@@ -25,8 +25,10 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
@@ -34,12 +36,16 @@ import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
+import com.squareup.phrase.Phrase;
+
 import org.conscrypt.Conscrypt;
+import org.jetbrains.annotations.NotNull;
 import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPollerV2;
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
@@ -49,6 +55,7 @@ import org.session.libsession.utilities.Environment;
 import org.session.libsession.utilities.ProfilePictureUtilities;
 import org.session.libsession.utilities.SSKEnvironment;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.Toaster;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.WindowDebouncer;
 import org.session.libsession.utilities.dynamiclanguage.DynamicLanguageContextWrapper;
@@ -59,7 +66,6 @@ import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.ThreadUtils;
 import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.LastSentTimestampCache;
 import org.thoughtcrime.securesms.database.LokiAPIDatabase;
@@ -71,6 +77,7 @@ import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
+import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.home.HomeActivity;
@@ -80,9 +87,9 @@ import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier;
+import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
-import org.thoughtcrime.securesms.notifications.PushRegistry;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
@@ -103,6 +110,7 @@ import java.security.Security;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.Executors;
 
@@ -113,7 +121,7 @@ import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
-import network.loki.messenger.libsession_util.ConfigBase;
+import network.loki.messenger.libsession_util.Config;
 import network.loki.messenger.libsession_util.UserProfile;
 
 /**
@@ -125,7 +133,7 @@ import network.loki.messenger.libsession_util.UserProfile;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver, ConfigFactoryUpdateListener {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, ConfigFactoryUpdateListener, Toaster {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -149,10 +157,13 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Device device;
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
-    @Inject PushRegistry pushRegistry;
     @Inject ConfigFactory configFactory;
+    @Inject PollerFactory pollerFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
+    @Inject
+    PushRegistrationHandler pushRegistrationHandler;
+    @Inject TokenFetcher tokenFetcher;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -201,12 +212,21 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     @Override
-    public void notifyUpdates(@NonNull ConfigBase forConfigObject, long messageTimestamp) {
+    public void notifyUpdates(@NotNull Config forConfigObject, long messageTimestamp) {
         // forward to the config factory / storage ig
         if (forConfigObject instanceof UserProfile && !textSecurePreferences.getConfigurationMessageSynced()) {
             textSecurePreferences.setConfigurationMessageSynced(true);
         }
         storage.notifyConfigUpdates(forConfigObject, messageTimestamp);
+    }
+
+    @Override
+    public void toast(@StringRes int stringRes, int toastLength, @NonNull Map<String, String> parameters) {
+        Phrase builder = Phrase.from(this, stringRes);
+        for (Map.Entry<String,String> entry : parameters.entrySet()) {
+            builder.put(entry.getKey(), entry.getValue());
+        }
+        Toast.makeText(getApplicationContext(), builder.format(), toastLength).show();
     }
 
     @Override
@@ -222,9 +242,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 storage,
                 device,
                 messageDataProvider,
-                ()-> KeyPairUtilities.INSTANCE.getUserED25519KeyPair(this),
                 configFactory,
-                lastSentTimestampCache
+                lastSentTimestampCache,
+                this,
+                tokenFetcher
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
@@ -255,6 +276,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
         NetworkConstraint networkConstraint = new NetworkConstraint.Factory(this).create();
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
+
+        pushRegistrationHandler.run();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -308,7 +331,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        ClosedGroupPollerV2.getShared().stopAll();
+        pollerFactory.stopAll();
+        LegacyClosedGroupPollerV2.getShared().stopAll();
         versionDataFetcher.stopTimedVersionCheck();
     }
 
@@ -316,6 +340,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
+        pollerFactory.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
@@ -438,7 +463,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             poller.setUserPublicKey(userPublicKey);
             return;
         }
-        poller = new Poller(configFactory, new Timer());
+        poller = new Poller(configFactory);
     }
 
     public void startPollingIfNeeded() {
@@ -446,7 +471,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
-        ClosedGroupPollerV2.getShared().start();
+        pollerFactory.startAll();
+        LegacyClosedGroupPollerV2.getShared().start();
     }
 
     public void retrieveUserProfile() {

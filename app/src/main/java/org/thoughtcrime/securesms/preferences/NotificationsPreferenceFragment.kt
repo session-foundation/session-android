@@ -10,26 +10,19 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.notifications.NotificationChannels
-import org.thoughtcrime.securesms.notifications.PushRegistry
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class NotificationsPreferenceFragment : ListSummaryPreferenceFragment() {
-    @Inject
-    lateinit var pushRegistry: PushRegistry
     @Inject
     lateinit var prefs: TextSecurePreferences
 
@@ -39,21 +32,9 @@ class NotificationsPreferenceFragment : ListSummaryPreferenceFragment() {
         // Set up FCM toggle
         val fcmKey = "pref_key_use_fcm"
         val fcmPreference: SwitchPreferenceCompat = findPreference(fcmKey)!!
-        fcmPreference.isChecked = prefs.isPushEnabled()
+        fcmPreference.isChecked = prefs.pushEnabled.value
         fcmPreference.setOnPreferenceChangeListener { _: Preference, newValue: Any ->
                 prefs.setPushEnabled(newValue as Boolean)
-                val job = pushRegistry.refresh(true)
-
-                fcmPreference.isEnabled = false
-
-                lifecycleScope.launch(Dispatchers.IO) {
-                    job.join()
-
-                    withContext(Dispatchers.Main) {
-                        fcmPreference.isEnabled = true
-                    }
-                }
-
                 true
             }
 

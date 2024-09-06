@@ -76,7 +76,7 @@ class DebugMenuViewModel @Inject constructor(
         // clear remote and local data, then restart the app
         viewModelScope.launch {
             try {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application).get()
+                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)
             } catch (e: Exception) {
                 // we can ignore fails here as we might be switching environments before the user gets a public key
             }

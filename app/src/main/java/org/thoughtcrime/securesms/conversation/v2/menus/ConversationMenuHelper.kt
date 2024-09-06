@@ -34,8 +34,8 @@ import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.groups.EditClosedGroupActivity
-import org.thoughtcrime.securesms.groups.EditClosedGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
+import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.showMuteDialog
@@ -56,7 +56,7 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (!isCommunity && (thread.hasApprovedMe() || thread.isClosedGroupRecipient || thread.isLocalNumber)) {
+        if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyClosedGroupRecipient || thread.isLocalNumber)) {
             inflater.inflate(R.menu.menu_conversation_expiration, menu)
         }
         // One-on-one chat menu allows copying the account id
@@ -72,7 +72,7 @@ object ConversationMenuHelper {
             }
         }
         // Closed group menu (options that should only be present in closed groups)
-        if (thread.isClosedGroupRecipient) {
+        if (thread.isLegacyClosedGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_closed_group, menu)
         }
         // Open group menu
@@ -258,15 +258,15 @@ object ConversationMenuHelper {
     }
 
     private fun editClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
-        val intent = Intent(context, EditClosedGroupActivity::class.java)
+        if (!thread.isLegacyClosedGroupRecipient) { return }
+        val intent = Intent(context, EditLegacyGroupActivity::class.java)
         val groupID: String = thread.address.toGroupString()
         intent.putExtra(groupIDKey, groupID)
         context.startActivity(intent)
     }
 
     private fun leaveClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isClosedGroupRecipient) { return }
+        if (!thread.isLegacyClosedGroupRecipient) { return }
 
         val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
         val admins = group.admins

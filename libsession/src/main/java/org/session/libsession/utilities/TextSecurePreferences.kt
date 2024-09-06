@@ -11,6 +11,8 @@ import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
 import org.session.libsession.utilities.TextSecurePreferences.Companion
@@ -43,12 +45,10 @@ interface TextSecurePreferences {
     fun setLastConfigurationSyncTime(value: Long)
     fun getConfigurationMessageSynced(): Boolean
     fun setConfigurationMessageSynced(value: Boolean)
-    fun isPushEnabled(): Boolean
+
     fun setPushEnabled(value: Boolean)
-    fun getPushToken(): String?
-    fun setPushToken(value: String)
-    fun getPushRegisterTime(): Long
-    fun setPushRegisterTime(value: Long)
+    val pushEnabled: StateFlow<Boolean>
+
     fun isScreenLockEnabled(): Boolean
     fun setScreenLockEnabled(value: Boolean)
     fun getScreenLockTimeout(): Long
@@ -265,8 +265,6 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
-        val PUSH_TOKEN get() = "pref_fcm_token_2$pushSuffix"
-        val PUSH_REGISTER_TIME get() = "pref_last_fcm_token_upload_time_2$pushSuffix"
         const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
@@ -339,24 +337,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setPushEnabled(context: Context, value: Boolean) {
             setBooleanPreference(context, IS_PUSH_ENABLED, value)
-        }
-
-        @JvmStatic
-        fun getPushToken(context: Context): String? {
-            return getStringPreference(context, PUSH_TOKEN, "")
-        }
-
-        @JvmStatic
-        fun setPushToken(context: Context, value: String?) {
-            setStringPreference(context, PUSH_TOKEN, value)
-        }
-
-        fun getPushRegisterTime(context: Context): Long {
-            return getLongPreference(context, PUSH_REGISTER_TIME, 0)
-        }
-
-        fun setPushRegisterTime(context: Context, value: Long) {
-            setLongPreference(context, PUSH_REGISTER_TIME, value)
         }
 
         // endregion
@@ -1032,28 +1012,13 @@ class AppTextSecurePreferences @Inject constructor(
         TextSecurePreferences._events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
     }
 
-    override fun isPushEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
-    }
+    override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
+        getBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, false)
+    )
 
     override fun setPushEnabled(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.IS_PUSH_ENABLED, value)
-    }
-
-    override fun getPushToken(): String? {
-        return getStringPreference(TextSecurePreferences.PUSH_TOKEN, "")
-    }
-
-    override fun setPushToken(value: String) {
-        setStringPreference(TextSecurePreferences.PUSH_TOKEN, value)
-    }
-
-    override fun getPushRegisterTime(): Long {
-        return getLongPreference(TextSecurePreferences.PUSH_REGISTER_TIME, 0)
-    }
-
-    override fun setPushRegisterTime(value: Long) {
-        setLongPreference(TextSecurePreferences.PUSH_REGISTER_TIME, value)
+        pushEnabled.value = value
     }
 
     override fun isScreenLockEnabled(): Boolean {

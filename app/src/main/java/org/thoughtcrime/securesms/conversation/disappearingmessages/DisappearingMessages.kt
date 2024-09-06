@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -43,7 +44,11 @@ class DisappearingMessages @Inject constructor(
 
         messageExpirationManager.insertExpirationTimerMessage(message)
         MessageSender.send(message, address)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+        if (address.isClosedGroupV2) {
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(Destination.from(address))
+        } else {
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+        }
     }
 
     fun showFollowSettingDialog(context: Context, message: MessageRecord) = context.showSessionDialog {
@@ -58,9 +63,9 @@ class DisappearingMessages @Inject constructor(
 
         dangerButton(
                 text = if (message.expiresIn == 0L) R.string.confirm else R.string.set,
-                contentDescription = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_setButton
+                contentDescriptionRes = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_setButton
         ) {
-            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.isClosedGroupRecipient)
+            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.isClosedGroupV2Recipient)
         }
         cancelButton()
     }

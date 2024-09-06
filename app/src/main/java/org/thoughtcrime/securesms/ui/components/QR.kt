@@ -55,8 +55,8 @@ import com.google.zxing.PlanarYUVLuminanceSource
 import com.google.zxing.Result
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.qrcode.QRCodeReader
-import com.squareup.phrase.Phrase
 import java.util.concurrent.Executors
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R

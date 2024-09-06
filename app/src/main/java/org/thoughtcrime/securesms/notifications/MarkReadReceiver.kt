@@ -6,13 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.recipients.Recipient
@@ -102,7 +102,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                     SnodeAPI.alterTtl(
                         messageHashes = hashes,
                         newExpiry = nowWithOffset + expiresIn,
-                        publicKey = TextSecurePreferences.getLocalNumber(context)!!,
+                        auth = checkNotNull(shared.storage.userAuth) { "No authorized user" },
                         shorten = true
                     )
                 }
@@ -130,7 +130,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
             @Suppress("UNCHECKED_CAST")
-            val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), TextSecurePreferences.getLocalNumber(context)!!).get()["expiries"] as Map<String, Long>
+            val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), shared.storage.userAuth!!).get()["expiries"] as Map<String, Long>
             hashToMessage.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
         }
 

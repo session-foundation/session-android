@@ -31,7 +31,10 @@ set(SOURCES
         contacts.cpp
         conversation.cpp
         blinded_key.cpp
-        util.cpp)
+        util.cpp
+        group_members.cpp
+        group_keys.cpp
+        group_info.cpp)
 
 add_library( # Sets the name of the library.
         session_util
@@ -48,7 +51,6 @@ add_library( # Sets the name of the library.
 
 find_library( # Sets the name of the path variable.
         log-lib
-
         # Specifies the name of the NDK library that
         # you want CMake to locate.
         log)

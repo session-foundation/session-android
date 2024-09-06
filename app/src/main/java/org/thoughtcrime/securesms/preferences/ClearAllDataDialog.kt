@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DividerItemDecoration
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.Job
@@ -16,18 +17,26 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.DialogClearAllDataBinding
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ClearAllDataDialog : DialogFragment() {
     private val TAG = "ClearAllDataDialog"
 
     private lateinit var binding: DialogClearAllDataBinding
+
+    @Inject
+    lateinit var storage: StorageProtocol
 
     private enum class Steps {
         INFO_PROMPT,
@@ -116,7 +125,7 @@ class ClearAllDataDialog : DialogFragment() {
 
     private suspend fun performDeleteLocalDataOnlyStep() {
         try {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(requireContext()).get()
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(requireContext())
         } catch (e: Exception) {
             Log.e(TAG, "Failed to force sync when deleting data", e)
             withContext(Main) {
@@ -149,7 +158,7 @@ class ClearAllDataDialog : DialogFragment() {
                         openGroups.map { it.value.server }.toSet().forEach { server ->
                             OpenGroupApi.deleteAllInboxMessages(server).get()
                         }
-                        SnodeAPI.deleteAllMessages().get()
+                        SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).get()
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
                         null

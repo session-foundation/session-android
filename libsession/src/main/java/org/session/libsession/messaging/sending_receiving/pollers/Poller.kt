@@ -15,6 +15,7 @@ import nl.komponents.kovenant.deferred
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.resolve
 import nl.komponents.kovenant.task
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -36,7 +37,7 @@ private const val TAG = "Poller"
 
 private class PromiseCanceledException : Exception("Promise canceled.")
 
-class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Timer) {
+class Poller(private val configFactory: ConfigFactoryProtocol) {
     var userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey() ?: ""
     private var hasStarted: Boolean = false
     private val usedSnodes: MutableSet<Snode> = mutableSetOf()
@@ -178,12 +179,15 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         runBlocking(Dispatchers.IO) {
             val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
             val hashesToExtend = mutableSetOf<String>()
+            val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
+
             configFactory.user?.let { config ->
                 hashesToExtend += config.currentHashes()
                 SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        snode, userPublicKey,
-                        config.configNamespace(),
-                        maxSize = -8
+                    snode = snode,
+                    auth = userAuth,
+                    namespace = config.namespace(),
+                    maxSize = -8
                 )
             }?.let { request ->
                 requests += request
@@ -192,7 +196,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
             if (hashesToExtend.isNotEmpty()) {
                 SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                         messageHashes = hashesToExtend.toList(),
-                        publicKey = userPublicKey,
+                        auth = userAuth,
                         newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
                         extend = true
                 )?.let { extensionRequest ->
@@ -213,7 +217,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                                 if (body == null) {
                                     Log.e(TAG, "Batch sub-request didn't contain a body")
                                 } else {
-                                    processConfig(snode, body, configFactory.user!!.configNamespace(), configFactory.user)
+                                    processConfig(snode, body, configFactory.user!!.namespace(), configFactory.user)
                                 }
                             }
                         }
@@ -230,19 +234,22 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
         if (!hasStarted) { return Promise.ofFail(PromiseCanceledException()) }
         return task {
             runBlocking(Dispatchers.IO) {
+                val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
                 val requestSparseArray = SparseArray<SnodeAPI.SnodeBatchRequestInfo>()
                 // get messages
-                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(snode, userPublicKey, maxSize = -2)!!.also { personalMessages ->
+                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(snode, auth = userAuth, maxSize = -2)
+                    .also { personalMessages ->
                     // namespaces here should always be set
                     requestSparseArray[personalMessages.namespace!!] = personalMessages
                 }
                 // get the latest convo info volatile
                 val hashesToExtend = mutableSetOf<String>()
-                configFactory.getUserConfigs().mapNotNull { config ->
+                configFactory.getUserConfigs().map { config ->
                     hashesToExtend += config.currentHashes()
                     SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        snode, userPublicKey,
-                        config.configNamespace(),
+                        snode = snode,
+                        auth = userAuth,
+                        namespace = config.namespace(),
                         maxSize = -8
                     )
                 }.forEach { request ->
@@ -256,7 +263,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                 if (hashesToExtend.isNotEmpty()) {
                     SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                         messageHashes = hashesToExtend.toList(),
-                        publicKey = userPublicKey,
+                        auth = userAuth,
                         newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
                         extend = true
                     )?.let { extensionRequest ->
@@ -274,10 +281,10 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             // in case we had null configs, the array won't be fully populated
                             // index of the sparse array key iterator should be the request index, with the key being the namespace
                             listOfNotNull(
-                                    configFactory.user?.configNamespace(),
-                                    configFactory.contacts?.configNamespace(),
-                                    configFactory.userGroups?.configNamespace(),
-                                    configFactory.convoVolatile?.configNamespace()
+                                    configFactory.user?.namespace(),
+                                    configFactory.contacts?.namespace(),
+                                    configFactory.userGroups?.namespace(),
+                                    configFactory.convoVolatile?.namespace()
                             ).map {
                                 it to requestSparseArray.indexOfKey(it)
                             }.filter { (_, i) -> i >= 0 }.forEach { (key, requestIndex) ->
@@ -291,7 +298,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                                         Log.e(TAG, "Batch sub-request didn't contain a body")
                                         return@forEach
                                     }
-                                    if (key == Namespace.DEFAULT) {
+                                    if (key == Namespace.DEFAULT()) {
                                         return@forEach // continue, skip default namespace
                                     } else {
                                         when (ConfigBase.kindFor(key)) {
@@ -305,7 +312,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
                             }
 
                             // the first response will be the personal messages (we want these to be processed after config messages)
-                            val personalResponseIndex = requestSparseArray.indexOfKey(Namespace.DEFAULT)
+                            val personalResponseIndex = requestSparseArray.indexOfKey(Namespace.DEFAULT())
                             if (personalResponseIndex >= 0) {
                                 responseList.getOrNull(personalResponseIndex)?.let { rawResponse ->
                                     if (rawResponse["code"] as? Int != 200) {

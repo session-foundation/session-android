@@ -36,6 +36,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.jobs.LibSessionGroupLeavingJob
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
@@ -43,6 +44,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.toHexString
@@ -71,7 +73,6 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
@@ -116,7 +117,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
-    @Inject lateinit var pushRegistry: PushRegistry
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -140,9 +140,13 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
             }
             is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, model.contact.accountID.let(Address::fromSerialized))
+                putExtra(
+                    ConversationActivityV2.ADDRESS,
+                    model.contact.accountID.let(Address::fromSerialized)
+                )
             }
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
+
+            is GlobalSearchAdapter.Model.LegacyGroupConversation -> model.groupRecord.encodedId
                 .let { Recipient.from(this, Address.fromSerialized(it), false) }
                 .let(threadDb::getThreadIdIfExistsFor)
                 .takeIf { it >= 0 }
@@ -238,7 +242,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
-                pushRegistry.refresh(false)
                 if (textSecurePreferences.getLocalNumber() != null) {
                     OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
@@ -330,7 +333,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
         contacts.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) } +
-            threads.map(GlobalSearchAdapter.Model::GroupConversation)
+            threads.map(GlobalSearchAdapter.Model::LegacyGroupConversation)
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
@@ -428,7 +431,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     override fun onLongConversationClick(thread: ThreadRecord) {
         val bottomSheet = ConversationOptionsBottomSheet(this)
+        bottomSheet.publicKey = publicKey
         bottomSheet.thread = thread
+        bottomSheet.group = groupDatabase.getGroup(thread.recipient.address.toString()).orNull()
         bottomSheet.onViewDetailsTapped = {
             bottomSheet.dismiss()
             val userDetailsBottomSheet = UserDetailsBottomSheet()
@@ -588,14 +593,18 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
             // If you are an admin of this group you can delete it
-            if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
+            if (group != null && group.admins.map { it.toString() }
+                    .contains(textSecurePreferences.getLocalNumber())) {
                 title = getString(R.string.groupDelete)
                 message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             } else {
                 // Otherwise this is either a community, or it's a group you're not an admin of
-                title = if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(R.string.groupLeave)
+                title =
+                    if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(
+                        R.string.groupLeave
+                    )
                 message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
@@ -622,25 +631,34 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Main) {
                     val context = this@HomeActivity
                     // Cancel any outstanding jobs
-                    DatabaseComponent.get(context).sessionJobDatabase().cancelPendingMessageSendJobs(threadID)
+                    DatabaseComponent.get(context).sessionJobDatabase()
+                        .cancelPendingMessageSendJobs(threadID)
                     // Send a leave group message if this is an active closed group
-                    if (recipient.address.isClosedGroup && DatabaseComponent.get(context).groupDatabase().isActive(recipient.address.toGroupString())) {
+                    if (recipient.address.isLegacyClosedGroup && DatabaseComponent.get(context)
+                            .groupDatabase().isActive(recipient.address.toGroupString())
+                    ) {
                         try {
-                            GroupUtil.doubleDecodeGroupID(recipient.address.toString()).toHexString()
+                            GroupUtil.doubleDecodeGroupID(recipient.address.toString())
+                                .toHexString()
                                 .takeIf(DatabaseComponent.get(context).lokiAPIDatabase()::isClosedGroup)
-                                ?.let { MessageSender.explicitLeave(it, false) }
+                                ?.let { MessageSender.explicitLeave(it, true, deleteThread = true) }
                         } catch (ioe: IOException) {
-                            Log.w(TAG, "Got an IOException while sending leave group message")
+                            Log.w(TAG, "Got an IOException while sending leave group message", ioe)
                         }
                     }
+                    if (recipient.address.isClosedGroupV2) {
+                        val groupLeave = LibSessionGroupLeavingJob(AccountId(recipient.address.serialize()), true)
+                        JobQueue.shared.add(groupLeave)
+                    }
                     // Delete the conversation
-                    val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase().getOpenGroupChat(threadID)
+                    val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase()
+                        .getOpenGroupChat(threadID)
                     if (v2OpenGroup != null) {
-                        v2OpenGroup.apply { OpenGroupManager.delete(server, room, context) }
-                    } else {
-                        lifecycleScope.launch(Dispatchers.IO) {
-                            threadDb.deleteConversation(threadID)
-                        }
+                        OpenGroupManager.delete(
+                            v2OpenGroup.server,
+                            v2OpenGroup.room,
+                            context
+                        )
                     }
                     // Update the badge count
                     ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)

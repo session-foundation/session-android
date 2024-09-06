@@ -4,17 +4,22 @@ import android.content.Context
 import com.goterl.lazysodium.utils.KeyPair
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
+import org.session.libsession.utilities.Toaster
+import org.session.libsignal.utilities.AccountId
 
 class MessagingModuleConfiguration(
     val context: Context,
     val storage: StorageProtocol,
     val device: Device,
     val messageDataProvider: MessageDataProvider,
-    val getUserED25519KeyPair: () -> KeyPair?,
     val configFactory: ConfigFactoryProtocol,
-    val lastSentTimestampCache: LastSentTimestampCache
+    val lastSentTimestampCache: LastSentTimestampCache,
+    val toaster: Toaster,
+    val tokenFetcher: TokenFetcher,
 ) {
 
     companion object {
