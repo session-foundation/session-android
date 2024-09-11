@@ -278,7 +278,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
 }
 
 fun handleMessageRequestResponse(message: MessageRequestResponse) {
-    MessagingModuleConfiguration.shared.storage.insertMessageRequestResponse(message)
+    MessagingModuleConfiguration.shared.storage.insertMessageRequestResponseFromContact(message)
 }
 //endregion
 

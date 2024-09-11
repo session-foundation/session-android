@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.fadingEdges
@@ -71,13 +72,15 @@ fun DisappearingMessages(
             }
         }
 
-        if (state.showSetButton) SlimOutlineButton(
-            stringResource(R.string.set),
-            modifier = Modifier
-                .contentDescription(R.string.AccessibilityId_setButton)
-                .align(Alignment.CenterHorizontally)
-                .padding(bottom = LocalDimensions.current.spacing),
-            onClick = callbacks::onSetClick
-        )
+        if (state.showSetButton){
+            PrimaryOutlineButton(
+                stringResource(R.string.set),
+                modifier = Modifier
+                    .contentDescription(R.string.AccessibilityId_setButton)
+                    .align(Alignment.CenterHorizontally)
+                    .padding(bottom = LocalDimensions.current.spacing),
+                onClick = callbacks::onSetClick
+            )
+        }
     }
 }

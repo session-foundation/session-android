@@ -43,6 +43,7 @@
     <string name="AccessibilityId_contactUserDetails">Details</string>
     <string name="AccessibilityId_pin">Pin</string>
     <string name="AccessibilityId_profilePicture">User settings</string>
+    <string name="AccessibilityId_avatarPicker">Image picker</string>
     <string name="AccessibilityId_searchIcon">Search icon</string>
     <!--Settings Page -->
     <string name="AccessibilityId_conversationsBlockedContacts">Blocked contacts</string>
@@ -66,6 +67,8 @@
     <string name="AccessibilityId_blockConfirm">Confirm block</string>
     <string name="AccessibilityId_unblockConfirm">Confirm unblock</string>
     <string name="AccessibilityId_delete">Delete</string>
+    <string name="AccessibilityId_leave">Leave</string>
+    <string name="AccessibilityId_clear">Clear</string>
     <string name="AccessibilityId_disappearingMessages">Disappearing messages</string>
     <string name="AccessibilityId_enable">Enable</string>
     <string name="AccessibilityId_notificationsMute">Mute notifications</string>
@@ -73,7 +76,7 @@
     <string name="AccessibilityId_search">Search</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
-    <string name="AccessibilityId_membersInvite">Add members</string>
+    <string name="AccessibilityId_membersInvite">Invite Contacts</string>
     <string name="AccessibilityId_set">Apply changes</string>
     <string name="AccessibilityId_groupNameChangeCancel">Cancel name change</string>
     <string name="AccessibilityId_contactMentions">Contact mentions</string>
@@ -122,10 +125,11 @@
     <string name="AccessibilityId_message">Message body</string>
     <string name="AccessibilityId_sent">Message sent status: Sent</string>
     <string name="AccessibilityId_reply">Reply to message</string>
-    <string name="AccessibilityId_save">Save attachment</string>
+    <string name="AccessibilityId_saveAttachment">Save attachment</string>
     <string name="AccessibilityId_select">Select</string>
     <string name="AccessibilityId_messageVoice">Voice message</string>
     <string name="AccessibilityId_deliveryIndicator">Delivered</string>
+    <string name="AccessibilityId_message_request_config_message">Message request has been accepted</string>
     <!-- Delete message modal-->
     <string name="AccessibilityId_deleteMessageCancel">Cancel deletion</string>
     <string name="AccessibilityId_deleteMessageEveryone">Delete for everyone</string>   <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForEveryone"? -->
@@ -156,9 +160,7 @@
     <string name="AccessibilityId_close">Close Dialog</string>
     <string name="AccessibilityId_expand">Expand</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>
-
-    <!-- LEGACY DISAPPEARING MESSAGES WILL BE NO MORE & THIS CAN BE REMOVED AFTER ONBOARDING GOES OUT! -ACL -->
-    <!-- Also, this is associated with the string: expiration_type_disappear_legacy                         -->
-    <string name="AccessibilityId_disappearingMessagesLegacy">Original version of disappearing messages.</string>
+    <string name="AccessibilityId_save">Save</string>
+    <string name="AccessibilityId_remove">Remove</string>
 
 </resources>

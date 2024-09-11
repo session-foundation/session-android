@@ -32,14 +32,13 @@ data class State(
 
     val nextType get() = when {
         expiryType == ExpiryType.AFTER_READ -> ExpiryType.AFTER_READ
-        isNewConfigEnabled -> ExpiryType.AFTER_SEND
-        else -> ExpiryType.LEGACY
+        else -> ExpiryType.AFTER_SEND
     }
 
     val duration get() = expiryMode?.duration
     val expiryType get() = expiryMode?.type
 
-    val isTimeOptionsEnabled = isNoteToSelf || isSelfAdmin && (isNewConfigEnabled || expiryType == ExpiryType.LEGACY)
+    val isTimeOptionsEnabled = isNoteToSelf || isSelfAdmin && isNewConfigEnabled
 }
 
 
@@ -53,11 +52,6 @@ enum class ExpiryType(
         { ExpiryMode.NONE },
         R.string.off,
         contentDescription = R.string.AccessibilityId_disappearingMessagesOff,
-    ),
-    LEGACY(
-        ExpiryMode::Legacy,
-        R.string.expiration_type_disappear_legacy,
-        contentDescription = R.string.AccessibilityId_disappearingMessagesLegacy
     ),
     AFTER_READ(
         ExpiryMode::AfterRead,
@@ -83,7 +77,6 @@ enum class ExpiryType(
 }
 
 val ExpiryMode.type: ExpiryType get() = when(this) {
-    is ExpiryMode.Legacy -> ExpiryType.LEGACY
     is ExpiryMode.AfterSend -> ExpiryType.AFTER_SEND
     is ExpiryMode.AfterRead -> ExpiryType.AFTER_READ
     else -> ExpiryType.NONE

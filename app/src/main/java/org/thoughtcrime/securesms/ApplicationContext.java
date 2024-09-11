@@ -483,39 +483,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     }
 
     private void resubmitProfilePictureIfNeeded() {
-        // Files expire on the file server after a while, so we simply re-upload the user's profile picture
-        // at a certain interval to ensure it's always available.
-        String userPublicKey = TextSecurePreferences.getLocalNumber(this);
-        if (userPublicKey == null) return;
-        long now = new Date().getTime();
-        long lastProfilePictureUpload = TextSecurePreferences.getLastProfilePictureUpload(this);
-        if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return;
-        ThreadUtils.queue(() -> {
-            // Don't generate a new profile key here; we do that when the user changes their profile picture
-            Log.d("Loki-Avatar", "Uploading Avatar Started");
-            String encodedProfileKey = TextSecurePreferences.getProfileKey(ApplicationContext.this);
-            try {
-                // Read the file into a byte array
-                InputStream inputStream = AvatarHelper.getInputStreamFor(ApplicationContext.this, Address.fromSerialized(userPublicKey));
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int count;
-                byte[] buffer = new byte[1024];
-                while ((count = inputStream.read(buffer, 0, buffer.length)) != -1) {
-                    baos.write(buffer, 0, count);
-                }
-                baos.flush();
-                byte[] profilePicture = baos.toByteArray();
-                // Re-upload it
-                ProfilePictureUtilities.INSTANCE.upload(profilePicture, encodedProfileKey, ApplicationContext.this).success(unit -> {
-                    // Update the last profile picture upload date
-                    TextSecurePreferences.setLastProfilePictureUpload(ApplicationContext.this, new Date().getTime());
-                    Log.d("Loki-Avatar", "Uploading Avatar Finished");
-                    return Unit.INSTANCE;
-                });
-            } catch (Exception e) {
-                Log.e("Loki-Avatar", "Uploading avatar failed.");
-            }
-        });
+        ProfilePictureUtilities.INSTANCE.resubmitProfilePictureIfNeeded(this);
     }
 
     private void loadEmojiSearchIndexIfNeeded() {

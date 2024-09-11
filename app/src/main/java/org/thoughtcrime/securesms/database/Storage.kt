@@ -5,6 +5,7 @@ import android.net.Uri
 import com.google.protobuf.ByteString
 import com.goterl.lazysodium.utils.KeyPair
 import network.loki.messenger.libsession_util.Config
+import network.loki.messenger.R
 import java.security.MessageDigest
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
@@ -2568,7 +2569,10 @@ open class Storage(
         SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
     }
 
-    override fun insertMessageRequestResponse(response: MessageRequestResponse) {
+    /**
+     * This will create a control message used to indicate that a contact has accepted our message request
+     */
+    override fun insertMessageRequestResponseFromContact(response: MessageRequestResponse) {
         val userPublicKey = getUserPublicKey()
         val senderPublicKey = response.sender!!
         val recipientPublicKey = response.recipient!!
@@ -2666,6 +2670,34 @@ open class Storage(
             )
             mmsDb.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
         }
+    }
+
+    /**
+     * This will create a control message used to indicate that you have accepted a message request
+     */
+    override fun insertMessageRequestResponseFromYou(threadId: Long){
+        val userPublicKey = getUserPublicKey() ?: return
+
+        val mmsDb = DatabaseComponent.get(context).mmsDatabase()
+        val message = IncomingMediaMessage(
+            fromSerialized(userPublicKey),
+            SnodeAPI.nowWithOffset,
+            -1,
+            0,
+            0,
+            false,
+            false,
+            true,
+            false,
+            Optional.absent(),
+            Optional.absent(),
+            Optional.absent(),
+            Optional.absent(),
+            Optional.absent(),
+            Optional.absent(),
+            Optional.absent()
+        )
+        mmsDb.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
     }
 
     override fun getRecipientApproved(address: Address): Boolean {

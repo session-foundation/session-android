@@ -24,9 +24,6 @@ import androidx.core.view.doOnLayout
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,6 +49,9 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ConversationReactionOverlay : FrameLayout {
@@ -213,7 +213,7 @@ class ConversationReactionOverlay : FrameLayout {
                         endY = backgroundView.height + menuPadding + reactionBarTopPadding
                     }
                 } else {
-                    endY = overlayHeight - contextMenu.getMaxHeight() - menuPadding - conversationItemSnapshot.height
+                    endY = overlayHeight - contextMenu.getMaxHeight() - 2*menuPadding - conversationItemSnapshot.height
                     reactionBarBackgroundY = endY - reactionBarHeight - menuPadding
                 }
                 endApparentTop = endY
@@ -538,7 +538,7 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_copy_icon, R.string.copy, { handleActionItemClicked(Action.COPY_MESSAGE) })
         }
         // Copy Account ID
-        if (recipient.isGroupRecipient && !recipient.isCommunityRecipient && message.recipient.address.toString() != userPublicKey) {
+        if (!recipient.isCommunityRecipient && message.isIncoming) {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
         // Delete message
@@ -572,7 +572,7 @@ class ConversationReactionOverlay : FrameLayout {
                 items += ActionItem(R.attr.menu_save_icon,
                             R.string.save,
                             { handleActionItemClicked(Action.DOWNLOAD) },
-                            R.string.AccessibilityId_save
+                            R.string.AccessibilityId_saveAttachment
                 )
             }
         }

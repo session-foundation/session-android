@@ -17,6 +17,7 @@ data class Dimensions(
 
     val dividerIndent: Dp = 60.dp,
     val appBarHeight: Dp = 64.dp,
+    val minItemButtonHeight: Dp = 50.dp,
     val minLargeItemButtonHeight: Dp = 60.dp,
 
     val indicatorHeight: Dp = 4.dp,

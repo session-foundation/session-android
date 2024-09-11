@@ -53,7 +53,12 @@ internal fun MessageNotificationsScreen(
         return
     }
 
-    if (state.showDialog) OnboardingBackPressAlertDialog(dismissDialog, quit = quit)
+    if (state.showingBackWarningDialogText != null)  {
+        OnboardingBackPressAlertDialog(dismissDialog,
+            textId = state.showingBackWarningDialogText,
+            quit = quit
+        )
+    }
 
     Column {
         Spacer(Modifier.weight(1f))

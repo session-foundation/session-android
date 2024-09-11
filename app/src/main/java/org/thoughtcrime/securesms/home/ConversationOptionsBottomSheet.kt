@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.TextSecurePreferences
@@ -88,10 +89,36 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.muteNotificationsTextView.setOnClickListener(this)
         binding.notificationsTextView.isVisible = recipient.isGroupRecipient && !recipient.isMuted
         binding.notificationsTextView.setOnClickListener(this)
-        binding.deleteTextView.isVisible = recipient.isContactRecipient || (recipient.isGroupRecipient && !isCurrentUserInGroup)
-        binding.deleteTextView.setOnClickListener(this)
+
+        // delete
+        binding.deleteTextView.apply {
+            isVisible = recipient.isContactRecipient || (recipient.isGroupRecipient && !isCurrentUserInGroup)
+            setOnClickListener(this@ConversationOptionsBottomSheet)
+
+            // the text and content description will change depending on the type
+            when{
+                // groups and communities
+                recipient.isGroupRecipient -> {
+                    text = context.getString(R.string.leave)
+                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                }
+
+                // note to self
+                recipient.isLocalNumber -> {
+                    text = context.getString(R.string.clear)
+                    contentDescription = context.getString(R.string.AccessibilityId_clear)
+                }
+
+                // 1on1
+                else -> {
+                    text = context.getString(R.string.delete)
+                    contentDescription = context.getString(R.string.AccessibilityId_delete)
+                }
+            }
+        }
         binding.leaveTextView.isVisible = recipient.isGroupRecipient && isCurrentUserInGroup
         binding.leaveTextView.setOnClickListener(this)
+
         binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 || configFactory.convoVolatile?.getConversationUnread(thread) == true
         binding.markAllAsReadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned

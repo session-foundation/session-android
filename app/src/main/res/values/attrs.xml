@@ -177,7 +177,6 @@
     <attr name="mention_candidates_view_background" format="color|reference"/>
     <attr name="scroll_to_bottom_button_background" format="color|reference"/>
     <attr name="scroll_to_bottom_button_border" format="color|reference"/>
-    <attr name="conversation_unread_count_indicator_background" format="color|reference"/>
 
     <attr name="verification_background" format="color"/>
 

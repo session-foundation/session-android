@@ -103,7 +103,9 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
       ViewCompat.setOnApplyWindowInsetsListener(container, (v, insets) -> insets.consumeSystemWindowInsets());
 
-      TabLayoutMediator mediator = new TabLayoutMediator(emojiTabs, recipientPagerView, (tab, position) -> {
+      TabLayoutMediator mediator = new TabLayoutMediator(
+              emojiTabs, recipientPagerView, true, false,
+              (tab, position) -> {
         tab.setCustomView(R.layout.reactions_pill_large);
 
         View           customView = Objects.requireNonNull(tab.getCustomView());
@@ -120,17 +122,13 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
         @Override
         public void onTabSelected(TabLayout.Tab tab) {
           View customView = tab.getCustomView();
-          TextView text = customView.findViewById(R.id.reactions_pill_count);
           customView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.reaction_pill_background_selected));
-          text.setTextColor(ThemeUtil.getThemedColor(requireContext(), R.attr.reactionsPillSelectedTextColor));
         }
 
         @Override
         public void onTabUnselected(TabLayout.Tab tab) {
           View customView = tab.getCustomView();
-          TextView text = customView.findViewById(R.id.reactions_pill_count);
           customView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.reaction_pill_dialog_background));
-          text.setTextColor(ThemeUtil.getThemedColor(requireContext(), R.attr.reactionsPillNormalTextColor));
         }
         @Override
         public void onTabReselected(TabLayout.Tab tab) {}
@@ -141,21 +139,6 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
   private void setUpRecipientsRecyclerView() {
     recipientsAdapter = new ReactionViewPagerAdapter(this);
-
-    recipientPagerView.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-      @Override
-      public void onPageSelected(int position) {
-        recipientPagerView.post(() -> recipientsAdapter.enableNestedScrollingForPosition(position));
-      }
-
-      @Override
-      public void onPageScrollStateChanged(int state) {
-        if (state == ViewPager2.SCROLL_STATE_IDLE) {
-          recipientPagerView.requestLayout();
-        }
-      }
-    });
-
     recipientPagerView.setAdapter(recipientsAdapter);
   }
 

@@ -18,7 +18,9 @@
 package org.thoughtcrime.securesms.database.model;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
+import static org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY;
+import static org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY;
 
@@ -35,10 +37,14 @@ import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import com.squareup.phrase.Phrase;
 import org.session.libsession.utilities.ExpirationUtil;
+import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.ui.UtilKt;
+
+import kotlin.Pair;
 import network.loki.messenger.R;
 
 /**
@@ -118,79 +124,78 @@ public class ThreadRecord extends DisplayRecord {
     }
 
     @Override
-    public SpannableString getDisplayBody(@NonNull Context context) {
+    public CharSequence getDisplayBody(@NonNull Context context) {
         if (isGroupUpdateMessage()) {
             String body = getBody();
             if (!body.isEmpty()) {
                 UpdateMessageData updateMessageData = UpdateMessageData.fromJSON(body);
                 if (updateMessageData != null) {
-                    return emphasisAdded(
-                            UpdateMessageBuilder.buildGroupUpdateMessage(context, updateMessageData, null, isOutgoing(), false)
-                                    .toString()
-                    );
+                    return UpdateMessageBuilder.buildGroupUpdateMessage(context, updateMessageData, null, isOutgoing(), false)
+                                .toString();
                 } else {
                     return null;
                 }
             }
-            return emphasisAdded(context.getString(R.string.groupUpdated));
+            return context.getString(R.string.groupUpdated);
         } else if (isOpenGroupInvitation()) {
-            return emphasisAdded(context.getString(R.string.communityInvitation));
+            return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {
-            String txt = Phrase.from(context, R.string.messageErrorOld)
+            return Phrase.from(context, R.string.messageErrorOld)
                     .put(APP_NAME_KEY, context.getString(R.string.app_name))
                     .format().toString();
-            return emphasisAdded(txt);
         } else if (MmsSmsColumns.Types.isDraftMessageType(type)) {
             String draftText = context.getString(R.string.draft);
-            return emphasisAdded(draftText + " " + getBody(), 0, draftText.length());
+            return draftText + " " + getBody();
         } else if (SmsDatabase.Types.isOutgoingCall(type)) {
-            String txt = Phrase.from(context, R.string.callsYouCalled)
+            return Phrase.from(context, R.string.callsYouCalled)
                     .put(NAME_KEY, getName())
                     .format().toString();
-            return emphasisAdded(txt);
         } else if (SmsDatabase.Types.isIncomingCall(type)) {
-            String txt = Phrase.from(context, R.string.callsCalledYou)
+            return Phrase.from(context, R.string.callsCalledYou)
                     .put(NAME_KEY, getName())
                     .format().toString();
-            return emphasisAdded(txt);
         } else if (SmsDatabase.Types.isMissedCall(type)) {
-            String txt = Phrase.from(context, R.string.callsMissedCallFrom)
+            return Phrase.from(context, R.string.callsMissedCallFrom)
                     .put(NAME_KEY, getName())
                     .format().toString();
-            return emphasisAdded(txt);
         } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
             int seconds = (int) (getExpiresIn() / 1000);
             if (seconds <= 0) {
-                String txt = Phrase.from(context, R.string.disappearingMessagesTurnedOff)
+                return Phrase.from(context, R.string.disappearingMessagesTurnedOff)
                         .put(NAME_KEY, getName())
                         .format().toString();
-                return emphasisAdded(txt);
             }
 
             // Implied that disappearing messages is enabled..
             String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
             String disappearAfterWhat = getDisappearingMsgExpiryTypeString(context); // Disappear after send or read?
-            String txt = Phrase.from(context, R.string.disappearingMessagesSet)
+            return Phrase.from(context, R.string.disappearingMessagesSet)
                     .put(NAME_KEY, getName())
                     .put(TIME_KEY, time)
                     .put(DISAPPEARING_MESSAGES_TYPE_KEY, disappearAfterWhat)
                     .format().toString();
-            return emphasisAdded(txt);
 
         } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
-            String txt = Phrase.from(context, R.string.attachmentsMediaSaved)
+            return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())
                     .format().toString();
-            return emphasisAdded(txt);
 
         } else if (MmsSmsColumns.Types.isScreenshotExtraction(type)) {
-            String txt = Phrase.from(context, R.string.screenshotTaken)
+            return Phrase.from(context, R.string.screenshotTaken)
                     .put(NAME_KEY, getName())
                     .format().toString();
-            return emphasisAdded(txt);
 
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
-            return emphasisAdded(context.getString(R.string.messageRequestsAccepted));
+            if (lastMessage.getRecipient().getAddress().serialize().equals(
+                    TextSecurePreferences.getLocalNumber(context))) {
+                return UtilKt.getSubbedCharSequence(
+                        context,
+                        R.string.messageRequestYouHaveAccepted,
+                        new Pair<>(NAME_KEY, getName())
+                );
+            }
+
+            return context.getString(R.string.messageRequestsAccepted);
         } else if (getCount() == 0) {
             return new SpannableString(context.getString(R.string.messageEmpty));
         } else {
@@ -203,20 +208,37 @@ public class ThreadRecord extends DisplayRecord {
                 return new SpannableString("");
                 // Old behaviour was: return new SpannableString(emphasisAdded(context.getString(R.string.mediaMessage)));
             } else {
-                return new SpannableString(getBody());
+                return getNonControlMessageDisplayBody(context);
             }
         }
     }
 
-    private SpannableString emphasisAdded(String sequence) {
-        return emphasisAdded(sequence, 0, sequence.length());
-    }
+    /**
+     * Logic to get the body for non control messages
+     */
+    public CharSequence getNonControlMessageDisplayBody(@NonNull Context context) {
+        Recipient recipient = getRecipient();
+        // The logic will differ depending on the type.
+        // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
+        // logic to be safe) do not need author details
+        if (recipient.isLocalNumber() || recipient.is1on1() ||
+                (lastMessage != null && lastMessage.isControlMessage())
+        ) {
+            return getBody();
+        } else { // for groups (new, legacy, communities) show either 'You' or the contact's name
+            String prefix = "";
+            if (lastMessage != null && lastMessage.isOutgoing()) {
+                prefix = context.getString(R.string.you);
+            }
+            else if(lastMessage != null){
+                prefix = lastMessage.getIndividualRecipient().toShortString();
+            }
 
-    private SpannableString emphasisAdded(String sequence, int start, int end) {
-        SpannableString spannable = new SpannableString(sequence);
-        spannable.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC),
-                start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return spannable;
+            return Phrase.from(context.getString(R.string.messageSnippetGroup))
+                    .put(AUTHOR_KEY, prefix)
+                    .put(MESSAGE_SNIPPET_KEY, getBody())
+                    .format().toString();
+        }
     }
 
     public long getCount()               { return count; }

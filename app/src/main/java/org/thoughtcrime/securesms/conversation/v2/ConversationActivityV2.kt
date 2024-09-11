@@ -113,7 +113,6 @@ import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.SessionDialogBuilder
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
@@ -128,6 +127,8 @@ import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companio
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
@@ -1990,7 +1991,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         } else {
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
-                .withRationaleDialog(getString(R.string.permissionsMicrophoneAccessRequired), R.drawable.ic_baseline_mic_48)
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsMicrophoneAccessRequired)
                     .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
@@ -2259,6 +2259,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             ON_REPLY -> reply(set)
             ON_RESEND -> resendMessage(set)
             ON_DELETE -> deleteMessages(set)
+            ON_COPY -> copyMessages(set)
+            ON_SAVE -> {
+                if(message is MmsMessageRecord) saveAttachmentsIfPossible(setOf(message))
+            }
         }
     }
 
@@ -2293,7 +2297,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         return result == PackageManager.PERMISSION_GRANTED
     }
 
-    override fun saveAttachment(messages: Set<MessageRecord>) {
+    override fun saveAttachmentsIfPossible(messages: Set<MessageRecord>) {
         val message = messages.first() as MmsMessageRecord
 
         // Note: The save option is only added to the menu in ConversationReactionOverlay.getMenuActionItems
@@ -2308,8 +2312,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         // that we've warned the user just _once_ that any attachments they save can be accessed by other apps.
         val haveWarned = TextSecurePreferences.getHaveWarnedUserAboutSavingAttachments(this)
         if (haveWarned) {
-            // On Android versions below 30 we require the WRITE_EXTERNAL_STORAGE permission to save attachments.
-            if (Build.VERSION.SDK_INT < 30) {
+            // On Android versions below 29 we require the WRITE_EXTERNAL_STORAGE permission to save attachments.
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                 // Save the attachment(s) then bail if we already have permission to do so
                 if (hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                     saveAttachments(message)
@@ -2330,7 +2334,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             Permissions.with(this)
                 .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .maxSdkVersion(Build.VERSION_CODES.P) // P is 28
-                .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsStorageSaveDenied)
+                .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
                     .put(APP_NAME_KEY, getString(R.string.app_name))
                     .format().toString())
                 .onAnyDenied {
@@ -2340,7 +2344,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     showSessionDialog {
                         title(R.string.permissionsRequired)
 
-                        val txt = Phrase.from(applicationContext, R.string.permissionsStorageSaveDenied)
+                        val txt = Phrase.from(applicationContext, R.string.permissionsStorageDeniedLegacy)
                             .put(APP_NAME_KEY, getString(R.string.app_name))
                             .format().toString()
                         text(txt)
@@ -2480,7 +2484,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 ConversationReactionOverlay.Action.REPLY -> reply(selectedItems)
                 ConversationReactionOverlay.Action.RESYNC -> resyncMessage(selectedItems)
                 ConversationReactionOverlay.Action.RESEND -> resendMessage(selectedItems)
-                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachment(selectedItems)
+                ConversationReactionOverlay.Action.DOWNLOAD -> saveAttachmentsIfPossible(selectedItems)
                 ConversationReactionOverlay.Action.COPY_MESSAGE -> copyMessages(selectedItems)
                 ConversationReactionOverlay.Action.VIEW_INFO -> showMessageDetail(selectedItems)
                 ConversationReactionOverlay.Action.SELECT -> selectMessages(selectedItems)

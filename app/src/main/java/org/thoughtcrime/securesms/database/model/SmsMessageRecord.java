@@ -18,14 +18,13 @@
 package org.thoughtcrime.securesms.database.model;
 
 import android.content.Context;
-import android.text.SpannableString;
+
 import androidx.annotation.NonNull;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.thoughtcrime.securesms.database.SmsDatabase;
+
 import java.util.LinkedList;
 import java.util.List;
-import network.loki.messenger.R;
 
 /**
  * The message record model which represents standard SMS messages.
@@ -56,7 +55,7 @@ public class SmsMessageRecord extends MessageRecord {
   }
 
   @Override
-  public SpannableString getDisplayBody(@NonNull Context context) {
+  public CharSequence getDisplayBody(@NonNull Context context) {
     return super.getDisplayBody(context);
   }
 

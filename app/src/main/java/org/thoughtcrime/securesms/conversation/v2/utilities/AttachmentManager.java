@@ -245,51 +245,58 @@ public class AttachmentManager {
 
   public static void selectDocument(Activity activity, int requestCode) {
     Permissions.PermissionsBuilder builder = Permissions.with(activity);
+    Context c = activity.getApplicationContext();
 
     // The READ_EXTERNAL_STORAGE permission is deprecated (and will AUTO-FAIL if requested!) on
     // Android 13 and above (API 33 - 'Tiramisu') we must ask for READ_MEDIA_VIDEO/IMAGES/AUDIO instead.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO)
                        .request(Manifest.permission.READ_MEDIA_IMAGES)
-                       .request(Manifest.permission.READ_MEDIA_AUDIO);
+                       .request(Manifest.permission.READ_MEDIA_AUDIO)
+                       .withRationaleDialog(
+                               Phrase.from(c, R.string.permissionsStorageSend)
+                                       .put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
+                       )
+                       .withPermanentDenialDialog(
+                            Phrase.from(c, R.string.permissionMusicAudioDenied)
+                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                                    .format().toString()
+                        );
     } else {
-      builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE);
+      builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE)
+              .withPermanentDenialDialog(
+                      Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
+                              .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                              .format().toString()
+              );
     }
 
-    Context c = activity.getApplicationContext();
-
-    String needStoragePermissionTxt = Phrase.from(c, R.string.permissionsStorageSend).put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString();
-
-    String storagePermissionDeniedTxt = Phrase.from(c, R.string.permissionsStorageSaveDenied)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
-            .format().toString();
-
-    builder.withPermanentDenialDialog(storagePermissionDeniedTxt)
-            .withRationaleDialog(needStoragePermissionTxt, R.drawable.ic_baseline_photo_library_24)
-            .onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode)) // Note: We can use startActivityForResult w/ the ACTION_OPEN_DOCUMENT or ACTION_OPEN_DOCUMENT_TREE intent if we need to modernise this.
+    builder.onAllGranted(() -> selectMediaType(activity, "*/*", null, requestCode)) // Note: We can use startActivityForResult w/ the ACTION_OPEN_DOCUMENT or ACTION_OPEN_DOCUMENT_TREE intent if we need to modernise this.
             .execute();
   }
 
   public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull String body) {
 
     Context c = activity.getApplicationContext();
-    String needStoragePermissionTxt = Phrase.from(c, R.string.permissionsStorageSend)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
-            .format().toString();
-    String cameraPermissionDeniedTxt = Phrase.from(c, R.string.cameraGrantAccessDenied)
-            .put(APP_NAME_KEY, c.getString(R.string.app_name))
-            .format().toString();
 
     Permissions.PermissionsBuilder builder = Permissions.with(activity);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO)
-              .request(Manifest.permission.READ_MEDIA_IMAGES);
+              .request(Manifest.permission.READ_MEDIA_IMAGES)
+              .withPermanentDenialDialog(
+                      Phrase.from(c, R.string.permissionsStorageDenied)
+                              .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                              .format().toString()
+              );
     } else {
-      builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE);
+      builder = builder.request(Manifest.permission.READ_EXTERNAL_STORAGE)
+              .withPermanentDenialDialog(
+                      Phrase.from(c, R.string.permissionsStorageDeniedLegacy)
+                              .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                              .format().toString()
+              );
     }
-    builder.withPermanentDenialDialog(cameraPermissionDeniedTxt)
-      .withRationaleDialog(needStoragePermissionTxt, R.drawable.ic_baseline_photo_library_24)
-      .onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
+    builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
       .execute();
   }
 
@@ -313,18 +320,13 @@ public class AttachmentManager {
 
   public void capturePhoto(Activity activity, int requestCode, Recipient recipient) {
 
-    String cameraPermissionDeniedTxt = Phrase.from(context, R.string.cameraGrantAccessDenied)
-            .put(APP_NAME_KEY, context.getString(R.string.app_name))
-            .format().toString();
-
-    String requireCameraPermissionTxt = Phrase.from(context, R.string.cameraGrantAccessDescription)
+    String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
             .put(APP_NAME_KEY, context.getString(R.string.app_name))
             .format().toString();
 
     Permissions.with(activity)
         .request(Manifest.permission.CAMERA)
         .withPermanentDenialDialog(cameraPermissionDeniedTxt)
-        .withRationaleDialog(requireCameraPermissionTxt, R.drawable.ic_baseline_photo_camera_24)
         .onAllGranted(() -> {
           Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient);
           if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {

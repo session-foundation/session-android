@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="64dp"
-    android:background="@drawable/conversation_view_background"
+    android:background="?attr/selectableItemBackground"
     android:contentDescription="@string/AccessibilityId_contact"
     android:orientation="vertical">
 

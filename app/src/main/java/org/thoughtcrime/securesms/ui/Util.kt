@@ -2,9 +2,14 @@ package org.thoughtcrime.securesms.ui
 
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.shouldShowRationale
 import com.squareup.phrase.Phrase
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
@@ -38,4 +43,18 @@ fun ComposeView.setThemedContent(content: @Composable () -> Unit) = setContent {
     SessionMaterialTheme {
         content()
     }
+}
+
+@ExperimentalPermissionsApi
+fun PermissionState.isPermanentlyDenied(): Boolean {
+    return !status.shouldShowRationale && !status.isGranted
+}
+
+fun Context.findActivity(): Activity {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    throw IllegalStateException("Permissions should be called in the context of an Activity")
 }

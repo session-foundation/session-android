@@ -65,7 +65,6 @@
             tools:text="You missed a call"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:drawableTint="?message_received_text_color"
             app:drawableStartCompat="@drawable/ic_missed_call" />
 
     </FrameLayout>

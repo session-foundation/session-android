@@ -98,10 +98,10 @@ class HelpSettingsFragment: CorrectedPreferenceFragment() {
         Permissions.with(this)
             .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             .maxSdkVersion(Build.VERSION_CODES.P)
-            .withPermanentDenialDialog(requireContext().getSubbedString(R.string.permissionsStorageSaveDenied, APP_NAME_KEY to getString(R.string.app_name)))
+            .withPermanentDenialDialog(requireContext().getSubbedString(R.string.permissionsStorageDeniedLegacy, APP_NAME_KEY to getString(R.string.app_name)))
             .onAnyDenied {
                 val c = requireContext()
-                val txt = c.getSubbedString(R.string.permissionsStorageSaveDenied, APP_NAME_KEY to getString(R.string.app_name))
+                val txt = c.getSubbedString(R.string.permissionsStorageDeniedLegacy, APP_NAME_KEY to getString(R.string.app_name))
                 Toast.makeText(c, txt, Toast.LENGTH_LONG).show()
             }
             .onAllGranted {

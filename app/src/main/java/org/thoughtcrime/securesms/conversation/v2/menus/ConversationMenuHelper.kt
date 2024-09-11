@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2.menus
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.AsyncTask
 import android.view.Menu
 import android.view.MenuInflater
@@ -22,11 +24,14 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.MissingMicrophonePermissionDialog
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
@@ -36,6 +41,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.showMuteDialog
@@ -162,6 +168,7 @@ object ConversationMenuHelper {
 
     private fun call(context: Context, thread: Recipient) {
 
+        // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
             context.showSessionDialog {
                 title(R.string.callsPermissionsRequired)
@@ -171,6 +178,12 @@ object ConversationMenuHelper {
                 }
                 cancelButton()
             }
+            return
+        }
+        // or if the user has not granted audio/microphone permissions
+        else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
+            Log.d("Loki", "Attempted to make a call without audio permissions")
+            MissingMicrophonePermissionDialog.show(context)
             return
         }
 
@@ -273,13 +286,13 @@ object ConversationMenuHelper {
         val accountID = TextSecurePreferences.getLocalNumber(context)
         val isCurrentUserAdmin = admins.any { it.toString() == accountID }
         val message = if (isCurrentUserAdmin) {
-            Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
+            Phrase.from(context, R.string.groupDeleteDescription)
                 .put(GROUP_NAME_KEY, group.title)
-                .format().toString()
+                .format()
         } else {
             Phrase.from(context, R.string.groupLeaveDescription)
                 .put(GROUP_NAME_KEY, group.title)
-                .format().toString()
+                .format()
         }
 
         fun onLeaveFailed() {
@@ -292,7 +305,7 @@ object ConversationMenuHelper {
         context.showSessionDialog {
             title(R.string.groupLeave)
             text(message)
-            button(R.string.yes) {
+            dangerButton(R.string.leave) {
                 try {
                     val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
                     val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
@@ -303,7 +316,7 @@ object ConversationMenuHelper {
                     onLeaveFailed()
                 }
             }
-            button(R.string.no)
+            button(R.string.cancel)
         }
     }
 

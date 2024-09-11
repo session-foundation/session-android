@@ -58,6 +58,7 @@ class DialogButtonModel(
     val contentDescription: GetString = text,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
+    val enabled: Boolean = true,
     val onClick: () -> Unit = {},
 )
 
@@ -164,7 +165,8 @@ fun AlertDialog(
                                         .fillMaxHeight()
                                         .contentDescription(it.contentDescription())
                                         .weight(1f),
-                                    color = it.color
+                                    color = it.color,
+                                    enabled = it.enabled
                                 ) {
                                     it.onClick()
                                     if (it.dismissOnClick) onDismissRequest()
@@ -222,16 +224,24 @@ fun DialogButton(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
+    enabled: Boolean,
     onClick: () -> Unit
 ) {
     TextButton(
         modifier = modifier,
         shape = RectangleShape,
+        enabled = enabled,
         onClick = onClick
     ) {
+        val textColor = if(enabled) {
+            color.takeOrElse { LocalColors.current.text }
+        } else {
+            LocalColors.current.disabled
+        }
+
         Text(
             text,
-            color = color.takeOrElse { LocalColors.current.text },
+            color = textColor,
             style = LocalType.current.large.bold(),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(

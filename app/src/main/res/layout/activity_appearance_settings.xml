@@ -209,15 +209,44 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-                <TextView
-                    android:textSize="12sp"
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?message_received_text_color"
-                    android:text="@string/appearancePreview1"
-                    android:gravity="center"
-                    android:drawablePadding="12dp"
-                    app:drawableLeftCompat="@drawable/quote_accent_line" />
+                    android:layout_height="wrap_content" >
+                    <View
+                        android:id="@+id/quote_line"
+                        android:layout_width="3dp"
+                        android:layout_height="0dp"
+                        android:background="?colorAccent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+                    <TextView
+                        android:id="@+id/quote_sender"
+                        android:textSize="12sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?message_received_text_color"
+                        android:text="@string/you"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        android:layout_marginStart="@dimen/small_spacing"
+                        app:layout_constraintStart_toEndOf="@+id/quote_line"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/quote_msg"/>
+                    <TextView
+                        android:id="@+id/quote_msg"
+                        android:textSize="12sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="?message_received_text_color"
+                        android:text="@string/appearancePreview1"
+                        android:gravity="center"
+                        android:layout_marginStart="@dimen/small_spacing"
+                        app:layout_constraintStart_toEndOf="@+id/quote_line"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/quote_sender"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                
                 <TextView
                     android:layout_marginTop="4dp"
                     android:text="@string/appearancePreview2"

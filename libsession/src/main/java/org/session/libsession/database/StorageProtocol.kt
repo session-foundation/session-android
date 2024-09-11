@@ -243,7 +243,8 @@ interface StorageProtocol {
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
     fun updateThread(threadId: Long, unarchive: Boolean)
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
-    fun insertMessageRequestResponse(response: MessageRequestResponse)
+    fun insertMessageRequestResponseFromContact(response: MessageRequestResponse)
+    fun insertMessageRequestResponseFromYou(threadId: Long)
     fun setRecipientApproved(recipient: Recipient, approved: Boolean)
     fun getRecipientApproved(address: Address): Boolean
     fun setRecipientApprovedMe(recipient: Recipient, approvedMe: Boolean)

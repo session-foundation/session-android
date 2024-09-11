@@ -5,6 +5,6 @@
         <item
             android:title="@string/accountIDCopy"
             android:id="@+id/menu_copy_account_id"
-            android:icon="@drawable/ic_content_copy_white_24dp"
+            android:icon="@drawable/ic_copy"
             android:contentDescription="@string/AccessibilityId_accountIdCopy" />
 </menu>

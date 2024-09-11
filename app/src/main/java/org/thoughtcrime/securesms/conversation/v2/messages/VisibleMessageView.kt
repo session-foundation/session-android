@@ -61,6 +61,8 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -390,9 +392,9 @@ class VisibleMessageView : FrameLayout {
                 context.getColor(R.color.accent_orange),
                 R.string.messageStatusFailedToSync
             )
-        message.isPending ->
-            // Non-mms messages display 'Sending'..
-            if (!message.isMms) {
+        message.isPending -> {
+            // Non-mms messages (or quote messages, which happen to be mms for some reason) display 'Sending'..
+            if (!message.isMms || (message as? MmsMessageRecord)?.quote != null) {
                 MessageStatusInfo(
                     R.drawable.ic_delivery_status_sending,
                     context.getColorFromAttr(R.attr.message_status_color),
@@ -403,9 +405,10 @@ class VisibleMessageView : FrameLayout {
                 MessageStatusInfo(
                     R.drawable.ic_delivery_status_sending,
                     context.getColorFromAttr(R.attr.message_status_color),
-                    R.string.messageStatusUploading
+                    R.string.uploading
                 )
             }
+        }
         message.isSyncing || message.isResyncing ->
             MessageStatusInfo(
                 R.drawable.ic_delivery_status_sending,

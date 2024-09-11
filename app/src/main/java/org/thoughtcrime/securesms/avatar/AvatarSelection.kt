@@ -74,8 +74,9 @@ class AvatarSelection(
      */
     fun startAvatarSelection(
         includeClear: Boolean,
-        attemptToIncludeCamera: Boolean
-    ): File? {
+        attemptToIncludeCamera: Boolean,
+        createTempFile: ()->File?
+    ) {
         var captureFile: File? = null
         val hasCameraPermission = ContextCompat
             .checkSelfPermission(
@@ -83,18 +84,11 @@ class AvatarSelection(
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED
         if (attemptToIncludeCamera && hasCameraPermission) {
-            try {
-                captureFile = File.createTempFile("avatar-capture", ".jpg", getImageDir(activity))
-            } catch (e: IOException) {
-                Log.e("Cannot reserve a temporary avatar capture file.", e)
-            } catch (e: NoExternalStorageException) {
-                Log.e("Cannot reserve a temporary avatar capture file.", e)
-            }
+            captureFile = createTempFile()
         }
 
         val chooserIntent = createAvatarSelectionIntent(activity, captureFile, includeClear)
         onPickImage.launch(chooserIntent)
-        return captureFile
     }
 
     private fun createAvatarSelectionIntent(

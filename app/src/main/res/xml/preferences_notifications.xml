@@ -17,7 +17,7 @@
 
     <PreferenceCategory android:title="@string/notificationsStyle">
 
-        <org.thoughtcrime.securesms.preferences.widgets.SignalPreference
+        <org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
             android:key="pref_key_ringtone"
             android:title="@string/notificationsSound"
             android:persistent="false"
@@ -37,11 +37,7 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/notificationsContent" >
-
-        <!-- android:summary="@string/notificationsContentDescription" -->
-        <!-- android:layout="@layout/preference_right_summary_widget" -->
-        <!-- android:summary="@string/notificationsContentDescription" -->
-        <org.thoughtcrime.securesms.preferences.widgets.SignalListPreference
+        <org.thoughtcrime.securesms.preferences.widgets.DropDownPreference
             android:key="pref_notification_privacy"
             android:title="@string/notificationsContent"
             android:summary="@string/notificationsContentDescription"

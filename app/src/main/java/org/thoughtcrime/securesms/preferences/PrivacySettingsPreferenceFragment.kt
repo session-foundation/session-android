@@ -25,7 +25,7 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.areNoti
 import org.thoughtcrime.securesms.util.IntentUtils
 
 @AndroidEntryPoint
-class PrivacySettingsPreferenceFragment : ListSummaryPreferenceFragment() {
+class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
 
     @Inject lateinit var configFactory: ConfigFactory
 

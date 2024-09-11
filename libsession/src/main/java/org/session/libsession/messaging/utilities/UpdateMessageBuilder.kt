@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.utilities
 
 import android.content.Context
-import android.text.SpannableString
 import com.squareup.phrase.Phrase
 import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -26,7 +25,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.Util
+import org.session.libsession.utilities.getExpirationTypeDisplayValue
+import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsignal.utilities.Log
 
 object UpdateMessageBuilder {
     const val TAG = "UpdateMessageBuilder"
@@ -49,7 +50,7 @@ object UpdateMessageBuilder {
             // --- Group created or joined ---
             is UpdateMessageData.Kind.GroupCreation -> {
                 if (!isOutgoing) {
-                    context.getText(R.string.groupInviteYou)
+                    context.getText(R.string.legacyGroupMemberYouNew)
                 } else {
                     "" // We no longer add a string like `disappearingMessagesNewGroup` ("You created a new group") and leave the group with its default empty state
                 }
@@ -75,20 +76,20 @@ object UpdateMessageBuilder {
                         return ""
                     }
                     1 -> {
-                        Phrase.from(context, R.string.groupMemberNew)
-                            .put(NAME_KEY, updateData.updatedMembers.elementAtOrNull(0))
+                        Phrase.from(context, R.string.legacyGroupMemberNew)
+                            .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .format()
                     }
                     2 -> {
-                        Phrase.from(context, R.string.groupMemberTwoNew)
-                            .put(NAME_KEY, updateData.updatedMembers.elementAtOrNull(0))
-                            .put(OTHER_NAME_KEY, updateData.updatedMembers.elementAtOrNull(1))
+                        Phrase.from(context, R.string.legacyGroupMemberTwoNew)
+                            .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
+                            .put(OTHER_NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(1)))
                             .format()
                     }
                     else -> {
                         val newMemberCountMinusOne = newMemberCount - 1
-                        Phrase.from(context, R.string.groupMemberMoreNew)
-                            .put(NAME_KEY, updateData.updatedMembers.elementAtOrNull(0))
+                        Phrase.from(context, R.string.legacyGroupMemberNewMultiple)
+                            .put(NAME_KEY, getSenderName(updateData.updatedMembers.elementAt(0)))
                             .put(COUNT_KEY, newMemberCountMinusOne)
                             .format()
                     }
@@ -327,11 +328,19 @@ object UpdateMessageBuilder {
         if (duration <= 0) {
             // ..by you..
             return if (isOutgoing) {
-                context.getText(R.string.disappearingMessagesTurnedOffYou)
+                // in a group
+                if(isGroup) context.getText(R.string.disappearingMessagesTurnedOffYouGroup)
+                // 1on1
+                else context.getText(R.string.disappearingMessagesTurnedOffYou)
             }
             else // ..or by someone else.
             {
-                Phrase.from(context, R.string.disappearingMessagesTurnedOff)
+                Phrase.from(context,
+                    // in a group
+                    if(isGroup) R.string.disappearingMessagesTurnedOffGroup
+                    // 1on1
+                    else R.string.disappearingMessagesTurnedOff
+                )
                     .put(NAME_KEY, senderName)
                     .format()
             }

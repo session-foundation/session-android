@@ -362,7 +362,7 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
   private void navigateToCamera() {
 
     Context c = getApplicationContext();
-    String permanentDenialTxt = Phrase.from(c, R.string.cameraGrantAccessDenied)
+    String permanentDenialTxt = Phrase.from(c, R.string.permissionsCameraDenied)
             .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString();
     String requireCameraPermissionsTxt = Phrase.from(c, R.string.cameraGrantAccessDescription)
@@ -371,7 +371,6 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
 
     Permissions.with(this)
                .request(Manifest.permission.CAMERA)
-               .withRationaleDialog(requireCameraPermissionsTxt, R.drawable.ic_baseline_photo_camera_48)
                .withPermanentDenialDialog(permanentDenialTxt)
                .onAllGranted(() -> {
                  Camera1Fragment fragment = getOrCreateCameraFragment();

@@ -22,7 +22,10 @@ fun showMuteDialog(
         if (entry.stringRes == R.string.notificationsMute) {
             context.getString(R.string.notificationsMute)
         } else {
-            val largeTimeUnitString = LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(context, Option.entries[index].getTime().milliseconds)
+            val largeTimeUnitString = LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                context,
+                Option.entries[index].duration.milliseconds
+            )
             context.getSubbedString(entry.stringRes, TIME_LARGE_KEY to largeTimeUnitString)
         }
     }.toTypedArray()) {
@@ -33,16 +36,17 @@ fun showMuteDialog(
         // less than the entire duration - so 1 hour becomes 59 minutes, 1 day becomes 23 hours etc.
         // As we really want to see the actual set time (1 hour / 1 day etc.) then we'll bump it by
         // 1 second which is neither here nor there in the grand scheme of things.
-        onMuteDuration(Option.entries[it].getTime() + System.currentTimeMillis() + 1.seconds.inWholeMilliseconds)
+        val muteTime = Option.entries[it].duration
+        val muteTimeFromNow = if (muteTime == Long.MAX_VALUE) muteTime
+        else muteTime + System.currentTimeMillis() + 1.seconds.inWholeMilliseconds
+        onMuteDuration(muteTimeFromNow)
     }
 }
 
-private enum class Option(@StringRes val stringRes: Int, val getTime: () -> Long) {
-    ONE_HOUR(R.string.notificationsMuteFor,   duration = TimeUnit.HOURS.toMillis(1)),
-    TWO_HOURS(R.string.notificationsMuteFor,  duration = TimeUnit.HOURS.toMillis(2)),
-    ONE_DAY(R.string.notificationsMuteFor,    duration = TimeUnit.DAYS.toMillis(1)),
+private enum class Option(@StringRes val stringRes: Int, val duration: Long) {
+    ONE_HOUR(R.string.notificationsMuteFor, duration = TimeUnit.HOURS.toMillis(1)),
+    TWO_HOURS(R.string.notificationsMuteFor, duration = TimeUnit.HOURS.toMillis(2)),
+    ONE_DAY(R.string.notificationsMuteFor, duration = TimeUnit.DAYS.toMillis(1)),
     SEVEN_DAYS(R.string.notificationsMuteFor, duration = TimeUnit.DAYS.toMillis(7)),
-    FOREVER(R.string.notificationsMute, getTime = { Long.MAX_VALUE } );
-
-    constructor(@StringRes stringRes: Int, duration: Long): this(stringRes, { duration } )
+    FOREVER(R.string.notificationsMute, duration = Long.MAX_VALUE );
 }

@@ -100,45 +100,6 @@ class DisappearingMessagesViewModelTest {
     }
 
     @Test
-    fun `note to self, off, old config`() = runTest {
-        mock1on1(ExpiryMode.NONE, LOCAL_ADDRESS)
-
-        val viewModel = createViewModel(isNewConfigEnabled = false)
-
-        advanceUntilIdle()
-
-        assertThat(
-            viewModel.state.value
-        ).isEqualTo(
-            State(
-                isGroup = false,
-                isSelfAdmin = true,
-                address = LOCAL_ADDRESS,
-                isNoteToSelf = true,
-                expiryMode = ExpiryMode.Legacy(0),
-                isNewConfigEnabled = false,
-                persistedMode = ExpiryMode.Legacy(0),
-                showDebugOptions = false
-            )
-        )
-
-        assertThat(
-            viewModel.uiState.value
-        ).isEqualTo(
-            UiState(
-                OptionsCardData(
-                    R.string.disappearingMessagesTimer,
-                    typeOption(ExpiryMode.NONE, selected = false),
-                    timeOption(ExpiryType.LEGACY, 12.hours),
-                    timeOption(ExpiryType.LEGACY, 1.days),
-                    timeOption(ExpiryType.LEGACY, 7.days),
-                    timeOption(ExpiryType.LEGACY, 14.days)
-                )
-            )
-        )
-    }
-
-    @Test
     fun `group, off, admin, new config`() = runTest {
         mockGroup(ExpiryMode.NONE, isAdmin = true)
 
@@ -298,53 +259,6 @@ class DisappearingMessagesViewModelTest {
                     timeOption(ExpiryType.AFTER_SEND, 1.days),
                     timeOption(ExpiryType.AFTER_SEND, 7.days),
                     timeOption(ExpiryType.AFTER_SEND, 14.days)
-                )
-            )
-        )
-    }
-
-    @Test
-    fun `1-1 conversation, 12 hours legacy, old config`() = runTest {
-        val time = 12.hours
-        val someAddress = Address.fromSerialized("05---SOME---ADDRESS")
-        mock1on1(ExpiryType.LEGACY.mode(time), someAddress)
-
-        val viewModel = createViewModel(isNewConfigEnabled = false)
-
-        advanceUntilIdle()
-
-        assertThat(
-            viewModel.state.value
-        ).isEqualTo(
-            State(
-                isGroup = false,
-                isSelfAdmin = true,
-                address = someAddress,
-                isNoteToSelf = false,
-                expiryMode = ExpiryType.LEGACY.mode(12.hours),
-                isNewConfigEnabled = false,
-                persistedMode = ExpiryType.LEGACY.mode(12.hours),
-                showDebugOptions = false
-            )
-        )
-
-        assertThat(
-            viewModel.uiState.value
-        ).isEqualTo(
-            UiState(
-                OptionsCardData(
-                    R.string.disappearingMessagesDeleteType,
-                    typeOption(ExpiryMode.NONE),
-                    typeOption(time, ExpiryType.LEGACY, selected = true),
-                    typeOption(12.hours, ExpiryType.AFTER_READ, enabled = false),
-                    typeOption(1.days, ExpiryType.AFTER_SEND, enabled = false)
-                ),
-                OptionsCardData(
-                    R.string.disappearingMessagesTimer,
-                    timeOption(ExpiryType.LEGACY, 12.hours, selected = true),
-                    timeOption(ExpiryType.LEGACY, 1.days),
-                    timeOption(ExpiryType.LEGACY, 7.days),
-                    timeOption(ExpiryType.LEGACY, 14.days)
                 )
             )
         )

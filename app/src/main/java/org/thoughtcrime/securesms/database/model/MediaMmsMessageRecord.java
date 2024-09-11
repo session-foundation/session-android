@@ -17,7 +17,6 @@
 package org.thoughtcrime.securesms.database.model;
 
 import android.content.Context;
-import android.text.SpannableString;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,13 +26,10 @@ import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase.Status;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
 import java.util.List;
-
-import network.loki.messenger.R;
 
 /**
  * Represents the message record model for MMS messages that contain
@@ -76,7 +72,7 @@ public class MediaMmsMessageRecord extends MmsMessageRecord {
   }
 
   @Override
-  public SpannableString getDisplayBody(@NonNull Context context) {
+  public CharSequence getDisplayBody(@NonNull Context context) {
     return super.getDisplayBody(context);
   }
 }

@@ -199,7 +199,7 @@
             android:layout_centerHorizontal="true"
             android:layout_alignParentTop="true"
             android:background="@drawable/rounded_rectangle"
-            android:backgroundTint="?conversation_unread_count_indicator_background">
+            android:backgroundTint="?backgroundSecondary">
 
             <TextView
                 android:id="@+id/unreadCountTextView"

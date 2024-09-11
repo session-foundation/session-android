@@ -20,15 +20,15 @@
     <TextView
         android:id="@+id/copyConversationId"
         style="@style/BottomSheetActionItem"
-        android:drawableStart="@drawable/ic_content_copy_white_24dp"
+        android:drawableStart="@drawable/ic_copy"
         android:drawableTint="?attr/colorControlNormal"
-        android:visibility="gone"
+        android:visibility="visible"
         android:text="@string/accountIDCopy" />
 
     <TextView
         android:id="@+id/copyCommunityUrl"
         style="@style/BottomSheetActionItem"
-        android:drawableStart="@drawable/ic_content_copy_white_24dp"
+        android:drawableStart="@drawable/ic_copy"
         android:drawableTint="?attr/colorControlNormal"
         android:visibility="gone"
         android:text="@string/communityUrlCopy" />

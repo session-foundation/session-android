@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
@@ -46,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -59,6 +62,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -96,6 +100,8 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
         const val ON_REPLY = 1
         const val ON_RESEND = 2
         const val ON_DELETE = 3
+        const val ON_COPY = 4
+        const val ON_SAVE = 5
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -122,11 +128,18 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
+
+        // can only save if the there is a media attachment which has finished downloading.
+        val canSave = state.mmsRecord?.containsMediaSlide() == true
+                && state.mmsRecord?.isMediaPending == false
+
         MessageDetails(
             state = state,
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
+            onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
             onDelete = { setResultAndFinish(ON_DELETE) },
+            onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
             onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
         )
@@ -147,7 +160,9 @@ fun MessageDetails(
     state: MessageDetailsState,
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
+    onSave: (() -> Unit)? = null,
     onDelete: () -> Unit = {},
+    onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
 ) {
@@ -181,9 +196,11 @@ fun MessageDetails(
         state.nonImageAttachmentFileDetails?.let { FileDetails(it) }
         CellMetadata(state)
         CellButtons(
-            onReply,
-            onResend,
-            onDelete,
+            onReply = onReply,
+            onResend = onResend,
+            onSave = onSave,
+            onDelete = onDelete,
+            onCopy = onCopy
         )
     }
 }
@@ -205,7 +222,15 @@ fun CellMetadata(
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
                         Row {
-                            sender?.let { Avatar(it) }
+                            sender?.let {
+                                Avatar(
+                                    recipient = it,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterVertically)
+                                        .size(46.dp)
+                                )
+                                Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
+                            }
                             TitledMonospaceText(it)
                         }
                     }
@@ -219,7 +244,9 @@ fun CellMetadata(
 fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
-    onDelete: () -> Unit = {},
+    onSave: (() -> Unit)? = null,
+    onDelete: () -> Unit,
+    onCopy: () -> Unit
 ) {
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
         Column {
@@ -231,6 +258,23 @@ fun CellButtons(
                 )
                 Divider()
             }
+
+            LargeItemButton(
+                R.string.copy,
+                R.drawable.ic_copy,
+                onClick = onCopy
+            )
+            Divider()
+
+            onSave?.let {
+                LargeItemButton(
+                    R.string.save,
+                    R.drawable.ic_baseline_save_24,
+                    onClick = it
+                )
+                Divider()
+            }
+
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
@@ -239,6 +283,7 @@ fun CellButtons(
                 )
                 Divider()
             }
+
             LargeItemButton(
                 R.string.delete,
                 R.drawable.ic_delete,
@@ -320,6 +365,21 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     }
 }
 
+@Preview
+@Composable
+fun PreviewMessageDetailsButtons(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        CellButtons(
+            onReply = {},
+            onResend = {},
+            onSave = {},
+            onDelete = {},
+            onCopy = {}
+        )
+    }
+}
 
 @Preview
 @Composable

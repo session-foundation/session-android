@@ -27,7 +27,7 @@
       android:layout_height="wrap_content"
       android:textSize="11sp"
       android:fontFamily="sans-serif-medium"
-      android:textColor="?android:textColorTertiary"
+      android:textColor="?android:textColorPrimary"
       android:layout_gravity="center_vertical"
       tools:text="23"
       tools:ignore="SpUsage" />

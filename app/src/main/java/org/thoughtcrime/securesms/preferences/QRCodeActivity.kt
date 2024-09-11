@@ -25,6 +25,7 @@ import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.threadDatabase
+import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
@@ -67,6 +68,11 @@ class QRCodeActivity : PassphraseRequiredActionBarActivity() {
             }
             finish()
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
     }
 }
 

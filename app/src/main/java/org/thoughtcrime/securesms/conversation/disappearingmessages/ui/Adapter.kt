@@ -23,7 +23,6 @@ fun State.toUiState() = UiState(
 private fun State.typeOptions(): List<ExpiryRadioOption>? = if (typeOptionsHidden) null else {
     buildList {
         add(offTypeOption())
-        if (!isNewConfigEnabled) add(legacyTypeOption())
         if (!isGroup) add(afterReadTypeOption())
         add(afterSendTypeOption())
     }
@@ -48,7 +47,6 @@ private fun State.timeOptions(): List<ExpiryRadioOption>? {
 }
 
 private fun State.offTypeOption() = typeOption(ExpiryType.NONE)
-private fun State.legacyTypeOption() = typeOption(ExpiryType.LEGACY)
 private fun State.afterReadTypeOption() = newTypeOption(ExpiryType.AFTER_READ)
 private fun State.afterSendTypeOption() = newTypeOption(ExpiryType.AFTER_SEND)
 private fun State.newTypeOption(type: ExpiryType) = typeOption(type, isNewConfigEnabled && isSelfAdmin)

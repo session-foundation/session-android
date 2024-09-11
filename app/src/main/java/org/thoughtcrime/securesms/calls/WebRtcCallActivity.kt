@@ -89,9 +89,9 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent?.action == ACTION_ANSWER) {
+        if (intent.action == ACTION_ANSWER) {
             val answerIntent = WebRtcCallService.acceptCallIntent(this)
             answerIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             ContextCompat.startForegroundService(this, answerIntent)

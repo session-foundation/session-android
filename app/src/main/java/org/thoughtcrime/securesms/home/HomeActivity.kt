@@ -391,6 +391,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         super.onDestroy()
         EventBus.getDefault().unregister(this)
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
+    }
     // endregion
 
     // region Updating
@@ -552,6 +557,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.IO) {
+                    Log.d("", "**** until: $until")
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
@@ -588,6 +594,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val recipient = thread.recipient
         val title: String
         val message: CharSequence
+        var positiveButtonId: Int = R.string.yes
+        var negativeButtonId: Int = R.string.no
 
         if (recipient.isGroupRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
@@ -595,7 +603,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // If you are an admin of this group you can delete it
             if (group != null && group.admins.map { it.toString() }
                     .contains(textSecurePreferences.getLocalNumber())) {
-                title = getString(R.string.groupDelete)
+                title = getString(R.string.groupLeave)
                 message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
@@ -609,6 +617,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             }
+
+            positiveButtonId = R.string.leave
+            negativeButtonId = R.string.cancel
         } else {
             // If this is a 1-on-1 conversation
             if (recipient.name != null) {
@@ -619,15 +630,17 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
             else {
                 // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
-                title = getString(R.string.noteToSelf)
+                title = getString(R.string.clearMessages)
                 message = getString(R.string.clearMessagesNoteToSelfDescription)
+                positiveButtonId = R.string.clear
+                negativeButtonId = R.string.cancel
             }
         }
 
         showSessionDialog {
             title(title)
             text(message)
-            button(R.string.yes) {
+            dangerButton(positiveButtonId) {
                 lifecycleScope.launch(Dispatchers.Main) {
                     val context = this@HomeActivity
                     // Cancel any outstanding jobs
@@ -668,7 +681,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                 }
             }
-            button(R.string.no)
+            button(negativeButtonId)
         }
     }
 

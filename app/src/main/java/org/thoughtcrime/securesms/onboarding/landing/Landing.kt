@@ -37,8 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants.BACKHAND_INDEX_POINTING_DOWN_EMOJI
-import org.session.libsession.utilities.NonTranslatableStringConstants.WAVING_HAND_EMOJI
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -139,7 +137,7 @@ internal fun LandingScreen(
                         R.string.onboardingBubbleWelcomeToSession -> {
                             Phrase.from(stringResource(item.stringId))
                                 .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                                .put(EMOJI_KEY, WAVING_HAND_EMOJI)
+                                .put(EMOJI_KEY, "\uD83D\uDC4B") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                                 .format().toString()
                         }
                         R.string.onboardingBubbleSessionIsEngineered -> {
@@ -149,7 +147,7 @@ internal fun LandingScreen(
                         }
                         R.string.onboardingBubbleCreatingAnAccountIsEasy -> {
                             Phrase.from(stringResource(item.stringId))
-                                .put(EMOJI_KEY, BACKHAND_INDEX_POINTING_DOWN_EMOJI)
+                                .put(EMOJI_KEY, "\uD83D\uDC47") // this hardcoded emoji might be moved to NonTranslatableConstants eventually
                                 .format().toString()
                         }
                         else -> {

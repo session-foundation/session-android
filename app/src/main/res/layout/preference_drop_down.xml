@@ -2,11 +2,12 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
-        android:drawableTint="?android:textColorPrimary"
-        android:id="@+id/left_summary"
+        app:drawableTint="?android:textColorPrimary"
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|center_vertical"
@@ -16,9 +17,9 @@
         tools:text="Whatever subtitle-type string you want" />
 
     <TextView
-        android:drawableTint="?android:textColorPrimary"
-        android:drawableLeft="@drawable/ic_baseline_arrow_drop_down_24"
-        android:id="@+id/right_summary"
+        app:drawableStartCompat="@drawable/ic_baseline_arrow_drop_down_24"
+        app:drawableTint="?android:textColorPrimary"
+        android:id="@+id/drop_down_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|center_vertical"

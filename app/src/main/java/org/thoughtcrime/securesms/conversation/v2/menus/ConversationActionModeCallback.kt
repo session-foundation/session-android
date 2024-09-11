@@ -102,7 +102,7 @@ class ConversationActionModeCallback(private val adapter: ConversationAdapter, p
             R.id.menu_context_resync -> delegate?.resyncMessage(selectedItems)
             R.id.menu_context_resend -> delegate?.resendMessage(selectedItems)
             R.id.menu_message_details -> delegate?.showMessageDetail(selectedItems)
-            R.id.menu_context_save_attachment -> delegate?.saveAttachment(selectedItems)
+            R.id.menu_context_save_attachment -> delegate?.saveAttachmentsIfPossible(selectedItems)
             R.id.menu_context_reply -> delegate?.reply(selectedItems)
         }
         return true
@@ -126,7 +126,7 @@ interface ConversationActionModeCallbackDelegate {
     fun resyncMessage(messages: Set<MessageRecord>)
     fun resendMessage(messages: Set<MessageRecord>)
     fun showMessageDetail(messages: Set<MessageRecord>)
-    fun saveAttachment(messages: Set<MessageRecord>)
+    fun saveAttachmentsIfPossible(messages: Set<MessageRecord>)
     fun reply(messages: Set<MessageRecord>)
     fun destroyActionMode()
 }

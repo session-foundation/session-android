@@ -149,6 +149,7 @@
     </array>
 
     <string-array name="notify_types">
+        <item>@string/notificationsAllMessages</item>
         <item>@string/notificationsMentionsOnly</item>
     </string-array>
 
