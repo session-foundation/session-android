@@ -119,8 +119,6 @@ import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
-import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivityContract
-import org.thoughtcrime.securesms.conversation.settings.ConversationSettingsActivityResult
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
@@ -164,6 +162,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.getSearchName
@@ -222,7 +221,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener, View.OnClickListener {
+    ConversationMenuHelper.ConversationMenuListener {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -239,18 +238,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     @Inject lateinit var reactionDb: ReactionDatabase
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
+    @Inject lateinit var configFactory: ConfigFactory
 
     private val screenshotObserver by lazy {
         ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
             // post screenshot message
             sendScreenshotNotification()
-        }
-    }
-
-    private val conversationSettingsCallback = registerForActivityResult(ConversationSettingsActivityContract()) { result ->
-        if (result is ConversationSettingsActivityResult.SearchConversation) {
-            // open search
-            binding?.toolbar?.menu?.findItem(R.id.menu_search)?.expandActionView()
         }
     }
 
@@ -497,7 +490,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         updatePlaceholder()
         setUpBlockedBanner()
         binding.searchBottomBar.setEventListener(this)
-        binding.toolbarContent.profilePictureView.setOnClickListener(this)
         updateSendAfterApprovalText()
         setUpMessageRequests()
 
@@ -949,10 +941,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return false
         if (!viewModel.isMessageRequestThread) {
             ConversationMenuHelper.onPrepareOptionsMenu(
-                menu,
-                menuInflater,
-                recipient,
-                this
+                menu = menu,
+                inflater = menuInflater,
+                thread = recipient,
+                context = this,
+                configFactory = configFactory,
             )
         }
         maybeUpdateToolbar(recipient)
@@ -1219,15 +1212,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             return false
         }
         return viewModel.recipient?.let { recipient ->
-            ConversationMenuHelper.onOptionItemSelected(this, item, recipient)
+            ConversationMenuHelper.onOptionItemSelected(this, item, recipient, configFactory, storage)
         } ?: false
-    }
-
-    override fun onClick(v: View?) {
-        if (v === binding?.toolbarContent?.profilePictureView) {
-            // open conversation settings
-            conversationSettingsCallback.launch(viewModel.threadId)
-        }
     }
 
     override fun block(deleteThread: Boolean) {

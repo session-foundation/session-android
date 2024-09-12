@@ -5,7 +5,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.AsyncTask
 import android.view.Menu
 import android.view.MenuInflater
@@ -21,13 +20,14 @@ import androidx.core.graphics.drawable.IconCompat
 import com.squareup.phrase.Phrase
 import java.io.IOException
 import network.loki.messenger.R
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
@@ -38,6 +38,8 @@ import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
+import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
@@ -54,7 +56,8 @@ object ConversationMenuHelper {
         menu: Menu,
         inflater: MenuInflater,
         thread: Recipient,
-        context: Context
+        context: Context,
+        configFactory: ConfigFactory,
     ) {
         // Prepare
         menu.clear()
@@ -77,10 +80,20 @@ object ConversationMenuHelper {
                 inflater.inflate(R.menu.menu_conversation_block, menu)
             }
         }
-        // Closed group menu (options that should only be present in closed groups)
+        // (Legacy) Closed group menu (options that should only be present in closed groups)
         if (thread.isLegacyClosedGroupRecipient) {
-            inflater.inflate(R.menu.menu_conversation_closed_group, menu)
+            inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
         }
+
+        // Groups v2 menu
+        if (thread.isClosedGroupV2Recipient) {
+            if (configFactory.userGroups?.getClosedGroup(thread.address.serialize())?.hasAdminKey() == true) {
+                inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
+            }
+
+            inflater.inflate(R.menu.menu_conversation_groups_v2, menu)
+        }
+
         // Open group menu
         if (isCommunity) {
             inflater.inflate(R.menu.menu_conversation_open_group, menu)
@@ -134,7 +147,13 @@ object ConversationMenuHelper {
         })
     }
 
-    fun onOptionItemSelected(context: Context, item: MenuItem, thread: Recipient): Boolean {
+    fun onOptionItemSelected(
+        context: Context,
+        item: MenuItem,
+        thread: Recipient,
+        factory: ConfigFactory,
+        storage: StorageProtocol
+    ): Boolean {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
@@ -146,7 +165,7 @@ object ConversationMenuHelper {
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
-            R.id.menu_leave_group -> { leaveClosedGroup(context, thread) }
+            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, factory, storage) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -278,26 +297,67 @@ object ConversationMenuHelper {
         context.startActivity(intent)
     }
 
-    private fun leaveClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isLegacyClosedGroupRecipient) { return }
+    private fun leaveClosedGroup(
+        context: Context,
+        thread: Recipient,
+        configFactory: ConfigFactory,
+        storage: StorageProtocol
+    ) {
+        when {
+            thread.isLegacyClosedGroupRecipient -> {
+                val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
+                val admins = group.admins
+                val accountID = TextSecurePreferences.getLocalNumber(context)
+                val isCurrentUserAdmin = admins.any { it.toString() == accountID }
 
-        val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
-        val admins = group.admins
-        val accountID = TextSecurePreferences.getLocalNumber(context)
-        val isCurrentUserAdmin = admins.any { it.toString() == accountID }
-        val message = if (isCurrentUserAdmin) {
+                confirmAndLeaveClosedGroup(context, group.title, isCurrentUserAdmin, doLeave = {
+                    val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
+
+                    check(DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)) {
+                        "Invalid group public key"
+                    }
+                    MessageSender.leave(groupPublicKey, notifyUser = false)
+                })
+            }
+            
+            thread.isClosedGroupV2Recipient -> {
+                val accountId = AccountId(thread.address.serialize())
+                val group = configFactory.userGroups?.getClosedGroup(accountId.hexString) ?: return
+                val (name, isAdmin) = configFactory.getGroupInfoConfig(accountId)?.use {
+                    it.getName() to group.hasAdminKey()
+                } ?: return
+
+                confirmAndLeaveClosedGroup(
+                    context = context,
+                    groupName = name,
+                    isAdmin = isAdmin,
+                    doLeave = {
+                        check(storage.leaveGroup(accountId.hexString, true))
+                    }
+                )
+            }
+        }
+    }
+
+    private fun confirmAndLeaveClosedGroup(
+        context: Context,
+        groupName: String,
+        isAdmin: Boolean,
+        doLeave: () -> Unit,
+    ) {
+        val message = if (isAdmin) {
             Phrase.from(context, R.string.groupDeleteDescription)
-                .put(GROUP_NAME_KEY, group.title)
+                .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else {
             Phrase.from(context, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, group.title)
+                .put(GROUP_NAME_KEY, groupName)
                 .format()
         }
 
         fun onLeaveFailed() {
             val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                .put(GROUP_NAME_KEY, group.title)
+                .put(GROUP_NAME_KEY, groupName)
                 .format().toString()
             Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
         }
@@ -307,11 +367,7 @@ object ConversationMenuHelper {
             text(message)
             dangerButton(R.string.leave) {
                 try {
-                    val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
-                    val isClosedGroup = DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)
-
-                    if (isClosedGroup) MessageSender.leave(groupPublicKey, notifyUser = false)
-                    else onLeaveFailed()
+                    doLeave()
                 } catch (e: Exception) {
                     onLeaveFailed()
                 }
