@@ -138,7 +138,7 @@ fun RowScope.ContactPhoto(sessionId: String) {
         val recipient = remember(sessionId) {
             Recipient.from(context, Address.fromSerialized(sessionId), false)
         }
-        Avatar(recipient)
+        Avatar(recipient, modifier = Modifier.size(48.dp))
     }
 }
 

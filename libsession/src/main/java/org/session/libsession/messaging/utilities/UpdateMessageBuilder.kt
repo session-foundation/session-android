@@ -25,9 +25,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.getExpirationTypeDisplayValue
-import org.session.libsession.utilities.truncateIdForDisplay
-import org.session.libsignal.utilities.Log
 
 object UpdateMessageBuilder {
     const val TAG = "UpdateMessageBuilder"
@@ -42,9 +39,6 @@ object UpdateMessageBuilder {
     @JvmStatic
     fun buildGroupUpdateMessage(context: Context, updateMessageData: UpdateMessageData, senderId: String? = null, isOutgoing: Boolean = false, isInConversation: Boolean): CharSequence {
         val updateData = updateMessageData.kind ?: return ""
-        val senderName: String by lazy {
-            senderId?.let(this::getSenderName).orEmpty()
-        }
 
         return when (updateData) {
             // --- Group created or joined ---
@@ -194,20 +188,20 @@ object UpdateMessageBuilder {
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
-                                R.string.groupMemberYouAndOtherNew)
+                                R.string.groupInviteYouAndOtherNew)
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
-                                R.string.groupMemberTwoNew)
+                                R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
-                                R.string.groupMemberNewYouMultiple)
+                                R.string.groupInviteYouAndMoreNew)
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             else -> Phrase.from(context,
-                                R.string.groupMemberMoreNew)
+                                R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()

@@ -19,8 +19,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -51,7 +49,8 @@ import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.NavigationBar
+import org.thoughtcrime.securesms.ui.components.ActionAppBar
+import org.thoughtcrime.securesms.ui.components.AppBarBackIcon
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -142,10 +141,12 @@ fun EditGroup(
 
     Scaffold(
         topBar = {
-            NavigationBar(
+            ActionAppBar(
                 title = stringResource(id = R.string.groupEdit),
-                onBack = onBackClick,
-                actionElement = {
+                navigationIcon = {
+                    AppBarBackIcon(onBack = onBackClick)
+                },
+                actions = {
                     TextButton(onClick = onBackClick) {
                         Text(
                             text = stringResource(id = R.string.done),
@@ -153,7 +154,7 @@ fun EditGroup(
                             style = LocalType.current.large.bold()
                         )
                     }
-                }
+                },
             )
         }
     ) { paddingValues ->
@@ -319,7 +320,7 @@ private fun ConfirmRemovingMemberDialog(
                 onClick = { onConfirmed(member.accountId, false) }
             ),
             DialogButtonModel(
-                text = GetString(R.string.groupRemoveMessages),
+                text = GetString("Remove and delete messages"), //TODO: Copy
                 color = LocalColors.current.danger,
                 onClick = { onConfirmed(member.accountId, true) }
             ),

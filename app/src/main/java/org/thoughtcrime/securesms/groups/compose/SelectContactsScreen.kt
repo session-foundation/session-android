@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -25,9 +26,8 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.contacts.Contact
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
-import org.thoughtcrime.securesms.ui.CloseIcon
-import org.thoughtcrime.securesms.ui.NavigationBar
 import org.thoughtcrime.securesms.ui.SearchBar
+import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -56,6 +56,7 @@ fun SelectContactsScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectContacts(
     contacts: List<ContactItem>,
@@ -64,18 +65,12 @@ fun SelectContacts(
     onSearchQueryChanged: (String) -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    onClose: (() -> Unit)? = null,
     @StringRes okButtonResId: Int = R.string.ok
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        NavigationBar(
+        BackAppBar(
             title = stringResource(id = R.string.contactSelect),
             onBack = onBack,
-            actionElement = {
-                if (onClose != null) {
-                    CloseIcon(onClose)
-                }
-            }
         )
 
         GroupMinimumVersionBanner()
@@ -139,7 +134,6 @@ private fun PreviewSelectContacts() {
             onSearchQueryChanged = {},
             onDoneClicked = {},
             onBack = {},
-            onClose = null
         )
     }
 }
