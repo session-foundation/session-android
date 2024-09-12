@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.groups.EditGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -290,11 +291,18 @@ object ConversationMenuHelper {
     }
 
     private fun editClosedGroup(context: Context, thread: Recipient) {
-        if (!thread.isLegacyClosedGroupRecipient) { return }
-        val intent = Intent(context, EditLegacyGroupActivity::class.java)
-        val groupID: String = thread.address.toGroupString()
-        intent.putExtra(groupIDKey, groupID)
-        context.startActivity(intent)
+        when {
+            thread.isClosedGroupV2Recipient -> {
+                context.startActivity(EditGroupActivity.createIntent(context, thread.address.serialize()))
+            }
+
+            thread.isLegacyClosedGroupRecipient -> {
+                val intent = Intent(context, EditLegacyGroupActivity::class.java)
+                val groupID: String = thread.address.toGroupString()
+                intent.putExtra(groupIDKey, groupID)
+                context.startActivity(intent)
+            }
+        }
     }
 
     private fun leaveClosedGroup(
