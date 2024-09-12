@@ -73,6 +73,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
@@ -592,49 +593,46 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun deleteConversation(thread: ThreadRecord) {
         val threadID = thread.threadId
         val recipient = thread.recipient
+
+        if (recipient.isClosedGroupV2Recipient || recipient.isLegacyClosedGroupRecipient) {
+            ConversationMenuHelper.leaveClosedGroup(
+                context = this,
+                thread = recipient,
+                threadID = threadID,
+                configFactory = configFactory,
+                storage = storage
+            )
+
+            return
+        }
+
         val title: String
         val message: CharSequence
         var positiveButtonId: Int = R.string.yes
         var negativeButtonId: Int = R.string.no
 
-        if (recipient.isGroupRecipient) {
-            val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
-
-            // If you are an admin of this group you can delete it
-            if (group != null && group.admins.map { it.toString() }
-                    .contains(textSecurePreferences.getLocalNumber())) {
-                title = getString(R.string.groupLeave)
-                message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
-                    .put(GROUP_NAME_KEY, group.title)
-                    .format()
-            } else {
-                // Otherwise this is either a community, or it's a group you're not an admin of
-                title =
-                    if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(
-                        R.string.groupLeave
-                    )
-                message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
-                    .put(GROUP_NAME_KEY, group.title)
-                    .format()
-            }
-
-            positiveButtonId = R.string.leave
+        if (recipient.isCommunityRecipient) {
+            title =
+                if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(
+                    R.string.groupLeave
+                )
+            message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
+                .put(GROUP_NAME_KEY, recipient.name.orEmpty())
+                .format()
+        }
+        // If this is a 1-on-1 conversation
+       else if (recipient.name != null) {
+            title = getString(R.string.conversationsDelete)
+            message = Phrase.from(this.applicationContext, R.string.conversationsDeleteDescription)
+                .put(NAME_KEY, recipient.name)
+                .format()
+        }
+        else {
+            // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
+            title = getString(R.string.clearMessages)
+            message = getString(R.string.clearMessagesNoteToSelfDescription)
+            positiveButtonId = R.string.clear
             negativeButtonId = R.string.cancel
-        } else {
-            // If this is a 1-on-1 conversation
-            if (recipient.name != null) {
-                title = getString(R.string.conversationsDelete)
-                message = Phrase.from(this.applicationContext, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.name)
-                    .format()
-            }
-            else {
-                // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
-                title = getString(R.string.clearMessages)
-                message = getString(R.string.clearMessagesNoteToSelfDescription)
-                positiveButtonId = R.string.clear
-                negativeButtonId = R.string.cancel
-            }
         }
 
         showSessionDialog {
@@ -646,23 +644,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     // Cancel any outstanding jobs
                     DatabaseComponent.get(context).sessionJobDatabase()
                         .cancelPendingMessageSendJobs(threadID)
-                    // Send a leave group message if this is an active closed group
-                    if (recipient.address.isLegacyClosedGroup && DatabaseComponent.get(context)
-                            .groupDatabase().isActive(recipient.address.toGroupString())
-                    ) {
-                        try {
-                            GroupUtil.doubleDecodeGroupID(recipient.address.toString())
-                                .toHexString()
-                                .takeIf(DatabaseComponent.get(context).lokiAPIDatabase()::isClosedGroup)
-                                ?.let { MessageSender.explicitLeave(it, true, deleteThread = true) }
-                        } catch (ioe: IOException) {
-                            Log.w(TAG, "Got an IOException while sending leave group message", ioe)
-                        }
-                    }
-                    if (recipient.address.isClosedGroupV2) {
-                        val groupLeave = LibSessionGroupLeavingJob(AccountId(recipient.address.serialize()), true)
-                        JobQueue.shared.add(groupLeave)
-                    }
+
                     // Delete the conversation
                     val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase()
                         .getOpenGroupChat(threadID)
@@ -672,7 +654,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             v2OpenGroup.room,
                             context
                         )
+                    } else {
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            threadDb.deleteConversation(threadID)
+                        }
                     }
+
                     // Update the badge count
                     ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
 

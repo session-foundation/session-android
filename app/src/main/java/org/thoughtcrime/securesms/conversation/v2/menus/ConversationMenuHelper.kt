@@ -52,7 +52,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.BitmapUtil
 
 object ConversationMenuHelper {
-    
+
     fun onPrepareOptionsMenu(
         menu: Menu,
         inflater: MenuInflater,
@@ -152,6 +152,7 @@ object ConversationMenuHelper {
         context: Context,
         item: MenuItem,
         thread: Recipient,
+        threadID: Long,
         factory: ConfigFactory,
         storage: StorageProtocol
     ): Boolean {
@@ -166,7 +167,7 @@ object ConversationMenuHelper {
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
-            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, factory, storage) }
+            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, threadID, factory, storage) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -305,9 +306,10 @@ object ConversationMenuHelper {
         }
     }
 
-    private fun leaveClosedGroup(
+    fun leaveClosedGroup(
         context: Context,
         thread: Recipient,
+        threadID: Long,
         configFactory: ConfigFactory,
         storage: StorageProtocol
     ) {
@@ -318,16 +320,23 @@ object ConversationMenuHelper {
                 val accountID = TextSecurePreferences.getLocalNumber(context)
                 val isCurrentUserAdmin = admins.any { it.toString() == accountID }
 
-                confirmAndLeaveClosedGroup(context, group.title, isCurrentUserAdmin, doLeave = {
-                    val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
+                confirmAndLeaveClosedGroup(
+                    context = context,
+                    groupName = group.title,
+                    isAdmin = isCurrentUserAdmin,
+                    threadID = threadID,
+                    storage = storage,
+                    doLeave = {
+                        val groupPublicKey = doubleDecodeGroupID(thread.address.toString()).toHexString()
 
-                    check(DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)) {
-                        "Invalid group public key"
+                        check(DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)) {
+                            "Invalid group public key"
+                        }
+                        MessageSender.leave(groupPublicKey, notifyUser = false)
                     }
-                    MessageSender.leave(groupPublicKey, notifyUser = false)
-                })
+                )
             }
-            
+
             thread.isClosedGroupV2Recipient -> {
                 val accountId = AccountId(thread.address.serialize())
                 val group = configFactory.userGroups?.getClosedGroup(accountId.hexString) ?: return
@@ -339,6 +348,8 @@ object ConversationMenuHelper {
                     context = context,
                     groupName = name,
                     isAdmin = isAdmin,
+                    threadID = threadID,
+                    storage = storage,
                     doLeave = {
                         check(storage.leaveGroup(accountId.hexString, true))
                     }
@@ -351,6 +362,8 @@ object ConversationMenuHelper {
         context: Context,
         groupName: String,
         isAdmin: Boolean,
+        threadID: Long,
+        storage: StorageProtocol,
         doLeave: () -> Unit,
     ) {
         val message = if (isAdmin) {
@@ -375,6 +388,9 @@ object ConversationMenuHelper {
             text(message)
             dangerButton(R.string.leave) {
                 try {
+                    // Cancel any outstanding jobs
+                    storage.cancelPendingMessageSendJobs(threadID)
+
                     doLeave()
                 } catch (e: Exception) {
                     onLeaveFailed()

@@ -1212,7 +1212,14 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             return false
         }
         return viewModel.recipient?.let { recipient ->
-            ConversationMenuHelper.onOptionItemSelected(this, item, recipient, configFactory, storage)
+            ConversationMenuHelper.onOptionItemSelected(
+                context = this,
+                item = item,
+                thread = recipient,
+                threadID = threadId,
+                factory = configFactory,
+                storage = storage
+            )
         } ?: false
     }
 
