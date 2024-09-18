@@ -28,7 +28,11 @@ class LibSessionGroupLeavingJob(val accountId: AccountId, val deleteOnLeave: Boo
         // do actual group leave request
 
         // on success
-        if (storage.leaveGroup(accountId.hexString, deleteOnLeave)) {
+        val leaveGroup = kotlin.runCatching {
+            MessagingModuleConfiguration.shared.groupManagerV2.leaveGroup(accountId, deleteOnLeave)
+        }
+
+        if (leaveGroup.isSuccess) {
             // message is already deleted, succeed
             delegate?.handleJobSucceeded(this, dispatcherName)
         } else {

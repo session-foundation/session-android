@@ -635,9 +635,10 @@ private fun handleMemberChange(message: GroupUpdated, closedGroup: AccountId) {
 }
 
 private fun handleMemberLeft(message: GroupUpdated, closedGroup: AccountId) {
-    val storage = MessagingModuleConfiguration.shared.storage
     GlobalScope.launch(Dispatchers.Default) {
-        storage.handleMemberLeft(message, closedGroup)
+        runCatching {
+            MessagingModuleConfiguration.shared.groupManagerV2.handleMemberLeft(message, closedGroup)
+        }
     }
 }
 

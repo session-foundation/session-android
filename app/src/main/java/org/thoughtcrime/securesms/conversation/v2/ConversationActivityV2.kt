@@ -77,6 +77,7 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
@@ -239,6 +240,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var groupManagerV2: GroupManagerV2
 
     private val screenshotObserver by lazy {
         ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
@@ -1218,7 +1220,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 thread = recipient,
                 threadID = threadId,
                 factory = configFactory,
-                storage = storage
+                storage = storage,
+                groupManager = groupManagerV2,
             )
         } ?: false
     }

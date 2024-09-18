@@ -101,3 +101,4 @@ Java_network_loki_messenger_libsession_1util_GroupMembersConfig_set(JNIEnv *env,
     auto deserialized = util::deserialize_group_member(env, group_member);
     config->set(deserialized);
 }
+

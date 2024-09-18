@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.groups.GroupManagerV2;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
@@ -164,6 +165,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject
     PushRegistrationHandler pushRegistrationHandler;
     @Inject TokenFetcher tokenFetcher;
+    @Inject GroupManagerV2 groupManagerV2;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -245,7 +247,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 configFactory,
                 lastSentTimestampCache,
                 this,
-                tokenFetcher
+                tokenFetcher,
+                groupManagerV2
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");

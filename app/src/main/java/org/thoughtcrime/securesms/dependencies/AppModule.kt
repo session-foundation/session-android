@@ -9,9 +9,11 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
+import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
 import javax.inject.Singleton
@@ -25,6 +27,9 @@ abstract class AppModule {
 
     @Binds
     abstract fun bindConversationRepository(repository: DefaultConversationRepository): ConversationRepository
+
+    @Binds
+    abstract fun bindGroupManager(groupManager: GroupManagerV2Impl): GroupManagerV2
 }
 
 @Module

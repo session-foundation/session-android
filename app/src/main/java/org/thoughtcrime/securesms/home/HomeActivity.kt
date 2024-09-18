@@ -73,6 +73,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -118,6 +119,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var groupDatabase: GroupDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
+    @Inject lateinit var groupManagerV2: GroupManagerV2
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -600,7 +602,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 thread = recipient,
                 threadID = threadID,
                 configFactory = configFactory,
-                storage = storage
+                storage = storage,
+                groupManager = groupManagerV2,
             )
 
             return

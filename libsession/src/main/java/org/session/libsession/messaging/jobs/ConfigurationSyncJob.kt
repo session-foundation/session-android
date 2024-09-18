@@ -294,12 +294,14 @@ data class ConfigurationSyncJob(val destination: Destination) : Job {
             )
         }
 
-        fun GroupKeysConfig.messageInformation(auth: OwnedSwarmAuth): ConfigMessageInformation {
+        fun GroupKeysConfig.messageInformation(auth: OwnedSwarmAuth): ConfigMessageInformation? {
+            val pending = pendingConfig() ?: return null
+
             val sentTimestamp = SnodeAPI.nowWithOffset
             val message =
                 SnodeMessage(
                     auth.accountId.hexString,
-                    Base64.encodeBytes(pendingConfig()!!), // should not be null from checking has pending
+                    Base64.encodeBytes(pending),
                     SnodeMessage.CONFIG_TTL,
                     sentTimestamp
                 )

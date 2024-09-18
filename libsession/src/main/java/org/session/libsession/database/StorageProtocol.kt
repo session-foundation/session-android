@@ -177,16 +177,11 @@ interface StorageProtocol {
     fun setGroupInviteCompleteIfNeeded(approved: Boolean, invitee: String, closedGroup: AccountId)
     fun getLibSessionClosedGroup(groupAccountId: String): GroupInfo.ClosedGroupInfo?
     fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo?
-    fun inviteClosedGroupMembers(groupAccountId: String, invitees: List<String>)
     fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long?
     fun insertGroupInfoLeaving(closedGroup: AccountId): Long?
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
-    fun promoteMember(groupAccountId: AccountId, promotions: List<AccountId>)
-    suspend fun removeMember(groupAccountId: AccountId, removedMembers: List<AccountId>, removeMessages: Boolean)
-    suspend fun handleMemberLeft(message: GroupUpdated, closedGroupId: AccountId)
     fun handleMemberLeftNotification(message: GroupUpdated, closedGroupId: AccountId)
     fun handleKicked(groupAccountId: AccountId)
-    fun leaveGroup(groupSessionId: String, deleteOnLeave: Boolean): Boolean
     fun setName(groupSessionId: String, newName: String)
     fun sendGroupUpdateDeleteMessage(groupSessionId: String, messageHashes: List<String>): Promise<Unit, Exception>
 

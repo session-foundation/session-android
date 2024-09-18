@@ -18,9 +18,14 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
@@ -154,7 +159,8 @@ object ConversationMenuHelper {
         thread: Recipient,
         threadID: Long,
         factory: ConfigFactory,
-        storage: StorageProtocol
+        storage: StorageProtocol,
+        groupManager: GroupManagerV2,
     ): Boolean {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
@@ -167,7 +173,7 @@ object ConversationMenuHelper {
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
-            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, threadID, factory, storage) }
+            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, threadID, factory, storage, groupManager) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -311,7 +317,8 @@ object ConversationMenuHelper {
         thread: Recipient,
         threadID: Long,
         configFactory: ConfigFactory,
-        storage: StorageProtocol
+        storage: StorageProtocol,
+        groupManager: GroupManagerV2,
     ) {
         when {
             thread.isLegacyClosedGroupRecipient -> {
@@ -351,7 +358,7 @@ object ConversationMenuHelper {
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
-                        check(storage.leaveGroup(accountId.hexString, true))
+                        groupManager.leaveGroup(accountId, true)
                     }
                 )
             }
@@ -364,7 +371,7 @@ object ConversationMenuHelper {
         isAdmin: Boolean,
         threadID: Long,
         storage: StorageProtocol,
-        doLeave: () -> Unit,
+        doLeave: suspend () -> Unit,
     ) {
         val message = if (isAdmin) {
             Phrase.from(context, R.string.groupDeleteDescription)
@@ -387,14 +394,19 @@ object ConversationMenuHelper {
             title(R.string.groupLeave)
             text(message)
             dangerButton(R.string.leave) {
-                try {
-                    // Cancel any outstanding jobs
-                    storage.cancelPendingMessageSendJobs(threadID)
+                GlobalScope.launch(Dispatchers.Default) {
+                    try {
+                        // Cancel any outstanding jobs
+                        storage.cancelPendingMessageSendJobs(threadID)
 
-                    doLeave()
-                } catch (e: Exception) {
-                    onLeaveFailed()
+                        doLeave()
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            onLeaveFailed()
+                        }
+                    }
                 }
+
             }
             button(R.string.cancel)
         }

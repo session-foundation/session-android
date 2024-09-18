@@ -6,14 +6,11 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -23,6 +20,7 @@ import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsignal.utilities.AccountId
@@ -34,7 +32,8 @@ const val MAX_GROUP_NAME_LENGTH = 100
 class EditGroupViewModel @AssistedInject constructor(
     @Assisted private val groupSessionId: String,
     private val storage: StorageProtocol,
-    configFactory: ConfigFactory
+    configFactory: ConfigFactory,
+    private val groupManager: GroupManagerV2,
 ) : ViewModel() {
     // Input/Output state
     private val mutableEditingName = MutableStateFlow<String?>(null)
@@ -165,8 +164,12 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onContactSelected(contacts: Set<Contact>) {
-        viewModelScope.launch(Dispatchers.Default) {
-            storage.inviteClosedGroupMembers(groupSessionId, contacts.map { it.accountID })
+        performGroupOperation {
+            groupManager.inviteMembers(
+                AccountId(hexString = groupSessionId),
+                contacts.map { AccountId(it.accountID) },
+                shareHistory = true
+            )
         }
     }
 
@@ -177,33 +180,18 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onPromoteContact(memberSessionId: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            storage.promoteMember(AccountId(groupSessionId), listOf(AccountId(memberSessionId)))
+        performGroupOperation {
+            groupManager.promoteMember(AccountId(groupSessionId), listOf(AccountId(memberSessionId)))
         }
     }
 
     fun onRemoveContact(contactSessionId: String, removeMessages: Boolean) {
-        viewModelScope.launch {
-            mutableInProgress.value = true
-
-            // We need to use GlobalScope here because we don't want
-            // "removeMember" to be cancelled when the view model is cleared. This operation
-            // is expected to complete even if the view model is cleared.
-            val task = GlobalScope.launch {
-                storage.removeMember(
-                    groupAccountId = AccountId(groupSessionId),
-                    removedMembers = listOf(AccountId(contactSessionId)),
-                    removeMessages = removeMessages
-                )
-            }
-
-            try {
-                task.join()
-            } catch (e: Exception) {
-                mutableError.value = e.localizedMessage.orEmpty()
-            } finally {
-                mutableInProgress.value = false
-            }
+        performGroupOperation {
+            groupManager.removeMembers(
+                groupAccountId = AccountId(groupSessionId),
+                removedMembers = listOf(AccountId(contactSessionId)),
+                removeMessages = removeMessages
+            )
         }
     }
 
@@ -238,6 +226,32 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onDismissError() {
         mutableError.value = null
+    }
+
+    /**
+     * Perform a group operation, such as inviting a member, removing a member.
+     *
+     * This is a helper function that encapsulates the common error handling and progress tracking.
+     */
+    private fun performGroupOperation(operation: suspend () -> Unit) {
+        viewModelScope.launch {
+            mutableInProgress.value = true
+
+            // We need to use GlobalScope here because we don't want
+            // "removeMember" to be cancelled when the view model is cleared. This operation
+            // is expected to complete even if the view model is cleared.
+            val task = GlobalScope.launch {
+                operation()
+            }
+
+            try {
+                task.join()
+            } catch (e: Exception) {
+                mutableError.value = e.localizedMessage.orEmpty()
+            } finally {
+                mutableInProgress.value = false
+            }
+        }
     }
 
     @AssistedFactory
