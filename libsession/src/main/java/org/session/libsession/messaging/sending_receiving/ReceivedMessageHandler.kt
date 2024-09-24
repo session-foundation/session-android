@@ -43,7 +43,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
@@ -173,7 +172,7 @@ private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimer
 
     val module = MessagingModuleConfiguration.shared
     try {
-        val threadId = fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
+        val threadId = Address.fromSerialized(message.groupPublicKey?.let(::doubleEncodeGroupID) ?: message.sender!!)
             .let(module.storage::getOrCreateThreadIdFor)
 
         module.storage.setExpirationConfiguration(
@@ -363,11 +362,18 @@ fun MessageReceiver.handleVisibleMessage(
     }
     // Handle group invite response if new closed group
     if (threadRecipient?.isClosedGroupV2Recipient == true) {
-        storage.setGroupInviteCompleteIfNeeded(
-            approved = true,
-            recipient.address.serialize(),
-            AccountId(threadRecipient.address.serialize())
-        )
+        GlobalScope.launch {
+            try {
+                MessagingModuleConfiguration.shared.groupManagerV2
+                    .handleInviteResponse(
+                        AccountId(threadRecipient.address.serialize()),
+                        AccountId(messageSender),
+                        approved = true
+                    )
+            } catch (e: Exception) {
+                Log.e("Loki", "Failed to handle invite response", e)
+            }
+        }
     }
     // Parse quote if needed
     var quoteModel: QuoteModel? = null
@@ -659,20 +665,25 @@ private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
 }
 
 private fun handlePromotionMessage(message: GroupUpdated) {
-    val storage = MessagingModuleConfiguration.shared.storage
     val promotion = message.inner.promoteMessage
     val seed = promotion.groupIdentitySeed.toByteArray()
     val keyPair = Sodium.ed25519KeyPair(seed)
     val sender = message.sender!!
     val adminId = AccountId(sender)
-    storage.addClosedGroupInvite(
-        groupId = AccountId(IdPrefix.GROUP, keyPair.pubKey),
-        name = promotion.name,
-        authData = null,
-        adminKey = keyPair.secretKey,
-        invitingAdmin = adminId,
-        message.serverHash
-    )
+    GlobalScope.launch {
+        try {
+            MessagingModuleConfiguration.shared.groupManagerV2
+                .onReceivePromotion(
+                    groupId = AccountId(IdPrefix.GROUP, keyPair.pubKey),
+                    groupName = promotion.name,
+                    adminKey = keyPair.secretKey,
+                    promoter = adminId,
+                    promoteMessageHash = message.serverHash
+                )
+        } catch (e: Exception) {
+            Log.e("GroupUpdated", "Failed to handle promotion message", e)
+        }
+    }
 }
 
 private fun MessageReceiver.handleInviteResponse(message: GroupUpdated, closedGroup: AccountId) {
@@ -680,7 +691,13 @@ private fun MessageReceiver.handleInviteResponse(message: GroupUpdated, closedGr
     // val profile = message // maybe we do need data to be the inner so we can access profile
     val storage = MessagingModuleConfiguration.shared.storage
     val approved = message.inner.inviteResponse.isApproved
-    storage.setGroupInviteCompleteIfNeeded(approved, sender, closedGroup)
+    GlobalScope.launch {
+        try {
+            MessagingModuleConfiguration.shared.groupManagerV2.handleInviteResponse(closedGroup, AccountId(sender), approved)
+        } catch (e: Exception) {
+            Log.e("GroupUpdated", "Failed to handle invite response", e)
+        }
+    }
 }
 
 private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: GroupUpdated) {
@@ -696,15 +713,20 @@ private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: Group
 
     val sender = message.sender!!
     val adminId = AccountId(sender)
-    // add the group
-    storage.addClosedGroupInvite(
-        groupId,
-        invite.name,
-        invite.memberAuthData.toByteArray(),
-        null,
-        adminId,
-        message.serverHash
-    )
+    GlobalScope.launch {
+        try {
+            MessagingModuleConfiguration.shared.groupManagerV2
+                .onReceiveInvitation(
+                    groupId = groupId,
+                    groupName = invite.name,
+                    authData = invite.memberAuthData.toByteArray(),
+                    inviter = adminId,
+                    inviteMessageHash = message.serverHash
+                )
+        } catch (e: Exception) {
+            Log.e("GroupUpdated", "Failed to handle invite message", e)
+        }
+    }
 }
 
 /**
@@ -768,7 +790,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
         storage.updateTitle(groupID, name)
         storage.updateMembers(groupID, members.map { Address.fromSerialized(it) })
     } else {
-        storage.createGroup(groupID, name, LinkedList(members.map { fromSerialized(it) }),
+        storage.createGroup(groupID, name, LinkedList(members.map { Address.fromSerialized(it) }),
             null, null, LinkedList(admins.map { Address.fromSerialized(it) }), formationTimestamp)
     }
     storage.setProfileSharing(Address.fromSerialized(groupID), true)

@@ -19,7 +19,6 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -42,8 +41,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             storage = storage,
             messageDataProvider = mock(),
             groupDb = mock(),
-            threadDb = mock(),
-            appContext = mock()
+            threadDb = mock()
         )
     }
 

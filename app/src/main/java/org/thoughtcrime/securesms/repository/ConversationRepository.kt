@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -26,16 +27,15 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
-import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
@@ -69,7 +69,7 @@ interface ConversationRepository {
     suspend fun deleteMessageRequest(thread: ThreadRecord): Result<Unit>
     suspend fun clearAllMessageRequests(block: Boolean): Result<Unit>
     suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
-    fun declineMessageRequest(threadId: Long, recipient: Recipient)
+    suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
 }
@@ -84,13 +84,12 @@ class DefaultConversationRepository @Inject constructor(
     private val smsDb: SmsDatabase,
     private val mmsDb: MmsDatabase,
     private val mmsSmsDb: MmsSmsDatabase,
-    private val recipientDb: RecipientDatabase,
     private val storage: Storage,
     private val lokiMessageDb: LokiMessageDatabase,
     private val sessionJobDb: SessionJobDatabase,
-    private val configDb: ExpirationConfigurationDatabase,
     private val configFactory: ConfigFactory,
     private val contentResolver: ContentResolver,
+    private val groupManager: GroupManagerV2,
 ) : ConversationRepository {
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
@@ -329,11 +328,8 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override suspend fun deleteMessageRequest(thread: ThreadRecord) = runCatching {
-        withContext(Dispatchers.Default) {
-            declineMessageRequest(thread.threadId, thread.recipient)
-        }
-    }
+    override suspend fun deleteMessageRequest(thread: ThreadRecord)
+        = declineMessageRequest(thread.threadId, thread.recipient)
 
     override suspend fun clearAllMessageRequests(block: Boolean) = runCatching {
         withContext(Dispatchers.Default) {
@@ -353,7 +349,10 @@ class DefaultConversationRepository @Inject constructor(
         withContext(Dispatchers.Default) {
             storage.setRecipientApproved(recipient, true)
             if (recipient.isClosedGroupV2Recipient) {
-                storage.respondToClosedGroupInvitation(threadId, recipient, true)
+                groupManager.respondToInvitation(
+                    AccountId(recipient.address.serialize()),
+                    approved = true
+                )
             } else {
                 val message = MessageRequestResponse(true)
                 MessageSender.send(
@@ -369,12 +368,17 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun declineMessageRequest(threadId: Long, recipient: Recipient) {
-        sessionJobDb.cancelPendingMessageSendJobs(threadId)
-        if (recipient.isClosedGroupV2Recipient) {
-            storage.respondToClosedGroupInvitation(threadId, recipient, false)
-        } else {
-            storage.deleteConversation(threadId)
+    override suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
+        withContext(Dispatchers.Default) {
+            sessionJobDb.cancelPendingMessageSendJobs(threadId)
+            if (recipient.isClosedGroupV2Recipient) {
+                groupManager.respondToInvitation(
+                    AccountId(recipient.address.serialize()),
+                    approved = false
+                )
+            } else {
+                storage.deleteConversation(threadId)
+            }
         }
     }
 

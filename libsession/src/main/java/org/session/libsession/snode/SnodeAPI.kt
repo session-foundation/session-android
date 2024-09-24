@@ -2,6 +2,8 @@
 
 package org.session.libsession.snode
 
+import android.os.SystemClock
+import com.fasterxml.jackson.databind.JsonNode
 import com.goterl.lazysodium.exceptions.SodiumException
 import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.PwHash
@@ -9,8 +11,18 @@ import com.goterl.lazysodium.interfaces.SecretBox
 import com.goterl.lazysodium.utils.Key
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -43,6 +55,8 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 import kotlin.properties.Delegates.observable
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 object SnodeAPI {
     internal val database: LokiAPIDatabaseProtocol
@@ -115,7 +129,7 @@ object SnodeAPI {
         val method: String,
         val params: Map<String, Any>,
         @Transient
-        val namespace: Int?
+        val namespace: Int?,
     ) // assume signatures, pubkey and namespaces are attached in parameters if required
 
     // Internal API
@@ -571,6 +585,99 @@ object SnodeAPI {
         }
     }
 
+    private data class RequestInfo(
+        val accountId: AccountId,
+        val request: SnodeBatchRequestInfo,
+        val responseType: Class<*>,
+        val callback: SendChannel<Result<Any>>,
+        val requestTime: Long = SystemClock.uptimeMillis(),
+    )
+
+    private val batchedRequestsSender: SendChannel<RequestInfo>
+
+    init {
+        val batchRequests = Channel<RequestInfo>()
+        batchedRequestsSender = batchRequests
+
+        val batchWindowMills = 100L
+
+        @Suppress("OPT_IN_USAGE")
+        GlobalScope.launch {
+            val batches = hashMapOf<AccountId, MutableList<RequestInfo>>()
+
+            while (true) {
+                val batch = select<List<RequestInfo>?> {
+                    // If we receive a request, add it to the batch
+                    batchRequests.onReceive {
+                        batches.getOrPut(it.accountId) { mutableListOf() }.add(it)
+                        null
+                    }
+
+                    // If we have anything in the batch, look for the one that is about to expire
+                    // and wait for it to expire, remove it from the batches and send it for
+                    // processing.
+                    if (batches.isNotEmpty()) {
+                        val earliestBatch = batches.minBy { it.value.first().requestTime }
+                        val deadline = earliestBatch.value.first().requestTime + batchWindowMills
+                        onTimeout(
+                            timeMillis = (deadline - SystemClock.uptimeMillis()).coerceAtLeast(0)
+                        ) {
+                            batches.remove(earliestBatch.key)
+                        }
+                    }
+                }
+
+                if (batch != null) {
+                    launch {
+                        val accountId = batch.first().accountId
+                        val responses = try {
+                            getBatchResponse(
+                                snode = getSingleTargetSnode(accountId.hexString).await(),
+                                publicKey = accountId.hexString,
+                                requests = batch.map { it.request }, sequence = false
+                            )
+                        } catch (e: Exception) {
+                            for (req in batch) {
+                                req.callback.send(Result.failure(e))
+                            }
+                            return@launch
+                        }
+
+                        for ((req, resp) in batch.zip(responses.results)) {
+                            req.callback.send(kotlin.runCatching {
+                                JsonUtil.fromJson(resp.body, req.responseType)
+                            })
+                        }
+
+                        // Close all channels in the requests just in case we don't have paired up
+                        // responses.
+                        for (req in batch) {
+                            req.callback.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    suspend fun <T> sendBatchRequest(
+        swarmAccount: AccountId,
+        request: SnodeBatchRequestInfo,
+        responseType: Class<T>,
+    ): T {
+        val callback = Channel<Result<T>>()
+        @Suppress("UNCHECKED_CAST")
+        batchedRequestsSender.send(RequestInfo(swarmAccount, request, responseType, callback as SendChannel<Any>))
+        return callback.receive().getOrThrow()
+    }
+
+    suspend fun sendBatchRequest(
+        swarmAccount: AccountId,
+        request: SnodeBatchRequestInfo,
+    ): JsonNode {
+        return sendBatchRequest(swarmAccount, request, JsonNode::class.java)
+    }
+
     suspend fun getBatchResponse(
         snode: Snode,
         publicKey: String,
@@ -697,8 +804,15 @@ object SnodeAPI {
 
         return scope.retrySuspendAsPromise(maxRetryCount) {
             val destination = message.recipient
-            val snode = getSingleTargetSnode(destination).await()
-            invoke(Snode.Method.SendMessage, snode, params, destination).await()
+            sendBatchRequest(
+                swarmAccount = AccountId(destination),
+                request = SnodeBatchRequestInfo(
+                    method = Snode.Method.SendMessage.rawValue,
+                    params = params,
+                    namespace = namespace
+                ),
+                responseType = Map::class.java
+            )
         }
     }
 

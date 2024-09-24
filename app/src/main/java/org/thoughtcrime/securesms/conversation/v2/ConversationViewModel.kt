@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.MessageDataProvider
@@ -36,7 +35,6 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import java.util.UUID
 
 class ConversationViewModel(
@@ -47,7 +45,6 @@ class ConversationViewModel(
     private val messageDataProvider: MessageDataProvider,
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
-    private val appContext: Context,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -348,10 +345,6 @@ class ConversationViewModel(
                 _uiState.update {
                     it.copy(messageRequestState = MessageRequestUiState.Invisible)
                 }
-
-                withContext(Dispatchers.IO) {
-                    ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(appContext)
-                }
             }
             .onFailure {
                 showMessage("Couldn't accept message request due to error: $it")
@@ -362,10 +355,14 @@ class ConversationViewModel(
             }
     }
 
-    fun declineMessageRequest() {
+    fun declineMessageRequest() = viewModelScope.launch {
         repository.declineMessageRequest(threadId, recipient!!)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(appContext)
-        _uiState.update { it.copy(shouldExit = true) }
+            .onSuccess {
+                _uiState.update { it.copy(shouldExit = true) }
+            }
+            .onFailure {
+                showMessage("Couldn't decline message request due to error: $it")
+            }
     }
 
     private fun showMessage(message: String) {
@@ -456,7 +453,6 @@ class ConversationViewModel(
                 messageDataProvider = messageDataProvider,
                 groupDb = groupDb,
                 threadDb = threadDb,
-                appContext = context,
             ) as T
         }
     }

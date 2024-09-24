@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class CreateGroupViewModel @Inject constructor(
     configFactory: ConfigFactory,
     private val storage: StorageProtocol,
+    private val groupManagerV2: GroupManagerV2,
 ): ViewModel() {
     // Child view model to handle contact selection logic
     val selectContactsViewModel = SelectContactsViewModel(
@@ -60,15 +62,25 @@ class CreateGroupViewModel @Inject constructor(
 
             mutableIsLoading.value = true
 
-            val recipient = withContext(Dispatchers.Default) {
-                storage.createNewGroup(groupName, "", selected)
+            val createResult = withContext(Dispatchers.Default) {
+                runCatching {
+                    groupManagerV2.createGroup(
+                        groupName = groupName,
+                        groupDescription = "",
+                        members = selected
+                    )
+                }
             }
 
-            if (recipient.isPresent) {
-                val threadId = withContext(Dispatchers.Default) { storage.getOrCreateThreadIdFor(recipient.get().address) }
-                mutableEvents.emit(CreateGroupEvent.NavigateToConversation(threadId))
-            } else {
-                mutableEvents.emit(CreateGroupEvent.Error("Failed to create group"))
+            when (val recipient = createResult.getOrNull()) {
+                null -> {
+                    mutableEvents.emit(CreateGroupEvent.Error("Failed to create group"))
+
+                }
+                else -> {
+                    val threadId = withContext(Dispatchers.Default) { storage.getOrCreateThreadIdFor(recipient.address) }
+                    mutableEvents.emit(CreateGroupEvent.NavigateToConversation(threadId))
+                }
             }
 
             mutableIsLoading.value = false

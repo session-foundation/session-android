@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.sskenvironment
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
@@ -13,8 +14,14 @@ import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ProfileManager(private val context: Context, private val configFactory: ConfigFactory) : SSKEnvironment.ProfileManagerProtocol {
+@Singleton
+class ProfileManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val configFactory: ConfigFactory
+) : SSKEnvironment.ProfileManagerProtocol {
 
     override fun setNickname(context: Context, recipient: Recipient, nickname: String?) {
         if (recipient.isLocalNumber) return

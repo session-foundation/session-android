@@ -144,7 +144,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private TypingStatusRepository typingStatusRepository;
     private TypingStatusSender typingStatusSender;
     private ReadReceiptManager readReceiptManager;
-    private ProfileManager profileManager;
+
     public MessageNotifier messageNotifier = null;
     public Poller poller = null;
     public Broadcaster broadcaster = null;
@@ -166,6 +166,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     PushRegistrationHandler pushRegistrationHandler;
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
+    @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
@@ -268,9 +269,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         initializeTypingStatusRepository();
         initializeTypingStatusSender();
         initializeReadReceiptManager();
-        initializeProfileManager();
         initializePeriodicTasks();
-        SSKEnvironment.Companion.configure(getTypingStatusRepository(), getReadReceiptManager(), getProfileManager(), messageNotifier, getExpiringMessageManager());
+        SSKEnvironment.Companion.configure(getTypingStatusRepository(), getReadReceiptManager(), profileManager, messageNotifier, getExpiringMessageManager());
         initializeWebRtc();
         initializeBlobProvider();
         resubmitProfilePictureIfNeeded();
@@ -368,9 +368,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         return readReceiptManager;
     }
 
-    public ProfileManager getProfileManager() {
-        return profileManager;
-    }
 
     public boolean isAppVisible() {
         return isAppVisible;
@@ -424,10 +421,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private void initializeReadReceiptManager() {
         this.readReceiptManager = new ReadReceiptManager();
-    }
-
-    private void initializeProfileManager() {
-        this.profileManager = new ProfileManager(this, configFactory);
     }
 
     private void initializeTypingStatusSender() {

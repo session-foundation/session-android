@@ -2,6 +2,7 @@ package org.session.libsession.messaging.sending_receiving.pollers
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -13,6 +14,7 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -38,7 +40,7 @@ class ClosedGroupPoller(
     private val executor: CoroutineDispatcher,
     private val closedGroupSessionId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
-    private val storageProtocol: StorageProtocol = MessagingModuleConfiguration.shared.storage) {
+    private val groupManagerV2: GroupManagerV2) {
 
     data class ParsedRawMessage(
             val data: ByteArray,
@@ -268,40 +270,14 @@ class ClosedGroupPoller(
                 if (Sodium.KICKED_REGEX.matches(message)) {
                     val (sessionId, generation) = message.split("-")
                     if (sessionId == userSessionId.hexString && generation.toInt() >= keys.currentGeneration()) {
-                        Log.d("GroupPoller", "We were kicked from the group, delete and stop polling")
-                        stop()
-
-                        configFactoryProtocol.userGroups?.let { userGroups ->
-                            userGroups.getClosedGroup(closedGroupSessionId.hexString)?.let { group ->
-                                // Retrieve the group name one last time from the group info,
-                                // as we are going to clear the keys, we won't have the chance to
-                                // read the group name anymore.
-                                val groupName = configFactoryProtocol.getGroupInfoConfig(closedGroupSessionId)
-                                    ?.use { it.getName() }
-                                    ?: group.name
-
-                                userGroups.set(group.copy(
-                                    authData = null,
-                                    adminKey = null,
-                                    name = groupName
-                                ))
-
-                                configFactoryProtocol.persist(userGroups, SnodeAPI.nowWithOffset)
+                        GlobalScope.launch {
+                            try {
+                                groupManagerV2.handleKicked(closedGroupSessionId)
+                            } catch (e: Exception) {
+                                Log.e("GroupPoller", "Error handling kicked message: $e")
                             }
                         }
 
-                        storageProtocol.handleKicked(closedGroupSessionId)
-
-                        MessagingModuleConfiguration.shared.storage.insertIncomingInfoMessage(
-                            context = MessagingModuleConfiguration.shared.context,
-                            senderPublicKey = userSessionId.hexString,
-                            groupID = closedGroupSessionId.hexString,
-                            type = SignalServiceGroup.Type.KICKED,
-                            name = "",
-                            members = emptyList(),
-                            admins = emptyList(),
-                            sentTimestamp = SnodeAPI.nowWithOffset,
-                        )
                     }
                 }
             }
