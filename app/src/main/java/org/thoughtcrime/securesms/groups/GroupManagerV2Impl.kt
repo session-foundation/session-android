@@ -1012,9 +1012,9 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun setName(groupId: AccountId, newName: String): Unit = withContext(dispatcher) {
         val adminKey = requireAdminAccess(groupId)
 
-        configFactory.withGroupConfigsOrNull(groupId) { info, members, keys ->
-            info.setName(newName)
-            configFactory.saveGroupConfigs(keys, info, members)
+        configFactory.getGroupInfoConfig(groupId)?.use { infoConfig ->
+            infoConfig.setName(newName)
+            configFactory.persist(infoConfig, SnodeAPI.nowWithOffset, forPublicKey = groupId.hexString)
         }
 
         val groupDestination = Destination.ClosedGroup(groupId.hexString)
