@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.dependencies
 
 import android.content.Context
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryUpdateListener
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
@@ -54,6 +56,7 @@ object SessionUtilModule {
     @Singleton
     fun providePollerFactory(@Named(POLLER_SCOPE) coroutineScope: CoroutineScope,
                              @Named(POLLER_SCOPE) dispatcher: CoroutineDispatcher,
-                             configFactory: ConfigFactory) = PollerFactory(coroutineScope, dispatcher, configFactory)
+                             configFactory: ConfigFactory,
+                             groupManagerV2: Lazy<GroupManagerV2>) = PollerFactory(coroutineScope, dispatcher, configFactory, groupManagerV2)
 
 }

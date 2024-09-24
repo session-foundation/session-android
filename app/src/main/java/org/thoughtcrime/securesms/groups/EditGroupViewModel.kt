@@ -218,9 +218,12 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onEditNameConfirmClicked() {
         val newName = mutableEditingName.value
-        if (newName != null) {
-            storage.setName(groupSessionId, newName.trim())
-            mutableEditingName.value = null
+
+        performGroupOperation {
+            if (!newName.isNullOrBlank()) {
+                groupManager.setName(AccountId(groupSessionId), newName)
+                mutableEditingName.value = null
+            }
         }
     }
 

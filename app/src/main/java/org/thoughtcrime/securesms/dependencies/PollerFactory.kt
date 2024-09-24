@@ -1,17 +1,22 @@
 package org.thoughtcrime.securesms.dependencies
 
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.plus
 import network.loki.messenger.libsession_util.util.GroupInfo
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsignal.utilities.AccountId
 import java.util.concurrent.ConcurrentHashMap
 
-class PollerFactory(private val scope: CoroutineScope,
-                    private val executor: CoroutineDispatcher,
-                    private val configFactory: ConfigFactory) {
+class PollerFactory(
+    private val scope: CoroutineScope,
+    private val executor: CoroutineDispatcher,
+    private val configFactory: ConfigFactory,
+    private val groupManagerV2: Lazy<GroupManagerV2>,
+    ) {
 
     private val pollers = ConcurrentHashMap<AccountId, ClosedGroupPoller>()
 
@@ -20,7 +25,7 @@ class PollerFactory(private val scope: CoroutineScope,
         if (configFactory.userGroups?.getClosedGroup(sessionId.hexString)?.invited != false) return null
 
         return pollers.getOrPut(sessionId) {
-            ClosedGroupPoller(scope + SupervisorJob(), executor, sessionId, configFactory)
+            ClosedGroupPoller(scope + SupervisorJob(), executor, sessionId, configFactory, groupManagerV2.get())
         }
     }
 
