@@ -13,16 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -55,8 +50,6 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 import kotlin.properties.Delegates.observable
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 object SnodeAPI {
     internal val database: LokiAPIDatabaseProtocol
@@ -628,7 +621,7 @@ object SnodeAPI {
                 }
 
                 if (batch != null) {
-                    launch {
+                    launch batch@{
                         val accountId = batch.first().accountId
                         val responses = try {
                             getBatchResponse(
@@ -640,13 +633,19 @@ object SnodeAPI {
                             for (req in batch) {
                                 req.callback.send(Result.failure(e))
                             }
-                            return@launch
+                            return@batch
                         }
 
                         for ((req, resp) in batch.zip(responses.results)) {
-                            req.callback.send(kotlin.runCatching {
-                                JsonUtil.fromJson(resp.body, req.responseType)
-                            })
+                            val result = if (resp.code != 200) {
+                                Result.failure(RuntimeException("Error with code = ${resp.code}, msg = ${resp.body}"))
+                            } else {
+                                runCatching {
+                                    JsonUtil.fromJson(resp.body, req.responseType)
+                                }
+                            }
+
+                            req.callback.send(result)
                         }
 
                         // Close all channels in the requests just in case we don't have paired up
@@ -745,6 +744,7 @@ object SnodeAPI {
                 buildString {
                     append("expire")
                     append(shortenOrExtend)
+                    append(newExpiry.toString())
                     messageHashes.forEach(this::append)
                 }
             }
