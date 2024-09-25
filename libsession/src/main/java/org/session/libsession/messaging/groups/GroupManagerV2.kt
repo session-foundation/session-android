@@ -3,6 +3,8 @@ package org.session.libsession.messaging.groups
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
 
 /**
@@ -57,4 +59,13 @@ interface GroupManagerV2 {
     suspend fun handleKicked(groupId: AccountId)
 
     suspend fun setName(groupId: AccountId, newName: String)
+
+    suspend fun requestMessageDeletion(groupId: AccountId, messageHashes: List<String>)
+
+    suspend fun handleDeleteMemberContent(
+        groupId: AccountId,
+        deleteMemberContent: GroupUpdateDeleteMemberContentMessage,
+        sender: AccountId,
+        senderIsVerifiedAdmin: Boolean,
+    )
 }

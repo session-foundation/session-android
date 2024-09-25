@@ -242,10 +242,10 @@ class DefaultConversationRepository @Inject constructor(
 
                         if (recipient.isClosedGroupV2Recipient) {
                             // admin check internally, assume either admin or all belong to user
-                            storage.sendGroupUpdateDeleteMessage(
-                                groupSessionId = recipient.address.serialize(),
+                            groupManager.requestMessageDeletion(
+                                groupId = AccountId(publicKey),
                                 messageHashes = listOf(serverHash)
-                            ).await()
+                            )
                         } else {
                             SnodeAPI.deleteMessage(
                                 publicKey = publicKey,

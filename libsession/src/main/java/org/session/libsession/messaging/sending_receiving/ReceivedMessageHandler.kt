@@ -6,6 +6,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.Sodium
+import network.loki.messenger.libsession_util.util.afterSend
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -585,45 +586,31 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
 }
 
 private fun handleDeleteMemberContent(message: GroupUpdated, closedGroup: AccountId) {
-    val storage = MessagingModuleConfiguration.shared.storage
     val deleteMemberContent = message.inner.deleteMemberContent
     val adminSig = if (deleteMemberContent.hasAdminSignature()) deleteMemberContent.adminSignature.toByteArray()!! else byteArrayOf()
 
-    val memberIds = deleteMemberContent.memberSessionIdsList
-    val hashes = deleteMemberContent.messageHashesList
-    val threadId = storage.getThreadId(Address.fromSerialized(closedGroup.hexString))!!
-
-    val messageToValidate = buildDeleteMemberContentSignature(
-        memberIds = memberIds.asSequence().map(::AccountId).asIterable(),
-        messageHashes = hashes,
-        timestamp = message.sentTimestamp!!
-    )
-
-    if (hashes.isNotEmpty()) {
-        // Delete all hashes conditionally
-        if (storage.ensureMessageHashesAreSender(hashes.toSet(), message.sender!!, closedGroup.hexString)) {
-            // ensure that all message hashes belong to user
-            // storage delete
-            storage.deleteMessagesByHash(threadId, hashes)
-        } else {
-            // otherwise assert a valid admin sig exists
-            verifyAdminSignature(
-                closedGroup,
-                adminSig,
-                messageToValidate
-            )
-            // storage delete
-            storage.deleteMessagesByHash(threadId, hashes)
-        }
-    } else if (memberIds.isNotEmpty()) {
-        // Delete all from member Ids, and require admin sig?
+    val hasValidAdminSignature = adminSig.isNotEmpty() && runCatching {
         verifyAdminSignature(
             closedGroup,
             adminSig,
-            messageToValidate
+            buildDeleteMemberContentSignature(
+                memberIds = deleteMemberContent.memberSessionIdsList.asSequence().map(::AccountId).asIterable(),
+                messageHashes = deleteMemberContent.messageHashesList,
+                timestamp = message.sentTimestamp!!,
+            )
         )
-        for (member in memberIds) {
-            storage.deleteMessagesByUser(threadId, member)
+    }.isSuccess
+
+    GlobalScope.launch {
+        try {
+            MessagingModuleConfiguration.shared.groupManagerV2.handleDeleteMemberContent(
+                groupId = closedGroup,
+                deleteMemberContent = deleteMemberContent,
+                sender = AccountId(message.sender!!),
+                senderIsVerifiedAdmin = hasValidAdminSignature
+            )
+        } catch (e: Exception) {
+            Log.e("GroupUpdated", "Failed to handle delete member content", e)
         }
     }
 }
@@ -649,7 +636,7 @@ private fun handleMemberLeft(message: GroupUpdated, closedGroup: AccountId) {
 }
 
 private fun handleMemberLeftNotification(message: GroupUpdated, closedGroup: AccountId) {
-    MessagingModuleConfiguration.shared.storage.handleMemberLeftNotification(message, closedGroup)
+    MessagingModuleConfiguration.shared.storage.insertGroupInfoChange(message, closedGroup)
 }
 
 private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {

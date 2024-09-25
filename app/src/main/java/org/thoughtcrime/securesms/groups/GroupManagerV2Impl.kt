@@ -1042,6 +1042,111 @@ class GroupManagerV2Impl @Inject constructor(
         storage.insertGroupInfoChange(message, groupId)
     }
 
+    override suspend fun requestMessageDeletion(
+        groupId: AccountId,
+        messageHashes: List<String>
+    ): Unit = withContext(dispatcher) {
+        // To delete messages from a group, there are a few considerations:
+        // 1. Messages are stored on every member's device, we need a way to ask them to delete their stored messages
+        // 2. Messages are also stored on the group swarm, only the group admin can delete them
+        // So we will send a group message to ask members to delete the messages,
+        // meanwhile, if we are admin we can just delete those messages from the group swarm, and otherwise
+        // the admins can pick up the group message and delete the messages on our behalf.
+
+        val userGroups = requireNotNull(configFactory.userGroups) { "User groups config is not available" }
+        val group = requireNotNull(userGroups.getClosedGroup(groupId.hexString)) {
+            "Group doesn't exist"
+        }
+        val userPubKey = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
+
+        // Check if we can actually delete these messages
+        check(
+            group.hasAdminKey() ||
+            storage.ensureMessageHashesAreSender(messageHashes.toSet(), userPubKey, groupId.hexString)
+        ) {
+            "Cannot delete messages that are not sent by us"
+        }
+
+        // If we are admin, we can delete the messages from the group swarm
+        group.adminKey?.let { adminKey ->
+            deleteMessageFromGroupSwarm(groupId, OwnedSwarmAuth.ofClosedGroup(groupId, adminKey), messageHashes)
+        }
+
+        // Construct a message to ask members to delete the messages, sign if we are admin, then send
+        val timestamp = SnodeAPI.nowWithOffset
+        val signature = group.adminKey?.let { key ->
+            SodiumUtilities.sign(
+                buildDeleteMemberContentSignature(memberIds = emptyList(), messageHashes, timestamp),
+                key
+            )
+        }
+        val message = GroupUpdated(
+            GroupUpdateMessage.newBuilder()
+                .setDeleteMemberContent(
+                    GroupUpdateDeleteMemberContentMessage.newBuilder()
+                        .addAllMessageHashes(messageHashes)
+                        .let {
+                            if (signature != null) it.setAdminSignature(ByteString.copyFrom(signature))
+                            else it
+                        }
+                )
+                .build()
+        ).apply {
+            sentTimestamp = timestamp
+        }
+
+        val groupAddress = Address.fromSerialized(groupId.hexString)
+        MessageSender.sendNonDurably(message, groupAddress, false).await()
+    }
+
+    override suspend fun handleDeleteMemberContent(
+        groupId: AccountId,
+        deleteMemberContent: GroupUpdateDeleteMemberContentMessage,
+        sender: AccountId,
+        senderIsVerifiedAdmin: Boolean,
+    ): Unit = withContext(dispatcher) {
+        val threadId = requireNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
+            "No thread ID found for the group"
+        }
+
+        val hashes = deleteMemberContent.messageHashesList
+        val memberIds = deleteMemberContent.memberSessionIdsList
+
+        if (hashes.isNotEmpty()) {
+            if (senderIsVerifiedAdmin) {
+                // We'll delete everything the admin says
+                storage.deleteMessagesByHash(threadId, hashes)
+            } else if (storage.ensureMessageHashesAreSender(hashes.toSet(), sender.hexString, groupId.hexString)) {
+                // ensure that all message hashes belong to user
+                // storage delete
+                storage.deleteMessagesByHash(threadId, hashes)
+            }
+        }
+
+        if (memberIds.isNotEmpty() && senderIsVerifiedAdmin) {
+            for (member in memberIds) {
+                storage.deleteMessagesByUser(threadId, member)
+            }
+        }
+
+        val adminKey = configFactory.userGroups?.getClosedGroup(groupId.hexString)?.adminKey
+        if (!senderIsVerifiedAdmin && adminKey != null) {
+            // If the deletion request comes from a non-admin, and we as an admin, will also delete
+            // the content from the swarm, provided that the messages are actually sent by that user
+            if (storage.ensureMessageHashesAreSender(hashes.toSet(), sender.hexString, groupId.hexString)) {
+                deleteMessageFromGroupSwarm(groupId, OwnedSwarmAuth.ofClosedGroup(groupId, adminKey), hashes)
+            }
+
+            // The non-admin user shouldn't be able to delete other user's messages so we will
+            // ignore the memberIds in the message
+        }
+    }
+
+    private suspend fun deleteMessageFromGroupSwarm(groupId: AccountId, auth: OwnedSwarmAuth, hashes: List<String>) {
+        SnodeAPI.sendBatchRequest(
+            groupId, SnodeAPI.buildAuthenticatedDeleteBatchInfo(auth, hashes)
+        )
+    }
 
     private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {
         val firstError = this.results.firstOrNull { it.code != 200 }

@@ -177,8 +177,6 @@ interface StorageProtocol {
     fun insertGroupInfoLeaving(closedGroup: AccountId): Long?
     fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, closedGroup: AccountId, groupName: String): Long?
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
-    fun handleMemberLeftNotification(message: GroupUpdated, closedGroupId: AccountId)
-    fun sendGroupUpdateDeleteMessage(groupSessionId: String, messageHashes: List<String>): Promise<Unit, Exception>
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>
