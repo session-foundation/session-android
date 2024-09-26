@@ -427,7 +427,7 @@ interface ReadableGroupKeysConfig {
     fun dump(): ByteArray
     fun needsRekey(): Boolean
     fun pendingKey(): ByteArray?
-    fun supplementFor(userSessionId: String): ByteArray
+    fun supplementFor(userSessionIds: List<String>): ByteArray
     fun pendingConfig(): ByteArray?
     fun currentHashes(): List<String>
     fun encrypt(plaintext: ByteArray): ByteArray
@@ -484,7 +484,11 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
                          membersPtr: Long): Boolean
     external override fun needsRekey(): Boolean
     external override fun pendingKey(): ByteArray?
-    external override fun supplementFor(userSessionId: String): ByteArray
+    private external fun supplementFor(userSessionIds: Array<String>): ByteArray
+    override fun supplementFor(userSessionIds: List<String>): ByteArray {
+        return supplementFor(userSessionIds.toTypedArray())
+    }
+
     external override fun pendingConfig(): ByteArray?
     external override fun currentHashes(): List<String>
     external fun rekey(infoPtr: Long, membersPtr: Long): ByteArray

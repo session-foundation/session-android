@@ -192,10 +192,13 @@ class GroupManagerV2Impl @Inject constructor(
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
-        configFactory.withGroupConfigsOrNull(group) { infoConfig, membersConfig, keysConfig ->
+        val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+
+        // Construct the new members in our config
+        val subAccountTokens = configFactory.withMutableGroupConfigs(group) { configs ->
             // Construct the new members in the config
             for (newMember in newMembers) {
-                val toSet = membersConfig.get(newMember.hexString)
+                val toSet = configs.groupMembers.get(newMember.hexString)
                     ?.let { existing ->
                         if (existing.inviteFailed || existing.invitePending) {
                             existing.copy(
@@ -206,7 +209,7 @@ class GroupManagerV2Impl @Inject constructor(
                             existing
                         }
                     }
-                    ?: membersConfig.getOrConstruct(newMember.hexString).let {
+                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).let {
                         val contact = storage.getContactWithAccountID(newMember.hexString)
                         it.copy(
                             name = contact?.name,
@@ -216,97 +219,73 @@ class GroupManagerV2Impl @Inject constructor(
                         )
                     }
 
-                membersConfig.set(toSet)
+                configs.groupMembers.set(toSet)
             }
-
-            // Persist the member change to the db now for the UI to reflect the status change
-            val timestamp = SnodeAPI.nowWithOffset
-            configFactory.persistGroupConfigDump(membersConfig, group, timestamp)
-
-            val batchRequests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
-            val messagesToDelete = mutableListOf<String>() // List of message hashes
 
             // Depends on whether we want to share history, we may need to rekey or just adding supplement keys
             if (shareHistory) {
-                for (member in newMembers) {
-                    val memberKey = keysConfig.supplementFor(member.hexString)
-                    batchRequests.add(
-                        SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                            namespace = keysConfig.namespace(),
-                            message = SnodeMessage(
-                                recipient = group.hexString,
-                                data = Base64.encodeBytes(memberKey),
-                                ttl = SnodeMessage.CONFIG_TTL,
-                                timestamp = timestamp
-                            ),
-                            auth = groupAuth,
-                        )
+                val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
+                batchRequests.add(
+                    SnodeAPI.buildAuthenticatedStoreBatchInfo(
+                        namespace = Namespace.ENCRYPTION_KEYS(),
+                        message = SnodeMessage(
+                            recipient = group.hexString,
+                            data = Base64.encodeBytes(memberKey),
+                            ttl = SnodeMessage.CONFIG_TTL,
+                            timestamp = SnodeAPI.nowWithOffset,
+                        ),
+                        auth = groupAuth,
                     )
-                }
+                )
             } else {
-                keysConfig.rekey(infoConfig, membersConfig)
+                configs.rekeys()
             }
 
-            // Call un-revocate API on new members, in case they have been removed before
-            batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
-                groupAdminAuth = groupAuth,
-                subAccountTokens = newMembers.map(keysConfig::getSubAccountToken)
-            )
-
-            keysConfig.messageInformation(groupAuth)?.let {
-                batchRequests += it.batch
-            }
-            batchRequests += infoConfig.messageInformation(messagesToDelete, groupAuth).batch
-            batchRequests += membersConfig.messageInformation(messagesToDelete, groupAuth).batch
-
-            if (messagesToDelete.isNotEmpty()) {
-                batchRequests += SnodeAPI.buildAuthenticatedDeleteBatchInfo(
-                    auth = groupAuth,
-                    messageHashes = messagesToDelete
-                )
-            }
-
-            // Call the API
-            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
-            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
-
-            // Make sure every request is successful
-            response.requireAllRequestsSuccessful("Failed to invite members")
-
-            // Persist the keys config
-            configFactory.saveGroupConfigs(keysConfig, infoConfig, membersConfig)
-
-            // Send the invitation message to the new members
-            JobQueue.shared.add(
-                InviteContactsJob(
-                    group.hexString,
-                    newMembers.map { it.hexString }.toTypedArray()
-                )
-            )
-
-            // Send a member change message to the group
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
-                adminKey
-            )
-
-            val updatedMessage = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setMemberChangeMessage(
-                        GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(newMembers.map { it.hexString })
-                            .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
-                            .setAdminSignature(ByteString.copyFrom(signature))
-                    )
-                    .build()
-            ).apply { this.sentTimestamp = timestamp }
-            MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
-            storage.insertGroupInfoChange(updatedMessage, group)
-
-            group
+            newMembers.map { configs.groupKeys.makeSubAccount(group) }
         }
-    }
 
+
+        // Call un-revocate API on new members, in case they have been removed before
+        batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
+            groupAdminAuth = groupAuth,
+            subAccountTokens = subAccountTokens
+        )
+
+        // Call the API
+        val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
+        val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+
+        // Make sure every request is successful
+        response.requireAllRequestsSuccessful("Failed to invite members")
+
+        // Send the invitation message to the new members
+        JobQueue.shared.add(
+            InviteContactsJob(
+                group.hexString,
+                newMembers.map { it.hexString }.toTypedArray()
+            )
+        )
+
+        // Send a member change message to the group
+        val timestamp = SnodeAPI.nowWithOffset
+        val signature = SodiumUtilities.sign(
+            buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
+            adminKey
+        )
+
+        val updatedMessage = GroupUpdated(
+            GroupUpdateMessage.newBuilder()
+                .setMemberChangeMessage(
+                    GroupUpdateMemberChangeMessage.newBuilder()
+                        .addAllMemberSessionIds(newMembers.map { it.hexString })
+                        .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
+                        .setAdminSignature(ByteString.copyFrom(signature))
+                )
+                .build()
+        ).apply { this.sentTimestamp = timestamp }
+        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        storage.insertGroupInfoChange(updatedMessage, group)
+    }
 
     override suspend fun removeMembers(
         groupAccountId: AccountId,
@@ -383,73 +362,74 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun promoteMember(group: AccountId, members: List<AccountId>): Unit = withContext(dispatcher) {
-        val adminKey = requireAdminAccess(group)
+    override suspend fun promoteMember(group: AccountId, members: List<AccountId>): Unit =
+        withContext(dispatcher) {
+            val adminKey = requireAdminAccess(group)
 
-        configFactory.withGroupConfigsOrNull(group) { info, membersConfig, keys ->
-            // Promote the members by sending a message containing the admin key to each member's swarm,
-            // we do this concurrently and then update the group configs after all the messages are sent.
-            val promoteResult = members.asSequence()
-                .mapNotNull { membersConfig.get(it.hexString) }
-                .map { memberConfig ->
-                    async {
-                        val message = GroupUpdated(
-                            GroupUpdateMessage.newBuilder()
-                                .setPromoteMessage(
-                                    DataMessage.GroupUpdatePromoteMessage.newBuilder()
-                                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey))
-                                        .setName(info.getName())
-                                )
-                                .build()
-                        )
+            configFactory.withGroupConfigsOrNull(group) { info, membersConfig, keys ->
+                // Promote the members by sending a message containing the admin key to each member's swarm,
+                // we do this concurrently and then update the group configs after all the messages are sent.
+                val promoteResult = members.asSequence()
+                    .mapNotNull { membersConfig.get(it.hexString) }
+                    .map { memberConfig ->
+                        async {
+                            val message = GroupUpdated(
+                                GroupUpdateMessage.newBuilder()
+                                    .setPromoteMessage(
+                                        DataMessage.GroupUpdatePromoteMessage.newBuilder()
+                                            .setGroupIdentitySeed(ByteString.copyFrom(adminKey))
+                                            .setName(info.getName())
+                                    )
+                                    .build()
+                            )
 
-                        try {
-                            MessageSender.sendNonDurably(
-                                message = message,
-                                address = Address.fromSerialized(memberConfig.sessionId),
-                                isSyncMessage = false
-                            ).await()
+                            try {
+                                MessageSender.sendNonDurably(
+                                    message = message,
+                                    address = Address.fromSerialized(memberConfig.sessionId),
+                                    isSyncMessage = false
+                                ).await()
 
-                            memberConfig.setPromoteSent()
-                        } catch (ec: Exception) {
-                            Log.e(TAG, "Failed to send promote message", ec)
-                            memberConfig.setPromoteFailed()
+                                memberConfig.setPromoteSent()
+                            } catch (ec: Exception) {
+                                Log.e(TAG, "Failed to send promote message", ec)
+                                memberConfig.setPromoteFailed()
+                            }
                         }
                     }
-                }
-                .toList()
+                    .toList()
 
-            for (result in promoteResult) {
-                membersConfig.set(result.await())
+                for (result in promoteResult) {
+                    membersConfig.set(result.await())
+                }
+
+                configFactory.saveGroupConfigs(keys, info, membersConfig)
             }
 
-            configFactory.saveGroupConfigs(keys, info, membersConfig)
-        }
+            // Send a group update message to the group telling members someone has been promoted
+            val groupDestination = Destination.ClosedGroup(group.hexString)
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(groupDestination)
+            val timestamp = SnodeAPI.nowWithOffset
+            val signature = SodiumUtilities.sign(
+                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                adminKey
+            )
+            val message = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setMemberChangeMessage(
+                        GroupUpdateMemberChangeMessage.newBuilder()
+                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
+                            .setAdminSignature(ByteString.copyFrom(signature))
+                    )
+                    .build()
+            ).apply {
+                sentTimestamp = timestamp
+            }
 
-        // Send a group update message to the group telling members someone has been promoted
-        val groupDestination = Destination.ClosedGroup(group.hexString)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(groupDestination)
-        val timestamp = SnodeAPI.nowWithOffset
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-            adminKey
-        )
-        val message = GroupUpdated(
-            GroupUpdateMessage.newBuilder()
-                .setMemberChangeMessage(
-                    GroupUpdateMemberChangeMessage.newBuilder()
-                        .addAllMemberSessionIds(members.map { it.hexString })
-                        .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
-                        .setAdminSignature(ByteString.copyFrom(signature))
-                )
-                .build()
-        ).apply {
-            sentTimestamp = timestamp
+            MessageSender.send(message, Address.fromSerialized(group.hexString))
+            storage.insertGroupInfoChange(message, group)
         }
-
-        MessageSender.send(message, Address.fromSerialized(group.hexString))
-        storage.insertGroupInfoChange(message, group)
-    }
 
     private suspend fun doRemoveMembers(
         group: AccountId,
@@ -624,29 +604,31 @@ class GroupManagerV2Impl @Inject constructor(
         )
     }
 
-    override suspend fun respondToInvitation(groupId: AccountId, approved: Boolean) = withContext(dispatcher) {
-        val groups = requireNotNull(configFactory.userGroups) {
-            "User groups config is not available"
-        }
+    override suspend fun respondToInvitation(groupId: AccountId, approved: Boolean) =
+        withContext(dispatcher) {
+            val groups = requireNotNull(configFactory.userGroups) {
+                "User groups config is not available"
+            }
 
-        val threadId = checkNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
-            "No thread has been created for the group"
-        }
+            val threadId =
+                checkNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
+                    "No thread has been created for the group"
+                }
 
-        val group = requireNotNull(groups.getClosedGroup(groupId.hexString)) {
-            "Group must have been created into the config object before responding to an invitation"
-        }
+            val group = requireNotNull(groups.getClosedGroup(groupId.hexString)) {
+                "Group must have been created into the config object before responding to an invitation"
+            }
 
-        // Whether approved or not, delete the invite
-        lokiDatabase.deleteGroupInviteReferrer(threadId)
+            // Whether approved or not, delete the invite
+            lokiDatabase.deleteGroupInviteReferrer(threadId)
 
-        if (approved) {
-            approveGroupInvite(groups, group, threadId)
-        } else {
-            groups.eraseClosedGroup(groupId.hexString)
-            storage.deleteConversation(threadId)
+            if (approved) {
+                approveGroupInvite(groups, group, threadId)
+            } else {
+                groups.eraseClosedGroup(groupId.hexString)
+                storage.deleteConversation(threadId)
+            }
         }
-    }
 
     private fun approveGroupInvite(
         groups: UserGroupsConfig,
@@ -671,7 +653,10 @@ class GroupManagerV2Impl @Inject constructor(
             val responseMessage = GroupUpdated(responseData.build())
             storage.clearMessages(threadId)
             // this will fail the first couple of times :)
-            MessageSender.send(responseMessage, Address.fromSerialized(group.groupAccountId.hexString))
+            MessageSender.send(
+                responseMessage,
+                Address.fromSerialized(group.groupAccountId.hexString)
+            )
         } else {
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withGroupConfigsOrNull(group.groupAccountId) { info, members, keys ->
@@ -801,9 +786,11 @@ class GroupManagerV2Impl @Inject constructor(
             return
         }
 
-        val recipient = Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
+        val recipient =
+            Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
 
-        val shouldAutoApprove = storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
+        val shouldAutoApprove =
+            storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId,
             adminKey = authDataOrAdminKey.takeIf { fromPromotion },
@@ -823,7 +810,12 @@ class GroupManagerV2Impl @Inject constructor(
             approveGroupInvite(groups, closedGroupInfo, groupThreadId)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
-            storage.insertGroupInviteControlMessage(SnodeAPI.nowWithOffset, inviter.hexString, groupId, groupName)
+            storage.insertGroupInviteControlMessage(
+                SnodeAPI.nowWithOffset,
+                inviter.hexString,
+                groupId,
+                groupName
+            )
         }
     }
 
@@ -869,7 +861,8 @@ class GroupManagerV2Impl @Inject constructor(
         pollerFactory.pollerFor(groupId)?.stop()
 
         val userId = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
-        val userGroups = requireNotNull(configFactory.userGroups) { "User groups config is not available" }
+        val userGroups =
+            requireNotNull(configFactory.userGroups) { "User groups config is not available" }
         val group = userGroups.getClosedGroup(groupId.hexString) ?: return@withContext
 
         // Retrieve the group name one last time from the group info,
@@ -879,11 +872,13 @@ class GroupManagerV2Impl @Inject constructor(
             ?.use { it.getName() }
             ?: group.name
 
-        userGroups.set(group.copy(
-            authData = null,
-            adminKey = null,
-            name = groupName
-        ))
+        userGroups.set(
+            group.copy(
+                authData = null,
+                adminKey = null,
+                name = groupName
+            )
+        )
 
         configFactory.persist(userGroups, SnodeAPI.nowWithOffset)
 
@@ -899,38 +894,44 @@ class GroupManagerV2Impl @Inject constructor(
         )
     }
 
-    override suspend fun setName(groupId: AccountId, newName: String): Unit = withContext(dispatcher) {
-        val adminKey = requireAdminAccess(groupId)
+    override suspend fun setName(groupId: AccountId, newName: String): Unit =
+        withContext(dispatcher) {
+            val adminKey = requireAdminAccess(groupId)
 
-        configFactory.getGroupInfoConfig(groupId)?.use { infoConfig ->
-            infoConfig.setName(newName)
-            configFactory.persist(infoConfig, SnodeAPI.nowWithOffset, forPublicKey = groupId.hexString)
-        }
-
-        val groupDestination = Destination.ClosedGroup(groupId.hexString)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(groupDestination)
-        val timestamp = SnodeAPI.nowWithOffset
-        val signature = SodiumUtilities.sign(
-            buildInfoChangeVerifier(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
-            adminKey
-        )
-
-        val message = GroupUpdated(
-            GroupUpdateMessage.newBuilder()
-                .setInfoChangeMessage(
-                    GroupUpdateInfoChangeMessage.newBuilder()
-                        .setUpdatedName(newName)
-                        .setType(GroupUpdateInfoChangeMessage.Type.NAME)
-                        .setAdminSignature(ByteString.copyFrom(signature))
+            configFactory.getGroupInfoConfig(groupId)?.use { infoConfig ->
+                infoConfig.setName(newName)
+                configFactory.persist(
+                    infoConfig,
+                    SnodeAPI.nowWithOffset,
+                    forPublicKey = groupId.hexString
                 )
-                .build()
-        ).apply {
-            sentTimestamp = timestamp
-        }
+            }
 
-        MessageSender.sendNonDurably(message, Address.fromSerialized(groupId.hexString), false).await()
-        storage.insertGroupInfoChange(message, groupId)
-    }
+            val groupDestination = Destination.ClosedGroup(groupId.hexString)
+            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(groupDestination)
+            val timestamp = SnodeAPI.nowWithOffset
+            val signature = SodiumUtilities.sign(
+                buildInfoChangeVerifier(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                adminKey
+            )
+
+            val message = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setInfoChangeMessage(
+                        GroupUpdateInfoChangeMessage.newBuilder()
+                            .setUpdatedName(newName)
+                            .setType(GroupUpdateInfoChangeMessage.Type.NAME)
+                            .setAdminSignature(ByteString.copyFrom(signature))
+                    )
+                    .build()
+            ).apply {
+                sentTimestamp = timestamp
+            }
+
+            MessageSender.sendNonDurably(message, Address.fromSerialized(groupId.hexString), false)
+                .await()
+            storage.insertGroupInfoChange(message, groupId)
+        }
 
     override suspend fun requestMessageDeletion(
         groupId: AccountId,
@@ -943,7 +944,8 @@ class GroupManagerV2Impl @Inject constructor(
         // meanwhile, if we are admin we can just delete those messages from the group swarm, and otherwise
         // the admins can pick up the group message and delete the messages on our behalf.
 
-        val userGroups = requireNotNull(configFactory.userGroups) { "User groups config is not available" }
+        val userGroups =
+            requireNotNull(configFactory.userGroups) { "User groups config is not available" }
         val group = requireNotNull(userGroups.getClosedGroup(groupId.hexString)) {
             "Group doesn't exist"
         }
@@ -952,21 +954,33 @@ class GroupManagerV2Impl @Inject constructor(
         // Check if we can actually delete these messages
         check(
             group.hasAdminKey() ||
-            storage.ensureMessageHashesAreSender(messageHashes.toSet(), userPubKey, groupId.hexString)
+                    storage.ensureMessageHashesAreSender(
+                        messageHashes.toSet(),
+                        userPubKey,
+                        groupId.hexString
+                    )
         ) {
             "Cannot delete messages that are not sent by us"
         }
 
         // If we are admin, we can delete the messages from the group swarm
         group.adminKey?.let { adminKey ->
-            deleteMessageFromGroupSwarm(groupId, OwnedSwarmAuth.ofClosedGroup(groupId, adminKey), messageHashes)
+            deleteMessageFromGroupSwarm(
+                groupId,
+                OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
+                messageHashes
+            )
         }
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
         val timestamp = SnodeAPI.nowWithOffset
         val signature = group.adminKey?.let { key ->
             SodiumUtilities.sign(
-                buildDeleteMemberContentSignature(memberIds = emptyList(), messageHashes, timestamp),
+                buildDeleteMemberContentSignature(
+                    memberIds = emptyList(),
+                    messageHashes,
+                    timestamp
+                ),
                 key
             )
         }
@@ -976,7 +990,11 @@ class GroupManagerV2Impl @Inject constructor(
                     GroupUpdateDeleteMemberContentMessage.newBuilder()
                         .addAllMessageHashes(messageHashes)
                         .let {
-                            if (signature != null) it.setAdminSignature(ByteString.copyFrom(signature))
+                            if (signature != null) it.setAdminSignature(
+                                ByteString.copyFrom(
+                                    signature
+                                )
+                            )
                             else it
                         }
                 )
@@ -995,9 +1013,10 @@ class GroupManagerV2Impl @Inject constructor(
         sender: AccountId,
         senderIsVerifiedAdmin: Boolean,
     ): Unit = withContext(dispatcher) {
-        val threadId = requireNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
-            "No thread ID found for the group"
-        }
+        val threadId =
+            requireNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
+                "No thread ID found for the group"
+            }
 
         val hashes = deleteMemberContent.messageHashesList
         val memberIds = deleteMemberContent.memberSessionIdsList
@@ -1006,7 +1025,12 @@ class GroupManagerV2Impl @Inject constructor(
             if (senderIsVerifiedAdmin) {
                 // We'll delete everything the admin says
                 storage.deleteMessagesByHash(threadId, hashes)
-            } else if (storage.ensureMessageHashesAreSender(hashes.toSet(), sender.hexString, groupId.hexString)) {
+            } else if (storage.ensureMessageHashesAreSender(
+                    hashes.toSet(),
+                    sender.hexString,
+                    groupId.hexString
+                )
+            ) {
                 // ensure that all message hashes belong to user
                 // storage delete
                 storage.deleteMessagesByHash(threadId, hashes)
@@ -1023,8 +1047,17 @@ class GroupManagerV2Impl @Inject constructor(
         if (!senderIsVerifiedAdmin && adminKey != null) {
             // If the deletion request comes from a non-admin, and we as an admin, will also delete
             // the content from the swarm, provided that the messages are actually sent by that user
-            if (storage.ensureMessageHashesAreSender(hashes.toSet(), sender.hexString, groupId.hexString)) {
-                deleteMessageFromGroupSwarm(groupId, OwnedSwarmAuth.ofClosedGroup(groupId, adminKey), hashes)
+            if (storage.ensureMessageHashesAreSender(
+                    hashes.toSet(),
+                    sender.hexString,
+                    groupId.hexString
+                )
+            ) {
+                deleteMessageFromGroupSwarm(
+                    groupId,
+                    OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
+                    hashes
+                )
             }
 
             // The non-admin user shouldn't be able to delete other user's messages so we will
@@ -1032,7 +1065,11 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    private suspend fun deleteMessageFromGroupSwarm(groupId: AccountId, auth: OwnedSwarmAuth, hashes: List<String>) {
+    private suspend fun deleteMessageFromGroupSwarm(
+        groupId: AccountId,
+        auth: OwnedSwarmAuth,
+        hashes: List<String>
+    ) {
         SnodeAPI.sendBatchRequest(
             groupId, SnodeAPI.buildAuthenticatedDeleteBatchInfo(auth, hashes)
         )

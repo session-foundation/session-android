@@ -277,14 +277,15 @@ extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_supplementFor(JNIEnv *env,
                                                                            jobject thiz,
-                                                                           jstring user_session_id) {
+                                                                           jobjectArray j_user_session_ids) {
     std::lock_guard lock{util::util_mutex_};
     auto ptr = ptrToKeys(env, thiz);
-    auto string = env->GetStringUTFChars(user_session_id, nullptr);
-    auto supplement = ptr->key_supplement(string);
-    auto supplement_jbytearray = util::bytes_from_ustring(env, supplement);
-    env->ReleaseStringUTFChars(user_session_id, string);
-    return supplement_jbytearray;
+    std::vector<std::string> user_session_ids;
+    for (int i = 0, size = env->GetArrayLength(j_user_session_ids); i < size; i++) {
+        user_session_ids.push_back(util::string_from_jstring(env, (jstring)(env->GetObjectArrayElement(j_user_session_ids, i))));
+    }
+    auto supplement = ptr->key_supplement(user_session_ids);
+    return util::bytes_from_ustring(env, supplement);
 }
 extern "C"
 JNIEXPORT jint JNICALL
