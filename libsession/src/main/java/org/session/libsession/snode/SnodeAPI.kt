@@ -579,7 +579,8 @@ object SnodeAPI {
     }
 
     private data class RequestInfo(
-        val accountId: AccountId,
+        val snode: Snode,
+        val publicKey: String,
         val request: SnodeBatchRequestInfo,
         val responseType: Class<*>,
         val callback: SendChannel<Result<Any>>,
@@ -594,15 +595,17 @@ object SnodeAPI {
 
         val batchWindowMills = 100L
 
+        data class BatchKey(val snodeAddress: String, val publicKey: String)
+
         @Suppress("OPT_IN_USAGE")
         GlobalScope.launch {
-            val batches = hashMapOf<AccountId, MutableList<RequestInfo>>()
+            val batches = hashMapOf<BatchKey, MutableList<RequestInfo>>()
 
             while (true) {
                 val batch = select<List<RequestInfo>?> {
                     // If we receive a request, add it to the batch
                     batchRequests.onReceive {
-                        batches.getOrPut(it.accountId) { mutableListOf() }.add(it)
+                        batches.getOrPut(BatchKey(it.snode.address, it.publicKey)) { mutableListOf() }.add(it)
                         null
                     }
 
@@ -622,11 +625,11 @@ object SnodeAPI {
 
                 if (batch != null) {
                     launch batch@{
-                        val accountId = batch.first().accountId
+                        val snode = batch.first().snode
                         val responses = try {
                             getBatchResponse(
-                                snode = getSingleTargetSnode(accountId.hexString).await(),
-                                publicKey = accountId.hexString,
+                                snode = snode,
+                                publicKey = batch.first().publicKey,
                                 requests = batch.map { it.request }, sequence = false
                             )
                         } catch (e: Exception) {
@@ -660,21 +663,23 @@ object SnodeAPI {
     }
 
     suspend fun <T> sendBatchRequest(
-        swarmAccount: AccountId,
+        snode: Snode,
+        publicKey: String,
         request: SnodeBatchRequestInfo,
         responseType: Class<T>,
     ): T {
         val callback = Channel<Result<T>>()
         @Suppress("UNCHECKED_CAST")
-        batchedRequestsSender.send(RequestInfo(swarmAccount, request, responseType, callback as SendChannel<Any>))
+        batchedRequestsSender.send(RequestInfo(snode, publicKey, request, responseType, callback as SendChannel<Any>))
         return callback.receive().getOrThrow()
     }
 
     suspend fun sendBatchRequest(
-        swarmAccount: AccountId,
+        snode: Snode,
+        publicKey: String,
         request: SnodeBatchRequestInfo,
     ): JsonNode {
-        return sendBatchRequest(swarmAccount, request, JsonNode::class.java)
+        return sendBatchRequest(snode, publicKey, request, JsonNode::class.java)
     }
 
     suspend fun getBatchResponse(
@@ -803,9 +808,9 @@ object SnodeAPI {
         }
 
         return scope.retrySuspendAsPromise(maxRetryCount) {
-            val destination = message.recipient
             sendBatchRequest(
-                swarmAccount = AccountId(destination),
+                snode = getSingleTargetSnode(message.recipient).await(),
+                publicKey = message.recipient,
                 request = SnodeBatchRequestInfo(
                     method = Snode.Method.SendMessage.rawValue,
                     params = params,

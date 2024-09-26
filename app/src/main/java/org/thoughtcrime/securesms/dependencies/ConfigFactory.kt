@@ -1,40 +1,57 @@
 package org.thoughtcrime.securesms.dependencies
 
 import android.content.Context
-import android.os.Trace
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
+import network.loki.messenger.libsession_util.MutableContacts
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
+import network.loki.messenger.libsession_util.MutableUserGroupsConfig
+import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Contact
+import network.loki.messenger.libsession_util.util.ExpiryMode
+import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.Sodium
-import org.session.libsession.messaging.messages.Destination
+import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.messages.control.ConfigurationMessage
+import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SwarmAuth
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigFactoryUpdateListener
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
-import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
+import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.GroupConfigs
+import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.MutableGroupConfigs
+import org.session.libsession.utilities.MutableUserConfigs
+import org.session.libsession.utilities.UserConfigs
+import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Hex
+import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import java.util.concurrent.ConcurrentHashMap
+
 
 class ConfigFactory(
     private val context: Context,
     private val configDatabase: ConfigDatabase,
-    /** <ed25519 secret key,33 byte prefixed public key (hex encoded)> */
-    private val maybeGetUserInfo: () -> Pair<ByteArray, String>?
-) :
-    ConfigFactoryProtocol {
+    private val threadDb: ThreadDatabase,
+    private val storage: StorageProtocol,
+) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
         // config change, any message which would normally result in a config change which was sent
@@ -43,312 +60,261 @@ class ConfigFactory(
         const val configChangeBufferPeriod: Long = (2 * 60 * 1000)
     }
 
-    fun keyPairChanged() { // this should only happen restoring or clearing datac
-        _userConfig?.free()
-        _contacts?.free()
-        _convoVolatileConfig?.free()
-        _userConfig = null
-        _contacts = null
-        _convoVolatileConfig = null
+    init {
+        System.loadLibrary("session_util")
     }
 
-    private val userLock = Object()
-    private var _userConfig: UserProfile? = null
-    private val contactsLock = Object()
-    private var _contacts: Contacts? = null
-    private val convoVolatileLock = Object()
-    private var _convoVolatileConfig: ConversationVolatileConfig? = null
-    private val userGroupsLock = Object()
-    private var _userGroups: UserGroupsConfig? = null
+    private class UserConfigsImpl(
+        userEd25519SecKey: ByteArray,
+        private val userAccountId: AccountId,
+        private val configDatabase: ConfigDatabase,
+        storage: StorageProtocol,
+        threadDb: ThreadDatabase,
+        contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.CONTACTS_VARIANT,
+            userAccountId.hexString
+        ),
+        userGroupsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.USER_GROUPS_VARIANT,
+            userAccountId.hexString
+        ),
+        userProfileDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.USER_PROFILE_VARIANT,
+            userAccountId.hexString
+        ),
+        convoInfoDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.CONVO_INFO_VARIANT,
+            userAccountId.hexString
+        )
+    ) : MutableUserConfigs {
+        override val contacts = Contacts(
+            ed25519SecretKey = userEd25519SecKey,
+            initialDump = contactsDump,
+        )
 
-    private val isConfigForcedOn by lazy { TextSecurePreferences.hasForcedNewConfig(context) }
+        override val userGroups = UserGroupsConfig(
+            ed25519SecretKey = userEd25519SecKey,
+            initialDump = userGroupsDump
+        )
+        override val userProfile = UserProfile(
+            ed25519SecretKey = userEd25519SecKey,
+            initialDump = userProfileDump
+        )
+        override val convoInfoVolatile = ConversationVolatileConfig(
+            ed25519SecretKey = userEd25519SecKey,
+            initialDump = convoInfoDump,
+        )
 
-    private val listeners: MutableList<ConfigFactoryUpdateListener> = mutableListOf()
+        init {
+            if (contactsDump == null) {
+                contacts.initFrom(storage)
+            }
 
-    private val _configUpdateNotifications = MutableSharedFlow<Unit>(
+            if (userGroupsDump == null) {
+                userGroups.initFrom(storage)
+            }
+
+            if (userProfileDump == null) {
+                userProfile.initFrom(storage)
+            }
+
+            if (convoInfoDump == null) {
+                convoInfoVolatile.initFrom(storage, threadDb)
+            }
+        }
+
+        /**
+         * Persists the config if it is dirty and returns the list of classes that were persisted
+         */
+        fun persistIfDirty(): Boolean {
+            return sequenceOf(
+                contacts to ConfigDatabase.CONTACTS_VARIANT,
+                userGroups to ConfigDatabase.USER_GROUPS_VARIANT,
+                userProfile to ConfigDatabase.USER_PROFILE_VARIANT,
+                convoInfoVolatile to ConfigDatabase.CONVO_INFO_VARIANT
+            ).fold(false) { acc, (config, variant) ->
+                if (config.needsDump()) {
+                    configDatabase.storeConfig(
+                        variant = variant,
+                        publicKey = userAccountId.hexString,
+                        data = config.dump(),
+                        timestamp = SnodeAPI.nowWithOffset
+                    )
+                    true
+                } else {
+                    acc
+                }
+            }
+        }
+    }
+
+    private class GroupConfigsImpl(
+        userEd25519SecKey: ByteArray,
+        private val groupAccountId: AccountId,
+        groupAdminKey: ByteArray?,
+        private val configDatabase: ConfigDatabase
+    ) : MutableGroupConfigs {
+        override val groupInfo = GroupInfoConfig(
+            groupPubKey = groupAccountId.pubKeyBytes,
+            groupAdminKey = groupAdminKey,
+            initialDump = configDatabase.retrieveConfigAndHashes(
+                ConfigDatabase.INFO_VARIANT,
+                groupAccountId.hexString
+            )
+        )
+        override val groupMembers = GroupMembersConfig(
+            groupPubKey = groupAccountId.pubKeyBytes,
+            groupAdminKey = groupAdminKey,
+            initialDump = configDatabase.retrieveConfigAndHashes(
+                ConfigDatabase.MEMBER_VARIANT,
+                groupAccountId.hexString
+            )
+        )
+        override val groupKeys = GroupKeysConfig(
+            userSecretKey = userEd25519SecKey,
+            groupPublicKey = groupAccountId.pubKeyBytes,
+            groupAdminKey = groupAdminKey,
+            initialDump = configDatabase.retrieveConfigAndHashes(
+                ConfigDatabase.KEYS_VARIANT,
+                groupAccountId.hexString
+            ),
+            info = groupInfo,
+            members = groupMembers
+        )
+
+        fun persistIfDirty(): Boolean {
+            if (groupInfo.needsDump() || groupMembers.needsDump() || groupKeys.needsDump()) {
+                configDatabase.storeGroupConfigs(
+                    publicKey = groupAccountId.hexString,
+                    keysConfig = groupKeys.dump(),
+                    infoConfig = groupInfo.dump(),
+                    memberConfig = groupMembers.dump(),
+                    timestamp = SnodeAPI.nowWithOffset
+                )
+                return true
+            }
+
+            return false
+        }
+
+        override fun loadKeys(message: ByteArray, hash: String, timestamp: Long): Boolean {
+            return groupKeys.loadKey(message, hash, timestamp, groupInfo.pointer, groupMembers.pointer)
+        }
+
+        override fun rekeys() {
+            groupKeys.rekey(groupInfo.pointer, groupMembers.pointer)
+        }
+    }
+
+    private val userConfigs = ConcurrentHashMap<AccountId, UserConfigsImpl>()
+    private val groupConfigs = ConcurrentHashMap<AccountId, GroupConfigsImpl>()
+
+    private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     override val configUpdateNotifications get() = _configUpdateNotifications
 
-    fun registerListener(listener: ConfigFactoryUpdateListener) {
-        listeners += listener
-    }
+    private fun requiresCurrentUserAccountId(): AccountId =
+        AccountId(requireNotNull(storage.getUserPublicKey()) {
+            "No logged in user"
+        })
 
-    fun unregisterListener(listener: ConfigFactoryUpdateListener) {
-        listeners -= listener
-    }
-
-    private inline fun <T> synchronizedWithLog(lock: Any, body: () -> T): T {
-        Trace.beginSection("synchronizedWithLog")
-        val result = synchronized(lock) {
-            body()
+    private fun requiresCurrentUserED25519SecKey(): ByteArray =
+        requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.asBytes) {
+            "No logged in user"
         }
-        Trace.endSection()
-        return result
+
+    override fun <T> withUserConfigs(cb: (UserConfigs) -> T): T {
+        val userAccountId = requiresCurrentUserAccountId()
+        val configs = userConfigs.getOrPut(userAccountId) {
+            UserConfigsImpl(
+                requiresCurrentUserED25519SecKey(),
+                userAccountId,
+                threadDb = threadDb,
+                configDatabase = configDatabase,
+                storage = storage
+            )
+        }
+
+        return synchronized(configs) {
+            cb(configs)
+        }
     }
 
-    override val user: UserProfile?
-        get() = synchronizedWithLog(userLock) {
-            if (_userConfig == null) {
-                val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
-                val userDump = configDatabase.retrieveConfigAndHashes(
-                    SharedConfigMessage.Kind.USER_PROFILE.name,
-                    publicKey
-                )
-                _userConfig = if (userDump != null) {
-                    UserProfile.newInstance(secretKey, userDump)
-                } else {
-                    ConfigurationMessageUtilities.generateUserProfileConfigDump()?.let { dump ->
-                        UserProfile.newInstance(secretKey, dump)
-                    } ?: UserProfile.newInstance(secretKey)
-                }
+    override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
+        return withUserConfigs { configs ->
+            val result = cb(configs as UserConfigsImpl)
+
+            if (configs.persistIfDirty()) {
+                _configUpdateNotifications.tryEmit(ConfigUpdateNotification.UserConfigs)
             }
-            _userConfig
+
+            result
+        }
+    }
+
+    override fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
+        val configs = groupConfigs.getOrPut(groupId) {
+            val groupAdminKey = requireNotNull(withUserConfigs {
+                it.userGroups.getClosedGroup(groupId.hexString)
+            }) {
+                "Group not found"
+            }.adminKey
+
+            GroupConfigsImpl(
+                requiresCurrentUserED25519SecKey(),
+                groupId,
+                groupAdminKey,
+                configDatabase
+            )
         }
 
-    override val contacts: Contacts?
-        get() = synchronizedWithLog(contactsLock) {
-            if (_contacts == null) {
-                val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
-                val contactsDump = configDatabase.retrieveConfigAndHashes(
-                    SharedConfigMessage.Kind.CONTACTS.name,
-                    publicKey
-                )
-                _contacts = if (contactsDump != null) {
-                    Contacts.newInstance(secretKey, contactsDump)
-                } else {
-                    ConfigurationMessageUtilities.generateContactConfigDump()?.let { dump ->
-                        Contacts.newInstance(secretKey, dump)
-                    } ?: Contacts.newInstance(secretKey)
-                }
+        return synchronized(configs) {
+            cb(configs)
+        }
+    }
+
+    override fun <T> withMutableGroupConfigs(
+        groupId: AccountId,
+        cb: (MutableGroupConfigs) -> T
+    ): T {
+        return withGroupConfigs(groupId) { configs ->
+            val result = cb(configs as GroupConfigsImpl)
+
+            if (configs.persistIfDirty()) {
+                _configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
             }
-            _contacts
+
+            result
         }
-
-    override val convoVolatile: ConversationVolatileConfig?
-        get() = synchronizedWithLog(convoVolatileLock) {
-            if (_convoVolatileConfig == null) {
-                val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
-                val convoDump = configDatabase.retrieveConfigAndHashes(
-                    SharedConfigMessage.Kind.CONVO_INFO_VOLATILE.name,
-                    publicKey
-                )
-                _convoVolatileConfig = if (convoDump != null) {
-                    ConversationVolatileConfig.newInstance(secretKey, convoDump)
-                } else {
-                    ConfigurationMessageUtilities.generateConversationVolatileDump(context)
-                        ?.let { dump ->
-                            ConversationVolatileConfig.newInstance(secretKey, dump)
-                        } ?: ConversationVolatileConfig.newInstance(secretKey)
-                }
-            }
-            _convoVolatileConfig
-        }
-
-    override val userGroups: UserGroupsConfig?
-        get() = synchronizedWithLog(userGroupsLock) {
-            if (_userGroups == null) {
-                val (secretKey, publicKey) = maybeGetUserInfo() ?: return null
-                val userGroupsDump = configDatabase.retrieveConfigAndHashes(
-                    SharedConfigMessage.Kind.GROUPS.name,
-                    publicKey
-                )
-                _userGroups = if (userGroupsDump != null) {
-                    UserGroupsConfig.Companion.newInstance(secretKey, userGroupsDump)
-                } else {
-                    ConfigurationMessageUtilities.generateUserGroupDump(context)?.let { dump ->
-                        UserGroupsConfig.Companion.newInstance(secretKey, dump)
-                    } ?: UserGroupsConfig.newInstance(secretKey)
-                }
-            }
-            _userGroups
-        }
-
-    private fun getGroupInfo(groupSessionId: AccountId) = userGroups?.getClosedGroup(groupSessionId.hexString)
-
-    override fun getGroupInfoConfig(groupSessionId: AccountId): GroupInfoConfig? = getGroupInfo(groupSessionId)?.let { groupInfo ->
-        // get any potential initial dumps
-        val dump = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.INFO_VARIANT,
-            groupSessionId.hexString
-        ) ?: byteArrayOf()
-
-        GroupInfoConfig.newInstance(groupSessionId.pubKeyBytes, groupInfo.adminKey, dump)
     }
 
-    override fun getGroupKeysConfig(groupSessionId: AccountId,
-                                    info: GroupInfoConfig?,
-                                    members: GroupMembersConfig?,
-                                    free: Boolean): GroupKeysConfig? = getGroupInfo(groupSessionId)?.let { groupInfo ->
-        // Get the user info or return early
-        val (userSk, _) = maybeGetUserInfo() ?: return@let null
-
-        // Get the group info or return early
-        val usedInfo = info ?: getGroupInfoConfig(groupSessionId) ?: return@let null
-
-        // Get the group members or return early
-        val usedMembers = members ?: getGroupMemberConfig(groupSessionId) ?: return@let null
-
-        // Get the dump or empty
-        val dump = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.KEYS_VARIANT,
-            groupSessionId.hexString
-        ) ?: byteArrayOf()
-
-        // Put it all together
-        val keys = GroupKeysConfig.newInstance(
-            userSk,
-            groupSessionId.pubKeyBytes,
-            groupInfo.adminKey,
-            dump,
-            usedInfo,
-            usedMembers
-        )
-        if (free) {
-            info?.free()
-            members?.free()
+    override fun removeGroup(groupId: AccountId) {
+        withMutableUserConfigs {
+            it.userGroups.eraseClosedGroup(groupId.hexString)
         }
-        if (usedInfo !== info) usedInfo.free()
-        if (usedMembers !== members) usedMembers.free()
-        keys
-    }
 
-    override fun getGroupMemberConfig(groupSessionId: AccountId): GroupMembersConfig? = getGroupInfo(groupSessionId)?.let { groupInfo ->
-        // Get initial dump if we have one
-        val dump = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.MEMBER_VARIANT,
-            groupSessionId.hexString
-        ) ?: byteArrayOf()
-
-        GroupMembersConfig.newInstance(
-            groupSessionId.pubKeyBytes,
-            groupInfo.adminKey,
-            dump
-        )
-    }
-
-    override fun constructGroupKeysConfig(
-        groupSessionId: AccountId,
-        info: GroupInfoConfig,
-        members: GroupMembersConfig
-    ): GroupKeysConfig? = getGroupInfo(groupSessionId)?.let { groupInfo ->
-        val (userSk, _) = maybeGetUserInfo() ?: return null
-        GroupKeysConfig.newInstance(
-            userSk,
-            groupSessionId.pubKeyBytes,
-            groupInfo.adminKey,
-            info = info,
-            members = members
-        )
-    }
-
-    override fun userSessionId(): AccountId? {
-        return maybeGetUserInfo()?.second?.let(::AccountId)
-    }
-
-    override fun maybeDecryptForUser(encoded: ByteArray, domain: String, closedGroupSessionId: AccountId): ByteArray? {
-        val secret = maybeGetUserInfo()?.first ?: run {
-            Log.e("ConfigFactory", "No user ed25519 secret key decrypting a message for us")
-            return null
+        if (groupConfigs.remove(groupId) != null) {
+            _configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsDeleted(groupId))
         }
+
+        configDatabase.deleteGroupConfigs(groupId)
+    }
+
+    override fun maybeDecryptForUser(
+        encoded: ByteArray,
+        domain: String,
+        closedGroupSessionId: AccountId
+    ): ByteArray? {
         return Sodium.decryptForMultipleSimple(
             encoded = encoded,
-            ed25519SecretKey = secret,
+            ed25519SecretKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.asBytes) {
+                "No logged in user"
+            },
             domain = domain,
             senderPubKey = Sodium.ed25519PkToCurve25519(closedGroupSessionId.pubKeyBytes)
         )
-    }
-
-    override fun getUserConfigs(): List<ConfigBase> =
-        listOfNotNull(user, contacts, convoVolatile, userGroups)
-
-
-    private fun persistUserConfigDump(timestamp: Long) = synchronized(userLock) {
-        val dumped = user?.dump() ?: return
-        val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(
-            SharedConfigMessage.Kind.USER_PROFILE.name,
-            publicKey,
-            dumped,
-            timestamp
-        )
-    }
-
-    private fun persistContactsConfigDump(timestamp: Long) = synchronized(contactsLock) {
-        val dumped = contacts?.dump() ?: return
-        val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(
-            SharedConfigMessage.Kind.CONTACTS.name,
-            publicKey,
-            dumped,
-            timestamp
-        )
-    }
-
-    private fun persistConvoVolatileConfigDump(timestamp: Long) = synchronized(convoVolatileLock) {
-        val dumped = convoVolatile?.dump() ?: return
-        val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(
-            SharedConfigMessage.Kind.CONVO_INFO_VOLATILE.name,
-            publicKey,
-            dumped,
-            timestamp
-        )
-    }
-
-    private fun persistUserGroupsConfigDump(timestamp: Long) = synchronized(userGroupsLock) {
-        val dumped = userGroups?.dump() ?: return
-        val (_, publicKey) = maybeGetUserInfo() ?: return
-        configDatabase.storeConfig(
-            SharedConfigMessage.Kind.GROUPS.name,
-            publicKey,
-            dumped,
-            timestamp
-        )
-    }
-
-    fun persistGroupConfigDump(forConfigObject: ConfigBase, groupSessionId: AccountId, timestamp: Long) = synchronized(userGroupsLock) {
-        val dumped = forConfigObject.dump()
-        val variant = when (forConfigObject) {
-            is GroupMembersConfig -> ConfigDatabase.MEMBER_VARIANT
-            is GroupInfoConfig -> ConfigDatabase.INFO_VARIANT
-            else -> throw Exception("Shouldn't be called")
-        }
-        configDatabase.storeConfig(
-            variant,
-            groupSessionId.hexString,
-            dumped,
-            timestamp
-        )
-        _configUpdateNotifications.tryEmit(Unit)
-    }
-
-    override fun persist(forConfigObject: Config, timestamp: Long, forPublicKey: String?) {
-        try {
-            if (forConfigObject is ConfigBase && !forConfigObject.needsDump() || forConfigObject is GroupKeysConfig && !forConfigObject.needsDump()) {
-                Log.d("ConfigFactory", "Don't need to persist ${forConfigObject.javaClass} for $forPublicKey pubkey")
-                return
-            }
-
-            listeners.forEach { listener ->
-                listener.notifyUpdates(forConfigObject, timestamp)
-            }
-
-            when (forConfigObject) {
-                is UserProfile -> persistUserConfigDump(timestamp)
-                is Contacts -> persistContactsConfigDump(timestamp)
-                is ConversationVolatileConfig -> persistConvoVolatileConfigDump(timestamp)
-                is UserGroupsConfig -> persistUserGroupsConfigDump(timestamp)
-                is GroupMembersConfig -> persistGroupConfigDump(forConfigObject, AccountId(forPublicKey!!), timestamp)
-                is GroupInfoConfig -> persistGroupConfigDump(forConfigObject, AccountId(forPublicKey!!), timestamp)
-                else -> throw UnsupportedOperationException("Can't support type of ${forConfigObject::class.simpleName} yet")
-            }
-
-            _configUpdateNotifications.tryEmit(Unit)
-        } catch (e: Exception) {
-            Log.e("Loki", "failed to persist ${forConfigObject.javaClass.simpleName}", e)
-        }
     }
 
     override fun conversationInConfig(
@@ -357,37 +323,37 @@ class ConfigFactory(
         openGroupId: String?,
         visibleOnly: Boolean
     ): Boolean {
-        val (_, userPublicKey) = maybeGetUserInfo() ?: return true
+        val userPublicKey = storage.getUserPublicKey() ?: return false
 
         if (openGroupId != null) {
-            val userGroups = userGroups ?: return false
             val threadId = GroupManager.getOpenGroupThreadID(openGroupId, context)
             val openGroup =
                 get(context).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return false
 
             // Not handling the `hidden` behaviour for communities so just indicate the existence
-            return (userGroups.getCommunityInfo(openGroup.server, openGroup.room) != null)
+            return withUserConfigs {
+                it.userGroups.getCommunityInfo(openGroup.server, openGroup.room) != null
+            }
         } else if (groupPublicKey != null) {
-            val userGroups = userGroups ?: return false
-
             // Not handling the `hidden` behaviour for legacy groups so just indicate the existence
-            return if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
-                userGroups.getClosedGroup(groupPublicKey) != null
-            } else {
-                userGroups.getLegacyGroupInfo(groupPublicKey) != null
+            return withUserConfigs {
+                if (groupPublicKey.startsWith(IdPrefix.GROUP.value)) {
+                    it.userGroups.getClosedGroup(groupPublicKey) != null
+                } else {
+                    it.userGroups.getLegacyGroupInfo(groupPublicKey) != null
+                }
             }
         } else if (publicKey == userPublicKey) {
-            val user = user ?: return false
-
-            return (!visibleOnly || user.getNtsPriority() != ConfigBase.PRIORITY_HIDDEN)
+            return withUserConfigs {
+                !visibleOnly || it.userProfile.getNtsPriority() != ConfigBase.PRIORITY_HIDDEN
+            }
         } else if (publicKey != null) {
-            val contacts = contacts ?: return false
-            val targetContact = contacts.get(publicKey) ?: return false
-
-            return (!visibleOnly || targetContact.priority != ConfigBase.PRIORITY_HIDDEN)
+            return withUserConfigs {
+                (!visibleOnly || it.contacts.get(publicKey)?.priority != ConfigBase.PRIORITY_HIDDEN)
+            }
+        } else {
+            return false
         }
-
-        return false
     }
 
     override fun canPerformChange(
@@ -402,32 +368,192 @@ class ConfigFactory(
         return (changeTimestampMs >= (lastUpdateTimestampMs - configChangeBufferPeriod))
     }
 
-    override fun saveGroupConfigs(
-        groupKeys: GroupKeysConfig,
-        groupInfo: GroupInfoConfig,
-        groupMembers: GroupMembersConfig
-    ) {
-        val pubKey = groupInfo.id().hexString
-        val timestamp = SnodeAPI.nowWithOffset
+    override fun getGroupAuth(groupId: AccountId): SwarmAuth? {
+        val (adminKey, authData) = withUserConfigs {
+            val group = it.userGroups.getClosedGroup(groupId.hexString)
+            group?.adminKey to group?.authData
+        }
 
-        // this would be nicer with a .any iteration or something but the base types don't line up
-        val anyNeedDump = groupKeys.needsDump() || groupInfo.needsDump() || groupMembers.needsDump()
-        if (!anyNeedDump) return Log.d("ConfigFactory", "Group config doesn't need dump, skipping")
-        else Log.d("ConfigFactory", "Group config needs dump, storing and notifying")
-
-        configDatabase.storeGroupConfigs(pubKey, groupKeys.dump(), groupInfo.dump(), groupMembers.dump(), timestamp)
-        _configUpdateNotifications.tryEmit(Unit)
+        return if (adminKey != null) {
+            OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
+        } else if (authData != null) {
+            GroupSubAccountSwarmAuth(groupId, this, authData)
+        } else {
+            null
+        }
     }
 
-    override fun removeGroup(closedGroupId: AccountId) {
-        val groups = userGroups ?: return
-        groups.eraseClosedGroup(closedGroupId.hexString)
-        persist(groups, SnodeAPI.nowWithOffset)
-        configDatabase.deleteGroupConfigs(closedGroupId)
+    fun clearAll() {
+        //TODO: clear all configsr
     }
 
-    override fun scheduleUpdate(destination: Destination) {
-        // there's probably a better way to do this
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(destination)
+    private class GroupSubAccountSwarmAuth(
+        override val accountId: AccountId,
+        val factory: ConfigFactory,
+        val authData: ByteArray,
+    ) : SwarmAuth {
+        override val ed25519PublicKeyHex: String?
+            get() = null
+
+        override fun sign(data: ByteArray): Map<String, String> {
+            return factory.withGroupConfigs(accountId) {
+                val auth = it.groupKeys.subAccountSign(data, authData)
+                buildMap {
+                    put("subaccount", auth.subAccount)
+                    put("subaccount_sig", auth.subAccountSig)
+                    put("signature", auth.signature)
+                }
+            }
+        }
+
+        override fun signForPushRegistry(data: ByteArray): Map<String, String> {
+            return factory.withGroupConfigs(accountId) {
+                val auth = it.groupKeys.subAccountSign(data, authData)
+                buildMap {
+                    put("subkey_tag", auth.subAccount)
+                    put("signature", auth.signature)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Sync group data from our local database
+ */
+private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
+    storage
+        .getAllOpenGroups()
+        .values
+        .asSequence()
+        .mapNotNull { openGroup ->
+            val (baseUrl, room, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return@mapNotNull null
+            val pubKeyHex = Hex.toStringCondensed(pubKey)
+            val baseInfo = BaseCommunityInfo(baseUrl, room, pubKeyHex)
+            val threadId = storage.getThreadId(openGroup) ?: return@mapNotNull null
+            val isPinned = storage.isPinned(threadId)
+            GroupInfo.CommunityGroupInfo(baseInfo, if (isPinned) 1 else 0)
+        }
+        .forEach(this::set)
+
+    storage
+        .getAllGroups(includeInactive = false)
+        .asSequence().filter { it.isLegacyClosedGroup && it.isActive && it.members.size > 1 }
+        .mapNotNull { group ->
+            val groupAddress = Address.fromSerialized(group.encodedId)
+            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.serialize()).toHexString()
+            val recipient = storage.getRecipientSettings(groupAddress) ?: return@mapNotNull null
+            val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: return@mapNotNull null
+            val threadId = storage.getThreadId(group.encodedId)
+            val isPinned = threadId?.let { storage.isPinned(threadId) } ?: false
+            val admins = group.admins.associate { it.serialize() to true }
+            val members = group.members.filterNot { it.serialize() !in admins.keys }.associate { it.serialize() to false }
+            GroupInfo.LegacyGroupInfo(
+                accountId = groupPublicKey,
+                name = group.title,
+                members = admins + members,
+                priority = if (isPinned) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
+                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
+                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                disappearingTimer = recipient.expireMessages.toLong(),
+                joinedAt = (group.formationTimestamp / 1000L)
+            )
+        }
+        .forEach(this::set)
+}
+
+private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol, threadDb: ThreadDatabase) {
+    threadDb.approvedConversationList.use { cursor ->
+        val reader = threadDb.readerFor(cursor)
+        var current = reader.next
+        while (current != null) {
+            val recipient = current.recipient
+            val contact = when {
+                recipient.isCommunityRecipient -> {
+                    val openGroup = storage.getOpenGroup(current.threadId) ?: continue
+                    val (base, room, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: continue
+                    getOrConstructCommunity(base, room, pubKey)
+                }
+                recipient.isClosedGroupV2Recipient -> {
+                    // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
+                    // but just in case...
+                    getOrConstructClosedGroup(recipient.address.serialize())
+                }
+                recipient.isLegacyClosedGroupRecipient -> {
+                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+                    getOrConstructLegacyGroup(groupPublicKey)
+                }
+                recipient.isContactRecipient -> {
+                    if (recipient.isLocalNumber) null // this is handled by the user profile NTS data
+                    else if (recipient.isOpenGroupInboxRecipient) null // specifically exclude
+                    else if (!recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) null
+                    else getOrConstructOneToOne(recipient.address.serialize())
+                }
+                else -> null
+            }
+            if (contact == null) {
+                current = reader.next
+                continue
+            }
+            contact.lastRead = current.lastSeen
+            contact.unread = false
+            set(contact)
+            current = reader.next
+        }
+    }
+}
+
+private fun MutableUserProfile.initFrom(storage: StorageProtocol) {
+    val ownPublicKey = storage.getUserPublicKey() ?: return
+    val config = ConfigurationMessage.getCurrent(listOf()) ?: return
+    setName(config.displayName)
+    val picUrl = config.profilePicture
+    val picKey = config.profileKey
+    if (!picUrl.isNullOrEmpty() && picKey.isNotEmpty()) {
+        setPic(UserPic(picUrl, picKey))
+    }
+    val ownThreadId = storage.getThreadId(Address.fromSerialized(ownPublicKey))
+    setNtsPriority(
+        if (ownThreadId != null)
+            if (storage.isPinned(ownThreadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE
+        else ConfigBase.PRIORITY_HIDDEN
+    )
+}
+
+private fun MutableContacts.initFrom(storage: StorageProtocol) {
+    val localUserKey = storage.getUserPublicKey() ?: return
+    val contactsWithSettings = storage.getAllContacts().filter { recipient ->
+        recipient.accountID != localUserKey && recipient.accountID.startsWith(IdPrefix.STANDARD.value)
+                && storage.getThreadId(recipient.accountID) != null
+    }.map { contact ->
+        val address = Address.fromSerialized(contact.accountID)
+        val thread = storage.getThreadId(address)
+        val isPinned = if (thread != null) {
+            storage.isPinned(thread)
+        } else false
+
+        Triple(contact, storage.getRecipientSettings(address)!!, isPinned)
+    }
+    for ((contact, settings, isPinned) in contactsWithSettings) {
+        val url = contact.profilePictureURL
+        val key = contact.profilePictureEncryptionKey
+        val userPic = if (url.isNullOrEmpty() || key?.isNotEmpty() != true) {
+            null
+        } else {
+            UserPic(url, key)
+        }
+
+        val contactInfo = Contact(
+            id = contact.accountID,
+            name = contact.name.orEmpty(),
+            nickname = contact.nickname.orEmpty(),
+            blocked = settings.isBlocked,
+            approved = settings.isApproved,
+            approvedMe = settings.hasApprovedMe(),
+            profilePicture = userPic ?: UserPic.DEFAULT,
+            priority = if (isPinned) 1 else 0,
+            expiryMode = if (settings.expireMessages == 0) ExpiryMode.NONE else ExpiryMode.AfterRead(settings.expireMessages.toLong())
+        )
+        set(contactInfo)
     }
 }

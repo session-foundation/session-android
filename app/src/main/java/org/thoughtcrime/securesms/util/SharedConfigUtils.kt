@@ -1,12 +1,13 @@
 package org.thoughtcrime.securesms.util
 
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 
-fun ConversationVolatileConfig.getConversationUnread(thread: ThreadRecord): Boolean {
+fun ReadableConversationVolatileConfig.getConversationUnread(thread: ThreadRecord): Boolean {
     val recipient = thread.recipient
     if (recipient.isContactRecipient
         && recipient.isOpenGroupInboxRecipient

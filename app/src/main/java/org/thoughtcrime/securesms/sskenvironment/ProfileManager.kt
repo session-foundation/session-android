@@ -13,7 +13,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -97,25 +96,24 @@ class ProfileManager @Inject constructor(
     }
 
     override fun contactUpdatedInternal(contact: Contact): String? {
-        val contactConfig = configFactory.contacts ?: return null
         if (contact.accountID == TextSecurePreferences.getLocalNumber(context)) return null
         val accountId = AccountId(contact.accountID)
         if (accountId.prefix != IdPrefix.STANDARD) return null // only internally store standard account IDs
-        contactConfig.upsertContact(contact.accountID) {
-            this.name = contact.name.orEmpty()
-            this.nickname = contact.nickname.orEmpty()
-            val url = contact.profilePictureURL
-            val key = contact.profilePictureEncryptionKey
-            if (!url.isNullOrEmpty() && key != null && key.size == 32) {
-                this.profilePicture = UserPic(url, key)
-            } else if (url.isNullOrEmpty() && key == null) {
-                this.profilePicture = UserPic.DEFAULT
+        return configFactory.withMutableUserConfigs {
+            val contactConfig = it.contacts
+            contactConfig.upsertContact(contact.accountID) {
+                this.name = contact.name.orEmpty()
+                this.nickname = contact.nickname.orEmpty()
+                val url = contact.profilePictureURL
+                val key = contact.profilePictureEncryptionKey
+                if (!url.isNullOrEmpty() && key != null && key.size == 32) {
+                    this.profilePicture = UserPic(url, key)
+                } else if (url.isNullOrEmpty() && key == null) {
+                    this.profilePicture = UserPic.DEFAULT
+                }
             }
+            contactConfig.get(contact.accountID)?.hashCode()?.toString()
         }
-        if (contactConfig.needsPush()) {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
-        }
-        return contactConfig.get(contact.accountID)?.hashCode()?.toString()
     }
 
 }

@@ -3,10 +3,17 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import android.util.SparseArray
 import androidx.core.util.valueIterator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.MutableConfig
+import network.loki.messenger.libsession_util.MutableContacts
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
+import network.loki.messenger.libsession_util.MutableUserGroupsConfig
+import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import nl.komponents.kovenant.Deferred
@@ -24,6 +31,8 @@ import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.Contact.Name
+import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
@@ -135,9 +144,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
         }
     }
 
-    private fun processConfig(snode: Snode, rawMessages: RawResponse, namespace: Int, forConfigObject: ConfigBase?) {
-        if (forConfigObject == null) return
-
+    private fun processConfig(snode: Snode, rawMessages: RawResponse, namespace: Int, forConfig: Class<out MutableConfig>) {
         val messages = rawMessages["messages"] as? List<*>
         val processed = if (!messages.isNullOrEmpty()) {
             SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
@@ -152,19 +159,18 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
 
         if (processed.isEmpty()) return
 
-        var latestMessageTimestamp: Long? = null
-        processed.forEach { (body, hash, timestamp) ->
+        processed.forEach { (body, hash, _) ->
             try {
-                forConfigObject.merge(hash to body)
-                latestMessageTimestamp = if (timestamp > (latestMessageTimestamp ?: 0L)) { timestamp } else { latestMessageTimestamp }
+                configFactory.withMutableUserConfigs { configs ->
+                    configs
+                        .allConfigs()
+                        .filter { it.javaClass.isInstance(forConfig) }
+                        .first()
+                        .merge(arrayOf(hash to body))
+                }
             } catch (e: Exception) {
                 Log.e(TAG, e)
             }
-        }
-        // process new results
-        // latestMessageTimestamp should always be non-null if the config object needs dump
-        if (forConfigObject.needsDump() && latestMessageTimestamp != null) {
-            configFactory.persist(forConfigObject, latestMessageTimestamp ?: SnodeAPI.nowWithOffset)
         }
     }
 
@@ -181,7 +187,8 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
             val hashesToExtend = mutableSetOf<String>()
             val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
 
-            configFactory.user?.let { config ->
+            configFactory.withUserConfigs {
+                val config = it.userProfile
                 hashesToExtend += config.currentHashes()
                 SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                     snode = snode,
@@ -189,7 +196,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                     namespace = config.namespace(),
                     maxSize = -8
                 )
-            }?.let { request ->
+            }.let { request ->
                 requests += request
             }
 
@@ -199,7 +206,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                         auth = userAuth,
                         newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
                         extend = true
-                )?.let { extensionRequest ->
+                ).let { extensionRequest ->
                     requests += extensionRequest
                 }
             }
@@ -217,7 +224,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                                 if (body == null) {
                                     Log.e(TAG, "Batch sub-request didn't contain a body")
                                 } else {
-                                    processConfig(snode, body, configFactory.user!!.namespace(), configFactory.user)
+                                    processConfig(snode, body, Namespace.USER_PROFILE(), MutableUserProfile::class.java)
                                 }
                             }
                         }
@@ -229,6 +236,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
             }
         }
     }
+
 
     private fun poll(snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> {
         if (!hasStarted) { return Promise.ofFail(PromiseCanceledException()) }
@@ -244,17 +252,19 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                 }
                 // get the latest convo info volatile
                 val hashesToExtend = mutableSetOf<String>()
-                configFactory.getUserConfigs().map { config ->
-                    hashesToExtend += config.currentHashes()
-                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        snode = snode,
-                        auth = userAuth,
-                        namespace = config.namespace(),
-                        maxSize = -8
-                    )
-                }.forEach { request ->
+                configFactory.withUserConfigs {
+                    it.allConfigs().map { config ->
+                        hashesToExtend += config.currentHashes()
+                        config.namespace() to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                            snode = snode,
+                            auth = userAuth,
+                            namespace = config.namespace(),
+                            maxSize = -8
+                        )
+                    }
+                }.forEach { (namespace, request) ->
                     // namespaces here should always be set
-                    requestSparseArray[request.namespace!!] = request
+                    requestSparseArray[namespace] = request
                 }
 
                 val requests =
@@ -266,7 +276,7 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                         auth = userAuth,
                         newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
                         extend = true
-                    )?.let { extensionRequest ->
+                    ).let { extensionRequest ->
                         requests += extensionRequest
                     }
                 }
@@ -280,14 +290,15 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                             val responseList = (rawResponses["results"] as List<RawResponse>)
                             // in case we had null configs, the array won't be fully populated
                             // index of the sparse array key iterator should be the request index, with the key being the namespace
-                            listOfNotNull(
-                                    configFactory.user?.namespace(),
-                                    configFactory.contacts?.namespace(),
-                                    configFactory.userGroups?.namespace(),
-                                    configFactory.convoVolatile?.namespace()
-                            ).map {
-                                it to requestSparseArray.indexOfKey(it)
-                            }.filter { (_, i) -> i >= 0 }.forEach { (key, requestIndex) ->
+                            sequenceOf(
+                                    Namespace.USER_PROFILE() to MutableUserProfile::class.java,
+                                    Namespace.CONTACTS() to MutableContacts::class.java,
+                                    Namespace.GROUPS() to MutableUserGroupsConfig::class.java,
+                                    Namespace.CONVO_INFO_VOLATILE() to MutableConversationVolatileConfig::class.java
+                            ).map { (namespace, configClass) ->
+                                Triple(namespace, configClass, requestSparseArray.indexOfKey(namespace))
+                            }.filter { (_, _, i) -> i >= 0 }
+                                .forEach { (namespace, configClass, requestIndex) ->
                                 responseList.getOrNull(requestIndex)?.let { rawResponse ->
                                     if (rawResponse["code"] as? Int != 200) {
                                         Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
@@ -298,16 +309,8 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                                         Log.e(TAG, "Batch sub-request didn't contain a body")
                                         return@forEach
                                     }
-                                    if (key == Namespace.DEFAULT()) {
-                                        return@forEach // continue, skip default namespace
-                                    } else {
-                                        when (ConfigBase.kindFor(key)) {
-                                            UserProfile::class.java -> processConfig(snode, body, key, configFactory.user)
-                                            Contacts::class.java -> processConfig(snode, body, key, configFactory.contacts)
-                                            ConversationVolatileConfig::class.java -> processConfig(snode, body, key, configFactory.convoVolatile)
-                                            UserGroupsConfig::class.java -> processConfig(snode, body, key, configFactory.userGroups)
-                                        }
-                                    }
+
+                                    processConfig(snode, body, namespace, configClass)
                                 }
                             }
 

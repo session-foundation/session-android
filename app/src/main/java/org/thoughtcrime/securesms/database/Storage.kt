@@ -2,50 +2,39 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
-import com.google.protobuf.ByteString
 import com.goterl.lazysodium.utils.KeyPair
-import network.loki.messenger.libsession_util.Config
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.Contacts
-import network.loki.messenger.libsession_util.ConversationVolatileConfig
-import network.loki.messenger.libsession_util.GroupInfoConfig
-import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.GroupMembersConfig
-import network.loki.messenger.libsession_util.UserGroupsConfig
-import network.loki.messenger.libsession_util.UserProfile
+import network.loki.messenger.libsession_util.ReadableContacts
+import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
+import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
-import network.loki.messenger.libsession_util.util.Sodium
 import network.loki.messenger.libsession_util.util.UserPic
 import network.loki.messenger.libsession_util.util.afterSend
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.functional.bind
-import nl.komponents.kovenant.functional.map
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
-import org.session.libsession.messaging.jobs.ConfigurationSyncJob
-import org.session.libsession.messaging.jobs.ConfigurationSyncJob.Companion.messageInformation
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
-import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
@@ -65,7 +54,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
-import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -75,17 +63,11 @@ import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGr
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
-import org.session.libsession.snode.GroupSubAccountSwarmAuth
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeAPI.buildAuthenticatedDeleteBatchInfo
-import org.session.libsession.snode.SnodeAPI.buildAuthenticatedStoreBatchInfo
-import org.session.libsession.snode.SnodeMessage
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
@@ -94,31 +76,20 @@ import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Co
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
-import org.session.libsession.utilities.withGroupConfigsOrNull
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteResponseMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
-import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
-import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeVerifier
-import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
@@ -130,7 +101,6 @@ import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
@@ -145,33 +115,40 @@ open class Storage(
 ) : Database(context, helper), StorageProtocol,
     ThreadDatabase.ConversationThreadUpdateListener {
 
+    init {
+        observeConfigUpdates()
+    }
+
     override fun threadCreated(address: Address, threadId: Long) {
         val localUserAddress = getUserPublicKey() ?: return
         if (!getRecipientApproved(address) && localUserAddress != address.serialize()) return // don't store unapproved / message requests
 
-        val volatile = configFactory.convoVolatile ?: return
         if (address.isGroup) {
-            val groups = configFactory.userGroups ?: return
             when {
                 address.isLegacyClosedGroup -> {
                     val accountId = GroupUtil.doubleDecodeGroupId(address.serialize())
                     val closedGroup = getGroup(address.toGroupString())
                     if (closedGroup != null && closedGroup.isActive) {
-                        val legacyGroup = groups.getOrConstructLegacyGroupInfo(accountId)
-                        groups.set(legacyGroup)
-                        val newVolatileParams = volatile.getOrConstructLegacyGroup(accountId).copy(
-                            lastRead = SnodeAPI.nowWithOffset,
-                        )
-                        volatile.set(newVolatileParams)
+                        configFactory.withMutableUserConfigs { configs ->
+                            val legacyGroup = configs.userGroups.getOrConstructLegacyGroupInfo(accountId)
+                            configs.userGroups.set(legacyGroup)
+                            val newVolatileParams = configs.convoInfoVolatile.getOrConstructLegacyGroup(accountId).copy(
+                                lastRead = SnodeAPI.nowWithOffset,
+                            )
+                            configs.convoInfoVolatile.set(newVolatileParams)
+                        }
+
                     }
                 }
                 address.isClosedGroupV2 -> {
-                    val AccountId = address.serialize()
-                    groups.getClosedGroup(AccountId) ?: return Log.d("Closed group doesn't exist locally", NullPointerException())
-                    val conversation = Conversation.ClosedGroup(
-                        AccountId, 0, false
-                    )
-                    volatile.set(conversation)
+                    configFactory.withMutableUserConfigs { configs ->
+                        val accountId = address.serialize()
+                        configs.userGroups.getClosedGroup(accountId)
+                            ?: return@withMutableUserConfigs Log.d("Closed group doesn't exist locally", NullPointerException())
+
+                        configs.convoInfoVolatile.getOrConstructClosedGroup(accountId)
+                    }
+
                 }
                 address.isCommunity -> {
                     // these should be added on the group join / group info fetch
@@ -183,49 +160,53 @@ open class Storage(
             if (AccountId(address.serialize()).prefix != IdPrefix.STANDARD) return
             // don't update our own address into the contacts DB
             if (getUserPublicKey() != address.serialize()) {
-                val contacts = configFactory.contacts ?: return
-                contacts.upsertContact(address.serialize()) {
-                    priority = PRIORITY_VISIBLE
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.upsertContact(address.serialize()) {
+                        priority = PRIORITY_VISIBLE
+                    }
                 }
             } else {
-                val userProfile = configFactory.user ?: return
-                userProfile.setNtsPriority(PRIORITY_VISIBLE)
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.userProfile.setNtsPriority(PRIORITY_VISIBLE)
+                }
+
                 DatabaseComponent.get(context).threadDatabase().setHasSent(threadId, true)
             }
-            val newVolatileParams = volatile.getOrConstructOneToOne(address.serialize())
-            volatile.set(newVolatileParams)
+
+            configFactory.withMutableUserConfigs { configs ->
+                configs.convoInfoVolatile.getOrConstructOneToOne(address.serialize())
+            }
         }
     }
 
     override fun threadDeleted(address: Address, threadId: Long) {
-        val volatile = configFactory.convoVolatile ?: return
-        if (address.isGroup) {
-            val groups = configFactory.userGroups ?: return
-            if (address.isLegacyClosedGroup) {
-                val accountId = GroupUtil.doubleDecodeGroupId(address.serialize())
-                volatile.eraseLegacyClosedGroup(accountId)
-                groups.eraseLegacyGroup(accountId)
-            } else if (address.isCommunity) {
-                // these should be removed in the group leave / handling new configs
-                Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-            } else if (address.isClosedGroupV2) {
-                Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
-            }
-        } else {
-            // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-            if (AccountId(address.serialize()).prefix != IdPrefix.STANDARD) return
-            volatile.eraseOneToOne(address.serialize())
-            if (getUserPublicKey() != address.serialize()) {
-                val contacts = configFactory.contacts ?: return
-                contacts.upsertContact(address.serialize()) {
-                    priority = PRIORITY_HIDDEN
+        configFactory.withMutableUserConfigs { configs ->
+            if (address.isGroup) {
+                if (address.isLegacyClosedGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(address.serialize())
+                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
+                    configs.userGroups.eraseLegacyGroup(accountId)
+                } else if (address.isCommunity) {
+                    // these should be removed in the group leave / handling new configs
+                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+                } else if (address.isClosedGroupV2) {
+                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
                 }
             } else {
-                val userProfile = configFactory.user ?: return
-                userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
+                if (AccountId(address.serialize()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(address.serialize())
+                if (getUserPublicKey() != address.serialize()) {
+                    configs.contacts.upsertContact(address.serialize()) {
+                        priority = PRIORITY_HIDDEN
+                    }
+                } else {
+                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                }
             }
+
+            Unit
         }
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
     }
 
     override fun getUserPublicKey(): String? {
@@ -347,22 +328,23 @@ open class Storage(
             // don't process configs for inbox recipients
             if (recipient.isOpenGroupInboxRecipient) return
 
-            configFactory.convoVolatile?.let { config ->
+            configFactory.withMutableUserConfigs { configs ->
+                val config = configs.convoInfoVolatile
                 val convo = when {
                     // recipient closed group
                     recipient.isLegacyClosedGroupRecipient -> config.getOrConstructLegacyGroup(GroupUtil.doubleDecodeGroupId(recipient.address.serialize()))
                     recipient.isClosedGroupV2Recipient -> config.getOrConstructClosedGroup(recipient.address.serialize())
                     // recipient is open group
                     recipient.isCommunityRecipient -> {
-                        val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return
+                        val openGroupJoinUrl = getOpenGroup(threadId)?.joinURL ?: return@withMutableUserConfigs
                         BaseCommunityInfo.parseFullUrl(openGroupJoinUrl)?.let { (base, room, pubKey) ->
                             config.getOrConstructCommunity(base, room, pubKey)
-                        } ?: return
+                        } ?: return@withMutableUserConfigs
                     }
                     // otherwise recipient is one to one
                     recipient.isContactRecipient -> {
                         // don't process non-standard account IDs though
-                        if (AccountId(recipient.address.serialize()).prefix != IdPrefix.STANDARD) return
+                        if (AccountId(recipient.address.serialize()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
                         config.getOrConstructOneToOne(recipient.address.serialize())
                     }
                     else -> throw NullPointerException("Weren't expecting to have a convo with address ${recipient.address.serialize()}")
@@ -373,7 +355,6 @@ open class Storage(
                     notifyConversationListListeners()
                 }
                 config.set(convo)
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
             }
         }
     }
@@ -522,12 +503,6 @@ open class Storage(
         return DatabaseComponent.get(context).sessionJobDatabase().getGroupAvatarDownloadJob(server, room, imageId)
     }
 
-    override fun getConfigSyncJob(destination: Destination): Job? {
-        return DatabaseComponent.get(context).sessionJobDatabase().getAllJobs(ConfigurationSyncJob.KEY).values.firstOrNull {
-            (it as? ConfigurationSyncJob)?.destination == destination
-        }
-    }
-
     override fun resumeMessageSendJobIfNeeded(messageSendJobID: String) {
         val job = DatabaseComponent.get(context).sessionJobDatabase().getMessageSendJob(messageSendJobID) ?: return
         JobQueue.shared.resumePendingSendMessage(job)
@@ -547,10 +522,6 @@ open class Storage(
         return DatabaseComponent.get(context).lokiAPIDatabase().getAuthToken(id)
     }
 
-    override fun notifyConfigUpdates(forConfigObject: Config, messageTimestamp: Long) {
-        notifyUpdates(forConfigObject, messageTimestamp)
-    }
-
     override fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean {
         return configFactory.conversationInConfig(publicKey, groupPublicKey, openGroupId, visibleOnly)
     }
@@ -560,22 +531,36 @@ open class Storage(
     }
 
     override fun isCheckingCommunityRequests(): Boolean {
-        return configFactory.user?.getCommunityMessageRequests() == true
+        return configFactory.withUserConfigs { it.userProfile.getCommunityMessageRequests() }
     }
 
-    private fun notifyUpdates(forConfigObject: Config, messageTimestamp: Long) {
-        when (forConfigObject) {
-            is UserProfile -> updateUser(forConfigObject, messageTimestamp)
-            is Contacts -> updateContacts(forConfigObject, messageTimestamp)
-            is ConversationVolatileConfig -> updateConvoVolatile(forConfigObject, messageTimestamp)
-            is UserGroupsConfig -> updateUserGroups(forConfigObject, messageTimestamp)
-            is GroupInfoConfig -> updateGroupInfo(forConfigObject, messageTimestamp)
-            is GroupKeysConfig -> updateGroupKeys(forConfigObject)
-            is GroupMembersConfig -> updateGroupMembers(forConfigObject)
+    private fun observeConfigUpdates() {
+        GlobalScope.launch {
+            configFactory.configUpdateNotifications
+                .collect { change ->
+                    when (change) {
+                        is ConfigUpdateNotification.GroupConfigsDeleted -> {}
+                        is ConfigUpdateNotification.GroupConfigsUpdated -> {
+                            configFactory.withGroupConfigs(change.groupId)  {
+                                updateGroup(it.groupInfo)
+                            }
+                        }
+                        ConfigUpdateNotification.UserConfigs -> {
+                            configFactory.withUserConfigs {
+                                val messageTimestamp = SnodeAPI.nowWithOffset
+
+                                updateUser(it.userProfile, messageTimestamp)
+                                updateContacts(it.contacts, messageTimestamp)
+                                updateUserGroups(it.userGroups, messageTimestamp)
+                                updateConvoVolatile(it.convoInfoVolatile)
+                            }
+                        }
+                    }
+                }
         }
     }
 
-    private fun updateUser(userProfile: UserProfile, messageTimestamp: Long) {
+    private fun updateUser(userProfile: ReadableUserProfile, messageTimestamp: Long) {
         val userPublicKey = getUserPublicKey() ?: return
         // would love to get rid of recipient and context from this
         val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
@@ -588,7 +573,6 @@ open class Storage(
         name.takeUnless { it.isEmpty() }?.truncate(NAME_PADDED_LENGTH)?.let {
             TextSecurePreferences.setProfileName(context, it)
             profileManager.setName(context, recipient, it)
-            if (it != name) userProfile.setName(it)
         }
 
         // Update profile picture
@@ -623,7 +607,7 @@ open class Storage(
         }
     }
 
-    private fun updateGroupInfo(groupInfoConfig: GroupInfoConfig, messageTimestamp: Long) {
+    private fun updateGroup(groupInfoConfig: ReadableGroupInfoConfig) {
         val threadId = getThreadId(fromSerialized(groupInfoConfig.id().hexString)) ?: return
         val recipient = getRecipientForThread(threadId) ?: return
         val db = DatabaseComponent.get(context).recipientDatabase()
@@ -635,18 +619,9 @@ open class Storage(
             val mmsDb = DatabaseComponent.get(context).mmsDatabase()
             mmsDb.deleteMessagesInThreadBeforeDate(threadId, removeAttachmentsBefore, onlyMedia = true)
         }
-        // TODO: handle deleted group, handle delete attachment / message before a certain time
     }
 
-    private fun updateGroupKeys(groupKeys: GroupKeysConfig) {
-        // TODO: update something here?
-    }
-
-    private fun updateGroupMembers(groupMembers: GroupMembersConfig) {
-        // TODO: maybe clear out some contacts or something?
-    }
-
-    private fun updateContacts(contacts: Contacts, messageTimestamp: Long) {
+    private fun updateContacts(contacts: ReadableContacts, messageTimestamp: Long) {
         val extracted = contacts.all().toList()
         addLibSessionContacts(extracted, messageTimestamp)
     }
@@ -665,10 +640,12 @@ open class Storage(
         TextSecurePreferences.setProfilePictureURL(context, null)
 
         Recipient.removeCached(fromSerialized(userPublicKey))
-        configFactory.user?.setPic(UserPic.DEFAULT)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setPic(UserPic.DEFAULT)
+        }
     }
 
-    private fun updateConvoVolatile(convos: ConversationVolatileConfig, messageTimestamp: Long) {
+    private fun updateConvoVolatile(convos: ReadableConversationVolatileConfig) {
         val extracted = convos.all().filterNotNull()
         for (conversation in extracted) {
             val threadId = when (conversation) {
@@ -686,7 +663,7 @@ open class Storage(
         }
     }
 
-    private fun updateUserGroups(userGroups: UserGroupsConfig, messageTimestamp: Long) {
+    private fun updateUserGroups(userGroups: ReadableUserGroupsConfig, messageTimestamp: Long) {
         val threadDb = DatabaseComponent.get(context).threadDatabase()
         val localUserPublicKey = getUserPublicKey() ?: return Log.w(
             "Loki",
@@ -1080,25 +1057,29 @@ open class Storage(
     }
 
     override fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int) {
-        val volatiles = configFactory.convoVolatile ?: return
-        val userGroups = configFactory.userGroups ?: return
-        if (volatiles.getLegacyClosedGroup(groupPublicKey) != null && userGroups.getLegacyGroupInfo(groupPublicKey) != null) return
-        val groupVolatileConfig = volatiles.getOrConstructLegacyGroup(groupPublicKey)
-        groupVolatileConfig.lastRead = formationTimestamp
-        volatiles.set(groupVolatileConfig)
-        val groupInfo = GroupInfo.LegacyGroupInfo(
-            accountId = groupPublicKey,
-            name = name,
-            members = members,
-            priority = PRIORITY_VISIBLE,
-            encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-            encSecKey = encryptionKeyPair.privateKey.serialize(),
-            disappearingTimer = expirationTimer.toLong(),
-            joinedAt = (formationTimestamp / 1000L)
-        )
-        // shouldn't exist, don't use getOrConstruct + copy
-        userGroups.set(groupInfo)
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
+        configFactory.withMutableUserConfigs {
+            val volatiles = it.convoInfoVolatile
+            val userGroups = it.userGroups
+            if (volatiles.getLegacyClosedGroup(groupPublicKey) != null && userGroups.getLegacyGroupInfo(groupPublicKey) != null) {
+                return@withMutableUserConfigs
+            }
+
+            val groupVolatileConfig = volatiles.getOrConstructLegacyGroup(groupPublicKey)
+            groupVolatileConfig.lastRead = formationTimestamp
+            volatiles.set(groupVolatileConfig)
+            val groupInfo = GroupInfo.LegacyGroupInfo(
+                accountId = groupPublicKey,
+                name = name,
+                members = members,
+                priority = PRIORITY_VISIBLE,
+                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
+                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                disappearingTimer = expirationTimer.toLong(),
+                joinedAt = (formationTimestamp / 1000L)
+            )
+            // shouldn't exist, don't use getOrConstruct + copy
+            userGroups.set(groupInfo)
+        }
     }
 
     override fun updateGroupConfig(groupPublicKey: String) {
@@ -1106,29 +1087,31 @@ open class Storage(
         val groupAddress = fromSerialized(groupID)
         val existingGroup = getGroup(groupID)
             ?: return Log.w("Loki-DBG", "No existing group for ${groupPublicKey.take(4)}} when updating group config")
-        val userGroups = configFactory.userGroups ?: return
-        if (!existingGroup.isActive) {
-            userGroups.eraseLegacyGroup(groupPublicKey)
-            return
-        }
-        val name = existingGroup.title
-        val admins = existingGroup.admins.map { it.serialize() }
-        val members = existingGroup.members.map { it.serialize() }
-        val membersMap = GroupUtil.createConfigMemberMap(admins = admins, members = members)
-        val latestKeyPair = getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
-            ?: return Log.w("Loki-DBG", "No latest closed group encryption key pair for ${groupPublicKey.take(4)}} when updating group config")
+        configFactory.withMutableUserConfigs {
+            val userGroups = it.userGroups
+            if (!existingGroup.isActive) {
+                userGroups.eraseLegacyGroup(groupPublicKey)
+                return@withMutableUserConfigs
+            }
+            val name = existingGroup.title
+            val admins = existingGroup.admins.map { it.serialize() }
+            val members = existingGroup.members.map { it.serialize() }
+            val membersMap = GroupUtil.createConfigMemberMap(admins = admins, members = members)
+            val latestKeyPair = getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
+                ?: return@withMutableUserConfigs Log.w("Loki-DBG", "No latest closed group encryption key pair for ${groupPublicKey.take(4)}} when updating group config")
 
-        val threadID = getThreadId(groupAddress) ?: return
-        val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
-            name = name,
-            members = membersMap,
-            encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-            encSecKey = latestKeyPair.privateKey.serialize(),
-            priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
-            disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
-            joinedAt = (existingGroup.formationTimestamp / 1000L)
-        )
-        userGroups.set(groupInfo)
+            val threadID = getThreadId(groupAddress) ?: return@withMutableUserConfigs
+            val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
+                name = name,
+                members = membersMap,
+                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
+                encSecKey = latestKeyPair.privateKey.serialize(),
+                priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
+                disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
+                joinedAt = (existingGroup.formationTimestamp / 1000L)
+            )
+            userGroups.set(groupInfo)
+        }
     }
 
     override fun isGroupActive(groupPublicKey: String): Boolean {
@@ -1242,18 +1225,20 @@ open class Storage(
      * For new closed groups
      */
     override fun getMembers(groupPublicKey: String): List<LibSessionGroupMember> =
-        configFactory.getGroupMemberConfig(AccountId(groupPublicKey))?.use { it.all() }?.toList() ?: emptyList()
+        configFactory.withGroupConfigs(AccountId(groupPublicKey)) {
+            it.groupMembers.all()
+        }
 
 
-    override fun getLibSessionClosedGroup(groupSessionId: String): GroupInfo.ClosedGroupInfo? {
-        return configFactory.userGroups?.getClosedGroup(groupSessionId)
+    override fun getLibSessionClosedGroup(groupAccountId: String): GroupInfo.ClosedGroupInfo? {
+        return configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupAccountId) }
     }
 
-    override fun getClosedGroupDisplayInfo(groupSessionId: String): GroupDisplayInfo? {
-        val infoConfig = configFactory.getGroupInfoConfig(AccountId(groupSessionId)) ?: return null
-        val isAdmin = configFactory.userGroups?.getClosedGroup(groupSessionId)?.hasAdminKey() ?: return null
+    override fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo? {
+        val groupIsAdmin = getLibSessionClosedGroup(groupAccountId)?.hasAdminKey() ?: return null
 
-        return infoConfig.use { info ->
+        return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
+            val info = configs.groupInfo
             GroupDisplayInfo(
                 id = info.id(),
                 name = info.getName(),
@@ -1262,7 +1247,7 @@ open class Storage(
                 destroyed = false,
                 created = info.getCreated(),
                 description = info.getDescription(),
-                isUserAdmin = isAdmin
+                isUserAdmin = groupIsAdmin
             )
         }
     }
@@ -1270,7 +1255,7 @@ open class Storage(
     override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long? {
         val sentTimestamp = message.sentTimestamp ?: SnodeAPI.nowWithOffset
         val senderPublicKey = message.sender
-        val groupName = configFactory.getGroupInfoConfig(closedGroup)?.use { it.getName() }.orEmpty()
+        val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
 
         val updateData = UpdateMessageData.buildGroupUpdate(message, groupName) ?: return null
 
@@ -1365,19 +1350,21 @@ open class Storage(
 
     override fun onOpenGroupAdded(server: String, room: String) {
         OpenGroupManager.restartPollerForServer(server.removeSuffix("/"))
-        val groups = configFactory.userGroups ?: return
-        val volatileConfig = configFactory.convoVolatile ?: return
-        val openGroup = getOpenGroup(room, server) ?: return
-        val (infoServer, infoRoom, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return
-        val pubKeyHex = Hex.toStringCondensed(pubKey)
-        val communityInfo = groups.getOrConstructCommunityInfo(infoServer, infoRoom, pubKeyHex)
-        groups.set(communityInfo)
-        val volatile = volatileConfig.getOrConstructCommunity(infoServer, infoRoom, pubKey)
-        if (volatile.lastRead != 0L) {
-            val threadId = getThreadId(openGroup) ?: return
-            markConversationAsRead(threadId, volatile.lastRead, force = true)
+        configFactory.withMutableUserConfigs { configs ->
+            val groups = configs.userGroups
+            val volatileConfig = configs.convoInfoVolatile
+            val openGroup = getOpenGroup(room, server) ?: return@withMutableUserConfigs
+            val (infoServer, infoRoom, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return@withMutableUserConfigs
+            val pubKeyHex = Hex.toStringCondensed(pubKey)
+            val communityInfo = groups.getOrConstructCommunityInfo(infoServer, infoRoom, pubKeyHex)
+            groups.set(communityInfo)
+            val volatile = volatileConfig.getOrConstructCommunity(infoServer, infoRoom, pubKey)
+            if (volatile.lastRead != 0L) {
+                val threadId = getThreadId(openGroup) ?: return@withMutableUserConfigs
+                markConversationAsRead(threadId, volatile.lastRead, force = true)
+            }
+            volatileConfig.set(volatile)
         }
-        volatileConfig.set(volatile)
     }
 
     override fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean {
@@ -1606,41 +1593,44 @@ open class Storage(
         val threadDB = DatabaseComponent.get(context).threadDatabase()
         threadDB.setPinned(threadID, isPinned)
         val threadRecipient = getRecipientForThread(threadID) ?: return
-        if (threadRecipient.isLocalNumber) {
-            val user = configFactory.user ?: return
-            user.setNtsPriority(if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
-        } else if (threadRecipient.isContactRecipient) {
-            val contacts = configFactory.contacts ?: return
-            contacts.upsertContact(threadRecipient.address.serialize()) {
-                priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
-            }
-        } else if (threadRecipient.isGroupRecipient) {
-            val groups = configFactory.userGroups ?: return
-            when {
-                threadRecipient.isLegacyClosedGroupRecipient -> {
-                    threadRecipient.address.serialize()
-                        .let(GroupUtil::doubleDecodeGroupId)
-                        .let(groups::getOrConstructLegacyGroupInfo)
-                        .copy (priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
-                        .let(groups::set)
+        configFactory.withMutableUserConfigs { configs ->
+            if (threadRecipient.isLocalNumber) {
+                configs.userProfile.setNtsPriority(if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
+            } else if (threadRecipient.isContactRecipient) {
+                configs.contacts.upsertContact(threadRecipient.address.serialize()) {
+                    priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
                 }
-                threadRecipient.isClosedGroupV2Recipient -> {
-                    val newGroupInfo = groups.getOrConstructClosedGroup(threadRecipient.address.serialize()).copy (
-                        priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
-                    )
-                    groups.set(newGroupInfo)
-                }
-                threadRecipient.isCommunityRecipient -> {
-                    val openGroup = getOpenGroup(threadID) ?: return
-                    val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return
-                    val newGroupInfo = groups.getOrConstructCommunityInfo(baseUrl, room, Hex.toStringCondensed(pubKeyHex)).copy (
-                        priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE
-                    )
-                    groups.set(newGroupInfo)
+            } else if (threadRecipient.isGroupRecipient) {
+                when {
+                    threadRecipient.isLegacyClosedGroupRecipient -> {
+                        threadRecipient.address.serialize()
+                            .let(GroupUtil::doubleDecodeGroupId)
+                            .let(configs.userGroups::getOrConstructLegacyGroupInfo)
+                            .copy(priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
+                            .let(configs.userGroups::set)
+                    }
+
+                    threadRecipient.isClosedGroupV2Recipient -> {
+                        val newGroupInfo = configs.userGroups
+                            .getOrConstructClosedGroup(threadRecipient.address.serialize())
+                            .copy(priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
+                        configs.userGroups.set(newGroupInfo)
+                    }
+
+                    threadRecipient.isCommunityRecipient -> {
+                        val openGroup = getOpenGroup(threadID) ?: return@withMutableUserConfigs
+                        val (baseUrl, room, pubKeyHex) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL)
+                            ?: return@withMutableUserConfigs
+                        val newGroupInfo = configs.userGroups.getOrConstructCommunityInfo(
+                            baseUrl,
+                            room,
+                            Hex.toStringCondensed(pubKeyHex)
+                        ).copy(priority = if (isPinned) PRIORITY_PINNED else PRIORITY_VISIBLE)
+                        configs.userGroups.set(newGroupInfo)
+                    }
                 }
             }
         }
-        ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
     }
 
     override fun isPinned(threadID: Long): Boolean {
@@ -1676,17 +1666,19 @@ open class Storage(
         if (recipient.isContactRecipient || recipient.isCommunityRecipient) return
 
         // If we get here then this is a closed group conversation (i.e., recipient.isClosedGroupRecipient)
-        val volatile = configFactory.convoVolatile ?: return
-        val groups = configFactory.userGroups ?: return
-        val groupID = recipient.address.toGroupString()
-        val closedGroup = getGroup(groupID)
-        val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
-        if (closedGroup != null) {
-            groupDB.delete(groupID)
-            volatile.eraseLegacyClosedGroup(groupPublicKey)
-            groups.eraseLegacyGroup(groupPublicKey)
-        } else {
-            Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
+        configFactory.withMutableUserConfigs { configs ->
+            val volatile = configs.convoInfoVolatile
+            val groups = configs.userGroups
+            val groupID = recipient.address.toGroupString()
+            val closedGroup = getGroup(groupID)
+            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+            if (closedGroup != null) {
+                groupDB.delete(groupID)
+                volatile.eraseLegacyClosedGroup(groupPublicKey)
+                groups.eraseLegacyGroup(groupPublicKey)
+            } else {
+                Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
+            }
         }
     }
 
@@ -1833,10 +1825,13 @@ open class Storage(
             setRecipientApprovedMe(sender, true)
 
             // Also update the config about this contact
-            configFactory.contacts?.upsertContact(sender.address.serialize()) {
-                approved = true
-                approvedMe = true
+            configFactory.withMutableUserConfigs {
+                it.contacts.upsertContact(sender.address.serialize()) {
+                    approved = true
+                    approvedMe = true
+                }
             }
+
             val message = IncomingMediaMessage(
                 sender.address,
                 response.sentTimestamp!!,
@@ -1894,16 +1889,20 @@ open class Storage(
     override fun setRecipientApproved(recipient: Recipient, approved: Boolean) {
         DatabaseComponent.get(context).recipientDatabase().setApproved(recipient, approved)
         if (recipient.isLocalNumber || !recipient.isContactRecipient) return
-        configFactory.contacts?.upsertContact(recipient.address.serialize()) {
-            this.approved = approved
+        configFactory.withMutableUserConfigs {
+            it.contacts.upsertContact(recipient.address.serialize()) {
+                this.approved = approved
+            }
         }
     }
 
     override fun setRecipientApprovedMe(recipient: Recipient, approvedMe: Boolean) {
         DatabaseComponent.get(context).recipientDatabase().setApprovedMe(recipient, approvedMe)
         if (recipient.isLocalNumber || !recipient.isContactRecipient) return
-        configFactory.contacts?.upsertContact(recipient.address.serialize()) {
-            this.approvedMe = approvedMe
+        configFactory.withMutableUserConfigs {
+            it.contacts.upsertContact(recipient.address.serialize()) {
+                this.approvedMe = approvedMe
+            }
         }
     }
 
@@ -2040,14 +2039,12 @@ open class Storage(
     override fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
         val recipientDb = DatabaseComponent.get(context).recipientDatabase()
         recipientDb.setBlocked(recipients, isBlocked)
-        recipients.filter { it.isContactRecipient && !it.isLocalNumber }.forEach { recipient ->
-            configFactory.contacts?.upsertContact(recipient.address.serialize()) {
-                this.blocked = isBlocked
+        configFactory.withMutableUserConfigs { configs ->
+            recipients.filter { it.isContactRecipient && !it.isLocalNumber }.forEach { recipient ->
+                configs.contacts.upsertContact(recipient.address.serialize()) {
+                    this.blocked = isBlocked
+                }
             }
-        }
-        val contactsConfig = configFactory.contacts ?: return
-        if (contactsConfig.needsPush() && !fromConfigUpdate) {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
         }
     }
 
@@ -2060,21 +2057,23 @@ open class Storage(
         val recipient = getRecipientForThread(threadId) ?: return null
         val dbExpirationMetadata = DatabaseComponent.get(context).expirationConfigurationDatabase().getExpirationConfiguration(threadId)
         return when {
-            recipient.isLocalNumber -> configFactory.user?.getNtsExpiry()
+            recipient.isLocalNumber -> configFactory.withUserConfigs { it.userProfile.getNtsExpiry() }
             recipient.isContactRecipient -> {
                 // read it from contacts config if exists
                 recipient.address.serialize().takeIf { it.startsWith(IdPrefix.STANDARD.value) }
-                    ?.let { configFactory.contacts?.get(it)?.expiryMode }
+                    ?.let { configFactory.withUserConfigs { configs -> configs.contacts.get(it)?.expiryMode } }
             }
             recipient.isClosedGroupV2Recipient -> {
-                configFactory.getGroupInfoConfig(AccountId(recipient.address.serialize()))?.getExpiryTimer()?.let {
+                configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) { configs ->
+                    configs.groupInfo.getExpiryTimer()
+                }.let {
                     if (it == 0L) ExpiryMode.NONE else ExpiryMode.AfterSend(it)
                 }
             }
             recipient.isLegacyClosedGroupRecipient -> {
                 // read it from group config if exists
                 GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
-                    .let { configFactory.userGroups?.getLegacyGroupInfo(it) }
+                    .let { id -> configFactory.withUserConfigs { it.userGroups.getLegacyGroupInfo(id) } }
                     ?.run { disappearingTimer.takeIf { it != 0L }?.let(ExpiryMode::AfterSend) ?: ExpiryMode.NONE }
             }
             else -> null
@@ -2100,24 +2099,28 @@ open class Storage(
         }
 
         if (recipient.isLegacyClosedGroupRecipient) {
-            val userGroups = configFactory.userGroups ?: return
             val groupPublicKey = GroupUtil.addressToGroupAccountId(recipient.address)
-            val groupInfo = userGroups.getLegacyGroupInfo(groupPublicKey)
-                ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return
-            userGroups.set(groupInfo)
+
+            configFactory.withMutableUserConfigs {
+                val groupInfo = it.userGroups.getLegacyGroupInfo(groupPublicKey)
+                    ?.copy(disappearingTimer = expiryMode.expirySeconds) ?: return@withMutableUserConfigs
+                it.userGroups.set(groupInfo)
+            }
         } else if (recipient.isClosedGroupV2Recipient) {
             val groupSessionId = AccountId(recipient.address.serialize())
-            val groupInfo = configFactory.getGroupInfoConfig(groupSessionId) ?: return
-            groupInfo.setExpiryTimer(expiryMode.expirySeconds)
-            configFactory.persist(groupInfo, SnodeAPI.nowWithOffset, groupSessionId.hexString)
-        } else if (recipient.isLocalNumber) {
-            val user = configFactory.user ?: return
-            user.setNtsExpiry(expiryMode)
-        } else if (recipient.isContactRecipient) {
-            val contacts = configFactory.contacts ?: return
+            configFactory.withMutableGroupConfigs(groupSessionId) { configs ->
+                configs.groupInfo.setExpiryTimer(expiryMode.expirySeconds)
+            }
 
-            val contact = contacts.get(recipient.address.serialize())?.copy(expiryMode = expiryMode) ?: return
-            contacts.set(contact)
+        } else if (recipient.isLocalNumber) {
+            configFactory.withMutableUserConfigs {
+                it.userProfile.setNtsExpiry(expiryMode)
+            }
+        } else if (recipient.isContactRecipient) {
+            configFactory.withMutableUserConfigs {
+                val contact = it.contacts.get(recipient.address.serialize())?.copy(expiryMode = expiryMode) ?: return@withMutableUserConfigs
+                it.contacts.set(contact)
+            }
         }
         expirationDb.setExpirationConfiguration(
             config.run { copy(expiryMode = expiryMode) }

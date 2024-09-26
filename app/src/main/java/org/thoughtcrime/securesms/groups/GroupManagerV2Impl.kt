@@ -85,8 +85,7 @@ class GroupManagerV2Impl @Inject constructor(
      */
     private fun requireAdminAccess(group: AccountId): ByteArray {
         return checkNotNull(configFactory
-            .userGroups
-            ?.getClosedGroup(group.hexString)
+            .withUserConfigs { it.userGroups.getClosedGroup(group.hexString) }
             ?.adminKey
             ?.takeIf { it.isNotEmpty() }) { "Only admin is allowed to invite members" }
     }
@@ -96,10 +95,6 @@ class GroupManagerV2Impl @Inject constructor(
         groupDescription: String,
         members: Set<Contact>
     ): Recipient = withContext(dispatcher) {
-        val userGroupsConfig =
-            requireNotNull(configFactory.userGroups) { "User groups config is not available" }
-        val convoVolatileConfig =
-            requireNotNull(configFactory.convoVolatile) { "Conversation volatile config is not available" }
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
         val ourKeys =
@@ -109,25 +104,23 @@ class GroupManagerV2Impl @Inject constructor(
         val groupCreationTimestamp = SnodeAPI.nowWithOffset
 
         // Create a group in the user groups config
-        val group = userGroupsConfig.createGroup()
+        val group = configFactory.withMutableUserConfigs { configs ->
+            configs.userGroups.createGroup().also(configs.userGroups::set)
+        }
+
         val adminKey = checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
-        userGroupsConfig.set(group)
         val groupId = group.groupAccountId
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         try {
-            withNewGroupConfigs(
-                groupId = groupId,
-                userSecretKey = ourKeys.secretKey.asBytes,
-                groupAdminKey = adminKey
-            ) { infoConfig, membersConfig, keysConfig ->
+            configFactory.withMutableGroupConfigs(groupId) { configs ->
                 // Update group's information
-                infoConfig.setName(groupName)
-                infoConfig.setDescription(groupDescription)
+                configs.groupInfo.setName(groupName)
+                configs.groupInfo.setDescription(groupDescription)
 
                 // Add members
                 for (member in members) {
-                    membersConfig.set(
+                    configs.groupMembers.set(
                         GroupMember(
                             sessionId = member.accountID,
                             name = member.name,
@@ -138,7 +131,7 @@ class GroupManagerV2Impl @Inject constructor(
                 }
 
                 // Add ourselves as admin
-                membersConfig.set(
+                configs.groupMembers.set(
                     GroupMember(
                         sessionId = ourAccountId,
                         name = ourProfile.displayName,
@@ -148,151 +141,48 @@ class GroupManagerV2Impl @Inject constructor(
                 )
 
                 // Manually re-key to prevent issue with linked admin devices
-                keysConfig.rekey(infoConfig, membersConfig)
+                configs.rekeys()
+            }
 
-
-                val configTtl = 14 * 24 * 60 * 60 * 1000L // 14 days
-
-                // Push keys
-                val pendingKey = requireNotNull(keysConfig.pendingConfig()) {
-                    "Expect pending keys data to push but got none"
-                }
-
-                val pushKeys = async {
-                    SnodeAPI.sendBatchRequest(
-                        groupId,
-                        SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                            namespace = keysConfig.namespace(),
-                            message = SnodeMessage(
-                                recipient = groupId.hexString,
-                                data = Base64.encodeBytes(pendingKey),
-                                ttl = configTtl,
-                                timestamp = groupCreationTimestamp
-                            ),
-                            auth = groupAuth
-                        ),
-                        StoreMessageResponse::class.java
-                    )
-                }
-
-                // Push info
-                val pushInfo = async {
-                    val (infoPush, infoSeqNo) = infoConfig.push()
-
-                    infoSeqNo to SnodeAPI.sendBatchRequest(
-                        groupId,
-                        SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                            namespace = infoConfig.namespace(),
-                            message = SnodeMessage(
-                                recipient = groupId.hexString,
-                                data = Base64.encodeBytes(infoPush),
-                                ttl = configTtl,
-                                timestamp = groupCreationTimestamp
-                            ),
-                            auth = groupAuth
-                        ),
-                        StoreMessageResponse::class.java
-                    )
-                }
-
-                // Members push
-                val pushMembers = async {
-                    val (membersPush, membersSeqNo) = membersConfig.push()
-
-                    membersSeqNo to SnodeAPI.sendBatchRequest(
-                        groupId,
-                        SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                            namespace = membersConfig.namespace(),
-                            message = SnodeMessage(
-                                recipient = groupId.hexString,
-                                data = Base64.encodeBytes(membersPush),
-                                ttl = configTtl,
-                                timestamp = groupCreationTimestamp
-                            ),
-                            auth = groupAuth
-                        ),
-                        StoreMessageResponse::class.java
-                    )
-                }
-
-
-                // Wait for all the push requests to finish then update the configs
-                val (keyHash, keyTimestamp) = pushKeys.await()
-                val (infoSeqNo, infoHash) = pushInfo.await()
-                val (membersSeqNo, membersHash) = pushMembers.await()
-
-                keysConfig.loadKey(pendingKey, keyHash, keyTimestamp, infoConfig, membersConfig)
-                infoConfig.confirmPushed(infoSeqNo, infoHash.hash)
-                membersConfig.confirmPushed(membersSeqNo, membersHash.hash)
-
-                configFactory.saveGroupConfigs(keysConfig, infoConfig, membersConfig)
-
-                // Add a new conversation into the volatile convo config and sync
-                convoVolatileConfig.set(
+            configFactory.withMutableUserConfigs {
+                it.convoInfoVolatile.set(
                     Conversation.ClosedGroup(
                         groupId.hexString,
                         groupCreationTimestamp,
                         false
                     )
                 )
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(application)
-
-                val recipient =
-                    Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
-
-                // Apply various data locally
-                profileManager.setName(application, recipient, groupName)
-                storage.setRecipientApprovedMe(recipient, true)
-                storage.setRecipientApproved(recipient, true)
-                pollerFactory.updatePollers()
-
-                // Invite members
-                JobQueue.shared.add(
-                    InviteContactsJob(
-                        groupSessionId = groupId.hexString,
-                        memberSessionIds = members.map { it.accountID }.toTypedArray()
-                    )
-                )
-
-                recipient
             }
+
+            val recipient =
+                Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
+
+            // Apply various data locally
+            profileManager.setName(application, recipient, groupName)
+            storage.setRecipientApprovedMe(recipient, true)
+            storage.setRecipientApproved(recipient, true)
+            pollerFactory.updatePollers()
+
+            // Invite members
+            JobQueue.shared.add(
+                InviteContactsJob(
+                    groupSessionId = groupId.hexString,
+                    memberSessionIds = members.map { it.accountID }.toTypedArray()
+                )
+            )
+
+            recipient
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create group", e)
 
             // Remove the group from the user groups config is sufficient as a "rollback"
-            userGroupsConfig.erase(group)
+            configFactory.withMutableUserConfigs {
+                it.userGroups.eraseClosedGroup(groupId.hexString)
+            }
             throw e
         }
     }
 
-    private suspend fun <T> withNewGroupConfigs(
-        groupId: AccountId,
-        userSecretKey: ByteArray,
-        groupAdminKey: ByteArray,
-        block: suspend CoroutineScope.(GroupInfoConfig, GroupMembersConfig, GroupKeysConfig) -> T
-    ): T {
-        return GroupInfoConfig.newInstance(
-            pubKey = groupId.pubKeyBytes,
-            secretKey = groupAdminKey
-        ).use { infoConfig ->
-            GroupMembersConfig.newInstance(
-                pubKey = groupId.pubKeyBytes,
-                secretKey = groupAdminKey
-            ).use { membersConfig ->
-                GroupKeysConfig.newInstance(
-                    userSecretKey = userSecretKey,
-                    groupPublicKey = groupId.pubKeyBytes,
-                    groupSecretKey = groupAdminKey,
-                    info = infoConfig,
-                    members = membersConfig
-                ).use { keysConfig ->
-                    coroutineScope {
-                        this.block(infoConfig, membersConfig, keysConfig)
-                    }
-                }
-            }
-        }
-    }
 
     override suspend fun inviteMembers(
         group: AccountId,

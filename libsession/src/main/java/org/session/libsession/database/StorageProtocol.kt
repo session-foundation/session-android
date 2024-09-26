@@ -68,7 +68,6 @@ interface StorageProtocol {
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob?
     fun getMessageReceiveJob(messageReceiveJobID: String): Job?
     fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): Job?
-    fun getConfigSyncJob(destination: Destination): Job?
     fun resumeMessageSendJobIfNeeded(messageSendJobID: String)
     fun isJobCanceled(job: Job): Boolean
     fun cancelPendingMessageSendJobs(threadID: Long)
@@ -269,7 +268,6 @@ interface StorageProtocol {
     )
 
     // Shared configs
-    fun notifyConfigUpdates(forConfigObject: Config, messageTimestamp: Long)
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformConfigChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
     fun isCheckingCommunityRequests(): Boolean

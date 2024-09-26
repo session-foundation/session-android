@@ -294,9 +294,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .request(Manifest.permission.POST_NOTIFICATIONS)
                     .execute()
             }
-            configFactory.user
-                ?.takeUnless { it.isBlockCommunityMessageRequestsSet() }
-                ?.setCommunityMessageRequests(false)
+
+            configFactory.withMutableUserConfigs {
+                if (!it.userProfile.isBlockCommunityMessageRequestsSet()) {
+                    it.userProfile.setCommunityMessageRequests(false)
+                }
+            }
         }
     }
 
@@ -378,11 +381,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         updateLegacyConfigView()
-
-        // Sync config changes if there are any
-        lifecycleScope.launch(Dispatchers.IO) {
-            ConfigurationMessageUtilities.syncConfigurationIfNeeded(this@HomeActivity)
-        }
     }
 
     override fun onPause() {

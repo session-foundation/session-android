@@ -10,15 +10,15 @@ JNIEXPORT jint JNICALL
 }
 
 extern "C"
-JNIEXPORT jobject JNICALL
+JNIEXPORT jlong JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newInstance(JNIEnv *env,
                                                                                         jobject thiz,
                                                                                         jbyteArray user_secret_key,
                                                                                         jbyteArray group_public_key,
                                                                                         jbyteArray group_secret_key,
                                                                                         jbyteArray initial_dump,
-                                                                                        jobject info_jobject,
-                                                                                        jobject members_jobject) {
+                                                                                        jlong info_pointer,
+                                                                                        jlong members_pointer) {
     std::lock_guard lock{util::util_mutex_};
     auto user_key_bytes = util::ustring_from_bytes(env, user_secret_key);
     auto pub_key_bytes = util::ustring_from_bytes(env, group_public_key);
@@ -35,8 +35,8 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newI
         initial_dump_optional = initial_dump_bytes;
     }
 
-    auto info = ptrToInfo(env, info_jobject);
-    auto members = ptrToMembers(env, members_jobject);
+    auto info = reinterpret_cast<session::config::groups::Info*>(info_pointer);
+    auto members = reinterpret_cast<session::config::groups::Members*>(members_pointer);
 
     auto* keys = new session::config::groups::Keys(user_key_bytes,
                                                    pub_key_bytes,
@@ -45,11 +45,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newI
                                                    *info,
                                                    *members);
 
-    jclass groupKeysConfig = env->FindClass("network/loki/messenger/libsession_util/GroupKeysConfig");
-    jmethodID constructor = env->GetMethodID(groupKeysConfig, "<init>", "(J)V");
-    jobject newConfig = env->NewObject(groupKeysConfig, constructor, reinterpret_cast<jlong>(keys));
-
-    return newConfig;
+    return reinterpret_cast<jlong>(keys);
 }
 
 extern "C"
@@ -75,14 +71,14 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadKey(JNIEnv *env
                                                                      jbyteArray message,
                                                                      jstring hash,
                                                                      jlong timestamp_ms,
-                                                                     jobject info_jobject,
-                                                                     jobject members_jobject) {
+                                                                     jlong info_ptr,
+                                                                     jlong members_ptr) {
     std::lock_guard lock{util::util_mutex_};
     auto keys = ptrToKeys(env, thiz);
     auto message_bytes = util::ustring_from_bytes(env, message);
     auto hash_bytes = env->GetStringUTFChars(hash, nullptr);
-    auto info = ptrToInfo(env, info_jobject);
-    auto members = ptrToMembers(env, members_jobject);
+    auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
+    auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
     bool processed = keys->load_key_message(hash_bytes, message_bytes, timestamp_ms, *info, *members);
 
     env->ReleaseStringUTFChars(hash, hash_bytes);
@@ -137,11 +133,11 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_pendingConfig(JNIEn
 extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_rekey(JNIEnv *env, jobject thiz,
-                                                                   jobject info_jobject, jobject members_jobject) {
+                                                                   jlong info_ptr, jlong members_ptr) {
     std::lock_guard lock{util::util_mutex_};
     auto keys = ptrToKeys(env, thiz);
-    auto info = ptrToInfo(env, info_jobject);
-    auto members = ptrToMembers(env, members_jobject);
+    auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
+    auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
     auto rekey = keys->rekey(*info, *members);
     auto rekey_bytes = util::bytes_from_ustring(env, rekey.data());
     return rekey_bytes;

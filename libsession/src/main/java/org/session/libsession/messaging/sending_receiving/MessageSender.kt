@@ -25,7 +25,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.snode.GroupSubAccountSwarmAuth
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.RawResponsePromise
 import org.session.libsession.snode.SnodeAPI
@@ -184,13 +183,9 @@ object MessageSender {
                 MessageEncrypter.encrypt(plaintext, encryptionKeyPair.hexEncodedPublicKey)
             }
             is Destination.ClosedGroup -> {
-                val groupKeys = configFactory.getGroupKeysConfig(AccountId(destination.publicKey)) ?: throw Error.NoKeyPair
                 val envelope = MessageWrapper.createEnvelope(kind, message.sentTimestamp!!, senderPublicKey, proto.build().toByteArray())
-                groupKeys.use { keys ->
-                    if (keys.keys().isEmpty()) {
-                        throw Error.EncryptionFailed
-                    }
-                    keys.encrypt(envelope.toByteArray())
+                configFactory.withGroupConfigs(AccountId(destination.publicKey)) {
+                    it.groupKeys.encrypt(envelope.toByteArray())
                 }
             }
             else -> throw IllegalStateException("Destination should not be open group.")
@@ -252,27 +247,13 @@ object MessageSender {
             namespaces.mapNotNull { namespace ->
                 if (destination is Destination.ClosedGroup) {
                     // possibly handle a failure for no user groups or no closed group signing key?
-                    val group = configFactory.userGroups?.getClosedGroup(destination.publicKey) ?: return@mapNotNull null
-                    val groupAuthData = group.authData
-                    val groupAdminKey = group.adminKey
-                    if (groupAuthData != null) {
-                        configFactory.getGroupKeysConfig(AccountId(destination.publicKey))?.use { keys ->
-                            SnodeAPI.sendMessage(
-                                auth = GroupSubAccountSwarmAuth(keys, AccountId(destination.publicKey), groupAuthData),
-                                message = snodeMessage,
-                                namespace = namespace
-                            )
-                        }
-                    } else if (groupAdminKey != null) {
-                        SnodeAPI.sendMessage(
-                            auth = OwnedSwarmAuth(AccountId(destination.publicKey), null, groupAdminKey),
-                            message = snodeMessage,
-                            namespace = namespace
-                        )
-                    } else {
-                        Log.w("MessageSender", "No auth data for group")
-                        null
-                    }
+                    val groupAuth = configFactory.getGroupAuth(AccountId(destination.publicKey)) ?: return@mapNotNull null
+
+                    SnodeAPI.sendMessage(
+                        auth = groupAuth,
+                        message = snodeMessage,
+                        namespace = namespace
+                    )
                 } else {
                     SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = namespace)
                 }
@@ -353,9 +334,9 @@ object MessageSender {
             message.sentTimestamp = nowWithOffset
         }
         // Attach the blocks message requests info
-        configFactory.user?.let { user ->
+        configFactory.withUserConfigs { configs ->
             if (message is VisibleMessage) {
-                message.blocksMessageRequests = !user.getCommunityMessageRequests()
+                message.blocksMessageRequests = !configs.userProfile.getCommunityMessageRequests()
             }
         }
         val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!

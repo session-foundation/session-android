@@ -11,7 +11,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -119,7 +118,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.leaveTextView.isVisible = recipient.isGroupRecipient && isCurrentUserInGroup
         binding.leaveTextView.setOnClickListener(this)
 
-        binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 || configFactory.convoVolatile?.getConversationUnread(thread) == true
+        binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 ||
+                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
         binding.markAllAsReadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned
         binding.unpinTextView.isVisible = thread.isPinned

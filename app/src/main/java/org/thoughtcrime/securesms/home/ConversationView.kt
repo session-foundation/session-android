@@ -97,7 +97,7 @@ class ConversationView : LinearLayout {
         val textSize = if (unreadCount < 1000) 12.0f else 10.0f
         binding.unreadCountTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         binding.unreadCountIndicator.isVisible = (unreadCount != 0 && !thread.isRead)
-                || (configFactory.convoVolatile?.getConversationUnread(thread) == true)
+                || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
         binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroup)
         val senderDisplayName = getTitle(thread.recipient)

@@ -10,7 +10,6 @@ import com.goterl.lazysodium.utils.Key
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -19,13 +18,9 @@ import org.session.libsession.messaging.sending_receiving.notifications.PushNoti
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
-import org.session.libsession.snode.GroupSubAccountSwarmAuth
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
 import org.session.libsession.utilities.bencode.BencodeString
-import org.session.libsession.utilities.withGroupConfigsOrNull
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -92,17 +87,15 @@ class PushReceiver @Inject constructor(
     }
 
     private fun tryDecryptGroupMessage(groupId: AccountId, data: ByteArray): Envelope? {
-        return configFactory.withGroupConfigsOrNull(groupId) { _, _, keys ->
-            val (envelopBytes, sender) = checkNotNull(keys.decrypt(data)) {
-                "Failed to decrypt group message"
-            }
-
-            Log.d(TAG, "Successfully decrypted group message from ${sender.hexString}")
-            Envelope.parseFrom(envelopBytes)
-                .toBuilder()
-                .setSource(sender.hexString)
-                .build()
+        val (envelopBytes, sender) = checkNotNull(configFactory.withGroupConfigs(groupId) { it.groupKeys.decrypt(data) }) {
+            "Failed to decrypt group message"
         }
+
+        Log.d(TAG, "Successfully decrypted group message from ${sender.hexString}")
+        return Envelope.parseFrom(envelopBytes)
+            .toBuilder()
+            .setSource(sender.hexString)
+            .build()
     }
 
     private fun onPush() {

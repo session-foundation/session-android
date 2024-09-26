@@ -10,5 +10,8 @@ data class BatchResponse @JsonCreator constructor(
     data class Item @JsonCreator constructor(
         @param:JsonProperty("code") val code: Int,
         @param:JsonProperty("body") val body: JsonNode,
-    )
+    ) {
+        val isSuccessful: Boolean
+            get() = code in 200..299
+    }
 }

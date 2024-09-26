@@ -134,7 +134,7 @@ import network.loki.messenger.libsession_util.UserProfile;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver, ConfigFactoryUpdateListener, Toaster {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -212,15 +212,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public PersistentLogger getPersistentLogger() {
         return this.persistentLogger;
-    }
-
-    @Override
-    public void notifyUpdates(@NotNull Config forConfigObject, long messageTimestamp) {
-        // forward to the config factory / storage ig
-        if (forConfigObject instanceof UserProfile && !textSecurePreferences.getConfigurationMessageSynced()) {
-            textSecurePreferences.setConfigurationMessageSynced(true);
-        }
-        storage.notifyConfigUpdates(forConfigObject, messageTimestamp);
     }
 
     @Override
@@ -510,7 +501,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             Log.d("Loki", "Failed to delete database.");
             return false;
         }
-        configFactory.keyPairChanged();
+        configFactory.clearAll();
         return true;
     }
 

@@ -3,9 +3,8 @@ package org.thoughtcrime.securesms.dependencies
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.plus
 import network.loki.messenger.libsession_util.util.GroupInfo
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsignal.utilities.AccountId
@@ -16,23 +15,29 @@ class PollerFactory(
     private val executor: CoroutineDispatcher,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: Lazy<GroupManagerV2>,
+    private val storage: StorageProtocol,
     ) {
 
     private val pollers = ConcurrentHashMap<AccountId, ClosedGroupPoller>()
 
     fun pollerFor(sessionId: AccountId): ClosedGroupPoller? {
         // Check if the group is currently in our config and approved, don't start if it isn't
-        if (configFactory.userGroups?.getClosedGroup(sessionId.hexString)?.invited != false) return null
+        val invited = configFactory.withUserConfigs {
+            it.userGroups.getClosedGroup(sessionId.hexString)?.invited
+        }
+
+        if (invited != false) return null
 
         return pollers.getOrPut(sessionId) {
-            ClosedGroupPoller(scope + SupervisorJob(), executor, sessionId, configFactory, groupManagerV2.get())
+            ClosedGroupPoller(scope, executor, sessionId, configFactory, groupManagerV2.get(), storage)
         }
     }
 
     fun startAll() {
-        configFactory.userGroups?.allClosedGroupInfo()?.filterNot(GroupInfo.ClosedGroupInfo::invited)?.forEach {
-            pollerFor(it.groupAccountId)?.start()
-        }
+        configFactory
+            .withUserConfigs { it.userGroups.allClosedGroupInfo() }
+            .filterNot(GroupInfo.ClosedGroupInfo::invited)
+            .forEach { pollerFor(it.groupAccountId)?.start() }
     }
 
     fun stopAll() {
@@ -42,7 +47,8 @@ class PollerFactory(
     }
 
     fun updatePollers() {
-        val currentGroups = configFactory.userGroups?.allClosedGroupInfo()?.filterNot(GroupInfo.ClosedGroupInfo::invited) ?: return
+        val currentGroups = configFactory
+            .withUserConfigs { it.userGroups.allClosedGroupInfo() }.filterNot(GroupInfo.ClosedGroupInfo::invited)
         val toRemove = pollers.filter { (id, _) -> id !in currentGroups.map { it.groupAccountId } }
         toRemove.forEach { (id, _) ->
             pollers.remove(id)?.stop()

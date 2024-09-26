@@ -34,22 +34,25 @@ object ClosedGroupManager {
     }
 
     fun ConfigFactory.updateLegacyGroup(group: GroupRecord) {
-        val groups = userGroups ?: return
         if (!group.isLegacyClosedGroup) return
         val storage = MessagingModuleConfiguration.shared.storage
         val threadId = storage.getThreadId(group.encodedId) ?: return
         val groupPublicKey = GroupUtil.doubleEncodeGroupID(group.getId())
         val latestKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: return
-        val legacyInfo = groups.getOrConstructLegacyGroupInfo(groupPublicKey)
-        val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::serialize), group.admins.map(Address::serialize))
-        val toSet = legacyInfo.copy(
-            members = latestMemberMap,
-            name = group.title,
-            priority = if (storage.isPinned(threadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-            encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-            encSecKey = latestKeyPair.privateKey.serialize()
-        )
-        groups.set(toSet)
-    }
 
+        withMutableUserConfigs {
+            val groups = it.userGroups
+
+            val legacyInfo = groups.getOrConstructLegacyGroupInfo(groupPublicKey)
+            val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::serialize), group.admins.map(Address::serialize))
+            val toSet = legacyInfo.copy(
+                members = latestMemberMap,
+                name = group.title,
+                priority = if (storage.isPinned(threadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
+                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
+                encSecKey = latestKeyPair.privateKey.serialize()
+            )
+            groups.set(toSet)
+        }
+    }
 }

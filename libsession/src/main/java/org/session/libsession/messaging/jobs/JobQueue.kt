@@ -29,7 +29,6 @@ class JobQueue : JobDelegate {
     private val rxMediaDispatcher = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
     private val openGroupDispatcher = Executors.newFixedThreadPool(8).asCoroutineDispatcher()
     private val txDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val configDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val scope = CoroutineScope(Dispatchers.Default) + SupervisorJob()
     private val queue = Channel<Job>(UNLIMITED)
@@ -117,20 +116,14 @@ class JobQueue : JobDelegate {
             val txQueue = Channel<Job>(capacity = UNLIMITED)
             val mediaQueue = Channel<Job>(capacity = UNLIMITED)
             val openGroupQueue = Channel<Job>(capacity = UNLIMITED)
-            val configQueue = Channel<Job>(capacity = UNLIMITED)
 
             val receiveJob = processWithDispatcher(rxQueue, rxDispatcher, "rx", asynchronous = false)
             val txJob = processWithDispatcher(txQueue, txDispatcher, "tx")
             val mediaJob = processWithDispatcher(mediaQueue, rxMediaDispatcher, "media")
             val openGroupJob = processWithOpenGroupDispatcher(openGroupQueue, openGroupDispatcher, "openGroup")
-            val configJob = processWithDispatcher(configQueue, configDispatcher, "configDispatcher")
 
             while (isActive) {
                 when (val job = queue.receive()) {
-                    is InviteContactsJob,
-                    is ConfigurationSyncJob -> {
-                        configQueue.send(job)
-                    }
                     is NotifyPNServerJob,
                     is AttachmentUploadJob,
                     is GroupLeavingJob,
@@ -167,7 +160,6 @@ class JobQueue : JobDelegate {
             txJob.cancel()
             mediaJob.cancel()
             openGroupJob.cancel()
-            configJob.cancel()
         }
     }
 
@@ -239,8 +231,6 @@ class JobQueue : JobDelegate {
             BackgroundGroupAddJob.KEY,
             OpenGroupDeleteJob.KEY,
             RetrieveProfileAvatarJob.KEY,
-            ConfigurationSyncJob.KEY,
-            InviteContactsJob.KEY,
             GroupLeavingJob.KEY,
             LibSessionGroupLeavingJob.KEY
         )

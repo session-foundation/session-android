@@ -9,25 +9,18 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.GroupInfoConfig
-import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.GroupMembersConfig
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.Sodium
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.messages.Destination
-import org.session.libsession.snode.GroupSubAccountSwarmAuth
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.withGroupConfigsOrNull
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -41,7 +34,9 @@ class ClosedGroupPoller(
     private val executor: CoroutineDispatcher,
     private val closedGroupSessionId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
-    private val groupManagerV2: GroupManagerV2) {
+    private val groupManagerV2: GroupManagerV2,
+    private val storage: StorageProtocol,
+) {
 
     data class ParsedRawMessage(
             val data: ByteArray,
@@ -82,9 +77,8 @@ class ClosedGroupPoller(
         if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Starting closed group poller for ${closedGroupSessionId.hexString.take(4)}")
         job?.cancel()
         job = scope.launch(executor) {
-            val closedGroups = configFactoryProtocol.userGroups ?: return@launch
             while (isActive) {
-                val group = closedGroups.getClosedGroup(closedGroupSessionId.hexString) ?: break
+                val group = configFactoryProtocol.withUserConfigs { it.userGroups.getClosedGroup(closedGroupSessionId.hexString) } ?: break
                 val nextPoll = runCatching { poll(group) }
                 when {
                     nextPoll.isFailure -> {
@@ -114,156 +108,122 @@ class ClosedGroupPoller(
     private suspend fun poll(group: GroupInfo.ClosedGroupInfo): Long? = coroutineScope {
         val snode = SnodeAPI.getSingleTargetSnode(closedGroupSessionId.hexString).await()
 
-        configFactoryProtocol.withGroupConfigsOrNull(closedGroupSessionId) { info, members, keys ->
-            val hashesToExtend = mutableSetOf<String>()
+        val groupAuth = configFactoryProtocol.getGroupAuth(closedGroupSessionId) ?: return@coroutineScope null
+        val configHashesToExtends = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+            buildSet {
+                addAll(it.groupKeys.currentHashes())
+                addAll(it.groupInfo.currentHashes())
+                addAll(it.groupMembers.currentHashes())
+            }
+        }
 
-            hashesToExtend += info.currentHashes()
-            hashesToExtend += members.currentHashes()
-            hashesToExtend += keys.currentHashes()
+        val adminKey = requireNotNull(configFactoryProtocol.withUserConfigs { it.userGroups.getClosedGroup(closedGroupSessionId.hexString) }) {
+            "Group doesn't exist"
+        }.adminKey
 
-            val authData = group.authData
-            val adminKey = group.adminKey
-            val groupAccountId = group.groupAccountId
-            val auth = if (authData != null) {
-                GroupSubAccountSwarmAuth(
-                    groupKeysConfig = keys,
-                    accountId = groupAccountId,
-                    authData = authData
+        val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
+
+        pollingTasks += "Poll revoked messages" to async {
+            handleRevoked(
+                SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snode = snode,
+                        auth = groupAuth,
+                        namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                        maxSize = null,
+                    ),
+                    Map::class.java
                 )
-            } else if (adminKey != null) {
-                OwnedSwarmAuth.ofClosedGroup(
-                    groupAccountId = groupAccountId,
-                    adminKey = adminKey
-                )
-            } else {
-                Log.e("ClosedGroupPoller", "No auth data for group, polling is cancelled")
-                return@coroutineScope null
-            }
-
-            val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
-
-            pollingTasks += "Poll revoked messages" to async {
-                handleRevoked(
-                    body = SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = auth,
-                            namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                            maxSize = null,
-                        ),
-                        Map::class.java),
-                    keys = keys
-                )
-            }
-
-            pollingTasks += "Poll group messages" to async {
-                handleMessages(
-                    body = SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = auth,
-                            namespace = Namespace.CLOSED_GROUP_MESSAGES(),
-                            maxSize = null,
-                        ),
-                        Map::class.java),
-                    snode = snode,
-                    keysConfig = keys
-                )
-            }
-
-            pollingTasks += "Poll group keys config" to async {
-                handleKeyPoll(
-                    response = SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = auth,
-                            namespace = keys.namespace(),
-                            maxSize = null,
-                        ),
-                        Map::class.java),
-                    keysConfig = keys,
-                    infoConfig = info,
-                    membersConfig = members
-                )
-            }
-
-            pollingTasks += "Poll group info config" to async {
-                handleInfo(
-                    response = SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = auth,
-                            namespace = Namespace.CLOSED_GROUP_INFO(),
-                            maxSize = null,
-                        ),
-                        Map::class.java),
-                    infoConfig = info
-                )
-            }
-
-            pollingTasks += "Poll group members config" to async {
-                handleMembers(
-                    response = SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = auth,
-                            namespace = Namespace.CLOSED_GROUP_MEMBERS(),
-                            maxSize = null,
-                        ),
-                        Map::class.java),
-                    membersConfig = members
-                )
-            }
-
-            if (hashesToExtend.isNotEmpty() && adminKey != null) {
-                pollingTasks += "Extend group config TTL" to async {
-                    SnodeAPI.sendBatchRequest(
-                        groupAccountId,
-                        SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                            messageHashes = hashesToExtend.toList(),
-                            auth = auth,
-                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
-                            extend = true
-                        ),
-                    )
-                }
-            }
-
-            val errors = pollingTasks.mapNotNull { (name, task) ->
-                runCatching { task.await() }
-                    .exceptionOrNull()
-                    ?.takeIf { it !is CancellationException }
-                    ?.let { RuntimeException("Error executing: $name", it) }
-            }
-
-            if (errors.isNotEmpty()) {
-                throw PollerException("Error polling closed group", errors)
-            }
-
-            // If we no longer have a group, stop poller
-            if (configFactoryProtocol.userGroups?.getClosedGroup(closedGroupSessionId.hexString) == null) return@coroutineScope null
-
-            // if poll result body is null here we don't have any things ig
-            if (ENABLE_LOGGING) Log.d(
-                "ClosedGroupPoller",
-                "Poll results @${SnodeAPI.nowWithOffset}:"
             )
+        }
 
-            val requiresSync =
-                info.needsPush() || members.needsPush() || keys.needsRekey() || keys.pendingConfig() != null
+        pollingTasks += "Poll group messages" to async {
+            handleMessages(
+                body = SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snode = snode,
+                        auth = groupAuth,
+                        namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                        maxSize = null,
+                    ),
+                    Map::class.java),
+                snode = snode,
+            )
+        }
 
-            if (info.needsDump() || members.needsDump() || keys.needsDump()) {
-                configFactoryProtocol.saveGroupConfigs(keys, info, members)
+        pollingTasks += "Poll group keys config" to async {
+            handleKeyPoll(
+                response = SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snode = snode,
+                        auth = groupAuth,
+                        namespace = Namespace.ENCRYPTION_KEYS(),
+                        maxSize = null,
+                    ),
+                    Map::class.java),
+            )
+        }
+
+        pollingTasks += "Poll group info config" to async {
+            handleInfo(
+                response = SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snode = snode,
+                        auth = groupAuth,
+                        namespace = Namespace.CLOSED_GROUP_INFO(),
+                        maxSize = null,
+                    ),
+                    Map::class.java),
+            )
+        }
+
+        pollingTasks += "Poll group members config" to async {
+            handleMembers(
+                SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                        snode = snode,
+                        auth = groupAuth,
+                        namespace = Namespace.CLOSED_GROUP_MEMBERS(),
+                        maxSize = null,
+                    ),
+                    Map::class.java),
+            )
+        }
+
+        if (configHashesToExtends.isNotEmpty() && adminKey != null) {
+            pollingTasks += "Extend group config TTL" to async {
+                SnodeAPI.sendBatchRequest(
+                    snode,
+                    closedGroupSessionId.hexString,
+                    SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                        messageHashes = configHashesToExtends.toList(),
+                        auth = groupAuth,
+                        newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                        extend = true
+                    ),
+                )
             }
+        }
 
-            if (requiresSync) {
-                configFactoryProtocol.scheduleUpdate(Destination.ClosedGroup(closedGroupSessionId.hexString))
-            }
+        val errors = pollingTasks.mapNotNull { (name, task) ->
+            runCatching { task.await() }
+                .exceptionOrNull()
+                ?.takeIf { it !is CancellationException }
+                ?.let { RuntimeException("Error executing: $name", it) }
+        }
+
+        if (errors.isNotEmpty()) {
+            throw PollerException("Error polling closed group", errors)
         }
 
         POLL_INTERVAL // this might change in future
@@ -281,9 +241,8 @@ class ClosedGroupPoller(
         }
     }
 
-    private suspend fun handleRevoked(body: RawResponse, keys: GroupKeysConfig) {
+    private suspend fun handleRevoked(body: RawResponse) {
         // This shouldn't ever return null at this point
-        val userSessionId = configFactoryProtocol.userSessionId()!!
         val messages = body["messages"] as? List<*>
             ?: return Log.w("GroupPoller", "body didn't contain a list of messages")
         messages.forEach { messageMap ->
@@ -305,7 +264,13 @@ class ClosedGroupPoller(
                 val message = decoded.decodeToString()
                 if (Sodium.KICKED_REGEX.matches(message)) {
                     val (sessionId, generation) = message.split("-")
-                    if (sessionId == userSessionId.hexString && generation.toInt() >= keys.currentGeneration()) {
+                    val currentKeysGeneration by lazy {
+                        configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                            it.groupKeys.currentGeneration()
+                        }
+                    }
+
+                    if (sessionId == storage.getUserPublicKey() && generation.toInt() >= currentKeysGeneration) {
                         try {
                             groupManagerV2.handleKicked(closedGroupSessionId)
                         } catch (e: Exception) {
@@ -318,51 +283,51 @@ class ClosedGroupPoller(
         }
     }
 
-    private fun handleKeyPoll(response: RawResponse,
-                              keysConfig: GroupKeysConfig,
-                              infoConfig: GroupInfoConfig,
-                              membersConfig: GroupMembersConfig) {
+    private fun handleKeyPoll(response: RawResponse) {
         // get all the data to hash objects and process them
         val allMessages = parseMessages(response)
         if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Total key messages this poll: ${allMessages.size}")
         var total = 0
         allMessages.forEach { (message, hash, timestamp) ->
-            if (keysConfig.loadKey(message, hash, timestamp, infoConfig, membersConfig)) {
-                total++
+            configFactoryProtocol.withMutableGroupConfigs(closedGroupSessionId) { configs ->
+                if (configs.loadKeys(message, hash, timestamp)) {
+                    total++
+                }
             }
+
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for keys on ${closedGroupSessionId.hexString}")
         }
         if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Total key messages consumed: $total")
     }
 
-    private fun handleInfo(response: RawResponse,
-                           infoConfig: GroupInfoConfig) {
+    private fun handleInfo(response: RawResponse) {
         val messages = parseMessages(response)
         messages.forEach { (message, hash, _) ->
-            infoConfig.merge(hash to message)
+            configFactoryProtocol.withMutableGroupConfigs(closedGroupSessionId) { configs ->
+                configs.groupInfo.merge(arrayOf(hash to message))
+            }
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for info on ${closedGroupSessionId.hexString}")
-        }
-        if (messages.isNotEmpty()) {
-            val lastTimestamp = messages.maxOf { it.timestamp }
-            MessagingModuleConfiguration.shared.storage.notifyConfigUpdates(infoConfig, lastTimestamp)
         }
     }
 
-    private fun handleMembers(response: RawResponse,
-                              membersConfig: GroupMembersConfig) {
+    private fun handleMembers(response: RawResponse) {
         parseMessages(response).forEach { (message, hash, _) ->
-            membersConfig.merge(hash to message)
+            configFactoryProtocol.withMutableGroupConfigs(closedGroupSessionId) { configs ->
+                configs.groupMembers.merge(arrayOf(hash to message))
+            }
             if (ENABLE_LOGGING) Log.d("ClosedGroupPoller", "Merged $hash for members on ${closedGroupSessionId.hexString}")
         }
     }
 
-    private fun handleMessages(body: RawResponse, snode: Snode, keysConfig: GroupKeysConfig) {
-        val messages = SnodeAPI.parseRawMessagesResponse(
-            rawResponse = body,
-            snode = snode,
-            publicKey = closedGroupSessionId.hexString,
-            decrypt = keysConfig::decrypt
-        )
+    private fun handleMessages(body: RawResponse, snode: Snode) {
+        val messages = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+            SnodeAPI.parseRawMessagesResponse(
+                rawResponse = body,
+                snode = snode,
+                publicKey = closedGroupSessionId.hexString,
+                decrypt = it.groupKeys::decrypt,
+            )
+        }
 
         val parameters = messages.map { (envelope, serverHash) ->
             MessageReceiveParameters(

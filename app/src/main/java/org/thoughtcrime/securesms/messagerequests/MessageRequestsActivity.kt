@@ -105,9 +105,6 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
         fun doDecline() {
             viewModel.deleteMessageRequest(thread)
             LoaderManager.getInstance(this).restartLoader(0, null, this)
-            lifecycleScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@MessageRequestsActivity)
-            }
         }
 
         showSessionDialog {
@@ -132,9 +129,6 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
         fun doDeleteAllAndBlock() {
             viewModel.clearAllMessageRequests(false)
             LoaderManager.getInstance(this).restartLoader(0, null, this)
-            lifecycleScope.launch(Dispatchers.IO) {
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(this@MessageRequestsActivity)
-            }
         }
 
         showSessionDialog {

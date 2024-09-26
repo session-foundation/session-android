@@ -1,7 +1,7 @@
 #include "group_members.h"
 
 extern "C"
-JNIEXPORT jobject JNICALL
+JNIEXPORT jlong JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMembersConfig_00024Companion_newInstance(
         JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key,
         jbyteArray initial_dump) {
@@ -13,18 +13,13 @@ Java_network_loki_messenger_libsession_1util_GroupMembersConfig_00024Companion_n
         auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
         secret_key_optional = secret_key_bytes;
     }
-    if (env->GetArrayLength(initial_dump) > 0) {
+    if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
         auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
         initial_dump_optional = initial_dump_bytes;
     }
 
     auto* group_members = new session::config::groups::Members(pub_key_bytes, secret_key_optional, initial_dump_optional);
-
-    jclass groupMemberClass = env->FindClass("network/loki/messenger/libsession_util/GroupMembersConfig");
-    jmethodID constructor = env->GetMethodID(groupMemberClass, "<init>", "(J)V");
-    jobject newConfig = env->NewObject(groupMemberClass, constructor, reinterpret_cast<jlong>(group_members));
-
-    return newConfig;
+    return reinterpret_cast<jlong>(group_members);
 }
 
 extern "C"

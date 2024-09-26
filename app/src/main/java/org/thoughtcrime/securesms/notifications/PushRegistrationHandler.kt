@@ -20,11 +20,9 @@ import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.snode.GroupSubAccountSwarmAuth
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.withGroupConfigsOrNull
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace

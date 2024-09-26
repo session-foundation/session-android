@@ -12,40 +12,32 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.utilities.ConfigFactoryUpdateListener
-import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Named
 import javax.inject.Singleton
 
+@Suppress("OPT_IN_USAGE")
 @Module
 @InstallIn(SingletonComponent::class)
 object SessionUtilModule {
 
-    const val POLLER_SCOPE = "poller_coroutine_scope"
-
-    private fun maybeUserEdSecretKey(context: Context): ByteArray? {
-        val edKey = KeyPairUtilities.getUserED25519KeyPair(context) ?: return null
-        return edKey.secretKey.asBytes
-    }
+    private const val POLLER_SCOPE = "poller_coroutine_scope"
 
     @Provides
     @Singleton
-    fun provideConfigFactory(@ApplicationContext context: Context, configDatabase: ConfigDatabase): ConfigFactory =
-        ConfigFactory(context, configDatabase) {
-            val localUserPublicKey = TextSecurePreferences.getLocalNumber(context)
-            val secretKey = maybeUserEdSecretKey(context)
-            if (localUserPublicKey == null || secretKey == null) null
-            else secretKey to localUserPublicKey
-        }.apply {
-            registerListener(context as ConfigFactoryUpdateListener)
-        }
+    fun provideConfigFactory(
+        @ApplicationContext context: Context,
+        configDatabase: ConfigDatabase,
+        storageProtocol: StorageProtocol,
+        threadDatabase: ThreadDatabase,
+    ): ConfigFactory = ConfigFactory(context, configDatabase, threadDatabase, storageProtocol)
 
     @Provides
     @Named(POLLER_SCOPE)
-    fun providePollerScope(@ApplicationContext applicationContext: Context): CoroutineScope = GlobalScope
+    fun providePollerScope(): CoroutineScope = GlobalScope
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Provides
@@ -57,6 +49,12 @@ object SessionUtilModule {
     fun providePollerFactory(@Named(POLLER_SCOPE) coroutineScope: CoroutineScope,
                              @Named(POLLER_SCOPE) dispatcher: CoroutineDispatcher,
                              configFactory: ConfigFactory,
-                             groupManagerV2: Lazy<GroupManagerV2>) = PollerFactory(coroutineScope, dispatcher, configFactory, groupManagerV2)
-
+                             storage: StorageProtocol,
+                             groupManagerV2: Lazy<GroupManagerV2>) = PollerFactory(
+        scope = coroutineScope,
+        executor = dispatcher,
+        configFactory = configFactory,
+        groupManagerV2 = groupManagerV2,
+        storage = storage
+    )
 }

@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.DividerItemDecoration
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
@@ -24,7 +23,6 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
@@ -124,15 +122,6 @@ class ClearAllDataDialog : DialogFragment() {
     }
 
     private suspend fun performDeleteLocalDataOnlyStep() {
-        try {
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(requireContext())
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to force sync when deleting data", e)
-            withContext(Main) {
-                Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-            }
-            return
-        }
         ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
             withContext(Main) {
                 if (success) {

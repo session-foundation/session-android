@@ -93,7 +93,8 @@ object ConversationMenuHelper {
 
         // Groups v2 menu
         if (thread.isClosedGroupV2Recipient) {
-            if (configFactory.userGroups?.getClosedGroup(thread.address.serialize())?.hasAdminKey() == true) {
+            val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.serialize())?.hasAdminKey() }
+            if (hasAdminKey == true) {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
             }
 
@@ -346,15 +347,15 @@ object ConversationMenuHelper {
 
             thread.isClosedGroupV2Recipient -> {
                 val accountId = AccountId(thread.address.serialize())
-                val group = configFactory.userGroups?.getClosedGroup(accountId.hexString) ?: return
-                val (name, isAdmin) = configFactory.getGroupInfoConfig(accountId)?.use {
-                    it.getName() to group.hasAdminKey()
-                } ?: return
+                val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+                val name = configFactory.withGroupConfigs(accountId) {
+                    it.groupInfo.getName()
+                }
 
                 confirmAndLeaveClosedGroup(
                     context = context,
                     groupName = name,
-                    isAdmin = isAdmin,
+                    isAdmin = group.hasAdminKey(),
                     threadID = threadID,
                     storage = storage,
                     doLeave = {

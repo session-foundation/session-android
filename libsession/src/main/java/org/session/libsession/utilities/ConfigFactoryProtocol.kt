@@ -1,82 +1,109 @@
 package org.session.libsession.utilities
 
 import kotlinx.coroutines.flow.Flow
-import network.loki.messenger.libsession_util.Config
-import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.Contacts
-import network.loki.messenger.libsession_util.ConversationVolatileConfig
-import network.loki.messenger.libsession_util.GroupInfoConfig
-import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.GroupMembersConfig
-import network.loki.messenger.libsession_util.UserGroupsConfig
-import network.loki.messenger.libsession_util.UserProfile
-import org.session.libsession.messaging.messages.Destination
+import network.loki.messenger.libsession_util.MutableConfig
+import network.loki.messenger.libsession_util.MutableContacts
+import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
+import network.loki.messenger.libsession_util.MutableGroupInfoConfig
+import network.loki.messenger.libsession_util.MutableGroupKeysConfig
+import network.loki.messenger.libsession_util.MutableGroupMembersConfig
+import network.loki.messenger.libsession_util.MutableUserGroupsConfig
+import network.loki.messenger.libsession_util.MutableUserProfile
+import network.loki.messenger.libsession_util.ReadableConfig
+import network.loki.messenger.libsession_util.ReadableContacts
+import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
+import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
+import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
+import network.loki.messenger.libsession_util.ReadableGroupMembersConfig
+import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
+import network.loki.messenger.libsession_util.ReadableUserProfile
+import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.AccountId
 
 interface ConfigFactoryProtocol {
+    val configUpdateNotifications: Flow<ConfigUpdateNotification>
 
-    val user: UserProfile?
-    val contacts: Contacts?
-    val convoVolatile: ConversationVolatileConfig?
-    val userGroups: UserGroupsConfig?
+    fun <T> withUserConfigs(cb: (UserConfigs) -> T): T
+    fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T
 
-    val configUpdateNotifications: Flow<Unit>
-
-    fun getGroupInfoConfig(groupSessionId: AccountId): GroupInfoConfig?
-    fun getGroupMemberConfig(groupSessionId: AccountId): GroupMembersConfig?
-    fun getGroupKeysConfig(groupSessionId: AccountId,
-                           info: GroupInfoConfig? = null,
-                           members: GroupMembersConfig? = null,
-                           free: Boolean = true): GroupKeysConfig?
-
-    fun getUserConfigs(): List<ConfigBase>
-    fun persist(forConfigObject: Config, timestamp: Long, forPublicKey: String? = null)
+    fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T
+    fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
 
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
-    fun saveGroupConfigs(
-        groupKeys: GroupKeysConfig,
-        groupInfo: GroupInfoConfig,
-        groupMembers: GroupMembersConfig
-    )
-    fun removeGroup(closedGroupId: AccountId)
 
-    fun scheduleUpdate(destination: Destination)
-    fun constructGroupKeysConfig(
-        groupSessionId: AccountId,
-        info: GroupInfoConfig,
-        members: GroupMembersConfig
-    ): GroupKeysConfig?
+    fun getGroupAuth(groupId: AccountId): SwarmAuth?
+    fun removeGroup(groupId: AccountId)
 
     fun maybeDecryptForUser(encoded: ByteArray,
                             domain: String,
                             closedGroupSessionId: AccountId): ByteArray?
 
-    fun userSessionId(): AccountId?
-
 }
 
-interface ConfigFactoryUpdateListener {
-    fun notifyUpdates(forConfigObject: Config, messageTimestamp: Long)
+
+interface UserConfigs {
+    val contacts: ReadableContacts
+    val userGroups: ReadableUserGroupsConfig
+    val userProfile: ReadableUserProfile
+    val convoInfoVolatile: ReadableConversationVolatileConfig
+
+    fun allConfigs(): Sequence<ReadableConfig> = sequenceOf(contacts, userGroups, userProfile, convoInfoVolatile)
 }
 
-/**
- * Access group configs if they exist, otherwise return null.
- *
- * Note: The config objects will be closed after the callback is executed. Any attempt
- * to store the config objects will result in a native crash.
- */
-inline fun <T: Any> ConfigFactoryProtocol.withGroupConfigsOrNull(
-    groupId: AccountId,
-    cb: (GroupInfoConfig, GroupMembersConfig, GroupKeysConfig) -> T
-): T? {
-    getGroupInfoConfig(groupId)?.use { groupInfo ->
-        getGroupMemberConfig(groupId)?.use { groupMembers ->
-            getGroupKeysConfig(groupId, groupInfo, groupMembers)?.use { groupKeys ->
-                return cb(groupInfo, groupMembers, groupKeys)
-            }
-        }
-    }
+interface MutableUserConfigs : UserConfigs {
+    override val contacts: MutableContacts
+    override val userGroups: MutableUserGroupsConfig
+    override val userProfile: MutableUserProfile
+    override val convoInfoVolatile: MutableConversationVolatileConfig
 
-    return null
+    override fun allConfigs(): Sequence<MutableConfig> = sequenceOf(contacts, userGroups, userProfile, convoInfoVolatile)
 }
+
+interface GroupConfigs {
+    val groupInfo: ReadableGroupInfoConfig
+    val groupMembers: ReadableGroupMembersConfig
+    val groupKeys: ReadableGroupKeysConfig
+}
+
+interface MutableGroupConfigs : GroupConfigs {
+    override val groupInfo: MutableGroupInfoConfig
+    override val groupMembers: MutableGroupMembersConfig
+    override val groupKeys: MutableGroupKeysConfig
+
+    fun loadKeys(message: ByteArray, hash: String, timestamp: Long): Boolean
+    fun rekeys()
+}
+
+sealed interface ConfigUpdateNotification {
+    data object UserConfigs : ConfigUpdateNotification
+    data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
+    data class GroupConfigsDeleted(val groupId: AccountId) : ConfigUpdateNotification
+}
+
+//interface ConfigFactoryUpdateListener {
+//    fun notifyUpdates(forConfigObject: Config, messageTimestamp: Long)
+//}
+
+
+
+///**
+// * Access group configs if they exist, otherwise return null.
+// *
+// * Note: The config objects will be closed after the callback is executed. Any attempt
+// * to store the config objects will result in a native crash.
+// */
+//inline fun <T: Any> ConfigFactoryProtocol.withGroupConfigsOrNull(
+//    groupId: AccountId,
+//    cb: (GroupInfoConfig, GroupMembersConfig, GroupKeysConfig) -> T
+//): T? {
+//    getGroupInfoConfig(groupId)?.use { groupInfo ->
+//        getGroupMemberConfig(groupId)?.use { groupMembers ->
+//            getGroupKeysConfig(groupId, groupInfo, groupMembers)?.use { groupKeys ->
+//                return cb(groupInfo, groupMembers, groupKeys)
+//            }
+//        }
+//    }
+//
+//    return null
+//}

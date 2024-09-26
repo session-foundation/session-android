@@ -14,7 +14,6 @@ import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPolle
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 object OpenGroupManager {
     private val executorService = Executors.newScheduledThreadPool(4)
@@ -131,8 +130,10 @@ object OpenGroupManager {
                     pollers.remove(server)
                 }
             }
-            configFactory.userGroups?.eraseCommunity(server, room)
-            configFactory.convoVolatile?.eraseCommunity(server, room)
+            configFactory.withMutableUserConfigs {
+                it.userGroups.eraseCommunity(server, room)
+                it.convoInfoVolatile.eraseCommunity(server, room)
+            }
             // Delete
             storage.removeLastDeletionServerID(room, server)
             storage.removeLastMessageServerID(room, server)
@@ -142,7 +143,6 @@ object OpenGroupManager {
             lokiThreadDB.removeOpenGroupChat(threadID)
             storage.deleteConversation(threadID)       // Must be invoked on a background thread
             GroupManager.deleteGroup(groupID, context) // Must be invoked on a background thread
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
         }
         catch (e: Exception) {
             Log.e("Loki", "Failed to leave (delete) community", e)

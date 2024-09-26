@@ -9,6 +9,8 @@ import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
+typealias ConfigVariant = String
+
 class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(context, helper) {
 
     companion object {
@@ -25,12 +27,17 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
         private const val VARIANT_AND_PUBKEY_WHERE = "$VARIANT = ? AND $PUBKEY = ?"
         private const val VARIANT_IN_AND_PUBKEY_WHERE = "$VARIANT in (?) AND $PUBKEY = ?"
 
-        val KEYS_VARIANT = SharedConfigMessage.Kind.ENCRYPTION_KEYS.name
-        val INFO_VARIANT = SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name
-        val MEMBER_VARIANT = SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name
+        val CONTACTS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CONTACTS.name
+        val USER_GROUPS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.GROUPS.name
+        val USER_PROFILE_VARIANT: ConfigVariant = SharedConfigMessage.Kind.USER_PROFILE.name
+        val CONVO_INFO_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CONVO_INFO_VOLATILE.name
+
+        val KEYS_VARIANT: ConfigVariant = SharedConfigMessage.Kind.ENCRYPTION_KEYS.name
+        val INFO_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CLOSED_GROUP_INFO.name
+        val MEMBER_VARIANT: ConfigVariant = SharedConfigMessage.Kind.CLOSED_GROUP_MEMBERS.name
     }
 
-    fun storeConfig(variant: String, publicKey: String, data: ByteArray, timestamp: Long) {
+    fun storeConfig(variant: ConfigVariant, publicKey: String, data: ByteArray, timestamp: Long) {
         val db = writableDatabase
         val contentValues = contentValuesOf(
             VARIANT to variant,
@@ -84,7 +91,7 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
         }
     }
 
-    fun retrieveConfigAndHashes(variant: String, publicKey: String): ByteArray? {
+    fun retrieveConfigAndHashes(variant: ConfigVariant, publicKey: String): ByteArray? {
         val db = readableDatabase
         val query = db.query(TABLE_NAME, arrayOf(DATA), VARIANT_AND_PUBKEY_WHERE, arrayOf(variant, publicKey),null, null, null)
         return query?.use { cursor ->
@@ -94,7 +101,7 @@ class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(co
         }
     }
 
-    fun retrieveConfigLastUpdateTimestamp(variant: String, publicKey: String): Long {
+    fun retrieveConfigLastUpdateTimestamp(variant: ConfigVariant, publicKey: String): Long {
         val db = readableDatabase
         val cursor = db.query(TABLE_NAME, arrayOf(TIMESTAMP), VARIANT_AND_PUBKEY_WHERE, arrayOf(variant, publicKey),null, null, null)
         if (cursor == null) return 0

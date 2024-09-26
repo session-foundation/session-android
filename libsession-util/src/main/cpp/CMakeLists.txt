@@ -34,7 +34,9 @@ set(SOURCES
         util.cpp
         group_members.cpp
         group_keys.cpp
-        group_info.cpp)
+        group_info.cpp
+        config_common.cpp
+)
 
 add_library( # Sets the name of the library.
         session_util

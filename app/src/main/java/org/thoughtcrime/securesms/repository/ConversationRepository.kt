@@ -161,8 +161,9 @@ class DefaultConversationRepository @Inject constructor(
             return false
         }
 
-        return configFactory.userGroups
-            ?.getClosedGroup(recipient.address.serialize())?.kicked == true
+        return configFactory.withUserConfigs {
+            it.userGroups.getClosedGroup(recipient.address.serialize())?.kicked == true
+        }
     }
 
     // This assumes that recipient.isContactRecipient is true
