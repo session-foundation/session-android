@@ -25,7 +25,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.RawResponsePromise
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
@@ -40,7 +39,6 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
