@@ -41,8 +41,6 @@ import javax.inject.Singleton
 
 interface TextSecurePreferences {
 
-    fun getLastConfigurationSyncTime(): Long
-    fun setLastConfigurationSyncTime(value: Long)
     fun getConfigurationMessageSynced(): Boolean
     fun setConfigurationMessageSynced(value: Boolean)
 
@@ -108,6 +106,7 @@ interface TextSecurePreferences {
     fun setUpdateApkDigest(value: String?)
     fun getUpdateApkDigest(): String?
     fun getLocalNumber(): String?
+    fun watchLocalNumber(): StateFlow<String?>
     fun getHasLegacyConfig(): Boolean
     fun setHasLegacyConfig(newValue: Boolean)
     fun setLocalNumber(localNumber: String)
@@ -203,6 +202,10 @@ interface TextSecurePreferences {
         @JvmStatic
         var pushSuffix = ""
 
+
+        // This is a stop-gap solution for static access to shared preference.
+        internal lateinit var preferenceInstance: TextSecurePreferences
+
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
         const val THREAD_TRIM_NOW = "pref_trim_now"
@@ -219,7 +222,7 @@ interface TextSecurePreferences {
         const val SCREEN_SECURITY_PREF = "pref_screen_security"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
-        const val LOCAL_NUMBER_PREF = "pref_local_number"
+        internal const val LOCAL_NUMBER_PREF = "pref_local_number"
         const val REGISTERED_GCM_PREF = "pref_gcm_registered"
         const val UPDATE_APK_REFRESH_TIME_PREF = "pref_update_apk_refresh_time"
         const val UPDATE_APK_DOWNLOAD_ID = "pref_update_apk_download_id"
@@ -265,7 +268,6 @@ interface TextSecurePreferences {
         const val GIF_METADATA_WARNING = "has_seen_gif_metadata_warning"
         const val GIF_GRID_LAYOUT = "pref_gif_grid_layout"
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
-        const val LAST_CONFIGURATION_SYNC_TIME = "pref_last_configuration_sync_time"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val LAST_OPEN_DATE = "pref_last_open_date"
@@ -308,16 +310,16 @@ interface TextSecurePreferences {
         // for the lifetime of the Session installation.
         const val HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS = "libsession.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS"
 
-        @JvmStatic
-        fun getLastConfigurationSyncTime(context: Context): Long {
-            return getLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, 0)
-        }
-
-        @JvmStatic
-        fun setLastConfigurationSyncTime(context: Context, value: Long) {
-            setLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, value)
-        }
-
+//        @JvmStatic
+//        fun getLastConfigurationSyncTime(context: Context): Long {
+//            return getLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, 0)
+//        }
+//
+//        @JvmStatic
+//        fun setLastConfigurationSyncTime(context: Context, value: Long) {
+//            setLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, value)
+//        }
+//
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
             return getBooleanPreference(context, CONFIGURATION_SYNCED, false)
@@ -629,9 +631,13 @@ interface TextSecurePreferences {
             return getStringPreference(context, UPDATE_APK_DIGEST, null)
         }
 
+        @Deprecated(
+            "Use the dependency-injected TextSecurePreference instance instead",
+            ReplaceWith("TextSecurePreferences.getLocalNumber()")
+        )
         @JvmStatic
         fun getLocalNumber(context: Context): String? {
-            return getStringPreference(context, LOCAL_NUMBER_PREF, null)
+            return preferenceInstance.getLocalNumber()
         }
 
         @JvmStatic
@@ -645,13 +651,6 @@ interface TextSecurePreferences {
             _events.tryEmit(HAS_RECEIVED_LEGACY_CONFIG)
         }
 
-        fun setLocalNumber(context: Context, localNumber: String) {
-            setStringPreference(context, LOCAL_NUMBER_PREF, localNumber.toLowerCase())
-        }
-
-        fun removeLocalNumber(context: Context) {
-            removePreference(context, LOCAL_NUMBER_PREF)
-        }
 
         @JvmStatic
         fun isEnterSendsEnabled(context: Context): Boolean {
@@ -994,14 +993,12 @@ interface TextSecurePreferences {
 class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
-
-    override fun getLastConfigurationSyncTime(): Long {
-        return getLongPreference(TextSecurePreferences.LAST_CONFIGURATION_SYNC_TIME, 0)
+    init {
+        // Should remove once all static access to the companion objects is removed
+        TextSecurePreferences.preferenceInstance = this
     }
 
-    override fun setLastConfigurationSyncTime(value: Long) {
-        setLongPreference(TextSecurePreferences.LAST_CONFIGURATION_SYNC_TIME, value)
-    }
+    private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)
@@ -1262,7 +1259,11 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun getLocalNumber(): String? {
-        return getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null)
+        return localNumberState.value
+    }
+
+    override fun watchLocalNumber(): StateFlow<String?> {
+        return localNumberState
     }
 
     override fun getHasLegacyConfig(): Boolean {
@@ -1275,10 +1276,13 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun setLocalNumber(localNumber: String) {
-        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, localNumber.toLowerCase())
+        val normalised = localNumber.lowercase()
+        setStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, normalised)
+        localNumberState.value = normalised
     }
 
     override fun removeLocalNumber() {
+        localNumberState.value = null
         removePreference(TextSecurePreferences.LOCAL_NUMBER_PREF)
     }
 

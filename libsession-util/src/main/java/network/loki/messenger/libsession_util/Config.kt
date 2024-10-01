@@ -48,7 +48,6 @@ interface MutableConfig : ReadableConfig {
     fun dump(): ByteArray
     fun encryptionDomain(): String
     fun confirmPushed(seqNo: Long, newHash: String)
-    fun merge(toMerge: Array<Pair<String,ByteArray>>): Stack<String>
     fun dirty(): Boolean
 }
 
@@ -81,11 +80,8 @@ sealed class ConfigBase(pointer: Long): Config(pointer), MutableConfig {
     external override fun dump(): ByteArray
     external override fun encryptionDomain(): String
     external override fun confirmPushed(seqNo: Long, newHash: String)
-    external override fun merge(toMerge: Array<Pair<String,ByteArray>>): Stack<String>
+    external fun merge(toMerge: Array<Pair<String,ByteArray>>): Stack<String>
     external override fun currentHashes(): List<String>
-
-    // Singular merge
-    external fun merge(toMerge: Pair<String,ByteArray>): Stack<String>
 }
 
 

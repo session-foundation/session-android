@@ -39,18 +39,17 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 import com.squareup.phrase.Phrase;
 
 import org.conscrypt.Conscrypt;
-import org.jetbrains.annotations.NotNull;
-import org.session.libsession.avatars.AvatarHelper;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.configs.ConfigSyncHandler;
 import org.session.libsession.messaging.groups.GroupManagerV2;
+import org.session.libsession.messaging.groups.RemoveGroupMemberHandler;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.ConfigFactoryUpdateListener;
 import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.Environment;
 import org.session.libsession.utilities.ProfilePictureUtilities;
@@ -94,7 +93,6 @@ import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
@@ -104,12 +102,10 @@ import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Security;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -119,11 +115,8 @@ import javax.inject.Inject;
 
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
-import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
-import network.loki.messenger.libsession_util.Config;
-import network.loki.messenger.libsession_util.UserProfile;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -169,6 +162,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
+    @Inject ConfigSyncHandler configSyncHandler;
+    @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
 
     private volatile boolean isAppVisible;
 
@@ -272,6 +267,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
 
         pushRegistrationHandler.run();
+        configSyncHandler.start();
+        removeGroupMemberHandler.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -353,6 +350,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public TypingStatusSender getTypingStatusSender() {
         return typingStatusSender;
+    }
+
+    public TextSecurePreferences getTextSecurePreferences() {
+        return textSecurePreferences;
     }
 
     public ReadReceiptManager getReadReceiptManager() {
@@ -444,13 +445,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private static class ProviderInitializationException extends RuntimeException { }
     private void setUpPollingIfNeeded() {
-        String userPublicKey = TextSecurePreferences.getLocalNumber(this);
+        String userPublicKey = textSecurePreferences.getLocalNumber();
         if (userPublicKey == null) return;
-        if (poller != null) {
-            poller.setUserPublicKey(userPublicKey);
-            return;
-        }
-        poller = new Poller(configFactory);
+        poller = new Poller(configFactory, storage, lokiAPIDatabase);
     }
 
     public void startPollingIfNeeded() {

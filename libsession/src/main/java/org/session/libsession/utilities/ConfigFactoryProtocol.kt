@@ -17,14 +17,18 @@ import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.ReadableGroupMembersConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
+import network.loki.messenger.libsession_util.util.ConfigPush
+import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Namespace
 
 interface ConfigFactoryProtocol {
     val configUpdateNotifications: Flow<ConfigUpdateNotification>
 
     fun <T> withUserConfigs(cb: (UserConfigs) -> T): T
     fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T
+    fun mergeUserConfigs(userConfigType: UserConfigType, messages: List<ConfigMessage>)
 
     fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T
     fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
@@ -39,8 +43,52 @@ interface ConfigFactoryProtocol {
                             domain: String,
                             closedGroupSessionId: AccountId): ByteArray?
 
+    fun mergeGroupConfigMessages(
+        groupId: AccountId,
+        keys: List<ConfigMessage>,
+        info: List<ConfigMessage>,
+        members: List<ConfigMessage>
+    )
+
+    fun confirmUserConfigsPushed(
+        contacts: Pair<ConfigPush, ConfigPushResult>? = null,
+        userProfile: Pair<ConfigPush, ConfigPushResult>? = null,
+        convoInfoVolatile: Pair<ConfigPush, ConfigPushResult>? = null,
+        userGroups: Pair<ConfigPush, ConfigPushResult>? = null
+    )
+
+    fun confirmGroupConfigsPushed(
+        groupId: AccountId,
+        members: Pair<ConfigPush, ConfigPushResult>?,
+        info: Pair<ConfigPush, ConfigPushResult>?,
+        keysPush: ConfigPushResult?
+    )
 }
 
+class ConfigMessage(
+    val hash: String,
+    val data: ByteArray,
+    val timestamp: Long
+)
+
+data class ConfigPushResult(
+    val hash: String,
+    val timestamp: Long
+)
+
+enum class UserConfigType(val namespace: Int) {
+    CONTACTS(Namespace.CONTACTS()),
+    USER_PROFILE(Namespace.USER_PROFILE()),
+    CONVO_INFO_VOLATILE(Namespace.CONVO_INFO_VOLATILE()),
+    USER_GROUPS(Namespace.GROUPS()),
+}
+
+/**
+ * Shortcut to get the group info for a closed group. Equivalent to: `withUserConfigs { it.userGroups.getClosedGroup(groupId) }`
+ */
+fun ConfigFactoryProtocol.getClosedGroup(groupId: AccountId): GroupInfo.ClosedGroupInfo? {
+    return withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
+}
 
 interface UserConfigs {
     val contacts: ReadableContacts
@@ -48,7 +96,14 @@ interface UserConfigs {
     val userProfile: ReadableUserProfile
     val convoInfoVolatile: ReadableConversationVolatileConfig
 
-    fun allConfigs(): Sequence<ReadableConfig> = sequenceOf(contacts, userGroups, userProfile, convoInfoVolatile)
+    fun getConfig(type: UserConfigType): ReadableConfig {
+        return when (type) {
+            UserConfigType.CONTACTS -> contacts
+            UserConfigType.USER_PROFILE -> userProfile
+            UserConfigType.CONVO_INFO_VOLATILE -> convoInfoVolatile
+            UserConfigType.USER_GROUPS -> userGroups
+        }
+    }
 }
 
 interface MutableUserConfigs : UserConfigs {
@@ -57,7 +112,14 @@ interface MutableUserConfigs : UserConfigs {
     override val userProfile: MutableUserProfile
     override val convoInfoVolatile: MutableConversationVolatileConfig
 
-    override fun allConfigs(): Sequence<MutableConfig> = sequenceOf(contacts, userGroups, userProfile, convoInfoVolatile)
+    override fun getConfig(type: UserConfigType): MutableConfig {
+        return when (type) {
+            UserConfigType.CONTACTS -> contacts
+            UserConfigType.USER_PROFILE -> userProfile
+            UserConfigType.CONVO_INFO_VOLATILE -> convoInfoVolatile
+            UserConfigType.USER_GROUPS -> userGroups
+        }
+    }
 }
 
 interface GroupConfigs {
@@ -71,8 +133,7 @@ interface MutableGroupConfigs : GroupConfigs {
     override val groupMembers: MutableGroupMembersConfig
     override val groupKeys: MutableGroupKeysConfig
 
-    fun loadKeys(message: ByteArray, hash: String, timestamp: Long): Boolean
-    fun rekeys()
+    fun rekey()
 }
 
 sealed interface ConfigUpdateNotification {
@@ -80,30 +141,3 @@ sealed interface ConfigUpdateNotification {
     data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
     data class GroupConfigsDeleted(val groupId: AccountId) : ConfigUpdateNotification
 }
-
-//interface ConfigFactoryUpdateListener {
-//    fun notifyUpdates(forConfigObject: Config, messageTimestamp: Long)
-//}
-
-
-
-///**
-// * Access group configs if they exist, otherwise return null.
-// *
-// * Note: The config objects will be closed after the callback is executed. Any attempt
-// * to store the config objects will result in a native crash.
-// */
-//inline fun <T: Any> ConfigFactoryProtocol.withGroupConfigsOrNull(
-//    groupId: AccountId,
-//    cb: (GroupInfoConfig, GroupMembersConfig, GroupKeysConfig) -> T
-//): T? {
-//    getGroupInfoConfig(groupId)?.use { groupInfo ->
-//        getGroupMemberConfig(groupId)?.use { groupMembers ->
-//            getGroupKeysConfig(groupId, groupInfo, groupMembers)?.use { groupKeys ->
-//                return cb(groupInfo, groupMembers, groupKeys)
-//            }
-//        }
-//    }
-//
-//    return null
-//}

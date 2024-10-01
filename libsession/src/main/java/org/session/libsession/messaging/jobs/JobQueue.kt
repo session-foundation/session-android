@@ -118,6 +118,7 @@ class JobQueue : JobDelegate {
 
             while (isActive) {
                 when (val job = queue.receive()) {
+                    is InviteContactsJob,
                     is NotifyPNServerJob,
                     is AttachmentUploadJob,
                     is GroupLeavingJob,
@@ -226,6 +227,7 @@ class JobQueue : JobDelegate {
             OpenGroupDeleteJob.KEY,
             RetrieveProfileAvatarJob.KEY,
             GroupLeavingJob.KEY,
+            InviteContactsJob.KEY,
             LibSessionGroupLeavingJob.KEY
         )
         allJobTypes.forEach { type ->

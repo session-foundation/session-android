@@ -3,9 +3,12 @@ package org.session.libsession.messaging.groups
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
@@ -19,24 +22,34 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import javax.inject.Inject
 
 private const val TAG = "RemoveGroupMemberHandler"
 
 private const val MIN_PROCESS_INTERVAL_MILLS = 1_000L
 
-class RemoveGroupMemberHandler(
+class RemoveGroupMemberHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val textSecurePreferences: TextSecurePreferences,
 ) {
-    init {
-        scope.launch {
+    private val scope: CoroutineScope = GlobalScope
+    private var job: Job? = null
+
+    fun start() {
+        require(job == null) { "Already started" }
+
+        job = scope.launch {
             while (true) {
+                // Make sure we have a local number before we start processing
+                textSecurePreferences.watchLocalNumber().first { it != null }
+
                 val processStartedAt = SystemClock.uptimeMillis()
 
                 try {

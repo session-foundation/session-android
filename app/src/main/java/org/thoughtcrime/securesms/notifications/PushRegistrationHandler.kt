@@ -9,15 +9,13 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.GroupInfoConfig
-import network.loki.messenger.libsession_util.GroupKeysConfig
-import network.loki.messenger.libsession_util.GroupMembersConfig
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -59,7 +57,7 @@ constructor(
 
         job = scope.launch(Dispatchers.Default) {
             combine(
-                configFactory.configUpdateNotifications
+                (configFactory.configUpdateNotifications as Flow<Any>)
                     .debounce(500L)
                     .onStart { emit(Unit) },
                 IdentityKeyUtil.CHANGES.onStart { emit(Unit) },
@@ -73,13 +71,9 @@ constructor(
                 val userAuth =
                     storage.userAuth ?: return@combine emptyMap<SubscriptionKey, Subscription>()
                 getGroupSubscriptions(
-                    token = token,
-                    userSecretKey = userAuth.ed25519PrivateKey
+                    token = token
                 ) + mapOf(
-                    SubscriptionKey(userAuth.accountId, token) to OwnedSubscription(
-                        userAuth,
-                        0
-                    )
+                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, 0)
                 )
             }
                 .scan<Map<SubscriptionKey, Subscription>, Pair<Map<SubscriptionKey, Subscription>, Map<SubscriptionKey, Subscription>>?>(
@@ -106,13 +100,11 @@ constructor(
                         val subscription = current.getValue(key)
                         async {
                             try {
-                                subscription.withAuth { auth ->
-                                    pushRegistry.register(
-                                        token = key.token,
-                                        swarmAuth = auth,
-                                        namespaces = listOf(subscription.namespace)
-                                    )
-                                }
+                                pushRegistry.register(
+                                    token = key.token,
+                                    swarmAuth = subscription.auth,
+                                    namespaces = listOf(subscription.namespace)
+                                )
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to register for push notification", e)
                             }
@@ -123,12 +115,10 @@ constructor(
                         val subscription = prev.getValue(key)
                         async {
                             try {
-                                subscription.withAuth { auth ->
-                                    pushRegistry.unregister(
-                                        token = key.token,
-                                        swarmAuth = auth,
-                                    )
-                                }
+                                pushRegistry.unregister(
+                                    token = key.token,
+                                    swarmAuth = subscription.auth,
+                                )
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to unregister for push notification", e)
                             }
@@ -141,17 +131,16 @@ constructor(
     }
 
     private fun getGroupSubscriptions(
-        token: String,
-        userSecretKey: ByteArray
+        token: String
     ): Map<SubscriptionKey, Subscription> {
         return buildMap {
-            val groups = configFactory.userGroups?.allClosedGroupInfo().orEmpty()
+            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
             for (group in groups) {
                 val adminKey = group.adminKey
                 if (adminKey != null && adminKey.isNotEmpty()) {
                     put(
                         SubscriptionKey(group.groupAccountId, token),
-                        OwnedSubscription(
+                        Subscription(
                             auth = OwnedSwarmAuth.ofClosedGroup(group.groupAccountId, adminKey),
                             namespace = Namespace.GROUPS()
                         )
@@ -161,15 +150,11 @@ constructor(
 
                 val authData = group.authData
                 if (authData != null && authData.isNotEmpty()) {
-                    val subscription =
-                        configFactory.withGroupConfigsOrNull(group.groupAccountId) { info, members, keys ->
-                            SubAccountSubscription(
-                                authData = authData,
-                                groupInfoConfigDump = info.dump(),
-                                groupMembersConfigDump = members.dump(),
-                                groupKeysConfigDump = keys.dump(),
-                                groupId = group.groupAccountId,
-                                userSecretKey = userSecretKey
+                    val subscription = configFactory.getGroupAuth(group.groupAccountId)
+                        ?.let {
+                            Subscription(
+                                auth = it,
+                                namespace = Namespace.GROUPS()
                             )
                         }
 
@@ -181,53 +166,6 @@ constructor(
         }
     }
 
-    private data class SubscriptionKey(
-        val accountId: AccountId,
-        val token: String,
-    )
-
-    private sealed interface Subscription {
-        suspend fun withAuth(cb: suspend (SwarmAuth) -> Unit)
-        val namespace: Int
-    }
-
-    private class OwnedSubscription(val auth: OwnedSwarmAuth, override val namespace: Int) :
-        Subscription {
-        override suspend fun withAuth(cb: suspend (SwarmAuth) -> Unit) {
-            cb(auth)
-        }
-    }
-
-    private class SubAccountSubscription(
-        val groupId: AccountId,
-        val userSecretKey: ByteArray,
-        val authData: ByteArray,
-        val groupInfoConfigDump: ByteArray,
-        val groupMembersConfigDump: ByteArray,
-        val groupKeysConfigDump: ByteArray
-    ) : Subscription {
-        override suspend fun withAuth(cb: suspend (SwarmAuth) -> Unit) {
-            GroupInfoConfig.newInstance(groupId.pubKeyBytes, initialDump = groupInfoConfigDump)
-                .use { info ->
-                    GroupMembersConfig.newInstance(
-                        groupId.pubKeyBytes,
-                        initialDump = groupMembersConfigDump
-                    ).use { members ->
-                        GroupKeysConfig.newInstance(
-                            userSecretKey = userSecretKey,
-                            groupPublicKey = groupId.pubKeyBytes,
-                            initialDump = groupKeysConfigDump,
-                            info = info,
-                            members = members
-                        ).use { keys ->
-                            cb(GroupSubAccountSwarmAuth(keys, groupId, authData))
-                        }
-                    }
-                }
-        }
-
-        override val namespace: Int
-            get() = Namespace.GROUPS()
-    }
-
+    private data class SubscriptionKey(val accountId: AccountId, val token: String)
+    private data class Subscription(val auth: SwarmAuth, val namespace: Int)
 }

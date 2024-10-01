@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,7 @@ class EditGroupViewModel @AssistedInject constructor(
 
     // Output: the source-of-truth group information. Other states are derived from this.
     private val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
-        configFactory.configUpdateNotifications
+        (configFactory.configUpdateNotifications as Flow<Any>)
             .onStart { emit(Unit) }
             .map {
                 withContext(Dispatchers.Default) {

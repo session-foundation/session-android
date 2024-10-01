@@ -3,25 +3,14 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import android.util.SparseArray
 import androidx.core.util.valueIterator
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
-import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.Contacts
-import network.loki.messenger.libsession_util.ConversationVolatileConfig
-import network.loki.messenger.libsession_util.MutableConfig
-import network.loki.messenger.libsession_util.MutableContacts
-import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
-import network.loki.messenger.libsession_util.MutableUserGroupsConfig
-import network.loki.messenger.libsession_util.MutableUserProfile
-import network.loki.messenger.libsession_util.UserGroupsConfig
-import network.loki.messenger.libsession_util.UserProfile
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.resolve
 import nl.komponents.kovenant.task
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
@@ -31,8 +20,9 @@ import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.Contact.Name
-import org.session.libsession.utilities.MutableGroupConfigs
+import org.session.libsession.utilities.ConfigMessage
+import org.session.libsession.utilities.UserConfigType
+import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
@@ -46,8 +36,14 @@ private const val TAG = "Poller"
 
 private class PromiseCanceledException : Exception("Promise canceled.")
 
-class Poller(private val configFactory: ConfigFactoryProtocol) {
-    var userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey() ?: ""
+class Poller(
+    private val configFactory: ConfigFactoryProtocol,
+    private val storage: StorageProtocol,
+    private val lokiApiDatabase: LokiAPIDatabaseProtocol
+) {
+    private val userPublicKey: String
+        get() = storage.getUserPublicKey().orEmpty()
+
     private var hasStarted: Boolean = false
     private val usedSnodes: MutableSet<Snode> = mutableSetOf()
     var isCaughtUp = false
@@ -74,12 +70,14 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
     }
 
     fun retrieveUserProfile() {
-        Log.d(TAG, "Retrieving user profile.")
+        Log.d(TAG, "Retrieving user profile. for key = $userPublicKey")
         SnodeAPI.getSwarm(userPublicKey).bind {
             usedSnodes.clear()
             deferred<Unit, Exception>().also {
                 pollNextSnode(userProfileOnly = true, it)
             }.promise
+        }.fail {
+            Log.e(TAG, "Failed to retrieve user profile.", it)
         }
     }
     // endregion
@@ -144,8 +142,9 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
         }
     }
 
-    private fun processConfig(snode: Snode, rawMessages: RawResponse, namespace: Int, forConfig: Class<out MutableConfig>) {
+    private fun processConfig(snode: Snode, rawMessages: RawResponse, forConfig: UserConfigType) {
         val messages = rawMessages["messages"] as? List<*>
+        val namespace = forConfig.namespace
         val processed = if (!messages.isNullOrEmpty()) {
             SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
             SnodeAPI.removeDuplicates(userPublicKey, messages, namespace, true).mapNotNull { rawMessageAsJSON ->
@@ -153,24 +152,21 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                 val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
                 val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
                 val body = Base64.decode(b64EncodedBody)
-                Triple(body, hashValue, timestamp)
+                ConfigMessage(data = body, hash = hashValue, timestamp = timestamp)
             }
         } else emptyList()
 
         if (processed.isEmpty()) return
 
-        processed.forEach { (body, hash, _) ->
-            try {
-                configFactory.withMutableUserConfigs { configs ->
-                    configs
-                        .allConfigs()
-                        .filter { it.javaClass.isInstance(forConfig) }
-                        .first()
-                        .merge(arrayOf(hash to body))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, e)
-            }
+        Log.i(TAG, "Processing ${processed.size} messages for $forConfig")
+
+        try {
+            configFactory.mergeUserConfigs(
+                userConfigType = forConfig,
+                messages = processed,
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, e)
         }
     }
 
@@ -182,57 +178,57 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
     }
 
     private fun pollUserProfile(snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> = task {
-        runBlocking(Dispatchers.IO) {
-            val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
-            val hashesToExtend = mutableSetOf<String>()
-            val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
+        val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
+        val hashesToExtend = mutableSetOf<String>()
+        val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
 
-            configFactory.withUserConfigs {
-                val config = it.userProfile
-                hashesToExtend += config.currentHashes()
-                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                    snode = snode,
+        configFactory.withUserConfigs {
+            hashesToExtend += it.userProfile.currentHashes()
+        }
+
+        requests += SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+            lastHash = lokiApiDatabase.getLastMessageHashValue(
+                snode = snode,
+                publicKey = userAuth.accountId.hexString,
+                namespace = Namespace.USER_PROFILE()
+            ),
+            auth = userAuth,
+            namespace = Namespace.USER_PROFILE(),
+            maxSize = -8
+        )
+
+        if (hashesToExtend.isNotEmpty()) {
+            SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                    messageHashes = hashesToExtend.toList(),
                     auth = userAuth,
-                    namespace = config.namespace(),
-                    maxSize = -8
-                )
-            }.let { request ->
-                requests += request
+                    newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                    extend = true
+            ).let { extensionRequest ->
+                requests += extensionRequest
             }
+        }
 
-            if (hashesToExtend.isNotEmpty()) {
-                SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                        messageHashes = hashesToExtend.toList(),
-                        auth = userAuth,
-                        newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
-                        extend = true
-                ).let { extensionRequest ->
-                    requests += extensionRequest
-                }
-            }
-
-            if (requests.isNotEmpty()) {
-                SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
-                    isCaughtUp = true
-                    if (!deferred.promise.isDone()) {
-                        val responseList = (rawResponses["results"] as List<RawResponse>)
-                        responseList.getOrNull(0)?.let { rawResponse ->
-                            if (rawResponse["code"] as? Int != 200) {
-                                Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+        if (requests.isNotEmpty()) {
+            SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
+                isCaughtUp = true
+                if (!deferred.promise.isDone()) {
+                    val responseList = (rawResponses["results"] as List<RawResponse>)
+                    responseList.getOrNull(0)?.let { rawResponse ->
+                        if (rawResponse["code"] as? Int != 200) {
+                            Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                        } else {
+                            val body = rawResponse["body"] as? RawResponse
+                            if (body == null) {
+                                Log.e(TAG, "Batch sub-request didn't contain a body")
                             } else {
-                                val body = rawResponse["body"] as? RawResponse
-                                if (body == null) {
-                                    Log.e(TAG, "Batch sub-request didn't contain a body")
-                                } else {
-                                    processConfig(snode, body, Namespace.USER_PROFILE(), MutableUserProfile::class.java)
-                                }
+                                processConfig(snode, body, UserConfigType.USER_PROFILE)
                             }
                         }
                     }
-                    Promise.ofSuccess(Unit)
-                }.fail {
-                    Log.e(TAG, "Failed to get raw batch response", it)
                 }
+                Promise.ofSuccess(Unit)
+            }.fail {
+                Log.e(TAG, "Failed to get raw batch response", it)
             }
         }
     }
@@ -245,23 +241,37 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                 val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
                 val requestSparseArray = SparseArray<SnodeAPI.SnodeBatchRequestInfo>()
                 // get messages
-                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(snode, auth = userAuth, maxSize = -2)
+                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                    lastHash = lokiApiDatabase.getLastMessageHashValue(
+                        snode = snode,
+                        publicKey = userAuth.accountId.hexString,
+                        namespace = Namespace.DEFAULT()
+                    ),
+                    auth = userAuth,
+                    maxSize = -2)
                     .also { personalMessages ->
                     // namespaces here should always be set
                     requestSparseArray[personalMessages.namespace!!] = personalMessages
                 }
                 // get the latest convo info volatile
                 val hashesToExtend = mutableSetOf<String>()
-                configFactory.withUserConfigs {
-                    it.allConfigs().map { config ->
-                        hashesToExtend += config.currentHashes()
-                        config.namespace() to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                            snode = snode,
-                            auth = userAuth,
-                            namespace = config.namespace(),
-                            maxSize = -8
-                        )
-                    }
+                configFactory.withUserConfigs { configs ->
+                    UserConfigType
+                        .entries
+                        .map { type ->
+                            val config = configs.getConfig(type)
+                            hashesToExtend += config.currentHashes()
+                            type.namespace to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                                lastHash = lokiApiDatabase.getLastMessageHashValue(
+                                    snode = snode,
+                                    publicKey = userAuth.accountId.hexString,
+                                    namespace = type.namespace
+                                ),
+                                auth = userAuth,
+                                namespace = type.namespace,
+                                maxSize = -8
+                            )
+                        }
                 }.forEach { (namespace, request) ->
                     // namespaces here should always be set
                     requestSparseArray[namespace] = request
@@ -290,29 +300,24 @@ class Poller(private val configFactory: ConfigFactoryProtocol) {
                             val responseList = (rawResponses["results"] as List<RawResponse>)
                             // in case we had null configs, the array won't be fully populated
                             // index of the sparse array key iterator should be the request index, with the key being the namespace
-                            sequenceOf(
-                                    Namespace.USER_PROFILE() to MutableUserProfile::class.java,
-                                    Namespace.CONTACTS() to MutableContacts::class.java,
-                                    Namespace.GROUPS() to MutableUserGroupsConfig::class.java,
-                                    Namespace.CONVO_INFO_VOLATILE() to MutableConversationVolatileConfig::class.java
-                            ).map { (namespace, configClass) ->
-                                Triple(namespace, configClass, requestSparseArray.indexOfKey(namespace))
-                            }.filter { (_, _, i) -> i >= 0 }
-                                .forEach { (namespace, configClass, requestIndex) ->
-                                responseList.getOrNull(requestIndex)?.let { rawResponse ->
-                                    if (rawResponse["code"] as? Int != 200) {
-                                        Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
-                                        return@forEach
+                            UserConfigType.entries
+                                .map { type -> type to requestSparseArray.indexOfKey(type.namespace) }
+                                .filter { (_, i) -> i >= 0 }
+                                .forEach { (configType, requestIndex) ->
+                                    responseList.getOrNull(requestIndex)?.let { rawResponse ->
+                                        if (rawResponse["code"] as? Int != 200) {
+                                            Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                                            return@forEach
+                                        }
+                                        val body = rawResponse["body"] as? RawResponse
+                                        if (body == null) {
+                                            Log.e(TAG, "Batch sub-request didn't contain a body")
+                                            return@forEach
+                                        }
+    
+                                        processConfig(snode, body, configType)
                                     }
-                                    val body = rawResponse["body"] as? RawResponse
-                                    if (body == null) {
-                                        Log.e(TAG, "Batch sub-request didn't contain a body")
-                                        return@forEach
-                                    }
-
-                                    processConfig(snode, body, namespace, configClass)
                                 }
-                            }
 
                             // the first response will be the personal messages (we want these to be processed after config messages)
                             val personalResponseIndex = requestSparseArray.indexOfKey(Namespace.DEFAULT())

@@ -2,6 +2,8 @@
 #include "group_info.h"
 #include "group_members.h"
 
+#include "jni_utils.h"
+
 extern "C"
 JNIEXPORT jint JNICALL
         Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_storageNamespace(JNIEnv* env,
@@ -30,7 +32,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newI
         secret_key_optional = secret_key_bytes;
     }
 
-    if (env->GetArrayLength(initial_dump) > 0) {
+    if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
         auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
         initial_dump_optional = initial_dump_bytes;
     }
@@ -165,21 +167,23 @@ extern "C"
 JNIEXPORT jbyteArray JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_encrypt(JNIEnv *env, jobject thiz,
                                                                      jbyteArray plaintext) {
-    std::lock_guard lock{util::util_mutex_};
-    auto ptr = ptrToKeys(env, thiz);
-    auto plaintext_ustring = util::ustring_from_bytes(env, plaintext);
-    auto enc = ptr->encrypt_message(plaintext_ustring);
-    return util::bytes_from_ustring(env, enc);
+    return jni_utils::run_catching_cxx_exception_or_throws<jbyteArray>(env, [=] {
+        std::lock_guard lock{util::util_mutex_};
+        auto ptr = ptrToKeys(env, thiz);
+        auto plaintext_ustring = util::ustring_from_bytes(env, plaintext);
+        auto enc = ptr->encrypt_message(plaintext_ustring);
+        return util::bytes_from_ustring(env, enc);
+    });
 }
 
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_decrypt(JNIEnv *env, jobject thiz,
                                                                      jbyteArray ciphertext) {
-    std::lock_guard lock{util::util_mutex_};
-    auto ptr = ptrToKeys(env, thiz);
-    auto ciphertext_ustring = util::ustring_from_bytes(env, ciphertext);
-    try {
+    return jni_utils::run_catching_cxx_exception_or_throws<jobject>(env, [=] {
+        std::lock_guard lock{util::util_mutex_};
+        auto ptr = ptrToKeys(env, thiz);
+        auto ciphertext_ustring = util::ustring_from_bytes(env, ciphertext);
         auto decrypted = ptr->decrypt_message(ciphertext_ustring);
         auto sender = decrypted.first;
         auto plaintext = decrypted.second;
@@ -189,12 +193,9 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_decrypt(JNIEnv *env
         auto pair_constructor = env->GetMethodID(pair_class, "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
         auto pair_obj = env->NewObject(pair_class, pair_constructor, plaintext_bytes, sender_session_id);
         return pair_obj;
-    } catch (std::exception& e) {
-        // TODO: maybe log here
-    }
-
-    return nullptr;
+    });
 }
+
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupKeysConfig_keys(JNIEnv *env, jobject thiz) {

@@ -192,7 +192,7 @@ object UpdateMessageBuilder {
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
-                                R.string.groupMemberNewMultiple)
+                                R.string.groupMemberNewTwo)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
                                 .format()

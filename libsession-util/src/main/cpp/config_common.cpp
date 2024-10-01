@@ -30,7 +30,7 @@ Java_network_loki_messenger_libsession_1util_ConfigKt_createConfigObject(
             return reinterpret_cast<jlong>(new session::config::UserProfile(secret_key, initial));
         } else if (config_name == "UserGroups") {
             return reinterpret_cast<jlong>(new session::config::UserGroups(secret_key, initial));
-        } else if (config_name == "ConversationVolatileConfig") {
+        } else if (config_name == "ConvoInfoVolatile") {
             return reinterpret_cast<jlong>(new session::config::ConvoInfoVolatile(secret_key, initial));
         } else {
             throw std::invalid_argument("Unknown config name: " + config_name);

@@ -510,8 +510,8 @@ object SnodeAPI {
     }
 
     fun buildAuthenticatedRetrieveBatchRequest(
-        snode: Snode,
         auth: SwarmAuth,
+        lastHash: String?,
         namespace: Int = 0,
         maxSize: Int? = null
     ): SnodeBatchRequestInfo {
@@ -520,7 +520,7 @@ object SnodeAPI {
             auth = auth,
             verificationData = { ns, t -> "${Snode.Method.Retrieve.rawValue}$ns$t" },
         ) {
-            put("last_hash", database.getLastMessageHashValue(snode, auth.accountId.hexString, namespace).orEmpty())
+            put("last_hash", lastHash.orEmpty())
             if (maxSize != null) {
                 put("max_size", maxSize)
             }
@@ -639,13 +639,15 @@ object SnodeAPI {
                             return@batch
                         }
 
+                        // For each response, parse the result, match it with the request then send
+                        // back through the request's callback.
                         for ((req, resp) in batch.zip(responses.results)) {
-                            val result = if (resp.code != 200) {
-                                Result.failure(RuntimeException("Error with code = ${resp.code}, msg = ${resp.body}"))
-                            } else {
-                                runCatching {
-                                    JsonUtil.fromJson(resp.body, req.responseType)
+                            val result = runCatching {
+                                check(resp.code == 200) {
+                                    "Error with code = ${resp.code}, msg = ${resp.body}"
                                 }
+
+                                JsonUtil.fromJson(resp.body, req.responseType)
                             }
 
                             req.callback.send(result)

@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.dependencies
 
 import android.content.Context
+import dagger.Lazy
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import network.loki.messenger.libsession_util.ConfigBase
@@ -16,6 +18,7 @@ import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -28,29 +31,39 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigMessage
+import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupConfigs
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.MutableUserConfigs
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 
 
-class ConfigFactory(
-    private val context: Context,
+@Singleton
+class ConfigFactory @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val configDatabase: ConfigDatabase,
     private val threadDb: ThreadDatabase,
-    private val storage: StorageProtocol,
+    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val storage: Lazy<StorageProtocol>,
+    private val textSecurePreferences: TextSecurePreferences
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -182,7 +195,7 @@ class ConfigFactory(
             members = groupMembers
         )
 
-        fun persistIfDirty(): Boolean {
+        fun dumpIfNeeded(): Boolean {
             if (groupInfo.needsDump() || groupMembers.needsDump() || groupKeys.needsDump()) {
                 configDatabase.storeGroupConfigs(
                     publicKey = groupAccountId.hexString,
@@ -197,11 +210,10 @@ class ConfigFactory(
             return false
         }
 
-        override fun loadKeys(message: ByteArray, hash: String, timestamp: Long): Boolean {
-            return groupKeys.loadKey(message, hash, timestamp, groupInfo.pointer, groupMembers.pointer)
-        }
+        val isDirty: Boolean
+            get() = groupInfo.dirty() || groupMembers.dirty()
 
-        override fun rekeys() {
+        override fun rekey() {
             groupKeys.rekey(groupInfo.pointer, groupMembers.pointer)
         }
     }
@@ -211,17 +223,17 @@ class ConfigFactory(
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
         extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
+        onBufferOverflow = BufferOverflow.SUSPEND
     )
     override val configUpdateNotifications get() = _configUpdateNotifications
 
     private fun requiresCurrentUserAccountId(): AccountId =
-        AccountId(requireNotNull(storage.getUserPublicKey()) {
+        AccountId(requireNotNull(textSecurePreferences.getLocalNumber()) {
             "No logged in user"
         })
 
     private fun requiresCurrentUserED25519SecKey(): ByteArray =
-        requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.asBytes) {
+        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
             "No logged in user"
         }
 
@@ -233,7 +245,7 @@ class ConfigFactory(
                 userAccountId,
                 threadDb = threadDb,
                 configDatabase = configDatabase,
-                storage = storage
+                storage = storage.get()
             )
         }
 
@@ -242,15 +254,46 @@ class ConfigFactory(
         }
     }
 
-    override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
+    /**
+     * Perform an operation on the user configs, and notify listeners if the configs were changed.
+     *
+     * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
+     */
+    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, Boolean>): T {
         return withUserConfigs { configs ->
-            val result = cb(configs as UserConfigsImpl)
+            val (result, changed) = cb(configs as UserConfigsImpl)
 
-            if (configs.persistIfDirty()) {
+            if (changed) {
                 _configUpdateNotifications.tryEmit(ConfigUpdateNotification.UserConfigs)
             }
 
             result
+        }
+    }
+
+    override fun mergeUserConfigs(
+        userConfigType: UserConfigType,
+        messages: List<ConfigMessage>
+    ) {
+        if (messages.isEmpty()) {
+            return
+        }
+
+        return doWithMutableUserConfigs { configs ->
+            val config = when (userConfigType) {
+                UserConfigType.CONTACTS -> configs.contacts
+                UserConfigType.USER_PROFILE -> configs.userProfile
+                UserConfigType.CONVO_INFO_VOLATILE -> configs.convoInfoVolatile
+                UserConfigType.USER_GROUPS -> configs.userGroups
+            }
+
+            Unit to config.merge(messages.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+        }
+    }
+
+    override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
+        return doWithMutableUserConfigs {
+            cb(it) to it.persistIfDirty()
         }
     }
 
@@ -275,18 +318,28 @@ class ConfigFactory(
         }
     }
 
+    private fun <T> doWithMutableGroupConfigs(groupId: AccountId, cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
+        return withGroupConfigs(groupId) { configs ->
+            val (result, changed) = cb(configs as GroupConfigsImpl)
+
+            Log.d("ConfigFactory", "Group updated? $groupId: $changed")
+
+            if (changed) {
+                if (!_configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))) {
+                    Log.e("ConfigFactory", "Unable to deliver group update notification")
+                }
+            }
+
+            result
+        }
+    }
+
     override fun <T> withMutableGroupConfigs(
         groupId: AccountId,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return withGroupConfigs(groupId) { configs ->
-            val result = cb(configs as GroupConfigsImpl)
-
-            if (configs.persistIfDirty()) {
-                _configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
-            }
-
-            result
+        return doWithMutableGroupConfigs(groupId) {
+            cb(it) to it.dumpIfNeeded()
         }
     }
 
@@ -309,12 +362,80 @@ class ConfigFactory(
     ): ByteArray? {
         return Sodium.decryptForMultipleSimple(
             encoded = encoded,
-            ed25519SecretKey = requireNotNull(storage.getUserED25519KeyPair()?.secretKey?.asBytes) {
+            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
                 "No logged in user"
             },
             domain = domain,
             senderPubKey = Sodium.ed25519PkToCurve25519(closedGroupSessionId.pubKeyBytes)
         )
+    }
+
+    override fun mergeGroupConfigMessages(
+        groupId: AccountId,
+        keys: List<ConfigMessage>,
+        info: List<ConfigMessage>,
+        members: List<ConfigMessage>
+    ) {
+        doWithMutableGroupConfigs(groupId) { configs ->
+            // Keys must be loaded first as they are used to decrypt the other config messages
+            val keysLoaded = keys.fold(false) { acc, msg ->
+                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
+            }
+
+            val infoMerged = info.isNotEmpty() &&
+                    configs.groupInfo.merge(info.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+
+            val membersMerged = members.isNotEmpty() &&
+                    configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+
+            configs.dumpIfNeeded()
+
+            Unit to (keysLoaded || infoMerged || membersMerged)
+        }
+    }
+
+    override fun confirmUserConfigsPushed(
+        contacts: Pair<ConfigPush, ConfigPushResult>?,
+        userProfile: Pair<ConfigPush, ConfigPushResult>?,
+        convoInfoVolatile: Pair<ConfigPush, ConfigPushResult>?,
+        userGroups: Pair<ConfigPush, ConfigPushResult>?
+    ) {
+        if (contacts == null && userProfile == null && convoInfoVolatile == null && userGroups == null) {
+            return
+        }
+
+        doWithMutableUserConfigs { configs ->
+            contacts?.let {  (push, result) -> configs.contacts.confirmPushed(push.seqNo, result.hash) }
+            userProfile?.let { (push, result) ->  configs.userProfile.confirmPushed(push.seqNo, result.hash) }
+            convoInfoVolatile?.let { (push, result) ->  configs.convoInfoVolatile.confirmPushed(push.seqNo, result.hash) }
+            userGroups?.let { (push, result) ->  configs.userGroups.confirmPushed(push.seqNo, result.hash) }
+
+            Unit to configs.persistIfDirty()
+        }
+    }
+
+    override fun confirmGroupConfigsPushed(
+        groupId: AccountId,
+        members: Pair<ConfigPush, ConfigPushResult>?,
+        info: Pair<ConfigPush, ConfigPushResult>?,
+        keysPush: ConfigPushResult?
+    ) {
+        if (members == null && info == null && keysPush == null) {
+            return
+        }
+
+        doWithMutableGroupConfigs(groupId) { configs ->
+            members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
+            info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
+            keysPush?.let { (hash, timestamp) ->
+                val pendingConfig = configs.groupKeys.pendingConfig()
+                if (pendingConfig != null) {
+                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer)
+                }
+            }
+
+            Unit to configs.dumpIfNeeded()
+        }
     }
 
     override fun conversationInConfig(
@@ -323,12 +444,11 @@ class ConfigFactory(
         openGroupId: String?,
         visibleOnly: Boolean
     ): Boolean {
-        val userPublicKey = storage.getUserPublicKey() ?: return false
+        val userPublicKey = storage.get().getUserPublicKey() ?: return false
 
         if (openGroupId != null) {
             val threadId = GroupManager.getOpenGroupThreadID(openGroupId, context)
-            val openGroup =
-                get(context).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return false
+            val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return false
 
             // Not handling the `hidden` behaviour for communities so just indicate the existence
             return withUserConfigs {

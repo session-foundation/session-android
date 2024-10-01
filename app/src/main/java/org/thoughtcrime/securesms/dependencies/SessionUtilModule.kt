@@ -14,6 +14,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Named
@@ -25,15 +27,6 @@ import javax.inject.Singleton
 object SessionUtilModule {
 
     private const val POLLER_SCOPE = "poller_coroutine_scope"
-
-    @Provides
-    @Singleton
-    fun provideConfigFactory(
-        @ApplicationContext context: Context,
-        configDatabase: ConfigDatabase,
-        storageProtocol: StorageProtocol,
-        threadDatabase: ThreadDatabase,
-    ): ConfigFactory = ConfigFactory(context, configDatabase, threadDatabase, storageProtocol)
 
     @Provides
     @Named(POLLER_SCOPE)
@@ -49,12 +42,14 @@ object SessionUtilModule {
     fun providePollerFactory(@Named(POLLER_SCOPE) coroutineScope: CoroutineScope,
                              @Named(POLLER_SCOPE) dispatcher: CoroutineDispatcher,
                              configFactory: ConfigFactory,
-                             storage: StorageProtocol,
-                             groupManagerV2: Lazy<GroupManagerV2>) = PollerFactory(
+                             storage: Lazy<StorageProtocol>,
+                             groupManagerV2: Lazy<GroupManagerV2>,
+                             lokiApiDatabase: LokiAPIDatabaseProtocol) = PollerFactory(
         scope = coroutineScope,
         executor = dispatcher,
         configFactory = configFactory,
         groupManagerV2 = groupManagerV2,
-        storage = storage
+        storage = storage,
+        lokiApiDatabase = lokiApiDatabase,
     )
 }

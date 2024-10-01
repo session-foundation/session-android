@@ -7,6 +7,7 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
+import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,7 +16,8 @@ class PollerFactory(
     private val executor: CoroutineDispatcher,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: Lazy<GroupManagerV2>,
-    private val storage: StorageProtocol,
+    private val storage: Lazy<StorageProtocol>,
+    private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     ) {
 
     private val pollers = ConcurrentHashMap<AccountId, ClosedGroupPoller>()
@@ -29,7 +31,15 @@ class PollerFactory(
         if (invited != false) return null
 
         return pollers.getOrPut(sessionId) {
-            ClosedGroupPoller(scope, executor, sessionId, configFactory, groupManagerV2.get(), storage)
+            ClosedGroupPoller(
+                scope = scope,
+                executor = executor,
+                closedGroupSessionId = sessionId,
+                configFactoryProtocol = configFactory,
+                groupManagerV2 = groupManagerV2.get(),
+                storage = storage.get(),
+                lokiApiDatabase = lokiApiDatabase,
+            )
         }
     }
 
