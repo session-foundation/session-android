@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.session.libsession.database.userAuth
@@ -27,6 +28,7 @@ import org.thoughtcrime.securesms.database.MarkedMessageInfo
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 
+@AndroidEntryPoint
 class MarkReadReceiver : BroadcastReceiver() {
     @SuppressLint("StaticFieldLeak")
     override fun onReceive(context: Context, intent: Intent) {

@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.service
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
-import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
@@ -23,27 +23,30 @@ import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.mms.MmsException
 import java.io.IOException
 import java.util.TreeSet
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private val TAG = ExpiringMessageManager::class.java.simpleName
-class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtocol {
+
+@Singleton
+class ExpiringMessageManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val smsDatabase: SmsDatabase,
+    private val mmsDatabase: MmsDatabase,
+    private val mmsSmsDatabase: MmsSmsDatabase,
+    private val clock: SnodeClock,
+    private val storage: Storage,
+) : MessageExpirationManagerProtocol {
     private val expiringMessageReferences = TreeSet<ExpiringMessageReference>()
     private val executor: Executor = Executors.newSingleThreadExecutor()
-    private val smsDatabase: SmsDatabase
-    private val mmsDatabase: MmsDatabase
-    private val mmsSmsDatabase: MmsSmsDatabase
-    private val context: Context
 
     init {
-        this.context = context.applicationContext
-        smsDatabase = get(context).smsDatabase()
-        mmsDatabase = get(context).mmsDatabase()
-        mmsSmsDatabase = get(context).mmsSmsDatabase()
         executor.execute(LoadTask())
         executor.execute(ProcessTask())
     }
@@ -94,7 +97,7 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
                 }
                 recipient = Recipient.from(context, groupAddress, false)
             }
-            val threadId = shared.storage.getThreadId(recipient) ?: return
+            val threadId = storage.getThreadId(recipient) ?: return
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
                 expiresInMillis, expireStartedAt, true,
@@ -134,7 +137,7 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
             val address = fromSerialized(serializedAddress)
             val recipient = Recipient.from(context, address, false)
 
-            message.threadID = shared.storage.getOrCreateThreadIdFor(address)
+            message.threadID = storage.getOrCreateThreadIdFor(address)
             val timerUpdateMessage = OutgoingExpirationUpdateMessage(
                 recipient,
                 sentTimestamp!!,
@@ -206,7 +209,7 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
                     try {
                         while (expiringMessageReferences.isEmpty()) (expiringMessageReferences as Object).wait()
                         val nextReference = expiringMessageReferences.first()
-                        val waitTime = nextReference.expiresAtMillis - nowWithOffset
+                        val waitTime = nextReference.expiresAtMillis - clock.currentTimeMills()
                         if (waitTime > 0) {
                             ExpirationListener.setAlarm(context, waitTime)
                             (expiringMessageReferences as Object).wait(waitTime)

@@ -45,6 +45,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Inject
 
 private const val TAG = "ConfigToDatabaseSync"
@@ -237,27 +238,39 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         val newClosedGroups = userGroups.allClosedGroupInfo()
-        val existingClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isClosedGroupV2 }
+        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
+            buildMap(reader.count) {
+                var current = reader.next
+                while (current != null) {
+                    if (current.recipient?.isClosedGroupV2Recipient == true) {
+                        put(AccountId(current.recipient.address.serialize()), current.threadId)
+                    }
+
+                    current = reader.next
+                }
+            }
+        }
+
+        val groupThreadsToKeep = hashMapOf<AccountId, Long>()
+
         for (closedGroup in newClosedGroups) {
             val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId.hexString), false)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             val threadId = storage.getOrCreateThreadIdFor(recipient.address)
+            groupThreadsToKeep[closedGroup.groupAccountId] = threadId
+
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
             if (!closedGroup.invited) {
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
             }
         }
 
-        val toRemove = existingClosedGroups.mapTo(hashSetOf()) { it.encodedId } - newClosedGroups.mapTo(hashSetOf()) { it.groupAccountId.hexString }
+        val toRemove = existingClosedGroupThreads - groupThreadsToKeep.keys
         Log.d(TAG, "Removing ${toRemove.size} closed groups")
-        toRemove.forEach { encodedId ->
-            val threadId = storage.getThreadId(encodedId)
-            if (threadId != null) {
-                storage.removeClosedGroupThread(threadId)
-            }
-
-            pollerFactory.pollerFor(AccountId(encodedId))?.stop()
+        toRemove.forEach { (groupId, threadId) ->
+            pollerFactory.pollerFor(groupId)?.stop()
+            storage.removeClosedGroupThread(threadId)
         }
 
         for (group in lgc) {

@@ -75,6 +75,7 @@ class SSKEnvironment(
     }
 
     companion object {
+        @Deprecated("Use Hilt to inject your dependencies instead")
         lateinit var shared: SSKEnvironment
 
         fun configure(typingIndicators: TypingIndicatorsProtocol,

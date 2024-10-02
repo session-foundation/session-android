@@ -113,6 +113,7 @@ import javax.inject.Inject;
 
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
+import kotlin.Deprecated;
 import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
@@ -132,11 +133,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
 
-    private ExpiringMessageManager expiringMessageManager;
-    private TypingStatusRepository typingStatusRepository;
-    private TypingStatusSender typingStatusSender;
-    private ReadReceiptManager readReceiptManager;
-
     public MessageNotifier messageNotifier = null;
     public Poller poller = null;
     public Broadcaster broadcaster = null;
@@ -154,8 +150,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject PollerFactory pollerFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
-    @Inject
-    PushRegistrationHandler pushRegistrationHandler;
+    @Inject PushRegistrationHandler pushRegistrationHandler;
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
@@ -165,6 +160,11 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject ConfigToDatabaseSync configToDatabaseSync;
     @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
     @Inject SnodeClock snodeClock;
+    @Inject ExpiringMessageManager expiringMessageManager;
+    @Inject TypingStatusRepository typingStatusRepository;
+    @Inject TypingStatusSender typingStatusSender;
+    @Inject ReadReceiptManager readReceiptManager;
+
 
     private volatile boolean isAppVisible;
 
@@ -253,12 +253,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
         boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
         SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
-        initializeExpiringMessageManager();
-        initializeTypingStatusRepository();
-        initializeTypingStatusSender();
-        initializeReadReceiptManager();
         initializePeriodicTasks();
-        SSKEnvironment.Companion.configure(getTypingStatusRepository(), getReadReceiptManager(), profileManager, messageNotifier, getExpiringMessageManager());
+        SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, messageNotifier, expiringMessageManager);
         initializeWebRtc();
         initializeBlobProvider();
         resubmitProfilePictureIfNeeded();
@@ -341,22 +337,27 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         super.onTerminate();
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public ExpiringMessageManager getExpiringMessageManager() {
         return expiringMessageManager;
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public TypingStatusRepository getTypingStatusRepository() {
         return typingStatusRepository;
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public TypingStatusSender getTypingStatusSender() {
         return typingStatusSender;
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public TextSecurePreferences getTextSecurePreferences() {
         return textSecurePreferences;
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public ReadReceiptManager getReadReceiptManager() {
         return readReceiptManager;
     }
@@ -402,22 +403,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void initializeCrashHandling() {
         final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
-    }
-
-    private void initializeExpiringMessageManager() {
-        this.expiringMessageManager = new ExpiringMessageManager(this);
-    }
-
-    private void initializeTypingStatusRepository() {
-        this.typingStatusRepository = new TypingStatusRepository();
-    }
-
-    private void initializeReadReceiptManager() {
-        this.readReceiptManager = new ReadReceiptManager();
-    }
-
-    private void initializeTypingStatusSender() {
-        this.typingStatusSender = new TypingStatusSender(this);
     }
 
     private void initializePeriodicTasks() {
