@@ -42,6 +42,7 @@ class ClosedGroupPoller(
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
+        private const val POLL_ERROR_RETRY_DELAY = 10_000L
 
         private const val TAG = "ClosedGroupPoller"
     }
@@ -54,34 +55,43 @@ class ClosedGroupPoller(
         Log.d(TAG, "Starting closed group poller for ${closedGroupSessionId.hexString.take(4)}")
         job?.cancel()
         job = scope.launch(executor) {
-            var snode: Snode? = null
-
             while (isActive) {
-                configFactoryProtocol.getClosedGroup(closedGroupSessionId) ?: break
+                try {
+                    val swarmNodes = SnodeAPI.getSwarm(closedGroupSessionId.hexString).await().toMutableSet()
+                    var currentSnode: Snode? = null
 
-                if (snode == null) {
-                    Log.i(TAG, "No Snode, fetching one")
-                    snode = SnodeAPI.getSingleTargetSnode(closedGroupSessionId.hexString).await()
-                }
+                    while (isActive) {
+                        if (currentSnode == null) {
+                            check(swarmNodes.isNotEmpty()) { "No swarm nodes found" }
+                            Log.d(TAG, "No current snode, getting a new one. Remaining in pool = ${swarmNodes.size - 1}")
+                            currentSnode = swarmNodes.random()
+                            swarmNodes.remove(currentSnode)
+                        }
 
-                val nextPoll = runCatching { poll(snode!!) }
-                when {
-                    nextPoll.isFailure -> {
-                        Log.e(TAG, "Error polling closed group", nextPoll.exceptionOrNull())
-                        // Clearing snode so we get a new one next time
-                        snode = null
-                        delay(POLL_INTERVAL)
+                        val result = runCatching { poll(currentSnode!!) }
+                        when {
+                            result.isSuccess -> {
+                                delay(POLL_INTERVAL)
+                            }
+
+                            result.isFailure -> {
+                                val error = result.exceptionOrNull()!!
+                                if (error is CancellationException) {
+                                    throw error
+                                }
+
+                                Log.e(TAG, "Error polling closed group", error)
+                                // Clearing snode so we get a new one next time
+                                currentSnode = null
+                                delay(POLL_INTERVAL)
+                            }
+                        }
                     }
-
-                    nextPoll.getOrNull() == null -> {
-                        // assume null poll time means don't continue polling, either the group has been deleted or something else
-                        Log.d(TAG, "Stopping the closed group poller")
-                        break
-                    }
-
-                    else -> {
-                        delay(POLL_INTERVAL)
-                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during group poller", e)
+                    delay(POLL_ERROR_RETRY_DELAY)
                 }
             }
         }

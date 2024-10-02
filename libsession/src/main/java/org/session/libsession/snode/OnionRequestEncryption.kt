@@ -38,57 +38,53 @@ object OnionRequestEncryption {
         payload: ByteArray,
         destination: Destination,
         version: Version
-    ): Promise<EncryptionResult, Exception> {
-        return GlobalScope.asyncPromise {
-            val plaintext = if (version == Version.V4) {
-                payload
-            } else {
-                // Wrapping isn't needed for file server or open group onion requests
-                when (destination) {
-                    is Destination.Snode -> encode(payload, mapOf("headers" to ""))
-                    is Destination.Server -> payload
-                }
+    ): EncryptionResult {
+        val plaintext = if (version == Version.V4) {
+            payload
+        } else {
+            // Wrapping isn't needed for file server or open group onion requests
+            when (destination) {
+                is Destination.Snode -> encode(payload, mapOf("headers" to ""))
+                is Destination.Server -> payload
             }
-            val x25519PublicKey = when (destination) {
-                is Destination.Snode -> destination.snode.publicKeySet!!.x25519Key
-                is Destination.Server -> destination.x25519PublicKey
-            }
-            AESGCM.encrypt(plaintext, x25519PublicKey)
         }
+        val x25519PublicKey = when (destination) {
+            is Destination.Snode -> destination.snode.publicKeySet!!.x25519Key
+            is Destination.Server -> destination.x25519PublicKey
+        }
+        return AESGCM.encrypt(plaintext, x25519PublicKey)
     }
 
     /**
      * Encrypts the previous encryption result (i.e. that of the hop after this one) for this hop. Use this to build the layers of an onion request.
      */
-    internal fun encryptHop(lhs: Destination, rhs: Destination, previousEncryptionResult: EncryptionResult): Promise<EncryptionResult, Exception> {
-        return GlobalScope.asyncPromise {
-            val payload: MutableMap<String, Any> = when (rhs) {
-                is Destination.Snode -> {
-                    mutableMapOf("destination" to rhs.snode.publicKeySet!!.ed25519Key)
-                }
-
-                is Destination.Server -> {
-                    mutableMapOf(
-                        "host" to rhs.host,
-                        "target" to rhs.target,
-                        "method" to "POST",
-                        "protocol" to rhs.scheme,
-                        "port" to rhs.port
-                    )
-                }
+    internal fun encryptHop(lhs: Destination, rhs: Destination, previousEncryptionResult: EncryptionResult): EncryptionResult {
+        val payload: MutableMap<String, Any> = when (rhs) {
+            is Destination.Snode -> {
+                mutableMapOf("destination" to rhs.snode.publicKeySet!!.ed25519Key)
             }
-            payload["ephemeral_key"] = previousEncryptionResult.ephemeralPublicKey.toHexString()
-            val x25519PublicKey = when (lhs) {
-                is Destination.Snode -> {
-                    lhs.snode.publicKeySet!!.x25519Key
-                }
 
-                is Destination.Server -> {
-                    lhs.x25519PublicKey
-                }
+            is Destination.Server -> {
+                mutableMapOf(
+                    "host" to rhs.host,
+                    "target" to rhs.target,
+                    "method" to "POST",
+                    "protocol" to rhs.scheme,
+                    "port" to rhs.port
+                )
             }
-            val plaintext = encode(previousEncryptionResult.ciphertext, payload)
-            AESGCM.encrypt(plaintext, x25519PublicKey)
         }
+        payload["ephemeral_key"] = previousEncryptionResult.ephemeralPublicKey.toHexString()
+        val x25519PublicKey = when (lhs) {
+            is Destination.Snode -> {
+                lhs.snode.publicKeySet!!.x25519Key
+            }
+
+            is Destination.Server -> {
+                lhs.x25519PublicKey
+            }
+        }
+        val plaintext = encode(previousEncryptionResult.ciphertext, payload)
+        return AESGCM.encrypt(plaintext, x25519PublicKey)
     }
 }

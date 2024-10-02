@@ -296,22 +296,22 @@ object OnionRequestAPI {
             is Destination.Snode -> destination.snode
             is Destination.Server -> null
         }
-        return getPath(snodeToExclude).bind { path ->
+        return getPath(snodeToExclude).map { path ->
             guardSnode = path.first()
             // Encrypt in reverse order, i.e. the destination first
-            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version).bind { r ->
+            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version).let { r ->
                 destinationSymmetricKey = r.symmetricKey
                 // Recursively encrypt the layers of the onion (again in reverse order)
                 encryptionResult = r
                 @Suppress("NAME_SHADOWING") var path = path
                 var rhs = destination
-                fun addLayer(): Promise<EncryptionResult, Exception> {
+                fun addLayer(): EncryptionResult {
                     return if (path.isEmpty()) {
-                        Promise.of(encryptionResult)
+                        encryptionResult
                     } else {
                         val lhs = Destination.Snode(path.last())
                         path = path.dropLast(1)
-                        OnionRequestEncryption.encryptHop(lhs, rhs, encryptionResult).bind { r ->
+                        OnionRequestEncryption.encryptHop(lhs, rhs, encryptionResult).let { r ->
                             encryptionResult = r
                             rhs = lhs
                             addLayer()

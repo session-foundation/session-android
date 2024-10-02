@@ -3,7 +3,6 @@ package org.session.libsession.messaging.groups
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
 
@@ -36,7 +35,7 @@ interface GroupManagerV2 {
 
     suspend fun promoteMember(group: AccountId, members: List<AccountId>)
 
-    suspend fun onReceiveInvitation(
+    suspend fun handleInvitation(
         groupId: AccountId,
         groupName: String,
         authData: ByteArray,
@@ -44,7 +43,7 @@ interface GroupManagerV2 {
         inviteMessageHash: String?
     )
 
-    suspend fun onReceivePromotion(
+    suspend fun handlePromotion(
         groupId: AccountId,
         groupName: String,
         adminKey: ByteArray,

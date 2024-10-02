@@ -634,7 +634,7 @@ class GroupManagerV2Impl @Inject constructor(
         pollerFactory.pollerFor(group.groupAccountId)?.start()
     }
 
-    override suspend fun onReceiveInvitation(
+    override suspend fun handleInvitation(
         groupId: AccountId,
         groupName: String,
         authData: ByteArray,
@@ -663,7 +663,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun onReceivePromotion(
+    override suspend fun handlePromotion(
         groupId: AccountId,
         groupName: String,
         adminKey: ByteArray,
@@ -692,7 +692,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             // Update our promote state
-            configFactory.withMutableGroupConfigs(groupId) { configs ->
+            configFactory.withMutableGroupConfigs(recreateConfigInstances = true, groupId = groupId) { configs ->
                 configs.groupMembers.get(userAuth.accountId.hexString)?.let { member ->
                     configs.groupMembers.set(member.setPromoteSuccess())
                 }

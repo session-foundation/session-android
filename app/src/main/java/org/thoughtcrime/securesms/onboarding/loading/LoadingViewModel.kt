@@ -60,7 +60,7 @@ internal class LoadingViewModel @Inject constructor(
     val events = _events.asSharedFlow()
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             state.flatMapLatest {
                 when (it) {
                     State.LOADING -> progress(0f, 1f, TIMEOUT_TIME)

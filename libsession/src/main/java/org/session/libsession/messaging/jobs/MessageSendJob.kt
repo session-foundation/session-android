@@ -94,7 +94,7 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
     }
 
     private fun handleFailure(dispatcherName: String, error: Exception) {
-        Log.w(TAG, "Failed to send $message::class.simpleName.")
+        Log.w(TAG, "Failed to send $message::class.simpleName.", error)
         val message = message as? VisibleMessage
         if (message != null) {
             if (!MessagingModuleConfiguration.shared.messageDataProvider.isOutgoingMessage(message.sentTimestamp!!)) {

@@ -41,6 +41,7 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
+import org.session.libsession.utilities.getClosedGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -299,11 +300,7 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
         val configs = groupConfigs.getOrPut(groupId) {
-            val groupAdminKey = requireNotNull(withUserConfigs {
-                it.userGroups.getClosedGroup(groupId.hexString)
-            }) {
-                "Group not found"
-            }.adminKey
+            val groupAdminKey = getClosedGroup(groupId)?.adminKey
 
             GroupConfigsImpl(
                 requiresCurrentUserED25519SecKey(),
@@ -318,7 +315,14 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    private fun <T> doWithMutableGroupConfigs(groupId: AccountId, cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
+    private fun <T> doWithMutableGroupConfigs(
+        groupId: AccountId,
+        recreateConfigInstances: Boolean,
+        cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
+        if (recreateConfigInstances) {
+            groupConfigs.remove(groupId)
+        }
+
         val (result, changed) =  withGroupConfigs(groupId) { configs ->
             cb(configs as GroupConfigsImpl)
         }
@@ -336,9 +340,10 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withMutableGroupConfigs(
         groupId: AccountId,
+        recreateConfigInstances: Boolean,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return doWithMutableGroupConfigs(groupId) {
+        return doWithMutableGroupConfigs(recreateConfigInstances = recreateConfigInstances, groupId = groupId) {
             cb(it) to it.dumpIfNeeded()
         }
     }
@@ -376,7 +381,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        doWithMutableGroupConfigs(groupId) { configs ->
+        doWithMutableGroupConfigs(groupId, false) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -424,7 +429,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableGroupConfigs(groupId) { configs ->
+        doWithMutableGroupConfigs(groupId, false) { configs ->
             members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
             info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
             keysPush?.let { (hash, timestamp) ->

@@ -4,7 +4,9 @@ import org.session.libsignal.protos.SignalServiceProtos.Content
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 
-class GroupUpdated(val inner: GroupUpdateMessage): ControlMessage() {
+class GroupUpdated @JvmOverloads constructor(
+    val inner: GroupUpdateMessage = GroupUpdateMessage.getDefaultInstance()
+): ControlMessage() {
 
     override fun isValid(): Boolean {
         return true // TODO: add the validation here

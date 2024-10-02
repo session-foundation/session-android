@@ -6,7 +6,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.Sodium
-import network.loki.messenger.libsession_util.util.afterSend
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -660,7 +659,7 @@ private fun handlePromotionMessage(message: GroupUpdated) {
     GlobalScope.launch {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
-                .onReceivePromotion(
+                .handlePromotion(
                     groupId = AccountId(IdPrefix.GROUP, keyPair.pubKey),
                     groupName = promotion.name,
                     adminKey = keyPair.secretKey,
@@ -703,7 +702,7 @@ private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: Group
     GlobalScope.launch {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
-                .onReceiveInvitation(
+                .handleInvitation(
                     groupId = groupId,
                     groupName = invite.name,
                     authData = invite.memberAuthData.toByteArray(),

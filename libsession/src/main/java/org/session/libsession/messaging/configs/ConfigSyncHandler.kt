@@ -33,6 +33,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
+import org.session.libsignal.utilities.retryWithUniformInterval
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
@@ -59,7 +60,6 @@ class ConfigSyncHandler @Inject constructor(
 
             configFactory.configUpdateNotifications
                 .collect { changes ->
-                try {
                     when (changes) {
                         is ConfigUpdateNotification.GroupConfigsDeleted -> {
                             groupMutex.remove(changes.groupId)
@@ -68,24 +68,32 @@ class ConfigSyncHandler @Inject constructor(
                         is ConfigUpdateNotification.GroupConfigsUpdated -> {
                             // Group config pushing is limited to its own dispatcher
                             launch {
-                                groupMutex.getOrPut(changes.groupId) { Mutex() }.withLock {
-                                    pushGroupConfigsChangesIfNeeded(changes.groupId)
+                                try {
+                                    retryWithUniformInterval {
+                                        groupMutex.getOrPut(changes.groupId) { Mutex() }.withLock {
+                                            pushGroupConfigsChangesIfNeeded(changes.groupId)
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Failed to push group configs", e)
                                 }
                             }
                         }
 
                         ConfigUpdateNotification.UserConfigs -> launch {
-                            userMutex.withLock {
-                                pushUserConfigChangesIfNeeded()
+                            try {
+                                retryWithUniformInterval {
+                                    userMutex.withLock {
+                                        pushUserConfigChangesIfNeeded()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to push user configs", e)
                             }
                         }
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error handling config update", e)
                 }
-            }
         }
-
     }
 
     private suspend fun pushGroupConfigsChangesIfNeeded(groupId: AccountId) = coroutineScope {
@@ -241,11 +249,17 @@ class ConfigSyncHandler @Inject constructor(
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
-                (configType to configPush) to pushConfig(userAuth, snode, configPush, configType.namespace)
+                (configType to configPush) to pushConfig(
+                    userAuth,
+                    snode,
+                    configPush,
+                    configType.namespace
+                )
             }
         }
 
-        val pushResults = pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
+        val pushResults =
+            pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
 
         Log.d(TAG, "Pushed ${pushResults.size} user configs")
 
