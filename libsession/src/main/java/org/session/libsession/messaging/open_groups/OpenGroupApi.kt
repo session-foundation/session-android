@@ -8,7 +8,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Sign
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
@@ -22,6 +24,8 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.asyncPromise
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64.decode
@@ -858,7 +862,9 @@ object OpenGroupApi {
     }
 
     fun getDefaultRoomsIfNeeded(): Promise<List<DefaultGroup>, Exception> {
-        return getAllRooms().map { groups ->
+        return GlobalScope.asyncPromise {
+            val groups = getAllRooms().await()
+
             val earlyGroups = groups.map { group ->
                 DefaultGroup(group.token, group.name, null)
             }
@@ -873,15 +879,13 @@ object OpenGroupApi {
             }
             groups.map { group ->
                 val image = try {
-                    images[group.token]!!.get()
+                    images[group.token]!!.await()
                 } catch (e: Exception) {
                     // No image or image failed to download
                     null
                 }
                 DefaultGroup(group.token, group.name, image)
-            }
-        }.success { new ->
-            defaultRooms.tryEmit(new)
+            }.also(defaultRooms::tryEmit)
         }
     }
 

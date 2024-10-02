@@ -9,6 +9,7 @@ import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.PwHash
 import com.goterl.lazysodium.interfaces.SecretBox
 import com.goterl.lazysodium.utils.Key
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -27,6 +28,7 @@ import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.snode.model.BatchResponse
+import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.snode.utilities.retrySuspendAsPromise
 import org.session.libsession.utilities.mapValuesNotNull
@@ -137,7 +139,7 @@ object SnodeAPI {
             JsonUtil.fromJson(it.body ?: throw Error.Generic, Map::class.java)
         }
 
-        else -> task {
+        else -> GlobalScope.asyncPromise {
             HTTP.execute(
                 HTTP.Verb.POST,
                 url = "${snode.address}:${snode.port}/storage_rpc/v1",
@@ -169,17 +171,15 @@ object SnodeAPI {
             JsonUtil.fromJson(resp.body ?: throw Error.Generic, responseClass)
         }
 
-        else -> withContext(Dispatchers.IO) {
-            HTTP.execute(
-                HTTP.Verb.POST,
-                url = "${snode.address}:${snode.port}/storage_rpc/v1",
-                parameters = buildMap {
-                    this["method"] = method.rawValue
-                    this["params"] = parameters
-                }
-            ).toString().let {
-                JsonUtil.fromJson(it, responseClass)
+        else -> HTTP.execute(
+            HTTP.Verb.POST,
+            url = "${snode.address}:${snode.port}/storage_rpc/v1",
+            parameters = buildMap {
+                this["method"] = method.rawValue
+                this["params"] = parameters
             }
+        ).toString().let {
+            JsonUtil.fromJson(it, responseClass)
         }
     }
 
@@ -192,7 +192,7 @@ object SnodeAPI {
     }
 
     internal fun getRandomSnode(): Promise<Snode, Exception> =
-        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.secureRandom()?.let { Promise.of(it) } ?: task {
+        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.secureRandom()?.let { Promise.of(it) } ?: GlobalScope.asyncPromise {
             val target = seedNodePool.random()
             Log.d("Loki", "Populating snode pool using: $target.")
             val url = "$target/json_rpc"
@@ -241,7 +241,7 @@ object SnodeAPI {
     }
 
     // Public API
-    fun getAccountID(onsName: String): Promise<String, Exception> = task {
+    fun getAccountID(onsName: String): Promise<String, Exception> = GlobalScope.asyncPromise {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
@@ -630,11 +630,16 @@ object SnodeAPI {
                             getBatchResponse(
                                 snode = snode,
                                 publicKey = batch.first().publicKey,
-                                requests = batch.map { it.request }, sequence = false
+                                requests = batch.mapNotNull { info ->
+                                    info.request.takeIf { !info.callback.isClosedForSend }
+                                },
+                                sequence = false
                             )
                         } catch (e: Exception) {
                             for (req in batch) {
-                                req.callback.send(Result.failure(e))
+                                runCatching {
+                                    req.callback.send(Result.failure(e))
+                                }
                             }
                             return@batch
                         }
@@ -650,7 +655,9 @@ object SnodeAPI {
                                 JsonUtil.fromJson(resp.body, req.responseType)
                             }
 
-                            req.callback.send(result)
+                            runCatching{
+                                req.callback.send(result)
+                            }
                         }
 
                         // Close all channels in the requests just in case we don't have paired up
@@ -673,7 +680,14 @@ object SnodeAPI {
         val callback = Channel<Result<T>>()
         @Suppress("UNCHECKED_CAST")
         batchedRequestsSender.send(RequestInfo(snode, publicKey, request, responseType, callback as SendChannel<Any>))
-        return callback.receive().getOrThrow()
+        try {
+            return callback.receive().getOrThrow()
+        } catch (e: CancellationException) {
+            // Close the channel if the coroutine is cancelled, so the batch processing won't
+            // handle this one (best effort only)
+            callback.close()
+            throw e
+        }
     }
 
     suspend fun sendBatchRequest(

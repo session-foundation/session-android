@@ -1,5 +1,8 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
@@ -8,6 +11,7 @@ import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import okhttp3.Request
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsession.utilities.getBodyForOnionRequest
@@ -27,6 +31,7 @@ import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.set
+import kotlin.coroutines.EmptyCoroutineContext
 
 private typealias Path = List<Snode>
 
@@ -112,26 +117,14 @@ object OnionRequestAPI {
      * Tests the given snode. The returned promise errors out if the snode is faulty; the promise is fulfilled otherwise.
      */
     private fun testSnode(snode: Snode): Promise<Unit, Exception> {
-        val deferred = deferred<Unit, Exception>()
-        ThreadUtils.queue { // No need to block the shared context for this
+        return GlobalScope.asyncPromise { // No need to block the shared context for this
             val url = "${snode.address}:${snode.port}/get_stats/v1"
-            try {
-                val response = HTTP.execute(HTTP.Verb.GET, url, 3).decodeToString()
-                val json = JsonUtil.fromJson(response, Map::class.java)
-                val version = json["version"] as? String
-                if (version == null) { deferred.reject(Exception("Missing snode version.")); return@queue }
-                if (version >= "2.0.7") {
-                    deferred.resolve(Unit)
-                } else {
-                    val message = "Unsupported snode version: $version."
-                    Log.d("Loki", message)
-                    deferred.reject(Exception(message))
-                }
-            } catch (exception: Exception) {
-                deferred.reject(exception)
-            }
+            val response = HTTP.execute(HTTP.Verb.GET, url, 3).decodeToString()
+            val json = JsonUtil.fromJson(response, Map::class.java)
+            val version = json["version"] as? String
+            require(version != null) { "Missing snode version." }
+            require(version >= "2.0.7") { "Unsupported snode version: $version." }
         }
-        return deferred.promise
     }
 
     /**
@@ -359,7 +352,7 @@ object OnionRequestAPI {
                 return@success deferred.reject(exception)
             }
             val destinationSymmetricKey = result.destinationSymmetricKey
-            ThreadUtils.queue {
+            GlobalScope.launch {
                 try {
                     val response = HTTP.execute(HTTP.Verb.POST, url, body)
                     handleResponse(response, destinationSymmetricKey, destination, version, deferred)

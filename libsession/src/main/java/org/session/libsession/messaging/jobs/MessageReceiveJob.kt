@@ -7,6 +7,7 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.utilities.Data
+import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
 
 class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val openGroupMessageServerID: Long? = null, val openGroupID: String? = null) : Job {
@@ -27,7 +28,7 @@ class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val
     }
 
     override suspend fun execute(dispatcherName: String) {
-        executeAsync(dispatcherName).get()
+        executeAsync(dispatcherName).await()
     }
 
     fun executeAsync(dispatcherName: String): Promise<Unit, Exception> {

@@ -2,10 +2,14 @@ package org.session.libsession.snode.utilities
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
+import org.session.libsignal.utilities.Log
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -17,9 +21,20 @@ suspend fun <T, E: Throwable> Promise<T, E>.await(): T {
     }
 }
 
-fun <T> CoroutineScope.asyncPromise(block: suspend () -> T): Promise<T, Exception> {
+fun <V, E: Throwable> Promise<V, E>.successBackground(callback: (value: V) -> Unit): Promise<V, E> {
+    GlobalScope.launch {
+        try {
+            callback(this@successBackground.await())
+        } catch (e: Exception) {
+            Log.d("Loki", "Failed to execute task in background: ${e.message}.")
+        }
+    }
+    return this
+}
+
+fun <T> CoroutineScope.asyncPromise(context: CoroutineContext = EmptyCoroutineContext, block: suspend () -> T): Promise<T, Exception> {
     val defer = deferred<T, Exception>()
-    launch {
+    launch(context) {
         try {
             defer.resolve(block())
         } catch (e: Exception) {

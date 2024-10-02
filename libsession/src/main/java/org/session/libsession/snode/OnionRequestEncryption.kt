@@ -1,8 +1,10 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.snode.OnionRequestAPI.Destination
+import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsignal.utilities.toHexString
@@ -37,68 +39,56 @@ object OnionRequestEncryption {
         destination: Destination,
         version: Version
     ): Promise<EncryptionResult, Exception> {
-        val deferred = deferred<EncryptionResult, Exception>()
-        ThreadUtils.queue {
-            try {
-                val plaintext = if (version == Version.V4) {
-                    payload
-                } else {
-                    // Wrapping isn't needed for file server or open group onion requests
-                    when (destination) {
-                        is Destination.Snode -> encode(payload, mapOf("headers" to ""))
-                        is Destination.Server -> payload
-                    }
+        return GlobalScope.asyncPromise {
+            val plaintext = if (version == Version.V4) {
+                payload
+            } else {
+                // Wrapping isn't needed for file server or open group onion requests
+                when (destination) {
+                    is Destination.Snode -> encode(payload, mapOf("headers" to ""))
+                    is Destination.Server -> payload
                 }
-                val x25519PublicKey = when (destination) {
-                    is Destination.Snode -> destination.snode.publicKeySet!!.x25519Key
-                    is Destination.Server -> destination.x25519PublicKey
-                }
-                val result = AESGCM.encrypt(plaintext, x25519PublicKey)
-                deferred.resolve(result)
-            } catch (exception: Exception) {
-                deferred.reject(exception)
             }
+            val x25519PublicKey = when (destination) {
+                is Destination.Snode -> destination.snode.publicKeySet!!.x25519Key
+                is Destination.Server -> destination.x25519PublicKey
+            }
+            AESGCM.encrypt(plaintext, x25519PublicKey)
         }
-        return deferred.promise
     }
 
     /**
      * Encrypts the previous encryption result (i.e. that of the hop after this one) for this hop. Use this to build the layers of an onion request.
      */
     internal fun encryptHop(lhs: Destination, rhs: Destination, previousEncryptionResult: EncryptionResult): Promise<EncryptionResult, Exception> {
-        val deferred = deferred<EncryptionResult, Exception>()
-        ThreadUtils.queue {
-            try {
-                val payload: MutableMap<String, Any> = when (rhs) {
-                    is Destination.Snode -> {
-                        mutableMapOf( "destination" to rhs.snode.publicKeySet!!.ed25519Key )
-                    }
-                    is Destination.Server -> {
-                        mutableMapOf(
-                            "host" to rhs.host,
-                            "target" to rhs.target,
-                            "method" to "POST",
-                            "protocol" to rhs.scheme,
-                            "port" to rhs.port
-                        )
-                    }
+        return GlobalScope.asyncPromise {
+            val payload: MutableMap<String, Any> = when (rhs) {
+                is Destination.Snode -> {
+                    mutableMapOf("destination" to rhs.snode.publicKeySet!!.ed25519Key)
                 }
-                payload["ephemeral_key"] = previousEncryptionResult.ephemeralPublicKey.toHexString()
-                val x25519PublicKey = when (lhs) {
-                    is Destination.Snode -> {
-                        lhs.snode.publicKeySet!!.x25519Key
-                    }
-                    is Destination.Server -> {
-                        lhs.x25519PublicKey
-                    }
+
+                is Destination.Server -> {
+                    mutableMapOf(
+                        "host" to rhs.host,
+                        "target" to rhs.target,
+                        "method" to "POST",
+                        "protocol" to rhs.scheme,
+                        "port" to rhs.port
+                    )
                 }
-                val plaintext = encode(previousEncryptionResult.ciphertext, payload)
-                val result = AESGCM.encrypt(plaintext, x25519PublicKey)
-                deferred.resolve(result)
-            } catch (exception: Exception) {
-                deferred.reject(exception)
             }
+            payload["ephemeral_key"] = previousEncryptionResult.ephemeralPublicKey.toHexString()
+            val x25519PublicKey = when (lhs) {
+                is Destination.Snode -> {
+                    lhs.snode.publicKeySet!!.x25519Key
+                }
+
+                is Destination.Server -> {
+                    lhs.x25519PublicKey
+                }
+            }
+            val plaintext = encode(previousEncryptionResult.ciphertext, payload)
+            AESGCM.encrypt(plaintext, x25519PublicKey)
         }
-        return deferred.promise
     }
 }

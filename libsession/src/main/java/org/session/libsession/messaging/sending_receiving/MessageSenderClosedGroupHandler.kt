@@ -3,6 +3,7 @@
 package org.session.libsession.messaging.sending_receiving
 
 import com.google.protobuf.ByteString
+import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -14,6 +15,8 @@ import org.session.libsession.messaging.sending_receiving.MessageSender.Error
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.asyncPromise
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Device
@@ -41,10 +44,8 @@ fun MessageSender.create(
     name: String,
     members: Collection<String>
 ): Promise<String, Exception> {
-    val deferred = deferred<String, Exception>()
-    ThreadUtils.queue {
+    return GlobalScope.asyncPromise {
         // Prepare
-        val context = MessagingModuleConfiguration.shared.context
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
         val membersAsData = members.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
@@ -83,7 +84,7 @@ fun MessageSender.create(
             val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupUpdateKind, groupID)
             closedGroupControlMessage.sentTimestamp = sentTime
             try {
-                sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member), member == ourPubKey).get()
+                sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member), member == ourPubKey).await()
             } catch (e: Exception) {
                 // We failed to properly create the group so delete it's associated data (in the past
                 // we didn't create this data until the messages successfully sent but this resulted
@@ -91,8 +92,7 @@ fun MessageSender.create(
                 storage.removeClosedGroupPublicKey(groupPublicKey)
                 storage.removeAllClosedGroupEncryptionKeyPairs(groupPublicKey)
                 storage.deleteConversation(threadID)
-                deferred.reject(e)
-                return@queue
+                throw e
             }
         }
 
@@ -102,11 +102,8 @@ fun MessageSender.create(
         PushRegistryV1.register(device = device, publicKey = userPublicKey)
         // Start polling
         LegacyClosedGroupPollerV2.shared.startPolling(groupPublicKey)
-        // Fulfill the promise
-        deferred.resolve(groupID)
+        groupID
     }
-    // Return
-    return deferred.promise
 }
 
 fun MessageSender.setName(groupPublicKey: String, newName: String) {

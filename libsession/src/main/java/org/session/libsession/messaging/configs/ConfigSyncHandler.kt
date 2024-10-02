@@ -6,10 +6,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -29,6 +33,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 private const val TAG = "ConfigSyncHandler"
@@ -44,32 +49,35 @@ class ConfigSyncHandler @Inject constructor(
 ) {
     private var job: Job? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
+    @OptIn(DelicateCoroutinesApi::class)
     fun start() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
-            val groupDispatchers = hashMapOf<AccountId, CoroutineDispatcher>()
-            val userConfigDispatcher = Dispatchers.Default.limitedParallelism(1)
+            val groupMutex = hashMapOf<AccountId, Mutex>()
+            val userMutex = Mutex()
 
-            configFactory.configUpdateNotifications.collect { changes ->
+            configFactory.configUpdateNotifications
+                .collect { changes ->
                 try {
                     when (changes) {
                         is ConfigUpdateNotification.GroupConfigsDeleted -> {
-                            groupDispatchers.remove(changes.groupId)
+                            groupMutex.remove(changes.groupId)
                         }
 
                         is ConfigUpdateNotification.GroupConfigsUpdated -> {
                             // Group config pushing is limited to its own dispatcher
-                            launch(groupDispatchers.getOrPut(changes.groupId) {
-                                Dispatchers.Default.limitedParallelism(1)
-                            }) {
-                                pushGroupConfigsChangesIfNeeded(changes.groupId)
+                            launch {
+                                groupMutex.getOrPut(changes.groupId) { Mutex() }.withLock {
+                                    pushGroupConfigsChangesIfNeeded(changes.groupId)
+                                }
                             }
                         }
 
-                        ConfigUpdateNotification.UserConfigs -> launch(userConfigDispatcher) {
-                            pushUserConfigChangesIfNeeded()
+                        ConfigUpdateNotification.UserConfigs -> launch {
+                            userMutex.withLock {
+                                pushUserConfigChangesIfNeeded()
+                            }
                         }
                     }
                 } catch (e: Exception) {

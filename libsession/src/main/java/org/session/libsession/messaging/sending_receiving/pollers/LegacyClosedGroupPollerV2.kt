@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
+import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
@@ -9,6 +10,8 @@ import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.asyncPromise
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.crypto.secureRandomOrNull
 import org.session.libsignal.utilities.Log
@@ -110,13 +113,13 @@ class LegacyClosedGroupPollerV2 {
             when {
                 currentForkInfo.defaultRequiresAuth() -> SnodeAPI.getUnauthenticatedRawMessages(snode, groupPublicKey, namespace = Namespace.UNAUTHENTICATED_CLOSED_GROUP())
                     .map { SnodeAPI.parseRawMessagesResponse(it, snode, groupPublicKey, Namespace.UNAUTHENTICATED_CLOSED_GROUP()) }
-                currentForkInfo.hasNamespaces() -> task {
+                currentForkInfo.hasNamespaces() -> GlobalScope.asyncPromise {
                     val unAuthed = SnodeAPI.getUnauthenticatedRawMessages(snode, groupPublicKey, namespace = Namespace.UNAUTHENTICATED_CLOSED_GROUP())
                         .map { SnodeAPI.parseRawMessagesResponse(it, snode, groupPublicKey, Namespace.UNAUTHENTICATED_CLOSED_GROUP()) }
                     val default = SnodeAPI.getUnauthenticatedRawMessages(snode, groupPublicKey, namespace = Namespace.DEFAULT())
                         .map { SnodeAPI.parseRawMessagesResponse(it, snode, groupPublicKey, Namespace.DEFAULT()) }
-                    val unAuthedResult = unAuthed.get()
-                    val defaultResult = default.get()
+                    val unAuthedResult = unAuthed.await()
+                    val defaultResult = default.await()
                     val format = DateFormat.getTimeInstance()
                     if (unAuthedResult.isNotEmpty() || defaultResult.isNotEmpty()) {
                         Log.d("Poller", "@${format.format(Date())}Polled ${unAuthedResult.size} from -10, ${defaultResult.size} from 0")

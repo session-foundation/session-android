@@ -24,7 +24,7 @@ class JobQueue : JobDelegate {
     private var hasResumedPendingJobs = false // Just for debugging
     private val jobTimestampMap = ConcurrentHashMap<Long, AtomicInteger>()
 
-    private val scope = GlobalScope
+    private val scope: CoroutineScope = GlobalScope
     private val queue = Channel<Job>(UNLIMITED)
     private val pendingJobIds = mutableSetOf<String>()
 
@@ -34,9 +34,8 @@ class JobQueue : JobDelegate {
 
     private fun CoroutineScope.processWithOpenGroupDispatcher(
         channel: Channel<Job>,
-        dispatcher: CoroutineDispatcher,
         name: String
-    ) = launch(dispatcher) {
+    ) = launch {
         for (job in channel) {
             if (!isActive) break
             val openGroupId = when (job) {
@@ -54,7 +53,7 @@ class JobQueue : JobDelegate {
                 val groupChannel = if (!openGroupChannels.containsKey(openGroupId)) {
                     Log.d("OpenGroupDispatcher", "Creating ${openGroupId.hashCode()} channel")
                     val newGroupChannel = Channel<Job>(UNLIMITED)
-                    launch(dispatcher) {
+                    launch {
                         for (groupJob in newGroupChannel) {
                             if (!isActive) break
                             groupJob.process(name)
@@ -74,14 +73,13 @@ class JobQueue : JobDelegate {
 
     private fun CoroutineScope.processWithDispatcher(
         channel: Channel<Job>,
-        dispatcher: CoroutineDispatcher,
         name: String,
         asynchronous: Boolean = true
-    ) = launch(dispatcher) {
+    ) = launch {
         for (job in channel) {
             if (!isActive) break
             if (asynchronous) {
-                launch(dispatcher) {
+                launch {
                     job.process(name)
                 }
             } else {
@@ -111,10 +109,10 @@ class JobQueue : JobDelegate {
             val mediaQueue = Channel<Job>(capacity = UNLIMITED)
             val openGroupQueue = Channel<Job>(capacity = UNLIMITED)
 
-            val receiveJob = processWithDispatcher(rxQueue, Dispatchers.Default.limitedParallelism(1), "rx", asynchronous = false)
-            val txJob = processWithDispatcher(txQueue, Dispatchers.Default.limitedParallelism(1), "tx")
-            val mediaJob = processWithDispatcher(mediaQueue, Dispatchers.Default.limitedParallelism(4), "media")
-            val openGroupJob = processWithOpenGroupDispatcher(openGroupQueue, Dispatchers.Default.limitedParallelism(8), "openGroup")
+            val receiveJob = processWithDispatcher(rxQueue, "rx", asynchronous = false)
+            val txJob = processWithDispatcher(txQueue, "tx")
+            val mediaJob = processWithDispatcher(mediaQueue, "media")
+            val openGroupJob = processWithOpenGroupDispatcher(openGroupQueue, "openGroup")
 
             while (isActive) {
                 when (val job = queue.receive()) {

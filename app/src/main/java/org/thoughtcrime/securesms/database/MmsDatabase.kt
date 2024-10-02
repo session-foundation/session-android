@@ -328,7 +328,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentValues.put(HAS_MENTION, 0)
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
         val attachmentDatabase = get(context).attachmentDatabase()
-        queue(Runnable { attachmentDatabase.deleteAttachmentsForMessage(messageId) })
+        queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val threadId = getThreadIdForMessage(messageId)
 
         markAs(messageId, MmsSmsColumns.Types.BASE_DELETED_TYPE, threadId)
@@ -889,7 +889,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
         val idsAsString = queryBuilder.toString()
         val attachmentDatabase = get(context).attachmentDatabase()
-        queue(Runnable { attachmentDatabase.deleteAttachmentsForMessages(messageIds) })
+        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
         val groupReceiptDatabase = get(context).groupReceiptDatabase()
         groupReceiptDatabase.deleteRowsForMessages(messageIds)
         val database = databaseHelper.writableDatabase
@@ -906,7 +906,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
     override fun deleteMessage(messageId: Long): Boolean {
         val threadId = getThreadIdForMessage(messageId)
         val attachmentDatabase = get(context).attachmentDatabase()
-        queue(Runnable { attachmentDatabase.deleteAttachmentsForMessage(messageId) })
+        queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
         val groupReceiptDatabase = get(context).groupReceiptDatabase()
         groupReceiptDatabase.deleteRowsForMessage(messageId)
         val database = databaseHelper.writableDatabase
@@ -925,7 +925,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         val attachmentDatabase = get(context).attachmentDatabase()
         val groupReceiptDatabase = get(context).groupReceiptDatabase()
 
-        queue(Runnable { attachmentDatabase.deleteAttachmentsForMessages(messageIds) })
+        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
         groupReceiptDatabase.deleteRowsForMessages(messageIds)
 
         val db = databaseHelper.writableDatabase

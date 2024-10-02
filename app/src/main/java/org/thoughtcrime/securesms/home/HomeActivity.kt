@@ -240,7 +240,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
 
         lifecycleScope.launchWhenStarted {
-            launch(Dispatchers.IO) {
+            launch(Dispatchers.Default) {
                 // Double check that the long poller is up
                 (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
@@ -516,7 +516,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 .put(NAME_KEY, thread.recipient.name)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
-                lifecycleScope.launch(Dispatchers.IO) {
+                lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), true)
 
                     withContext(Dispatchers.Main) {
@@ -536,7 +536,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             title(R.string.blockUnblock)
             text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
-                lifecycleScope.launch(Dispatchers.IO) {
+                lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()
@@ -549,7 +549,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private fun setConversationMuted(thread: ThreadRecord, isMuted: Boolean) {
         if (!isMuted) {
-            lifecycleScope.launch(Dispatchers.IO) {
+            lifecycleScope.launch(Dispatchers.Default) {
                 recipientDatabase.setMuted(thread.recipient, 0)
                 withContext(Dispatchers.Main) {
                     binding.recyclerView.adapter!!.notifyDataSetChanged()
@@ -557,7 +557,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
         } else {
             showMuteDialog(this) { until ->
-                lifecycleScope.launch(Dispatchers.IO) {
+                lifecycleScope.launch(Dispatchers.Default) {
                     Log.d("", "**** until: $until")
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
@@ -569,7 +569,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun setNotifyType(thread: ThreadRecord, newNotifyType: Int) {
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch(Dispatchers.Default) {
             recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
             withContext(Dispatchers.Main) {
                 binding.recyclerView.adapter!!.notifyDataSetChanged()
@@ -578,14 +578,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     }
 
     private fun setConversationPinned(threadId: Long, pinned: Boolean) {
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch(Dispatchers.Default) {
             storage.setPinned(threadId, pinned)
             homeViewModel.tryReload()
         }
     }
 
     private fun markAllAsRead(thread: ThreadRecord) {
-        ThreadUtils.queue {
+        lifecycleScope.launch(Dispatchers.Default) {
             MessagingModuleConfiguration.shared.storage.markConversationAsRead(thread.threadId, SnodeAPI.nowWithOffset)
         }
     }
@@ -656,7 +656,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                             context
                         )
                     } else {
-                        lifecycleScope.launch(Dispatchers.IO) {
+                        lifecycleScope.launch(Dispatchers.Default) {
                             threadDb.deleteConversation(threadID)
                         }
                     }

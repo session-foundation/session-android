@@ -6,12 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
@@ -72,9 +75,11 @@ class MarkReadReceiver : BroadcastReceiver() {
                 }
                 .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.serialize()) }
 
-            hashToDisappearAfterReadMessage(context, markedReadMessages)?.let {
-                fetchUpdatedExpiriesAndScheduleDeletion(context, it)
-                shortenExpiryOfDisappearingAfterRead(context, it)
+            hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
+                GlobalScope.launch {
+                    fetchUpdatedExpiriesAndScheduleDeletion(context, hashToMessages)
+                    shortenExpiryOfDisappearingAfterRead(hashToMessages)
+                }
             }
         }
 
@@ -91,7 +96,6 @@ class MarkReadReceiver : BroadcastReceiver() {
         }
 
         private fun shortenExpiryOfDisappearingAfterRead(
-            context: Context,
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
             hashToMessage.entries
@@ -125,12 +129,12 @@ class MarkReadReceiver : BroadcastReceiver() {
                 }
         }
 
-        private fun fetchUpdatedExpiriesAndScheduleDeletion(
+        private suspend fun fetchUpdatedExpiriesAndScheduleDeletion(
             context: Context,
             hashToMessage: Map<String, MarkedMessageInfo>
         ) {
             @Suppress("UNCHECKED_CAST")
-            val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), shared.storage.userAuth!!).get()["expiries"] as Map<String, Long>
+            val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), shared.storage.userAuth!!).await()["expiries"] as Map<String, Long>
             hashToMessage.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
         }
 

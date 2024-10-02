@@ -222,7 +222,7 @@ class ConfigFactory @Inject constructor(
     private val groupConfigs = ConcurrentHashMap<AccountId, GroupConfigsImpl>()
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
-        extraBufferCapacity = 1,
+        extraBufferCapacity = 5, // The notifications are normally important so we can afford to buffer a few
         onBufferOverflow = BufferOverflow.SUSPEND
     )
     override val configUpdateNotifications get() = _configUpdateNotifications
@@ -260,15 +260,15 @@ class ConfigFactory @Inject constructor(
      * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
      */
     private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, Boolean>): T {
-        return withUserConfigs { configs ->
-            val (result, changed) = cb(configs as UserConfigsImpl)
-
-            if (changed) {
-                _configUpdateNotifications.tryEmit(ConfigUpdateNotification.UserConfigs)
-            }
-
-            result
+        val (result, changed) = withUserConfigs { configs ->
+            cb(configs as UserConfigsImpl)
         }
+
+        if (changed) {
+            _configUpdateNotifications.tryEmit(ConfigUpdateNotification.UserConfigs)
+        }
+
+        return result
     }
 
     override fun mergeUserConfigs(
@@ -319,19 +319,19 @@ class ConfigFactory @Inject constructor(
     }
 
     private fun <T> doWithMutableGroupConfigs(groupId: AccountId, cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
-        return withGroupConfigs(groupId) { configs ->
-            val (result, changed) = cb(configs as GroupConfigsImpl)
-
-            Log.d("ConfigFactory", "Group updated? $groupId: $changed")
-
-            if (changed) {
-                if (!_configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))) {
-                    Log.e("ConfigFactory", "Unable to deliver group update notification")
-                }
-            }
-
-            result
+        val (result, changed) =  withGroupConfigs(groupId) { configs ->
+            cb(configs as GroupConfigsImpl)
         }
+
+        Log.d("ConfigFactory", "Group updated? $groupId: $changed")
+
+        if (changed) {
+            if (!_configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))) {
+                Log.e("ConfigFactory", "Unable to deliver group update notification")
+            }
+        }
+
+        return result
     }
 
     override fun <T> withMutableGroupConfigs(

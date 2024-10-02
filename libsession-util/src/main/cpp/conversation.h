@@ -53,7 +53,6 @@ inline jobject serialize_closed_group(JNIEnv* env, session::config::convo::group
 }
 
 inline jobject serialize_any(JNIEnv *env, session::config::convo::any any) {
-    __android_log_print(ANDROID_LOG_WARN, "DESERIALIE", "deserializing any");
     if (auto* dm = std::get_if<session::config::convo::one_to_one>(&any)) {
         return serialize_one_to_one(env, *dm);
     } else if (auto* og = std::get_if<session::config::convo::community>(&any)) {
