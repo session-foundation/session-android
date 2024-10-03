@@ -126,17 +126,9 @@ public class ThreadRecord extends DisplayRecord {
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
         if (isGroupUpdateMessage()) {
-            String body = getBody();
-            if (!body.isEmpty()) {
-                UpdateMessageData updateMessageData = UpdateMessageData.fromJSON(body);
-                if (updateMessageData != null) {
-                    return UpdateMessageBuilder.buildGroupUpdateMessage(context, updateMessageData, null, isOutgoing(), false)
-                                .toString();
-                } else {
-                    return null;
-                }
-            }
-            return context.getString(R.string.groupUpdated);
+            return lastMessage != null
+                    ? lastMessage.getDisplayBody(context).toString()
+                    : context.getString(R.string.groupUpdated);
         } else if (isOpenGroupInvitation()) {
             return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {
@@ -159,22 +151,8 @@ public class ThreadRecord extends DisplayRecord {
                     .put(NAME_KEY, getName())
                     .format().toString();
         } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
-            int seconds = (int) (getExpiresIn() / 1000);
-            if (seconds <= 0) {
-                return Phrase.from(context, R.string.disappearingMessagesTurnedOff)
-                        .put(NAME_KEY, getName())
-                        .format().toString();
-            }
-
-            // Implied that disappearing messages is enabled..
-            String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
-            String disappearAfterWhat = getDisappearingMsgExpiryTypeString(context); // Disappear after send or read?
-            return Phrase.from(context, R.string.disappearingMessagesSet)
-                    .put(NAME_KEY, getName())
-                    .put(TIME_KEY, time)
-                    .put(DISAPPEARING_MESSAGES_TYPE_KEY, disappearAfterWhat)
-                    .format().toString();
-
+            // Remove formatting on the message by calling .getString() on the SpannableString
+            return lastMessage != null ? lastMessage.getDisplayBody(context).toString() : null;
         } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
             return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())

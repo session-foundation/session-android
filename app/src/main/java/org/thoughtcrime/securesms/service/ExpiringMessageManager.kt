@@ -126,9 +126,11 @@ class ExpiringMessageManager(context: Context) : MessageExpirationManagerProtoco
         val groupId = message.groupPublicKey
         val duration = message.expiryMode.expiryMillis
         try {
-            val serializedAddress = groupId?.let(::doubleEncodeGroupID)
-                ?: message.syncTarget?.takeIf { it.isNotEmpty() }
-                ?: message.recipient!!
+            val serializedAddress = when {
+                groupId == null -> message.syncTarget ?: message.recipient!!
+                groupId.startsWith(IdPrefix.GROUP.value) -> groupId
+                else -> doubleEncodeGroupID(groupId)
+            }
             val address = fromSerialized(serializedAddress)
             val recipient = Recipient.from(context, address, false)
 
