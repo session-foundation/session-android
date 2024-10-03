@@ -89,8 +89,6 @@ class ConversationViewModel(
             return repository.getInvitingAdmin(threadId)
         }
 
-    private var communityWriteAccessJob: Job? = null
-
     private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
         storage.getOpenGroup(threadId)
     }
@@ -147,27 +145,6 @@ class ConversationViewModel(
                             enableInputMediaControls = shouldEnableInputMediaControls(recipient),
                             messageRequestState = buildMessageRequestState(recipient),
                         )
-                    }
-                }
-        }
-
-        // listen to community write access updates from this point
-        communityWriteAccessJob?.cancel()
-        communityWriteAccessJob = viewModelScope.launch {
-            OpenGroupManager.getCommunitiesWriteAccessFlow()
-                .map {
-                    if(openGroup?.groupId != null)
-                        it[openGroup?.groupId]
-                    else null
-                }
-                .filterNotNull()
-                .collect{
-                    // update our community object
-                    _openGroup.updateTo(openGroup?.copy(canWrite = it))
-                    // when we get an update on the write access of a community
-                    // we need to update the input text accordingly
-                    _uiState.update { state ->
-                        state.copy(hideInputBar = shouldHideInputBar())
                     }
                 }
         }

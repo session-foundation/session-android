@@ -29,6 +29,7 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient

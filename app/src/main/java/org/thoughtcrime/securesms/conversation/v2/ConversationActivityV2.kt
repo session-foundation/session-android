@@ -898,8 +898,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 if (!isFinishing) {
                     finish()
                 }
-
-                binding.inputBar.isGone = uiState.hideInputBar
             }
         }
 
@@ -908,7 +906,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding?.inputBar?.run {
+                    binding.inputBar.run {
                         isVisible = state.showInput
                         showMediaControls = state.enableInputMediaControls
                     }
@@ -1012,7 +1010,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
         }
 
-        lifecycleScope.launch {
+                    lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
                     .map { it.messageRequestState }

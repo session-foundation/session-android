@@ -113,6 +113,7 @@ import javax.inject.Inject;
 
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
+import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 
