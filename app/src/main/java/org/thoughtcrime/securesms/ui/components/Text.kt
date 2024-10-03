@@ -122,7 +122,7 @@ fun SessionOutlinedTextField(
                         )
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(vertical = 28.dp, horizontal = 21.dp)
+                        .padding(LocalDimensions.current.spacing)
                 ) {
                     innerTextField()
 

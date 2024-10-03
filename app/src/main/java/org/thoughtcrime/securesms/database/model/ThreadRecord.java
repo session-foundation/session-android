@@ -104,24 +104,6 @@ public class ThreadRecord extends DisplayRecord {
         return name;
     }
 
-    private String getDisappearingMsgExpiryTypeString(Context context) {
-        MessageRecord lm = this.lastMessage;
-        if (lm == null) {
-            Log.w("ThreadRecord", "Could not get last message to determine disappearing msg type.");
-            return "Unknown";
-        }
-        long expireStarted = lm.getExpireStarted();
-
-        // Note: This works because expireStarted is 0 for messages which are 'Disappear after read'
-        // while it's a touch higher than the sent timestamp for "Disappear after send". We could then
-        // use `expireStarted == 0`, but that's not how it's done in UpdateMessageBuilder so to keep
-        // things the same I'll assume there's a reason for this and follow suit.
-        // Also: `this.lastMessage.getExpiresIn()` is available.
-        if (expireStarted >= dateSent) {
-            return context.getString(R.string.disappearingMessagesSent);
-        }
-        return context.getString(R.string.read);
-    }
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
@@ -151,8 +133,13 @@ public class ThreadRecord extends DisplayRecord {
                     .put(NAME_KEY, getName())
                     .format().toString();
         } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
-            // Remove formatting on the message by calling .getString() on the SpannableString
-            return lastMessage != null ? lastMessage.getDisplayBody(context).toString() : null;
+            // Use the same message as we would for displaying on the conversation screen.
+            // lastMessage shouldn't be null here, but we'll check just in case.
+            if (lastMessage != null) {
+                return lastMessage.getDisplayBody(context).toString();
+            } else {
+                return "";
+            }
         } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
             return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())

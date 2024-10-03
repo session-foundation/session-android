@@ -11,8 +11,12 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -34,6 +38,7 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.util.UUID
 
@@ -83,6 +88,8 @@ class ConversationViewModel(
 
             return repository.getInvitingAdmin(threadId)
         }
+
+    private var communityWriteAccessJob: Job? = null
 
     private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
         storage.getOpenGroup(threadId)
@@ -140,6 +147,27 @@ class ConversationViewModel(
                             enableInputMediaControls = shouldEnableInputMediaControls(recipient),
                             messageRequestState = buildMessageRequestState(recipient),
                         )
+                    }
+                }
+        }
+
+        // listen to community write access updates from this point
+        communityWriteAccessJob?.cancel()
+        communityWriteAccessJob = viewModelScope.launch {
+            OpenGroupManager.getCommunitiesWriteAccessFlow()
+                .map {
+                    if(openGroup?.groupId != null)
+                        it[openGroup?.groupId]
+                    else null
+                }
+                .filterNotNull()
+                .collect{
+                    // update our community object
+                    _openGroup.updateTo(openGroup?.copy(canWrite = it))
+                    // when we get an update on the write access of a community
+                    // we need to update the input text accordingly
+                    _uiState.update { state ->
+                        state.copy(hideInputBar = shouldHideInputBar())
                     }
                 }
         }
@@ -396,7 +424,7 @@ class ConversationViewModel(
      * - We are dealing with a contact from a community (blinded recipient) that does not allow
      *   requests form community members
      */
-    fun hidesInputBar(): Boolean = openGroup?.canWrite == false ||
+    fun shouldHideInputBar(): Boolean = openGroup?.canWrite == false ||
             blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {

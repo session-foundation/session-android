@@ -1892,6 +1892,7 @@ open class Storage(
         configFactory.withMutableUserConfigs {
             it.contacts.upsertContact(recipient.address.serialize()) {
                 this.approved = approved
+                this.priority = PRIORITY_VISIBLE
             }
         }
     }

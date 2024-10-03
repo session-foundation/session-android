@@ -36,8 +36,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.MissingMicrophonePermissionDialog
-import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
@@ -49,11 +47,14 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.ui.findActivity
+import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.BitmapUtil
 
 object ConversationMenuHelper {
@@ -211,7 +212,15 @@ object ConversationMenuHelper {
         // or if the user has not granted audio/microphone permissions
         else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
             Log.d("Loki", "Attempted to make a call without audio permissions")
-            MissingMicrophonePermissionDialog.show(context)
+
+            Permissions.with(context.findActivity())
+                .request(Manifest.permission.RECORD_AUDIO)
+                .withPermanentDenialDialog(
+                    context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
+                    APP_NAME_KEY to context.getString(R.string.app_name))
+                )
+                .execute()
+
             return
         }
 
