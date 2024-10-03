@@ -2,10 +2,8 @@ package org.session.libsession.messaging.groups
 
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -23,6 +21,7 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
@@ -35,17 +34,22 @@ private const val TAG = "RemoveGroupMemberHandler"
 
 private const val MIN_PROCESS_INTERVAL_MILLS = 1_000L
 
+/**
+ * This handler is responsible for processing pending group member removals.
+ *
+ * It automatically does so by listening to the config updates changes and checking for any pending removals.
+ */
 class RemoveGroupMemberHandler @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val textSecurePreferences: TextSecurePreferences,
+    private val groupManager: GroupManagerV2,
 ) {
-    private val scope: CoroutineScope = GlobalScope
     private var job: Job? = null
 
     fun start() {
         require(job == null) { "Already started" }
 
-        job = scope.launch {
+        job = GlobalScope.launch {
             while (true) {
                 // Make sure we have a local number before we start processing
                 textSecurePreferences.watchLocalNumber().first { it != null }
@@ -74,74 +78,54 @@ class RemoveGroupMemberHandler @Inject constructor(
     }
 
     private suspend fun processPendingMemberRemoval() {
-        // Run the removal process for each group in parallel
-        val removalTasks = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+        configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
             .asSequence()
             .filter { it.hasAdminKey() }
-            .associate { group ->
-                group.name to scope.async {
-                    processPendingRemovalsForGroup(
-                        groupAccountId = group.groupAccountId,
-                        groupName = group.name,
-                        adminKey = group.adminKey!!
-                    )
-                }
+            .forEach { group ->
+                processPendingRemovalsForGroup(group.groupAccountId, group.adminKey!!)
             }
-
-        // Wait and collect the results of the removal tasks
-        for ((groupName, task) in removalTasks) {
-            try {
-                task.await()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error processing pending removals for group $groupName", e)
-            }
-        }
     }
 
     private suspend fun processPendingRemovalsForGroup(
         groupAccountId: AccountId,
-        groupName: String,
         adminKey: ByteArray
     ) {
-        val swarmAuth = OwnedSwarmAuth(
-            accountId = groupAccountId,
-            ed25519PublicKeyHex = null,
-            ed25519PrivateKey = adminKey
-        )
+        val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
 
-        val batchCalls = configFactory.withGroupConfigs(groupAccountId) { configs ->
+        val (pendingRemovals, batchCalls) = configFactory.withGroupConfigs(groupAccountId) { configs ->
             val pendingRemovals = configs.groupMembers.all().filter { it.removed }
             if (pendingRemovals.isEmpty()) {
                 // Skip if there are no pending removals
-                return@withGroupConfigs emptyList()
+                return@withGroupConfigs pendingRemovals to emptyList()
             }
 
-            Log.d(TAG, "Processing ${pendingRemovals.size} pending removals for group $groupName")
+            Log.d(TAG, "Processing ${pendingRemovals.size} pending removals for group")
 
             // Perform a sequential call to group snode to:
             // 1. Revoke the member's sub key (by adding the key to a "revoked list" under the hood)
-            // 2. Send a message to a special namespace to inform the removed members they have been removed
-            // 3. Conditionally, delete removed-members' messages from the group's message store, if that option is selected by the actioning admin
+            // 2. Send a message to a special namespace on the group to inform the removed members they have been removed
+            // 3. Conditionally, send a `GroupUpdateDeleteMemberContent` to the group so the message deletion
+            //    can be performed by everyone in the group.
             val calls = ArrayList<SnodeAPI.SnodeBatchRequestInfo>(3)
 
             // Call No 1. Revoke sub-key. This call is crucial and must not fail for the rest of the operation to be successful.
             calls += checkNotNull(
                 SnodeAPI.buildAuthenticatedRevokeSubKeyBatchRequest(
-                    groupAdminAuth = swarmAuth,
+                    groupAdminAuth = groupAuth,
                     subAccountTokens = pendingRemovals.map {
                         configs.groupKeys.getSubAccountToken(AccountId(it.sessionId))
                     }
                 )
             ) { "Fail to create a revoke request" }
 
-            // Call No 2. Send a message to the removed members
+            // Call No 2. Send a "kicked" message to the revoked namespace
             calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
                 namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                 message = buildGroupKickMessage(groupAccountId.hexString, pendingRemovals, configs.groupKeys, adminKey),
-                auth = swarmAuth,
+                auth = groupAuth,
             )
 
-            // Call No 3. Conditionally remove the message from the group's message store
+            // Call No 3. Conditionally send the `GroupUpdateDeleteMemberContent`
             if (pendingRemovals.any { it.shouldRemoveMessages }) {
                 calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
                     namespace = Namespace.CLOSED_GROUP_MESSAGES(),
@@ -152,11 +136,11 @@ class RemoveGroupMemberHandler @Inject constructor(
                             .filter { it.shouldRemoveMessages }
                             .map { it.sessionId }
                     ),
-                    auth = swarmAuth,
+                    auth = groupAuth,
                 )
             }
 
-            calls
+            pendingRemovals to (calls as List<SnodeAPI.SnodeBatchRequestInfo>)
         }
 
         if (batchCalls.isEmpty()) {
@@ -164,9 +148,39 @@ class RemoveGroupMemberHandler @Inject constructor(
         }
 
         val node = SnodeAPI.getSingleTargetSnode(groupAccountId.hexString).await()
-        SnodeAPI.getBatchResponse(node, groupAccountId.hexString, batchCalls, true)
+        val response = SnodeAPI.getBatchResponse(node, groupAccountId.hexString, batchCalls, sequence = true)
 
-        //TODO: Handle message removal
+        val firstError = response.results.firstOrNull { !it.isSuccessful }
+        check(firstError == null) {
+            "Error processing pending removals for group: code = ${firstError?.code}, body = ${firstError?.body}"
+        }
+
+        Log.d(TAG, "Essential steps for group removal are done")
+
+        // The essential part of the operation has been successful once we get to this point,
+        // now we can go ahead and update the configs
+        configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
+            pendingRemovals.forEach(configs.groupMembers::erase)
+            configs.rekey()
+        }
+
+        configFactory.waitUntilGroupConfigsPushed(groupAccountId)
+
+        Log.d(TAG, "Group configs updated")
+
+        // Try to delete members' message. It's ok to fail as they will be re-tried in different
+        // cases (a.k.a the GroupUpdateDeleteMemberContent message handling) and could be by different admins.
+        val deletingMessagesForMembers = pendingRemovals.filter { it.shouldRemoveMessages }
+        if (deletingMessagesForMembers.isNotEmpty()) {
+            try {
+                groupManager.removeMemberMessages(
+                    groupAccountId,
+                    deletingMessagesForMembers.map { AccountId(it.sessionId) }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Error deleting messages for removed members", e)
+            }
+        }
     }
 
     private fun buildDeleteGroupMemberContentMessage(
@@ -211,7 +225,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 domain = Sodium.KICKED_DOMAIN
             )
         ),
-        ttl = SnodeMessage.CONFIG_TTL,
+        ttl = SnodeMessage.DEFAULT_TTL,
         timestamp = SnodeAPI.nowWithOffset
     )
 }

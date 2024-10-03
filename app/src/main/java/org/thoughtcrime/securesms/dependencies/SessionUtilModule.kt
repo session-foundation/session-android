@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.thoughtcrime.securesms.database.ConfigDatabase
@@ -52,4 +53,8 @@ object SessionUtilModule {
         storage = storage,
         lokiApiDatabase = lokiApiDatabase,
     )
+
+    @Provides
+    @Singleton
+    fun provideSnodeClock() = SnodeClock()
 }

@@ -8,6 +8,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -242,14 +243,13 @@ class EditGroupViewModel @AssistedInject constructor(
             mutableInProgress.value = true
 
             // We need to use GlobalScope here because we don't want
-            // "removeMember" to be cancelled when the view model is cleared. This operation
-            // is expected to complete even if the view model is cleared.
-            val task = GlobalScope.launch {
+            // any group operation to be cancelled when the view model is cleared.
+            val task = GlobalScope.async {
                 operation()
             }
 
             try {
-                task.join()
+                task.await()
             } catch (e: Exception) {
                 mutableError.value = e.localizedMessage.orEmpty()
             } finally {

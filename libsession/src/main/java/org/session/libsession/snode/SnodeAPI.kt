@@ -25,6 +25,7 @@ import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import nl.komponents.kovenant.task
 import nl.komponents.kovenant.unwrap
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.snode.model.BatchResponse
@@ -47,6 +48,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
+import java.util.Date
 import java.util.Locale
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -63,15 +65,11 @@ object SnodeAPI {
     internal var snodePool: Set<Snode>
         get() = database.getSnodePool()
         set(newValue) { database.setSnodePool(newValue) }
-    /**
-     * The offset between the user's clock and the Service Node's clock. Used in cases where the
-     * user's clock is incorrect.
-     */
-    internal var clockOffset = 0L
 
+    @Deprecated("Use a dependency injected SnodeClock.currentTimeMills() instead")
     @JvmStatic
     val nowWithOffset
-        get() = System.currentTimeMillis() + clockOffset
+        get() = MessagingModuleConfiguration.shared.clock.currentTimeMills()
 
     internal var forkInfo by observable(database.getForkInfo()) { _, oldValue, newValue ->
         if (newValue > oldValue) {
@@ -418,7 +416,6 @@ object SnodeAPI {
             namespace = namespace,
             auth = auth,
             verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
-            timestamp = message.timestamp
         ) {
             putAll(message.toJSON())
         }
@@ -785,7 +782,7 @@ object SnodeAPI {
         parseRawMessagesResponse(resp, snode, auth.accountId.hexString)
     }
 
-    private fun getNetworkTime(snode: Snode): Promise<Pair<Snode, Long>, Exception> =
+    fun getNetworkTime(snode: Snode): Promise<Pair<Snode, Long>, Exception> =
         invoke(Snode.Method.Info, snode, emptyMap()).map { rawResponse ->
             val timestamp = rawResponse["timestamp"] as? Long ?: -1
             snode to timestamp
@@ -805,13 +802,15 @@ object SnodeAPI {
                 "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
             }
 
+            val timestamp = nowWithOffset
+
             buildAuthenticatedParameters(
                 auth = auth,
                 namespace = namespace,
                 verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
-                timestamp = message.timestamp
+                timestamp = timestamp
             ) {
-                put("sig_timestamp", message.timestamp)
+                put("sig_timestamp", timestamp)
                 putAll(message.toJSON())
             }
         } else {
@@ -921,7 +920,7 @@ object SnodeAPI {
     fun deleteAllMessages(auth: SwarmAuth): Promise<Map<String, Boolean>, Exception> =
         scope.retrySuspendAsPromise(maxRetryCount) {
             val snode = getSingleTargetSnode(auth.accountId.hexString).await()
-            val (_, timestamp) = getNetworkTime(snode).await()
+            val timestamp = MessagingModuleConfiguration.shared.clock.waitForNetworkAdjustedTime()
 
             val params = buildAuthenticatedParameters(
                 auth = auth,

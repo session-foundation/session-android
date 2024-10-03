@@ -5,10 +5,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -22,7 +22,6 @@ import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
-import org.session.libsession.utilities.getClosedGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -102,9 +101,9 @@ class ClosedGroupPoller(
         job = null
     }
 
-    private suspend fun poll(snode: Snode): Unit = coroutineScope {
+    private suspend fun poll(snode: Snode): Unit = supervisorScope {
         val groupAuth =
-            configFactoryProtocol.getGroupAuth(closedGroupSessionId) ?: return@coroutineScope
+            configFactoryProtocol.getGroupAuth(closedGroupSessionId) ?: return@supervisorScope
         val configHashesToExtends = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
             buildSet {
                 addAll(it.groupKeys.currentHashes())
@@ -121,23 +120,21 @@ class ClosedGroupPoller(
 
         val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
-        pollingTasks += "retrieving revoked messages" to async {
-            handleRevoked(
-                SnodeAPI.sendBatchRequest(
-                    snode,
-                    closedGroupSessionId.hexString,
-                    SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        lastHash = lokiApiDatabase.getLastMessageHashValue(
-                            snode,
-                            closedGroupSessionId.hexString,
-                            Namespace.REVOKED_GROUP_MESSAGES()
-                        ).orEmpty(),
-                        auth = groupAuth,
-                        namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                        maxSize = null,
-                    ),
-                    RetrieveMessageResponse::class.java
-                )
+        val receiveRevokeMessage = async {
+            SnodeAPI.sendBatchRequest(
+                snode,
+                closedGroupSessionId.hexString,
+                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                    lastHash = lokiApiDatabase.getLastMessageHashValue(
+                        snode,
+                        closedGroupSessionId.hexString,
+                        Namespace.REVOKED_GROUP_MESSAGES()
+                    ).orEmpty(),
+                    auth = groupAuth,
+                    namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                    maxSize = null,
+                ),
+                RetrieveMessageResponse::class.java
             )
         }
 
@@ -198,18 +195,28 @@ class ClosedGroupPoller(
             }
         }
 
-        // The retrieval of the config and regular messages can be done concurrently,
+        // The retrieval of the all group messages can be done concurrently,
         // however, in order for the messages to be able to be decrypted, the config messages
         // must be processed first.
         pollingTasks += "polling and handling group config keys and messages" to async {
-            val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
-            saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
-            saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
-            saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
-            handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
+            val result = runCatching {
+                val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
+                handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
+                saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
+                saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
+                saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
 
-            val regularMessages = groupMessageRetrieval.await()
-            handleMessages(regularMessages, snode)
+                val regularMessages = groupMessageRetrieval.await()
+                handleMessages(regularMessages, snode)
+            }
+
+            // Revoke message must be handled regardless, and at the end
+            val revokedMessages = receiveRevokeMessage.await()
+            handleRevoked(revokedMessages)
+            saveLastMessageHash(snode, revokedMessages, Namespace.REVOKED_GROUP_MESSAGES())
+
+            // Propagate any prior exceptions
+            result.getOrThrow()
         }
 
         // Wait for all tasks to complete, gather any exceptions happened during polling
@@ -254,23 +261,23 @@ class ClosedGroupPoller(
             )
 
             if (decoded != null) {
-                Log.d(TAG, "decoded kick message was for us")
                 val message = decoded.decodeToString()
-                if (Sodium.KICKED_REGEX.matches(message)) {
-                    val (sessionId, generation) = message.split("-")
-                    val currentKeysGeneration by lazy {
-                        configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
-                            it.groupKeys.currentGeneration()
-                        }
+                val matcher = Sodium.KICKED_REGEX.matcher(message)
+                if (matcher.matches()) {
+                    val sessionId = matcher.group(1)
+                    val messageGeneration = matcher.group(2)!!.toInt()
+                    val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                        it.groupKeys.currentGeneration()
                     }
 
-                    if (sessionId == storage.getUserPublicKey() && generation.toInt() >= currentKeysGeneration) {
-                        try {
-                            groupManagerV2.handleKicked(closedGroupSessionId)
-                        } catch (e: Exception) {
-                            Log.e("GroupPoller", "Error handling kicked message: $e")
-                        }
+                    val isForMe = sessionId == storage.getUserPublicKey()
+                    Log.d(TAG, "Received kicked message, for us? ${sessionId == storage.getUserPublicKey()}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
+
+                    if (isForMe && messageGeneration >= currentKeysGeneration) {
+                        groupManagerV2.handleKicked(closedGroupSessionId)
                     }
+                } else {
+                    Log.w(TAG, "Received an invalid kicked message")
                 }
             }
         }

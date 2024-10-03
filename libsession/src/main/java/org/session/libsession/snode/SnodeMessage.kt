@@ -32,6 +32,7 @@ data class SnodeMessage(
     }
 
     companion object {
-        const val CONFIG_TTL: Long = 30 * 24 * 60 * 60 * 1000L
+        const val CONFIG_TTL: Long = 30 * 24 * 60 * 60 * 1000L // 30 days
+        const val DEFAULT_TTL: Long = 14 * 24 * 60 * 60 * 1000L // 14 days
     }
 }

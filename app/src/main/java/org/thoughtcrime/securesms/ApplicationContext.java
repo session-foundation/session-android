@@ -48,6 +48,7 @@ import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
+import org.session.libsession.snode.SnodeClock;
 import org.session.libsession.snode.SnodeModule;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Device;
@@ -165,6 +166,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigSyncHandler configSyncHandler;
     @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
+    @Inject SnodeClock snodeClock;
 
     private volatile boolean isAppVisible;
 
@@ -236,7 +238,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 lastSentTimestampCache,
                 this,
                 tokenFetcher,
-                groupManagerV2
+                groupManagerV2,
+                snodeClock
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
@@ -270,6 +273,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         pushRegistrationHandler.run();
         configSyncHandler.start();
         removeGroupMemberHandler.start();
+        snodeClock.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

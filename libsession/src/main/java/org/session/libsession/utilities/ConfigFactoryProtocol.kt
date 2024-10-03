@@ -1,6 +1,11 @@
 package org.session.libsession.utilities
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.MutableConfig
 import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
@@ -92,6 +97,52 @@ enum class UserConfigType(val namespace: Int) {
  */
 fun ConfigFactoryProtocol.getClosedGroup(groupId: AccountId): GroupInfo.ClosedGroupInfo? {
     return withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
+}
+
+/**
+ * Wait until all user configs are pushed to the server.
+ *
+ * This function is not essential to the pushing of the configs, the config push will schedule
+ * itself upon changes, so this function is purely observatory.
+ *
+ * This function will check the user configs immediately, if nothing needs to be pushed, it will return immediately.
+ *
+ * @return True if all user configs are pushed, false if the timeout is reached.
+ */
+suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long = 10_000L): Boolean {
+    fun needsPush() = withUserConfigs { configs ->
+        UserConfigType.entries.any { configs.getConfig(it).needsPush() }
+    }
+
+    return withTimeoutOrNull(timeoutMills){
+        configUpdateNotifications
+            .onStart { emit(ConfigUpdateNotification.UserConfigs) } // Trigger the filtering immediately
+            .filter { it == ConfigUpdateNotification.UserConfigs && !needsPush() }
+            .first()
+    } != null
+}
+
+/**
+ * Wait until all configs of given group are pushed to the server.
+ *
+ * This function is not essential to the pushing of the configs, the config push will schedule
+ * itself upon changes, so this function is purely observatory.
+ *
+ * This function will check the group configs immediately, if nothing needs to be pushed, it will return immediately.
+ *
+ * @return True if all group configs are pushed, false if the timeout is reached.
+ */
+suspend fun ConfigFactoryProtocol.waitUntilGroupConfigsPushed(groupId: AccountId, timeoutMills: Long = 10_000L): Boolean {
+    fun needsPush() = withGroupConfigs(groupId) { configs ->
+        configs.groupInfo.needsPush() || configs.groupMembers.needsPush()
+    }
+
+    return withTimeoutOrNull(timeoutMills) {
+        configUpdateNotifications
+            .onStart { emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId)) } // Trigger the filtering immediately
+            .filter { it == ConfigUpdateNotification.GroupConfigsUpdated(groupId) && !needsPush() }
+            .first()
+    } != null
 }
 
 interface UserConfigs {

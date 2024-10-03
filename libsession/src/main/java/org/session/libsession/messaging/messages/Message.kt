@@ -5,6 +5,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.snode.SnodeMessage
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
 
@@ -25,7 +26,7 @@ abstract class Message {
 
     open val coerceDisappearAfterSendToRead = false
 
-    open val defaultTtl: Long = 14 * 24 * 60 * 60 * 1000
+    open val defaultTtl: Long = SnodeMessage.DEFAULT_TTL
     open val ttl: Long get() = specifiedTtl ?: defaultTtl
     open val isSelfSendValid: Boolean = false
 

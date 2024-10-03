@@ -327,8 +327,6 @@ class ConfigFactory @Inject constructor(
             cb(configs as GroupConfigsImpl)
         }
 
-        Log.d("ConfigFactory", "Group updated? $groupId: $changed")
-
         if (changed) {
             if (!_configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))) {
                 Log.e("ConfigFactory", "Unable to deliver group update notification")
@@ -351,6 +349,7 @@ class ConfigFactory @Inject constructor(
     override fun removeGroup(groupId: AccountId) {
         withMutableUserConfigs {
             it.userGroups.eraseClosedGroup(groupId.hexString)
+            it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
         }
 
         if (groupConfigs.remove(groupId) != null) {

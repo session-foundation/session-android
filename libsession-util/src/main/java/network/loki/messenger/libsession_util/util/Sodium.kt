@@ -1,9 +1,11 @@
 package network.loki.messenger.libsession_util.util
 
+import java.util.regex.Pattern
+
 object Sodium {
 
     const val KICKED_DOMAIN = "SessionGroupKickedMessage"
-    val KICKED_REGEX = Regex("05\\w{64}-\\d+")
+    val KICKED_REGEX: Pattern = Pattern.compile("^(05[a-zA-Z0-9]{64})(\\d+)$")
 
     init {
         System.loadLibrary("session_util")

@@ -1,6 +1,5 @@
 package org.session.libsession.snode
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
@@ -26,12 +25,10 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.set
-import kotlin.coroutines.EmptyCoroutineContext
 
 private typealias Path = List<Snode>
 
@@ -603,11 +600,7 @@ object OnionRequestAPI {
                                 val bodyAsString = json["body"] as String
                                 JsonUtil.fromJson(bodyAsString, Map::class.java)
                             }
-                            if (body["t"] != null) {
-                                val timestamp = body["t"] as Long
-                                val offset = timestamp - System.currentTimeMillis()
-                                SnodeAPI.clockOffset = offset
-                            }
+
                             if (body.containsKey("hf")) {
                                 @Suppress("UNCHECKED_CAST")
                                 val currentHf = body["hf"] as List<Int>
