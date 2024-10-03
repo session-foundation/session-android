@@ -3,9 +3,7 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -33,6 +31,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildMem
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
@@ -70,6 +69,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val pollerFactory: PollerFactory,
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     @ApplicationContext val application: Context,
+    private val clock: SnodeClock,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -95,7 +95,7 @@ class GroupManagerV2Impl @Inject constructor(
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
         val ourProfile = storage.getUserProfile()
 
-        val groupCreationTimestamp = SnodeAPI.nowWithOffset
+        val groupCreationTimestamp = clock.currentTimeMills()
 
         // Create a group in the user groups config
         val group = configFactory.withMutableUserConfigs { configs ->
@@ -231,7 +231,7 @@ class GroupManagerV2Impl @Inject constructor(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
                             ttl = SnodeMessage.CONFIG_TTL,
-                            timestamp = SnodeAPI.nowWithOffset,
+                            timestamp = clock.currentTimeMills(),
                         ),
                         auth = groupAuth,
                     )
@@ -266,7 +266,7 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Send a member change message to the group
-        val timestamp = SnodeAPI.nowWithOffset
+        val timestamp = clock.currentTimeMills()
         val signature = SodiumUtilities.sign(
             buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
             adminKey
@@ -283,7 +283,6 @@ class GroupManagerV2Impl @Inject constructor(
                 .build()
         ).apply { this.sentTimestamp = timestamp }
         MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
-        storage.insertGroupInfoChange(updatedMessage, group)
     }
 
     override suspend fun removeMembers(
@@ -444,7 +443,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Send a group update message to the group telling members someone has been promoted
-        val timestamp = SnodeAPI.nowWithOffset
+        val timestamp = clock.currentTimeMills()
         val signature = SodiumUtilities.sign(
             buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
             adminKey
@@ -463,7 +462,6 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         MessageSender.send(message, Address.fromSerialized(group.hexString))
-        storage.insertGroupInfoChange(message, group)
     }
 
     private suspend fun flagMembersForRemoval(
@@ -485,7 +483,7 @@ class GroupManagerV2Impl @Inject constructor(
 
         // 2. Send a member change message
         if (sendMemberChangeMessage) {
-            val timestamp = SnodeAPI.nowWithOffset
+            val timestamp = clock.currentTimeMills()
             val signature = SodiumUtilities.sign(
                 buildMemberChangeSignature(
                     GroupUpdateMemberChangeMessage.Type.REMOVED,
@@ -698,7 +696,7 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
             storage.insertGroupInviteControlMessage(
-                SnodeAPI.nowWithOffset,
+                clock.currentTimeMills(),
                 inviter.hexString,
                 groupId,
                 groupName
@@ -765,7 +763,7 @@ class GroupManagerV2Impl @Inject constructor(
             name = groupName,
             members = emptyList(),
             admins = emptyList(),
-            sentTimestamp = SnodeAPI.nowWithOffset,
+            sentTimestamp = clock.currentTimeMills(),
         )
     }
 
@@ -777,7 +775,7 @@ class GroupManagerV2Impl @Inject constructor(
                 it.groupInfo.setName(newName)
             }
 
-            val timestamp = SnodeAPI.nowWithOffset
+            val timestamp = clock.currentTimeMills()
             val signature = SodiumUtilities.sign(
                 buildInfoChangeVerifier(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
                 adminKey
@@ -796,7 +794,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.sendNonDurably(message, Address.fromSerialized(groupId.hexString), false)
+            MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false)
                 .await()
             storage.insertGroupInfoChange(message, groupId)
         }
@@ -839,7 +837,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
-        val timestamp = SnodeAPI.nowWithOffset
+        val timestamp = clock.currentTimeMills()
         val signature = group.adminKey?.let { key ->
             SodiumUtilities.sign(
                 buildDeleteMemberContentSignature(
@@ -910,7 +908,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         val adminKey = configFactory.getClosedGroup(groupId)?.adminKey
-        if (!senderIsVerifiedAdmin && adminKey != null) {
+        if (!senderIsVerifiedAdmin && adminKey != null && hashes.isNotEmpty()) {
             // If the deletion request comes from a non-admin, and we as an admin, will also delete
             // the content from the swarm, provided that the messages are actually sent by that user
             if (storage.ensureMessageHashesAreSender(

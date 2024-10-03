@@ -18,17 +18,16 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
-import kotlinx.coroutines.withContext
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
-import nl.komponents.kovenant.task
 import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.snode.model.BatchResponse
+import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.snode.utilities.retrySuspendAsPromise
@@ -48,6 +47,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
+import org.session.libsignal.utilities.retryWithUniformInterval
 import java.util.Date
 import java.util.Locale
 import kotlin.collections.component1
@@ -792,37 +792,37 @@ object SnodeAPI {
      * Note: After this method returns, [auth] will not be used by any of async calls and it's afe
      * for the caller to clean up the associated resources if needed.
      */
-    fun sendMessage(
+    suspend fun sendMessage(
         message: SnodeMessage,
         auth: SwarmAuth?,
         namespace: Int = 0
-    ): RawResponsePromise {
-        val params = if (auth != null) {
-            check(auth.accountId.hexString == message.recipient) {
-                "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
-            }
+    ): StoreMessageResponse {
+        return retryWithUniformInterval(maxRetryCount = maxRetryCount) {
+            val params = if (auth != null) {
+                check(auth.accountId.hexString == message.recipient) {
+                    "Message sent to ${message.recipient} but authenticated with ${auth.accountId.hexString}"
+                }
 
-            val timestamp = nowWithOffset
+                val timestamp = nowWithOffset
 
-            buildAuthenticatedParameters(
-                auth = auth,
-                namespace = namespace,
-                verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
-                timestamp = timestamp
-            ) {
-                put("sig_timestamp", timestamp)
-                putAll(message.toJSON())
-            }
-        } else {
-            buildMap {
-                putAll(message.toJSON())
-                if (namespace != 0) {
-                    put("namespace", namespace)
+                buildAuthenticatedParameters(
+                    auth = auth,
+                    namespace = namespace,
+                    verificationData = { ns, t -> "${Snode.Method.SendMessage.rawValue}$ns$t" },
+                    timestamp = timestamp
+                ) {
+                    put("sig_timestamp", timestamp)
+                    putAll(message.toJSON())
+                }
+            } else {
+                buildMap {
+                    putAll(message.toJSON())
+                    if (namespace != 0) {
+                        put("namespace", namespace)
+                    }
                 }
             }
-        }
 
-        return scope.retrySuspendAsPromise(maxRetryCount) {
             sendBatchRequest(
                 snode = getSingleTargetSnode(message.recipient).await(),
                 publicKey = message.recipient,
@@ -831,7 +831,7 @@ object SnodeAPI {
                     params = params,
                     namespace = namespace
                 ),
-                responseType = Map::class.java
+                responseType = StoreMessageResponse::class.java
             )
         }
     }

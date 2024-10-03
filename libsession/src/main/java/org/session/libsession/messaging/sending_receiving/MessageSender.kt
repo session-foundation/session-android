@@ -1,5 +1,9 @@
 package org.session.libsession.messaging.sending_receiving
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -30,6 +34,8 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SnodeModule
+import org.session.libsession.snode.utilities.asyncPromise
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
@@ -77,7 +83,9 @@ object MessageSender {
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
-            sendToSnodeDestination(destination, message, isSyncMessage)
+            GlobalScope.asyncPromise {
+                sendToSnodeDestination(destination, message, isSyncMessage)
+            }
         }
     }
 
@@ -207,9 +215,7 @@ object MessageSender {
     }
 
     // One-on-One Chats & Closed Groups
-    private fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false): Promise<Unit, Exception> {
-        val deferred = deferred<Unit, Exception>()
-        val promise = deferred.promise
+    private suspend fun sendToSnodeDestination(destination: Destination, message: Message, isSyncMessage: Boolean = false) = supervisorScope {
         val storage = MessagingModuleConfiguration.shared.storage
         val configFactory = MessagingModuleConfiguration.shared.configFactory
         val userPublicKey = storage.getUserPublicKey()
@@ -223,7 +229,7 @@ object MessageSender {
             if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend()) {
                 SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
             }
-            deferred.reject(error)
+            throw error
         }
         try {
             val snodeMessage = buildWrappedMessageToSnode(destination, message, isSyncMessage)
@@ -242,57 +248,43 @@ object MessageSender {
 
                 else -> listOf(Namespace.DEFAULT())
             }
-            namespaces.mapNotNull { namespace ->
+
+            val sendTasks = namespaces.map { namespace ->
                 if (destination is Destination.ClosedGroup) {
-                    // possibly handle a failure for no user groups or no closed group signing key?
-                    val groupAuth = configFactory.getGroupAuth(AccountId(destination.publicKey)) ?: return@mapNotNull null
+                    val groupAuth = requireNotNull(configFactory.getGroupAuth(AccountId(destination.publicKey))) {
+                        "Unable to authorize group message send"
+                    }
 
-                    SnodeAPI.sendMessage(
-                        auth = groupAuth,
-                        message = snodeMessage,
-                        namespace = namespace
-                    )
+                    async {
+                        SnodeAPI.sendMessage(
+                            auth = groupAuth,
+                            message = snodeMessage,
+                            namespace = namespace
+                        )
+                    }
                 } else {
-                    SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = namespace)
-                }
-            }.let { promises ->
-                var isSuccess = false
-                val promiseCount = promises.size
-                val errorCount = AtomicInteger(0)
-                promises.forEach { promise: RawResponsePromise ->
-                    promise.success {
-                        if (isSuccess) { return@success } // Succeed as soon as the first promise succeeds
-                        isSuccess = true
-                        val hash = it["hash"] as? String
-                        message.serverHash = hash
-                        handleSuccessfulMessageSend(message, destination, isSyncMessage)
-
-                        val shouldNotify: Boolean = when (message) {
-                            is VisibleMessage, is UnsendRequest -> !isSyncMessage
-                            is CallMessage -> {
-                                // Note: Other 'CallMessage' types are too big to send as push notifications
-                                // so only send the 'preOffer' message as a notification
-                                when (message.type) {
-                                    SignalServiceProtos.CallMessage.Type.PRE_OFFER -> true
-                                    else -> false
-                                }
-                            }
-                            else -> false
-                        }
-
-                        deferred.resolve(Unit)
-                    }
-                    promise.fail {
-                        errorCount.getAndIncrement()
-                        if (errorCount.get() != promiseCount) { return@fail } // Only error out if all promises failed
-                        handleFailure(it)
+                    async {
+                        SnodeAPI.sendMessage(snodeMessage, auth = null, namespace = namespace)
                     }
                 }
+            }
+
+            val sendTaskResults = sendTasks.map {
+                runCatching { it.await() }
+            }
+
+            val firstSuccess = sendTaskResults.firstOrNull { it.isSuccess }
+
+            if (firstSuccess != null) {
+                message.serverHash = firstSuccess.getOrThrow().hash
+                handleSuccessfulMessageSend(message, destination, isSyncMessage)
+            } else {
+                // If all tasks failed, throw the first exception
+                throw sendTaskResults.first().exceptionOrNull()!!
             }
         } catch (exception: Exception) {
             handleFailure(exception)
         }
-        return promise
     }
 
     private fun getSpecifiedTtl(
@@ -511,7 +503,9 @@ object MessageSender {
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 
             storage.markAsSyncing(timestamp, userPublicKey)
-            sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
+            GlobalScope.launch {
+                sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
+            }
         }
     }
 
