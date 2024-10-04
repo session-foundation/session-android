@@ -18,10 +18,12 @@ import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
+import org.session.libsession.utilities.getClosedGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
@@ -38,6 +40,7 @@ class ClosedGroupPoller(
     private val groupManagerV2: GroupManagerV2,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
+    private val clock: SnodeClock,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -112,9 +115,7 @@ class ClosedGroupPoller(
             }
         }
 
-        val adminKey = requireNotNull(configFactoryProtocol.withUserConfigs {
-            it.userGroups.getClosedGroup(closedGroupSessionId.hexString)
-        }) {
+        val adminKey = requireNotNull(configFactoryProtocol.getClosedGroup(closedGroupSessionId)) {
             "Group doesn't exist"
         }.adminKey
 
@@ -135,7 +136,7 @@ class ClosedGroupPoller(
                     maxSize = null,
                 ),
                 RetrieveMessageResponse::class.java
-            )
+            ).messages.filterNotNull()
         }
 
         if (configHashesToExtends.isNotEmpty() && adminKey != null) {
@@ -146,7 +147,7 @@ class ClosedGroupPoller(
                     SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                         messageHashes = configHashesToExtends.toList(),
                         auth = groupAuth,
-                        newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                        newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
                         extend = true
                     ),
                 )
@@ -191,7 +192,7 @@ class ClosedGroupPoller(
                         maxSize = null,
                     ),
                     responseType = RetrieveMessageResponse::class.java
-                )
+                ).messages.filterNotNull()
             }
         }
 
@@ -238,23 +239,27 @@ class ClosedGroupPoller(
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
-        return ConfigMessage(hash, data, timestamp)
+        return ConfigMessage(hash, data, timestamp ?: clock.currentTimeMills())
     }
 
-    private fun saveLastMessageHash(snode: Snode, body: RetrieveMessageResponse, namespace: Int) {
-        if (body.messages.isNotEmpty()) {
+    private fun saveLastMessageHash(
+        snode: Snode,
+        messages: List<RetrieveMessageResponse.Message>,
+        namespace: Int
+    ) {
+        if (messages.isNotEmpty()) {
             lokiApiDatabase.setLastMessageHashValue(
                 snode = snode,
                 publicKey = closedGroupSessionId.hexString,
-                newValue = body.messages.last().hash,
+                newValue = messages.last().hash,
                 namespace = namespace
             )
         }
     }
 
-    private suspend fun handleRevoked(body: RetrieveMessageResponse) {
-        body.messages.forEach { msg ->
-            val decoded = configFactoryProtocol.maybeDecryptForUser(
+    private suspend fun handleRevoked(messages: List<RetrieveMessageResponse.Message>) {
+        messages.forEach { msg ->
+            val decoded = configFactoryProtocol.decryptForUser(
                 msg.data,
                 Sodium.KICKED_DOMAIN,
                 closedGroupSessionId,
@@ -284,26 +289,26 @@ class ClosedGroupPoller(
     }
 
     private fun handleGroupConfigMessages(
-        keysResponse: RetrieveMessageResponse,
-        infoResponse: RetrieveMessageResponse,
-        membersResponse: RetrieveMessageResponse
+        keysResponse: List<RetrieveMessageResponse.Message>,
+        infoResponse: List<RetrieveMessageResponse.Message>,
+        membersResponse: List<RetrieveMessageResponse.Message>
     ) {
-        if (keysResponse.messages.isEmpty() && infoResponse.messages.isEmpty() && membersResponse.messages.isEmpty()) {
+        if (keysResponse.isEmpty() && infoResponse.isEmpty() && membersResponse.isEmpty()) {
             return
         }
 
         Log.d(
             TAG, "Handling group config messages(" +
-                    "info = ${infoResponse.messages.size}, " +
-                    "keys = ${keysResponse.messages.size}, " +
-                    "members = ${membersResponse.messages.size})"
+                    "info = ${infoResponse.size}, " +
+                    "keys = ${keysResponse.size}, " +
+                    "members = ${membersResponse.size})"
         )
 
         configFactoryProtocol.mergeGroupConfigMessages(
             groupId = closedGroupSessionId,
-            keys = keysResponse.messages.map { it.toConfigMessage() },
-            info = infoResponse.messages.map { it.toConfigMessage() },
-            members = membersResponse.messages.map { it.toConfigMessage() },
+            keys = keysResponse.map { it.toConfigMessage() },
+            info = infoResponse.map { it.toConfigMessage() },
+            members = membersResponse.map { it.toConfigMessage() },
         )
     }
 
@@ -314,6 +319,7 @@ class ClosedGroupPoller(
                 snode = snode,
                 publicKey = closedGroupSessionId.hexString,
                 decrypt = it.groupKeys::decrypt,
+                namespace = Namespace.CLOSED_GROUP_MESSAGES(),
             )
         }
 
@@ -331,7 +337,7 @@ class ClosedGroupPoller(
         }
 
         if (messages.isNotEmpty()) {
-            Log.d(TAG, "namespace for messages rx count: ${messages.size}")
+            Log.d(TAG, "Received and handled ${messages.size} group messages")
         }
     }
 }

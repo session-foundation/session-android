@@ -554,7 +554,8 @@ class GroupManagerV2Impl @Inject constructor(
             // this will fail the first couple of times :)
             MessageSender.send(
                 responseMessage,
-                Address.fromSerialized(group.groupAccountId.hexString)
+                Destination.ClosedGroup(group.groupAccountId.hexString),
+                isSyncMessage = false
             )
         } else {
             // If we are invited as admin, we can just update the group info ourselves
@@ -756,7 +757,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         storage.insertIncomingInfoMessage(
-            context = MessagingModuleConfiguration.shared.context,
+            context = application,
             senderPublicKey = userId,
             groupID = groupId.hexString,
             type = SignalServiceGroup.Type.KICKED,

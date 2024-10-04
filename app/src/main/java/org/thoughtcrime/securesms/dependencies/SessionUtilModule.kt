@@ -45,13 +45,15 @@ object SessionUtilModule {
                              configFactory: ConfigFactory,
                              storage: Lazy<StorageProtocol>,
                              groupManagerV2: Lazy<GroupManagerV2>,
-                             lokiApiDatabase: LokiAPIDatabaseProtocol) = PollerFactory(
+                             lokiApiDatabase: LokiAPIDatabaseProtocol,
+                             clock: SnodeClock) = PollerFactory(
         scope = coroutineScope,
         executor = dispatcher,
         configFactory = configFactory,
         groupManagerV2 = groupManagerV2,
         storage = storage,
         lokiApiDatabase = lokiApiDatabase,
+        clock = clock,
     )
 
     @Provides

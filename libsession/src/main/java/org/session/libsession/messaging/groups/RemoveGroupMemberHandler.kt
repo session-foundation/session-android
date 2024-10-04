@@ -143,7 +143,7 @@ class RemoveGroupMemberHandler @Inject constructor(
             pendingRemovals to (calls as List<SnodeAPI.SnodeBatchRequestInfo>)
         }
 
-        if (batchCalls.isEmpty()) {
+        if (pendingRemovals.isEmpty() || batchCalls.isEmpty()) {
             return
         }
 

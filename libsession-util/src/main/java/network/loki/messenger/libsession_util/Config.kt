@@ -500,6 +500,7 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
     external override fun subAccountSign(message: ByteArray, signingValue: ByteArray): SwarmAuth
 
     external override fun currentGeneration(): Int
+    external fun admin(): Boolean
 
     data class SwarmAuth(
         val subAccount: String,

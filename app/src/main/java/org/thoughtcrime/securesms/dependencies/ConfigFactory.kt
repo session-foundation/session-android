@@ -27,7 +27,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.snode.OwnedSwarmAuth
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -52,7 +52,6 @@ import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.GroupManager
-import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -64,163 +63,23 @@ class ConfigFactory @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val storage: Lazy<StorageProtocol>,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val clock: SnodeClock,
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
         // config change, any message which would normally result in a config change which was sent
         // before `lastConfigMessage.timestamp - configChangeBufferPeriod` will not  actually have
         // it's changes applied (control text will still be added though)
-        const val configChangeBufferPeriod: Long = (2 * 60 * 1000)
+        private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
     }
 
     init {
         System.loadLibrary("session_util")
     }
 
-    private class UserConfigsImpl(
-        userEd25519SecKey: ByteArray,
-        private val userAccountId: AccountId,
-        private val configDatabase: ConfigDatabase,
-        storage: StorageProtocol,
-        threadDb: ThreadDatabase,
-        contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.CONTACTS_VARIANT,
-            userAccountId.hexString
-        ),
-        userGroupsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.USER_GROUPS_VARIANT,
-            userAccountId.hexString
-        ),
-        userProfileDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.USER_PROFILE_VARIANT,
-            userAccountId.hexString
-        ),
-        convoInfoDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
-            ConfigDatabase.CONVO_INFO_VARIANT,
-            userAccountId.hexString
-        )
-    ) : MutableUserConfigs {
-        override val contacts = Contacts(
-            ed25519SecretKey = userEd25519SecKey,
-            initialDump = contactsDump,
-        )
-
-        override val userGroups = UserGroupsConfig(
-            ed25519SecretKey = userEd25519SecKey,
-            initialDump = userGroupsDump
-        )
-        override val userProfile = UserProfile(
-            ed25519SecretKey = userEd25519SecKey,
-            initialDump = userProfileDump
-        )
-        override val convoInfoVolatile = ConversationVolatileConfig(
-            ed25519SecretKey = userEd25519SecKey,
-            initialDump = convoInfoDump,
-        )
-
-        init {
-            if (contactsDump == null) {
-                contacts.initFrom(storage)
-            }
-
-            if (userGroupsDump == null) {
-                userGroups.initFrom(storage)
-            }
-
-            if (userProfileDump == null) {
-                userProfile.initFrom(storage)
-            }
-
-            if (convoInfoDump == null) {
-                convoInfoVolatile.initFrom(storage, threadDb)
-            }
-        }
-
-        /**
-         * Persists the config if it is dirty and returns the list of classes that were persisted
-         */
-        fun persistIfDirty(): Boolean {
-            return sequenceOf(
-                contacts to ConfigDatabase.CONTACTS_VARIANT,
-                userGroups to ConfigDatabase.USER_GROUPS_VARIANT,
-                userProfile to ConfigDatabase.USER_PROFILE_VARIANT,
-                convoInfoVolatile to ConfigDatabase.CONVO_INFO_VARIANT
-            ).fold(false) { acc, (config, variant) ->
-                if (config.needsDump()) {
-                    configDatabase.storeConfig(
-                        variant = variant,
-                        publicKey = userAccountId.hexString,
-                        data = config.dump(),
-                        timestamp = SnodeAPI.nowWithOffset
-                    )
-                    true
-                } else {
-                    acc
-                }
-            }
-        }
-    }
-
-    private class GroupConfigsImpl(
-        userEd25519SecKey: ByteArray,
-        private val groupAccountId: AccountId,
-        groupAdminKey: ByteArray?,
-        private val configDatabase: ConfigDatabase
-    ) : MutableGroupConfigs {
-        override val groupInfo = GroupInfoConfig(
-            groupPubKey = groupAccountId.pubKeyBytes,
-            groupAdminKey = groupAdminKey,
-            initialDump = configDatabase.retrieveConfigAndHashes(
-                ConfigDatabase.INFO_VARIANT,
-                groupAccountId.hexString
-            )
-        )
-        override val groupMembers = GroupMembersConfig(
-            groupPubKey = groupAccountId.pubKeyBytes,
-            groupAdminKey = groupAdminKey,
-            initialDump = configDatabase.retrieveConfigAndHashes(
-                ConfigDatabase.MEMBER_VARIANT,
-                groupAccountId.hexString
-            )
-        )
-        override val groupKeys = GroupKeysConfig(
-            userSecretKey = userEd25519SecKey,
-            groupPublicKey = groupAccountId.pubKeyBytes,
-            groupAdminKey = groupAdminKey,
-            initialDump = configDatabase.retrieveConfigAndHashes(
-                ConfigDatabase.KEYS_VARIANT,
-                groupAccountId.hexString
-            ),
-            info = groupInfo,
-            members = groupMembers
-        )
-
-        fun dumpIfNeeded(): Boolean {
-            if (groupInfo.needsDump() || groupMembers.needsDump() || groupKeys.needsDump()) {
-                configDatabase.storeGroupConfigs(
-                    publicKey = groupAccountId.hexString,
-                    keysConfig = groupKeys.dump(),
-                    infoConfig = groupInfo.dump(),
-                    memberConfig = groupMembers.dump(),
-                    timestamp = SnodeAPI.nowWithOffset
-                )
-                return true
-            }
-
-            return false
-        }
-
-        val isDirty: Boolean
-            get() = groupInfo.dirty() || groupMembers.dirty()
-
-        override fun rekey() {
-            groupKeys.rekey(groupInfo.pointer, groupMembers.pointer)
-        }
-    }
-
-    private val userConfigs = ConcurrentHashMap<AccountId, UserConfigsImpl>()
-    private val groupConfigs = ConcurrentHashMap<AccountId, GroupConfigsImpl>()
+    private val userConfigs = HashMap<AccountId, UserConfigsImpl>()
+    private val groupConfigs = HashMap<AccountId, GroupConfigsImpl>()
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
         extraBufferCapacity = 5, // The notifications are normally important so we can afford to buffer a few
@@ -240,14 +99,16 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withUserConfigs(cb: (UserConfigs) -> T): T {
         val userAccountId = requiresCurrentUserAccountId()
-        val configs = userConfigs.getOrPut(userAccountId) {
-            UserConfigsImpl(
-                requiresCurrentUserED25519SecKey(),
-                userAccountId,
-                threadDb = threadDb,
-                configDatabase = configDatabase,
-                storage = storage.get()
-            )
+        val configs = synchronized(userConfigs) {
+            userConfigs.getOrPut(userAccountId) {
+                UserConfigsImpl(
+                    requiresCurrentUserED25519SecKey(),
+                    userAccountId,
+                    threadDb = threadDb,
+                    configDatabase = configDatabase,
+                    storage = storage.get()
+                )
+            }
         }
 
         return synchronized(configs) {
@@ -294,20 +155,27 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
         return doWithMutableUserConfigs {
-            cb(it) to it.persistIfDirty()
+            cb(it) to it.persistIfDirty(clock)
         }
     }
 
     override fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
-        val configs = groupConfigs.getOrPut(groupId) {
-            val groupAdminKey = getClosedGroup(groupId)?.adminKey
+        val groupAdminKey = getClosedGroup(groupId)?.adminKey
 
-            GroupConfigsImpl(
-                requiresCurrentUserED25519SecKey(),
-                groupId,
-                groupAdminKey,
-                configDatabase
-            )
+        val configs = synchronized(groupConfigs) {
+            var value = groupConfigs[groupId]
+            if (value == null || value.groupKeys.admin() != (groupAdminKey != null)) {
+                // No existing configs or existing configs have different admin settings with what we currently have
+                // Create a new group configs
+                value = GroupConfigsImpl(
+                    requiresCurrentUserED25519SecKey(),
+                    groupId,
+                    groupAdminKey,
+                    configDatabase
+                ).also { groupConfigs[groupId] = it }
+            }
+
+            value
         }
 
         return synchronized(configs) {
@@ -342,7 +210,7 @@ class ConfigFactory @Inject constructor(
         cb: (MutableGroupConfigs) -> T
     ): T {
         return doWithMutableGroupConfigs(recreateConfigInstances = recreateConfigInstances, groupId = groupId) {
-            cb(it) to it.dumpIfNeeded()
+            cb(it) to it.dumpIfNeeded(clock)
         }
     }
 
@@ -359,7 +227,7 @@ class ConfigFactory @Inject constructor(
         configDatabase.deleteGroupConfigs(groupId)
     }
 
-    override fun maybeDecryptForUser(
+    override fun decryptForUser(
         encoded: ByteArray,
         domain: String,
         closedGroupSessionId: AccountId
@@ -392,7 +260,7 @@ class ConfigFactory @Inject constructor(
             val membersMerged = members.isNotEmpty() &&
                     configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
 
-            configs.dumpIfNeeded()
+            configs.dumpIfNeeded(clock)
 
             Unit to (keysLoaded || infoMerged || membersMerged)
         }
@@ -414,7 +282,7 @@ class ConfigFactory @Inject constructor(
             convoInfoVolatile?.let { (push, result) ->  configs.convoInfoVolatile.confirmPushed(push.seqNo, result.hash) }
             userGroups?.let { (push, result) ->  configs.userGroups.confirmPushed(push.seqNo, result.hash) }
 
-            Unit to configs.persistIfDirty()
+            Unit to configs.persistIfDirty(clock)
         }
     }
 
@@ -438,7 +306,7 @@ class ConfigFactory @Inject constructor(
                 }
             }
 
-            Unit to configs.dumpIfNeeded()
+            Unit to configs.dumpIfNeeded(clock)
         }
     }
 
@@ -489,7 +357,7 @@ class ConfigFactory @Inject constructor(
             configDatabase.retrieveConfigLastUpdateTimestamp(variant, publicKey)
 
         // Ensure the change occurred after the last config message was handled (minus the buffer period)
-        return (changeTimestampMs >= (lastUpdateTimestampMs - configChangeBufferPeriod))
+        return (changeTimestampMs >= (lastUpdateTimestampMs - CONFIG_CHANGE_BUFFER_PERIOD))
     }
 
     override fun getGroupAuth(groupId: AccountId): SwarmAuth? {
@@ -679,5 +547,143 @@ private fun MutableContacts.initFrom(storage: StorageProtocol) {
             expiryMode = if (settings.expireMessages == 0) ExpiryMode.NONE else ExpiryMode.AfterRead(settings.expireMessages.toLong())
         )
         set(contactInfo)
+    }
+}
+
+private class UserConfigsImpl(
+    userEd25519SecKey: ByteArray,
+    private val userAccountId: AccountId,
+    private val configDatabase: ConfigDatabase,
+    storage: StorageProtocol,
+    threadDb: ThreadDatabase,
+    contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+        ConfigDatabase.CONTACTS_VARIANT,
+        userAccountId.hexString
+    ),
+    userGroupsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+        ConfigDatabase.USER_GROUPS_VARIANT,
+        userAccountId.hexString
+    ),
+    userProfileDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+        ConfigDatabase.USER_PROFILE_VARIANT,
+        userAccountId.hexString
+    ),
+    convoInfoDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
+        ConfigDatabase.CONVO_INFO_VARIANT,
+        userAccountId.hexString
+    )
+) : MutableUserConfigs {
+    override val contacts = Contacts(
+        ed25519SecretKey = userEd25519SecKey,
+        initialDump = contactsDump,
+    )
+
+    override val userGroups = UserGroupsConfig(
+        ed25519SecretKey = userEd25519SecKey,
+        initialDump = userGroupsDump
+    )
+    override val userProfile = UserProfile(
+        ed25519SecretKey = userEd25519SecKey,
+        initialDump = userProfileDump
+    )
+    override val convoInfoVolatile = ConversationVolatileConfig(
+        ed25519SecretKey = userEd25519SecKey,
+        initialDump = convoInfoDump,
+    )
+
+    init {
+        if (contactsDump == null) {
+            contacts.initFrom(storage)
+        }
+
+        if (userGroupsDump == null) {
+            userGroups.initFrom(storage)
+        }
+
+        if (userProfileDump == null) {
+            userProfile.initFrom(storage)
+        }
+
+        if (convoInfoDump == null) {
+            convoInfoVolatile.initFrom(storage, threadDb)
+        }
+    }
+
+    /**
+     * Persists the config if it is dirty and returns the list of classes that were persisted
+     */
+    fun persistIfDirty(clock: SnodeClock): Boolean {
+        return sequenceOf(
+            contacts to ConfigDatabase.CONTACTS_VARIANT,
+            userGroups to ConfigDatabase.USER_GROUPS_VARIANT,
+            userProfile to ConfigDatabase.USER_PROFILE_VARIANT,
+            convoInfoVolatile to ConfigDatabase.CONVO_INFO_VARIANT
+        ).fold(false) { acc, (config, variant) ->
+            if (config.needsDump()) {
+                configDatabase.storeConfig(
+                    variant = variant,
+                    publicKey = userAccountId.hexString,
+                    data = config.dump(),
+                    timestamp = clock.currentTimeMills()
+                )
+                true
+            } else {
+                acc
+            }
+        }
+    }
+}
+
+private class GroupConfigsImpl(
+    userEd25519SecKey: ByteArray,
+    private val groupAccountId: AccountId,
+    groupAdminKey: ByteArray?,
+    private val configDatabase: ConfigDatabase
+) : MutableGroupConfigs {
+    override val groupInfo = GroupInfoConfig(
+        groupPubKey = groupAccountId.pubKeyBytes,
+        groupAdminKey = groupAdminKey,
+        initialDump = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.INFO_VARIANT,
+            groupAccountId.hexString
+        )
+    )
+    override val groupMembers = GroupMembersConfig(
+        groupPubKey = groupAccountId.pubKeyBytes,
+        groupAdminKey = groupAdminKey,
+        initialDump = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.MEMBER_VARIANT,
+            groupAccountId.hexString
+        )
+    )
+    override val groupKeys = GroupKeysConfig(
+        userSecretKey = userEd25519SecKey,
+        groupPublicKey = groupAccountId.pubKeyBytes,
+        groupAdminKey = groupAdminKey,
+        initialDump = configDatabase.retrieveConfigAndHashes(
+            ConfigDatabase.KEYS_VARIANT,
+            groupAccountId.hexString
+        ),
+        info = groupInfo,
+        members = groupMembers
+    )
+
+    fun dumpIfNeeded(clock: SnodeClock): Boolean {
+        if (groupInfo.needsDump() || groupMembers.needsDump() || groupKeys.needsDump()) {
+            configDatabase.storeGroupConfigs(
+                publicKey = groupAccountId.hexString,
+                keysConfig = groupKeys.dump(),
+                infoConfig = groupInfo.dump(),
+                memberConfig = groupMembers.dump(),
+                timestamp = clock.currentTimeMills()
+            )
+            return true
+        }
+
+        return false
+    }
+
+    override fun rekey() {
+        groupKeys.rekey(groupInfo.pointer, groupMembers.pointer)
     }
 }

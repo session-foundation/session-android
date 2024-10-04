@@ -48,7 +48,6 @@ import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.prettifiedDescription
 import org.session.libsignal.utilities.retryIfNeeded
 import org.session.libsignal.utilities.retryWithUniformInterval
-import java.util.Date
 import java.util.Locale
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -989,7 +988,7 @@ object SnodeAPI {
                     }
                     else Pair(MessageWrapper.unwrap(data), rawMessageAsJSON["hash"] as? String)
                 } catch (e: Exception) {
-                    Log.d("Loki", "Failed to unwrap data for message: ${rawMessage.prettifiedDescription()}.")
+                    Log.d("Loki", "Failed to unwrap data for message: ${rawMessage.prettifiedDescription()}.", e)
                     null
                 }
             } else {

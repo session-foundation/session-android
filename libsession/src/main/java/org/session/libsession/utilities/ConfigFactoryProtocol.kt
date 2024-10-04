@@ -3,7 +3,6 @@ package org.session.libsession.utilities
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.MutableConfig
@@ -48,9 +47,9 @@ interface ConfigFactoryProtocol {
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
     fun removeGroup(groupId: AccountId)
 
-    fun maybeDecryptForUser(encoded: ByteArray,
-                            domain: String,
-                            closedGroupSessionId: AccountId): ByteArray?
+    fun decryptForUser(encoded: ByteArray,
+                       domain: String,
+                       closedGroupSessionId: AccountId): ByteArray?
 
     fun mergeGroupConfigMessages(
         groupId: AccountId,
