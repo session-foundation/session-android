@@ -54,7 +54,8 @@ interface GroupManagerV2 {
         groupName: String,
         authData: ByteArray,
         inviter: AccountId,
-        inviteMessageHash: String?
+        inviteMessageHash: String,
+        inviteMessageTimestamp: Long,
     )
 
     suspend fun handlePromotion(
@@ -62,7 +63,8 @@ interface GroupManagerV2 {
         groupName: String,
         adminKey: ByteArray,
         promoter: AccountId,
-        promoteMessageHash: String?
+        promoteMessageHash: String,
+        promoteMessageTimestamp: Long,
     )
 
     suspend fun respondToInvitation(groupId: AccountId, approved: Boolean): Unit?

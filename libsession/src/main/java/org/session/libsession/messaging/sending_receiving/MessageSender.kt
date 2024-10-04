@@ -229,8 +229,8 @@ object MessageSender {
             if (destination is Destination.Contact && message is VisibleMessage && !isSelfSend()) {
                 SnodeModule.shared.broadcaster.broadcast("messageFailed", message.sentTimestamp!!)
             }
-            throw error
         }
+
         try {
             val snodeMessage = buildWrappedMessageToSnode(destination, message, isSyncMessage)
             // TODO: this might change in future for config messages
@@ -273,10 +273,10 @@ object MessageSender {
                 runCatching { it.await() }
             }
 
-            val firstSuccess = sendTaskResults.firstOrNull { it.isSuccess }
+            val firstSuccess = sendTaskResults.firstOrNull { it.isSuccess }?.getOrNull()
 
             if (firstSuccess != null) {
-                message.serverHash = firstSuccess.getOrThrow().hash
+                message.serverHash = firstSuccess.hash
                 handleSuccessfulMessageSend(message, destination, isSyncMessage)
             } else {
                 // If all tasks failed, throw the first exception
@@ -284,6 +284,7 @@ object MessageSender {
             }
         } catch (exception: Exception) {
             handleFailure(exception)
+            throw exception
         }
     }
 

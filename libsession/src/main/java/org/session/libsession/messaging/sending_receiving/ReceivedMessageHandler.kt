@@ -665,7 +665,8 @@ private fun handlePromotionMessage(message: GroupUpdated) {
                     groupName = promotion.name,
                     adminKey = keyPair.secretKey,
                     promoter = adminId,
-                    promoteMessageHash = message.serverHash
+                    promoteMessageHash = message.serverHash!!,
+                    promoteMessageTimestamp = message.sentTimestamp!!,
                 )
         } catch (e: Exception) {
             Log.e("GroupUpdated", "Failed to handle promotion message", e)
@@ -708,7 +709,8 @@ private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: Group
                     groupName = invite.name,
                     authData = invite.memberAuthData.toByteArray(),
                     inviter = adminId,
-                    inviteMessageHash = message.serverHash
+                    inviteMessageHash = message.serverHash!!,
+                    inviteMessageTimestamp = message.sentTimestamp!!,
                 )
         } catch (e: Exception) {
             Log.e("GroupUpdated", "Failed to handle invite message", e)

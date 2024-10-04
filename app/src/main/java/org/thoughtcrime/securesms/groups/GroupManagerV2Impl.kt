@@ -16,7 +16,6 @@ import network.loki.messenger.libsession_util.util.INVITE_STATUS_SENT
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.InviteContactsJob
@@ -282,7 +281,8 @@ class GroupManagerV2Impl @Inject constructor(
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
-        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
+        MessageSender.send(updatedMessage, Destination.ClosedGroup(group.hexString), false).await()
+        storage.insertGroupInfoChange(updatedMessage, group)
     }
 
     override suspend fun removeMembers(
@@ -461,11 +461,13 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.send(message, Address.fromSerialized(group.hexString))
+        MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
+        storage.insertGroupInfoChange(message, group)
     }
 
     private suspend fun flagMembersForRemoval(
-        group: AccountId, members: List<AccountId>,
+        group: AccountId,
+        members: List<AccountId>,
         alsoRemoveMembersMessage: Boolean,
         sendMemberChangeMessage: Boolean
     ) {
@@ -505,6 +507,7 @@ class GroupManagerV2Impl @Inject constructor(
             ).apply { sentTimestamp = timestamp }
 
             MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
+            storage.insertGroupInfoChange(message, group)
         }
     }
 
@@ -576,28 +579,21 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         authData: ByteArray,
         inviter: AccountId,
-        inviteMessageHash: String?
-    ) = withContext(dispatcher) {
+        inviteMessageHash: String,
+        inviteMessageTimestamp: Long,
+    ): Unit = withContext(dispatcher) {
         handleInvitation(
             groupId = groupId,
             groupName = groupName,
             authDataOrAdminKey = authData,
             fromPromotion = false,
-            inviter = inviter
+            inviter = inviter,
+            inviteMessageTimestamp = inviteMessageTimestamp,
         )
 
-        // Delete the invite message remotely
-        if (inviteMessageHash != null) {
-            val auth = requireNotNull(storage.userAuth) { "No current user available" }
-            SnodeAPI.sendBatchRequest(
-                snode = SnodeAPI.getSingleTargetSnode(groupId.hexString).await(),
-                publicKey = auth.accountId.hexString,
-                request = SnodeAPI.buildAuthenticatedDeleteBatchInfo(
-                    auth,
-                    listOf(inviteMessageHash)
-                ),
-            )
-        }
+        // Once we are done, delete the invite message remotely
+        val auth = requireNotNull(storage.userAuth) { "No current user available" }
+        SnodeAPI.deleteMessage(groupId.hexString, auth, listOf(inviteMessageHash))
     }
 
     override suspend fun handlePromotion(
@@ -605,8 +601,9 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         adminKey: ByteArray,
         promoter: AccountId,
-        promoteMessageHash: String?
-    ) = withContext(dispatcher) {
+        promoteMessageHash: String,
+        promoteMessageTimestamp: Long,
+    ): Unit = withContext(dispatcher) {
         val userAuth = requireNotNull(storage.userAuth) { "No current user available" }
         val group = configFactory.getClosedGroup(groupId)
 
@@ -620,6 +617,7 @@ class GroupManagerV2Impl @Inject constructor(
                 authDataOrAdminKey = adminKey,
                 fromPromotion = true,
                 inviter = promoter,
+                inviteMessageTimestamp = promoteMessageTimestamp,
             )
         } else {
             // If we have the group in the config, we can just update the admin key
@@ -639,13 +637,11 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         // Delete the promotion message remotely
-        if (promoteMessageHash != null) {
-            SnodeAPI.deleteMessage(
-                userAuth.accountId.hexString,
-                userAuth,
-                listOf(promoteMessageHash)
-            ).await()
-        }
+        SnodeAPI.deleteMessage(
+            userAuth.accountId.hexString,
+            userAuth,
+            listOf(promoteMessageHash)
+        )
     }
 
     /**
@@ -664,6 +660,7 @@ class GroupManagerV2Impl @Inject constructor(
         authDataOrAdminKey: ByteArray,
         fromPromotion: Boolean,
         inviter: AccountId,
+        inviteMessageTimestamp: Long
     ) {
         // If we have already received an invitation in the past, we should not process this one
         if (configFactory.getClosedGroup(groupId)?.invited == true) {
@@ -697,7 +694,7 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
             storage.insertGroupInviteControlMessage(
-                clock.currentTimeMills(),
+                inviteMessageTimestamp,
                 inviter.hexString,
                 groupId,
                 groupName
@@ -868,8 +865,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        val groupAddress = Address.fromSerialized(groupId.hexString)
-        MessageSender.sendNonDurably(message, groupAddress, false).await()
+        MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false).await()
     }
 
     override suspend fun handleDeleteMemberContent(
