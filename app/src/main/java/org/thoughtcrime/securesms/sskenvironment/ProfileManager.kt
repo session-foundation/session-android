@@ -1,34 +1,39 @@
 package org.thoughtcrime.securesms.sskenvironment
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.SessionJobDatabase
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ProfileManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactoryProtocol,
+    private val storage: StorageProtocol,
+    private val contactDatabase: SessionContactDatabase,
+    private val recipientDatabase: RecipientDatabase,
+    private val jobDatabase: SessionJobDatabase,
+    private val preferences: TextSecurePreferences,
 ) : SSKEnvironment.ProfileManagerProtocol {
 
     override fun setNickname(context: Context, recipient: Recipient, nickname: String?) {
         if (recipient.isLocalNumber) return
         val accountID = recipient.address.serialize()
-        val contactDatabase = DatabaseComponent.get(context).sessionContactDatabase()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = DatabaseComponent.get(context).storage().getThreadId(recipient.address)
+        contact.threadID = storage.getThreadId(recipient.address)
         if (contact.nickname != nickname) {
             contact.nickname = nickname
             contactDatabase.setContact(contact)
@@ -40,17 +45,15 @@ class ProfileManager @Inject constructor(
         // New API
         if (recipient.isLocalNumber) return
         val accountID = recipient.address.serialize()
-        val contactDatabase = DatabaseComponent.get(context).sessionContactDatabase()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = DatabaseComponent.get(context).storage().getThreadId(recipient.address)
+        contact.threadID = storage.getThreadId(recipient.address)
         if (contact.name != name) {
             contact.name = name
             contactDatabase.setContact(contact)
         }
         // Old API
-        val database = DatabaseComponent.get(context).recipientDatabase()
-        database.setProfileName(recipient, name)
+        recipientDatabase.setProfileName(recipient, name)
         recipient.notifyListeners()
         contactUpdatedInternal(contact)
     }
@@ -61,23 +64,20 @@ class ProfileManager @Inject constructor(
         profilePictureURL: String?,
         profileKey: ByteArray?
     ) {
-        val hasPendingDownload = DatabaseComponent
-            .get(context)
-            .sessionJobDatabase()
+        val hasPendingDownload = jobDatabase
             .getAllJobs(RetrieveProfileAvatarJob.KEY).any {
                 (it.value as? RetrieveProfileAvatarJob)?.recipientAddress == recipient.address
             }
         val resolved = recipient.resolve()
-        DatabaseComponent.get(context).storage().setProfilePicture(
+        storage.setProfilePicture(
             recipient = resolved,
             newProfileKey = profileKey,
             newProfilePicture = profilePictureURL
         )
         val accountID = recipient.address.serialize()
-        val contactDatabase = DatabaseComponent.get(context).sessionContactDatabase()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = DatabaseComponent.get(context).storage().getThreadId(recipient.address)
+        contact.threadID = storage.getThreadId(recipient.address)
         if (!contact.profilePictureEncryptionKey.contentEquals(profileKey) || contact.profilePictureURL != profilePictureURL) {
             contact.profilePictureEncryptionKey = profileKey
             contact.profilePictureURL = profilePictureURL
@@ -91,12 +91,11 @@ class ProfileManager @Inject constructor(
     }
 
     override fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode) {
-        val database = DatabaseComponent.get(context).recipientDatabase()
-        database.setUnidentifiedAccessMode(recipient, unidentifiedAccessMode)
+        recipientDatabase.setUnidentifiedAccessMode(recipient, unidentifiedAccessMode)
     }
 
     override fun contactUpdatedInternal(contact: Contact): String? {
-        if (contact.accountID == TextSecurePreferences.getLocalNumber(context)) return null
+        if (contact.accountID == preferences.getLocalNumber()) return null
         val accountId = AccountId(contact.accountID)
         if (accountId.prefix != IdPrefix.STANDARD) return null // only internally store standard account IDs
         return configFactory.withMutableUserConfigs {

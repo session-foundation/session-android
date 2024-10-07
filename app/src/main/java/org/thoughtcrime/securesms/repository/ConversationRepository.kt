@@ -22,6 +22,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
@@ -43,7 +44,6 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import javax.inject.Inject
 
 interface ConversationRepository {
@@ -90,6 +90,7 @@ class DefaultConversationRepository @Inject constructor(
     private val configFactory: ConfigFactory,
     private val contentResolver: ContentResolver,
     private val groupManager: GroupManagerV2,
+    private val clock: SnodeClock,
 ) : ConversationRepository {
 
     override fun maybeGetRecipientForThreadId(threadId: Long): Recipient? {
@@ -134,13 +135,13 @@ class DefaultConversationRepository @Inject constructor(
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
-            message.sentTimestamp = SnodeAPI.nowWithOffset
+            message.sentTimestamp = clock.currentTimeMills()
             val openGroupInvitation = OpenGroupInvitation().apply {
                 name = openGroup.name
                 url = openGroup.joinURL
             }
             message.openGroupInvitation = openGroupInvitation
-            val expirationConfig = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(contact).let(storage::getExpirationConfiguration)
+            val expirationConfig = threadDb.getOrCreateThreadIdFor(contact).let(storage::getExpirationConfiguration)
             val expiresInMillis = expirationConfig?.expiryMode?.expiryMillis ?: 0
             val expireStartedAt = if (expirationConfig?.expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
             val outgoingTextMessage = OutgoingTextMessage.fromOpenGroupInvitation(

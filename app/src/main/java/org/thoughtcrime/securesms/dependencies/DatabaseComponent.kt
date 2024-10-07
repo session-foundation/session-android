@@ -17,7 +17,7 @@ interface DatabaseComponent {
 
     companion object {
         @JvmStatic
-        @Deprecated("Should use a properly DI instance of components")
+        @Deprecated("Use Hilt to inject your dependencies instead")
         fun get(context: Context) = ApplicationContext.getInstance(context).databaseComponent
     }
 

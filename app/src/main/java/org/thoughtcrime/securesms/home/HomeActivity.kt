@@ -8,11 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.annotation.PluralsRes
-import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
@@ -20,6 +17,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
@@ -34,69 +33,50 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.LibSessionGroupLeavingJob
-import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils
-import org.session.libsignal.utilities.toHexString
-import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
-import org.session.libsession.messaging.groups.GroupManagerV2
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.IP2Country
-import org.thoughtcrime.securesms.util.RelativeDay
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
-import java.io.IOException
-import java.util.Calendar
-import java.util.Locale
 import javax.inject.Inject
-import kotlin.math.abs
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 // Intent extra keys so we know where we came from
 private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
@@ -120,6 +100,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
+    @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
+    @Inject lateinit var sessionJobDatabase: SessionJobDatabase
+    @Inject lateinit var clock: SnodeClock
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -460,7 +443,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
             else if (thread.recipient.isCommunityRecipient) {
                 val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient)
-                val openGroup = DatabaseComponent.get(this@HomeActivity).lokiThreadDatabase().getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
+                val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
 
                 val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -586,7 +569,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
-            MessagingModuleConfiguration.shared.storage.markConversationAsRead(thread.threadId, SnodeAPI.nowWithOffset)
+            storage.markConversationAsRead(thread.threadId, clock.currentTimeMills())
         }
     }
 
@@ -643,11 +626,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Main) {
                     val context = this@HomeActivity
                     // Cancel any outstanding jobs
-                    DatabaseComponent.get(context).sessionJobDatabase()
+                    sessionJobDatabase
                         .cancelPendingMessageSendJobs(threadID)
 
                     // Delete the conversation
-                    val v2OpenGroup = DatabaseComponent.get(context).lokiThreadDatabase()
+                    val v2OpenGroup = lokiThreadDatabase
                         .getOpenGroupChat(threadID)
                     if (v2OpenGroup != null) {
                         OpenGroupManager.delete(

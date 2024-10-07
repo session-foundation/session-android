@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.database
 import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.MessageDigest
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
@@ -85,13 +86,15 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import javax.inject.Inject
+import javax.inject.Singleton
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
 
+@Singleton
 open class Storage @Inject constructor(
-    context: Context,
+    @ApplicationContext context: Context,
     helper: SQLCipherOpenHelper,
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
