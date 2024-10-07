@@ -768,7 +768,7 @@ public class ThreadDatabase extends Database {
     if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);
     MarkReadReceiver.process(context, messages);
-    ApplicationContext.getInstance(context).messageNotifier.updateNotification(context, threadId);
+    ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
   }
 

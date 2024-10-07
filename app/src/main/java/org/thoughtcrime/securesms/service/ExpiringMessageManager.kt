@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.service
 
 import android.content.Context
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
@@ -13,7 +14,7 @@ import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
@@ -41,7 +42,8 @@ class ExpiringMessageManager @Inject constructor(
     private val mmsDatabase: MmsDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val clock: SnodeClock,
-    private val storage: Storage,
+    private val storage: Lazy<Storage>,
+    private val preferences: TextSecurePreferences,
 ) : MessageExpirationManagerProtocol {
     private val expiringMessageReferences = TreeSet<ExpiringMessageReference>()
     private val executor: Executor = Executors.newSingleThreadExecutor()
@@ -97,7 +99,7 @@ class ExpiringMessageManager @Inject constructor(
                 }
                 recipient = Recipient.from(context, groupAddress, false)
             }
-            val threadId = storage.getThreadId(recipient) ?: return
+            val threadId = storage.get().getThreadId(recipient) ?: return
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
                 expiresInMillis, expireStartedAt, true,
@@ -137,7 +139,7 @@ class ExpiringMessageManager @Inject constructor(
             val address = fromSerialized(serializedAddress)
             val recipient = Recipient.from(context, address, false)
 
-            message.threadID = storage.getOrCreateThreadIdFor(address)
+            message.threadID = storage.get().getOrCreateThreadIdFor(address)
             val timerUpdateMessage = OutgoingExpirationUpdateMessage(
                 recipient,
                 sentTimestamp!!,
@@ -161,7 +163,7 @@ class ExpiringMessageManager @Inject constructor(
     override fun insertExpirationTimerMessage(message: ExpirationTimerUpdate) {
         val expiryMode: ExpiryMode = message.expiryMode
 
-        val userPublicKey = getLocalNumber(context)
+        val userPublicKey = preferences.getLocalNumber()
         val senderPublicKey = message.sender
         val sentTimestamp = message.sentTimestamp ?: 0
         val expireStartedAt = if ((expiryMode is AfterSend || message.isSenderSelf) && !message.isGroup) sentTimestamp else 0

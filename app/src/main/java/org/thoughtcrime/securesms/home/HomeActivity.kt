@@ -35,6 +35,7 @@ import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfilePictureModifiedEvent
@@ -103,6 +104,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var sessionJobDatabase: SessionJobDatabase
     @Inject lateinit var clock: SnodeClock
+    @Inject lateinit var messageNotifier: MessageNotifier
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -354,7 +356,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     override fun onResume() {
         super.onResume()
-        ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(true)
+        messageNotifier.setHomeScreenVisible(true)
         if (textSecurePreferences.getLocalNumber() == null) { return; } // This can be the case after a secondary device is auto-cleared
         IdentityKeyUtil.checkUpdate(this)
         binding.profileButton.recycle() // clear cached image before update tje profilePictureView

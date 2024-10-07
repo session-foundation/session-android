@@ -111,6 +111,7 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Deprecated;
@@ -133,7 +134,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private static final String TAG = ApplicationContext.class.getSimpleName();
 
-    public MessageNotifier messageNotifier = null;
     public Poller poller = null;
     public Broadcaster broadcaster = null;
     private WindowDebouncer conversationListDebouncer;
@@ -164,7 +164,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject TypingStatusRepository typingStatusRepository;
     @Inject TypingStatusSender typingStatusSender;
     @Inject ReadReceiptManager readReceiptManager;
-
+    @Inject Lazy<MessageNotifier> messageNotifierLazy;
+    @Inject LokiAPIDatabase apiDB;
+    @Inject EmojiSearchDatabase emojiSearchDb;
 
     private volatile boolean isAppVisible;
 
@@ -180,12 +182,19 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         return (ApplicationContext) context.getApplicationContext();
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public TextSecurePreferences getPrefs() {
         return EntryPoints.get(getApplicationContext(), AppComponent.class).getPrefs();
     }
 
+    @Deprecated(message = "Use proper DI to inject this component")
     public DatabaseComponent getDatabaseComponent() {
         return EntryPoints.get(getApplicationContext(), DatabaseComponent.class);
+    }
+
+    @Deprecated(message = "Use proper DI to inject this component")
+    public MessageNotifier getMessageNotifier() {
+        return messageNotifierLazy.get();
     }
 
     public Handler getConversationListNotificationHandler() {
@@ -248,13 +257,11 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         NotificationChannels.create(this);
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         AppContext.INSTANCE.configureKovenant();
-        messageNotifier = new OptimizedMessageNotifier(new DefaultMessageNotifier());
         broadcaster = new Broadcaster(this);
-        LokiAPIDatabase apiDB = getDatabaseComponent().lokiAPIDatabase();
         boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
         SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
         initializePeriodicTasks();
-        SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, messageNotifier, expiringMessageManager);
+        SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, getMessageNotifier(), expiringMessageManager);
         initializeWebRtc();
         initializeBlobProvider();
         resubmitProfilePictureIfNeeded();
@@ -319,7 +326,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         isAppVisible = false;
         Log.i(TAG, "App is no longer visible.");
         KeyCachingService.onAppBackgrounded(this);
-        messageNotifier.setVisibleThread(-1);
+        getMessageNotifier().setVisibleThread(-1);
         if (poller != null) {
             poller.stopIfNeeded();
         }
@@ -452,7 +459,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     private void loadEmojiSearchIndexIfNeeded() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            EmojiSearchDatabase emojiSearchDb = getDatabaseComponent().emojiSearchDatabase();
             if (emojiSearchDb.query("face", 1).isEmpty()) {
                 try (InputStream inputStream = getAssets().open("emoji/emoji_search_index.json")) {
                     List<EmojiSearchData> searchIndex = Arrays.asList(JsonUtil.fromJson(inputStream, EmojiSearchData[].class));

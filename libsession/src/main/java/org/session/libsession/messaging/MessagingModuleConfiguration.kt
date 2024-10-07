@@ -28,6 +28,7 @@ class MessagingModuleConfiguration(
 
     companion object {
         @JvmStatic
+        @Deprecated("Use properly DI components instead")
         val shared: MessagingModuleConfiguration
         get() = context.getSystemService(MESSAGING_MODULE_SERVICE) as MessagingModuleConfiguration
 

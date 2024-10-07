@@ -14,9 +14,9 @@ import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -49,11 +49,12 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
@@ -113,6 +114,12 @@ open class Storage @Inject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val sessionContactDatabase: SessionContactDatabase,
     private val expirationConfigurationDatabase: ExpirationConfigurationDatabase,
+    private val profileManager: SSKEnvironment.ProfileManagerProtocol,
+    private val notificationManager: MessageNotifier,
+    private val messageDataProvider: MessageDataProvider,
+    private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
+    private val clock: SnodeClock,
+    private val preferences: TextSecurePreferences,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
         
     init {
@@ -133,7 +140,7 @@ open class Storage @Inject constructor(
                             val legacyGroup = configs.userGroups.getOrConstructLegacyGroupInfo(accountId)
                             configs.userGroups.set(legacyGroup)
                             val newVolatileParams = configs.convoInfoVolatile.getOrConstructLegacyGroup(accountId).copy(
-                                lastRead = SnodeAPI.nowWithOffset,
+                                lastRead = clock.currentTimeMills(),
                             )
                             configs.convoInfoVolatile.set(newVolatileParams)
                         }
@@ -210,7 +217,7 @@ open class Storage @Inject constructor(
     }
 
     override fun getUserPublicKey(): String? {
-        return TextSecurePreferences.getLocalNumber(context)
+        return preferences.getLocalNumber()
     }
 
     override fun getUserX25519KeyPair(): ECKeyPair {
@@ -291,18 +298,16 @@ open class Storage @Inject constructor(
     }
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())
         // TODO: no idea if we need to server delete this
         for ((serverHash, sender, messageIdToDelete, isSms) in info) {
             messageDataProvider.updateMessageAsDeleted(messageIdToDelete, isSms)
             if (!messageDataProvider.isOutgoingMessage(messageIdToDelete)) {
-                SSKEnvironment.shared.notificationManager.updateNotification(context)
+                notificationManager.updateNotification(context)
             }
         }
     }
     override fun deleteMessagesByUser(threadId: Long, userSessionId: String) {
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val userMessages = mmsSmsDatabase.getUserMessages(threadId, userSessionId)
         val (mmsMessages, smsMessages) = userMessages.partition { it.isMms }
         if (mmsMessages.isNotEmpty()) {
@@ -684,7 +689,7 @@ open class Storage @Inject constructor(
     // message timestamp and as such we cannot use that to identify the local message.
     override fun markAsSentToCommunity(threadId: Long, messageID: Long) {
         val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, TextSecurePreferences.getLocalNumber(context))
+        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
 
         // Ensure we can find the local message..
         if (message == null) {
@@ -749,7 +754,7 @@ open class Storage @Inject constructor(
     // modifies the message timestamp and as such we cannot use that to identify the local message.
     override fun markUnidentifiedInCommunity(threadId: Long, messageId: Long) {
         val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, TextSecurePreferences.getLocalNumber(context))
+        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
 
         // Check to ensure the message exists
         if (message == null) {
@@ -1023,7 +1028,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long? {
-        val sentTimestamp = message.sentTimestamp ?: SnodeAPI.nowWithOffset
+        val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
 
@@ -1033,7 +1038,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInfoLeaving(closedGroup: AccountId): Long? {
-        val sentTimestamp = SnodeAPI.nowWithOffset
+        val sentTimestamp = clock.currentTimeMills()
         val senderPublicKey = getUserPublicKey() ?: return null
         val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupLeaving)
 
@@ -1211,7 +1216,7 @@ open class Storage @Inject constructor(
         sessionContactDatabase.setContact(contact)
         val address = fromSerialized(contact.accountID)
         if (!getRecipientApproved(address)) return
-        val recipientHash = SSKEnvironment.shared.profileManager.contactUpdatedInternal(contact)
+        val recipientHash = profileManager.contactUpdatedInternal(contact)
         val recipient = Recipient.from(context, address, false)
         setRecipientHash(recipient, recipientHash)
     }
@@ -1234,7 +1239,6 @@ open class Storage @Inject constructor(
             val id = AccountId(contact.id)
             id.prefix?.isBlinded() == false || mappingDb.getBlindedIdMapping(contact.id).none { it.accountId != null }
         }
-        val profileManager = SSKEnvironment.shared.profileManager
         moreContacts.forEach { contact ->
             val address = fromSerialized(contact.id)
             val recipient = Recipient.from(context, address, false)
@@ -1510,8 +1514,7 @@ open class Storage @Inject constructor(
         )
 
         database.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-
-        SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
     }
 
     /**
@@ -1543,7 +1546,6 @@ open class Storage @Inject constructor(
             val threadId = getOrCreateThreadIdFor(sender.address)
             val profile = response.profile
             if (profile != null) {
-                val profileManager = SSKEnvironment.shared.profileManager
                 val name = profile.displayName!!
                 if (name.isNotEmpty()) {
                     profileManager.setName(context, sender, name)
@@ -1629,7 +1631,7 @@ open class Storage @Inject constructor(
         val mmsDb = mmsDatabase
         val message = IncomingMediaMessage(
             fromSerialized(userPublicKey),
-            SnodeAPI.nowWithOffset,
+            clock.currentTimeMills(),
             -1,
             0,
             0,
@@ -1684,7 +1686,7 @@ open class Storage @Inject constructor(
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
         database.insertCallMessage(callMessage)
-        SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {

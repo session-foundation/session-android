@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.sskenvironment
 
 import android.content.Context
+import dagger.Lazy
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
@@ -21,7 +22,7 @@ import javax.inject.Singleton
 @Singleton
 class ProfileManager @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
-    private val storage: StorageProtocol,
+    private val storage: Lazy<StorageProtocol>,
     private val contactDatabase: SessionContactDatabase,
     private val recipientDatabase: RecipientDatabase,
     private val jobDatabase: SessionJobDatabase,
@@ -33,7 +34,7 @@ class ProfileManager @Inject constructor(
         val accountID = recipient.address.serialize()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = storage.getThreadId(recipient.address)
+        contact.threadID = storage.get().getThreadId(recipient.address)
         if (contact.nickname != nickname) {
             contact.nickname = nickname
             contactDatabase.setContact(contact)
@@ -47,7 +48,7 @@ class ProfileManager @Inject constructor(
         val accountID = recipient.address.serialize()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = storage.getThreadId(recipient.address)
+        contact.threadID = storage.get().getThreadId(recipient.address)
         if (contact.name != name) {
             contact.name = name
             contactDatabase.setContact(contact)
@@ -69,7 +70,7 @@ class ProfileManager @Inject constructor(
                 (it.value as? RetrieveProfileAvatarJob)?.recipientAddress == recipient.address
             }
         val resolved = recipient.resolve()
-        storage.setProfilePicture(
+        storage.get().setProfilePicture(
             recipient = resolved,
             newProfileKey = profileKey,
             newProfilePicture = profilePictureURL
@@ -77,7 +78,7 @@ class ProfileManager @Inject constructor(
         val accountID = recipient.address.serialize()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
-        contact.threadID = storage.getThreadId(recipient.address)
+        contact.threadID = storage.get().getThreadId(recipient.address)
         if (!contact.profilePictureEncryptionKey.contentEquals(profileKey) || contact.profilePictureURL != profilePictureURL) {
             contact.profilePictureEncryptionKey = profileKey
             contact.profilePictureURL = profilePictureURL
