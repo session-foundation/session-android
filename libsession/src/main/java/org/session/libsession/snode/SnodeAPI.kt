@@ -645,7 +645,7 @@ object SnodeAPI {
                         for ((req, resp) in batch.zip(responses.results)) {
                             val result = runCatching {
                                 check(resp.code == 200) {
-                                    "Error with code = ${resp.code}, msg = ${resp.body}"
+                                    "Error calling \"${req.request.method}\" with code = ${resp.code}, msg = ${resp.body}"
                                 }
 
                                 JsonUtil.fromJson(resp.body, req.responseType)

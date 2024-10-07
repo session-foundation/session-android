@@ -62,6 +62,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getClosedGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -1004,13 +1005,8 @@ open class Storage @Inject constructor(
             it.groupMembers.all()
         }
 
-
-    override fun getLibSessionClosedGroup(groupAccountId: String): GroupInfo.ClosedGroupInfo? {
-        return configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupAccountId) }
-    }
-
     override fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo? {
-        val groupIsAdmin = getLibSessionClosedGroup(groupAccountId)?.hasAdminKey() ?: return null
+        val groupIsAdmin = configFactory.getClosedGroup(AccountId(groupAccountId))?.hasAdminKey() ?: return null
 
         return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             val info = configs.groupInfo
@@ -1031,8 +1027,9 @@ open class Storage @Inject constructor(
         val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
+            ?: configFactory.getClosedGroup(closedGroup)?.name
 
-        val updateData = UpdateMessageData.buildGroupUpdate(message, groupName) ?: return null
+        val updateData = UpdateMessageData.buildGroupUpdate(message, groupName.orEmpty()) ?: return null
 
         return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }

@@ -44,6 +44,7 @@ import kotlinx.serialization.Serializable
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
@@ -60,12 +61,12 @@ import org.thoughtcrime.securesms.ui.theme.bold
 
 @Composable
 fun EditGroupScreen(
-    groupSessionId: String,
+    groupId: AccountId,
     onFinish: () -> Unit,
 ) {
     val navController = rememberNavController()
     val viewModel = hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
-        factory.create(groupSessionId)
+        factory.create(groupId)
     }
 
     NavHost(navController = navController, startDestination = RouteEditGroup) {

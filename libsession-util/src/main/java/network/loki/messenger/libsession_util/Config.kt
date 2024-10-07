@@ -328,7 +328,7 @@ interface ReadableGroupInfoConfig: ReadableConfig {
     fun getDeleteAttachmentsBefore(): Long?
     fun getDeleteBefore(): Long?
     fun getExpiryTimer(): Long
-    fun getName(): String
+    fun getName(): String?
     fun getCreated(): Long?
     fun getProfilePic(): UserPic
     fun isDestroyed(): Boolean
@@ -367,7 +367,7 @@ class GroupInfoConfig private constructor(pointer: Long): ConfigBase(pointer), M
     external override fun getDeleteAttachmentsBefore(): Long?
     external override fun getDeleteBefore(): Long?
     external override fun getExpiryTimer(): Long
-    external override fun getName(): String
+    external override fun getName(): String?
     external override fun getProfilePic(): UserPic
     external override fun isDestroyed(): Boolean
     external override fun setCreated(createdAt: Long)

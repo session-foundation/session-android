@@ -1,30 +1,36 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.jobs.InviteContactsJob
-import org.session.libsession.messaging.jobs.JobQueue
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
@@ -32,7 +38,8 @@ const val MAX_GROUP_NAME_LENGTH = 100
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
-    @Assisted private val groupSessionId: String,
+    @Assisted private val groupId: AccountId,
+    @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     configFactory: ConfigFactory,
     private val groupManager: GroupManagerV2,
@@ -40,39 +47,52 @@ class EditGroupViewModel @AssistedInject constructor(
     // Input/Output state
     private val mutableEditingName = MutableStateFlow<String?>(null)
 
+    // Input: invite/promote member's intermediate states. This is needed because we don't have
+    // a state that we can map into in the config system. The config system only provides "sent", "failed", etc.
+    // The intermediate states are needed to show the user that the operation is in progress, and the
+    // states are limited to the view model (i.e. lost if the user navigates away). This is a trade-off
+    // between the complexity of the config system and the user experience.
+    private val memberPendingState = MutableStateFlow<Map<AccountId, MemberPendingState>>(emptyMap())
+
     // Output: The name of the group being edited. Null if it's not in edit mode, not to be confused
     // with empty string, where it's a valid editing state.
     val editingName: StateFlow<String?> get() = mutableEditingName
 
     // Output: the source-of-truth group information. Other states are derived from this.
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
-        (configFactory.configUpdateNotifications as Flow<Any>)
-            .onStart { emit(Unit) }
-            .map {
-                withContext(Dispatchers.Default) {
-                    val currentUserId = checkNotNull(storage.getUserPublicKey()) {
-                        "User public key is null"
+        combine(
+            configFactory.configUpdateNotifications
+                .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                .filter { it.groupId == groupId }
+                .onStart { emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId)) },
+            memberPendingState
+        ) { _, pending ->
+            withContext(Dispatchers.Default) {
+                val currentUserId = checkNotNull(storage.getUserPublicKey()) {
+                    "User public key is null"
+                }
+
+                val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
+                    ?: return@withContext null
+
+                val members = storage.getMembers(groupId.hexString)
+                    .asSequence()
+                    .filter { !it.removed }
+                    .mapTo(arrayListOf()) { member ->
+                        createGroupMember(
+                            member = member,
+                            myAccountId = currentUserId,
+                            amIAdmin = displayInfo.isUserAdmin,
+                            pendingState = pending[AccountId(member.sessionId)]
+                        )
                     }
 
-                    val displayInfo = storage.getClosedGroupDisplayInfo(groupSessionId)
-                        ?: return@withContext null
+                sortMembers(members, currentUserId)
 
-                    val members = storage.getMembers(groupSessionId)
-                        .asSequence()
-                        .filter { !it.removed }
-                        .mapTo(mutableListOf()) { member ->
-                            createGroupMember(
-                                member = member,
-                                myAccountId = currentUserId,
-                                amIAdmin = displayInfo.isUserAdmin,
-                            )
-                        }
-
-                    sortMembers(members, currentUserId)
-
-                    displayInfo to members
-                }
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+                displayInfo to members
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // Output: whether the group name can be edited. This is true if the group is loaded successfully.
     val canEditGroupName: StateFlow<Boolean> = groupInfo
@@ -110,6 +130,7 @@ class EditGroupViewModel @AssistedInject constructor(
         member: GroupMember,
         myAccountId: String,
         amIAdmin: Boolean,
+        pendingState: MemberPendingState?
     ): GroupMemberState {
         var status = ""
         var highlightStatus = false
@@ -117,24 +138,32 @@ class EditGroupViewModel @AssistedInject constructor(
 
         when {
             member.sessionId == myAccountId -> {
-                name = "You"
+                name = context.getString(R.string.you)
+            }
+
+            pendingState == MemberPendingState.Inviting -> {
+                status = context.getString(R.string.groupInviteSending)
+            }
+
+            pendingState == MemberPendingState.Promoting -> {
+                status = context.getString(R.string.groupInviteSending)
             }
 
             member.promotionPending -> {
-                status = "Promotion sent"
+                status = context.getString(R.string.adminPromotionSent)
             }
 
             member.invitePending -> {
-                status = "Invite Sent"
+                status = context.getString(R.string.groupInviteSent)
             }
 
             member.inviteFailed -> {
-                status = "Invite Failed"
+                status = context.getString(R.string.groupInviteFailed)
                 highlightStatus = true
             }
 
             member.promotionFailed -> {
-                status = "Promotion Failed"
+                status = context.getString(R.string.adminPromotionFailed)
                 highlightStatus = true
             }
         }
@@ -145,7 +174,8 @@ class EditGroupViewModel @AssistedInject constructor(
             canRemove = amIAdmin && member.sessionId != myAccountId && !member.isAdminOrBeingPromoted,
             canPromote = amIAdmin && member.sessionId != myAccountId && !member.isAdminOrBeingPromoted,
             canResendPromotion = amIAdmin && member.sessionId != myAccountId && member.promotionFailed,
-            canResendInvite = amIAdmin && member.sessionId != myAccountId && member.inviteFailed,
+            canResendInvite = amIAdmin && member.sessionId != myAccountId &&
+                    (member.inviteFailed || member.invitePending),
             status = status,
             highlightStatus = highlightStatus
         )
@@ -167,30 +197,46 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onContactSelected(contacts: Set<Contact>) {
         performGroupOperation {
-            groupManager.inviteMembers(
-                AccountId(hexString = groupSessionId),
-                contacts.map { AccountId(it.accountID) },
-                shareHistory = true
-            )
+            try {
+                // Mark the contacts as pending
+                memberPendingState.update { states ->
+                    states + contacts.associate { AccountId(it.accountID) to MemberPendingState.Inviting }
+                }
+
+                groupManager.inviteMembers(
+                    groupId,
+                    contacts.map { AccountId(it.accountID) },
+                    shareHistory = false
+                )
+            } finally {
+                // Remove pending state (so the real state will be revealed)
+                memberPendingState.update { states -> states - contacts.mapTo(hashSetOf()) { AccountId(it.accountID) } }
+            }
         }
     }
 
     fun onResendInviteClicked(contactSessionId: String) {
-        viewModelScope.launch(Dispatchers.Default) {
-            JobQueue.shared.add(InviteContactsJob(groupSessionId, arrayOf(contactSessionId)))
-        }
+        onContactSelected(setOf(Contact(contactSessionId)))
     }
 
     fun onPromoteContact(memberSessionId: String) {
         performGroupOperation {
-            groupManager.promoteMember(AccountId(groupSessionId), listOf(AccountId(memberSessionId)))
+            try {
+                memberPendingState.update { states ->
+                    states + (AccountId(memberSessionId) to MemberPendingState.Promoting)
+                }
+
+                groupManager.promoteMember(groupId, listOf(AccountId(memberSessionId)))
+            } finally {
+                memberPendingState.update { states -> states - AccountId(memberSessionId) }
+            }
         }
     }
 
     fun onRemoveContact(contactSessionId: String, removeMessages: Boolean) {
         performGroupOperation {
             groupManager.removeMembers(
-                groupAccountId = AccountId(groupSessionId),
+                groupAccountId = groupId,
                 removedMembers = listOf(AccountId(contactSessionId)),
                 removeMessages = removeMessages
             )
@@ -223,7 +269,7 @@ class EditGroupViewModel @AssistedInject constructor(
 
         performGroupOperation {
             if (!newName.isNullOrBlank()) {
-                groupManager.setName(AccountId(groupSessionId), newName)
+                groupManager.setName(groupId, newName)
                 mutableEditingName.value = null
             }
         }
@@ -238,12 +284,15 @@ class EditGroupViewModel @AssistedInject constructor(
      *
      * This is a helper function that encapsulates the common error handling and progress tracking.
      */
-    private fun performGroupOperation(operation: suspend () -> Unit) {
+    private fun performGroupOperation(
+        genericErrorMessage: (() -> String?)? = null,
+        operation: suspend () -> Unit) {
         viewModelScope.launch {
             mutableInProgress.value = true
 
             // We need to use GlobalScope here because we don't want
             // any group operation to be cancelled when the view model is cleared.
+            @Suppress("OPT_IN_USAGE")
             val task = GlobalScope.async {
                 operation()
             }
@@ -251,7 +300,8 @@ class EditGroupViewModel @AssistedInject constructor(
             try {
                 task.await()
             } catch (e: Exception) {
-                mutableError.value = e.localizedMessage.orEmpty()
+                mutableError.value = genericErrorMessage?.invoke()
+                    ?: context.getString(R.string.errorUnknown)
             } finally {
                 mutableInProgress.value = false
             }
@@ -260,8 +310,13 @@ class EditGroupViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(groupSessionId: String): EditGroupViewModel
+        fun create(groupId: AccountId): EditGroupViewModel
     }
+}
+
+private enum class MemberPendingState {
+    Inviting,
+    Promoting,
 }
 
 data class GroupMemberState(

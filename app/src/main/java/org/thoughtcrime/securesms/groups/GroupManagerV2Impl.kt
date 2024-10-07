@@ -741,7 +741,7 @@ class GroupManagerV2Impl @Inject constructor(
         // read the group name anymore.
         val groupName = configFactory.withGroupConfigs(groupId) { configs ->
             configs.groupInfo.getName()
-        }
+        } ?: group.name
 
         configFactory.withMutableUserConfigs {
             it.userGroups.set(

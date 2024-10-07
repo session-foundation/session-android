@@ -170,7 +170,6 @@ interface StorageProtocol {
 
     // Closed Groups
     fun getMembers(groupPublicKey: String): List<LibSessionGroupMember>
-    fun getLibSessionClosedGroup(groupAccountId: String): GroupInfo.ClosedGroupInfo?
     fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo?
     fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long?
     fun insertGroupInfoLeaving(closedGroup: AccountId): Long?

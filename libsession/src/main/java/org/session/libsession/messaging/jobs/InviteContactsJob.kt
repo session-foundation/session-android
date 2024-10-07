@@ -20,6 +20,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
+import org.session.libsession.utilities.getClosedGroup
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
@@ -100,6 +101,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             }
 
             val groupName = configs.withGroupConfigs(sessionId) { it.groupInfo.getName() }
+                ?: configs.getClosedGroup(sessionId)?.name
 
             val failures = results.filter { it.second.isFailure }
             // if there are failed invites, display a message
@@ -117,7 +119,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             toaster.toast(R.string.groupInviteFailedUser, Toast.LENGTH_LONG,
                                 mapOf(
                                     NAME_KEY to firstString,
-                                    GROUP_NAME_KEY to groupName
+                                    GROUP_NAME_KEY to groupName.orEmpty()
                                 )
                             )
                         }
@@ -134,7 +136,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                                 mapOf(
                                     NAME_KEY to firstString,
                                     OTHER_NAME_KEY to secondString,
-                                    GROUP_NAME_KEY to groupName
+                                    GROUP_NAME_KEY to groupName.orEmpty()
                                 )
                             )
                         }
@@ -149,7 +151,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                                 mapOf(
                                     NAME_KEY to firstString,
                                     OTHER_NAME_KEY to remaining.toString(),
-                                    GROUP_NAME_KEY to groupName
+                                    GROUP_NAME_KEY to groupName.orEmpty()
                                 )
                             )
                         }

@@ -360,7 +360,7 @@ object ConversationMenuHelper {
                 val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                 val name = configFactory.withGroupConfigs(accountId) {
                     it.groupInfo.getName()
-                }
+                } ?: group.name
 
                 confirmAndLeaveClosedGroup(
                     context = context,
@@ -412,6 +412,7 @@ object ConversationMenuHelper {
 
                         doLeave()
                     } catch (e: Exception) {
+                        Log.e("Conversation", "Error leaving group", e)
                         withContext(Dispatchers.Main) {
                             onLeaveFailed()
                         }
