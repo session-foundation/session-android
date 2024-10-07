@@ -1,4 +1,4 @@
-package org.session.libsession.messaging.configs
+package org.thoughtcrime.securesms.configs
 
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -35,6 +35,12 @@ private const val TAG = "ConfigUploader"
 
 /**
  * This class is responsible for sending the local config changes to the swarm.
+ *
+ * Note: This class is listening ONLY to the config system changes. If you change any local database
+ * data, this class will not be aware of it. You'll need to update the config system
+ * for this class to pick up these changes.
+ *
+ * @see ConfigToDatabaseSync For syncing the config changes to the local database.
  *
  * It does so by listening for changes in the config factory.
  */
