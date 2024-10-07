@@ -41,7 +41,7 @@ import com.squareup.phrase.Phrase;
 import org.conscrypt.Conscrypt;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.session.libsession.messaging.configs.ConfigSyncHandler;
+import org.session.libsession.messaging.configs.ConfigUploader;
 import org.session.libsession.messaging.groups.GroupManagerV2;
 import org.session.libsession.messaging.groups.RemoveGroupMemberHandler;
 import org.session.libsession.messaging.notifications.TokenFetcher;
@@ -50,7 +50,6 @@ import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGr
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
 import org.session.libsession.snode.SnodeClock;
 import org.session.libsession.snode.SnodeModule;
-import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Device;
 import org.session.libsession.utilities.Environment;
 import org.session.libsession.utilities.ProfilePictureUtilities;
@@ -161,7 +160,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
-    @Inject ConfigSyncHandler configSyncHandler;
+    @Inject
+    ConfigUploader configUploader;
     @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
     @Inject SnodeClock snodeClock;
 
@@ -268,7 +268,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
 
         pushRegistrationHandler.run();
-        configSyncHandler.start();
+        configUploader.start();
         removeGroupMemberHandler.start();
         snodeClock.start();
 

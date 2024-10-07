@@ -1,16 +1,11 @@
 package org.session.libsession.messaging.configs
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -34,17 +29,16 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
-import java.util.concurrent.Executors
 import javax.inject.Inject
 
-private const val TAG = "ConfigSyncHandler"
+private const val TAG = "ConfigUploader"
 
 /**
  * This class is responsible for sending the local config changes to the swarm.
  *
  * It does so by listening for changes in the config factory.
  */
-class ConfigSyncHandler @Inject constructor(
+class ConfigUploader @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storageProtocol: StorageProtocol,
 ) {
