@@ -66,6 +66,10 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.truncateIdForDisplay
+import org.thoughtcrime.securesms.notifications.PushRegistry
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
@@ -498,7 +502,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.name)
+                .put(NAME_KEY, thread.recipient.toShortString())
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
@@ -509,7 +513,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
                 }
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.name).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.toShortString()).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
             cancelButton()
@@ -519,7 +523,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     private fun unblockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.blockUnblock)
-            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
+            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.toShortString()).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
@@ -597,28 +601,40 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         var positiveButtonId: Int = R.string.yes
         var negativeButtonId: Int = R.string.no
 
-        if (recipient.isCommunityRecipient) {
-            title =
-                if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(
-                    R.string.groupLeave
-                )
-            message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
-                .put(GROUP_NAME_KEY, recipient.name.orEmpty())
-                .format()
-        }
-        // If this is a 1-on-1 conversation
-       else if (recipient.name != null) {
-            title = getString(R.string.conversationsDelete)
-            message = Phrase.from(this.applicationContext, R.string.conversationsDeleteDescription)
-                .put(NAME_KEY, recipient.name)
-                .format()
-        }
-        else {
-            // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
-            title = getString(R.string.clearMessages)
-            message = getString(R.string.clearMessagesNoteToSelfDescription)
-            positiveButtonId = R.string.clear
+        if (recipient.isGroupRecipient) {
+            val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
+
+            // If you are an admin of this group you can delete it
+            if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
+                title = getString(R.string.groupLeave)
+                message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
+                    .put(GROUP_NAME_KEY, group.title)
+                    .format()
+            } else {
+                // Otherwise this is either a community, or it's a group you're not an admin of
+                title = if (recipient.isCommunityRecipient) getString(R.string.communityLeave) else getString(R.string.groupLeave)
+                message = Phrase.from(this.applicationContext, R.string.groupLeaveDescription)
+                    .put(GROUP_NAME_KEY, group.title)
+                    .format()
+            }
+
+            positiveButtonId = R.string.leave
             negativeButtonId = R.string.cancel
+        } else {
+            // If this is a 1-on-1 conversation
+            if (recipient.name != null) {
+                title = getString(R.string.conversationsDelete)
+                message = Phrase.from(this.applicationContext, R.string.conversationsDeleteDescription)
+                    .put(NAME_KEY, recipient.toShortString())
+                    .format()
+            }
+            else {
+                // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
+                title = getString(R.string.clearMessages)
+                message = getString(R.string.clearMessagesNoteToSelfDescription)
+                positiveButtonId = R.string.clear
+                negativeButtonId = R.string.cancel
+            }
         }
 
         showSessionDialog {
