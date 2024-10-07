@@ -17,6 +17,7 @@ interface DatabaseComponent {
 
     companion object {
         @JvmStatic
+        @Deprecated("Should use a properly DI instance of components")
         fun get(context: Context) = ApplicationContext.getInstance(context).databaseComponent
     }
 
