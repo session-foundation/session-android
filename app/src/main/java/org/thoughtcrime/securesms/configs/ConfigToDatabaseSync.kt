@@ -203,7 +203,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
         val existingLegacyClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isLegacyClosedGroup }
         val lgcIds = lgc.map { it.accountId }
-        val toDeleteClosedGroups = existingLegacyClosedGroups.filter { group ->
+        val toDeleteLegacyClosedGroups = existingLegacyClosedGroups.filter { group ->
             GroupUtil.doubleDecodeGroupId(group.encodedId) !in lgcIds
         }
 
@@ -212,7 +212,7 @@ class ConfigToDatabaseSync @Inject constructor(
             OpenGroupManager.delete(openGroup.server, openGroup.room, context)
         }
 
-        toDeleteClosedGroups.forEach { deleteGroup ->
+        toDeleteLegacyClosedGroups.forEach { deleteGroup ->
             val threadId = storage.getThreadId(deleteGroup.encodedId)
             if (threadId != null) {
                 ClosedGroupManager.silentlyRemoveGroup(context,threadId,
@@ -237,6 +237,7 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         val newClosedGroups = userGroups.allClosedGroupInfo()
+        val existingClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isClosedGroupV2 }
         for (closedGroup in newClosedGroups) {
             val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId.hexString), false)
             storage.setRecipientApprovedMe(recipient, true)
@@ -246,6 +247,17 @@ class ConfigToDatabaseSync @Inject constructor(
             if (!closedGroup.invited) {
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
             }
+        }
+
+        val toRemove = existingClosedGroups.mapTo(hashSetOf()) { it.encodedId } - newClosedGroups.mapTo(hashSetOf()) { it.groupAccountId.hexString }
+        Log.d(TAG, "Removing ${toRemove.size} closed groups")
+        toRemove.forEach { encodedId ->
+            val threadId = storage.getThreadId(encodedId)
+            if (threadId != null) {
+                storage.removeClosedGroupThread(threadId)
+            }
+
+            pollerFactory.pollerFor(AccountId(encodedId))?.stop()
         }
 
         for (group in lgc) {
