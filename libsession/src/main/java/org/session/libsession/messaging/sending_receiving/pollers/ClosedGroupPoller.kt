@@ -59,12 +59,12 @@ class ClosedGroupPoller(
         job = scope.launch(executor) {
             while (isActive) {
                 try {
-                    val swarmNodes = SnodeAPI.getSwarm(closedGroupSessionId.hexString).await().toMutableSet()
+                    val swarmNodes = SnodeAPI.fetchSwarmNodes(closedGroupSessionId.hexString).toMutableSet()
                     var currentSnode: Snode? = null
 
                     while (isActive) {
                         if (currentSnode == null) {
-                            check(swarmNodes.isNotEmpty()) { "No swarm nodes found" }
+                            check(swarmNodes.isNotEmpty()) { "No more swarm nodes found" }
                             Log.d(TAG, "No current snode, getting a new one. Remaining in pool = ${swarmNodes.size - 1}")
                             currentSnode = swarmNodes.random()
                             swarmNodes.remove(currentSnode)

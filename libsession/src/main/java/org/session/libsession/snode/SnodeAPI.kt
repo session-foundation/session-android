@@ -312,6 +312,23 @@ object SnodeAPI {
                 database.setSwarm(publicKey, it)
             }
 
+    /**
+     * Fetch swarm nodes for the specific public key.
+     *
+     * Note: this differs from [getSwarm] in that it doesn't store the swarm nodes in the database.
+     * This always fetches from network.
+     */
+    suspend fun fetchSwarmNodes(publicKey: String): List<Snode> {
+        val randomNode = getRandomSnode().await()
+        val response = invoke(
+            method = Snode.Method.GetSwarm,
+            snode = randomNode, parameters = buildMap { this["pubKey"] = publicKey },
+            publicKey = publicKey
+        ).await()
+
+        return parseSnodes(response)
+    }
+
 
     /**
      * Build parameters required to call authenticated storage API.
@@ -706,7 +723,23 @@ object SnodeAPI {
             parameters = mapOf("requests" to requests),
             responseClass = BatchResponse::class.java,
             publicKey = publicKey
-        )
+        ).also { resp ->
+            // If there's a unsuccessful response, go through specific logic to handle
+            // potential snode errors.
+            val firstError = resp.results.firstOrNull { !it.isSuccessful }
+            if (firstError != null) {
+                handleSnodeError(
+                    statusCode = firstError.code,
+                    json = if (firstError.body.isObject) {
+                        JsonUtil.fromJson(firstError.body, Map::class.java)
+                    } else {
+                        null
+                    },
+                    snode = snode,
+                    publicKey = publicKey
+                )
+            }
+        }
     }
 
     fun getExpiries(
