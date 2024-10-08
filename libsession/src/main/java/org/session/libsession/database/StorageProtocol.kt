@@ -55,7 +55,7 @@ interface StorageProtocol {
     fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
     fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
     fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
-    fun clearUserPic()
+    fun clearUserPic(clearConfig: Boolean = true)
     // Signal
     fun getOrGenerateRegistrationID(): Int
 

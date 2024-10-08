@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -73,8 +74,8 @@ internal class LoadingViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 configFactory.configUpdateNotifications
-                    .filter { it == ConfigUpdateNotification.UserConfigs }
-                    .onStart { emit(ConfigUpdateNotification.UserConfigs) }
+                    .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                    .onStart { emit(ConfigUpdateNotification.UserConfigsModified) }
                     .filter {
                         configFactory.withUserConfigs { configs ->
                             !configs.userProfile.getName().isNullOrEmpty()

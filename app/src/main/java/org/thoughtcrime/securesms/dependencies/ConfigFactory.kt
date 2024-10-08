@@ -142,14 +142,14 @@ class ConfigFactory @Inject constructor(
      *
      * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
      */
-    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, Boolean>): T {
+    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, ConfigUpdateNotification?>): T {
         val (lock, configs) = ensureUserConfigsInitialized()
         val (result, changed) = lock.write {
             cb(configs)
         }
 
-        if (changed) {
-            _configUpdateNotifications.tryEmit(ConfigUpdateNotification.UserConfigs)
+        if (changed != null) {
+            _configUpdateNotifications.tryEmit(changed)
         }
 
         return result
@@ -171,13 +171,25 @@ class ConfigFactory @Inject constructor(
                 UserConfigType.USER_GROUPS -> configs.userGroups
             }
 
-            Unit to config.merge(messages.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+            val maxTimestamp = config.merge(messages.map { it.hash to it.data }.toTypedArray())
+                .asSequence()
+                .mapNotNull { hash -> messages.firstOrNull { it.hash == hash } }
+                .maxOfOrNull { it.timestamp }
+
+            Unit to maxTimestamp?.let(ConfigUpdateNotification::UserConfigsMerged)
         }
     }
 
     override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
         return doWithMutableUserConfigs {
-            cb(it) to it.persistIfDirty(clock)
+            val result = cb(it)
+            val changed = if (it.persistIfDirty(clock)) {
+                ConfigUpdateNotification.UserConfigsModified
+            } else {
+                null
+            }
+
+            result to changed
         }
     }
 
@@ -227,10 +239,6 @@ class ConfigFactory @Inject constructor(
         withMutableUserConfigs {
             it.userGroups.eraseClosedGroup(groupId.hexString)
             it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
-        }
-
-        if (groupConfigs.remove(groupId) != null) {
-            _configUpdateNotifications.tryEmit(ConfigUpdateNotification.GroupConfigsDeleted(groupId))
         }
 
         configDatabase.deleteGroupConfigs(groupId)
@@ -291,7 +299,9 @@ class ConfigFactory @Inject constructor(
             convoInfoVolatile?.let { (push, result) ->  configs.convoInfoVolatile.confirmPushed(push.seqNo, result.hash) }
             userGroups?.let { (push, result) ->  configs.userGroups.confirmPushed(push.seqNo, result.hash) }
 
-            Unit to configs.persistIfDirty(clock)
+            configs.persistIfDirty(clock)
+
+            Unit to null
         }
     }
 
@@ -385,7 +395,7 @@ class ConfigFactory @Inject constructor(
     }
 
     fun clearAll() {
-        //TODO: clear all configsr
+        //TODO: clear all configs
     }
 
     private class GroupSubAccountSwarmAuth(

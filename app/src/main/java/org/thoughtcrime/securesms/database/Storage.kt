@@ -257,8 +257,8 @@ open class Storage @Inject constructor(
             Recipient.from(context, it, false)
         }
         ourRecipient.resolve().profileKey = newProfileKey
-        TextSecurePreferences.setProfileKey(context, newProfileKey?.let { Base64.encodeBytes(it) })
-        TextSecurePreferences.setProfilePictureURL(context, newProfilePicture)
+        preferences.setProfileKey(newProfileKey?.let { Base64.encodeBytes(it) })
+        preferences.setProfilePictureURL(newProfilePicture)
 
         if (newProfileKey != null) {
             JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address))
@@ -533,20 +533,22 @@ open class Storage @Inject constructor(
         return configFactory.withUserConfigs { it.userProfile.getCommunityMessageRequests() }
     }
 
-    override  fun clearUserPic() {
+    override fun clearUserPic(clearConfig: Boolean) {
         val userPublicKey = getUserPublicKey() ?: return Log.w(TAG, "No user public key when trying to clear user pic")
         val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
 
         // Clear details related to the user's profile picture
-        TextSecurePreferences.setProfileKey(context, null)
+        preferences.setProfileKey(null)
         ProfileKeyUtil.setEncodedProfileKey(context, null)
         recipientDatabase.setProfileAvatar(recipient, null)
-        TextSecurePreferences.setProfileAvatarId(context, 0)
-        TextSecurePreferences.setProfilePictureURL(context, null)
+        preferences.setProfileAvatarId(0)
+        preferences.setProfilePictureURL(null)
 
         Recipient.removeCached(fromSerialized(userPublicKey))
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setPic(UserPic.DEFAULT)
+        if (clearConfig) {
+            configFactory.withMutableUserConfigs {
+                it.userProfile.setPic(UserPic.DEFAULT)
+            }
         }
     }
 

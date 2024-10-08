@@ -1,19 +1,22 @@
 package org.thoughtcrime.securesms.configs
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.model.StoreMessageResponse
@@ -47,52 +50,49 @@ private const val TAG = "ConfigUploader"
 class ConfigUploader @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storageProtocol: StorageProtocol,
+    private val clock: SnodeClock,
 ) {
     private var job: Job? = null
 
-    @OptIn(DelicateCoroutinesApi::class)
+    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class)
     fun start() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
-            val groupMutex = hashMapOf<AccountId, Mutex>()
-            val userMutex = Mutex()
-
-            configFactory.configUpdateNotifications
-                .collect { changes ->
-                    when (changes) {
-                        is ConfigUpdateNotification.GroupConfigsDeleted -> {
-                            groupMutex.remove(changes.groupId)
-                        }
-
-                        is ConfigUpdateNotification.GroupConfigsUpdated -> {
-                            // Group config pushing is limited to its own dispatcher
-                            launch {
-                                try {
-                                    retryWithUniformInterval {
-                                        groupMutex.getOrPut(changes.groupId) { Mutex() }.withLock {
-                                            pushGroupConfigsChangesIfNeeded(changes.groupId)
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Failed to push group configs", e)
-                                }
-                            }
-                        }
-
-                        ConfigUpdateNotification.UserConfigs -> launch {
+            supervisorScope {
+                val job1 = launch {
+                    configFactory.configUpdateNotifications
+                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                        .debounce(1000L)
+                        .collect {
                             try {
                                 retryWithUniformInterval {
-                                    userMutex.withLock {
-                                        pushUserConfigChangesIfNeeded()
-                                    }
+                                    pushUserConfigChangesIfNeeded()
                                 }
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to push user configs", e)
                             }
                         }
-                    }
                 }
+
+                val job2 = launch {
+                    configFactory.configUpdateNotifications
+                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                        .debounce(1000L)
+                        .collect { changes ->
+                            try {
+                                retryWithUniformInterval {
+                                    pushGroupConfigsChangesIfNeeded(changes.groupId)
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Failed to push group configs", e)
+                            }
+                        }
+                }
+
+                job1.join()
+                job2.join()
+            }
         }
     }
 
@@ -160,7 +160,7 @@ class ConfigUploader @Inject constructor(
                         auth.accountId.hexString,
                         Base64.encodeBytes(keysPush),
                         SnodeMessage.CONFIG_TTL,
-                        SnodeAPI.nowWithOffset,
+                        clock.currentTimeMills(),
                     ),
                     auth
                 ),
@@ -203,7 +203,7 @@ class ConfigUploader @Inject constructor(
                     auth.accountId.hexString,
                     Base64.encodeBytes(push.config),
                     SnodeMessage.CONFIG_TTL,
-                    SnodeAPI.nowWithOffset,
+                    clock.currentTimeMills(),
                 ),
                 auth,
             ),

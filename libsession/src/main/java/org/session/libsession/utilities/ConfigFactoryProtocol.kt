@@ -115,8 +115,8 @@ suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long 
 
     return withTimeoutOrNull(timeoutMills){
         configUpdateNotifications
-            .onStart { emit(ConfigUpdateNotification.UserConfigs) } // Trigger the filtering immediately
-            .filter { it == ConfigUpdateNotification.UserConfigs && !needsPush() }
+            .onStart { emit(ConfigUpdateNotification.UserConfigsModified) } // Trigger the filtering immediately
+            .filter { it == ConfigUpdateNotification.UserConfigsModified && !needsPush() }
             .first()
     } != null
 }
@@ -190,8 +190,10 @@ interface MutableGroupConfigs : GroupConfigs {
     fun rekey()
 }
 
+
 sealed interface ConfigUpdateNotification {
-    data object UserConfigs : ConfigUpdateNotification
+    data object UserConfigsModified : ConfigUpdateNotification
+    data class UserConfigsMerged(val timestamp: Long) : ConfigUpdateNotification
+
     data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
-    data class GroupConfigsDeleted(val groupId: AccountId) : ConfigUpdateNotification
 }
