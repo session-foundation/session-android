@@ -52,8 +52,11 @@ import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.GroupManager
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 
 @Singleton
@@ -78,8 +81,8 @@ class ConfigFactory @Inject constructor(
         System.loadLibrary("session_util")
     }
 
-    private val userConfigs = HashMap<AccountId, UserConfigsImpl>()
-    private val groupConfigs = HashMap<AccountId, GroupConfigsImpl>()
+    private val userConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, UserConfigsImpl>>()
+    private val groupConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, GroupConfigsImpl>>()
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
         extraBufferCapacity = 5, // The notifications are normally important so we can afford to buffer a few
@@ -97,21 +100,39 @@ class ConfigFactory @Inject constructor(
             "No logged in user"
         }
 
-    override fun <T> withUserConfigs(cb: (UserConfigs) -> T): T {
+    private fun ensureUserConfigsInitialized(): Pair<ReentrantReadWriteLock, UserConfigsImpl> {
         val userAccountId = requiresCurrentUserAccountId()
-        val configs = synchronized(userConfigs) {
+
+        return synchronized(userConfigs) {
             userConfigs.getOrPut(userAccountId) {
-                UserConfigsImpl(
-                    requiresCurrentUserED25519SecKey(),
-                    userAccountId,
+                ReentrantReadWriteLock() to UserConfigsImpl(
+                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+                    userAccountId = userAccountId,
                     threadDb = threadDb,
                     configDatabase = configDatabase,
                     storage = storage.get()
                 )
             }
         }
+    }
 
-        return synchronized(configs) {
+    private fun ensureGroupConfigsInitialized(groupId: AccountId): Pair<ReentrantReadWriteLock, GroupConfigsImpl> {
+        val groupAdminKey = getClosedGroup(groupId)?.adminKey
+        return synchronized(groupConfigs) {
+            groupConfigs.getOrPut(groupId) {
+                ReentrantReadWriteLock() to GroupConfigsImpl(
+                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+                    groupAccountId = groupId,
+                    groupAdminKey = groupAdminKey,
+                    configDatabase = configDatabase
+                )
+            }
+        }
+    }
+
+    override fun <T> withUserConfigs(cb: (UserConfigs) -> T): T {
+        val (lock, configs) = ensureUserConfigsInitialized()
+        return lock.read {
             cb(configs)
         }
     }
@@ -122,8 +143,9 @@ class ConfigFactory @Inject constructor(
      * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
      */
     private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, Boolean>): T {
-        val (result, changed) = withUserConfigs { configs ->
-            cb(configs as UserConfigsImpl)
+        val (lock, configs) = ensureUserConfigsInitialized()
+        val (result, changed) = lock.write {
+            cb(configs)
         }
 
         if (changed) {
@@ -160,25 +182,9 @@ class ConfigFactory @Inject constructor(
     }
 
     override fun <T> withGroupConfigs(groupId: AccountId, cb: (GroupConfigs) -> T): T {
-        val groupAdminKey = getClosedGroup(groupId)?.adminKey
+        val (lock, configs) = ensureGroupConfigsInitialized(groupId)
 
-        val configs = synchronized(groupConfigs) {
-            var value = groupConfigs[groupId]
-            if (value == null || value.groupKeys.admin() != (groupAdminKey != null)) {
-                // No existing configs or existing configs have different admin settings with what we currently have
-                // Create a new group configs
-                value = GroupConfigsImpl(
-                    requiresCurrentUserED25519SecKey(),
-                    groupId,
-                    groupAdminKey,
-                    configDatabase
-                ).also { groupConfigs[groupId] = it }
-            }
-
-            value
-        }
-
-        return synchronized(configs) {
+        return lock.read {
             cb(configs)
         }
     }
@@ -188,11 +194,14 @@ class ConfigFactory @Inject constructor(
         recreateConfigInstances: Boolean,
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         if (recreateConfigInstances) {
-            groupConfigs.remove(groupId)
+            synchronized(groupConfigs) {
+                groupConfigs.remove(groupId)
+            }
         }
 
-        val (result, changed) =  withGroupConfigs(groupId) { configs ->
-            cb(configs as GroupConfigsImpl)
+        val (lock, configs) = ensureGroupConfigsInitialized(groupId)
+        val (result, changed) = lock.write {
+            cb(configs)
         }
 
         if (changed) {

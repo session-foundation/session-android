@@ -80,7 +80,7 @@ internal class LoadingViewModel @Inject constructor(
                             !configs.userProfile.getName().isNullOrEmpty()
                         }
                     }
-//                    .timeout(TIMEOUT_TIME)
+                    .timeout(TIMEOUT_TIME)
                     .first()
                 onSuccess()
             } catch (e: Exception) {
