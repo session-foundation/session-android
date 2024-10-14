@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
-import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.MutableConfig
 import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
@@ -196,8 +195,18 @@ interface MutableGroupConfigs : GroupConfigs {
 
 
 sealed interface ConfigUpdateNotification {
+    /**
+     * The user configs have been modified locally.
+     */
     data object UserConfigsModified : ConfigUpdateNotification
-    data class UserConfigsMerged(val timestamp: Long) : ConfigUpdateNotification
+
+    /**
+     * The user configs have been merged from the server.
+     */
+    data class UserConfigsMerged(
+        val configType: UserConfigType,
+        val timestamp: Long
+    ) : ConfigUpdateNotification
 
     data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
 }

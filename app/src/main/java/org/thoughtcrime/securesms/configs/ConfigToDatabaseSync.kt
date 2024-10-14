@@ -35,6 +35,7 @@ import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -86,7 +87,7 @@ class ConfigToDatabaseSync @Inject constructor(
                         .collect { config ->
                             try {
                                 Log.i(TAG, "Start syncing user configs")
-                                syncUserConfigs(config.timestamp)
+                                syncUserConfigs(config.configType, config.timestamp)
                                 Log.i(TAG, "Finished syncing user configs")
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error syncing user configs", e)
@@ -116,23 +117,23 @@ class ConfigToDatabaseSync @Inject constructor(
         updateGroup(info)
     }
 
-    private fun syncUserConfigs(updateTimestamp: Long) {
-        lateinit var updateUserInfo: UpdateUserInfo
-        lateinit var updateUserGroupsInfo: UpdateUserGroupsInfo
-        lateinit var updateContacts: List<Contact>
-        lateinit var updateConvoVolatile: List<Conversation?>
-
-        configFactory.withUserConfigs { configs ->
-            updateUserInfo = UpdateUserInfo(configs.userProfile)
-            updateUserGroupsInfo = UpdateUserGroupsInfo(configs.userGroups)
-            updateContacts = configs.contacts.all()
-            updateConvoVolatile = configs.convoInfoVolatile.all()
+    private fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long) {
+        val configUpdate = configFactory.withUserConfigs { configs ->
+            when (userConfigType) {
+                UserConfigType.USER_PROFILE -> UpdateUserInfo(configs.userProfile)
+                UserConfigType.USER_GROUPS -> UpdateUserGroupsInfo(configs.userGroups)
+                UserConfigType.CONTACTS -> UpdateContacts(configs.contacts.all())
+                UserConfigType.CONVO_INFO_VOLATILE -> UpdateConvoVolatile(configs.convoInfoVolatile.all())
+            }
         }
 
-        updateUser(updateUserInfo, updateTimestamp)
-        updateContacts(updateContacts, updateTimestamp)
-        updateUserGroups(updateUserGroupsInfo, updateTimestamp)
-        updateConvoVolatile(updateConvoVolatile)
+        when (configUpdate) {
+            is UpdateUserInfo -> updateUser(configUpdate, updateTimestamp)
+            is UpdateUserGroupsInfo -> updateUserGroups(configUpdate, updateTimestamp)
+            is UpdateContacts -> updateContacts(configUpdate, updateTimestamp)
+            is UpdateConvoVolatile -> updateConvoVolatile(configUpdate)
+            else -> error("Unknown config update type: $configUpdate")
+        }
     }
 
     private data class UpdateUserInfo(
@@ -219,8 +220,10 @@ class ConfigToDatabaseSync @Inject constructor(
         }
     }
 
-    private fun updateContacts(contacts: List<Contact>, messageTimestamp: Long) {
-        storage.addLibSessionContacts(contacts, messageTimestamp)
+    private data class UpdateContacts(val contacts: List<Contact>)
+
+    private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long) {
+        storage.addLibSessionContacts(contacts.contacts, messageTimestamp)
     }
 
     private data class UpdateUserGroupsInfo(
@@ -368,8 +371,10 @@ class ConfigToDatabaseSync @Inject constructor(
         }
     }
 
-    private fun updateConvoVolatile(convos: List<Conversation?>) {
-        val extracted = convos.filterNotNull()
+    private data class UpdateConvoVolatile(val convos: List<Conversation?>)
+
+    private fun updateConvoVolatile(convos: UpdateConvoVolatile) {
+        val extracted = convos.convos.filterNotNull()
         for (conversation in extracted) {
             val threadId = when (conversation) {
                 is Conversation.OneToOne -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false)

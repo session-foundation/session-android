@@ -35,6 +35,7 @@ import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
@@ -103,24 +104,23 @@ class BatchMessageReceiveJob(
         executeAsync(dispatcherName)
     }
 
-    private fun isHidden(message: Message): Boolean{
+    private fun isHidden(message: Message): Boolean {
         // if the contact is marked as hidden for 1on1 messages
         // and  the message's sentTimestamp is earlier than the sentTimestamp of the last config
-        val config = MessagingModuleConfiguration.shared.configFactory
+        val configFactory = MessagingModuleConfiguration.shared.configFactory
         val publicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
-        if(config.contacts == null || message.sentTimestamp == null || publicKey == null) return false
-        val contactConfigTimestamp = config.getConfigTimestamp(config.contacts!!, publicKey)
-        if(message.groupPublicKey == null && // not a group
-            message.openGroupServerMessageID == null && // not a community
-            // not marked as hidden
-            config.contacts?.get(message.senderOrSync)?.priority == ConfigBase.PRIORITY_HIDDEN &&
-            // the message's sentTimestamp is earlier than the sentTimestamp of the last config
-            message.sentTimestamp!! < contactConfigTimestamp
-        ) {
-            return true
-        }
+        if (message.sentTimestamp == null || publicKey == null) return false
 
-        return false
+        val contactConfigTimestamp = configFactory.getConfigTimestamp(UserConfigType.CONTACTS, publicKey)
+
+        return configFactory.withUserConfigs { configs ->
+            message.groupPublicKey == null && // not a group
+                    message.openGroupServerMessageID == null && // not a community
+                    // not marked as hidden
+                    configs.contacts.get(message.senderOrSync)?.priority == ConfigBase.PRIORITY_HIDDEN &&
+                    // the message's sentTimestamp is earlier than the sentTimestamp of the last config
+                    message.sentTimestamp!! < contactConfigTimestamp
+        }
     }
 
     suspend fun executeAsync(dispatcherName: String) {

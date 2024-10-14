@@ -49,6 +49,7 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.ConfigVariant
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.groups.GroupManager
@@ -142,14 +143,18 @@ class ConfigFactory @Inject constructor(
      *
      * @param cb A function that takes a [UserConfigsImpl] and returns a pair of the result of the operation and a boolean indicating if the configs were changed.
      */
-    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, ConfigUpdateNotification?>): T {
+    private fun <T> doWithMutableUserConfigs(cb: (UserConfigsImpl) -> Pair<T, List<ConfigUpdateNotification>>): T {
         val (lock, configs) = ensureUserConfigsInitialized()
         val (result, changed) = lock.write {
             cb(configs)
         }
 
-        if (changed != null) {
-            _configUpdateNotifications.tryEmit(changed)
+        if (changed.isNotEmpty()) {
+            for (notification in changed) {
+                if (!_configUpdateNotifications.tryEmit(notification)) {
+                    Log.e("ConfigFactory", "Unable to deliver config update notification")
+                }
+            }
         }
 
         return result
@@ -163,7 +168,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        return doWithMutableUserConfigs { configs ->
+        val toDump = doWithMutableUserConfigs { configs ->
             val config = when (userConfigType) {
                 UserConfigType.CONTACTS -> configs.contacts
                 UserConfigType.USER_PROFILE -> configs.userProfile
@@ -171,22 +176,42 @@ class ConfigFactory @Inject constructor(
                 UserConfigType.USER_GROUPS -> configs.userGroups
             }
 
+            // Merge the list of config messages, we'll be told which messages have been merged
+            // and we will then find out which message has the max timestamp
             val maxTimestamp = config.merge(messages.map { it.hash to it.data }.toTypedArray())
                 .asSequence()
                 .mapNotNull { hash -> messages.firstOrNull { it.hash == hash } }
                 .maxOfOrNull { it.timestamp }
 
-            Unit to maxTimestamp?.let(ConfigUpdateNotification::UserConfigsMerged)
+            maxTimestamp?.let {
+                (config.dump() to it) to
+                listOf(ConfigUpdateNotification.UserConfigsMerged(userConfigType, it))
+            } ?: (null to emptyList())
+        }
+
+        // Dump now regardless so we can save the timestamp to the database
+        if (toDump != null) {
+            val (dump, timestamp) = toDump
+            configDatabase.storeConfig(
+                variant = userConfigType.configVariant,
+                publicKey = requiresCurrentUserAccountId().hexString,
+                data = dump,
+                timestamp = timestamp
+            )
         }
     }
 
     override fun <T> withMutableUserConfigs(cb: (MutableUserConfigs) -> T): T {
         return doWithMutableUserConfigs {
             val result = cb(it)
-            val changed = if (it.persistIfDirty(clock)) {
-                ConfigUpdateNotification.UserConfigsModified
+
+            val changed = if (it.userGroups.dirty() ||
+                it.convoInfoVolatile.dirty() ||
+                it.userProfile.dirty() ||
+                it.contacts.dirty()) {
+                listOf(ConfigUpdateNotification.UserConfigsModified)
             } else {
-                null
+                emptyList()
             }
 
             result to changed
@@ -293,15 +318,30 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableUserConfigs { configs ->
-            contacts?.let {  (push, result) -> configs.contacts.confirmPushed(push.seqNo, result.hash) }
-            userProfile?.let { (push, result) ->  configs.userProfile.confirmPushed(push.seqNo, result.hash) }
-            convoInfoVolatile?.let { (push, result) ->  configs.convoInfoVolatile.confirmPushed(push.seqNo, result.hash) }
-            userGroups?.let { (push, result) ->  configs.userGroups.confirmPushed(push.seqNo, result.hash) }
+        // Confirm push for the configs and gather the dumped data to be saved into the db.
+        // For this operation, we will no notify the users as there won't be any real change in terms
+        // of the displaying data.
+        val dump = doWithMutableUserConfigs { configs ->
+            sequenceOf(contacts, userProfile, convoInfoVolatile, userGroups)
+                .zip(
+                    sequenceOf(
+                        UserConfigType.CONTACTS to configs.contacts,
+                        UserConfigType.USER_PROFILE to configs.userProfile,
+                        UserConfigType.CONVO_INFO_VOLATILE to configs.convoInfoVolatile,
+                        UserConfigType.USER_GROUPS to configs.userGroups
+                    )
+                )
+                .filter { (push, _) -> push != null }
+                .onEach { (push, config) -> config.second.confirmPushed(push!!.first.seqNo, push.second.hash) }
+                .map { (push, config) ->
+                    Triple(config.first.configVariant, config.second.dump(), push!!.second.timestamp)
+                }.toList() to emptyList()
+        }
 
-            configs.persistIfDirty(clock)
-
-            Unit to null
+        // We need to persist the data to the database to save timestamp after the push
+        val userAccountId = requiresCurrentUserAccountId()
+        for ((variant, data, timestamp) in dump) {
+            configDatabase.storeConfig(variant, userAccountId.hexString, data, timestamp)
         }
     }
 
@@ -327,18 +367,6 @@ class ConfigFactory @Inject constructor(
 
             Unit to configs.dumpIfNeeded(clock)
         }
-    }
-
-    override fun getConfigTimestamp(forConfigObject: ConfigBase, publicKey: String): Long {
-        val variant = when (forConfigObject) {
-            is UserProfile -> SharedConfigMessage.Kind.USER_PROFILE.name
-            is Contacts -> SharedConfigMessage.Kind.CONTACTS.name
-            is ConversationVolatileConfig -> SharedConfigMessage.Kind.CONVO_INFO_VOLATILE.name
-            is UserGroupsConfig -> SharedConfigMessage.Kind.GROUPS.name
-            else -> throw UnsupportedOperationException("Can't support type of ${forConfigObject::class.simpleName} yet")
-        }
-
-        return configDatabase.retrieveConfigLastUpdateTimestamp(variant, publicKey)
     }
 
     override fun conversationInConfig(
@@ -391,6 +419,10 @@ class ConfigFactory @Inject constructor(
         return (changeTimestampMs >= (lastUpdateTimestampMs - CONFIG_CHANGE_BUFFER_PERIOD))
     }
 
+    override fun getConfigTimestamp(userConfigType: UserConfigType, publicKey: String): Long {
+        return configDatabase.retrieveConfigLastUpdateTimestamp(userConfigType.configVariant, publicKey)
+    }
+
     override fun getGroupAuth(groupId: AccountId): SwarmAuth? {
         val (adminKey, authData) = withUserConfigs {
             val group = it.userGroups.getClosedGroup(groupId.hexString)
@@ -440,6 +472,14 @@ class ConfigFactory @Inject constructor(
         }
     }
 }
+
+private val UserConfigType.configVariant: ConfigVariant
+    get() = when (this) {
+        UserConfigType.CONTACTS -> ConfigDatabase.CONTACTS_VARIANT
+        UserConfigType.USER_PROFILE -> ConfigDatabase.USER_PROFILE_VARIANT
+        UserConfigType.CONVO_INFO_VOLATILE -> ConfigDatabase.CONVO_INFO_VARIANT
+        UserConfigType.USER_GROUPS -> ConfigDatabase.USER_GROUPS_VARIANT
+    }
 
 /**
  * Sync group data from our local database
@@ -637,30 +677,6 @@ private class UserConfigsImpl(
 
         if (convoInfoDump == null) {
             convoInfoVolatile.initFrom(storage, threadDb)
-        }
-    }
-
-    /**
-     * Persists the config if it is dirty and returns the list of classes that were persisted
-     */
-    fun persistIfDirty(clock: SnodeClock): Boolean {
-        return sequenceOf(
-            contacts to ConfigDatabase.CONTACTS_VARIANT,
-            userGroups to ConfigDatabase.USER_GROUPS_VARIANT,
-            userProfile to ConfigDatabase.USER_PROFILE_VARIANT,
-            convoInfoVolatile to ConfigDatabase.CONVO_INFO_VARIANT
-        ).fold(false) { acc, (config, variant) ->
-            if (config.needsDump()) {
-                configDatabase.storeConfig(
-                    variant = variant,
-                    publicKey = userAccountId.hexString,
-                    data = config.dump(),
-                    timestamp = clock.currentTimeMills()
-                )
-                true
-            } else {
-                acc
-            }
         }
     }
 }
