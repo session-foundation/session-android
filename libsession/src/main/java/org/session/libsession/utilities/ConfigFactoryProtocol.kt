@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
+import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.MutableConfig
 import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
@@ -44,6 +45,8 @@ interface ConfigFactoryProtocol {
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean
 
+    fun getConfigTimestamp(userConfigType: UserConfigType, publicKey: String): Long
+
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
     fun removeGroup(groupId: AccountId)
 
@@ -71,6 +74,7 @@ interface ConfigFactoryProtocol {
         info: Pair<ConfigPush, ConfigPushResult>?,
         keysPush: ConfigPushResult?
     )
+
 }
 
 class ConfigMessage(

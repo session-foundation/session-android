@@ -48,10 +48,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
         val explanation = Phrase.from(context, R.string.attachmentsAutoDownloadModalDescription)
             .put(CONVERSATION_NAME_KEY, displayName)
             .format()
-        val spannable = SpannableStringBuilder(explanation)
-        val startIndex = explanation.indexOf(displayName)
-        spannable.setSpan(StyleSpan(Typeface.BOLD), startIndex, startIndex + displayName.count(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-        text(spannable)
+        text(explanation)
 
         button(R.string.download, R.string.AccessibilityId_download) {
             setAutoDownload()
