@@ -8,6 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -16,7 +17,6 @@ import network.loki.messenger.libsession_util.util.INVITE_STATUS_SENT
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -116,7 +116,7 @@ class GroupManagerV2Impl @Inject constructor(
                 for (member in members) {
                     configs.groupMembers.set(
                         GroupMember(
-                            sessionId = member.accountID,
+                            sessionId = member.id,
                             name = member.name,
                             profilePicture = member.profilePicture ?: UserPic.DEFAULT,
                             inviteStatus = INVITE_STATUS_SENT
@@ -165,7 +165,7 @@ class GroupManagerV2Impl @Inject constructor(
             JobQueue.shared.add(
                 InviteContactsJob(
                     groupSessionId = groupId.hexString,
-                    memberSessionIds = members.map { it.accountID }.toTypedArray()
+                    memberSessionIds = members.map { it.id }.toTypedArray()
                 )
             )
 
@@ -207,9 +207,12 @@ class GroupManagerV2Impl @Inject constructor(
                             existing
                         }
                     }
-                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).let {
-                        val contact = storage.getContactWithAccountID(newMember.hexString)
-                        it.copy(
+                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).let { member ->
+                        val contact = configFactory.withUserConfigs { configs ->
+                            configs.contacts.get(newMember.hexString)
+                        }
+
+                        member.copy(
                             name = contact?.name,
                             profilePicture = contact?.profilePicture ?: UserPic.DEFAULT,
                             inviteStatus = INVITE_STATUS_SENT,
@@ -930,17 +933,6 @@ class GroupManagerV2Impl @Inject constructor(
         val firstError = this.results.firstOrNull { it.code != 200 }
         require(firstError == null) { "$errorMessage: ${firstError!!.body}" }
     }
-
-    private val Contact.profilePicture: UserPic?
-        get() {
-            val url = this.profilePictureURL
-            val key = this.profilePictureEncryptionKey
-            return if (url != null && key != null) {
-                UserPic(url, key)
-            } else {
-                null
-            }
-        }
 
     private val Profile.profilePicture: UserPic?
         get() {

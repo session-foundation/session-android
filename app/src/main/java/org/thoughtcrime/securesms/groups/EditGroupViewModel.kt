@@ -9,7 +9,6 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,10 +24,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
@@ -196,17 +195,17 @@ class EditGroupViewModel @AssistedInject constructor(
             try {
                 // Mark the contacts as pending
                 memberPendingState.update { states ->
-                    states + contacts.associate { AccountId(it.accountID) to MemberPendingState.Inviting }
+                    states + contacts.associate { AccountId(it.id) to MemberPendingState.Inviting }
                 }
 
                 groupManager.inviteMembers(
                     groupId,
-                    contacts.map { AccountId(it.accountID) },
+                    contacts.map { AccountId(it.id) },
                     shareHistory = false
                 )
             } finally {
                 // Remove pending state (so the real state will be revealed)
-                memberPendingState.update { states -> states - contacts.mapTo(hashSetOf()) { AccountId(it.accountID) } }
+                memberPendingState.update { states -> states - contacts.mapTo(hashSetOf()) { AccountId(it.id) } }
             }
         }
     }

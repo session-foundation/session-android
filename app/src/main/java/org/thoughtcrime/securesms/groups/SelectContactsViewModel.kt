@@ -21,10 +21,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.util.Contact
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.search.getSearchName
 
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
@@ -70,12 +70,14 @@ class SelectContactsViewModel @AssistedInject constructor(
         .onStart { emit(Unit) }
         .map {
             withContext(Dispatchers.Default) {
-                val allContacts = storage.getAllContacts()
+                val allContacts = configFactory.withUserConfigs {
+                    it.contacts.all()
+                }
 
                 if (excludingAccountIDs.isEmpty()) {
                     allContacts
                 } else {
-                    allContacts.filterNot { it.accountID in excludingAccountIDs }
+                    allContacts.filterNot { it.id in excludingAccountIDs }
                 }
             }
         }
@@ -90,13 +92,13 @@ class SelectContactsViewModel @AssistedInject constructor(
             .asSequence()
             .filter {
                 query.isBlank() ||
-                it.name?.contains(query, ignoreCase = true) == true ||
-                it.nickname?.contains(query, ignoreCase = true) == true
+                        it.name.contains(query, ignoreCase = true) ||
+                        it.nickname.contains(query, ignoreCase = true)
             }
             .map { contact ->
                 ContactItem(
                     contact = contact,
-                    selected = selectedAccountIDs.contains(contact.accountID)
+                    selected = selectedAccountIDs.contains(contact.id)
                 )
             }
             .toList()
@@ -127,6 +129,6 @@ data class ContactItem(
     val contact: Contact,
     val selected: Boolean,
 ) {
-    val accountID: String get() = contact.accountID
-    val name: String get() = contact.getSearchName()
+    val accountID: String get() = contact.id
+    val name: String get() = contact.displayName.ifEmpty { truncateIdForDisplay(contact.id) }
 }

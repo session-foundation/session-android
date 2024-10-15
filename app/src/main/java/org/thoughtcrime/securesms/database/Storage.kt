@@ -310,6 +310,7 @@ open class Storage @Inject constructor(
             }
         }
     }
+
     override fun deleteMessagesByUser(threadId: Long, userSessionId: String) {
         val userMessages = mmsSmsDatabase.getUserMessages(threadId, userSessionId)
         val (mmsMessages, smsMessages) = userMessages.partition { it.isMms }

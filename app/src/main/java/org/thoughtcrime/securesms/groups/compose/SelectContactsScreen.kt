@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.serialization.Serializable
 import network.loki.messenger.R
-import org.session.libsession.messaging.contacts.Contact
+import network.loki.messenger.libsession_util.util.Contact
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.SearchBar
@@ -121,11 +121,11 @@ private fun PreviewSelectContacts() {
         SelectContacts(
             contacts = listOf(
                 ContactItem(
-                    contact = Contact(accountID = "123", name = "User 1"),
+                    contact = Contact(id = "123", name = "User 1"),
                     selected = false,
                 ),
                 ContactItem(
-                    contact = Contact(accountID = "124", name = "User 2"),
+                    contact = Contact(id = "124", name = "User 2"),
                     selected = true,
                 ),
             ),

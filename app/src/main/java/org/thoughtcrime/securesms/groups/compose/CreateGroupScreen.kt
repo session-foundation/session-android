@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
-import org.session.libsession.messaging.contacts.Contact
+import network.loki.messenger.libsession_util.util.Contact
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.CreateGroupEvent
 import org.thoughtcrime.securesms.groups.CreateGroupViewModel
