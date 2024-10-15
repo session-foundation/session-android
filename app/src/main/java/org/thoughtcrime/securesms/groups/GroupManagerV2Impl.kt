@@ -556,7 +556,6 @@ class GroupManagerV2Impl @Inject constructor(
             val responseData = GroupUpdateMessage.newBuilder()
                 .setInviteResponse(inviteResponse)
             val responseMessage = GroupUpdated(responseData.build())
-            storage.clearMessages(threadId)
             // this will fail the first couple of times :)
             MessageSender.send(
                 responseMessage,

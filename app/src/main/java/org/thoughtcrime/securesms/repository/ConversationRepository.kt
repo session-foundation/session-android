@@ -404,11 +404,12 @@ class DefaultConversationRepository @Inject constructor(
                     destination = Destination.from(recipient.address),
                     isSyncMessage = recipient.isLocalNumber
                 ).await()
+
+                // add a control message for our user
+                storage.insertMessageRequestResponseFromYou(threadId)
             }
 
             threadDb.setHasSent(threadId, true)
-            // add a control message for our user
-            storage.insertMessageRequestResponseFromYou(threadId)
         }
     }
 

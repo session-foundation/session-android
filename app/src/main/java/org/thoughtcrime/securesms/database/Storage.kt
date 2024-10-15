@@ -1059,7 +1059,7 @@ open class Storage @Inject constructor(
     }
 
     override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, closedGroup: AccountId, groupName: String): Long? {
-        val updateData = UpdateMessageData(UpdateMessageData.Kind.GroupInvitation(senderPublicKey, groupName))
+        val updateData = UpdateMessageData(UpdateMessageData.Kind.GroupInvitation(closedGroup.hexString, senderPublicKey, groupName))
         return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 

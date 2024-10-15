@@ -48,8 +48,13 @@ class UpdateMessageData () {
         class GroupMemberLeft(val updatedMembers: Collection<String>, val groupName:String): Kind() {
             constructor(): this(Collections.emptyList(), "")
         }
-        class GroupMemberUpdated(val sessionIds: List<String>, val type: MemberUpdateType?, val groupName: String): Kind() {
-            constructor(): this(emptyList(), null, "")
+        class GroupMemberUpdated(
+            val sessionIds: List<String>,
+            val type: MemberUpdateType?,
+            val groupName: String,
+            val historyShared: Boolean
+        ): Kind() {
+            constructor(): this(emptyList(), null, "", false)
         }
         data object GroupAvatarUpdated: Kind()
         class GroupExpirationUpdated(val updatedExpiration: Int = 0): Kind() {
@@ -60,8 +65,8 @@ class UpdateMessageData () {
         }
         data object GroupLeaving: Kind()
         data object GroupErrorQuit: Kind()
-        class GroupInvitation(val invitingAdmin: String, val groupName: String) : Kind() {
-            constructor(): this("", "")
+        class GroupInvitation(val groupAccountId: String, val invitingAdmin: String, val groupName: String) : Kind() {
+            constructor(): this("", "", "")
         }
 
         class GroupKicked(val groupName: String) : Kind() {
@@ -117,7 +122,7 @@ class UpdateMessageData () {
                         null -> null
                     }
                     val members = memberChange.memberSessionIdsList
-                    UpdateMessageData(Kind.GroupMemberUpdated(members, type, groupName))
+                    UpdateMessageData(Kind.GroupMemberUpdated(members, type, groupName, memberChange.historyShared))
                 }
                 inner.hasInfoChangeMessage() -> {
                     val infoChange = inner.infoChangeMessage

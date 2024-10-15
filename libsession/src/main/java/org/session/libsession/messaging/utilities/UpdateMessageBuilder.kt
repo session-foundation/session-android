@@ -14,6 +14,7 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.utilities.Address
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.getExpirationTypeDisplayValue
 import org.session.libsession.utilities.recipients.Recipient
@@ -25,6 +26,8 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.getClosedGroup
+import org.session.libsignal.utilities.AccountId
 
 object UpdateMessageBuilder {
     const val TAG = "UpdateMessageBuilder"
@@ -37,7 +40,12 @@ object UpdateMessageBuilder {
         ?: truncateIdForDisplay(senderId)
 
     @JvmStatic
-    fun buildGroupUpdateMessage(context: Context, updateMessageData: UpdateMessageData, senderId: String? = null, isOutgoing: Boolean = false, isInConversation: Boolean): CharSequence {
+    fun buildGroupUpdateMessage(
+        context: Context,
+        updateMessageData: UpdateMessageData,
+        configFactory: ConfigFactoryProtocol,
+        isOutgoing: Boolean = false
+    ): CharSequence {
         val updateData = updateMessageData.kind ?: return ""
 
         return when (updateData) {
@@ -177,31 +185,32 @@ object UpdateMessageBuilder {
                 val userPublicKey = storage.getUserPublicKey()!!
                 val number = updateData.sessionIds.size
                 val containsUser = updateData.sessionIds.contains(userPublicKey)
+                val historyShared = updateData.historyShared
                 when (updateData.type) {
                     UpdateMessageData.MemberUpdateType.ADDED -> {
                         when {
                             number == 1 && containsUser -> Phrase.from(context,
-                                R.string.groupInviteYou)
+                                if (historyShared) R.string.groupInviteYouHistory else R.string.groupInviteYou)
                                 .format()
                             number == 1 -> Phrase.from(context,
-                                R.string.groupMemberNew)
+                                if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
-                                R.string.groupInviteYouAndOtherNew)
+                                if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
-                                R.string.groupMemberNewTwo)
+                                if (historyShared) R.string.groupMemberNewHistoryTwo else R.string.groupMemberNewTwo)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
-                                R.string.groupInviteYouAndMoreNew)
+                                if (historyShared) R.string.groupMemberNewYouHistoryMultiple else R.string.groupInviteYouAndMoreNew)
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             else -> Phrase.from(context,
-                                R.string.groupMemberNewMultiple)
+                                if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
@@ -272,7 +281,8 @@ object UpdateMessageBuilder {
             }
             is UpdateMessageData.Kind.GroupInvitation -> {
                 val invitingAdmin = Recipient.from(context, Address.fromSerialized(updateData.invitingAdmin), false)
-                return if (invitingAdmin.name != null) {
+                val approved = configFactory.getClosedGroup(AccountId(updateData.groupAccountId))?.invited == false
+                return if (invitingAdmin.name != null && !approved) {
                     Phrase.from(context, R.string.messageRequestGroupInvite)
                         .put(NAME_KEY, invitingAdmin.name)
                         .put(GROUP_NAME_KEY, updateData.groupName)
