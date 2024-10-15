@@ -80,6 +80,7 @@ class VisibleMessageContentView : ConstraintLayout {
         onContentDoubleTap = null
 
         if (message.isDeleted) {
+            binding.contentParent.isVisible = true
             binding.deletedMessageView.root.isVisible = true
             binding.deletedMessageView.root.bind(message, getTextColor(context, message))
             binding.bodyTextView.isVisible = false

@@ -3,6 +3,7 @@ package org.session.libsignal.utilities
 import kotlinx.coroutines.delay
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
+import org.session.libsignal.exceptions.NonRetryableException
 import java.util.*
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -38,6 +39,8 @@ suspend fun <T> retryWithUniformInterval(maxRetryCount: Int = 3, retryIntervalMi
         try {
             return body()
         } catch (e: CancellationException) {
+            throw e
+        } catch (e: NonRetryableException) {
             throw e
         } catch (e: Exception) {
             if (retryCount == maxRetryCount) {

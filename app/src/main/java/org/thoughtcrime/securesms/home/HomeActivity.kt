@@ -543,7 +543,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.Default) {
-                    Log.d("", "**** until: $until")
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
                         binding.recyclerView.adapter!!.notifyDataSetChanged()

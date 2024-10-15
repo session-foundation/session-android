@@ -65,6 +65,9 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getClosedGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
+import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.getType
+import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -656,6 +659,12 @@ open class Storage @Inject constructor(
         val database = mmsSmsDatabase
         val address = fromSerialized(author)
         return database.getMessageFor(timestamp, address)?.run { getId() to isMms }
+    }
+
+    override fun getMessageType(timestamp: Long, author: String): MessageType? {
+        val database = DatabaseComponent.get(context).mmsSmsDatabase()
+        val address = fromSerialized(author)
+        return database.getMessageFor(timestamp, address)?.individualRecipient?.getType()
     }
 
     override fun updateSentTimestamp(
@@ -1805,6 +1814,12 @@ open class Storage @Inject constructor(
 
     override fun deleteReactions(messageId: Long, mms: Boolean) {
         reactionDatabase.deleteMessageReactions(MessageId(messageId, mms))
+    }
+
+    override fun deleteReactions(messageIds: List<Long>, mms: Boolean) {
+        DatabaseComponent.get(context).reactionDatabase().deleteMessageReactions(
+            messageIds.map { MessageId(it, mms) }
+        )
     }
 
     override fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean) {

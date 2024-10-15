@@ -18,6 +18,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import com.goterl.lazysodium.utils.KeyPair
+import kotlinx.coroutines.coroutineScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -867,63 +869,70 @@ object SnodeAPI {
             )
         }
     }
-
-    @Suppress("UNCHECKED_CAST")
-    fun deleteMessage(
-        publicKey: String,
-        swarmAuth: SwarmAuth,
-        serverHashes: List<String>
-    ): Promise<Map<String, Boolean>, Exception> = scope.retrySuspendAsPromise(maxRetryCount) {
-        val params = buildAuthenticatedParameters(
-            auth = swarmAuth,
-            namespace = null,
-            verificationData = { _, _ ->
-                buildString {
-                    append(Snode.Method.DeleteMessage.rawValue)
-                    serverHashes.forEach(this::append)
+    
+    suspend fun deleteMessage(publicKey: String, swarmAuth: SwarmAuth, serverHashes: List<String>) {
+        retryWithUniformInterval {
+            val snode = getSingleTargetSnode(publicKey).await()
+            val params = buildAuthenticatedParameters(
+                auth = swarmAuth,
+                namespace = null,
+                verificationData = { _, _ ->
+                    buildString {
+                        append(Snode.Method.DeleteMessage.rawValue)
+                        serverHashes.forEach(this::append)
+                    }
                 }
+            ) {
+                this["messages"] = serverHashes
             }
-        ) {
-            this["messages"] = serverHashes
-        }
+            val rawResponse = invoke(
+                Snode.Method.DeleteMessage,
+                snode,
+                params,
+                publicKey
+            ).await()
 
-        val snode = getSingleTargetSnode(publicKey).await()
-        val rawResponse = invoke(Snode.Method.DeleteMessage, snode, params, publicKey).await()
-        val swarms = rawResponse["swarm"] as? Map<String, Any> ?: return@retrySuspendAsPromise mapOf()
-        swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
-            (rawJSON as? Map<String, Any>)?.let { json ->
-                val isFailed = json["failed"] as? Boolean ?: false
-                val statusCode = json["code"] as? String
-                val reason = json["reason"] as? String
+            // thie next step is to verify the nodes on our swarm and check that the message was deleted
+            // on at least one of them
+            val swarms = rawResponse["swarm"] as? Map<String, Any> ?: throw (Error.Generic)
 
-                if (isFailed) {
-                    Log.e(
-                        "Loki",
-                        "Failed to delete messages from: $hexSnodePublicKey due to error: $reason ($statusCode)."
-                    )
-                    false
-                } else {
-                    // Hashes of deleted messages
-                    val hashes = json["deleted"] as List<String>
-                    val signature = json["signature"] as String
-                    val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
-                    // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
-                    val message = sequenceOf(swarmAuth.accountId.hexString)
+            val deletedMessages = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
+                (rawJSON as? Map<String, Any>)?.let { json ->
+                    val isFailed = json["failed"] as? Boolean ?: false
+                    val statusCode = json["code"] as? String
+                    val reason = json["reason"] as? String
+
+                    if (isFailed) {
+                        Log.e(
+                            "Loki",
+                            "Failed to delete messages from: $hexSnodePublicKey due to error: $reason ($statusCode)."
+                        )
+                        false
+                    } else {
+                        // Hashes of deleted messages
+                        val hashes = json["deleted"] as List<String>
+                        val signature = json["signature"] as String
+                        val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
+                        // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
+                        val message = sequenceOf(swarmAuth.accountId.hexString)
                             .plus(serverHashes)
                             .plus(hashes)
                             .toByteArray()
-                    sodium.cryptoSignVerifyDetached(
-                        Base64.decode(signature),
-                        message,
-                        message.size,
-                        snodePublicKey.asBytes
-                    )
+                        sodium.cryptoSignVerifyDetached(
+                            Base64.decode(signature),
+                            message,
+                            message.size,
+                            snodePublicKey.asBytes
+                        )
+                    }
                 }
             }
+
+            // if all the nodes returned false (the message was not deleted) then we consider this a failed scenario
+            if (deletedMessages.entries.all { !it.value }) throw (Error.Generic)
         }
-
     }
-
+    
     // Parsing
     private fun parseSnodes(rawResponse: Any): List<Snode> =
         (rawResponse as? Map<*, *>)

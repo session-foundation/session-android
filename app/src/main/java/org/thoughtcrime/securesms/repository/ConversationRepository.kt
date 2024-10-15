@@ -14,6 +14,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.Destination
+import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.signal.OutgoingTextMessage
@@ -45,6 +46,8 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 interface ConversationRepository {
     fun maybeGetRecipientForThreadId(threadId: Long): Recipient?
@@ -56,13 +59,29 @@ interface ConversationRepository {
     fun clearDrafts(threadId: Long)
     fun inviteContacts(threadId: Long, contacts: List<Recipient>)
     fun setBlocked(threadId: Long, recipient: Recipient, blocked: Boolean)
-    fun deleteLocally(recipient: Recipient, message: MessageRecord)
+    fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
+    fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun setApproved(recipient: Recipient, isApproved: Boolean)
     fun isKicked(recipient: Recipient): Boolean
 
-    suspend fun deleteForEveryone(threadId: Long, recipient: Recipient, message: MessageRecord): Result<Unit>
-    suspend fun deleteMessageWithoutUnsendRequest(threadId: Long, messages: Set<MessageRecord>): Result<Unit>
+    suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
+    suspend fun delete1on1MessagesRemotely(
+        threadId: Long,
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    )
+    suspend fun deleteNoteToSelfMessagesRemotely(
+        threadId: Long,
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    )
+    suspend fun deleteLegacyGroupMessagesRemotely(
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    )
+
+    fun buildUnsendRequest(recipient: Recipient, message: MessageRecord): UnsendRequest?
     suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit>
     suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient): Result<Unit>
     suspend fun deleteThread(threadId: Long): Result<Unit>
@@ -174,14 +193,57 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun deleteLocally(recipient: Recipient, message: MessageRecord) {
-        if (shouldSendUnsendRequest(recipient)) {
-            textSecurePreferences.getLocalNumber()?.let {
-                MessageSender.send(buildUnsendRequest(message), Address.fromSerialized(it))
-            }
+    /**
+     * This will delete these messages from the db
+     * Not to be confused with 'marking messages as deleted'
+     */
+    override fun deleteMessages(messages: Set<MessageRecord>, threadId: Long) {
+        // split the messages into mms and sms
+        val (mms, sms) = messages.partition { it.isMms }
+
+        if(mms.isNotEmpty()){
+            messageDataProvider.deleteMessages(mms.map { it.id }, threadId, isSms = false)
         }
 
-        messageDataProvider.deleteMessage(message.id, !message.isMms)
+        if(sms.isNotEmpty()){
+            messageDataProvider.deleteMessages(sms.map { it.id }, threadId, isSms = true)
+        }
+    }
+
+    /**
+     * This will mark the messages as deleted.
+     * They won't be removed from the db but instead will appear as a special type
+     * of message that says something like "This message was deleted"
+     */
+    override fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String) {
+        // split the messages into mms and sms
+        val (mms, sms) = messages.partition { it.isMms }
+
+        if(mms.isNotEmpty()){
+            messageDataProvider.markMessagesAsDeleted(mms.map { MarkAsDeletedMessage(
+                messageId = it.id,
+                isOutgoing = it.isOutgoing
+            ) },
+                isSms = false,
+                displayedMessage = displayedMessage
+            )
+
+            // delete reactions
+            storage.deleteReactions(messageIds = mms.map { it.id }, mms = true)
+        }
+
+        if(sms.isNotEmpty()){
+            messageDataProvider.markMessagesAsDeleted(sms.map { MarkAsDeletedMessage(
+                messageId = it.id,
+                isOutgoing = it.isOutgoing
+            ) },
+                isSms = true,
+                displayedMessage = displayedMessage
+            )
+
+            // delete reactions
+            storage.deleteReactions(messageIds = sms.map { it.id }, mms = false)
+        }
     }
 
     override fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord) {
@@ -197,74 +259,82 @@ class DefaultConversationRepository @Inject constructor(
         storage.setRecipientApproved(recipient, isApproved)
     }
 
-    override suspend fun deleteForEveryone(
+    override suspend fun deleteCommunityMessagesRemotely(
+        threadId: Long,
+        messages: Set<MessageRecord>
+    ) {
+        val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
+
+        messages.forEach { message ->
+            lokiMessageDb.getServerID(message.id, !message.isMms)?.let { messageServerID ->
+                OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
+            }
+        }
+    }
+
+    override suspend fun delete1on1MessagesRemotely(
         threadId: Long,
         recipient: Recipient,
-        message: MessageRecord
-    ): Result<Unit> {
-        return runCatching {
-            withContext(Dispatchers.Default) {
-                val openGroup = lokiThreadDb.getOpenGroupChat(threadId)
-                if (openGroup != null) {
-                    val serverId = lokiMessageDb.getServerID(message.id, !message.isMms)
-                    if (serverId != null) {
-                        OpenGroupApi.deleteMessage(
-                            serverID = serverId,
-                            room = openGroup.room,
-                            server = openGroup.server
-                        ).await()
-                        messageDataProvider.deleteMessage(message.id, !message.isMms)
-                    } else {
-                        // If the server ID is null then this message is stuck in limbo (it has likely been
-                        // deleted remotely but that deletion did not occur locally) - so we'll delete the
-                        // message locally to clean up.
-                        Log.w(
-                            "ConversationRepository",
-                            "Found community message without a server ID - deleting locally."
-                        )
+        messages: Set<MessageRecord>
+    ) {
+        // delete the messages remotely
+        val publicKey = recipient.address.serialize()
+        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
 
-                        // Caution: The bool returned from `deleteMessage` is NOT "Was the message
-                        // successfully deleted?" - it is "Was the thread itself also deleted because
-                        // removing that message resulted in an empty thread?".
-                        if (message.isMms) {
-                            mmsDb.deleteMessage(message.id)
-                        } else {
-                            smsDb.deleteMessage(message.id)
-                        }
-                    }
-                } else // If this thread is NOT in a Community
-                {
-                    val serverHash =
-                        messageDataProvider.getServerHashForMessage(message.id, message.isMms)
-                    if (serverHash != null) {
-                        var publicKey = recipient.address.serialize()
-                        if (recipient.isLegacyClosedGroupRecipient) {
-                            publicKey = GroupUtil.doubleDecodeGroupID(publicKey).toHexString()
-                        }
-
-                        if (recipient.isClosedGroupV2Recipient) {
-                            // admin check internally, assume either admin or all belong to user
-                            groupManager.requestMessageDeletion(
-                                groupId = AccountId(publicKey),
-                                messageHashes = listOf(serverHash)
-                            )
-                        } else {
-                            SnodeAPI.deleteMessage(
-                                publicKey = publicKey,
-                                swarmAuth = storage.userAuth!!,
-                                serverHashes = listOf(serverHash)
-                            ).await()
-                        }
-
-                        if (shouldSendUnsendRequest(recipient)) {
-                            MessageSender.send(
-                                message = buildUnsendRequest(message),
-                                address = recipient.address,
-                            )
-                        }
-                    }
-                    messageDataProvider.deleteMessage(message.id, !message.isMms)
+        messages.forEach { message ->
+            // delete from swarm
+            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+                ?.let { serverHash ->
+                    SnodeAPI.deleteMessage(publicKey, listOf(serverHash))
                 }
+
+            // send an UnsendRequest to user's swarm
+            buildUnsendRequest(recipient, message)?.let { unsendRequest ->
+                userAddress?.let { MessageSender.send(unsendRequest, it) }
+            }
+
+            // send an UnsendRequest to recipient's swarm
+            buildUnsendRequest(recipient, message)?.let { unsendRequest ->
+                MessageSender.send(unsendRequest, recipient.address)
+            }
+        }
+    }
+
+    override suspend fun deleteLegacyGroupMessagesRemotely(
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    ) {
+        if (recipient.isClosedGroupRecipient) {
+            val publicKey = recipient.address
+
+            messages.forEach { message ->
+                // send an UnsendRequest to group's swarm
+                buildUnsendRequest(recipient, message)?.let { unsendRequest ->
+                    MessageSender.send(unsendRequest, publicKey)
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteNoteToSelfMessagesRemotely(
+        threadId: Long,
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    ) {
+        // delete the messages remotely
+        val publicKey = recipient.address.serialize()
+        val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
+
+        messages.forEach { message ->
+            // delete from swarm
+            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+                ?.let { serverHash ->
+                    SnodeAPI.deleteMessage(publicKey, listOf(serverHash))
+                }
+
+            // send an UnsendRequest to user's swarm
+            buildUnsendRequest(recipient, message)?.let { unsendRequest ->
+                userAddress?.let { MessageSender.send(unsendRequest, it) }
             }
         }
     }
@@ -278,35 +348,6 @@ class DefaultConversationRepository @Inject constructor(
             author = message.takeUnless { it.isOutgoing }?.run { individualRecipient.address.contactIdentifier() } ?: textSecurePreferences.getLocalNumber(),
             timestamp = message.timestamp
         )
-    }
-
-    override suspend fun deleteMessageWithoutUnsendRequest(
-        threadId: Long,
-        messages: Set<MessageRecord>
-    ): Result<Unit> = kotlin.runCatching {
-        withContext(Dispatchers.Default) {
-            val openGroup = lokiThreadDb.getOpenGroupChat(threadId)
-            if (openGroup != null) {
-                val messageServerIDs = mutableMapOf<Long, MessageRecord>()
-                for (message in messages) {
-                    val messageServerID =
-                        lokiMessageDb.getServerID(message.id, !message.isMms) ?: continue
-                    messageServerIDs[messageServerID] = message
-                }
-                messageServerIDs.forEach { (messageServerID, message) ->
-                    OpenGroupApi.deleteMessage(messageServerID, openGroup.room, openGroup.server).await()
-                    messageDataProvider.deleteMessage(message.id, !message.isMms)
-                }
-            } else {
-                for (message in messages) {
-                    if (message.isMms) {
-                        mmsDb.deleteMessage(message.id)
-                    } else {
-                        smsDb.deleteMessage(message.id)
-                    }
-                }
-            }
-        }
     }
 
     override suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {

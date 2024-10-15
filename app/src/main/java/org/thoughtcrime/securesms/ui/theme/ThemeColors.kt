@@ -21,6 +21,7 @@ interface ThemeColors {
     val warning: Color
     val textAlert: Color
     val danger: Color
+    val warning: Color
     val disabled: Color
     val background: Color
     val backgroundSecondary: Color
@@ -102,7 +103,7 @@ fun dangerButtonColors() = ButtonDefaults.buttonColors(
 data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
-    override val warning = warningUniversal
+    override val warning = primaryOrange
     override val disabled = disabledDark
     override val background = classicDark0
     override val backgroundSecondary = classicDark1
@@ -122,7 +123,7 @@ data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors
 data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
-    override val warning = warningUniversal
+    override val warning = primaryOrange
     override val disabled = disabledLight
     override val background = classicLight6
     override val backgroundSecondary = classicLight5
@@ -142,7 +143,7 @@ data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColor
 data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val isLight = false
     override val danger = dangerDark
-    override val warning = warningUniversal
+    override val warning = primaryOrange
     override val disabled = disabledDark
     override val background = oceanDark2
     override val backgroundSecondary = oceanDark1
@@ -162,7 +163,7 @@ data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
 data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
     override val isLight = true
     override val danger = dangerLight
-    override val warning = warningUniversal
+    override val warning = primaryOrange
     override val disabled = disabledLight
     override val background = oceanLight7
     override val backgroundSecondary = oceanLight6
