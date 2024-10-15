@@ -292,8 +292,9 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
         messageDataProvider.getServerHashForMessage(messageIdToDelete, mms)?.let { serverHash ->
             GlobalScope.launch(Dispatchers.IO) { // using GlobalScope as we are slowly migrating to coroutines but we can't migrate everything at once
                 try {
-                    SnodeAPI.deleteMessage(author, listOf(serverHash))
+                    SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
                 } catch (e: Exception) {
+                    Log.e("Loki", "Failed to delete message", e)
                 }
             }
         }

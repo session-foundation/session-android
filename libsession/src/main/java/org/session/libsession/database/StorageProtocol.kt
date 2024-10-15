@@ -3,17 +3,13 @@ package org.session.libsession.database
 import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
-import network.loki.messenger.libsession_util.Config
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
-import network.loki.messenger.libsession_util.util.GroupInfo
-import nl.komponents.kovenant.Promise
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
@@ -34,14 +30,13 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.guava.Optional
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 

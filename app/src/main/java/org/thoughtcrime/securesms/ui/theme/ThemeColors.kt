@@ -18,7 +18,6 @@ interface ThemeColors {
     // properties to override for each theme
     val isLight: Boolean
     val primary: Color
-    val warning: Color
     val textAlert: Color
     val danger: Color
     val warning: Color

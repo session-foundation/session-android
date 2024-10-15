@@ -912,7 +912,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     }
 
                     // show or hide loading indicator
-                    binding.loader.isVisible = uiState.showLoader
+                    binding.loader.isVisible = state.showLoader
                 }
             }
         }

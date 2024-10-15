@@ -326,7 +326,7 @@ class GroupManagerV2Impl @Inject constructor(
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@withContext
 
-        SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete).await()
+        SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
     override suspend fun handleMemberLeft(message: GroupUpdated, group: AccountId) {
@@ -831,7 +831,7 @@ class GroupManagerV2Impl @Inject constructor(
                 publicKey = groupId.hexString,
                 swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                 serverHashes = messageHashes
-            ).await()
+            )
         }
 
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
@@ -918,7 +918,7 @@ class GroupManagerV2Impl @Inject constructor(
                     groupId.hexString,
                     OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                     hashes
-                ).await()
+                )
             }
 
             // The non-admin user shouldn't be able to delete other user's messages so we will

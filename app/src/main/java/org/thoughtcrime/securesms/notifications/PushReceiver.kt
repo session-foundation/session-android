@@ -90,7 +90,7 @@ class PushReceiver @Inject constructor(
                 }
 
                 else -> {
-                    Log.w(TAG, "Received a push notification with an unknown namespace: ${metadata.namespace}")
+                    Log.w(TAG, "Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
                     return
                 }
             }

@@ -303,9 +303,8 @@ open class Storage @Inject constructor(
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
         val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())
-        // TODO: no idea if we need to server delete this
         for ((serverHash, sender, messageIdToDelete, isSms) in info) {
-            messageDataProvider.updateMessageAsDeleted(messageIdToDelete, isSms)
+            messageDataProvider.deleteMessage(messageIdToDelete, isSms)
             if (!messageDataProvider.isOutgoingMessage(messageIdToDelete)) {
                 notificationManager.updateNotification(context)
             }
@@ -662,9 +661,8 @@ open class Storage @Inject constructor(
     }
 
     override fun getMessageType(timestamp: Long, author: String): MessageType? {
-        val database = DatabaseComponent.get(context).mmsSmsDatabase()
         val address = fromSerialized(author)
-        return database.getMessageFor(timestamp, address)?.individualRecipient?.getType()
+        return mmsSmsDatabase.getMessageFor(timestamp, address)?.individualRecipient?.getType()
     }
 
     override fun updateSentTimestamp(
@@ -1817,7 +1815,7 @@ open class Storage @Inject constructor(
     }
 
     override fun deleteReactions(messageIds: List<Long>, mms: Boolean) {
-        DatabaseComponent.get(context).reactionDatabase().deleteMessageReactions(
+        reactionDatabase.deleteMessageReactions(
             messageIds.map { MessageId(it, mms) }
         )
     }

@@ -59,7 +59,6 @@ class EditGroupViewModel @AssistedInject constructor(
     val editingName: StateFlow<String?> get() = mutableEditingName
 
     // Output: the source-of-truth group information. Other states are derived from this.
-    @OptIn(ExperimentalCoroutinesApi::class)
     private val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
         combine(
             configFactory.configUpdateNotifications
@@ -77,20 +76,17 @@ class EditGroupViewModel @AssistedInject constructor(
                     ?: return@withContext null
 
                 val members = storage.getMembers(groupId.hexString)
-                    .asSequence()
-                    .filter { !it.removed }
-                    .mapTo(arrayListOf()) { member ->
-                        createGroupMember(
-                            member = member,
-                            myAccountId = currentUserId,
-                            amIAdmin = displayInfo.isUserAdmin,
-                            pendingState = pending[AccountId(member.sessionId)]
-                        )
-                    }
-
+                    .filterTo(mutableListOf()) { !it.removed }
                 sortMembers(members, currentUserId)
 
-                displayInfo to members
+                displayInfo to members.map { member ->
+                    createGroupMember(
+                        member = member,
+                        myAccountId = currentUserId,
+                        amIAdmin = displayInfo.isUserAdmin,
+                        pendingState = pending[AccountId(member.sessionId)]
+                    )
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
@@ -181,16 +177,16 @@ class EditGroupViewModel @AssistedInject constructor(
         )
     }
 
-    private fun sortMembers(members: MutableList<GroupMemberState>, currentUserId: String) {
-        // Order or members:
-        // 1. Current user always comes first
-        // 2. Then sort by name
-        // 3. Then sort by account ID
+    private fun sortMembers(members: MutableList<GroupMember>, currentUserId: String) {
         members.sortWith(
             compareBy(
-                { it.accountId != currentUserId },
-                { it.name },
-                { it.accountId }
+                { !it.inviteFailed }, // Failed invite comes first (as false value is less than true)
+                { memberPendingState.value[AccountId(it.sessionId)] != MemberPendingState.Inviting }, // "Sending invite" comes first
+                { !it.invitePending }, // "Invite sent" comes first
+                { !it.isAdminOrBeingPromoted }, // Admins come first
+                { it.sessionId != currentUserId }, // Being myself comes first
+                { it.name }, // Sort by name
+                { it.sessionId } // Last resort: sort by account ID
             )
         )
     }
