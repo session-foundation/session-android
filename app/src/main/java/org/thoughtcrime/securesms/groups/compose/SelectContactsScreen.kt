@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.serialization.Serializable
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Contact
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.SearchBar
@@ -38,8 +38,8 @@ object RouteSelectContacts
 
 @Composable
 fun SelectContactsScreen(
-    excludingAccountIDs: Set<String> = emptySet(),
-    onDoneClicked: (selectedContacts: Set<Contact>) -> Unit,
+    excludingAccountIDs: Set<AccountId> = emptySet(),
+    onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
     onBackClicked: () -> Unit,
 ) {
     val viewModel = hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
@@ -60,7 +60,7 @@ fun SelectContactsScreen(
 @Composable
 fun SelectContacts(
     contacts: List<ContactItem>,
-    onContactItemClicked: (accountId: String) -> Unit,
+    onContactItemClicked: (accountId: AccountId) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
     onDoneClicked: () -> Unit,
@@ -117,15 +117,19 @@ fun SelectContacts(
 @Preview
 @Composable
 private fun PreviewSelectContacts() {
+    val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
+
     PreviewTheme {
         SelectContacts(
             contacts = listOf(
                 ContactItem(
-                    contact = Contact(id = "123", name = "User 1"),
+                    accountID = AccountId(random),
+                    name = "User 1",
                     selected = false,
                 ),
                 ContactItem(
-                    contact = Contact(id = "124", name = "User 2"),
+                    accountID = AccountId(random),
+                    name = "User 2",
                     selected = true,
                 ),
             ),

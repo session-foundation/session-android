@@ -6,9 +6,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -24,6 +26,7 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeVerifier
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
@@ -88,7 +91,7 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun createGroup(
         groupName: String,
         groupDescription: String,
-        members: Set<Contact>
+        members: Set<AccountId>
     ): Recipient = withContext(dispatcher) {
         val ourAccountId =
             requireNotNull(storage.getUserPublicKey()) { "Our account ID is not available" }
@@ -103,8 +106,12 @@ class GroupManagerV2Impl @Inject constructor(
                 .also(configs.userGroups::set)
         }
 
-        checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
+        val adminKey = checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
         val groupId = group.groupAccountId
+
+        val memberAsRecipients = members.map {
+            Recipient.from(application, Address.fromSerialized(it.hexString), false)
+        }
 
         try {
             configFactory.withMutableGroupConfigs(groupId) { configs ->
@@ -113,12 +120,14 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupInfo.setDescription(groupDescription)
 
                 // Add members
-                for (member in members) {
+                for (member in memberAsRecipients) {
                     configs.groupMembers.set(
                         GroupMember(
-                            sessionId = member.id,
+                            sessionId = member.address.serialize(),
                             name = member.name,
-                            profilePicture = member.profilePicture ?: UserPic.DEFAULT,
+                            profilePicture = member.profileAvatar?.let { url ->
+                                member.profileKey?.let { key -> UserPic(url, key) }
+                            } ?: UserPic.DEFAULT,
                             inviteStatus = INVITE_STATUS_SENT
                         )
                     )
@@ -165,9 +174,12 @@ class GroupManagerV2Impl @Inject constructor(
             JobQueue.shared.add(
                 InviteContactsJob(
                     groupSessionId = groupId.hexString,
-                    memberSessionIds = members.map { it.id }.toTypedArray()
+                    memberSessionIds = members.map { it.hexString }.toTypedArray()
                 )
             )
+
+            // Also send a group update message
+            sendGroupUpdateForAddingMembers(groupId, adminKey, members, insertLocally = false)
 
             recipient
         } catch (e: Exception) {
@@ -223,7 +235,7 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupMembers.set(toSet)
             }
 
-            // Depends on whether we want to share history, we may need to rekey or just adding supplement keys
+            // Depends on whether we want to share history, we may need to rekey or just adding rsupplement keys
             if (shareHistory) {
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
@@ -267,7 +279,19 @@ class GroupManagerV2Impl @Inject constructor(
             )
         )
 
-        // Send a member change message to the group
+        // Send a group update message to the group telling members someone has been invited
+        sendGroupUpdateForAddingMembers(group, adminKey, newMembers, insertLocally = true)
+    }
+
+    /**
+     * Send a group update message to the group telling members someone has been invited.
+     */
+    private fun sendGroupUpdateForAddingMembers(
+        group: AccountId,
+        adminKey: ByteArray,
+        newMembers: Collection<AccountId>,
+        insertLocally: Boolean
+    ) {
         val timestamp = clock.currentTimeMills()
         val signature = SodiumUtilities.sign(
             buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
@@ -284,8 +308,11 @@ class GroupManagerV2Impl @Inject constructor(
                 )
                 .build()
         ).apply { this.sentTimestamp = timestamp }
-        MessageSender.send(updatedMessage, Destination.ClosedGroup(group.hexString), false).await()
-        storage.insertGroupInfoChange(updatedMessage, group)
+        MessageSender.send(updatedMessage, Destination.ClosedGroup(group.hexString), false)
+
+        if (insertLocally) {
+            storage.insertGroupInfoChange(updatedMessage, group)
+        }
     }
 
     override suspend fun removeMembers(
@@ -529,16 +556,15 @@ class GroupManagerV2Impl @Inject constructor(
             lokiDatabase.deleteGroupInviteReferrer(threadId)
 
             if (approved) {
-                approveGroupInvite(group, threadId)
+                approveGroupInvite(group)
             } else {
                 configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
                 storage.deleteConversation(threadId)
             }
         }
 
-    private fun approveGroupInvite(
+    private suspend fun approveGroupInvite(
         group: GroupInfo.ClosedGroupInfo,
-        threadId: Long,
     ) {
         val key = requireNotNull(storage.getUserPublicKey()) {
             "Our account ID is not available"
@@ -548,6 +574,15 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.set(group.copy(invited = false))
         }
+
+        val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
+        poller.start()
+
+        // We need to wait until we have the first data polled from the poller, otherwise
+        // we won't have the necessary configs to send invite response/or do anything else
+        poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
+            .filter { it.hadAtLeastOneSuccessfulPoll }
+            .first()
 
         if (group.adminKey == null) {
             // Send an invite response to the group if we are invited as a regular member
@@ -572,8 +607,6 @@ class GroupManagerV2Impl @Inject constructor(
                 Unit
             }
         }
-
-        pollerFactory.pollerFor(group.groupAccountId)?.start()
     }
 
     override suspend fun handleInvitation(
@@ -656,7 +689,7 @@ class GroupManagerV2Impl @Inject constructor(
      * @param inviter the invite message sender
      * @return The newly created group info if the invitation is processed, null otherwise.
      */
-    private fun handleInvitation(
+    private suspend fun handleInvitation(
         groupId: AccountId,
         groupName: String,
         authDataOrAdminKey: ByteArray,
@@ -691,8 +724,9 @@ class GroupManagerV2Impl @Inject constructor(
         val groupThreadId = storage.getOrCreateThreadIdFor(recipient.address)
         storage.setRecipientApprovedMe(recipient, true)
         storage.setRecipientApproved(recipient, shouldAutoApprove)
+
         if (shouldAutoApprove) {
-            approveGroupInvite(closedGroupInfo, groupThreadId)
+            approveGroupInvite(closedGroupInfo)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
             storage.insertGroupInviteControlMessage(

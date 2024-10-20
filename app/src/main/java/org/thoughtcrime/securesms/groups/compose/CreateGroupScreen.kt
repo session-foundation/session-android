@@ -21,7 +21,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Contact
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.CreateGroupEvent
 import org.thoughtcrime.securesms.groups.CreateGroupViewModel
@@ -83,7 +83,7 @@ fun CreateGroup(
     groupNameError: String,
     contactSearchQuery: String,
     onContactSearchQueryChanged: (String) -> Unit,
-    onContactItemClicked: (accountID: String) -> Unit,
+    onContactItemClicked: (accountID: AccountId) -> Unit,
     showLoading: Boolean,
     items: List<ContactItem>,
     onCreateClicked: () -> Unit,
@@ -144,8 +144,8 @@ private fun CreateGroupPreview(
 ) {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val previewMembers = listOf(
-        ContactItem(Contact(random, name = "Alice"), false),
-        ContactItem(Contact(random, name = "Bob"), true),
+        ContactItem(accountID = AccountId(random), name = "Alice", false),
+        ContactItem(accountID = AccountId(random), name = "Bob", true),
     )
 
     PreviewTheme {

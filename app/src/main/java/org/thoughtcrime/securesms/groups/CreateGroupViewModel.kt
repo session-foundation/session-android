@@ -1,8 +1,10 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateGroupViewModel @Inject constructor(
     configFactory: ConfigFactory,
+    @ApplicationContext appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
 ): ViewModel() {
@@ -28,6 +31,7 @@ class CreateGroupViewModel @Inject constructor(
         configFactory = configFactory,
         excludingAccountIDs = emptySet(),
         scope = viewModelScope,
+        appContext = appContext,
     )
 
     // Input: group name

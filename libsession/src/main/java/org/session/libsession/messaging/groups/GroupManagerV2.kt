@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.groups
 
-import network.loki.messenger.libsession_util.util.Contact
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
@@ -14,7 +13,7 @@ interface GroupManagerV2 {
     suspend fun createGroup(
         groupName: String,
         groupDescription: String,
-        members: Set<Contact>
+        members: Set<AccountId>
     ): Recipient
 
     suspend fun inviteMembers(

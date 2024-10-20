@@ -114,10 +114,10 @@ private object RouteEditGroup
 fun EditGroup(
     onBackClick: () -> Unit,
     onAddMemberClick: () -> Unit,
-    onResendInviteClick: (accountId: String) -> Unit,
-    onResendPromotionClick: (accountId: String) -> Unit,
-    onPromoteClick: (accountId: String) -> Unit,
-    onRemoveClick: (accountId: String, removeMessages: Boolean) -> Unit,
+    onResendInviteClick: (accountId: AccountId) -> Unit,
+    onResendPromotionClick: (accountId: AccountId) -> Unit,
+    onPromoteClick: (accountId: AccountId) -> Unit,
+    onRemoveClick: (accountId: AccountId, removeMessages: Boolean) -> Unit,
     onEditingNameValueChanged: (String) -> Unit,
     editingName: String?,
     onEditNameClicked: () -> Unit,
@@ -300,7 +300,7 @@ fun EditGroup(
 
 @Composable
 private fun ConfirmRemovingMemberDialog(
-    onConfirmed: (accountId: String, removeMessages: Boolean) -> Unit,
+    onConfirmed: (accountId: AccountId, removeMessages: Boolean) -> Unit,
     onDismissRequest: () -> Unit,
     member: GroupMemberState,
     groupName: String,
@@ -393,7 +393,7 @@ private fun MemberModalBottomSheetOptionItem(
 
 @Composable
 private fun MemberItem(
-    onClick: (accountId: String) -> Unit,
+    onClick: (accountId: AccountId) -> Unit,
     member: GroupMemberState,
     modifier: Modifier = Modifier,
 ) {
@@ -445,7 +445,7 @@ private fun MemberItem(
 private fun EditGroupPreview() {
     PreviewTheme {
         val oneMember = GroupMemberState(
-            accountId = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234",
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
             status = "Invited",
             highlightStatus = false,
@@ -455,7 +455,7 @@ private fun EditGroupPreview() {
             canResendPromotion = false,
         )
         val twoMember = GroupMemberState(
-            accountId = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235",
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
             status = "Promote failed",
             highlightStatus = true,
@@ -465,7 +465,7 @@ private fun EditGroupPreview() {
             canResendPromotion = false,
         )
         val threeMember = GroupMemberState(
-            accountId = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236",
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
             status = "",
             highlightStatus = false,

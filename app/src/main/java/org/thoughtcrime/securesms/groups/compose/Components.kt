@@ -41,6 +41,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -69,7 +70,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 fun LazyListScope.multiSelectMemberList(
     contacts: List<ContactItem>,
     modifier: Modifier = Modifier,
-    onContactItemClicked: (accountId: String) -> Unit,
+    onContactItemClicked: (accountId: AccountId) -> Unit,
     enabled: Boolean = true,
 ) {
     items(contacts) { contact ->
@@ -120,7 +121,7 @@ fun RowScope.MemberName(
 
 
 @Composable
-fun RowScope.ContactPhoto(sessionId: String) {
+fun RowScope.ContactPhoto(sessionId: AccountId) {
     return if (LocalInspectionMode.current) {
         Image(
             painterResource(id = R.drawable.ic_profile_default),
@@ -136,7 +137,7 @@ fun RowScope.ContactPhoto(sessionId: String) {
         val context = LocalContext.current
         // Ideally we migrate to something that doesn't require recipient, or get contact photo another way
         val recipient = remember(sessionId) {
-            Recipient.from(context, Address.fromSerialized(sessionId), false)
+            Recipient.from(context, Address.fromSerialized(sessionId.hexString), false)
         }
         Avatar(recipient, modifier = Modifier.size(48.dp))
     }
@@ -153,11 +154,13 @@ fun PreviewMemberList() {
             multiSelectMemberList(
                 contacts = listOf(
                     ContactItem(
-                        Contact(random, "Person"),
+                        accountID = AccountId(random),
+                        name = "Person",
                         selected = false,
                     ),
                     ContactItem(
-                        Contact(random, "Cow"),
+                        accountID = AccountId(random),
+                        name = "Cow",
                         selected = true,
                     )
                 ),

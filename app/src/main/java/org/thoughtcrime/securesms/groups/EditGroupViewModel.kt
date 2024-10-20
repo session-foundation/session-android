@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
@@ -67,9 +66,9 @@ class EditGroupViewModel @AssistedInject constructor(
             memberPendingState
         ) { _, pending ->
             withContext(Dispatchers.Default) {
-                val currentUserId = checkNotNull(storage.getUserPublicKey()) {
+                val currentUserId = AccountId(checkNotNull(storage.getUserPublicKey()) {
                     "User public key is null"
-                }
+                })
 
                 val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                     ?: return@withContext null
@@ -118,21 +117,21 @@ class EditGroupViewModel @AssistedInject constructor(
     val error: StateFlow<String?> get() = mutableError
 
     // Output:
-    val excludingAccountIDsFromContactSelection: Set<String>
+    val excludingAccountIDsFromContactSelection: Set<AccountId>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
 
     private fun createGroupMember(
         member: GroupMember,
-        myAccountId: String,
+        myAccountId: AccountId,
         amIAdmin: Boolean,
         pendingState: MemberPendingState?
     ): GroupMemberState {
         var status = ""
         var highlightStatus = false
-        var name = member.name.orEmpty()
+        var name = member.name.orEmpty().ifEmpty { member.sessionId }
 
         when {
-            member.sessionId == myAccountId -> {
+            member.sessionId == myAccountId.hexString -> {
                 name = context.getString(R.string.you)
             }
 
@@ -164,81 +163,81 @@ class EditGroupViewModel @AssistedInject constructor(
         }
 
         return GroupMemberState(
-            accountId = member.sessionId,
+            accountId = AccountId(member.sessionId),
             name = name,
-            canRemove = amIAdmin && member.sessionId != myAccountId && !member.isAdminOrBeingPromoted,
-            canPromote = amIAdmin && member.sessionId != myAccountId && !member.isAdminOrBeingPromoted,
-            canResendPromotion = amIAdmin && member.sessionId != myAccountId && member.promotionFailed,
-            canResendInvite = amIAdmin && member.sessionId != myAccountId &&
+            canRemove = amIAdmin && member.sessionId != myAccountId.hexString && !member.isAdminOrBeingPromoted,
+            canPromote = amIAdmin && member.sessionId != myAccountId.hexString && !member.isAdminOrBeingPromoted,
+            canResendPromotion = amIAdmin && member.sessionId != myAccountId.hexString && member.promotionFailed,
+            canResendInvite = amIAdmin && member.sessionId != myAccountId.hexString &&
                     (member.inviteFailed || member.invitePending),
             status = status,
             highlightStatus = highlightStatus
         )
     }
 
-    private fun sortMembers(members: MutableList<GroupMember>, currentUserId: String) {
+    private fun sortMembers(members: MutableList<GroupMember>, currentUserId: AccountId) {
         members.sortWith(
             compareBy(
                 { !it.inviteFailed }, // Failed invite comes first (as false value is less than true)
                 { memberPendingState.value[AccountId(it.sessionId)] != MemberPendingState.Inviting }, // "Sending invite" comes first
                 { !it.invitePending }, // "Invite sent" comes first
                 { !it.isAdminOrBeingPromoted }, // Admins come first
-                { it.sessionId != currentUserId }, // Being myself comes first
+                { it.sessionId != currentUserId.hexString }, // Being myself comes first
                 { it.name }, // Sort by name
                 { it.sessionId } // Last resort: sort by account ID
             )
         )
     }
 
-    fun onContactSelected(contacts: Set<Contact>) {
+    fun onContactSelected(contacts: Set<AccountId>) {
         performGroupOperation {
             try {
                 // Mark the contacts as pending
                 memberPendingState.update { states ->
-                    states + contacts.associate { AccountId(it.id) to MemberPendingState.Inviting }
+                    states + contacts.associateWith { MemberPendingState.Inviting }
                 }
 
                 groupManager.inviteMembers(
                     groupId,
-                    contacts.map { AccountId(it.id) },
+                    contacts.toList(),
                     shareHistory = false
                 )
             } finally {
                 // Remove pending state (so the real state will be revealed)
-                memberPendingState.update { states -> states - contacts.mapTo(hashSetOf()) { AccountId(it.id) } }
+                memberPendingState.update { states -> states - contacts }
             }
         }
     }
 
-    fun onResendInviteClicked(contactSessionId: String) {
-        onContactSelected(setOf(Contact(contactSessionId)))
+    fun onResendInviteClicked(contactSessionId: AccountId) {
+        onContactSelected(setOf(contactSessionId))
     }
 
-    fun onPromoteContact(memberSessionId: String) {
+    fun onPromoteContact(memberSessionId: AccountId) {
         performGroupOperation {
             try {
                 memberPendingState.update { states ->
-                    states + (AccountId(memberSessionId) to MemberPendingState.Promoting)
+                    states + (memberSessionId to MemberPendingState.Promoting)
                 }
 
-                groupManager.promoteMember(groupId, listOf(AccountId(memberSessionId)))
+                groupManager.promoteMember(groupId, listOf(memberSessionId))
             } finally {
-                memberPendingState.update { states -> states - AccountId(memberSessionId) }
+                memberPendingState.update { states -> states - memberSessionId }
             }
         }
     }
 
-    fun onRemoveContact(contactSessionId: String, removeMessages: Boolean) {
+    fun onRemoveContact(contactSessionId: AccountId, removeMessages: Boolean) {
         performGroupOperation {
             groupManager.removeMembers(
                 groupAccountId = groupId,
-                removedMembers = listOf(AccountId(contactSessionId)),
+                removedMembers = listOf(contactSessionId),
                 removeMessages = removeMessages
             )
         }
     }
 
-    fun onResendPromotionClicked(memberSessionId: String) {
+    fun onResendPromotionClicked(memberSessionId: AccountId) {
         onPromoteContact(memberSessionId)
     }
 
@@ -315,7 +314,7 @@ private enum class MemberPendingState {
 }
 
 data class GroupMemberState(
-    val accountId: String,
+    val accountId: AccountId,
     val name: String,
     val status: String,
     val highlightStatus: Boolean,

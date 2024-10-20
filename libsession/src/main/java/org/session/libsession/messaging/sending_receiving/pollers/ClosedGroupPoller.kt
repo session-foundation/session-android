@@ -6,6 +6,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -49,23 +51,31 @@ class ClosedGroupPoller(
         private const val TAG = "ClosedGroupPoller"
     }
 
-    private var job: Job? = null
+    sealed interface State
+    data object IdleState : State
+    data class StartedState(internal val job: Job, val hadAtLeastOneSuccessfulPoll: Boolean = false) : State
+
+    private val mutableState = MutableStateFlow<State>(IdleState)
+    val state: StateFlow<State> get() = mutableState
 
     fun start() {
-        if (job?.isActive == true) return // already started, don't restart
+        if ((state.value as? StartedState)?.job?.isActive == true) return // already started, don't restart
 
         Log.d(TAG, "Starting closed group poller for ${closedGroupSessionId.hexString.take(4)}")
-        job?.cancel()
-        job = scope.launch(executor) {
+        val job = scope.launch(executor) {
             while (isActive) {
                 try {
-                    val swarmNodes = SnodeAPI.fetchSwarmNodes(closedGroupSessionId.hexString).toMutableSet()
+                    val swarmNodes =
+                        SnodeAPI.fetchSwarmNodes(closedGroupSessionId.hexString).toMutableSet()
                     var currentSnode: Snode? = null
 
                     while (isActive) {
                         if (currentSnode == null) {
                             check(swarmNodes.isNotEmpty()) { "No more swarm nodes found" }
-                            Log.d(TAG, "No current snode, getting a new one. Remaining in pool = ${swarmNodes.size - 1}")
+                            Log.d(
+                                TAG,
+                                "No current snode, getting a new one. Remaining in pool = ${swarmNodes.size - 1}"
+                            )
                             currentSnode = swarmNodes.random()
                             swarmNodes.remove(currentSnode)
                         }
@@ -97,11 +107,17 @@ class ClosedGroupPoller(
                 }
             }
         }
+
+        mutableState.value = StartedState(job = job)
+
+        job.invokeOnCompletion {
+            mutableState.value = IdleState
+        }
     }
 
     fun stop() {
-        job?.cancel()
-        job = null
+        Log.d(TAG, "Stopping closed group poller for ${closedGroupSessionId.hexString.take(4)}")
+        (state.value as? StartedState)?.job?.cancel()
     }
 
     private suspend fun poll(snode: Snode): Unit = supervisorScope {
@@ -235,6 +251,12 @@ class ClosedGroupPoller(
                     addSuppressed(errors[index])
                 }
             }
+        }
+
+        // Update the state to indicate that we had at least one successful poll
+        val currentState = state.value as? StartedState
+        if (currentState != null && !currentState.hadAtLeastOneSuccessfulPoll) {
+            mutableState.value = currentState.copy(hadAtLeastOneSuccessfulPoll = true)
         }
     }
 

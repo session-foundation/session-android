@@ -1,11 +1,13 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -21,24 +23,28 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import network.loki.messenger.libsession_util.util.Contact
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.search.getSearchName
 
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
 class SelectContactsViewModel @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val configFactory: ConfigFactory,
-    @Assisted private val excludingAccountIDs: Set<String>,
+    @ApplicationContext private val appContext: Context,
+    @Assisted private val excludingAccountIDs: Set<AccountId>,
     @Assisted private val scope: CoroutineScope
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
 
     // Input: The selected contact account IDs
-    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<String>())
+    private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<AccountId>())
 
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
@@ -52,11 +58,11 @@ class SelectContactsViewModel @AssistedInject constructor(
     ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Output
-    val currentSelected: Set<Contact>
+    val currentSelected: Set<AccountId>
         get() = contacts.value
             .asSequence()
             .filter { it.selected }
-            .map { it.contact }
+            .map { it.accountID }
             .toSet()
 
     override fun onCleared() {
@@ -71,34 +77,32 @@ class SelectContactsViewModel @AssistedInject constructor(
         .map {
             withContext(Dispatchers.Default) {
                 val allContacts = configFactory.withUserConfigs {
-                    it.contacts.all()
+                    it.contacts.all().filter { it.approvedMe }
                 }
 
                 if (excludingAccountIDs.isEmpty()) {
                     allContacts
                 } else {
-                    allContacts.filterNot { it.id in excludingAccountIDs }
-                }
+                    allContacts.filterNot { AccountId(it.id) in excludingAccountIDs }
+                }.map { Recipient.from(appContext, Address.fromSerialized(it.id), false) }
             }
         }
 
 
     private fun filterContacts(
-        contacts: Collection<Contact>,
+        contacts: Collection<Recipient>,
         query: String,
-        selectedAccountIDs: Set<String>
+        selectedAccountIDs: Set<AccountId>
     ): List<ContactItem> {
         return contacts
             .asSequence()
-            .filter {
-                query.isBlank() ||
-                        it.name.contains(query, ignoreCase = true) ||
-                        it.nickname.contains(query, ignoreCase = true)
-            }
+            .filter { query.isBlank() || it.getSearchName().contains(query, ignoreCase = true) }
             .map { contact ->
+                val accountId = AccountId(contact.address.serialize())
                 ContactItem(
-                    contact = contact,
-                    selected = selectedAccountIDs.contains(contact.id)
+                    name = contact.getSearchName(),
+                    accountID = accountId,
+                    selected = selectedAccountIDs.contains(accountId),
                 )
             }
             .toList()
@@ -108,7 +112,7 @@ class SelectContactsViewModel @AssistedInject constructor(
         mutableSearchQuery.value = query
     }
 
-    fun onContactItemClicked(accountID: String) {
+    fun onContactItemClicked(accountID: AccountId) {
         val newSet = mutableSelectedContactAccountIDs.value.toHashSet()
         if (!newSet.remove(accountID)) {
             newSet.add(accountID)
@@ -119,16 +123,14 @@ class SelectContactsViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            excludingAccountIDs: Set<String> = emptySet(),
+            excludingAccountIDs: Set<AccountId> = emptySet(),
             scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         ): SelectContactsViewModel
     }
 }
 
 data class ContactItem(
-    val contact: Contact,
+    val accountID: AccountId,
+    val name: String,
     val selected: Boolean,
-) {
-    val accountID: String get() = contact.id
-    val name: String get() = contact.displayName.ifEmpty { truncateIdForDisplay(contact.id) }
-}
+)
