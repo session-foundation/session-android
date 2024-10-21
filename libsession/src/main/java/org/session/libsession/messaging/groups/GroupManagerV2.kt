@@ -44,7 +44,7 @@ interface GroupManagerV2 {
 
     suspend fun handleMemberLeft(message: GroupUpdated, group: AccountId)
 
-    suspend fun leaveGroup(group: AccountId, deleteOnLeave: Boolean)
+    suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean)
 
     suspend fun promoteMember(group: AccountId, members: List<AccountId>)
 

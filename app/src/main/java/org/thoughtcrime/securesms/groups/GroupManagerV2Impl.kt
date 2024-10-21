@@ -388,22 +388,20 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(group: AccountId, deleteOnLeave: Boolean) {
-        val canSendGroupMessage = configFactory.getClosedGroup(group)?.kicked == false
+    override suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean) {
+        val group = configFactory.getClosedGroup(groupId)
 
-        if (canSendGroupMessage) {
-            val destination = Destination.ClosedGroup(group.hexString)
+        // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
+        val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
+            val allMembers = config.groupMembers.all()
+            allMembers.count { it.admin } == 1 &&
+                    allMembers.first { it.admin }.sessionId == storage.getUserPublicKey()
+        }
 
-            MessageSender.send(
-                GroupUpdated(
-                    GroupUpdateMessage.newBuilder()
-                        .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                        .build()
-                ),
-                destination,
-                isSyncMessage = false
-            ).await()
+        if (group?.kicked == false) {
+            val destination = Destination.ClosedGroup(groupId.hexString)
 
+            // Always send a "XXX left" message to the group if we can
             MessageSender.send(
                 GroupUpdated(
                     GroupUpdateMessage.newBuilder()
@@ -412,14 +410,40 @@ class GroupManagerV2Impl @Inject constructor(
                 ),
                 destination,
                 isSyncMessage = false
-            ).await()
+            )
+
+            // If we are not the only admin, send a left message for other admin to handle the member removal
+            if (!weAreTheOnlyAdmin) {
+                MessageSender.send(
+                    GroupUpdated(
+                        GroupUpdateMessage.newBuilder()
+                            .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                            .build()
+                    ),
+                    destination,
+                    isSyncMessage = false
+                ).await()
+            }
         }
 
-        pollerFactory.pollerFor(group)?.stop()
+        // If we are the only admin, leaving this group will destroy the group
+        if (weAreTheOnlyAdmin) {
+            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                configs.groupInfo.destroyGroup()
+            }
+
+            // Must wait until the config is pushed, otherwise if we go through the rest
+            // of the code it will destroy the conversation, destroying the necessary configs
+            // along the way, we won't be able to push the "destroyed" state anymore.
+            configFactory.waitUntilGroupConfigsPushed(groupId)
+        }
+
+        pollerFactory.pollerFor(groupId)?.stop()
+
         if (deleteOnLeave) {
-            storage.getThreadId(Address.fromSerialized(group.hexString))
+            storage.getThreadId(Address.fromSerialized(groupId.hexString))
                 ?.let(storage::deleteConversation)
-            configFactory.removeGroup(group)
+            configFactory.removeGroup(groupId)
         }
     }
 

@@ -20,6 +20,8 @@ import androidx.core.graphics.drawable.IconCompat
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -156,6 +158,12 @@ object ConversationMenuHelper {
         })
     }
 
+    /**
+     * Handle the selected option
+     *
+     * @return An asynchronous channel that can be used to wait for the action to complete. Null if
+     * the action does not require waiting.
+     */
     fun onOptionItemSelected(
         context: Context,
         item: MenuItem,
@@ -164,7 +172,7 @@ object ConversationMenuHelper {
         factory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
-    ): Boolean {
+    ): ReceiveChannel<Unit>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
@@ -176,14 +184,15 @@ object ConversationMenuHelper {
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editClosedGroup(context, thread) }
-            R.id.menu_leave_group -> { leaveClosedGroup(context, thread, threadID, factory, storage, groupManager) }
+            R.id.menu_leave_group -> { return leaveClosedGroup(context, thread, threadID, factory, storage, groupManager) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
             R.id.menu_notification_settings -> { setNotifyType(context, thread) }
             R.id.menu_call -> { call(context, thread) }
         }
-        return true
+
+        return null
     }
 
     private fun showAllMedia(context: Context, thread: Recipient) {
@@ -330,7 +339,7 @@ object ConversationMenuHelper {
         configFactory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
-    ) {
+    ): ReceiveChannel<Unit>? {
         when {
             thread.isLegacyClosedGroupRecipient -> {
                 val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
@@ -357,10 +366,12 @@ object ConversationMenuHelper {
 
             thread.isClosedGroupV2Recipient -> {
                 val accountId = AccountId(thread.address.serialize())
-                val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+                val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return null
                 val name = configFactory.withGroupConfigs(accountId) {
                     it.groupInfo.getName()
                 } ?: group.name
+
+                val channel = Channel<Unit>()
 
                 confirmAndLeaveClosedGroup(
                     context = context,
@@ -369,11 +380,19 @@ object ConversationMenuHelper {
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
-                        groupManager.leaveGroup(accountId, true)
+                        try {
+                            groupManager.leaveGroup(accountId, true)
+                        } finally {
+                            channel.send(Unit)
+                        }
                     }
                 )
+
+                return channel
             }
         }
+
+        return null
     }
 
     private fun confirmAndLeaveClosedGroup(

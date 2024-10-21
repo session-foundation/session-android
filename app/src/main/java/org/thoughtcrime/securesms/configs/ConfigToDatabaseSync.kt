@@ -196,12 +196,14 @@ class ConfigToDatabaseSync @Inject constructor(
     private data class UpdateGroupInfo(
         val id: AccountId,
         val name: String?,
+        val destroyed: Boolean,
         val deleteBefore: Long?,
         val deleteAttachmentsBefore: Long?
     ) {
         constructor(groupInfoConfig: ReadableGroupInfoConfig) : this(
             id = groupInfoConfig.id(),
             name = groupInfoConfig.getName(),
+            destroyed = groupInfoConfig.isDestroyed(),
             deleteBefore = groupInfoConfig.getDeleteBefore(),
             deleteAttachmentsBefore = groupInfoConfig.getDeleteAttachmentsBefore()
         )
@@ -212,11 +214,16 @@ class ConfigToDatabaseSync @Inject constructor(
         val recipient = storage.getRecipientForThread(threadId) ?: return
         recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
         profileManager.setName(context, recipient, groupInfoConfig.name ?: "")
-        groupInfoConfig.deleteBefore?.let { removeBefore ->
-            storage.trimThreadBefore(threadId, removeBefore)
-        }
-        groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
-            mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, removeAttachmentsBefore, onlyMedia = true)
+
+        if (groupInfoConfig.destroyed) {
+            storage.clearMessages(threadId)
+        } else {
+            groupInfoConfig.deleteBefore?.let { removeBefore ->
+                storage.trimThreadBefore(threadId, removeBefore)
+            }
+            groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
+                mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, removeAttachmentsBefore, onlyMedia = true)
+            }
         }
     }
 

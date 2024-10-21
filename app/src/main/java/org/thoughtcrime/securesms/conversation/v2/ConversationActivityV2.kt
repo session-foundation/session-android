@@ -1231,17 +1231,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         if (item.itemId == android.R.id.home) {
             return false
         }
-        return viewModel.recipient?.let { recipient ->
-            ConversationMenuHelper.onOptionItemSelected(
-                context = this,
-                item = item,
-                thread = recipient,
-                threadID = threadId,
-                factory = configFactory,
-                storage = storage,
-                groupManager = groupManagerV2,
-            )
-        } ?: false
+
+        return viewModel.onOptionItemSelected(this, item)
     }
 
     override fun block(deleteThread: Boolean) {

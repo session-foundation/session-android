@@ -28,6 +28,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getClosedGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
@@ -59,7 +60,7 @@ interface ConversationRepository {
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun setApproved(recipient: Recipient, isApproved: Boolean)
-    fun isKicked(recipient: Recipient): Boolean
+    fun isGroupReadOnly(recipient: Recipient): Boolean
 
     suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
     suspend fun delete1on1MessagesRemotely(
@@ -170,15 +171,16 @@ class DefaultConversationRepository @Inject constructor(
         }
     }
 
-    override fun isKicked(recipient: Recipient): Boolean {
-        // For now, we only know care we are kicked for a groups v2 recipient
+    override fun isGroupReadOnly(recipient: Recipient): Boolean {
+        // We only care about group v2 recipient
         if (!recipient.isClosedGroupV2Recipient) {
             return false
         }
 
+        val groupId = recipient.address.serialize()
         return configFactory.withUserConfigs {
-            it.userGroups.getClosedGroup(recipient.address.serialize())?.kicked == true
-        }
+            it.userGroups.getClosedGroup(groupId)?.kicked == true
+        } || configFactory.withGroupConfigs(AccountId(groupId)) { it.groupInfo.isDestroyed() }
     }
 
     // This assumes that recipient.isContactRecipient is true

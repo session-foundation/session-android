@@ -365,7 +365,9 @@ class ConfigFactory @Inject constructor(
                 }
             }
 
-            Unit to configs.dumpIfNeeded(clock)
+            configs.dumpIfNeeded(clock)
+
+            Unit to true
         }
     }
 

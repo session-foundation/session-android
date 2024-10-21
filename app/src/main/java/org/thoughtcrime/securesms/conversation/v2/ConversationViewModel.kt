@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
+import android.view.MenuItem
 import androidx.annotation.StringRes
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
@@ -13,11 +14,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,6 +23,7 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -40,12 +39,14 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -61,7 +62,9 @@ class ConversationViewModel(
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val configFactory: ConfigFactory,
+    private val groupManagerV2: GroupManagerV2,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -225,7 +228,7 @@ class ConversationViewModel(
      */
     private fun shouldShowInput(recipient: Recipient?): Boolean {
         return when {
-            recipient?.isClosedGroupV2Recipient == true -> !repository.isKicked(recipient)
+            recipient?.isClosedGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
             recipient?.isLegacyClosedGroupRecipient == true -> {
                 groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true
             }
@@ -872,6 +875,37 @@ class ConversationViewModel(
         }
     }
 
+    fun onOptionItemSelected(
+        // This must be the context of the activity as requirement from ConversationMenuHelper
+        context: Context,
+        item: MenuItem
+    ): Boolean {
+        val recipient = recipient ?: return false
+
+        val inProgress = ConversationMenuHelper.onOptionItemSelected(
+            context = context,
+            item = item,
+            thread = recipient,
+            threadID = threadId,
+            factory = configFactory,
+            storage = storage,
+            groupManager = groupManagerV2,
+        )
+
+        if (inProgress != null) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(showLoader = true) }
+                try {
+                    inProgress.receive()
+                } finally {
+                    _uiState.update { it.copy(showLoader = false) }
+                }
+            }
+        }
+
+        return true
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -890,7 +924,9 @@ class ConversationViewModel(
         @ApplicationContext
         private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
-        private val textSecurePreferences: TextSecurePreferences
+        private val textSecurePreferences: TextSecurePreferences,
+        private val configFactory: ConfigFactory,
+        private val groupManagerV2: GroupManagerV2,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -904,7 +940,9 @@ class ConversationViewModel(
                 groupDb = groupDb,
                 threadDb = threadDb,
                 lokiMessageDb = lokiMessageDb,
-                textSecurePreferences = textSecurePreferences
+                textSecurePreferences = textSecurePreferences,
+                configFactory = configFactory,
+                groupManagerV2 = groupManagerV2,
             ) as T
         }
     }
