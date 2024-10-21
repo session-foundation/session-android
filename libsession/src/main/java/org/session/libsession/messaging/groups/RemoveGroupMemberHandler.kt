@@ -216,7 +216,8 @@ class RemoveGroupMemberHandler @Inject constructor(
         data = Base64.encodeBytes(
             Sodium.encryptForMultipleSimple(
                 messages = Array(pendingRemovals.size) {
-                    "${pendingRemovals[it].sessionId}${keys.currentGeneration()}".encodeToByteArray()
+                    AccountId(pendingRemovals[it].sessionId).pubKeyBytes
+                        .plus(keys.currentGeneration().toString().toByteArray())
                 },
                 recipients = Array(pendingRemovals.size) {
                     AccountId(pendingRemovals[it].sessionId).pubKeyBytes

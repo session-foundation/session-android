@@ -29,6 +29,7 @@ import org.session.libsession.utilities.getClosedGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
@@ -299,23 +300,29 @@ class ClosedGroupPoller(
             )
 
             if (decoded != null) {
-                val message = decoded.decodeToString()
-                val matcher = Sodium.KICKED_REGEX.matcher(message)
-                if (matcher.matches()) {
-                    val sessionId = matcher.group(1)
-                    val messageGeneration = matcher.group(2)!!.toInt()
-                    val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
-                        it.groupKeys.currentGeneration()
-                    }
+                // The message should be in the format of "<sessionIdPubKeyBinary><messageGenerationASCII>",
+                // where the pub key is 32 bytes, so we need to have at least 33 bytes of data
+                if (decoded.size < 33) {
+                    Log.w(TAG, "Received an invalid kicked message, expecting at least 33 bytes, got ${decoded.size}")
+                    return@forEach
+                }
 
-                    val isForMe = sessionId == storage.getUserPublicKey()
-                    Log.d(TAG, "Received kicked message, for us? ${sessionId == storage.getUserPublicKey()}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
+                val sessionId = AccountId(IdPrefix.STANDARD, decoded.copyOfRange(0, 32))
+                val messageGeneration = decoded.copyOfRange(32, decoded.size).decodeToString().toIntOrNull()
+                if (messageGeneration == null) {
+                    Log.w(TAG, "Received an invalid kicked message: missing message generation")
+                    return@forEach
+                }
 
-                    if (isForMe && messageGeneration >= currentKeysGeneration) {
-                        groupManagerV2.handleKicked(closedGroupSessionId)
-                    }
-                } else {
-                    Log.w(TAG, "Received an invalid kicked message")
+                val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                    it.groupKeys.currentGeneration()
+                }
+
+                val isForMe = sessionId.hexString == storage.getUserPublicKey()
+                Log.d(TAG, "Received kicked message, for us? ${isForMe}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
+
+                if (isForMe && messageGeneration >= currentKeysGeneration) {
+                    groupManagerV2.handleKicked(closedGroupSessionId)
                 }
             }
         }
