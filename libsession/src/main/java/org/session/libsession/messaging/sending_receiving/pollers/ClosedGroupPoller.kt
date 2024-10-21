@@ -27,6 +27,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.getClosedGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
@@ -88,7 +89,7 @@ class ClosedGroupPoller(
 
                             result.isFailure -> {
                                 val error = result.exceptionOrNull()!!
-                                if (error is CancellationException) {
+                                if (error is CancellationException || error is NonRetryableException) {
                                     throw error
                                 }
 
@@ -100,6 +101,9 @@ class ClosedGroupPoller(
                         }
                     }
                 } catch (e: CancellationException) {
+                    throw e
+                } catch (e: NonRetryableException) {
+                    Log.e(TAG, "Non-retryable error during group poller", e)
                     throw e
                 } catch (e: Exception) {
                     Log.e(TAG, "Error during group poller", e)
@@ -131,9 +135,16 @@ class ClosedGroupPoller(
             }
         }
 
-        val adminKey = requireNotNull(configFactoryProtocol.getClosedGroup(closedGroupSessionId)) {
-            "Group doesn't exist"
-        }.adminKey
+        val group = configFactoryProtocol.getClosedGroup(closedGroupSessionId)
+        if (group == null) {
+            throw NonRetryableException("Group doesn't exist")
+        }
+
+        if (group.kicked) {
+            throw NonRetryableException("Group has been kicked")
+        }
+
+        val adminKey = group.adminKey
 
         val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
 
