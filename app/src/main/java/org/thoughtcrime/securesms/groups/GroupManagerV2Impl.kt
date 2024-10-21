@@ -3,12 +3,15 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Conversation
@@ -388,7 +391,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean) {
+    override suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean) = withContext(dispatcher + SupervisorJob()) {
         val group = configFactory.getClosedGroup(groupId)
 
         // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
@@ -400,30 +403,38 @@ class GroupManagerV2Impl @Inject constructor(
 
         if (group?.kicked == false) {
             val destination = Destination.ClosedGroup(groupId.hexString)
+            val sendMessageTasks = mutableListOf<Deferred<*>>()
 
             // Always send a "XXX left" message to the group if we can
-            MessageSender.send(
-                GroupUpdated(
-                    GroupUpdateMessage.newBuilder()
-                        .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                        .build()
-                ),
-                destination,
-                isSyncMessage = false
-            )
-
-            // If we are not the only admin, send a left message for other admin to handle the member removal
-            if (!weAreTheOnlyAdmin) {
+            sendMessageTasks += async {
                 MessageSender.send(
                     GroupUpdated(
                         GroupUpdateMessage.newBuilder()
-                            .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                            .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
                             .build()
                     ),
                     destination,
                     isSyncMessage = false
                 ).await()
             }
+
+
+            // If we are not the only admin, send a left message for other admin to handle the member removal
+            if (!weAreTheOnlyAdmin) {
+                sendMessageTasks += async {
+                    MessageSender.send(
+                        GroupUpdated(
+                            GroupUpdateMessage.newBuilder()
+                                .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                .build()
+                        ),
+                        destination,
+                        isSyncMessage = false
+                    ).await()
+                }
+            }
+
+            sendMessageTasks.awaitAll()
         }
 
         // If we are the only admin, leaving this group will destroy the group
