@@ -119,14 +119,14 @@ import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
+import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_REPLY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_RESEND
-import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_SAVE
 import org.thoughtcrime.securesms.conversation.v2.dialogs.BlockedDialog
 import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
@@ -168,6 +168,8 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
@@ -913,6 +915,10 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
                     // show or hide loading indicator
                     binding.loader.isVisible = state.showLoader
+
+                    if (state.isMessageRequestAccepted == true) {
+                        binding.messageRequestBar.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -1169,8 +1175,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val openGroup = viewModel.openGroup
 
         // Get the correct placeholder text for this type of empty conversation
-        val isNoteToSelf = recipient.isLocalNumber
         val txtCS: CharSequence = when {
+            // note to self
             recipient.isLocalNumber -> getString(R.string.noteToSelfEmpty)
 
             // If this is a community which we cannot write to
@@ -1187,8 +1193,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     .format()
             }
 
-            recipient.isGroupRecipient -> {
-                // If this is a group or community that we CAN send messages to
+            // 10n1 and groups
+            recipient.is1on1 || recipient.isGroupRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.toShortString())
                     .format()
@@ -1591,14 +1597,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         sendEmojiRemoval(emoji, message)
     }
 
+    /**
+     * Called when the user is attempting to clear all instance of a specific emoji.
+     */
     override fun onClearAll(emoji: String, messageId: MessageId) {
-        reactionDb.deleteEmojiReactions(emoji, messageId)
-        viewModel.openGroup?.let { openGroup ->
-            lokiMessageDb.getServerID(messageId.id, !messageId.mms)?.let { serverId ->
-                OpenGroupApi.deleteAllReactions(openGroup.room, openGroup.server, serverId, emoji)
-            }
-        }
-        threadDb.notifyThreadUpdated(viewModel.threadId)
+        viewModel.onEmojiClear(emoji, messageId)
     }
 
     override fun onMicrophoneButtonMove(event: MotionEvent) {

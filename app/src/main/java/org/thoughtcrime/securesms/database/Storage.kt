@@ -1288,6 +1288,16 @@ open class Storage @Inject constructor(
             }
             setRecipientHash(recipient, contact.hashCode().toString())
         }
+
+        // if we have contacts locally but that are missing from the config, remove their corresponding thread
+        val  removedContacts = getAllContacts().filter { localContact ->
+            moreContacts.firstOrNull {
+                it.id == localContact.accountID
+            } == null
+        }
+        removedContacts.forEach {
+            getThreadId(fromSerialized(it.accountID))?.let(::deleteConversation)
+        }
     }
 
     override fun addContacts(contacts: List<ConfigurationMessage.Contact>) {
@@ -1766,10 +1776,17 @@ open class Storage @Inject constructor(
         val timestamp = reaction.timestamp
         val localId = reaction.localId
         val isMms = reaction.isMms
+
         val messageId = if (localId != null && localId > 0 && isMms != null) {
+            // bail early is the message is marked as deleted
+            val messagingDatabase: MessagingDatabase = if (isMms == true) DatabaseComponent.get(context).mmsDatabase()
+            else DatabaseComponent.get(context).smsDatabase()
+            if(messagingDatabase.getMessageRecord(localId)?.isDeleted == true) return
+
             MessageId(localId, isMms)
         } else if (timestamp != null && timestamp > 0) {
             val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
+            if (messageRecord.isDeleted) return
             MessageId(messageRecord.id, messageRecord.isMms)
         } else return
         reactionDatabase.addReaction(

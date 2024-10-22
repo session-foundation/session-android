@@ -114,7 +114,6 @@ interface TextSecurePreferences {
     fun isEnterSendsEnabled(): Boolean
     fun isPasswordDisabled(): Boolean
     fun setPasswordDisabled(disabled: Boolean)
-    fun isScreenSecurityEnabled(): Boolean
     fun getLastVersionCode(): Int
     fun setLastVersionCode(versionCode: Int)
     fun isPassphraseTimeoutEnabled(): Boolean
@@ -219,7 +218,6 @@ interface TextSecurePreferences {
         const val LED_BLINK_PREF_CUSTOM = "pref_led_blink_custom"
         const val PASSPHRASE_TIMEOUT_INTERVAL_PREF = "pref_timeout_interval"
         const val PASSPHRASE_TIMEOUT_PREF = "pref_timeout_passphrase"
-        const val SCREEN_SECURITY_PREF = "pref_screen_security"
         const val ENTER_SENDS_PREF = "pref_enter_sends"
         const val THREAD_TRIM_ENABLED = "pref_trim_threads"
         internal const val LOCAL_NUMBER_PREF = "pref_local_number"
@@ -664,11 +662,6 @@ interface TextSecurePreferences {
 
         fun setPasswordDisabled(context: Context, disabled: Boolean) {
             setBooleanPreference(context, DISABLE_PASSPHRASE_PREF, disabled)
-        }
-
-        @JvmStatic
-        fun isScreenSecurityEnabled(context: Context): Boolean {
-            return getBooleanPreference(context, SCREEN_SECURITY_PREF, context.resources.getBoolean(R.bool.screen_security_default))
         }
 
         fun getLastVersionCode(context: Context): Int {
@@ -1296,10 +1289,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setPasswordDisabled(disabled: Boolean) {
         setBooleanPreference(TextSecurePreferences.DISABLE_PASSPHRASE_PREF, disabled)
-    }
-
-    override fun isScreenSecurityEnabled(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SCREEN_SECURITY_PREF, true)
     }
 
     override fun getLastVersionCode(): Int {

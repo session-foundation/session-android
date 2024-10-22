@@ -193,6 +193,16 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
+  public void clearSnippet(long threadId){
+    ContentValues contentValues = new ContentValues(1);
+
+    contentValues.put(SNIPPET, "");
+
+    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
+    notifyConversationListListeners();
+  }
+
   public void updateSnippet(long threadId, String snippet, @Nullable Uri attachment, long date, long type, boolean unarchive) {
     ContentValues contentValues = new ContentValues(4);
 
@@ -298,7 +308,7 @@ public class ThreadDatabase extends Database {
   public void trimThreadBefore(long threadId, long timestamp) {
     Log.i("ThreadDatabase", "Trimming thread: " + threadId + " before :"+timestamp);
     DatabaseComponent.get(context).smsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp);
-    DatabaseComponent.get(context).mmsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp, false);
+    DatabaseComponent.get(context).mmsDatabase().deleteMessagesInThreadBeforeDate(threadId, timestamp);
     update(threadId, false);
     notifyConversationListeners(threadId);
   }
@@ -707,10 +717,7 @@ public class ThreadDatabase extends Database {
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     long count                    = mmsSmsDatabase.getConversationCount(threadId);
 
-    MmsSmsDatabase.Reader reader = null;
-
-    try {
-      reader = mmsSmsDatabase.readerFor(mmsSmsDatabase.getConversationSnippet(threadId));
+    try (MmsSmsDatabase.Reader reader = mmsSmsDatabase.readerFor(mmsSmsDatabase.getConversationSnippet(threadId))) {
       MessageRecord record = null;
       if (reader != null) {
         record = reader.getNext();
@@ -724,7 +731,8 @@ public class ThreadDatabase extends Database {
                      record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount());
         return false;
       } else {
-        updateThread(threadId, 0, "", null, System.currentTimeMillis(), 0, 0, 0, false, 0, 0);
+        // for empty threads or if there is only deleted messages, show an empty snippet
+        clearSnippet(threadId);
         return false;
       }
     } finally {
@@ -770,10 +778,6 @@ public class ThreadDatabase extends Database {
     MarkReadReceiver.process(context, messages);
     ApplicationContext.getInstance(context).getMessageNotifier().updateNotification(context, threadId);
     return setLastSeen(threadId, lastSeenTime);
-  }
-
-  private boolean deleteThreadOnEmpty(long threadId) {
-    return false;
   }
 
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {

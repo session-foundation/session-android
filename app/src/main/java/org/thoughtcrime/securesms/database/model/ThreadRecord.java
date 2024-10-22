@@ -107,10 +107,12 @@ public class ThreadRecord extends DisplayRecord {
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
-        if (isGroupUpdateMessage()) {
-            return lastMessage != null
-                    ? lastMessage.getDisplayBody(context).toString()
-                    : context.getString(R.string.groupUpdated);
+        // no need to display anything if there are no messages
+        if(lastMessage == null){
+            return "";
+        }
+        else if (isGroupUpdateMessage()) {
+            return context.getString(R.string.groupUpdated);
         } else if (isOpenGroupInvitation()) {
             return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {

@@ -305,14 +305,14 @@
 
     <TextView
         android:padding="@dimen/medium_spacing"
-        android:textSize="@dimen/small_font_size"
-        android:textColor="?android:textColorSecondary"
+        style="@style/Signal.Text.Preview"
+        android:textColor="?android:textColorTertiary"
         android:textAlignment="center"
         android:id="@+id/placeholderText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/large_spacing"
         app:layout_constraintTop_toBottomOf="@+id/outdatedDisappearingBanner"
-        android:elevation="8dp"
         android:contentDescription="@string/AccessibilityId_control_message"
         tools:text="Some Control Message Text"
         />
@@ -339,7 +339,7 @@
             android:paddingHorizontal="@dimen/massive_spacing"
             android:paddingVertical="@dimen/small_spacing"
             android:textSize="@dimen/text_size"
-            android:text="@string/block"/>
+            android:text="@string/deleteAfterGroupPR1BlockUser"/>
 
         <TextView
             android:id="@+id/sendAcceptsTextView"
@@ -375,7 +375,7 @@
                 android:layout_height="@dimen/medium_button_height"
                 android:layout_marginStart="@dimen/medium_spacing"
                 android:layout_weight="1"
-                android:text="d" />
+                android:text="@string/delete" />
 
         </LinearLayout>
 

@@ -43,7 +43,10 @@ import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -61,6 +64,7 @@ class ConversationViewModel(
     private val messageDataProvider: MessageDataProvider,
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
+    private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
@@ -339,12 +343,12 @@ class ConversationViewModel(
 
             // hashes are required if wanting to delete messages from the 'storage server'
             // They are not required for communities OR if all messages are outgoing
-            // also we can only delete deleted messages (marked as deleted) locally
+            // also we can only delete deleted messages and control messages (marked as deleted) locally
             val canDeleteForEveryone = messages.all{ !it.isDeleted && !it.isControlMessage } && (
                     messages.all { it.isOutgoing } ||
                     conversationType == MessageType.COMMUNITY ||
-                            messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null
-            })
+                            messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
+                    )
 
             // There are three types of dialogs for deletion:
             // 1- Delete on device only OR all devices - Used for Note to self
@@ -354,11 +358,16 @@ class ConversationViewModel(
                 // the conversation is a note to self
                 conversationType == MessageType.NOTE_TO_SELF -> {
                     _dialogsState.update {
-                        it.copy(deleteAllDevices = DeleteForEveryoneDialogData(
+                        it.copy(deleteEveryone = DeleteForEveryoneDialogData(
                                 messages = messages,
                                 defaultToEveryone = false,
-                                everyoneEnabled = true,
-                                messageType = conversationType
+                                everyoneEnabled = canDeleteForEveryone,
+                                messageType = conversationType,
+                                deleteForEveryoneLabel = application.getString(R.string.deleteMessageDevicesAll),
+                                warning = if(canDeleteForEveryone) null else
+                                    application.resources.getQuantityString(
+                                        R.plurals.deleteMessageNoteToSelfWarning, messages.count(), messages.count()
+                                    )
                             )
                         )
                     }
@@ -372,6 +381,7 @@ class ConversationViewModel(
                                 messages = messages,
                                 defaultToEveryone = isAdmin.value,
                                 everyoneEnabled = true,
+                                deleteForEveryoneLabel = application.getString(R.string.deleteMessageEveryone),
                                 messageType = conversationType
                             )
                         )
@@ -387,6 +397,7 @@ class ConversationViewModel(
                                 defaultToEveryone = false,
                                 everyoneEnabled = false, // disable 'delete for everyone' - can only delete locally in this case
                                 messageType = conversationType,
+                                deleteForEveryoneLabel = application.getString(R.string.deleteMessageEveryone),
                                 warning = application.resources.getQuantityString(
                                     R.plurals.deleteMessageWarning, messages.count(), messages.count()
                                 )
@@ -642,7 +653,7 @@ class ConversationViewModel(
                     ).show()
                 }
 
-                _dialogsState.update { it.copy(deleteAllDevices = data) }
+                _dialogsState.update { it.copy(deleteEveryone = data) }
             }
 
             // hide loading indicator
@@ -659,11 +670,8 @@ class ConversationViewModel(
             try {
                 repository.deleteCommunityMessagesRemotely(threadId, data.messages)
 
-                // When this is done we simply need to remove the message locally
-                repository.markAsDeletedLocally(
-                    messages = data.messages,
-                    displayedMessage = application.getString(R.string.deleteMessageDeletedGlobally)
-                )
+                // When this is done we simply need to remove the message locally (leave nothing behind)
+                repository.deleteMessages(messages = data.messages, threadId = threadId)
 
                 // show confirmation toast
                 withContext(Dispatchers.Main) {
@@ -855,9 +863,9 @@ class ConversationViewModel(
                 }
             }
 
-            is Commands.HideDeleteAllDevicesDialog -> {
+            is Commands.HideClearEmoji -> {
                 _dialogsState.update {
-                    it.copy(deleteAllDevices = null)
+                    it.copy(clearAllEmoji = null)
                 }
             }
 
@@ -872,6 +880,35 @@ class ConversationViewModel(
             is Commands.MarkAsDeletedForEveryone -> {
                 markAsDeletedForEveryone(command.data)
             }
+
+
+            is Commands.ClearEmoji -> {
+                clearEmoji(command.emoji, command.messageId)
+            }
+        }
+    }
+
+    private fun clearEmoji(emoji: String, messageId: MessageId){
+        viewModelScope.launch(Dispatchers.Default) {
+            reactionDb.deleteEmojiReactions(emoji, messageId)
+            openGroup?.let { openGroup ->
+                lokiMessageDb.getServerID(messageId.id, !messageId.mms)?.let { serverId ->
+                    OpenGroupApi.deleteAllReactions(
+                        openGroup.room,
+                        openGroup.server,
+                        serverId,
+                        emoji
+                    )
+                }
+            }
+            threadDb.notifyThreadUpdated(threadId)
+        }
+    }
+
+    fun onEmojiClear(emoji: String, messageId: MessageId) {
+        // show a confirmation dialog
+        _dialogsState.update {
+            it.copy(clearAllEmoji = ClearAllEmoji(emoji, messageId))
         }
     }
 
@@ -921,6 +958,7 @@ class ConversationViewModel(
         private val messageDataProvider: MessageDataProvider,
         private val groupDb: GroupDatabase,
         private val threadDb: ThreadDatabase,
+        private val reactionDb: ReactionDatabase,
         @ApplicationContext
         private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
@@ -939,6 +977,7 @@ class ConversationViewModel(
                 messageDataProvider = messageDataProvider,
                 groupDb = groupDb,
                 threadDb = threadDb,
+                reactionDb = reactionDb,
                 lokiMessageDb = lokiMessageDb,
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
@@ -949,8 +988,8 @@ class ConversationViewModel(
 
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
-        val deleteEveryone: DeleteForEveryoneDialogData? = null,
-        val deleteAllDevices: DeleteForEveryoneDialogData? = null,
+        val clearAllEmoji: ClearAllEmoji? = null,
+        val deleteEveryone: DeleteForEveryoneDialogData? = null
     )
 
     data class DeleteForEveryoneDialogData(
@@ -958,13 +997,22 @@ class ConversationViewModel(
         val messageType: MessageType,
         val defaultToEveryone: Boolean,
         val everyoneEnabled: Boolean,
+        val deleteForEveryoneLabel: String,
         val warning: String? = null
+    )
+
+    data class ClearAllEmoji(
+        val emoji: String,
+        val messageId: MessageId
     )
 
     sealed class Commands {
         data class ShowOpenUrlDialog(val url: String?) : Commands()
+
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands()
+
         data object HideDeleteEveryoneDialog : Commands()
-        data object HideDeleteAllDevicesDialog : Commands()
+        data object HideClearEmoji : Commands()
 
         data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands()
         data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands()
