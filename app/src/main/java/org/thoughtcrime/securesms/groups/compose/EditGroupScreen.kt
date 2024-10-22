@@ -321,11 +321,6 @@ private fun ConfirmRemovingMemberDialog(
                 onClick = { onConfirmed(member.accountId, false) }
             ),
             DialogButtonModel(
-                text = GetString("Remove and delete messages"), //TODO: Copy
-                color = LocalColors.current.danger,
-                onClick = { onConfirmed(member.accountId, true) }
-            ),
-            DialogButtonModel(
                 text = GetString(R.string.cancel),
                 onClick = onDismissRequest,
             )
