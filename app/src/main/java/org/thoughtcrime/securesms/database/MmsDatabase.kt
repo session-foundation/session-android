@@ -1219,7 +1219,12 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         var cursor: Cursor? = null
         try {
             val db = databaseHelper.readableDatabase
-            var where = "$THREAD_ID = ? AND $DATE_SENT < $date"
+            var where =
+                THREAD_ID + " = ? AND (CASE (" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") "
+            for (outgoingType in MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES) {
+                where += " WHEN $outgoingType THEN $DATE_SENT < $date"
+            }
+            where += " ELSE $DATE_RECEIVED < $date END)"
             if (onlyMedia) where += " AND $PART_COUNT >= 1"
             cursor = db.query(
                 TABLE_NAME,

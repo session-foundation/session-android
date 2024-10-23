@@ -1779,8 +1779,7 @@ open class Storage @Inject constructor(
 
         val messageId = if (localId != null && localId > 0 && isMms != null) {
             // bail early is the message is marked as deleted
-            val messagingDatabase: MessagingDatabase = if (isMms == true) DatabaseComponent.get(context).mmsDatabase()
-            else DatabaseComponent.get(context).smsDatabase()
+            val messagingDatabase: MessagingDatabase = if (isMms == true) mmsDatabase else smsDatabase
             if(messagingDatabase.getMessageRecord(localId)?.isDeleted == true) return
 
             MessageId(localId, isMms)
