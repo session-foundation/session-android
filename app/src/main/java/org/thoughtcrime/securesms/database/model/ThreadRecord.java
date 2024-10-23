@@ -112,7 +112,7 @@ public class ThreadRecord extends DisplayRecord {
             return "";
         }
         else if (isGroupUpdateMessage()) {
-            return context.getString(R.string.groupUpdated);
+            return lastMessage.getDisplayBody(context).toString();
         } else if (isOpenGroupInvitation()) {
             return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {
