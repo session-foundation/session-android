@@ -583,8 +583,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val threadID = thread.threadId
         val recipient = thread.recipient
 
-        if (recipient.isGroupV2Recipient || recipient.isLegacyGroupRecipient) {
-            ConversationMenuHelper.leaveClosedGroup(
+        if (recipient.isGroupRecipient) {
+            ConversationMenuHelper.leaveGroup(
                 context = this,
                 thread = recipient,
                 threadID = threadID,

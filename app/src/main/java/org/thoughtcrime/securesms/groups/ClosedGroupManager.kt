@@ -34,7 +34,7 @@ object ClosedGroupManager {
     }
 
     fun ConfigFactory.updateLegacyGroup(group: GroupRecord) {
-        if (!group.isLegacyClosedGroup) return
+        if (!group.isLegacyGroup) return
         val storage = MessagingModuleConfiguration.shared.storage
         val threadId = storage.getThreadId(group.encodedId) ?: return
         val groupPublicKey = GroupUtil.doubleEncodeGroupID(group.getId())

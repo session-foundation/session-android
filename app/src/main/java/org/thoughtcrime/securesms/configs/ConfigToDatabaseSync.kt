@@ -259,7 +259,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val toAddCommunities = userGroups.communityInfo.filter { it.community.fullUrl() !in existingCommunities.map { it.value.joinURL } }
         val existingJoinUrls = existingCommunities.values.map { it.joinURL }
 
-        val existingLegacyClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isLegacyClosedGroup }
+        val existingLegacyClosedGroups = storage.getAllGroups(includeInactive = true).filter { it.isLegacyGroup }
         val lgcIds = userGroups.legacyGroupInfo.map { it.accountId }
         val toDeleteLegacyClosedGroups = existingLegacyClosedGroups.filter { group ->
             GroupUtil.doubleDecodeGroupId(group.encodedId) !in lgcIds

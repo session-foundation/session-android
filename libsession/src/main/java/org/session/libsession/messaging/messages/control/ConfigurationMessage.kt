@@ -124,7 +124,7 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
             val profileKey = ProfileKeyUtil.getProfileKey(context)
             val groups = storage.getAllGroups(includeInactive = false)
             for (group in groups) {
-                if (group.isLegacyClosedGroup && group.isActive) {
+                if (group.isLegacyGroup && group.isActive) {
                     if (!group.members.contains(Address.fromSerialized(storage.getUserPublicKey()!!))) continue
                     val groupPublicKey = GroupUtil.doubleDecodeGroupID(group.encodedId).toHexString()
                     val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: continue
@@ -137,7 +137,7 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
                     )
                     closedGroups.add(closedGroup)
                 }
-                if (group.isOpenGroup) {
+                if (group.isCommunity) {
                     val threadID = storage.getThreadId(group.encodedId) ?: continue
                     val openGroup = storage.getOpenGroup(threadID)
                     val shareUrl = openGroup?.joinURL ?: continue

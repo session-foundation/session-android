@@ -89,7 +89,7 @@ private fun getHighlight(query: String?, toSearch: String): Spannable? {
 
 fun ContentView.bindModel(query: String?, model: LegacyGroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSubtitle.isVisible = model.groupRecord.isLegacyClosedGroup
+    binding.searchResultSubtitle.isVisible = model.groupRecord.isLegacyGroup
     binding.searchResultTimestamp.isVisible = false
     val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupRecord.encodedId), false)
     binding.searchResultProfilePicture.update(threadRecipient)
@@ -99,7 +99,7 @@ fun ContentView.bindModel(query: String?, model: LegacyGroupConversation) {
     val groupRecipients = model.groupRecord.members.map { Recipient.from(binding.root.context, it, false) }
 
     val membersString = groupRecipients.joinToString(transform = Recipient::getSearchName)
-    if (model.groupRecord.isLegacyClosedGroup) {
+    if (model.groupRecord.isLegacyGroup) {
         binding.searchResultSubtitle.text = getHighlight(query, membersString)
     }
 }

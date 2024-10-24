@@ -509,7 +509,7 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
 
     storage
         .getAllGroups(includeInactive = false)
-        .asSequence().filter { it.isLegacyClosedGroup && it.isActive && it.members.size > 1 }
+        .asSequence().filter { it.isLegacyGroup && it.isActive && it.members.size > 1 }
         .mapNotNull { group ->
             val groupAddress = Address.fromSerialized(group.encodedId)
             val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.serialize()).toHexString()

@@ -480,6 +480,10 @@ public class Recipient implements RecipientModifiedListener {
     return address.isLegacyGroup();
   }
 
+  public boolean isGroupRecipient() {
+    return address.isGroup();
+  }
+
   public boolean isGroupV2Recipient() {
     return address.isGroupV2();
   }

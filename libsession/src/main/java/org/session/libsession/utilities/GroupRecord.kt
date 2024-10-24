@@ -21,11 +21,11 @@ class GroupRecord(
         }
     }
 
-    val isOpenGroup: Boolean
+    val isCommunity: Boolean
         get() = Address.fromSerialized(encodedId).isCommunity
-    val isLegacyClosedGroup: Boolean
+    val isLegacyGroup: Boolean
         get() = Address.fromSerialized(encodedId).isLegacyGroup
-    val isClosedGroupV2: Boolean
+    val isGroupV2: Boolean
         get() = Address.fromSerialized(encodedId).isGroupV2
 
     init {

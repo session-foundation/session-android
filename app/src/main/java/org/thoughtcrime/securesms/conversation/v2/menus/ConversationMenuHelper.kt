@@ -182,8 +182,8 @@ object ConversationMenuHelper {
             R.id.menu_block_delete -> { blockAndDelete(context, thread) }
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
-            R.id.menu_edit_group -> { editClosedGroup(context, thread) }
-            R.id.menu_leave_group -> { return leaveClosedGroup(context, thread, threadID, factory, storage, groupManager) }
+            R.id.menu_edit_group -> { editGroup(context, thread) }
+            R.id.menu_leave_group -> { return leaveGroup(context, thread, threadID, factory, storage, groupManager) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -316,7 +316,7 @@ object ConversationMenuHelper {
         listener.copyOpenGroupUrl(thread)
     }
 
-    private fun editClosedGroup(context: Context, thread: Recipient) {
+    private fun editGroup(context: Context, thread: Recipient) {
         when {
             thread.isGroupV2Recipient -> {
                 context.startActivity(EditGroupActivity.createIntent(context, thread.address.serialize()))
@@ -331,7 +331,7 @@ object ConversationMenuHelper {
         }
     }
 
-    fun leaveClosedGroup(
+    fun leaveGroup(
         context: Context,
         thread: Recipient,
         threadID: Long,
@@ -346,7 +346,7 @@ object ConversationMenuHelper {
                 val accountID = TextSecurePreferences.getLocalNumber(context)
                 val isCurrentUserAdmin = admins.any { it.toString() == accountID }
 
-                confirmAndLeaveClosedGroup(
+                confirmAndLeaveGroup(
                     context = context,
                     groupName = group.title,
                     isAdmin = isCurrentUserAdmin,
@@ -372,7 +372,7 @@ object ConversationMenuHelper {
 
                 val channel = Channel<Unit>()
 
-                confirmAndLeaveClosedGroup(
+                confirmAndLeaveGroup(
                     context = context,
                     groupName = name,
                     isAdmin = group.hasAdminKey(),
@@ -394,7 +394,7 @@ object ConversationMenuHelper {
         return null
     }
 
-    private fun confirmAndLeaveClosedGroup(
+    private fun confirmAndLeaveGroup(
         context: Context,
         groupName: String,
         isAdmin: Boolean,
