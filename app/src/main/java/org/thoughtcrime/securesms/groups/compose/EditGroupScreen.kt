@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,14 +15,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,14 +46,15 @@ import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.ActionAppBar
-import org.thoughtcrime.securesms.ui.components.AppBarBackIcon
+import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.BottomOptionsDialog
+import org.thoughtcrime.securesms.ui.components.BottomOptionsDialogItem
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.bold
 
 @Composable
 fun EditGroupScreen(
@@ -130,9 +127,7 @@ fun EditGroup(
     showingError: String?,
     onErrorDismissed: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-
-    val (showingBottomModelForMember, setShowingBottomModelForMember) = remember {
+    val (showingOptionsDialogForMember, setShowingBottomModelForMember) = remember {
         mutableStateOf<GroupMemberState?>(null)
     }
 
@@ -142,20 +137,9 @@ fun EditGroup(
 
     Scaffold(
         topBar = {
-            ActionAppBar(
+            BackAppBar(
                 title = stringResource(id = R.string.groupEdit),
-                navigationIcon = {
-                    AppBarBackIcon(onBack = onBackClick)
-                },
-                actions = {
-                    TextButton(onClick = onBackClick) {
-                        Text(
-                            text = stringResource(id = R.string.done),
-                            color = LocalColors.current.text,
-                            style = LocalType.current.large.bold()
-                        )
-                    }
-                },
+                onBack = onBackClick,
             )
         }
     ) { paddingValues ->
@@ -168,8 +152,11 @@ fun EditGroup(
                 modifier = Modifier
                     .animateContentSize()
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                    .padding(LocalDimensions.current.smallSpacing),
+                horizontalArrangement = Arrangement.spacedBy(
+                    LocalDimensions.current.xxxsSpacing,
+                    Alignment.CenterHorizontally
+                ),
                 verticalAlignment = CenterVertically,
             ) {
                 if (editingName != null) {
@@ -185,7 +172,11 @@ fun EditGroup(
                         modifier = Modifier.width(180.dp),
                         text = editingName,
                         onChange = onEditingNameValueChanged,
-                        textStyle = LocalType.current.large
+                        textStyle = LocalType.current.h8,
+                        innerPadding = PaddingValues(
+                            horizontal = LocalDimensions.current.spacing,
+                            vertical = LocalDimensions.current.smallSpacing
+                        )
                     )
 
                     IconButton(onClick = onEditNameConfirmed) {
@@ -198,7 +189,7 @@ fun EditGroup(
                 } else {
                     Text(
                         text = groupName,
-                        style = LocalType.current.h3,
+                        style = LocalType.current.h4,
                         textAlign = TextAlign.Center,
                     )
 
@@ -242,6 +233,7 @@ fun EditGroup(
                     MemberItem(
                         modifier = Modifier.fillMaxWidth(),
                         member = member,
+                        clickable = member.canEdit,
                         onClick = { setShowingBottomModelForMember(member) }
                     )
                 }
@@ -249,27 +241,26 @@ fun EditGroup(
         }
     }
 
-    if (showingBottomModelForMember != null) {
-        MemberModalBottomSheetOptions(
+    if (showingOptionsDialogForMember != null) {
+        MemberOptionsDialog(
             onDismissRequest = { setShowingBottomModelForMember(null) },
-            sheetState = sheetState,
             onRemove = {
-                setShowingConfirmRemovingMember(showingBottomModelForMember)
+                setShowingConfirmRemovingMember(showingOptionsDialogForMember)
                 setShowingBottomModelForMember(null)
             },
             onPromote = {
                 setShowingBottomModelForMember(null)
-                onPromoteClick(showingBottomModelForMember.accountId)
+                onPromoteClick(showingOptionsDialogForMember.accountId)
             },
             onResendInvite = {
                 setShowingBottomModelForMember(null)
-                onResendInviteClick(showingBottomModelForMember.accountId)
+                onResendInviteClick(showingOptionsDialogForMember.accountId)
             },
             onResendPromotion = {
                 setShowingBottomModelForMember(null)
-                onResendPromotionClick(showingBottomModelForMember.accountId)
+                onResendPromotionClick(showingOptionsDialogForMember.accountId)
             },
-            member = showingBottomModelForMember,
+            member = showingOptionsDialogForMember,
         )
     }
 
@@ -284,17 +275,13 @@ fun EditGroup(
         )
     }
 
-    if (!showingError.isNullOrEmpty()) {
-        Snackbar(
-            dismissAction = {
-                TextButton(onClick = onErrorDismissed) {
-                    Text(text = stringResource(id = R.string.dismiss))
-                }
-            },
-            content = {
-                Text(text = showingError)
-            }
-        )
+    val context = LocalContext.current
+
+    LaunchedEffect(showingError) {
+        if (showingError != null) {
+            Toast.makeText(context, showingError, Toast.LENGTH_SHORT).show()
+            onErrorDismissed()
+        }
     }
 }
 
@@ -328,80 +315,81 @@ private fun ConfirmRemovingMemberDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MemberModalBottomSheetOptions(
+private fun MemberOptionsDialog(
     member: GroupMemberState,
     onRemove: () -> Unit,
     onPromote: () -> Unit,
     onResendInvite: () -> Unit,
     onResendPromotion: () -> Unit,
     onDismissRequest: () -> Unit,
-    sheetState: SheetState,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-    ) {
-        if (member.canRemove) {
-            val context = LocalContext.current
-            MemberModalBottomSheetOptionItem(
-                onClick = onRemove,
-                text = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1)
-            )
-        }
+    val context = LocalContext.current
 
-        if (member.canPromote) {
-            MemberModalBottomSheetOptionItem(
-                onClick = onPromote,
-                text = stringResource(R.string.adminPromoteToAdmin)
-            )
-        }
+    val options = remember(member) {
+        buildList {
+            if (member.canRemove) {
+                this += BottomOptionsDialogItem(
+                    title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
+                    iconRes = R.drawable.ic_delete,
+                    onClick = onRemove
+                )
+            }
 
-        if (member.canResendInvite) {
-            MemberModalBottomSheetOptionItem(onClick = onResendInvite, text = "Resend invite")
-        }
+            if (member.canPromote) {
+                this += BottomOptionsDialogItem(
+                    title = context.getString(R.string.adminPromoteToAdmin),
+                    iconRes = R.drawable.ic_profile_default,
+                    onClick = onPromote
+                )
+            }
 
-        if (member.canResendPromotion) {
-            MemberModalBottomSheetOptionItem(onClick = onResendPromotion, text = "Resend promotion")
-        }
+            if (member.canResendInvite) {
+                this += BottomOptionsDialogItem(
+                    title = "Resend invite",
+                    iconRes = R.drawable.ic_arrow_left,
+                    onClick = onResendInvite
+                )
+            }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            if (member.canResendPromotion) {
+                this += BottomOptionsDialogItem(
+                    title = "Resend promotion",
+                    iconRes = R.drawable.ic_arrow_left,
+                    onClick = onResendPromotion
+                )
+            }
+        }
     }
-}
 
-@Composable
-private fun MemberModalBottomSheetOptionItem(
-    text: String,
-    onClick: () -> Unit
-) {
-    Text(
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-            .fillMaxWidth(),
-        style = LocalType.current.base,
-        text = text,
-        color = LocalColors.current.text,
+    BottomOptionsDialog(
+        items = options,
+        onDismissRequest = onDismissRequest
     )
 }
 
 @Composable
 private fun MemberItem(
+    clickable: Boolean,
     onClick: (accountId: AccountId) -> Unit,
     member: GroupMemberState,
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier
+            .clickable(enabled = clickable, onClick = { onClick(member.accountId) })
+            .padding(
+                horizontal = LocalDimensions.current.smallSpacing,
+                vertical = LocalDimensions.current.xsSpacing
+            ),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
         ContactPhoto(member.accountId)
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
         ) {
 
             Text(
@@ -424,12 +412,10 @@ private fun MemberItem(
         }
 
         if (member.canEdit) {
-            IconButton(onClick = { onClick(member.accountId) }) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_circle_dot_dot_dot),
-                    contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
-                )
-            }
+            Icon(
+                painter = painterResource(R.drawable.ic_circle_dot_dot_dot),
+                contentDescription = stringResource(R.string.AccessibilityId_sessionSettings)
+            )
         }
     }
 }

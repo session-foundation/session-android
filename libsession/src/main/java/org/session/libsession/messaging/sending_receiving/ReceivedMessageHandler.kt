@@ -57,7 +57,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMemberChangeMessage
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -675,8 +674,12 @@ private fun handleMemberChange(message: GroupUpdated, closedGroup: AccountId) {
 
 private fun handleMemberLeft(message: GroupUpdated, closedGroup: AccountId) {
     GlobalScope.launch(Dispatchers.Default) {
-        runCatching {
-            MessagingModuleConfiguration.shared.groupManagerV2.handleMemberLeft(message, closedGroup)
+        try {
+            MessagingModuleConfiguration.shared.groupManagerV2.handleMemberLeftMessage(
+                AccountId(message.sender!!), closedGroup
+            )
+        } catch (e: Exception) {
+            Log.e("GroupUpdated", "Failed to handle member left message", e)
         }
     }
 }

@@ -209,11 +209,12 @@ object UpdateMessageBuilder {
                                 if (historyShared) R.string.groupMemberNewYouHistoryMultiple else R.string.groupInviteYouAndMoreNew)
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
-                            else -> Phrase.from(context,
+                            number > 0 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
+                            else -> ""
                         }
                     }
 

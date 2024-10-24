@@ -30,6 +30,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
 const val MAX_GROUP_NAME_LENGTH = 100
@@ -44,6 +45,11 @@ class EditGroupViewModel @AssistedInject constructor(
 ) : ViewModel() {
     // Input/Output state
     private val mutableEditingName = MutableStateFlow<String?>(null)
+
+    // Input/Output: the name that has been written and submitted for change to push to the server,
+    // but not yet confirmed by the server. When this state is present, it takes precedence over
+    // the group name in the group info.
+    private val mutablePendingEditedName = MutableStateFlow<String?>(null)
 
     // Input: invite/promote member's intermediate states. This is needed because we don't have
     // a state that we can map into in the config system. The config system only provides "sent", "failed", etc.
@@ -94,8 +100,8 @@ class EditGroupViewModel @AssistedInject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
-    val groupName: StateFlow<String> = groupInfo
-        .map { it?.first?.name.orEmpty() }
+    val groupName: StateFlow<String> = combine(groupInfo
+        .map { it?.first?.name.orEmpty() }, mutablePendingEditedName) { name, pendingName -> pendingName ?: name }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), "")
 
     // Output: the list of the members and their state in the group.
@@ -260,11 +266,22 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onEditNameConfirmClicked() {
         val newName = mutableEditingName.value
+        if (newName.isNullOrBlank()) {
+            return
+        }
+
+        // Move the edited name into the pending state
+        mutableEditingName.value = null
+        mutablePendingEditedName.value = newName
 
         performGroupOperation {
-            if (!newName.isNullOrBlank()) {
+            try {
                 groupManager.setName(groupId, newName)
-                mutableEditingName.value = null
+            } finally {
+                // As soon as the operation is done, clear the pending state,
+                // no matter if it's successful or not. So that we update the UI to reflect the
+                // real state.
+                mutablePendingEditedName.value = null
             }
         }
     }

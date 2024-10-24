@@ -3,11 +3,14 @@ package org.thoughtcrime.securesms.groups.compose
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,7 +74,6 @@ fun CreateGroupScreen(
         items = viewModel.selectContactsViewModel.contacts.collectAsState().value,
         onCreateClicked = viewModel::onCreateClicked,
         onBack = onBack,
-        onClose = onClose,
     )
 }
 
@@ -88,54 +90,67 @@ fun CreateGroup(
     items: List<ContactItem>,
     onCreateClicked: () -> Unit,
     onBack: () -> Unit,
-    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
 
-    Column(
-        modifier = modifier.padding(bottom = LocalDimensions.current.mediumSpacing),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        BackAppBar(
-            title = stringResource(id = R.string.groupCreate),
-            onBack = onBack,
-        )
-
-        SessionOutlinedTextField(
-            text = groupName,
-            onChange = onGroupNameChanged,
-            placeholder = stringResource(R.string.groupNameEnter),
-            textStyle = LocalType.current.base,
-            modifier = Modifier.padding(horizontal = 16.dp),
-            error = groupNameError.takeIf { it.isNotBlank() },
-            enabled = !showLoading,
-            onContinue = focusManager::clearFocus
-        )
-
-        SearchBar(
-            query = contactSearchQuery,
-            onValueChanged = onContactSearchQueryChanged,
-            placeholder = stringResource(R.string.searchContacts),
-            modifier = Modifier.padding(horizontal = 16.dp),
-            enabled = !showLoading
-        )
-
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            multiSelectMemberList(
-                contacts = items,
-                onContactItemClicked = onContactItemClicked,
-                enabled = !showLoading
+    Scaffold(
+        containerColor = LocalColors.current.backgroundSecondary,
+        topBar = {
+            BackAppBar(
+                title = stringResource(id = R.string.groupCreate),
+                backgroundColor = LocalColors.current.backgroundSecondary,
+                onBack = onBack,
             )
         }
+    ) { paddings ->
+        Box(modifier = modifier.padding(paddings),) {
+            Column(
+                modifier = modifier.padding(vertical = LocalDimensions.current.spacing),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
+            ) {
+                SessionOutlinedTextField(
+                    text = groupName,
+                    onChange = onGroupNameChanged,
+                    placeholder = stringResource(R.string.groupNameEnter),
+                    textStyle = LocalType.current.base,
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                    error = groupNameError.takeIf { it.isNotBlank() },
+                    enabled = !showLoading,
+                    innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
+                    onContinue = focusManager::clearFocus
+                )
 
-        PrimaryOutlineButton(onClick = onCreateClicked, modifier = Modifier.widthIn(min = 120.dp)) {
-            LoadingArcOr(loading = showLoading) {
-                Text(stringResource(R.string.create))
+                SearchBar(
+                    query = contactSearchQuery,
+                    onValueChanged = onContactSearchQueryChanged,
+                    placeholder = stringResource(R.string.searchContacts),
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                    enabled = !showLoading
+                )
+
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    multiSelectMemberList(
+                        contacts = items,
+                        onContactItemClicked = onContactItemClicked,
+                        enabled = !showLoading
+                    )
+                }
+
+                PrimaryOutlineButton(
+                    onClick = onCreateClicked,
+                    modifier = Modifier.widthIn(min = 120.dp)
+                ) {
+                    LoadingArcOr(loading = showLoading) {
+                        Text(stringResource(R.string.create))
+                    }
+                }
             }
         }
+
     }
+
 }
 
 @Preview
@@ -150,18 +165,17 @@ private fun CreateGroupPreview(
 
     PreviewTheme {
         CreateGroup(
-            modifier = Modifier.background(LocalColors.current.backgroundSecondary),
-            groupName = "Group Name",
+            groupName = "",
             onGroupNameChanged = {},
+            groupNameError = "",
             contactSearchQuery = "",
             onContactSearchQueryChanged = {},
             onContactItemClicked = {},
-            items = previewMembers,
-            onBack = {},
-            onClose = {},
-            onCreateClicked = {},
             showLoading = false,
-            groupNameError = "",
+            items = previewMembers,
+            onCreateClicked = {},
+            onBack = {},
+            modifier = Modifier.background(LocalColors.current.backgroundSecondary),
         )
     }
 

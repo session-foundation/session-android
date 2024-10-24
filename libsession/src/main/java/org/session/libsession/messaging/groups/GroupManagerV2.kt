@@ -42,7 +42,7 @@ interface GroupManagerV2 {
         members: List<AccountId>
     )
 
-    suspend fun handleMemberLeft(message: GroupUpdated, group: AccountId)
+    suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId)
 
     suspend fun leaveGroup(groupId:
                            AccountId, deleteOnLeave: Boolean)

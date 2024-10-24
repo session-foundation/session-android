@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -91,6 +92,7 @@ fun SessionOutlinedTextField(
     modifier: Modifier = Modifier,
     onChange: (String) -> Unit = {},
     textStyle: TextStyle = LocalType.current.base,
+    innerPadding: PaddingValues = PaddingValues(LocalDimensions.current.spacing),
     placeholder: String = "",
     onContinue: () -> Unit = {},
     error: String? = null,
@@ -122,7 +124,7 @@ fun SessionOutlinedTextField(
                         )
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(LocalDimensions.current.spacing)
+                        .padding(innerPadding)
                 ) {
                     innerTextField()
 

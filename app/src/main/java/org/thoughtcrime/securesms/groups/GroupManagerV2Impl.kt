@@ -11,7 +11,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Conversation
@@ -323,12 +322,39 @@ class GroupManagerV2Impl @Inject constructor(
         removedMembers: List<AccountId>,
         removeMessages: Boolean
     ) {
+        val adminKey = requireAdminAccess(groupAccountId)
+
+        // Update the config to mark this member as "removed"
         flagMembersForRemoval(
             group = groupAccountId,
+            groupAdminKey = adminKey,
             members = removedMembers,
             alsoRemoveMembersMessage = removeMessages,
-            sendMemberChangeMessage = true
         )
+
+        val timestamp = clock.currentTimeMills()
+        val signature = SodiumUtilities.sign(
+            buildMemberChangeSignature(
+                GroupUpdateMemberChangeMessage.Type.REMOVED,
+                timestamp
+            ),
+            adminKey
+        )
+
+        val updateMessage = GroupUpdateMessage.newBuilder()
+            .setMemberChangeMessage(
+                GroupUpdateMemberChangeMessage.newBuilder()
+                    .addAllMemberSessionIds(removedMembers.map { it.hexString })
+                    .setType(GroupUpdateMemberChangeMessage.Type.REMOVED)
+                    .setAdminSignature(ByteString.copyFrom(signature))
+            )
+            .build()
+        val message = GroupUpdated(
+            updateMessage
+        ).apply { sentTimestamp = timestamp }
+
+        MessageSender.send(message, Destination.ClosedGroup(groupAccountId.hexString), false).await()
+        storage.insertGroupInfoChange(message, groupAccountId)
     }
 
     override suspend fun removeMemberMessages(
@@ -362,32 +388,17 @@ class GroupManagerV2Impl @Inject constructor(
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
-    override suspend fun handleMemberLeft(message: GroupUpdated, group: AccountId) {
+    override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) {
         val closedGroup = configFactory.getClosedGroup(group) ?: return
+        val groupAdminKey = closedGroup.adminKey
 
-        if (closedGroup.hasAdminKey()) {
+        if (groupAdminKey != null) {
             flagMembersForRemoval(
                 group = group,
-                members = listOf(AccountId(message.sender!!)),
+                groupAdminKey = groupAdminKey,
+                members = listOf(memberId),
                 alsoRemoveMembersMessage = false,
-                sendMemberChangeMessage = false
             )
-        } else {
-            val hasAnyAdminRemaining = configFactory.withGroupConfigs(group) { configs ->
-                configs.groupMembers.all()
-                    .asSequence()
-                    .filterNot { it.sessionId == message.sender }
-                    .any { it.admin && !it.removed }
-            }
-
-            // if the leaving member is last admin, disable the group and remove it
-            // This is just to emulate the "existing" group behaviour, this will probably be removed in future
-            if (!hasAnyAdminRemaining) {
-                pollerFactory.pollerFor(group)?.stop()
-                storage.getThreadId(Address.fromSerialized(group.hexString))
-                    ?.let(storage::deleteConversation)
-                configFactory.removeGroup(group)
-            }
         }
     }
 
@@ -530,15 +541,17 @@ class GroupManagerV2Impl @Inject constructor(
         storage.insertGroupInfoChange(message, group)
     }
 
-    private suspend fun flagMembersForRemoval(
+    /**
+     * Mark this member as "removed" in the group config.
+     *
+     * [RemoveGroupMemberHandler] should be able to pick up the config changes and remove the member from the group.
+     */
+    private fun flagMembersForRemoval(
         group: AccountId,
+        groupAdminKey: ByteArray, // Not used ATM required here for verification purpose
         members: List<AccountId>,
         alsoRemoveMembersMessage: Boolean,
-        sendMemberChangeMessage: Boolean
     ) {
-        val adminKey = requireAdminAccess(group)
-
-        // 1. Mark the members as removed in the group configs
         configFactory.withMutableGroupConfigs(group) { configs ->
             for (member in members) {
                 val memberConfig = configs.groupMembers.get(member.hexString)
@@ -546,33 +559,6 @@ class GroupManagerV2Impl @Inject constructor(
                     configs.groupMembers.set(memberConfig.setRemoved(alsoRemoveMembersMessage))
                 }
             }
-        }
-
-        // 2. Send a member change message
-        if (sendMemberChangeMessage) {
-            val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(
-                    GroupUpdateMemberChangeMessage.Type.REMOVED,
-                    timestamp
-                ),
-                adminKey
-            )
-
-            val updateMessage = GroupUpdateMessage.newBuilder()
-                .setMemberChangeMessage(
-                    GroupUpdateMemberChangeMessage.newBuilder()
-                        .addAllMemberSessionIds(members.map { it.hexString })
-                        .setType(GroupUpdateMemberChangeMessage.Type.REMOVED)
-                        .setAdminSignature(ByteString.copyFrom(signature))
-                )
-                .build()
-            val message = GroupUpdated(
-                updateMessage
-            ).apply { sentTimestamp = timestamp }
-
-            MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
-            storage.insertGroupInfoChange(message, group)
         }
     }
 

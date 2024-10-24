@@ -6,8 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -44,7 +46,9 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.components.RadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
@@ -73,31 +77,26 @@ fun LazyListScope.multiSelectMemberList(
     onContactItemClicked: (accountId: AccountId) -> Unit,
     enabled: Boolean = true,
 ) {
-    items(contacts) { contact ->
-        Column {
-            Row(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        enabled = enabled,
-                        value = contact.selected,
-                        onValueChange = { onContactItemClicked(contact.accountID) },
-                        role = Role.Checkbox
-                    )
-                    .padding(vertical = 8.dp, horizontal = 24.dp),
-                verticalAlignment = CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+    items(contacts.size) { index ->
+        val contact = contacts[index]
+        Column(modifier = modifier) {
+            if (index == 0) {
+                // Show top divider for the first item only
+                HorizontalDivider(color = LocalColors.current.borders)
+            }
+
+            RadioButton(
+                onClick = { onContactItemClicked(contact.accountID) },
+                selected = contact.selected,
+                enabled = enabled,
+                contentPadding = PaddingValues(
+                    vertical = LocalDimensions.current.xxsSpacing,
+                    horizontal = LocalDimensions.current.smallSpacing
+                )
             ) {
-                ContactPhoto(
-                    contact.accountID,
-                )
+                ContactPhoto(contact.accountID)
+                Spacer(modifier = Modifier.size(LocalDimensions.current.smallSpacing))
                 MemberName(name = contact.name)
-                Checkbox(
-                    checked = contact.selected,
-                    onCheckedChange = null,
-                    colors = CheckboxDefaults.colors(checkedColor = LocalColors.current.primary),
-                    enabled = enabled,
-                )
             }
 
             HorizontalDivider(color = LocalColors.current.borders)
@@ -105,15 +104,14 @@ fun LazyListScope.multiSelectMemberList(
     }
 }
 
-val MemberNameStyle = TextStyle(fontWeight = FontWeight.Bold)
-
 @Composable
 fun RowScope.MemberName(
     name: String,
     modifier: Modifier = Modifier
 ) = Text(
     text = name,
-    style = MemberNameStyle,
+    style = LocalType.current.h8,
+    color = LocalColors.current.text,
     modifier = modifier
         .weight(1f)
         .align(CenterVertically)
@@ -121,7 +119,7 @@ fun RowScope.MemberName(
 
 
 @Composable
-fun RowScope.ContactPhoto(sessionId: AccountId) {
+fun ContactPhoto(sessionId: AccountId) {
     return if (LocalInspectionMode.current) {
         Image(
             painterResource(id = R.drawable.ic_profile_default),

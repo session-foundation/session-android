@@ -544,7 +544,7 @@ fun SearchBar(
                     painterResource(id = R.drawable.ic_search_24),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(
-                        LocalColors.current.text
+                        LocalColors.current.textSecondary
                     ),
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -557,7 +557,7 @@ fun SearchBar(
                         Text(
                             text = placeholder,
                             color = LocalColors.current.textSecondary,
-                            style = LocalType.current.base
+                            style = LocalType.current.xl
                         )
                     }
                 }
