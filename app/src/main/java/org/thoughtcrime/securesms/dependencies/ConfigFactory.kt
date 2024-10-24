@@ -441,7 +441,13 @@ class ConfigFactory @Inject constructor(
     }
 
     fun clearAll() {
-        //TODO: clear all configs
+        synchronized(userConfigs) {
+            userConfigs.clear()
+        }
+
+        synchronized(groupConfigs) {
+            groupConfigs.clear()
+        }
     }
 
     private class GroupSubAccountSwarmAuth(

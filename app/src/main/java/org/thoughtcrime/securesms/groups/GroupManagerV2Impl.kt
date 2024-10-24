@@ -826,8 +826,17 @@ class GroupManagerV2Impl @Inject constructor(
         withContext(dispatcher) {
             val adminKey = requireAdminAccess(groupId)
 
-            configFactory.withMutableGroupConfigs(groupId) {
-                it.groupInfo.setName(newName)
+            val nameChanged = configFactory.withMutableGroupConfigs(groupId) { configs ->
+                if (configs.groupInfo.getName() != newName) {
+                    configs.groupInfo.setName(newName)
+                    true
+                } else {
+                    false
+                }
+            }
+
+            if (!nameChanged) {
+                return@withContext
             }
 
             val timestamp = clock.currentTimeMills()
