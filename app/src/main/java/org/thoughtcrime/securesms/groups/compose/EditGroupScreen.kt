@@ -7,9 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -150,9 +154,8 @@ fun EditGroup(
             // Group name title
             Row(
                 modifier = Modifier
-                    .animateContentSize()
                     .fillMaxWidth()
-                    .padding(LocalDimensions.current.smallSpacing),
+                    .heightIn(min = 72.dp),
                 horizontalArrangement = Arrangement.spacedBy(
                     LocalDimensions.current.xxxsSpacing,
                     Alignment.CenterHorizontally
@@ -160,7 +163,9 @@ fun EditGroup(
                 verticalAlignment = CenterVertically,
             ) {
                 if (editingName != null) {
-                    IconButton(onClick = onEditNameCancelClicked) {
+                    IconButton(
+                        modifier = Modifier.size(LocalDimensions.current.spacing),
+                        onClick = onEditNameCancelClicked) {
                         Icon(
                             painter = painterResource(R.drawable.ic_x),
                             contentDescription = stringResource(R.string.AccessibilityId_cancel),
@@ -169,23 +174,30 @@ fun EditGroup(
                     }
 
                     SessionOutlinedTextField(
-                        modifier = Modifier.width(180.dp),
+                        modifier = Modifier.widthIn(
+                            min = LocalDimensions.current.mediumSpacing,
+                            max = 240.dp
+                        ),
                         text = editingName,
                         onChange = onEditingNameValueChanged,
                         textStyle = LocalType.current.h8,
+                        singleLine = true,
                         innerPadding = PaddingValues(
                             horizontal = LocalDimensions.current.spacing,
                             vertical = LocalDimensions.current.smallSpacing
                         )
                     )
 
-                    IconButton(onClick = onEditNameConfirmed) {
+                    IconButton(
+                        modifier = Modifier.size(LocalDimensions.current.spacing),
+                        onClick = onEditNameConfirmed) {
                         Icon(
                             painter = painterResource(R.drawable.check),
                             contentDescription = stringResource(R.string.AccessibilityId_confirm),
                             tint = LocalColors.current.text,
                         )
                     }
+
                 } else {
                     Text(
                         text = groupName,

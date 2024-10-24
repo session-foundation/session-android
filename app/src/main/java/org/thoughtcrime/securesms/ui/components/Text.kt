@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -51,6 +52,7 @@ import org.thoughtcrime.securesms.ui.theme.textSecondary
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
+import kotlin.math.sin
 
 @Preview
 @Composable
@@ -98,6 +100,7 @@ fun SessionOutlinedTextField(
     error: String? = null,
     isTextErrorColor: Boolean = error != null,
     enabled: Boolean = true,
+    singleLine: Boolean = false,
 ) {
     BasicTextField(
         value = text,
@@ -113,6 +116,7 @@ fun SessionOutlinedTextField(
             onSearch = { onContinue() },
             onSend = { onContinue() },
         ),
+        singleLine = singleLine,
         decorationBox = { innerTextField ->
             Column(modifier = Modifier.animateContentSize()) {
                 Box(
