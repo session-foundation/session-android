@@ -13,7 +13,6 @@ import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.Response
 import org.session.libsession.messaging.sending_receiving.notifications.Server
 import org.session.libsession.messaging.sending_receiving.notifications.SubscriptionRequest
@@ -21,7 +20,7 @@ import org.session.libsession.messaging.sending_receiving.notifications.Subscrip
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscribeResponse
 import org.session.libsession.messaging.sending_receiving.notifications.UnsubscriptionRequest
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.snode.Version
 import org.session.libsession.snode.utilities.await
@@ -36,6 +35,7 @@ private const val maxRetryCount = 4
 class PushRegistryV2 @Inject constructor(
     private val pushReceiver: PushReceiver,
     private val device: Device,
+    private val clock: SnodeClock,
     ) {
     suspend fun register(
         token: String,
@@ -44,7 +44,7 @@ class PushRegistryV2 @Inject constructor(
     ) {
         val pnKey = pushReceiver.getOrCreateNotificationKey()
 
-        val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
         val publicKey = swarmAuth.accountId.hexString
         val signed = swarmAuth.sign(
             "MONITOR${publicKey}${timestamp}1${namespaces.joinToString(separator = ",")}".encodeToByteArray()
@@ -75,7 +75,7 @@ class PushRegistryV2 @Inject constructor(
         swarmAuth: SwarmAuth
     ) {
         val publicKey = swarmAuth.accountId.hexString
-        val timestamp = SnodeAPI.nowWithOffset / 1000 // get timestamp in ms -> s
+        val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
         // if we want to support passing namespace list, here is the place to do it
         val signature = swarmAuth.signForPushRegistry(
             "UNSUBSCRIBE${publicKey}${timestamp}".encodeToByteArray()
