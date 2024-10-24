@@ -407,7 +407,7 @@ fun MessageReceiver.handleVisibleMessage(
         )
     }
     // Handle group invite response if new closed group
-    if (threadRecipient?.isClosedGroupV2Recipient == true) {
+    if (threadRecipient?.isGroupV2Recipient == true) {
         GlobalScope.launch {
             try {
                 MessagingModuleConfiguration.shared.groupManagerV2
@@ -464,7 +464,7 @@ fun MessageReceiver.handleVisibleMessage(
     // Cancel any typing indicators if needed
     cancelTypingIndicatorsIfNeeded(message.sender!!)
     // Parse reaction if needed
-    val threadIsGroup = threadRecipient?.isGroupRecipient == true
+    val threadIsGroup = threadRecipient?.isGroupOrCommunityRecipient == true
     message.reaction?.let { reaction ->
         if (reaction.react == true) {
             reaction.serverId = message.openGroupServerMessageID?.toString() ?: message.serverHash.orEmpty()

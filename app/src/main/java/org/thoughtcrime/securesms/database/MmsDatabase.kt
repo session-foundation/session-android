@@ -162,7 +162,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                     val ourAddress = messageId.address
                     val columnName =
                         if (deliveryReceipt) DELIVERY_RECEIPT_COUNT else READ_RECEIPT_COUNT
-                    if (ourAddress.equals(theirAddress) || theirAddress.isGroup) {
+                    if (ourAddress.equals(theirAddress) || theirAddress.isGroupOrCommunity) {
                         val id = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
                         val threadId = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
                         val status =
@@ -779,7 +779,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             contentValues,
             insertListener,
         )
-        if (message.recipient.address.isGroup) {
+        if (message.recipient.address.isGroupOrCommunity) {
             val members = get(context).groupDatabase()
                 .getGroupMembers(message.recipient.address.toGroupString(), false)
             val receiptDatabase = get(context).groupReceiptDatabase()

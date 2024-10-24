@@ -17,12 +17,9 @@
  */
 package org.session.libsession.utilities.recipients;
 
-import static org.session.libsession.utilities.IdUtilKt.truncateIdForDisplay;
-
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -326,7 +323,7 @@ public class Recipient implements RecipientModifiedListener {
   public synchronized @Nullable String getName() {
     StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
     String accountID = this.address.toString();
-    if (isGroupRecipient()) {
+    if (isGroupOrCommunityRecipient()) {
       if (this.name == null) {
         List<String> names = new LinkedList<>();
         for (Recipient recipient : participants) {
@@ -336,7 +333,7 @@ public class Recipient implements RecipientModifiedListener {
       } else {
         return this.name;
       }
-    } else if (isOpenGroupInboxRecipient()){
+    } else if (isCommunityInboxRecipient()){
       String inboxID = GroupUtil.getDecodedOpenGroupInboxAccountId(accountID);
       Contact contact = storage.getContactWithAccountID(inboxID);
       if (contact == null) return accountID;
@@ -374,7 +371,7 @@ public class Recipient implements RecipientModifiedListener {
   }
 
   public synchronized @NonNull MaterialColor getColor() {
-    if      (isGroupRecipient()) return MaterialColor.GROUP;
+    if      (isGroupOrCommunityRecipient()) return MaterialColor.GROUP;
     else if (color != null)      return color;
     else if (name != null)       return ContactColors.generateFor(name);
     else                         return ContactColors.UNKNOWN_COLOR;
@@ -458,8 +455,8 @@ public class Recipient implements RecipientModifiedListener {
     notifyListeners();
   }
 
-  public boolean isGroupRecipient() {
-    return address.isGroup();
+  public boolean isGroupOrCommunityRecipient() {
+    return address.isGroupOrCommunity();
   }
 
   public boolean isContactRecipient() {
@@ -471,26 +468,26 @@ public class Recipient implements RecipientModifiedListener {
     return address.isCommunity();
   }
 
-  public boolean isOpenGroupOutboxRecipient() {
+  public boolean isCommunityOutboxRecipient() {
     return address.isCommunityOutbox();
   }
 
-  public boolean isOpenGroupInboxRecipient() {
+  public boolean isCommunityInboxRecipient() {
     return address.isCommunityInbox();
   }
 
-  public boolean isLegacyClosedGroupRecipient() {
-    return address.isLegacyClosedGroup();
+  public boolean isLegacyGroupRecipient() {
+    return address.isLegacyGroup();
   }
 
-  public boolean isClosedGroupV2Recipient() {
-    return address.isClosedGroupV2();
+  public boolean isGroupV2Recipient() {
+    return address.isGroupV2();
   }
 
 
   @Deprecated
   public boolean isPushGroupRecipient() {
-    return address.isGroup();
+    return address.isGroupOrCommunity();
   }
 
   public @NonNull synchronized List<Recipient> getParticipants() {
@@ -538,7 +535,7 @@ public class Recipient implements RecipientModifiedListener {
 
   public synchronized @Nullable ContactPhoto getContactPhoto() {
     if      (isLocalNumber)                               return new ProfileContactPhoto(address, String.valueOf(TextSecurePreferences.getProfileAvatarId(context)));
-    else if (isGroupRecipient() && groupAvatarId != null) return new GroupRecordContactPhoto(address, groupAvatarId);
+    else if (isGroupOrCommunityRecipient() && groupAvatarId != null) return new GroupRecordContactPhoto(address, groupAvatarId);
     else if (systemContactPhoto != null)                  return new SystemContactPhoto(address, systemContactPhoto, 0);
     else if (profileAvatar != null)                       return new ProfileContactPhoto(address, profileAvatar);
     else                                                  return null;
@@ -813,7 +810,7 @@ public class Recipient implements RecipientModifiedListener {
   }
 
   public synchronized boolean showCallMenu() {
-    return !isGroupRecipient() && hasApprovedMe();
+    return !isGroupOrCommunityRecipient() && hasApprovedMe();
   }
 
   @Override

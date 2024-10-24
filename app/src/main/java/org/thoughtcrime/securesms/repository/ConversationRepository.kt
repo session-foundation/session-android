@@ -28,7 +28,6 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getClosedGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
@@ -113,7 +112,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     override fun maybeGetBlindedRecipient(recipient: Recipient): Recipient? {
-        if (!recipient.isOpenGroupInboxRecipient) return null
+        if (!recipient.isCommunityInboxRecipient) return null
         return Recipient.from(
             context,
             Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.serialize())),
@@ -173,7 +172,7 @@ class DefaultConversationRepository @Inject constructor(
 
     override fun isGroupReadOnly(recipient: Recipient): Boolean {
         // We only care about group v2 recipient
-        if (!recipient.isClosedGroupV2Recipient) {
+        if (!recipient.isGroupV2Recipient) {
             return false
         }
 
@@ -304,7 +303,7 @@ class DefaultConversationRepository @Inject constructor(
         recipient: Recipient,
         messages: Set<MessageRecord>
     ) {
-        if (recipient.isLegacyClosedGroupRecipient) {
+        if (recipient.isLegacyGroupRecipient) {
             val publicKey = recipient.address
 
             messages.forEach { message ->
@@ -343,7 +342,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     private fun shouldSendUnsendRequest(recipient: Recipient): Boolean {
-        return recipient.is1on1 || recipient.isLegacyClosedGroupRecipient
+        return recipient.is1on1 || recipient.isLegacyGroupRecipient
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
@@ -383,7 +382,7 @@ class DefaultConversationRepository @Inject constructor(
                 while (reader.next != null) {
                     deleteMessageRequest(reader.current)
                     val recipient = reader.current.recipient
-                    if (block && !recipient.isClosedGroupV2Recipient) {
+                    if (block && !recipient.isGroupV2Recipient) {
                         setBlocked(reader.current.threadId, recipient, true)
                     }
                 }
@@ -394,7 +393,7 @@ class DefaultConversationRepository @Inject constructor(
     override suspend fun acceptMessageRequest(threadId: Long, recipient: Recipient) = runCatching {
         withContext(Dispatchers.Default) {
             storage.setRecipientApproved(recipient, true)
-            if (recipient.isClosedGroupV2Recipient) {
+            if (recipient.isGroupV2Recipient) {
                 groupManager.respondToInvitation(
                     AccountId(recipient.address.serialize()),
                     approved = true
@@ -418,7 +417,7 @@ class DefaultConversationRepository @Inject constructor(
     override suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit> = runCatching {
         withContext(Dispatchers.Default) {
             sessionJobDb.cancelPendingMessageSendJobs(threadId)
-            if (recipient.isClosedGroupV2Recipient) {
+            if (recipient.isGroupV2Recipient) {
                 groupManager.respondToInvitation(
                     AccountId(recipient.address.serialize()),
                     approved = false

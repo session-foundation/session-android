@@ -1,11 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.dialogs
 
 import android.app.Dialog
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.style.StyleSpan
 import androidx.fragment.app.DialogFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,8 +35,8 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
 
         val displayName = when {
             threadRecipient.isCommunityRecipient -> storage.getOpenGroup(threadId)?.name ?: "UNKNOWN"
-            threadRecipient.isLegacyClosedGroupRecipient -> storage.getGroup(threadRecipient.address.toGroupString())?.title ?: "UNKNOWN"
-            threadRecipient.isClosedGroupV2Recipient -> threadRecipient.name ?: "UNKNOWN"
+            threadRecipient.isLegacyGroupRecipient -> storage.getGroup(threadRecipient.address.toGroupString())?.title ?: "UNKNOWN"
+            threadRecipient.isGroupV2Recipient -> threadRecipient.name ?: "UNKNOWN"
             else -> storage.getContactWithAccountID(threadRecipient.address.serialize())?.displayName(Contact.ContactContext.REGULAR) ?: "UNKNOWN"
         }
         title(getString(R.string.attachmentsAutoDownloadModalTitle))

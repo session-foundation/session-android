@@ -32,7 +32,7 @@ class MessageRequestsAdapter(
         view.setOnClickListener { view.thread?.let { listener.onConversationClick(it) } }
         view.setOnLongClickListener {
             view.thread?.let { thread ->
-                showPopupMenu(view, thread.recipient.isGroupRecipient, thread.invitingAdminId)
+                showPopupMenu(view, thread.recipient.isGroupOrCommunityRecipient, thread.invitingAdminId)
             }
             true
         }
@@ -52,7 +52,7 @@ class MessageRequestsAdapter(
     private fun showPopupMenu(view: MessageRequestView, groupRecipient: Boolean, invitingAdmin: String?) {
         val popupMenu = PopupMenu(ContextThemeWrapper(context, R.style.PopupMenu_MessageRequests), view)
         // still show the block option if we have an inviting admin for the group
-        if ((groupRecipient && invitingAdmin == null) || view.thread!!.recipient.isOpenGroupInboxRecipient) {
+        if ((groupRecipient && invitingAdmin == null) || view.thread!!.recipient.isCommunityInboxRecipient) {
             popupMenu.menuInflater.inflate(R.menu.menu_group_request, popupMenu.menu)
         } else {
             popupMenu.menuInflater.inflate(R.menu.menu_message_request, popupMenu.menu)

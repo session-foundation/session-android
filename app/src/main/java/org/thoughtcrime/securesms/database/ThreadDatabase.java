@@ -665,7 +665,7 @@ public class ThreadDatabase extends Database {
         threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
       } else {
         DatabaseComponent.get(context).recipientDatabase().setProfileSharing(recipient, true);
-        threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupRecipient(), distributionType);
+        threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupOrCommunityRecipient(), distributionType);
         created = true;
       }
       if (created && updateListener != null) {

@@ -24,9 +24,9 @@ class GroupRecord(
     val isOpenGroup: Boolean
         get() = Address.fromSerialized(encodedId).isCommunity
     val isLegacyClosedGroup: Boolean
-        get() = Address.fromSerialized(encodedId).isLegacyClosedGroup
+        get() = Address.fromSerialized(encodedId).isLegacyGroup
     val isClosedGroupV2: Boolean
-        get() = Address.fromSerialized(encodedId).isClosedGroupV2
+        get() = Address.fromSerialized(encodedId).isGroupV2
 
     init {
         if (!TextUtils.isEmpty(members)) {

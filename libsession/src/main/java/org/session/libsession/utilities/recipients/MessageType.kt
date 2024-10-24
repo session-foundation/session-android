@@ -8,7 +8,7 @@ fun Recipient.getType(): MessageType =
     when{
         isCommunityRecipient -> MessageType.COMMUNITY
         isLocalNumber -> MessageType.NOTE_TO_SELF
-        isLegacyClosedGroupRecipient -> MessageType.LEGACY_GROUP
-        isClosedGroupV2Recipient -> MessageType.GROUPS_V2
+        isLegacyGroupRecipient -> MessageType.LEGACY_GROUP
+        isGroupV2Recipient -> MessageType.GROUPS_V2
         else -> MessageType.ONE_ON_ONE
     }

@@ -442,7 +442,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         }
         bottomSheet.onCopyConversationId = onCopyConversationId@{
             bottomSheet.dismiss()
-            if (!thread.recipient.isGroupRecipient && !thread.recipient.isLocalNumber) {
+            if (!thread.recipient.isGroupOrCommunityRecipient && !thread.recipient.isLocalNumber) {
                 val clip = ClipData.newPlainText("Account ID", thread.recipient.address.toString())
                 val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                 manager.setPrimaryClip(clip)
@@ -583,7 +583,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val threadID = thread.threadId
         val recipient = thread.recipient
 
-        if (recipient.isClosedGroupV2Recipient || recipient.isLegacyClosedGroupRecipient) {
+        if (recipient.isGroupV2Recipient || recipient.isLegacyGroupRecipient) {
             ConversationMenuHelper.leaveClosedGroup(
                 context = this,
                 thread = recipient,
@@ -601,7 +601,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         var positiveButtonId: Int = R.string.yes
         var negativeButtonId: Int = R.string.no
 
-        if (recipient.isGroupRecipient) {
+        if (recipient.isGroupOrCommunityRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
             // If you are an admin of this group you can delete it
@@ -666,7 +666,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
 
                     // Notify the user
-                    val toastMessage = if (recipient.isGroupRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
+                    val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
                     Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
                 }
             }

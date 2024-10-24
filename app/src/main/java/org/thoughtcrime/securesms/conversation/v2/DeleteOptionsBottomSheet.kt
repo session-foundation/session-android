@@ -12,7 +12,6 @@ import network.loki.messenger.databinding.FragmentDeleteMessageBottomSheetBindin
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.util.UiModeUtilities
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -59,11 +58,11 @@ class DeleteOptionsBottomSheet : BottomSheetDialogFragment(), View.OnClickListen
         if (recipient.isLocalNumber) {
             binding.deleteForEveryoneTextView.text =
                 getString(R.string.clearMessagesForMe)
-        } else if (!recipient.isGroupRecipient && !contact.isNullOrEmpty()) {
+        } else if (!recipient.isGroupOrCommunityRecipient && !contact.isNullOrEmpty()) {
             binding.deleteForEveryoneTextView.text =
                 resources.getString(R.string.clearMessagesForEveryone)
         }
-        binding.deleteForEveryoneTextView.isVisible = !recipient.isLegacyClosedGroupRecipient
+        binding.deleteForEveryoneTextView.isVisible = !recipient.isLegacyGroupRecipient
         binding.deleteForMeTextView.setOnClickListener(this)
         binding.deleteForEveryoneTextView.setOnClickListener(this)
         binding.cancelTextView.setOnClickListener(this)

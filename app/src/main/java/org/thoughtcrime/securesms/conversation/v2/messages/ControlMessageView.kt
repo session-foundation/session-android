@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
@@ -12,7 +11,6 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewControlMessageBinding
@@ -78,7 +76,7 @@ class ControlMessageView : LinearLayout {
 
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
 
-                    if (threadRecipient?.isClosedGroupV2Recipient == true) {
+                    if (threadRecipient?.isGroupV2Recipient == true) {
                         expirationTimerView.setTimerIcon()
                     } else {
                         expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
@@ -87,7 +85,7 @@ class ControlMessageView : LinearLayout {
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                         && !message.isOutgoing
                         && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && threadRecipient?.isGroupRecipient != true
+                        && threadRecipient?.isGroupOrCommunityRecipient != true
 
                     if (followSetting.isVisible) {
                         binding.controlContentView.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }

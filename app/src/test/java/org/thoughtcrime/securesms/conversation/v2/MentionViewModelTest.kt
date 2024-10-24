@@ -74,7 +74,7 @@ class MentionViewModelTest {
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doAnswer {
                     mock<Recipient> {
-                        on { isClosedGroupV2Recipient } doReturn false
+                        on { isGroupV2Recipient } doReturn false
                         on { isCommunityRecipient } doReturn true
                         on { isContactRecipient } doReturn false
                     }

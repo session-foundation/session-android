@@ -68,7 +68,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
         val isCurrentUserInGroup = group?.members?.map { it.toString() }?.contains(publicKey) ?: false
-        if (!recipient.isGroupRecipient && !recipient.isLocalNumber) {
+        if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
             binding.blockTextView.visibility = if (recipient.isBlocked) View.GONE else View.VISIBLE
@@ -78,7 +78,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         } else {
             binding.detailsTextView.visibility = View.GONE
         }
-        binding.copyConversationId.visibility = if (!recipient.isGroupRecipient && !recipient.isLocalNumber) View.VISIBLE else View.GONE
+        binding.copyConversationId.visibility = if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) View.VISIBLE else View.GONE
         binding.copyConversationId.setOnClickListener(this)
         binding.copyCommunityUrl.visibility = if (recipient.isCommunityRecipient) View.VISIBLE else View.GONE
         binding.copyCommunityUrl.setOnClickListener(this)
@@ -86,18 +86,18 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
         binding.unMuteNotificationsTextView.setOnClickListener(this)
         binding.muteNotificationsTextView.setOnClickListener(this)
-        binding.notificationsTextView.isVisible = recipient.isGroupRecipient && !recipient.isMuted
+        binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
         binding.notificationsTextView.setOnClickListener(this)
 
         // delete
         binding.deleteTextView.apply {
-            isVisible = recipient.isContactRecipient || (recipient.isGroupRecipient && !isCurrentUserInGroup)
+            isVisible = recipient.isContactRecipient || (recipient.isGroupOrCommunityRecipient && !isCurrentUserInGroup)
             setOnClickListener(this@ConversationOptionsBottomSheet)
 
             // the text and content description will change depending on the type
             when{
                 // groups and communities
-                recipient.isGroupRecipient -> {
+                recipient.isGroupOrCommunityRecipient -> {
                     text = context.getString(R.string.leave)
                     contentDescription = context.getString(R.string.AccessibilityId_leave)
                 }
@@ -115,7 +115,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 }
             }
         }
-        binding.leaveTextView.isVisible = recipient.isGroupRecipient && isCurrentUserInGroup
+        binding.leaveTextView.isVisible = recipient.isGroupOrCommunityRecipient && isCurrentUserInGroup
         binding.leaveTextView.setOnClickListener(this)
 
         binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 ||

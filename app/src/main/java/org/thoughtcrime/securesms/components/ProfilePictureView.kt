@@ -53,7 +53,7 @@ class ProfilePictureView @JvmOverloads constructor(
 
     fun update(recipient: Recipient) {
         this.recipient = recipient
-        recipient.run { update(address, isLegacyClosedGroupRecipient, isOpenGroupInboxRecipient) }
+        recipient.run { update(address, isLegacyGroupRecipient, isCommunityInboxRecipient) }
     }
 
     fun update(

@@ -37,7 +37,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
@@ -57,17 +56,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -168,8 +163,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.search.getSearchName
-import org.thoughtcrime.securesms.home.HomeActivity
-import org.thoughtcrime.securesms.home.startHomeActivity
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewViewModel
@@ -188,7 +181,6 @@ import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.NetworkUtils
@@ -815,7 +807,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // called from onCreate
     private fun setUpBlockedBanner() {
-        val recipient = viewModel.recipient?.takeUnless { it.isGroupRecipient } ?: return
+        val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
         binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
         binding.blockedBanner.isVisible = recipient.isBlocked
         binding.blockedBanner.setOnClickListener { viewModel.unblock() }
@@ -838,7 +830,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun setUpLegacyGroupBanner() {
-        val shouldDisplayBanner = viewModel.recipient?.isLegacyClosedGroupRecipient ?: return
+        val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
 
         with(binding) {
             outdatedGroupBanner.isVisible = shouldDisplayBanner
@@ -1190,7 +1182,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
 
             // 10n1 and groups
-            recipient.is1on1 || recipient.isGroupRecipient -> {
+            recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.toShortString())
                     .format()
@@ -1241,7 +1233,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
         val invitingAdmin = viewModel.invitingAdmin
 
-        val name = if (recipient.isClosedGroupV2Recipient && invitingAdmin != null) {
+        val name = if (recipient.isGroupV2Recipient && invitingAdmin != null) {
             invitingAdmin.getSearchName()
         } else {
             recipient.toShortString()
@@ -1291,7 +1283,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     // TODO: don't need to allow new closed group check here, removed in new disappearing messages
     override fun showDisappearingMessages(thread: Recipient) {
-        if (thread.isLegacyClosedGroupRecipient) {
+        if (thread.isLegacyGroupRecipient) {
             groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (!isActive) return }
         }
         Intent(this, DisappearingMessagesActivity::class.java)
@@ -1719,7 +1711,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     override fun onReactionLongClicked(messageId: MessageId, emoji: String?) {
-        if (viewModel.recipient?.isGroupRecipient == true) {
+        if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
                 OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
@@ -2339,7 +2331,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun sendScreenshotNotification() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.isGroupRecipient) return
+        if (recipient.isGroupOrCommunityRecipient) return
         val kind = DataExtractionNotification.Kind.Screenshot()
         val message = DataExtractionNotification(kind)
         MessageSender.send(message, recipient.address)
@@ -2347,7 +2339,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun sendMediaSavedNotification() {
         val recipient = viewModel.recipient ?: return
-        if (recipient.isGroupRecipient) { return }
+        if (recipient.isGroupOrCommunityRecipient) { return }
         val timestamp = SnodeAPI.nowWithOffset
         val kind = DataExtractionNotification.Kind.MediaSaved(timestamp)
         val message = DataExtractionNotification(kind)

@@ -85,11 +85,11 @@ class MentionViewModel(
                 }
 
                 val memberIDs = when {
-                    recipient.isLegacyClosedGroupRecipient -> {
+                    recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
                             .map { it.serialize() }
                     }
-                    recipient.isClosedGroupV2Recipient -> {
+                    recipient.isGroupV2Recipient -> {
                         storage.getMembers(recipient.address.serialize()).map { it.sessionId }
                     }
 

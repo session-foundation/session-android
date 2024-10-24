@@ -4,7 +4,6 @@ import android.app.Application
 import com.goterl.lazysodium.utils.KeyPair
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import org.hamcrest.CoreMatchers.endsWith
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.nullValue
@@ -166,8 +165,8 @@ class ConversationViewModelTest: BaseViewModelTest() {
     @Test
     fun `open group recipient should have no blinded recipient`() {
         whenever(recipient.isCommunityRecipient).thenReturn(true)
-        whenever(recipient.isOpenGroupOutboxRecipient).thenReturn(false)
-        whenever(recipient.isOpenGroupInboxRecipient).thenReturn(false)
+        whenever(recipient.isCommunityOutboxRecipient).thenReturn(false)
+        whenever(recipient.isCommunityInboxRecipient).thenReturn(false)
         assertThat(viewModel.blindedRecipient, nullValue())
     }
 
@@ -180,7 +179,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
 
     @Test
     fun `contact recipient should hide input bar if not accepting requests`() {
-        whenever(recipient.isOpenGroupInboxRecipient).thenReturn(true)
+        whenever(recipient.isCommunityInboxRecipient).thenReturn(true)
         val blinded = mock<Recipient> {
             whenever(it.blocksCommunityMessageRequests).thenReturn(true)
         }

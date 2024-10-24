@@ -545,18 +545,18 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
                     val (base, room, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: continue
                     getOrConstructCommunity(base, room, pubKey)
                 }
-                recipient.isClosedGroupV2Recipient -> {
+                recipient.isGroupV2Recipient -> {
                     // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
                     // but just in case...
                     getOrConstructClosedGroup(recipient.address.serialize())
                 }
-                recipient.isLegacyClosedGroupRecipient -> {
+                recipient.isLegacyGroupRecipient -> {
                     val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
                     getOrConstructLegacyGroup(groupPublicKey)
                 }
                 recipient.isContactRecipient -> {
                     if (recipient.isLocalNumber) null // this is handled by the user profile NTS data
-                    else if (recipient.isOpenGroupInboxRecipient) null // specifically exclude
+                    else if (recipient.isCommunityInboxRecipient) null // specifically exclude
                     else if (!recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) null
                     else getOrConstructOneToOne(recipient.address.serialize())
                 }

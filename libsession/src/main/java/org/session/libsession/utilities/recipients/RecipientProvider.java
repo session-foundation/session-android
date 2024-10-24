@@ -84,9 +84,9 @@ class RecipientProvider {
                                                                                @NonNull Optional<RecipientSettings> settings,
                                                                                @NonNull Optional<GroupRecord> groupRecord)
   {
-    if (address.isGroup() && settings.isPresent() && groupRecord.isPresent()) {
+    if (address.isGroupOrCommunity() && settings.isPresent() && groupRecord.isPresent()) {
       return Optional.of(getGroupRecipientDetails(context, address, groupRecord, settings, true));
-    } else if (!address.isGroup() && settings.isPresent()) {
+    } else if (!address.isGroupOrCommunity() && settings.isPresent()) {
       boolean isLocalNumber = address.serialize().equals(TextSecurePreferences.getLocalNumber(context));
       return Optional.of(new RecipientDetails(null, null, !TextUtils.isEmpty(settings.get().getSystemDisplayName()), isLocalNumber, settings.get(), null));
     }
@@ -104,7 +104,7 @@ class RecipientProvider {
   }
 
   private @NonNull RecipientDetails getRecipientDetailsSync(Context context, @NonNull Address address, Optional<RecipientSettings> settings, Optional<GroupRecord> groupRecord, boolean nestedAsynchronous) {
-    if (address.isGroup() && !address.isClosedGroupV2()) return getGroupRecipientDetails(context, address, groupRecord, settings, nestedAsynchronous);
+    if (address.isGroupOrCommunity() && !address.isGroupV2()) return getGroupRecipientDetails(context, address, groupRecord, settings, nestedAsynchronous);
     else                   return getIndividualRecipientDetails(context, address, settings);
   }
 

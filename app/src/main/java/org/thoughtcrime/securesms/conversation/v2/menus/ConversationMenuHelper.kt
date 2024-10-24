@@ -44,7 +44,6 @@ import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
@@ -75,7 +74,7 @@ object ConversationMenuHelper {
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
         // Expiring messages
-        if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyClosedGroupRecipient || thread.isLocalNumber)) {
+        if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyGroupRecipient || thread.isLocalNumber)) {
             inflater.inflate(R.menu.menu_conversation_expiration, menu)
         }
         // One-on-one chat menu allows copying the account id
@@ -91,12 +90,12 @@ object ConversationMenuHelper {
             }
         }
         // (Legacy) Closed group menu (options that should only be present in closed groups)
-        if (thread.isLegacyClosedGroupRecipient) {
+        if (thread.isLegacyGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
         }
 
         // Groups v2 menu
-        if (thread.isClosedGroupV2Recipient) {
+        if (thread.isGroupV2Recipient) {
             val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.serialize())?.hasAdminKey() }
             if (hasAdminKey == true) {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
@@ -116,7 +115,7 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_unmuted, menu)
         }
 
-        if (thread.isGroupRecipient && !thread.isMuted) {
+        if (thread.isGroupOrCommunityRecipient && !thread.isMuted) {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 
@@ -260,7 +259,7 @@ object ConversationMenuHelper {
                     }
                 }
                 if (icon == null) {
-                    icon = IconCompat.createWithResource(context, if (thread.isGroupRecipient) R.mipmap.ic_group_shortcut else R.mipmap.ic_person_shortcut)
+                    icon = IconCompat.createWithResource(context, if (thread.isGroupOrCommunityRecipient) R.mipmap.ic_group_shortcut else R.mipmap.ic_person_shortcut)
                 }
                 return icon
             }
@@ -319,11 +318,11 @@ object ConversationMenuHelper {
 
     private fun editClosedGroup(context: Context, thread: Recipient) {
         when {
-            thread.isClosedGroupV2Recipient -> {
+            thread.isGroupV2Recipient -> {
                 context.startActivity(EditGroupActivity.createIntent(context, thread.address.serialize()))
             }
 
-            thread.isLegacyClosedGroupRecipient -> {
+            thread.isLegacyGroupRecipient -> {
                 val intent = Intent(context, EditLegacyGroupActivity::class.java)
                 val groupID: String = thread.address.toGroupString()
                 intent.putExtra(groupIDKey, groupID)
@@ -341,7 +340,7 @@ object ConversationMenuHelper {
         groupManager: GroupManagerV2,
     ): ReceiveChannel<Unit>? {
         when {
-            thread.isLegacyClosedGroupRecipient -> {
+            thread.isLegacyGroupRecipient -> {
                 val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
                 val admins = group.admins
                 val accountID = TextSecurePreferences.getLocalNumber(context)
@@ -364,7 +363,7 @@ object ConversationMenuHelper {
                 )
             }
 
-            thread.isClosedGroupV2Recipient -> {
+            thread.isGroupV2Recipient -> {
                 val accountId = AccountId(thread.address.serialize())
                 val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return null
                 val name = configFactory.withGroupConfigs(accountId) {

@@ -298,7 +298,7 @@ class ConfigToDatabaseSync @Inject constructor(
             buildMap(reader.count) {
                 var current = reader.next
                 while (current != null) {
-                    if (current.recipient?.isClosedGroupV2Recipient == true) {
+                    if (current.recipient?.isGroupV2Recipient == true) {
                         put(AccountId(current.recipient.address.serialize()), current.threadId)
                     }
 

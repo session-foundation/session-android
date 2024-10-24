@@ -93,7 +93,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
 
-          if (recipient.isGroupRecipient()) {
+          if (recipient.isGroupOrCommunityRecipient()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
             OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
             try {

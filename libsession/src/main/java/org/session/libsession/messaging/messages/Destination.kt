@@ -41,7 +41,7 @@ sealed class Destination {
                 address.isContact -> {
                     Contact(address.contactIdentifier())
                 }
-                address.isLegacyClosedGroup -> {
+                address.isLegacyGroup -> {
                     val groupID = address.toGroupString()
                     val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupID).toHexString()
                     LegacyClosedGroup(groupPublicKey)
@@ -61,7 +61,7 @@ sealed class Destination {
                         groupInboxId.last()
                     )
                 }
-                address.isClosedGroupV2 -> {
+                address.isGroupV2 -> {
                     ClosedGroup(address.serialize())
                 }
                 else -> {

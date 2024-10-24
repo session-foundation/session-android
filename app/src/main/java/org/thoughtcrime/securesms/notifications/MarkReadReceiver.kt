@@ -73,7 +73,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
                 .map { it.syncMessageId }
                 .filter { mmsSmsDatabase.getMessageForTimestamp(it.timetamp)?.run {
-                    isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupRecipient == true } == false
+                    isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
                 .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.serialize()) }
 

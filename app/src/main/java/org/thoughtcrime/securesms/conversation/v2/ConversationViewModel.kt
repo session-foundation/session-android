@@ -123,8 +123,8 @@ class ConversationViewModel(
     val blindedRecipient: Recipient?
         get() = _recipient.value?.let { recipient ->
             when {
-                recipient.isOpenGroupOutboxRecipient -> recipient
-                recipient.isOpenGroupInboxRecipient -> repository.maybeGetBlindedRecipient(recipient)
+                recipient.isCommunityOutboxRecipient -> recipient
+                recipient.isCommunityInboxRecipient -> repository.maybeGetBlindedRecipient(recipient)
                 else -> null
             }
         }
@@ -137,7 +137,7 @@ class ConversationViewModel(
     val invitingAdmin: Recipient?
         get() {
             val recipient = recipient ?: return null
-            if (!recipient.isClosedGroupV2Recipient) return null
+            if (!recipient.isGroupV2Recipient) return null
 
             return repository.getInvitingAdmin(threadId)
         }
@@ -151,14 +151,14 @@ class ConversationViewModel(
     private val closedGroupMembers: List<GroupMember>
         get() {
             val recipient = recipient ?: return emptyList()
-            if (!recipient.isClosedGroupV2Recipient) return emptyList()
+            if (!recipient.isGroupV2Recipient) return emptyList()
             return storage.getMembers(recipient.address.serialize())
         }
 
     val isClosedGroupAdmin: Boolean
         get() {
             val recipient = recipient ?: return false
-            return !recipient.isClosedGroupV2Recipient ||
+            return !recipient.isGroupV2Recipient ||
                     (closedGroupMembers.firstOrNull { it.sessionId == storage.getUserPublicKey() }?.admin ?: false)
         }
 
@@ -174,7 +174,7 @@ class ConversationViewModel(
     val isMessageRequestThread : Boolean
         get() {
             val recipient = recipient ?: return false
-            return !recipient.isLocalNumber && !recipient.isLegacyClosedGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
+            return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
     val canReactToMessages: Boolean
@@ -230,8 +230,8 @@ class ConversationViewModel(
      */
     private fun shouldShowInput(recipient: Recipient?): Boolean {
         return when {
-            recipient?.isClosedGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
-            recipient?.isLegacyClosedGroupRecipient == true -> {
+            recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
+            recipient?.isLegacyGroupRecipient == true -> {
                 groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true
             }
             openGroup != null -> openGroup?.canWrite == true
@@ -253,7 +253,7 @@ class ConversationViewModel(
             (!recipient.isApproved && !recipient.isLocalNumber) &&
 
             // Req 4: the type of conversation supports message request
-            (recipient.is1on1 || recipient.isClosedGroupV2Recipient) &&
+            (recipient.is1on1 || recipient.isGroupV2Recipient) &&
 
             // Req 2: we haven't sent a message to them before
             !threadDb.getLastSeenAndHasSent(threadId).second() &&
@@ -263,14 +263,14 @@ class ConversationViewModel(
         ) {
 
             return MessageRequestUiState.Visible(
-                acceptButtonText = if (recipient.isGroupRecipient) {
+                acceptButtonText = if (recipient.isGroupOrCommunityRecipient) {
                     R.string.messageRequestGroupInviteDescription
                 } else {
                     R.string.messageRequestsAcceptDescription
                 },
                 // You can block a 1to1 conversation, or a normal groups v2 conversation
-                showBlockButton = recipient.is1on1 || recipient.isClosedGroupV2Recipient,
-                declineButtonText = if (recipient.isClosedGroupV2Recipient) {
+                showBlockButton = recipient.is1on1 || recipient.isGroupV2Recipient,
+                declineButtonText = if (recipient.isGroupV2Recipient) {
                     R.string.delete
                 } else {
                     R.string.decline
@@ -311,7 +311,7 @@ class ConversationViewModel(
     fun block() {
         // inviting admin will be true if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
-        if (recipient.isContactRecipient || recipient.isClosedGroupV2Recipient) {
+        if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
             repository.setBlocked(threadId, recipient, true)
         }
     }
