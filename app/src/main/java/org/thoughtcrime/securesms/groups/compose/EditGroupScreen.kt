@@ -41,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.squareup.phrase.Phrase
 import kotlinx.serialization.Serializable
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -343,12 +344,12 @@ private fun MemberOptionsDialog(
             if (member.canRemove) {
                 this += BottomOptionsDialogItem(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
-                    iconRes = R.drawable.ic_delete,
+                    iconRes = R.drawable.ic_delete_24,
                     onClick = onRemove
                 )
             }
 
-            if (member.canPromote) {
+            if (BuildConfig.DEBUG && member.canPromote) {
                 this += BottomOptionsDialogItem(
                     title = context.getString(R.string.adminPromoteToAdmin),
                     iconRes = R.drawable.ic_profile_default,
@@ -356,7 +357,7 @@ private fun MemberOptionsDialog(
                 )
             }
 
-            if (member.canResendInvite) {
+            if (BuildConfig.DEBUG && member.canResendInvite) {
                 this += BottomOptionsDialogItem(
                     title = "Resend invite",
                     iconRes = R.drawable.ic_arrow_left,
@@ -364,7 +365,7 @@ private fun MemberOptionsDialog(
                 )
             }
 
-            if (member.canResendPromotion) {
+            if (BuildConfig.DEBUG && member.canResendPromotion) {
                 this += BottomOptionsDialogItem(
                     title = "Resend promotion",
                     iconRes = R.drawable.ic_arrow_left,
