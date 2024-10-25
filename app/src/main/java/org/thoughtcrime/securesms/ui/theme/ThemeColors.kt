@@ -116,7 +116,7 @@ data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors
     override val qrCodeBackground = text
     override val primaryButtonFill = primary
     override val primaryButtonFillText = Color.Black
-    override val textAlert: Color = classicDark6
+    override val textAlert: Color = classicDark0
 }
 
 data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColors {
@@ -156,7 +156,7 @@ data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val qrCodeBackground = text
     override val primaryButtonFill = primary
     override val primaryButtonFillText = Color.Black
-    override val textAlert: Color = oceanDark7
+    override val textAlert: Color = oceanDark0
 }
 
 data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
@@ -210,6 +210,9 @@ private fun ThemeColors() {
         }
         Box(Modifier.background(LocalColors.current.borders)) {
             Text("border", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.warning)) {
+            Text("alertOnWarning", style = LocalType.current.base, color = LocalColors.current.textAlert)
         }
     }
 }

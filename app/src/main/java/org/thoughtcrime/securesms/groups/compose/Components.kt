@@ -66,7 +66,10 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
             style = LocalType.current.small,
             maxLines = 2,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+            modifier = Modifier.padding(
+                horizontal = LocalDimensions.current.spacing,
+                vertical = LocalDimensions.current.xxxsSpacing
+            )
         )
     }
 }
