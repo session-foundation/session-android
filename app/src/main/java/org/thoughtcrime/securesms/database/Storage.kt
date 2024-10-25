@@ -296,15 +296,21 @@ open class Storage @Inject constructor(
         closedGroupId: String
     ): Boolean {
         val threadId = getThreadId(fromSerialized(closedGroupId))!!
+        val senderIsMe = sender == getUserPublicKey()
+
         val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes)
-        return info.all { it.sender == sender }
+
+        if (senderIsMe) {
+            return info.all { it.isOutgoing }
+        } else {
+            return info.all { it.sender == sender }
+        }
     }
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
-        val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())
-        for ((serverHash, sender, messageIdToDelete, isSms) in info) {
-            messageDataProvider.deleteMessage(messageIdToDelete, isSms)
-            if (!messageDataProvider.isOutgoingMessage(messageIdToDelete)) {
+        for (info in lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())) {
+            messageDataProvider.deleteMessage(info.messageId, info.isSms)
+            if (!info.isOutgoing) {
                 notificationManager.updateNotification(context)
             }
         }

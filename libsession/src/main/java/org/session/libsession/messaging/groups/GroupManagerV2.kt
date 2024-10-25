@@ -80,7 +80,7 @@ interface GroupManagerV2 {
      * It can be called by a regular member who wishes to delete their own messages.
      * It can also called by an admin, who can delete any messages from any member.
      */
-    suspend fun requestMessageDeletion(groupId: AccountId, messageHashes: List<String>)
+    suspend fun requestMessageDeletion(groupId: AccountId, messageHashes: Set<String>)
 
     /**
      * Handle a request to delete a member's content from the group. This is called when we receive

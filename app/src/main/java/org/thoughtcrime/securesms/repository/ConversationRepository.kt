@@ -77,6 +77,8 @@ interface ConversationRepository {
         messages: Set<MessageRecord>
     )
 
+    suspend fun deleteGroupV2MessagesRemotely(recipient: Recipient, messages: Set<MessageRecord>)
+
     suspend fun banUser(threadId: Long, recipient: Recipient): Result<Unit>
     suspend fun banAndDeleteAll(threadId: Long, recipient: Recipient): Result<Unit>
     suspend fun deleteThread(threadId: Long): Result<Unit>
@@ -313,6 +315,20 @@ class DefaultConversationRepository @Inject constructor(
                 }
             }
         }
+    }
+
+    override suspend fun deleteGroupV2MessagesRemotely(
+        recipient: Recipient,
+        messages: Set<MessageRecord>
+    ) {
+        require(recipient.isGroupV2Recipient) { "Recipient is not a group v2 recipient" }
+
+        val groupId = AccountId(recipient.address.serialize())
+        val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
+            messageDataProvider.getServerHashForMessage(msg.id, msg.isMms)
+        }
+
+        groupManager.requestMessageDeletion(groupId, hashes)
     }
 
     override suspend fun deleteNoteToSelfMessagesRemotely(

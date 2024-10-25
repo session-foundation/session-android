@@ -610,13 +610,12 @@ class ConversationViewModel(
     }
 
     private fun markAsDeletedForEveryoneGroupsV2(data: DeleteForEveryoneDialogData){
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             // show a loading indicator
             _uiState.update { it.copy(showLoader = true) }
 
-            //todo GROUPS V2 - uncomment below and use Fanchao's method to delete a group V2
             try {
-                //repository.callMethodFromFanchao(threadId, recipient, data.messages)
+                repository.deleteGroupV2MessagesRemotely(recipient!!, data.messages)
 
                 // the repo will handle the internal logic (calling `/delete` on the swarm
                 // and sending 'GroupUpdateDeleteMemberContentMessage'
@@ -638,7 +637,7 @@ class ConversationViewModel(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${data.messages} ")
+                Log.e("Loki", "FAILED TO delete messages ${data.messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(

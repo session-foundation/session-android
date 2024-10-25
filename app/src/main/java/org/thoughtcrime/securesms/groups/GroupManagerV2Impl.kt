@@ -19,6 +19,7 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.INVITE_STATUS_FAILED
 import network.loki.messenger.libsession_util.util.INVITE_STATUS_SENT
 import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -74,6 +75,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     @ApplicationContext val application: Context,
     private val clock: SnodeClock,
+    private val messageDataProvider: MessageDataProvider,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -865,7 +867,7 @@ class GroupManagerV2Impl @Inject constructor(
 
     override suspend fun requestMessageDeletion(
         groupId: AccountId,
-        messageHashes: List<String>
+        messageHashes: Set<String>
     ): Unit = withContext(dispatcher) {
         // To delete messages from a group, there are a few considerations:
         // 1. Messages are stored on every member's device, we need a way to ask them to delete their stored messages
@@ -883,7 +885,7 @@ class GroupManagerV2Impl @Inject constructor(
         check(
             group.hasAdminKey() ||
                     storage.ensureMessageHashesAreSender(
-                        messageHashes.toSet(),
+                        messageHashes,
                         userPubKey,
                         groupId.hexString
                     )
@@ -896,7 +898,7 @@ class GroupManagerV2Impl @Inject constructor(
             SnodeAPI.deleteMessage(
                 publicKey = groupId.hexString,
                 swarmAuth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                serverHashes = messageHashes
+                serverHashes = messageHashes.toList()
             )
         }
 
@@ -958,8 +960,8 @@ class GroupManagerV2Impl @Inject constructor(
                     groupId.hexString
                 )
             ) {
-                // ensure that all message hashes belong to user
-                // storage delete
+                // For deleting message by hashes, we'll likely only need to mark
+                // them as deleted
                 storage.deleteMessagesByHash(threadId, hashes)
             }
         }
