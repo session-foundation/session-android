@@ -285,6 +285,8 @@
         android:contentDescription="@string/AccessibilityId_outdated_group_banner"
         android:textSize="@dimen/tiny_font_size"
         tools:text="@string/groupLegacyBanner"
+        android:visibility="gone"
+        tools:visibility="visible"
         app:drawableEndCompat="@drawable/ic_link_out" />
 
     <TextView
