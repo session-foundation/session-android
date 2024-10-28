@@ -92,8 +92,11 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
@@ -176,6 +179,7 @@ import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
@@ -822,25 +826,38 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         binding.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
 
-            val txt = Phrase.from(applicationContext, R.string.disappearingMessagesLegacy)
+            val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
                 .put(NAME_KEY, legacyRecipient!!.toShortString())
                 .format()
-            binding.outdatedBannerTextView.text = txt
+            binding.outdatedDisappearingBannerTextView.text = txt
         }
     }
 
     private fun setUpLegacyGroupBanner() {
         val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
 
+        //TODO groupsv2, URL
+        val url = "https://getsession.org"
+
         with(binding) {
             outdatedGroupBanner.isVisible = shouldDisplayBanner
+            outdatedGroupBanner.text = Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
+                //TODO groupsv2, date
+                .put(DATE_KEY, "")
+                .format()
             outdatedGroupBanner.setOnClickListener {
                 showSessionDialog {
                     title(R.string.urlOpenBrowser)
-                    text(R.string.urlOpenDescription)
+                    text(Phrase.from(this@ConversationActivityV2, R.string.urlOpenDescription)
+                            .put(URL_KEY, url)
+                            .format())
                     cancelButton()
                     dangerButton(R.string.open) {
-                        // open the URL (tbc)
+                        try {
+                            openUrl(url)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error opening URL", e)
+                        }
                     }
                 }
             }
