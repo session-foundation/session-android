@@ -238,11 +238,6 @@ open class Storage @Inject constructor(
         return Profile(displayName, profileKey, profilePictureUrl)
     }
 
-    override fun setProfileAvatar(recipient: Recipient, profileAvatar: String?) {
-        val database = recipientDatabase
-        database.setProfileAvatar(recipient, profileAvatar)
-    }
-
     override fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?) {
         val db = recipientDatabase
         db.setProfileAvatar(recipient, newProfilePicture)
@@ -263,7 +258,7 @@ open class Storage @Inject constructor(
         preferences.setProfilePictureURL(newProfilePicture)
 
         if (newProfileKey != null) {
-            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address))
+            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address, newProfileKey))
         }
     }
 

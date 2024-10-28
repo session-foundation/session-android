@@ -69,12 +69,9 @@ class ProfileManager @Inject constructor(
             .getAllJobs(RetrieveProfileAvatarJob.KEY).any {
                 (it.value as? RetrieveProfileAvatarJob)?.recipientAddress == recipient.address
             }
-        val resolved = recipient.resolve()
-        storage.get().setProfilePicture(
-            recipient = resolved,
-            newProfileKey = profileKey,
-            newProfilePicture = profilePictureURL
-        )
+
+        recipient.resolve()
+
         val accountID = recipient.address.serialize()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
@@ -86,7 +83,7 @@ class ProfileManager @Inject constructor(
         }
         contactUpdatedInternal(contact)
         if (!hasPendingDownload) {
-            val job = RetrieveProfileAvatarJob(profilePictureURL, recipient.address)
+            val job = RetrieveProfileAvatarJob(profilePictureURL, recipient.address, profileKey)
             JobQueue.shared.add(job)
         }
     }

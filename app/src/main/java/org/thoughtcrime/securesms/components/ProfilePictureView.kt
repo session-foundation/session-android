@@ -131,8 +131,10 @@ class ProfilePictureView @JvmOverloads constructor(
                 this.recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
                 this.recipient!!
             }
+            
             if (profilePicturesCache[imageView] == recipient) return
-            profilePicturesCache[imageView] = recipient
+            // recipient is mutable so without cloning it the line above always returns true as the changes to the underlying recipient happens on both shared instances
+            profilePicturesCache[imageView] = recipient.clone()
             val signalProfilePicture = recipient.contactPhoto
             val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
 
