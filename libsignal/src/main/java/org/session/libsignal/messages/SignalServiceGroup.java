@@ -89,7 +89,7 @@ public class SignalServiceGroup {
     return groupId;
   }
 
-  public boolean isNewClosedGroup() {
+  public boolean isGroupV2() {
     return groupId.length == 33 && groupId[0] == 0x03;
   }
 

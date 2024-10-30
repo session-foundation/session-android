@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ButtonColors
@@ -43,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -55,7 +58,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -432,12 +437,25 @@ fun Avatar(
     userAddress: Address,
     modifier: Modifier = Modifier
 ) {
-    AndroidView(
-        factory = {
-            ProfilePictureView(it).apply { update(userAddress) }
-        },
-        modifier = modifier
-    )
+    if (LocalInspectionMode.current) {
+        Image(
+            painterResource(id = R.drawable.ic_profile_default),
+            colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+            contentScale = ContentScale.Inside,
+            contentDescription = null,
+            modifier = Modifier
+                .size(LocalDimensions.current.iconLarge)
+                .clip(CircleShape)
+                .border(1.dp, LocalColors.current.borders, CircleShape)
+        )
+    } else {
+        AndroidView(
+            factory = {
+                ProfilePictureView(it).apply { update(userAddress) }
+            },
+            modifier = modifier
+        )
+    }
 }
 
 @Composable

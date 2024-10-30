@@ -82,7 +82,7 @@ public class IncomingTextMessage implements Parcelable {
 
     if (group.isPresent()) {
       SignalServiceGroup groupObject = group.get();
-      if (groupObject.isNewClosedGroup()) {
+      if (groupObject.isGroupV2()) {
         // new closed group 03..etc..
         this.groupId = Address.fromSerialized(Hex.toStringCondensed(groupObject.getGroupId()));
       } else {

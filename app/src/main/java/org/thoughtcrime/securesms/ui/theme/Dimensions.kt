@@ -20,5 +20,8 @@ data class Dimensions(
     val minLargeItemButtonHeight: Dp = 60.dp,
 
     val indicatorHeight: Dp = 4.dp,
-    val borderStroke: Dp = 1.dp
+    val borderStroke: Dp = 1.dp,
+
+    val iconMedium: Dp = 24.dp,
+    val iconLarge: Dp = 48.dp,
 )

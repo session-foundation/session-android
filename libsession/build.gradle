@@ -12,8 +12,6 @@ android {
 
     defaultConfig {
         minSdkVersion androidMinimumSdkVersion
-        // Build constant for which version should minimally support new groups
-        buildConfigField("String", "MINIMUM_GROUP_VERSION", '"1.19.0"')
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

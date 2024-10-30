@@ -73,11 +73,11 @@ public class IncomingMediaMessage {
 
     if (group.isPresent()) {
       SignalServiceGroup groupObject = group.get();
-      if (groupObject.isNewClosedGroup()) {
-        // new closed group 03..etc..
+      if (groupObject.isGroupV2()) {
+        // new groupv2 03..etc..
         this.groupId = Address.fromSerialized(Hex.toStringCondensed(groupObject.getGroupId()));
       } else {
-        // old closed group or open group
+        // legacy group or community
         this.groupId = Address.fromSerialized(GroupUtil.getEncodedId(group.get()));
       }
     } else {

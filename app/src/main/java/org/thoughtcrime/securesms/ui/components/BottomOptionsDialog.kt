@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -53,7 +52,7 @@ fun <T> BottomOptionsDialog(
         containerColor = LocalColors.current.backgroundSecondary,
     ) {
         for (option in options) {
-            MemberModalBottomSheetOptionItem(
+            BottomOptionItem(
                 text = optionTitle(option),
                 leadingIcon = optionIconRes(option),
                 onClick = {
@@ -66,7 +65,7 @@ fun <T> BottomOptionsDialog(
 }
 
 @Composable
-private fun MemberModalBottomSheetOptionItem(
+private fun BottomOptionItem(
     leadingIcon: Int,
     text: String,
     onClick: () -> Unit
@@ -81,7 +80,7 @@ private fun MemberModalBottomSheetOptionItem(
     ) {
         Icon(
             painter = painterResource(leadingIcon),
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(LocalDimensions.current.iconMedium),
             tint = LocalColors.current.text,
             contentDescription = null
         )

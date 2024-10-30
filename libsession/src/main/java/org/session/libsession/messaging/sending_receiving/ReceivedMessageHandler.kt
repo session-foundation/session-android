@@ -168,9 +168,9 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
     SSKEnvironment.shared.messageExpirationManager.insertExpirationTimerMessage(message)
 
-    val isGroupV1 = message.groupPublicKey != null && message.groupPublicKey?.startsWith(IdPrefix.GROUP.value) == false
+    val isLegacyGroup = message.groupPublicKey != null && message.groupPublicKey?.startsWith(IdPrefix.GROUP.value) == false
 
-    if (isNewConfigEnabled && !isGroupV1) return
+    if (isNewConfigEnabled && !isLegacyGroup) return
 
     val module = MessagingModuleConfiguration.shared
     try {
