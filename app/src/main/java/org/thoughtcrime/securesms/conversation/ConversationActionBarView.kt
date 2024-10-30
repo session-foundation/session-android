@@ -80,7 +80,7 @@ class ConversationActionBarView @JvmOverloads constructor(
     ) {
         this.delegate = delegate
         binding.profilePictureView.layoutParams = resources.getDimensionPixelSize(
-            if (recipient.isGroupV2Recipient) R.dimen.medium_profile_picture_size else R.dimen.small_profile_picture_size
+            if (recipient.isGroupRecipient) R.dimen.medium_profile_picture_size else R.dimen.small_profile_picture_size
         ).let { LayoutParams(it, it) }
         update(recipient, openGroup, config)
     }
