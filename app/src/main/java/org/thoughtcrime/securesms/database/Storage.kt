@@ -62,7 +62,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.MessageType
@@ -1016,7 +1016,7 @@ open class Storage @Inject constructor(
         }
 
     override fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo? {
-        val groupIsAdmin = configFactory.getClosedGroup(AccountId(groupAccountId))?.hasAdminKey() ?: return null
+        val groupIsAdmin = configFactory.getGroup(AccountId(groupAccountId))?.hasAdminKey() ?: return null
 
         return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             val info = configs.groupInfo
@@ -1037,7 +1037,7 @@ open class Storage @Inject constructor(
         val sentTimestamp = message.sentTimestamp ?: clock.currentTimeMills()
         val senderPublicKey = message.sender
         val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
-            ?: configFactory.getClosedGroup(closedGroup)?.name
+            ?: configFactory.getGroup(closedGroup)?.name
 
         val updateData = UpdateMessageData.buildGroupUpdate(message, groupName.orEmpty()) ?: return null
 

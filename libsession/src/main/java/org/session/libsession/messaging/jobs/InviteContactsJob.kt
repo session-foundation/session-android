@@ -20,12 +20,11 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.prettifiedDescription
 
 class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<String>) : Job {
 
@@ -101,7 +100,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             }
 
             val groupName = configs.withGroupConfigs(sessionId) { it.groupInfo.getName() }
-                ?: configs.getClosedGroup(sessionId)?.name
+                ?: configs.getGroup(sessionId)?.name
 
             val failures = results.filter { it.second.isFailure }
             // if there are failed invites, display a message

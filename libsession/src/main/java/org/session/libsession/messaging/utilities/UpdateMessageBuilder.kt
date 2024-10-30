@@ -26,7 +26,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 
 object UpdateMessageBuilder {
@@ -282,7 +282,7 @@ object UpdateMessageBuilder {
             }
             is UpdateMessageData.Kind.GroupInvitation -> {
                 val invitingAdmin = Recipient.from(context, Address.fromSerialized(updateData.invitingAdmin), false)
-                val approved = configFactory.getClosedGroup(AccountId(updateData.groupAccountId))?.invited == false
+                val approved = configFactory.getGroup(AccountId(updateData.groupAccountId))?.invited == false
                 return if (invitingAdmin.name != null && !approved) {
                     Phrase.from(context, R.string.messageRequestGroupInvite)
                         .put(NAME_KEY, invitingAdmin.name)

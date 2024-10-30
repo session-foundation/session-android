@@ -25,7 +25,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.UserConfigType
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -98,7 +98,7 @@ class ConfigUploader @Inject constructor(
 
     private suspend fun pushGroupConfigsChangesIfNeeded(groupId: AccountId) = coroutineScope {
         // Only admin can push group configs
-        val adminKey = configFactory.getClosedGroup(groupId)?.adminKey
+        val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (adminKey == null) {
             Log.i(TAG, "Skipping group config push without admin key")
             return@coroutineScope

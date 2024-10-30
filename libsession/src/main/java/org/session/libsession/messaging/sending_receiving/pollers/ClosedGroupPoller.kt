@@ -22,10 +22,9 @@ import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.model.RetrieveMessageResponse
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
@@ -136,7 +135,7 @@ class ClosedGroupPoller(
             }
         }
 
-        val group = configFactoryProtocol.getClosedGroup(closedGroupSessionId)
+        val group = configFactoryProtocol.getGroup(closedGroupSessionId)
         if (group == null) {
             throw NonRetryableException("Group doesn't exist")
         }

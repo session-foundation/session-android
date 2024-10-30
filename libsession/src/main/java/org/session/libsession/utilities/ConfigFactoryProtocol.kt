@@ -97,7 +97,7 @@ enum class UserConfigType(val namespace: Int) {
 /**
  * Shortcut to get the group info for a closed group. Equivalent to: `withUserConfigs { it.userGroups.getClosedGroup(groupId) }`
  */
-fun ConfigFactoryProtocol.getClosedGroup(groupId: AccountId): GroupInfo.ClosedGroupInfo? {
+fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInfo? {
     return withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
 }
 

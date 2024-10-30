@@ -32,6 +32,7 @@ import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.getType

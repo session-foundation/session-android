@@ -43,7 +43,7 @@ import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.messages.SignalServiceGroup
@@ -87,7 +87,7 @@ class GroupManagerV2Impl @Inject constructor(
      */
     private fun requireAdminAccess(group: AccountId): ByteArray {
         return checkNotNull(
-            configFactory.getClosedGroup(group)
+            configFactory.getGroup(group)
                 ?.adminKey
                 ?.takeIf { it.isNotEmpty() }
         ) { "Only admin is allowed to invite members" }
@@ -384,7 +384,7 @@ class GroupManagerV2Impl @Inject constructor(
             return@withContext
         }
 
-        val groupAdminAuth = configFactory.getClosedGroup(groupAccountId)?.adminKey?.let {
+        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.let {
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
         } ?: return@withContext
 
@@ -392,7 +392,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) {
-        val closedGroup = configFactory.getClosedGroup(group) ?: return
+        val closedGroup = configFactory.getGroup(group) ?: return
         val groupAdminKey = closedGroup.adminKey
 
         if (groupAdminKey != null) {
@@ -406,7 +406,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean) = withContext(dispatcher + SupervisorJob()) {
-        val group = configFactory.getClosedGroup(groupId)
+        val group = configFactory.getGroup(groupId)
 
         // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
         val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
@@ -664,7 +664,7 @@ class GroupManagerV2Impl @Inject constructor(
         promoteMessageTimestamp: Long,
     ): Unit = withContext(dispatcher) {
         val userAuth = requireNotNull(storage.userAuth) { "No current user available" }
-        val group = configFactory.getClosedGroup(groupId)
+        val group = configFactory.getGroup(groupId)
 
         if (group == null) {
             // If we haven't got the group in the config, it could mean that we haven't
@@ -722,7 +722,7 @@ class GroupManagerV2Impl @Inject constructor(
         inviteMessageTimestamp: Long
     ) {
         // If we have already received an invitation in the past, we should not process this one
-        if (configFactory.getClosedGroup(groupId)?.invited == true) {
+        if (configFactory.getGroup(groupId)?.invited == true) {
             return
         }
 
@@ -772,7 +772,7 @@ class GroupManagerV2Impl @Inject constructor(
             return@withContext
         }
 
-        val adminKey = configFactory.getClosedGroup(groupId)?.adminKey
+        val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (adminKey == null || adminKey.isEmpty()) {
             return@withContext // We don't have the admin key, we can't process the invite response
         }
@@ -794,7 +794,7 @@ class GroupManagerV2Impl @Inject constructor(
         pollerFactory.pollerFor(groupId)?.stop()
 
         val userId = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
-        val group = configFactory.getClosedGroup(groupId) ?: return@withContext
+        val group = configFactory.getGroup(groupId) ?: return@withContext
 
         // Retrieve the group name one last time from the group info,
         // as we are going to clear the keys, we won't have the chance to
@@ -877,7 +877,7 @@ class GroupManagerV2Impl @Inject constructor(
         // meanwhile, if we are admin we can just delete those messages from the group swarm, and otherwise
         // the admins can pick up the group message and delete the messages on our behalf.
 
-        val group = requireNotNull(configFactory.getClosedGroup(groupId)) {
+        val group = requireNotNull(configFactory.getGroup(groupId)) {
             "Group doesn't exist"
         }
         val userPubKey = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
@@ -981,7 +981,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
         }
 
-        val adminKey = configFactory.getClosedGroup(groupId)?.adminKey
+        val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (!senderIsVerifiedAdmin && adminKey != null && hashes.isNotEmpty()) {
             // If the deletion request comes from a non-admin, and we as an admin, will also delete
             // the content from the swarm, provided that the messages are actually sent by that user

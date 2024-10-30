@@ -41,7 +41,7 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
-import org.session.libsession.utilities.getClosedGroup
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
@@ -118,7 +118,7 @@ class ConfigFactory @Inject constructor(
     }
 
     private fun ensureGroupConfigsInitialized(groupId: AccountId): Pair<ReentrantReadWriteLock, GroupConfigsImpl> {
-        val groupAdminKey = getClosedGroup(groupId)?.adminKey
+        val groupAdminKey = getGroup(groupId)?.adminKey
         return synchronized(groupConfigs) {
             groupConfigs.getOrPut(groupId) {
                 ReentrantReadWriteLock() to GroupConfigsImpl(
