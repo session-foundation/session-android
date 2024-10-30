@@ -71,10 +71,6 @@ object GroupUtil {
         return decodedGroupId
     }
 
-    fun isEncodedGroup(groupId: String): Boolean {
-        return groupId.startsWith(LEGACY_CLOSED_GROUP_PREFIX) || groupId.startsWith(COMMUNITY_PREFIX)
-    }
-
     @JvmStatic
     fun isCommunity(groupId: String): Boolean {
         return groupId.startsWith(COMMUNITY_PREFIX)

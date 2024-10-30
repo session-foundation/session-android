@@ -7,7 +7,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.recipients.Recipient
@@ -28,21 +27,10 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
     @Inject lateinit var contactDB: SessionContactDatabase
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
-        val threadId = storage.getThreadId(threadRecipient) ?: run {
-            dismiss()
-            return@createSessionDialog
-        }
-
-        val displayName = when {
-            threadRecipient.isCommunityRecipient -> storage.getOpenGroup(threadId)?.name ?: "UNKNOWN"
-            threadRecipient.isLegacyGroupRecipient -> storage.getGroup(threadRecipient.address.toGroupString())?.title ?: "UNKNOWN"
-            threadRecipient.isGroupV2Recipient -> threadRecipient.name ?: "UNKNOWN"
-            else -> storage.getContactWithAccountID(threadRecipient.address.serialize())?.displayName(Contact.ContactContext.REGULAR) ?: "UNKNOWN"
-        }
         title(getString(R.string.attachmentsAutoDownloadModalTitle))
 
         val explanation = Phrase.from(context, R.string.attachmentsAutoDownloadModalDescription)
-            .put(CONVERSATION_NAME_KEY, displayName)
+            .put(CONVERSATION_NAME_KEY, threadRecipient.toShortString())
             .format()
         text(explanation)
 

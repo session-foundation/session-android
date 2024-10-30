@@ -1549,16 +1549,12 @@ open class Storage @Inject constructor(
             || (userPublicKey == recipientPublicKey && userPublicKey == senderPublicKey)
         ) return
 
-        val recipientDb = recipientDatabase
-        val threadDB = threadDatabase
         if (userPublicKey == senderPublicKey) {
             val requestRecipient = Recipient.from(context, fromSerialized(recipientPublicKey), false)
-            recipientDb.setApproved(requestRecipient, true)
-            val threadId = threadDB.getOrCreateThreadIdFor(requestRecipient)
-            threadDB.setHasSent(threadId, true)
+            recipientDatabase.setApproved(requestRecipient, true)
+            val threadId = threadDatabase.getOrCreateThreadIdFor(requestRecipient)
+            threadDatabase.setHasSent(threadId, true)
         } else {
-            val mmsDb = mmsDatabase
-            val smsDb = smsDatabase
             val sender = Recipient.from(context, fromSerialized(senderPublicKey), false)
             val threadId = getOrCreateThreadIdFor(sender.address)
             val profile = response.profile
@@ -1578,10 +1574,10 @@ open class Storage @Inject constructor(
                     profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDB.setHasSent(threadId, true)
+            threadDatabase.setHasSent(threadId, true)
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
-            threadDB.readerFor(threadDB.conversationList).use { reader ->
+            threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
                 while (reader.next != null) {
                     val recipient = reader.current.recipient
                     val address = recipient.address.serialize()
@@ -1601,10 +1597,10 @@ open class Storage @Inject constructor(
                 }
                 mappingDb.addBlindedIdMapping(mapping.value.copy(accountId = senderPublicKey))
 
-                val blindedThreadId = threadDB.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
-                mmsDb.updateThreadId(blindedThreadId, threadId)
-                smsDb.updateThreadId(blindedThreadId, threadId)
-                threadDB.deleteConversation(blindedThreadId)
+                val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
+                mmsDatabase.updateThreadId(blindedThreadId, threadId)
+                smsDatabase.updateThreadId(blindedThreadId, threadId)
+                threadDatabase.deleteConversation(blindedThreadId)
             }
             setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
@@ -1635,7 +1631,7 @@ open class Storage @Inject constructor(
                 Optional.absent(),
                 Optional.absent()
             )
-            mmsDb.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
+            mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
         }
     }
 
@@ -1645,7 +1641,6 @@ open class Storage @Inject constructor(
     override fun insertMessageRequestResponseFromYou(threadId: Long){
         val userPublicKey = getUserPublicKey() ?: return
 
-        val mmsDb = mmsDatabase
         val message = IncomingMediaMessage(
             fromSerialized(userPublicKey),
             clock.currentTimeMills(),
@@ -1664,7 +1659,7 @@ open class Storage @Inject constructor(
             Optional.absent(),
             Optional.absent()
         )
-        mmsDb.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
+        mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = false)
     }
 
     override fun getRecipientApproved(address: Address): Boolean {

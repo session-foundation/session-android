@@ -470,7 +470,6 @@ class DisappearingMessagesViewModelTest {
         THREAD_ID,
         application,
         textSecurePreferences,
-        messageExpirationManager,
         disappearingMessages,
         threadDb,
         groupDb,

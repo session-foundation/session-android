@@ -3,8 +3,8 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.app.Application
 import android.content.Context
 import android.view.MenuItem
-import androidx.annotation.StringRes
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -33,12 +32,12 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -147,20 +146,6 @@ class ConversationViewModel(
     }
     val openGroup: OpenGroup?
         get() = _openGroup.value
-
-    private val closedGroupMembers: List<GroupMember>
-        get() {
-            val recipient = recipient ?: return emptyList()
-            if (!recipient.isGroupV2Recipient) return emptyList()
-            return storage.getMembers(recipient.address.serialize())
-        }
-
-    val isClosedGroupAdmin: Boolean
-        get() {
-            val recipient = recipient ?: return false
-            return !recipient.isGroupV2Recipient ||
-                    (closedGroupMembers.firstOrNull { it.sessionId == storage.getUserPublicKey() }?.admin ?: false)
-        }
 
     val serverCapabilities: List<String>
         get() = openGroup?.let { storage.getServerCapabilities(it.server) } ?: listOf()
@@ -767,7 +752,7 @@ class ConversationViewModel(
                 }
             }
             .onFailure {
-                showMessage("Couldn't accept message request due to error: $it")
+                Log.w("Loki", "Couldn't accept message request due to error", it)
 
                 _uiState.update { state ->
                     state.copy(messageRequestState = currentState)
@@ -781,7 +766,7 @@ class ConversationViewModel(
                 _uiState.update { it.copy(shouldExit = true) }
             }
             .onFailure {
-                showMessage("Couldn't decline message request due to error: $it")
+                Log.w("Loki", "Couldn't decline message request due to error", it)
             }
     }
 

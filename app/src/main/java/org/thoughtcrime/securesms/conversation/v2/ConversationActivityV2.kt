@@ -70,7 +70,6 @@ import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.applyExpiryMode
@@ -279,7 +278,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private val viewModel: ConversationViewModel by viewModels {
-        viewModelFactory.create(threadId, MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair())
+        viewModelFactory.create(threadId, storage.getUserED25519KeyPair())
     }
     private var actionMode: ActionMode? = null
     private var unreadCount = Int.MAX_VALUE
@@ -576,10 +575,6 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         viewModel.run {
             binding.toolbarContent?.update(recipient ?: return, openGroup, expirationConfiguration)
         }
-    }
-
-    override fun finish() {
-        super.finish()
     }
 
     override fun onPause() {

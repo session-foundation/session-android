@@ -87,8 +87,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun contactFromCursor(cursor: Cursor): Contact {
-        val sessionID = cursor.getString(accountID)
-        val contact = Contact(sessionID)
+        val contact = Contact(cursor.getString(accountID))
         contact.name = cursor.getStringOrNull(name)
         contact.nickname = cursor.getStringOrNull(nickname)
         contact.profilePictureURL = cursor.getStringOrNull(profilePictureURL)

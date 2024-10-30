@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.ExpirationConfiguration
-import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryCallbacks
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
@@ -32,7 +31,6 @@ class DisappearingMessagesViewModel(
     private val threadId: Long,
     private val application: Application,
     private val textSecurePreferences: TextSecurePreferences,
-    private val messageExpirationManager: MessageExpirationManagerProtocol,
     private val disappearingMessages: DisappearingMessages,
     private val threadDb: ThreadDatabase,
     private val groupDb: GroupDatabase,
@@ -60,8 +58,6 @@ class DisappearingMessagesViewModel(
         viewModelScope.launch {
             val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode ?: ExpiryMode.NONE
             val recipient = threadDb.getRecipientForThreadId(threadId)?: return@launch
-            val groupRecord = recipient.takeIf { it.isLegacyGroupRecipient || it.isGroupV2Recipient }
-                ?.run { groupDb.getGroup(address.toGroupString()).orNull() }
 
             val isAdmin = when {
                 recipient.isGroupV2Recipient -> {
@@ -69,6 +65,7 @@ class DisappearingMessagesViewModel(
                     storage.getMembers(recipient.address.serialize()).any { it.sessionId == textSecurePreferences.getLocalNumber() && it.admin }
                 }
                 recipient.isLegacyGroupRecipient -> {
+                    val groupRecord = groupDb.getGroup(recipient.address.toGroupString()).orNull()
                     // Handle as legacy group
                     groupRecord?.admins?.any{ it.serialize() == textSecurePreferences.getLocalNumber() } == true
                 }
@@ -78,7 +75,7 @@ class DisappearingMessagesViewModel(
             _state.update {
                 it.copy(
                     address = recipient.address,
-                    isGroup = recipient.isGroupOrCommunityRecipient,
+                    isGroup = recipient.isGroupRecipient,
                     isNoteToSelf = recipient.address.serialize() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = isAdmin,
                     expiryMode = expiryMode,
@@ -114,7 +111,6 @@ class DisappearingMessagesViewModel(
         @Assisted private val threadId: Long,
         private val application: Application,
         private val textSecurePreferences: TextSecurePreferences,
-        private val messageExpirationManager: MessageExpirationManagerProtocol,
         private val disappearingMessages: DisappearingMessages,
         private val threadDb: ThreadDatabase,
         private val groupDb: GroupDatabase,
@@ -125,7 +121,6 @@ class DisappearingMessagesViewModel(
             threadId,
             application,
             textSecurePreferences,
-            messageExpirationManager,
             disappearingMessages,
             threadDb,
             groupDb,

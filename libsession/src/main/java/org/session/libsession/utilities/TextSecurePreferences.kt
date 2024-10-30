@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
-import org.session.libsession.utilities.TextSecurePreferences.Companion
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -308,16 +307,6 @@ interface TextSecurePreferences {
         // for the lifetime of the Session installation.
         const val HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS = "libsession.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS"
 
-//        @JvmStatic
-//        fun getLastConfigurationSyncTime(context: Context): Long {
-//            return getLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, 0)
-//        }
-//
-//        @JvmStatic
-//        fun setLastConfigurationSyncTime(context: Context, value: Long) {
-//            setLongPreference(context, LAST_CONFIGURATION_SYNC_TIME, value)
-//        }
-//
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
             return getBooleanPreference(context, CONFIGURATION_SYNCED, false)
