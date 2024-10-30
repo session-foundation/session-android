@@ -1024,13 +1024,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             }
         }
 
-                    lifecycleScope.launch {
+        lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
                     .map { it.messageRequestState }
                     .distinctUntilChanged()
                     .collectLatest { state ->
-                        binding.messageRequestBar.isVisible = state != MessageRequestUiState.Invisible
+                        binding.messageRequestBar.isVisible = state is MessageRequestUiState.Visible
 
                         if (state is MessageRequestUiState.Visible) {
                             binding.sendAcceptsTextView.setText(state.acceptButtonText)
