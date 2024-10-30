@@ -14,7 +14,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Contact as ContactModel
-import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.LegacyGroupConversation
+import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Header
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMessages
@@ -66,7 +66,7 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
             binding.searchResultSubtitle.isVisible = true
             binding.searchResultTitle.text = model.messageResult.conversationRecipient.getSearchName()
         }
-        is LegacyGroupConversation -> {
+        is GroupConversation -> {
             binding.searchResultTitle.text = getHighlight(
                 query,
                 model.groupRecord.title
@@ -87,7 +87,7 @@ private fun getHighlight(query: String?, toSearch: String): Spannable? {
     return SearchUtil.getHighlightedSpan(Locale.getDefault(), BoldStyleFactory, toSearch, query)
 }
 
-fun ContentView.bindModel(query: String?, model: LegacyGroupConversation) {
+fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultSubtitle.isVisible = model.groupRecord.isLegacyGroup
     binding.searchResultTimestamp.isVisible = false

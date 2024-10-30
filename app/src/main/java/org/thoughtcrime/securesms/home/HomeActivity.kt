@@ -134,7 +134,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 )
             }
 
-            is GlobalSearchAdapter.Model.LegacyGroupConversation -> model.groupRecord.encodedId
+            is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
                 .let { Recipient.from(this, Address.fromSerialized(it), false) }
                 .let(threadDb::getThreadIdIfExistsFor)
                 .takeIf { it >= 0 }
@@ -324,7 +324,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
         contacts.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) } +
-            threads.map(GlobalSearchAdapter.Model::LegacyGroupConversation)
+            threads.map(GlobalSearchAdapter.Model::GroupConversation)
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
