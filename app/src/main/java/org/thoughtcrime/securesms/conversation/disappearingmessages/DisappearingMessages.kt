@@ -9,6 +9,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
@@ -23,13 +24,13 @@ import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
 class DisappearingMessages @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val messageExpirationManager: MessageExpirationManagerProtocol,
-    private val storage: StorageProtocol
+    private val storage: StorageProtocol,
+    private val clock: SnodeClock,
 ) {
     fun set(threadId: Long, address: Address, mode: ExpiryMode, isGroup: Boolean) {
-        val expiryChangeTimestampMs = SnodeAPI.nowWithOffset
+        val expiryChangeTimestampMs = clock.currentTimeMills()
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
         val message = ExpirationTimerUpdate(isGroup = isGroup).apply {
@@ -58,7 +59,7 @@ class DisappearingMessages @Inject constructor(
                 text = if (message.expiresIn == 0L) R.string.confirm else R.string.set,
                 contentDescriptionRes = if (message.expiresIn == 0L) R.string.AccessibilityId_confirm else R.string.AccessibilityId_setButton
         ) {
-            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.isGroupV2Recipient)
+            set(message.threadId, message.recipient.address, message.expiryMode, message.recipient.isGroupRecipient)
         }
         cancelButton()
     }
