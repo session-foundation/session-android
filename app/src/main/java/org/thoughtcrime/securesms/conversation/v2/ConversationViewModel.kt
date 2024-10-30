@@ -91,8 +91,7 @@ class ConversationViewModel(
         _isAdmin.value = when(conversationType) {
         // for Groups V2
         MessageType.GROUPS_V2 -> {
-            //todo GROUPS V2 add logic where code is commented to determine if user is an admin
-            false // FANCHAO - properly set up admin for groups v2 here
+            configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
         }
 
         // for legacy groups, check if the user created the group
