@@ -303,6 +303,27 @@ private fun ConfirmRemovingMemberDialog(
     groupName: String,
 ) {
     val context = LocalContext.current
+    val buttons = buildList {
+        this += DialogButtonModel(
+            text = GetString(R.string.remove),
+            color = LocalColors.current.danger,
+            onClick = { onConfirmed(member.accountId, false) }
+        )
+
+        if (BuildConfig.DEBUG) {
+            this += DialogButtonModel(
+                text = GetString("Remove with messages"),
+                color = LocalColors.current.danger,
+                onClick = { onConfirmed(member.accountId, true) }
+            )
+        }
+
+        this += DialogButtonModel(
+            text = GetString(R.string.cancel),
+            onClick = onDismissRequest,
+        )
+    }
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         text = Phrase.from(context, R.string.groupRemoveDescription)
@@ -311,17 +332,7 @@ private fun ConfirmRemovingMemberDialog(
             .format()
             .toString(),
         title = stringResource(R.string.remove),
-        buttons = listOf(
-            DialogButtonModel(
-                text = GetString(R.string.remove),
-                color = LocalColors.current.danger,
-                onClick = { onConfirmed(member.accountId, false) }
-            ),
-            DialogButtonModel(
-                text = GetString(R.string.cancel),
-                onClick = onDismissRequest,
-            )
-        )
+        buttons = buttons
     )
 }
 
@@ -346,7 +357,7 @@ private fun MemberOptionsDialog(
                 )
             }
 
-            if (false && member.canPromote) {
+            if (BuildConfig.DEBUG && member.canPromote) {
                 this += BottomOptionsDialogItem(
                     title = context.getString(R.string.adminPromoteToAdmin),
                     iconRes = R.drawable.ic_profile_default,

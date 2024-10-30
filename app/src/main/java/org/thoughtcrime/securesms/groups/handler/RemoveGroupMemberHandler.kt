@@ -1,37 +1,45 @@
-package org.session.libsession.messaging.groups
+package org.thoughtcrime.securesms.groups.handler
 
+import android.content.Context
 import android.os.SystemClock
-import kotlinx.coroutines.CoroutineScope
+import com.google.protobuf.ByteString
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.Sodium
+import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
+import org.session.libsession.messaging.utilities.MessageAuthentication
+import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TAG = "RemoveGroupMemberHandler"
-
 private const val MIN_PROCESS_INTERVAL_MILLS = 1_000L
 
 /**
@@ -39,10 +47,15 @@ private const val MIN_PROCESS_INTERVAL_MILLS = 1_000L
  *
  * It automatically does so by listening to the config updates changes and checking for any pending removals.
  */
+@Singleton
 class RemoveGroupMemberHandler @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
     private val textSecurePreferences: TextSecurePreferences,
     private val groupManager: GroupManagerV2,
+    private val clock: SnodeClock,
+    private val messageDataProvider: MessageDataProvider,
+    private val storage: StorageProtocol,
 ) {
     private var job: Job? = null
 
@@ -121,7 +134,12 @@ class RemoveGroupMemberHandler @Inject constructor(
             // Call No 2. Send a "kicked" message to the revoked namespace
             calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
                 namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                message = buildGroupKickMessage(groupAccountId.hexString, pendingRemovals, configs.groupKeys, adminKey),
+                message = buildGroupKickMessage(
+                    groupAccountId.hexString,
+                    pendingRemovals,
+                    configs.groupKeys,
+                    adminKey
+                ),
                 auth = groupAuth,
             )
 
@@ -130,11 +148,12 @@ class RemoveGroupMemberHandler @Inject constructor(
                 calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
                     namespace = Namespace.CLOSED_GROUP_MESSAGES(),
                     message = buildDeleteGroupMemberContentMessage(
+                        adminKey = adminKey,
                         groupAccountId = groupAccountId.hexString,
                         memberSessionIDs = pendingRemovals
                             .asSequence()
                             .filter { it.shouldRemoveMessages }
-                            .map { it.sessionId }
+                            .map { it.sessionId },
                     ),
                     auth = groupAuth,
                 )
@@ -148,7 +167,8 @@ class RemoveGroupMemberHandler @Inject constructor(
         }
 
         val node = SnodeAPI.getSingleTargetSnode(groupAccountId.hexString).await()
-        val response = SnodeAPI.getBatchResponse(node, groupAccountId.hexString, batchCalls, sequence = true)
+        val response =
+            SnodeAPI.getBatchResponse(node, groupAccountId.hexString, batchCalls, sequence = true)
 
         val firstError = response.results.firstOrNull { !it.isSuccessful }
         check(firstError == null) {
@@ -172,36 +192,58 @@ class RemoveGroupMemberHandler @Inject constructor(
         // cases (a.k.a the GroupUpdateDeleteMemberContent message handling) and could be by different admins.
         val deletingMessagesForMembers = pendingRemovals.filter { it.shouldRemoveMessages }
         if (deletingMessagesForMembers.isNotEmpty()) {
-            try {
-                groupManager.removeMemberMessages(
-                    groupAccountId,
-                    deletingMessagesForMembers.map { AccountId(it.sessionId) }
-                )
-            } catch (e: Exception) {
-                Log.e(TAG, "Error deleting messages for removed members", e)
+            val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
+            if (threadId != null) {
+                val until = clock.currentTimeMills()
+                for (member in deletingMessagesForMembers) {
+                    try {
+                        messageDataProvider.markUserMessagesAsDeleted(
+                            threadId = threadId,
+                            until = until,
+                            sender = member.sessionId,
+                            displayedMessage = context.getString(R.string.deleteMessageDeletedGlobally)
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error deleting messages for removed member", e)
+                    }
+                }
             }
         }
     }
 
     private fun buildDeleteGroupMemberContentMessage(
+        adminKey: ByteArray,
         groupAccountId: String,
         memberSessionIDs: Sequence<String>
     ): SnodeMessage {
+        val timestamp = clock.currentTimeMills()
+
         return MessageSender.buildWrappedMessageToSnode(
             destination = Destination.ClosedGroup(groupAccountId),
             message = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
+                SignalServiceProtos.DataMessage.GroupUpdateMessage.newBuilder()
                     .setDeleteMemberContent(
-                        SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
-                            .newBuilder()
+                        SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage.newBuilder()
                             .apply {
                                 for (id in memberSessionIDs) {
                                     addMemberSessionIds(id)
                                 }
                             }
+                            .setAdminSignature(
+                                ByteString.copyFrom(
+                                    SodiumUtilities.sign(
+                                        MessageAuthentication.buildDeleteMemberContentSignature(
+                                            memberIds = memberSessionIDs.map { AccountId(it) }
+                                                .toList(),
+                                            messageHashes = emptyList(),
+                                            timestamp = timestamp,
+                                        ), adminKey
+                                    )
+                                )
+                            )
                     )
                     .build()
-            ),
+            ).apply { sentTimestamp = timestamp },
             isSyncMessage = false
         )
     }
@@ -227,7 +269,6 @@ class RemoveGroupMemberHandler @Inject constructor(
             )
         ),
         ttl = SnodeMessage.DEFAULT_TTL,
-        timestamp = SnodeAPI.nowWithOffset
+        timestamp = clock.currentTimeMills()
     )
 }
-

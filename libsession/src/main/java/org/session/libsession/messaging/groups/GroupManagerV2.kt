@@ -93,6 +93,7 @@ interface GroupManagerV2 {
     suspend fun handleDeleteMemberContent(
         groupId: AccountId,
         deleteMemberContent: GroupUpdateDeleteMemberContentMessage,
+        timestamp: Long,
         sender: AccountId,
         senderIsVerifiedAdmin: Boolean,
     )

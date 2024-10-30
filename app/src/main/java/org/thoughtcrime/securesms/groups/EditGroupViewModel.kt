@@ -30,7 +30,6 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
 const val MAX_GROUP_NAME_LENGTH = 100

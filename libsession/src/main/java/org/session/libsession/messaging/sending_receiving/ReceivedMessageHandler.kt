@@ -651,6 +651,7 @@ private fun handleDeleteMemberContent(message: GroupUpdated, closedGroup: Accoun
             MessagingModuleConfiguration.shared.groupManagerV2.handleDeleteMemberContent(
                 groupId = closedGroup,
                 deleteMemberContent = deleteMemberContent,
+                timestamp = message.sentTimestamp!!,
                 sender = AccountId(message.sender!!),
                 senderIsVerifiedAdmin = hasValidAdminSignature
             )

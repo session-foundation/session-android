@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -939,6 +940,7 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun handleDeleteMemberContent(
         groupId: AccountId,
         deleteMemberContent: GroupUpdateDeleteMemberContentMessage,
+        timestamp: Long,
         sender: AccountId,
         senderIsVerifiedAdmin: Boolean,
     ): Unit = withContext(dispatcher) {
@@ -951,24 +953,31 @@ class GroupManagerV2Impl @Inject constructor(
         val memberIds = deleteMemberContent.memberSessionIdsList
 
         if (hashes.isNotEmpty()) {
-            if (senderIsVerifiedAdmin) {
-                // We'll delete everything the admin says
-                storage.deleteMessagesByHash(threadId, hashes)
-            } else if (storage.ensureMessageHashesAreSender(
+            // If the sender is a verified admin, or the sender is the actual sender of the messages,
+            // we can mark them as deleted locally.
+            if (senderIsVerifiedAdmin ||
+                storage.ensureMessageHashesAreSender(
                     hashes.toSet(),
                     sender.hexString,
                     groupId.hexString
+                )) {
+                // We'll delete everything the admin says
+                messageDataProvider.markMessagesAsDeleted(
+                    threadId = threadId,
+                    serverHashes = hashes,
+                    displayedMessage = application.getString(
+                        R.string.deleteMessageDeletedGlobally
+                    )
                 )
-            ) {
-                // For deleting message by hashes, we'll likely only need to mark
-                // them as deleted
-                storage.deleteMessagesByHash(threadId, hashes)
             }
         }
 
+        // To be able to delete a user's messages, the sender must be a verified admin
         if (memberIds.isNotEmpty() && senderIsVerifiedAdmin) {
             for (member in memberIds) {
-                storage.deleteMessagesByUser(threadId, member)
+                messageDataProvider.markUserMessagesAsDeleted(threadId, timestamp, member, application.getString(
+                    R.string.deleteMessageDeletedGlobally
+                ))
             }
         }
 
