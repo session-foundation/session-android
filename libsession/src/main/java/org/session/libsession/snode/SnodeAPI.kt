@@ -138,7 +138,7 @@ object SnodeAPI {
             JsonUtil.fromJson(it.body ?: throw Error.Generic, Map::class.java)
         }
 
-        else -> GlobalScope.asyncPromise {
+        else -> scope.asyncPromise {
             HTTP.execute(
                 HTTP.Verb.POST,
                 url = "${snode.address}:${snode.port}/storage_rpc/v1",
@@ -191,7 +191,7 @@ object SnodeAPI {
     }
 
     internal fun getRandomSnode(): Promise<Snode, Exception> =
-        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.secureRandom()?.let { Promise.of(it) } ?: GlobalScope.asyncPromise {
+        snodePool.takeIf { it.size >= minimumSnodePoolCount }?.secureRandom()?.let { Promise.of(it) } ?: scope.asyncPromise {
             val target = seedNodePool.random()
             Log.d("Loki", "Populating snode pool using: $target.")
             val url = "$target/json_rpc"
@@ -240,7 +240,7 @@ object SnodeAPI {
     }
 
     // Public API
-    fun getAccountID(onsName: String): Promise<String, Exception> = GlobalScope.asyncPromise {
+    fun getAccountID(onsName: String): Promise<String, Exception> = scope.asyncPromise {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
