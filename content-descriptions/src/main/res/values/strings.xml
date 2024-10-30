@@ -5,6 +5,7 @@
 
     <!-- Onboarding related -->
     <string name="AccessibilityId_accountIdOrOnsEnter">Account id input box</string>
+    <string name="AccessibilityId_sessionIdInput">Session id input box</string>
     <string name="AccessibilityId_recoveryPasswordHidePermanentlyConfirm">Confirm button</string>
     <string name="AccessibilityId_accountIdCopy">Copy Account ID</string>
     <string name="AccessibilityId_copy">Copy button</string>
