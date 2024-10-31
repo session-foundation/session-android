@@ -21,6 +21,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Preview
@@ -67,7 +68,7 @@ internal fun PickDisplayName(
 
             SessionOutlinedTextField(
                 text = state.displayName,
-                modifier = Modifier.fillMaxWidth().contentDescription(R.string.AccessibilityId_displayNameEnter),
+                modifier = Modifier.fillMaxWidth().qaTag(stringResource(R.string.AccessibilityId_displayNameEnter)),
                 placeholder = stringResource(R.string.displayNameEnter),
                 onChange = onChange,
                 onContinue = onContinue,

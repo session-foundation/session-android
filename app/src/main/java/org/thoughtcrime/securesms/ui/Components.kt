@@ -6,25 +6,20 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -46,18 +41,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -79,6 +71,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
+import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -86,7 +79,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 interface Callbacks<in T> {
@@ -370,43 +362,58 @@ fun Modifier.contentDescription(text: String?): Modifier {
     return text?.let { semantics { contentDescription = it } } ?: this
 }
 
-fun Modifier.fadingEdges(
-    scrollState: ScrollState,
-    topEdgeHeight: Dp = 0.dp,
-    bottomEdgeHeight: Dp = 20.dp
-): Modifier = this.then(
-    Modifier
-        // adding layer fixes issue with blending gradient and content
-        .graphicsLayer { alpha = 0.99F }
-        .drawWithContent {
-            drawContent()
+@Composable
+fun BottomFadingEdgeBox(
+    modifier: Modifier = Modifier,
+    fadingEdgeHeight: Dp = LocalDimensions.current.spacing,
+    fadingColor: Color = LocalColors.current.background,
+    content: @Composable BoxScope.(bottomContentPadding: Dp) -> Unit,
+) {
+    Box(modifier) {
+        this.content(fadingEdgeHeight)
 
-            val topColors = listOf(Color.Transparent, Color.Black)
-            val topStartY = scrollState.value.toFloat()
-            val topGradientHeight = min(topEdgeHeight.toPx(), topStartY)
-            if (topGradientHeight > 0f) drawRect(
-                brush = Brush.verticalGradient(
-                    colors = topColors,
-                    startY = topStartY,
-                    endY = topStartY + topGradientHeight
-                ),
-                blendMode = BlendMode.DstIn
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .height(fadingEdgeHeight)
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        1f to fadingColor,
+                        tileMode = TileMode.Repeated
+                    )
+                )
+        )
+    }
+}
 
-            val bottomColors = listOf(Color.Black, Color.Transparent)
-            val bottomEndY = size.height - scrollState.maxValue + scrollState.value
-            val bottomGradientHeight =
-                min(bottomEdgeHeight.toPx(), scrollState.maxValue.toFloat() - scrollState.value)
-            if (bottomGradientHeight > 0f) drawRect(
-                brush = Brush.verticalGradient(
-                    colors = bottomColors,
-                    startY = bottomEndY - bottomGradientHeight,
-                    endY = bottomEndY
-                ),
-                blendMode = BlendMode.DstIn
-            )
-        }
-)
+@Preview
+@Composable
+private fun BottomFadingEdgeBoxPreview() {
+    Column(modifier = Modifier.background(LocalColors.current.background)) {
+        BottomFadingEdgeBox(
+            modifier = Modifier
+                .height(600.dp)
+                .background(LocalColors.current.backgroundSecondary),
+            content = { bottomContentPadding ->
+                LazyColumn(contentPadding = PaddingValues(bottom = bottomContentPadding)) {
+                    items(200) {
+                        Text("Item $it",
+                            color = LocalColors.current.text,
+                            style = LocalType.current.base)
+                    }
+                }
+            },
+        )
+
+        PrimaryOutlineButton(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally),
+            text = "Do stuff", onClick = {}
+        )
+    }
+}
 
 @Composable
 fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
@@ -565,8 +572,11 @@ fun SearchBar(
                         LocalColors.current.textSecondary
                     ),
                     modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .size(24.dp)
+                        .padding(
+                            horizontal = LocalDimensions.current.smallSpacing,
+                            vertical = LocalDimensions.current.xxsSpacing
+                        )
+                        .size(LocalDimensions.current.iconMedium)
                 )
 
                 Box(modifier = Modifier.weight(1f)) {

@@ -648,12 +648,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                         .cancelPendingMessageSendJobs(threadID)
 
                     // Delete the conversation
-                    val v2OpenGroup = lokiThreadDatabase
+                    val community = lokiThreadDatabase
                         .getOpenGroupChat(threadID)
-                    if (v2OpenGroup != null) {
+                    if (community != null) {
                         OpenGroupManager.delete(
-                            v2OpenGroup.server,
-                            v2OpenGroup.room,
+                            community.server,
+                            community.room,
                             context
                         )
                     } else {

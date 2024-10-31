@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,8 +19,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,6 +33,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.CreateGroupEvent
 import org.thoughtcrime.securesms.groups.CreateGroupViewModel
+import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -104,11 +110,10 @@ fun CreateGroup(
             )
         }
     ) { paddings ->
-        Box(modifier = modifier.padding(paddings),) {
+        Box(modifier = modifier.padding(paddings)) {
             Column(
-                modifier = modifier.padding(vertical = LocalDimensions.current.spacing),
+                modifier = modifier.padding(vertical = LocalDimensions.current.xsSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
             ) {
                 SessionOutlinedTextField(
                     text = groupName,
@@ -122,6 +127,8 @@ fun CreateGroup(
                     onContinue = focusManager::clearFocus
                 )
 
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
                 SearchBar(
                     query = contactSearchQuery,
                     onValueChanged = onContactSearchQueryChanged,
@@ -130,17 +137,30 @@ fun CreateGroup(
                     enabled = !showLoading
                 )
 
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    multiSelectMemberList(
-                        contacts = items,
-                        onContactItemClicked = onContactItemClicked,
-                        enabled = !showLoading
-                    )
+                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                BottomFadingEdgeBox(
+                    modifier = Modifier.weight(1f)
+                        .nestedScroll(rememberNestedScrollInteropConnection()),
+                    fadingColor = LocalColors.current.backgroundSecondary
+                ) { bottomContentPadding ->
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = bottomContentPadding)) {
+                        multiSelectMemberList(
+                            contacts = items,
+                            onContactItemClicked = onContactItemClicked,
+                            enabled = !showLoading
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
                 PrimaryOutlineButton(
                     onClick = onCreateClicked,
-                    modifier = Modifier.widthIn(min = 120.dp)
+                    modifier = Modifier
+                        .padding(horizontal = LocalDimensions.current.spacing)
+                        .widthIn(min = LocalDimensions.current.minButtonWidth)
                 ) {
                     LoadingArcOr(loading = showLoading) {
                         Text(stringResource(R.string.create))

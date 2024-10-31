@@ -14,7 +14,7 @@
         android:id="@+id/pendingDownloadIcon"
         android:layout_width="16dp"
         android:layout_height="16dp"
-        android:src="@drawable/ic_media"
+        android:src="@drawable/ic_images"
         app:tint="?android:textColorPrimary" />
 
     <TextView

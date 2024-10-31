@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -101,7 +102,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
             SessionOutlinedTextField(
                 text = state.recoveryPhrase,
                 modifier = Modifier.fillMaxWidth()
-                    .contentDescription(R.string.AccessibilityId_recoveryPasswordEnter),
+                    .qaTag(stringResource(R.string.AccessibilityId_recoveryPasswordEnter)),
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
                 onContinue = onContinue,
