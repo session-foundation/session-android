@@ -1,11 +1,14 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import android.widget.Toast
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -150,66 +153,62 @@ fun EditGroup(
             GroupMinimumVersionBanner()
 
             // Group name title
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 72.dp),
-                horizontalArrangement = Arrangement.spacedBy(
-                    LocalDimensions.current.xxxsSpacing,
-                    Alignment.CenterHorizontally
-                ),
-                verticalAlignment = CenterVertically,
-            ) {
-                if (editingName != null) {
-                    IconButton(
-                        modifier = Modifier.size(LocalDimensions.current.spacing),
-                        onClick = onEditNameCancelClicked) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_x),
-                            contentDescription = stringResource(R.string.AccessibilityId_cancel),
-                            tint = LocalColors.current.text,
-                        )
-                    }
-
-                    SessionOutlinedTextField(
-                        modifier = Modifier.widthIn(
-                            min = LocalDimensions.current.mediumSpacing,
-                            max = 240.dp
-                        ),
-                        text = editingName,
-                        onChange = onEditingNameValueChanged,
-                        textStyle = LocalType.current.h8,
-                        singleLine = true,
-                        innerPadding = PaddingValues(
-                            horizontal = LocalDimensions.current.spacing,
-                            vertical = LocalDimensions.current.smallSpacing
-                        )
-                    )
-
-                    IconButton(
-                        modifier = Modifier.size(LocalDimensions.current.spacing),
-                        onClick = onEditNameConfirmed) {
-                        Icon(
-                            painter = painterResource(R.drawable.check),
-                            contentDescription = stringResource(R.string.AccessibilityId_confirm),
-                            tint = LocalColors.current.text,
-                        )
-                    }
-
-                } else {
-                    Text(
-                        text = groupName,
-                        style = LocalType.current.h4,
-                        textAlign = TextAlign.Center,
-                    )
-
-                    if (canEditName) {
-                        IconButton(onClick = onEditNameClicked) {
+            Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
+                if (showNameEditing) {
+                    GroupNameContainer {
+                        IconButton(
+                            modifier = Modifier.size(LocalDimensions.current.spacing),
+                            onClick = onEditNameCancelClicked) {
                             Icon(
-                                painterResource(R.drawable.ic_baseline_edit_24),
-                                contentDescription = stringResource(R.string.groupName),
+                                painter = painterResource(R.drawable.ic_x),
+                                contentDescription = stringResource(R.string.AccessibilityId_cancel),
                                 tint = LocalColors.current.text,
                             )
+                        }
+
+                        SessionOutlinedTextField(
+                            modifier = Modifier.widthIn(
+                                min = LocalDimensions.current.mediumSpacing,
+                                max = 240.dp
+                            ),
+                            text = editingName.orEmpty(),
+                            onChange = onEditingNameValueChanged,
+                            textStyle = LocalType.current.h8,
+                            singleLine = true,
+                            innerPadding = PaddingValues(
+                                horizontal = LocalDimensions.current.spacing,
+                                vertical = LocalDimensions.current.smallSpacing
+                            )
+                        )
+
+                        IconButton(
+                            modifier = Modifier.size(LocalDimensions.current.spacing),
+                            onClick = onEditNameConfirmed) {
+                            Icon(
+                                painter = painterResource(R.drawable.check),
+                                contentDescription = stringResource(R.string.AccessibilityId_confirm),
+                                tint = LocalColors.current.text,
+                            )
+                        }
+                    }
+
+
+                } else {
+                    GroupNameContainer {
+                        Text(
+                            text = groupName,
+                            style = LocalType.current.h4,
+                            textAlign = TextAlign.Center,
+                        )
+
+                        if (canEditName) {
+                            IconButton(onClick = onEditNameClicked) {
+                                Icon(
+                                    painterResource(R.drawable.ic_baseline_edit_24),
+                                    contentDescription = stringResource(R.string.groupName),
+                                    tint = LocalColors.current.text,
+                                )
+                            }
                         }
                     }
                 }
@@ -217,7 +216,10 @@ fun EditGroup(
 
             // Header & Add member button
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxsSpacing
+                ),
                 verticalAlignment = CenterVertically
             ) {
                 Text(
@@ -293,6 +295,21 @@ fun EditGroup(
             onErrorDismissed()
         }
     }
+}
+
+@Composable
+private fun GroupNameContainer(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 72.dp),
+        horizontalArrangement = Arrangement.spacedBy(
+            LocalDimensions.current.xxxsSpacing,
+            Alignment.CenterHorizontally
+        ),
+        verticalAlignment = CenterVertically,
+        content = content
+    )
 }
 
 @Composable
