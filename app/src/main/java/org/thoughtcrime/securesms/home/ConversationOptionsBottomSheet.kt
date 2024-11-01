@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -55,7 +56,6 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.blockTextView -> onBlockTapped?.invoke()
             binding.unblockTextView -> onUnblockTapped?.invoke()
             binding.deleteTextView -> onDeleteTapped?.invoke()
-            binding.leaveTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
             binding.unMuteNotificationsTextView -> onSetMuteTapped?.invoke(false)
@@ -91,32 +91,36 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         // delete
         binding.deleteTextView.apply {
-            isVisible = recipient.isContactRecipient || (recipient.isGroupOrCommunityRecipient && !isCurrentUserInGroup)
             setOnClickListener(this@ConversationOptionsBottomSheet)
 
-            // the text and content description will change depending on the type
-            when{
+            val drawableStartRes: Int
+
+            // the text, content description and icon will change depending on the type
+            when {
                 // groups and communities
                 recipient.isGroupOrCommunityRecipient -> {
                     text = context.getString(R.string.leave)
                     contentDescription = context.getString(R.string.AccessibilityId_leave)
+                    drawableStartRes = R.drawable.ic_log_out
                 }
 
                 // note to self
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.clear)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
+                    drawableStartRes = R.drawable.ic_delete_24
                 }
 
                 // 1on1
                 else -> {
                     text = context.getString(R.string.delete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
+                    drawableStartRes = R.drawable.ic_delete_24
                 }
             }
+
+            TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
-        binding.leaveTextView.isVisible = recipient.isGroupOrCommunityRecipient && isCurrentUserInGroup
-        binding.leaveTextView.setOnClickListener(this)
 
         binding.markAllAsReadTextView.isVisible = thread.unreadCount > 0 ||
                 configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) }
