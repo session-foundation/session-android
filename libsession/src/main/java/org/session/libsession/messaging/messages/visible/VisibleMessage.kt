@@ -102,17 +102,9 @@ data class VisibleMessage(
         val pointers = attachments.mapNotNull { Attachment.createAttachmentPointer(it) }
         dataMessage.addAllAttachments(pointers)
         // TODO: Contact
-        // Expiration timer
+        // Expiration timer on the message
         proto.applyExpiryMode()
-        // Group context
-        val storage = MessagingModuleConfiguration.shared.storage
-        val context = MessagingModuleConfiguration.shared.context
-        val expiration = if (storage.isLegacyClosedGroup(recipient!!)) {
-            Recipient.from(context, Address.fromSerialized(GroupUtil.doubleEncodeGroupID(recipient!!)), false).expireMessages
-        } else {
-            Recipient.from(context, Address.fromSerialized(recipient!!), false).expireMessages
-        }
-        dataMessage.expireTimer = expiration
+
         // Community blocked message requests flag
         dataMessage.blocksCommunityMessageRequests = blocksMessageRequests
         // Sync target
