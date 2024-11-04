@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,11 +22,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.groupSizeLimit
+import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
@@ -317,7 +320,14 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
             loaderContainer.fadeIn()
             try {
                 if (!members.contains(Recipient.from(this, Address.fromSerialized(userPublicKey), false))) {
-                    MessageSender.explicitLeave(groupPublicKey!!, false)
+                    lifecycleScope.launch {
+                        try {
+                            MessageSender.leave(groupPublicKey!!, false)
+                        } catch (e: Exception) {
+                            Log.e("EditClosedGroup", "Failed to leave group", e)
+                        }
+                    }
+
                 } else {
                     if (hasNameChanged) {
                         MessageSender.explicitNameChange(groupPublicKey!!, name)

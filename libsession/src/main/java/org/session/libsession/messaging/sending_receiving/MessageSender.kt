@@ -13,7 +13,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -583,11 +582,6 @@ object MessageSender {
 
     fun explicitRemoveMembers(groupPublicKey: String, membersToRemove: List<String>) {
         return removeMembers(groupPublicKey, membersToRemove)
-    }
-
-    @JvmStatic
-    fun explicitLeave(groupPublicKey: String, notifyUser: Boolean, deleteThread: Boolean = false) {
-        leave(groupPublicKey, notifyUser, deleteThread)
     }
 
 }

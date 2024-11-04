@@ -171,7 +171,7 @@ object ConversationMenuHelper {
         factory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
-    ): ReceiveChannel<Unit>? {
+    ): ReceiveChannel<GroupLeavingStatus>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
             R.id.menu_search -> { search(context) }
@@ -331,6 +331,12 @@ object ConversationMenuHelper {
         }
     }
 
+    enum class GroupLeavingStatus {
+        Leaving,
+        Left,
+        Error,
+    }
+
     fun leaveGroup(
         context: Context,
         thread: Recipient,
@@ -338,7 +344,9 @@ object ConversationMenuHelper {
         configFactory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
-    ): ReceiveChannel<Unit>? {
+    ): ReceiveChannel<GroupLeavingStatus>? {
+        val channel = Channel<GroupLeavingStatus>()
+
         when {
             thread.isLegacyGroupRecipient -> {
                 val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
@@ -358,7 +366,14 @@ object ConversationMenuHelper {
                         check(DatabaseComponent.get(context).lokiAPIDatabase().isClosedGroup(groupPublicKey)) {
                             "Invalid group public key"
                         }
-                        MessageSender.leave(groupPublicKey, notifyUser = false)
+                        try {
+                            channel.send(GroupLeavingStatus.Leaving)
+                            MessageSender.leave(groupPublicKey)
+                            channel.send(GroupLeavingStatus.Left)
+                        } catch (e: Exception) {
+                            channel.send(GroupLeavingStatus.Error)
+                            throw e
+                        }
                     }
                 )
             }
@@ -370,8 +385,6 @@ object ConversationMenuHelper {
                     it.groupInfo.getName()
                 } ?: group.name
 
-                val channel = Channel<Unit>()
-
                 confirmAndLeaveGroup(
                     context = context,
                     groupName = name,
@@ -380,9 +393,12 @@ object ConversationMenuHelper {
                     storage = storage,
                     doLeave = {
                         try {
+                            channel.send(GroupLeavingStatus.Leaving)
                             groupManager.leaveGroup(accountId, true)
-                        } finally {
-                            channel.send(Unit)
+                            channel.send(GroupLeavingStatus.Left)
+                        } catch (e: Exception) {
+                            channel.send(GroupLeavingStatus.Error)
+                            throw e
                         }
                     }
                 )

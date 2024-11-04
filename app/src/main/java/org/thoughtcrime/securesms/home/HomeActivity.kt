@@ -22,6 +22,7 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -584,7 +585,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val recipient = thread.recipient
 
         if (recipient.isGroupRecipient) {
-            ConversationMenuHelper.leaveGroup(
+            val statusChannel = ConversationMenuHelper.leaveGroup(
                 context = this,
                 thread = recipient,
                 threadID = threadID,
@@ -592,6 +593,25 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 storage = storage,
                 groupManager = groupManagerV2,
             )
+
+            if (statusChannel != null) {
+                lifecycleScope.launch {
+                    statusChannel.consumeEach { status ->
+                        when (status) {
+                            ConversationMenuHelper.GroupLeavingStatus.Leaving -> {
+                                homeViewModel.onLeavingGroupStarted(threadID)
+                            }
+
+                            ConversationMenuHelper.GroupLeavingStatus.Left -> {
+                                homeViewModel.onLeavingGroupFinished(threadID, isError = false)
+                            }
+                            ConversationMenuHelper.GroupLeavingStatus.Error -> {
+                                homeViewModel.onLeavingGroupFinished(threadID, isError = true)
+                            }
+                        }
+                    }
+                }
+            }
 
             return
         }
@@ -607,7 +627,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // If you are an admin of this group you can delete it
             if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
                 title = getString(R.string.groupLeave)
-                message = Phrase.from(this.applicationContext, R.string.groupDeleteDescription)
+                message = Phrase.from(this, R.string.groupDeleteDescription)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             } else {
@@ -624,7 +644,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // If this is a 1-on-1 conversation
             if (recipient.name != null) {
                 title = getString(R.string.conversationsDelete)
-                message = Phrase.from(this.applicationContext, R.string.conversationsDeleteDescription)
+                message = Phrase.from(this, R.string.conversationsDeleteDescription)
                     .put(NAME_KEY, recipient.toShortString())
                     .format()
             }
@@ -663,7 +683,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     }
 
                     // Update the badge count
-                    ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
+                    messageNotifier.updateNotification(context)
 
                     // Notify the user
                     val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted

@@ -19,24 +19,21 @@ package org.thoughtcrime.securesms.database.model;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY;
 
 import android.content.Context;
 import android.net.Uri;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.StyleSpan;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import com.squareup.phrase.Phrase;
-import org.session.libsession.utilities.ExpirationUtil;
+
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
@@ -230,28 +227,6 @@ public class ThreadRecord extends DisplayRecord {
     public boolean isPinned()            { return pinned; }
 
     public int getInitialRecipientHash() { return initialRecipientHash; }
-
-    public boolean isLeavingGroup() {
-        if (isGroupUpdateMessage()) {
-            String body = getBody();
-            if (!body.isEmpty()) {
-                UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(body);
-                return updateMessageData.isGroupLeavingKind();
-            }
-        }
-        return false;
-    }
-
-    public boolean isErrorLeavingGroup() {
-        if (isGroupUpdateMessage()) {
-            String body = getBody();
-            if (!body.isEmpty()) {
-                UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(body);
-                return updateMessageData.isGroupErrorQuitKind();
-            }
-        }
-        return false;
-    }
 
     public String getInvitingAdminId() {
         return invitingAdminId;

@@ -4,6 +4,7 @@ package org.session.libsession.messaging.sending_receiving
 
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -238,9 +239,12 @@ fun MessageSender.removeMembers(groupPublicKey: String, membersToRemove: List<St
     }
 }
 
-fun MessageSender.leave(groupPublicKey: String, notifyUser: Boolean = true, deleteThread: Boolean = false) {
-    val job = GroupLeavingJob(groupPublicKey, notifyUser, deleteThread)
+suspend fun MessageSender.leave(groupPublicKey: String, deleteThread: Boolean = false) {
+    val channel = Channel<Result<Unit>>()
+    val job = GroupLeavingJob(groupPublicKey, completeChannel = channel, deleteThread)
     JobQueue.shared.add(job)
+
+    channel.receive().getOrThrow()
 }
 
 fun MessageSender.generateAndSendNewEncryptionKeyPair(groupPublicKey: String, targetMembers: Collection<String>) {

@@ -14,6 +14,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -935,11 +936,12 @@ class ConversationViewModel(
 
         if (inProgress != null) {
             viewModelScope.launch {
-                _uiState.update { it.copy(showLoader = true) }
-                try {
-                    inProgress.receive()
-                } finally {
-                    _uiState.update { it.copy(showLoader = false) }
+                inProgress.consumeEach { status ->
+                    when (status) {
+                        ConversationMenuHelper.GroupLeavingStatus.Left,
+                        ConversationMenuHelper.GroupLeavingStatus.Error -> _uiState.update { it.copy(showLoader = false) }
+                        else -> _uiState.update { it.copy(showLoader = true) }
+                    }
                 }
             }
         }
