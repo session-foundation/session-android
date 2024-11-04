@@ -16,6 +16,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -141,9 +144,10 @@ class ConversationViewModel(
             return repository.getInvitingAdmin(threadId)
         }
 
-    private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
-        storage.getOpenGroup(threadId)
+    private val _openGroup: MutableStateFlow<OpenGroup?> by lazy {
+        MutableStateFlow(storage.getOpenGroup(threadId))
     }
+
     val openGroup: OpenGroup?
         get() = _openGroup.value
 
@@ -174,16 +178,34 @@ class ConversationViewModel(
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId)
-                .collect { recipient ->
+            combine(
+                repository.recipientUpdateFlow(threadId),
+                _openGroup,
+            ) { a, b -> a to b }
+                .collect { (recipient, community) ->
                     _uiState.update {
                         it.copy(
                             shouldExit = recipient == null,
-                            showInput = shouldShowInput(recipient),
+                            showInput = shouldShowInput(recipient, community),
                             enableInputMediaControls = shouldEnableInputMediaControls(recipient),
                             messageRequestState = buildMessageRequestState(recipient),
                         )
                     }
+                }
+        }
+
+        // Listen for changes in the open group's write access
+        viewModelScope.launch {
+            OpenGroupManager.getCommunitiesWriteAccessFlow()
+                .map {
+                    if(openGroup?.groupId != null)
+                        it[openGroup?.groupId]
+                    else null
+                }
+                .filterNotNull()
+                .collect{
+                    // update our community object
+                    _openGroup.value = openGroup?.copy(canWrite = it)
                 }
         }
     }
@@ -213,13 +235,13 @@ class ConversationViewModel(
      *  2. The legacy group is inactive, OR
      *  3. The community chat is read only
      */
-    private fun shouldShowInput(recipient: Recipient?): Boolean {
+    private fun shouldShowInput(recipient: Recipient?, community: OpenGroup?): Boolean {
         return when {
             recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
             recipient?.isLegacyGroupRecipient == true -> {
                 groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true
             }
-            openGroup != null -> openGroup?.canWrite == true
+            community != null -> community.canWrite
             else -> true
         }
     }
