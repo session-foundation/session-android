@@ -23,10 +23,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.getSearchName
@@ -34,7 +32,6 @@ import org.thoughtcrime.securesms.home.search.getSearchName
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
 class SelectContactsViewModel @AssistedInject constructor(
-    private val storage: StorageProtocol,
     private val configFactory: ConfigFactory,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
@@ -59,11 +56,7 @@ class SelectContactsViewModel @AssistedInject constructor(
 
     // Output
     val currentSelected: Set<AccountId>
-        get() = contacts.value
-            .asSequence()
-            .filter { it.selected }
-            .map { it.accountID }
-            .toSet()
+        get() = mutableSelectedContactAccountIDs.value
 
     override fun onCleared() {
         super.onCleared()
@@ -76,8 +69,8 @@ class SelectContactsViewModel @AssistedInject constructor(
         .onStart { emit(Unit) }
         .map {
             withContext(Dispatchers.Default) {
-                val allContacts = configFactory.withUserConfigs {
-                    it.contacts.all().filter { it.approvedMe }
+                val allContacts = configFactory.withUserConfigs { configs ->
+                    configs.contacts.all().filter { it.approvedMe }
                 }
 
                 if (excludingAccountIDs.isEmpty()) {
