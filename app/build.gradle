@@ -15,8 +15,8 @@ configurations.configureEach {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 384
-def canonicalVersionName = "1.20.2"
+def canonicalVersionCode = 385
+def canonicalVersionName = "1.20.3"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -174,7 +174,7 @@ android {
 
         website {
             dimension "distribution"
-            ext.websiteUpdateUrl = "https://github.com/oxen-io/session-android/releases"
+            ext.websiteUpdateUrl = "https://github.com/session-foundation/session-android/releases"
             buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
             buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID"
             buildConfigField "String", "NOPLAY_UPDATE_URL", "\"$ext.websiteUpdateUrl\""
@@ -337,7 +337,7 @@ dependencies {
     implementation project(":libsession")
     implementation project(":libsession-util")
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxJsonVersion"
-    implementation "com.github.oxen-io.session-android-curve-25519:curve25519-java:$curve25519Version"
+    implementation "com.github.session-foundation.session-android-curve-25519:curve25519-java:$curve25519Version"
     implementation project(":liblazysodium")
     implementation "net.java.dev.jna:jna:5.12.1@aar"
     implementation "com.google.protobuf:protobuf-java:$protobufVersion"

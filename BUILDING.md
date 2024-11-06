@@ -28,7 +28,7 @@ Setting up a development environment and building from Android Studio
 
 1. Open Android Studio. On a new installation, the Quickstart panel will appear. If you have open projects, close them using "File > Close Project" to see the Quickstart panel.
 2. From the Quickstart panel, choose "Checkout from Version Control" then "git".
-3. Paste the URL for the session-android project when prompted (https://github.com/oxen-io/session-android.git).
+3. Paste the URL for the session-android project when prompted (https://github.com/session-foundation/session-android.git).
 4. Android Studio should detect the presence of a project file and ask you whether to open it. Click "yes".
 5. Default config options should be good enough.
 6. Project initialization and building should proceed.

@@ -137,7 +137,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
 
             // TODO: This method may pass an empty string as the filename in Android API 28 and below. This requires
             // TODO: follow-up investigation, but has temporarily been worked around, see:
-            // TODO: https://github.com/oxen-io/session-android/commit/afbb71351a74220c312a09c25cc1c79738453c12
+            // TODO: https://github.com/session-foundation/session-android/commit/afbb71351a74220c312a09c25cc1c79738453c12
 
             val fileParts: Array<String> = getFileNameParts(fileName)
             val base = fileParts[0]

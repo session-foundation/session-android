@@ -119,7 +119,7 @@ object FileServerApi {
      * Note that the value is cached and can be up to 30 minutes out of date normally, and up to 24
      * hours out of date if we cannot reach the Github API for some reason.
      *
-     * https://github.com/oxen-io/session-file-server/blob/dev/doc/api.yaml#L119
+     * https://github.com/session-foundation/session-file-server/blob/dev/doc/api.yaml#L119
      */
     suspend fun getClientVersion(): VersionData {
         // Generate the auth signature

@@ -29,6 +29,7 @@ public interface MmsSmsColumns {
   public static final String REACTIONS_LAST_SEEN      = "reactions_last_seen";
 
   public static final String HAS_MENTION              = "has_mention";
+  public static final String IS_DELETED               = "is_deleted";
 
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;
@@ -185,6 +186,9 @@ public interface MmsSmsColumns {
     }
 
     public static boolean isDeletedMessage(long type) {
+      // Note: if you change the logic below, you must also change the is_deleted database column (by doing migration),
+      // which must have the same logic as here. See [MmsDatabase.IS_DELETED_COLUMN_DEF] or [SmsDatabase.IS_DELETED_COLUMN_DEF].
+      // Failing to do so will result in inconsistencies in the UI.
       return (type & BASE_TYPE_MASK) == BASE_DELETED_OUTGOING_TYPE || (type & BASE_TYPE_MASK) == BASE_DELETED_INCOMING_TYPE;
     }
 

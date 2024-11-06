@@ -636,11 +636,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV47) {
-        db.execSQL(RecipientDatabase.getCreateAutoDownloadCommand());
-        db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
+        db.execSQL(SmsDatabase.ADD_IS_DELETED_COLUMN);
+        db.execSQL(MmsDatabase.ADD_IS_DELETED_COLUMN);
       }
 
       if (oldVersion < lokiV48) {
+        db.execSQL(RecipientDatabase.getCreateAutoDownloadCommand());
+        db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
         db.execSQL(LokiMessageDatabase.getCreateGroupInviteTableCommand());
         db.execSQL(LokiMessageDatabase.getCreateThreadDeleteTrigger());
       }

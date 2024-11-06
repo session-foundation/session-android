@@ -25,7 +25,7 @@ dependencies {
     implementation "androidx.annotation:annotation:1.5.0"
     implementation "com.google.protobuf:protobuf-java:$protobufVersion"
     implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-    implementation "com.github.oxen-io.session-android-curve-25519:curve25519-java:$curve25519Version"
+    implementation "com.github.session-foundation.session-android-curve-25519:curve25519-java:$curve25519Version"
     implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"

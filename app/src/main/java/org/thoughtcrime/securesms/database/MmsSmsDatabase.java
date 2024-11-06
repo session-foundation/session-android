@@ -336,7 +336,7 @@ public class MmsSmsDatabase extends Database {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     // make sure the last message isn't marked as deleted
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
-            "(ifnull("+SmsDatabase.TYPE+", "+MmsDatabase.MESSAGE_BOX+") & "+BASE_TYPE_MASK+") NOT IN ("+BASE_DELETED_OUTGOING_TYPE+", "+BASE_DELETED_INCOMING_TYPE+")"; // this ugly line checks whether the type is deleted (incoming or outgoing) for either the sms table or the mms table
+            "NOT " + MmsSmsColumns.IS_DELETED;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
       if (cursor.moveToFirst()) {

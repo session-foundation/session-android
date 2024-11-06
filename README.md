@@ -4,7 +4,7 @@
 
 Add the [F-Droid repo](https://fdroid.getsession.org/)
 
-[Download the APK from here](https://github.com/oxen-io/session-android/releases/latest)
+[Download the APK from here](https://github.com/session-foundation/session-android/releases/latest)
 
 ## Summary
 
@@ -14,7 +14,7 @@ Session integrates directly with [Oxen Service Nodes](https://docs.oxen.io/about
 
 ## Want to contribute? Found a bug or have a feature request?
 
-Please search for any [existing issues](https://github.com/oxen-io/session-android/issues) that describe your bugs in order to avoid duplicate submissions. Submissions can be made by making a pull request to our `dev` branch. If you don't know where to start contributing, try reading the Github issues page for ideas.
+Please search for any [existing issues](https://github.com/session-foundation/session-android/issues) that describe your bugs in order to avoid duplicate submissions. Submissions can be made by making a pull request to our `dev` branch. If you don't know where to start contributing, try reading the Github issues page for ideas.
 
 ## Build instructions
 
@@ -29,8 +29,8 @@ Want to help us translate Session into your language? You can do so at https://c
 **Step 1:**
 
 ```
-wget https://raw.githubusercontent.com/oxen-io/oxen-core/master/utils/gpg_keys/KeeJef.asc
-gpg --import KeeJef.asc
+wget https://github.com/jagerman.gpg
+gpg --import jagerman.gpg
 ```
 
 **Step 2:**
@@ -39,7 +39,7 @@ Get the signed hash for this release. `SESSION_VERSION` needs to be updated for 
 
 ```
 export SESSION_VERSION=1.10.4
-wget https://github.com/oxen-io/session-android/releases/download/$SESSION_VERSION/signatures.asc
+wget https://github.com/session-foundation/session-android/releases/download/$SESSION_VERSION/signatures.asc
 ```
 
 **Step 3:**
