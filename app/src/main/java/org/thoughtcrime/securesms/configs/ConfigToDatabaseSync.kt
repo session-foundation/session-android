@@ -313,6 +313,7 @@ class ConfigToDatabaseSync @Inject constructor(
             val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId.hexString), false)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, !closedGroup.invited)
+            profileManager.setName(context, recipient, closedGroup.name)
             val threadId = storage.getOrCreateThreadIdFor(recipient.address)
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
