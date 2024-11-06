@@ -18,6 +18,7 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.session.libsignal.utilities.Util.SECURE_RANDOM;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -141,6 +142,7 @@ public class SmsDatabase extends MessagingDatabase {
   };
 
   public static final String ADD_IS_DELETED_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + IS_DELETED_COLUMN_DEF;
+  public static final String ADD_IS_GROUP_UPDATE_COLUMN = "ALTER TABLE " + TABLE_NAME +" ADD COLUMN " + IS_GROUP_UPDATE +" BOOL GENERATED ALWAYS AS (" + TYPE +" & " + GROUP_UPDATE_MESSAGE_BIT +" != 0) VIRTUAL";
 
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
@@ -469,7 +471,7 @@ public class SmsDatabase extends MessagingDatabase {
       type |= Types.SECURE_MESSAGE_BIT;
     } else if (message.isGroup()) {
       type |= Types.SECURE_MESSAGE_BIT;
-      if (((IncomingGroupMessage)message).isUpdateMessage()) type |= Types.GROUP_UPDATE_MESSAGE_BIT;
+      if (((IncomingGroupMessage)message).isUpdateMessage()) type |= GROUP_UPDATE_MESSAGE_BIT;
     }
 
     if (message.isPush()) type |= Types.PUSH_MESSAGE_BIT;

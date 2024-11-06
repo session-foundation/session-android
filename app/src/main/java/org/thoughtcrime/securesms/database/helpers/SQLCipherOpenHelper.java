@@ -369,6 +369,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
     db.execSQL(LokiMessageDatabase.getCreateGroupInviteTableCommand());
     db.execSQL(LokiMessageDatabase.getCreateThreadDeleteTrigger());
+    db.execSQL(SmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
+    db.execSQL(MmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
   }
 
   @Override
@@ -645,6 +647,9 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(RecipientDatabase.getUpdateAutoDownloadValuesCommand());
         db.execSQL(LokiMessageDatabase.getCreateGroupInviteTableCommand());
         db.execSQL(LokiMessageDatabase.getCreateThreadDeleteTrigger());
+
+        db.execSQL(SmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
+        db.execSQL(MmsDatabase.ADD_IS_GROUP_UPDATE_COLUMN);
       }
 
       db.setTransactionSuccessful();

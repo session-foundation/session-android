@@ -1559,6 +1559,8 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         )
 
         const val ADD_IS_DELETED_COLUMN: String = "ALTER TABLE $TABLE_NAME ADD COLUMN $IS_DELETED_COLUMN_DEF"
+        const val ADD_IS_GROUP_UPDATE_COLUMN: String =
+            "ALTER TABLE $TABLE_NAME ADD COLUMN $IS_GROUP_UPDATE BOOL GENERATED ALWAYS AS ($MESSAGE_BOX & ${MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT} != 0) VIRTUAL"
 
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",
