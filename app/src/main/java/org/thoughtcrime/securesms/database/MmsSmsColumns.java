@@ -29,6 +29,7 @@ public interface MmsSmsColumns {
   public static final String REACTIONS_LAST_SEEN      = "reactions_last_seen";
 
   public static final String HAS_MENTION              = "has_mention";
+  public static final String IS_DELETED               = "is_deleted";
 
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;

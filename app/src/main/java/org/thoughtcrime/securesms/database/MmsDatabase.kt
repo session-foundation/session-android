@@ -1423,27 +1423,67 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         const val QUOTE_MISSING: String = "quote_missing"
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
+
+
+        private const val IS_DELETED_COLUMN_DEF = """
+            $IS_DELETED GENERATED ALWAYS AS (
+                    ($MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK}) IN (${MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE}, ${MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE})
+                ) VIRTUAL
+        """
+
         const val CREATE_TABLE: String =
-            "CREATE TABLE " + TABLE_NAME + " (" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    THREAD_ID + " INTEGER, " + DATE_SENT + " INTEGER, " + DATE_RECEIVED + " INTEGER, " + MESSAGE_BOX + " INTEGER, " +
-                    READ + " INTEGER DEFAULT 0, " + "m_id" + " TEXT, " + "sub" + " TEXT, " +
-                    "sub_cs" + " INTEGER, " + BODY + " TEXT, " + PART_COUNT + " INTEGER, " +
-                    "ct_t" + " TEXT, " + CONTENT_LOCATION + " TEXT, " + ADDRESS + " TEXT, " +
-                    ADDRESS_DEVICE_ID + " INTEGER, " +
-                    EXPIRY + " INTEGER, " + "m_cls" + " TEXT, " + MESSAGE_TYPE + " INTEGER, " +
-                    "v" + " INTEGER, " + MESSAGE_SIZE + " INTEGER, " + "pri" + " INTEGER, " +
-                    "rr" + " INTEGER, " + "rpt_a" + " INTEGER, " + "resp_st" + " INTEGER, " +
-                    STATUS + " INTEGER, " + TRANSACTION_ID + " TEXT, " + "retr_st" + " INTEGER, " +
-                    "retr_txt" + " TEXT, " + "retr_txt_cs" + " INTEGER, " + "read_status" + " INTEGER, " +
-                    "ct_cls" + " INTEGER, " + "resp_txt" + " TEXT, " + "d_tm" + " INTEGER, " +
-                    DELIVERY_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + MISMATCHED_IDENTITIES + " TEXT DEFAULT NULL, " +
-                    NETWORK_FAILURE + " TEXT DEFAULT NULL," + "d_rpt" + " INTEGER, " +
-                    SUBSCRIPTION_ID + " INTEGER DEFAULT -1, " + EXPIRES_IN + " INTEGER DEFAULT 0, " +
-                    EXPIRE_STARTED + " INTEGER DEFAULT 0, " + NOTIFIED + " INTEGER DEFAULT 0, " +
-                    READ_RECEIPT_COUNT + " INTEGER DEFAULT 0, " + QUOTE_ID + " INTEGER DEFAULT 0, " +
-                    QUOTE_AUTHOR + " TEXT, " + QUOTE_BODY + " TEXT, " + QUOTE_ATTACHMENT + " INTEGER DEFAULT -1, " +
-                    QUOTE_MISSING + " INTEGER DEFAULT 0, " + SHARED_CONTACTS + " TEXT, " + UNIDENTIFIED + " INTEGER DEFAULT 0, " +
-                    LINK_PREVIEWS + " TEXT);"
+            """CREATE TABLE $TABLE_NAME (
+                $ID INTEGER PRIMARY KEY AUTOINCREMENT, 
+                $THREAD_ID INTEGER, 
+                $DATE_SENT INTEGER, 
+                $DATE_RECEIVED INTEGER, 
+                $MESSAGE_BOX INTEGER, 
+                $READ INTEGER DEFAULT 0, 
+                m_id TEXT, 
+                sub TEXT, 
+                sub_cs INTEGER, 
+                $BODY TEXT, 
+                $PART_COUNT INTEGER, 
+                ct_t TEXT, 
+                $CONTENT_LOCATION TEXT, 
+                $ADDRESS TEXT, 
+                $ADDRESS_DEVICE_ID INTEGER, 
+                $EXPIRY INTEGER, 
+                m_cls TEXT, 
+                $MESSAGE_TYPE INTEGER, 
+                v INTEGER, 
+                $MESSAGE_SIZE INTEGER, 
+                pri INTEGER, 
+                rr INTEGER, 
+                rpt_a INTEGER, 
+                resp_st INTEGER, 
+                $STATUS INTEGER, 
+                $TRANSACTION_ID TEXT, 
+                retr_st INTEGER, 
+                retr_txt TEXT, 
+                retr_txt_cs INTEGER, 
+                read_status INTEGER, 
+                ct_cls INTEGER, 
+                resp_txt TEXT, 
+                d_tm INTEGER, 
+                $DELIVERY_RECEIPT_COUNT INTEGER DEFAULT 0, 
+                $MISMATCHED_IDENTITIES TEXT DEFAULT NULL, 
+                $NETWORK_FAILURE TEXT DEFAULT NULL,
+                d_rpt INTEGER, 
+                $SUBSCRIPTION_ID INTEGER DEFAULT -1, 
+                $EXPIRES_IN INTEGER DEFAULT 0, 
+                $EXPIRE_STARTED INTEGER DEFAULT 0, 
+                $NOTIFIED INTEGER DEFAULT 0, 
+                $READ_RECEIPT_COUNT INTEGER DEFAULT 0, 
+                $QUOTE_ID INTEGER DEFAULT 0, 
+                $QUOTE_AUTHOR TEXT, 
+                $QUOTE_BODY TEXT, 
+                $QUOTE_ATTACHMENT INTEGER DEFAULT -1, 
+                $QUOTE_MISSING INTEGER DEFAULT 0, 
+                $SHARED_CONTACTS TEXT, 
+                $UNIDENTIFIED INTEGER DEFAULT 0, 
+                $LINK_PREVIEWS TEXT,
+                $IS_DELETED_COLUMN_DEF);"""
 
         @JvmField
         val CREATE_INDEXS: Array<String> = arrayOf(
@@ -1454,6 +1494,9 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             "CREATE INDEX IF NOT EXISTS mms_date_sent_index ON $TABLE_NAME ($DATE_SENT);",
             "CREATE INDEX IF NOT EXISTS mms_thread_date_index ON $TABLE_NAME ($THREAD_ID, $DATE_RECEIVED);"
         )
+
+        const val ADD_IS_DELETED_COLUMN: String = "ALTER TABLE $TABLE_NAME ADD COLUMN $IS_DELETED_COLUMN_DEF"
+
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",
             THREAD_ID,
