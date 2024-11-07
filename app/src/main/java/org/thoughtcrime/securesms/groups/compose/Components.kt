@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,10 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,8 +29,10 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
+import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButton
+import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -52,6 +60,80 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun MemberItem(
+    enabled: Boolean,
+    accountId: AccountId,
+    title: String,
+    onClick: (accountId: AccountId) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    subtitleColor: Color = LocalColors.current.textSecondary,
+    content: @Composable RowScope.() -> Unit = {},
+) {
+    Row(
+        modifier = modifier
+            .clickable(enabled = enabled, onClick = { onClick(accountId) })
+            .padding(
+                horizontal = LocalDimensions.current.smallSpacing,
+                vertical = LocalDimensions.current.xsSpacing
+            ),
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
+        verticalAlignment = CenterVertically,
+    ) {
+        ContactPhoto(accountId)
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+        ) {
+
+            Text(
+                style = LocalType.current.h8,
+                text = title,
+                color = LocalColors.current.text
+            )
+
+            if (!subtitle.isNullOrEmpty()) {
+                Text(
+                    text = subtitle,
+                    style = LocalType.current.small,
+                    color = subtitleColor,
+                )
+            }
+        }
+
+        content()
+    }
+}
+
+@Composable
+fun RadioMemberItem(
+    enabled: Boolean,
+    selected: Boolean,
+    accountId: AccountId,
+    title: String,
+    onClick: (accountId: AccountId) -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    subtitleColor: Color = LocalColors.current.textSecondary
+) {
+    MemberItem(
+        enabled = enabled,
+        accountId = accountId,
+        title = title,
+        subtitle = subtitle,
+        subtitleColor = subtitleColor,
+        onClick = onClick,
+        modifier = modifier
+    ){
+        RadioButtonIndicator(
+            selected = selected,
+            enabled = enabled
+        )
+    }
+}
+
 fun LazyListScope.multiSelectMemberList(
     contacts: List<ContactItem>,
     modifier: Modifier = Modifier,
@@ -66,37 +148,18 @@ fun LazyListScope.multiSelectMemberList(
                 HorizontalDivider(color = LocalColors.current.borders)
             }
 
-            RadioButton(
-                onClick = { onContactItemClicked(contact.accountID) },
-                selected = contact.selected,
+            RadioMemberItem(
                 enabled = enabled,
-                contentPadding = PaddingValues(
-                    vertical = LocalDimensions.current.xxsSpacing,
-                    horizontal = LocalDimensions.current.smallSpacing
-                )
-            ) {
-                ContactPhoto(contact.accountID)
-                Spacer(modifier = Modifier.size(LocalDimensions.current.smallSpacing))
-                MemberName(name = contact.name)
-            }
+                selected = contact.selected,
+                accountId = contact.accountID,
+                title = contact.name,
+                onClick = { onContactItemClicked(contact.accountID) }
+            )
 
             HorizontalDivider(color = LocalColors.current.borders)
         }
     }
 }
-
-@Composable
-fun RowScope.MemberName(
-    name: String,
-    modifier: Modifier = Modifier
-) = Text(
-    text = name,
-    style = LocalType.current.h8,
-    color = LocalColors.current.text,
-    modifier = modifier
-        .weight(1f)
-        .align(CenterVertically)
-)
 
 
 @Composable
@@ -104,7 +167,6 @@ fun ContactPhoto(sessionId: AccountId) {
     Avatar(Address.fromSerialized(sessionId.hexString),
         modifier = Modifier.size(LocalDimensions.current.iconLarge))
 }
-
 
 @Preview
 @Composable

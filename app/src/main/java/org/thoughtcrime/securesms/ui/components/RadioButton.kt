@@ -74,7 +74,6 @@ fun RadioButton(
             selected = selected,
             enabled = enabled,
             modifier = Modifier
-                .size(22.dp)
                 .align(Alignment.CenterVertically)
         )
     }
@@ -84,12 +83,14 @@ fun RadioButton(
 fun RadioButtonIndicator(
     selected: Boolean,
     enabled: Boolean,
-    modifier: Modifier
+    modifier: Modifier = Modifier,
+    size: Dp = 22.dp
 ) {
     Box(modifier = modifier) {
         AnimatedVisibility(
             selected,
             modifier = Modifier
+                .size(size)
                 .padding(2.5.dp)
                 .clip(CircleShape),
             enter = scaleIn(),
@@ -106,6 +107,7 @@ fun RadioButtonIndicator(
         }
         Box(
             modifier = Modifier
+                .size(size)
                 .aspectRatio(1f)
                 .border(
                     width = LocalDimensions.current.borderStroke,

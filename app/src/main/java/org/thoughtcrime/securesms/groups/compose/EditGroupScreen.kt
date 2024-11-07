@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -55,6 +56,7 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BottomOptionsDialog
 import org.thoughtcrime.securesms.ui.components.BottomOptionsDialogItem
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -242,10 +244,9 @@ fun EditGroup(
             LazyColumn(modifier = Modifier) {
                 items(members) { member ->
                     // Each member's view
-                    MemberItem(
+                    EditMemberItem(
                         modifier = Modifier.fillMaxWidth(),
                         member = member,
-                        clickable = member.canEdit,
                         onClick = { setShowingBottomModelForMember(member) }
                     )
                 }
@@ -407,48 +408,24 @@ private fun MemberOptionsDialog(
 }
 
 @Composable
-private fun MemberItem(
-    clickable: Boolean,
-    onClick: (accountId: AccountId) -> Unit,
+fun EditMemberItem(
     member: GroupMemberState,
-    modifier: Modifier = Modifier,
+    onClick: (accountId: AccountId) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Row(
+    MemberItem(
+        enabled = member.canEdit,
+        accountId = member.accountId,
+        title = member.name,
+        subtitle = member.status,
+        subtitleColor = if (member.highlightStatus) {
+            LocalColors.current.danger
+        } else {
+            LocalColors.current.textSecondary
+        },
+        onClick = onClick,
         modifier = modifier
-            .clickable(enabled = clickable, onClick = { onClick(member.accountId) })
-            .padding(
-                horizontal = LocalDimensions.current.smallSpacing,
-                vertical = LocalDimensions.current.xsSpacing
-            ),
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
-        verticalAlignment = CenterVertically,
-    ) {
-        ContactPhoto(member.accountId)
-
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-        ) {
-
-            Text(
-                style = LocalType.current.large,
-                text = member.name,
-                color = LocalColors.current.text
-            )
-
-            if (member.status.isNotEmpty()) {
-                Text(
-                    text = member.status,
-                    style = LocalType.current.small,
-                    color = if (member.highlightStatus) {
-                        LocalColors.current.danger
-                    } else {
-                        LocalColors.current.textSecondary
-                    },
-                )
-            }
-        }
-
+    ){
         if (member.canEdit) {
             Icon(
                 painter = painterResource(R.drawable.ic_circle_dot_dot_dot),
