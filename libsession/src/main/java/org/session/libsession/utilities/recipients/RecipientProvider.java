@@ -104,7 +104,7 @@ class RecipientProvider {
   }
 
   private @NonNull RecipientDetails getRecipientDetailsSync(Context context, @NonNull Address address, Optional<RecipientSettings> settings, Optional<GroupRecord> groupRecord, boolean nestedAsynchronous) {
-    if (address.isGroupOrCommunity() && !address.isGroupV2()) return getGroupRecipientDetails(context, address, groupRecord, settings, nestedAsynchronous);
+    if (address.isLegacyGroup() || address.isCommunity()) return getGroupRecipientDetails(context, address, groupRecord, settings, nestedAsynchronous);
     else                   return getIndividualRecipientDetails(context, address, settings);
   }
 

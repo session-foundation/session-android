@@ -19,10 +19,18 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
+import org.session.libsession.database.StorageProtocol
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
@@ -37,6 +45,15 @@ class ProfilePictureView @JvmOverloads constructor(
     var additionalPublicKey: String? = null
     var additionalDisplayName: String? = null
     var recipient: Recipient? = null
+
+    @Inject
+    lateinit var contactDatabase: SessionContactDatabase
+
+    @Inject
+    lateinit var groupDatabase: GroupDatabase
+
+    @Inject
+    lateinit var storage: StorageProtocol
 
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
@@ -53,23 +70,35 @@ class ProfilePictureView @JvmOverloads constructor(
 
     fun update(recipient: Recipient) {
         this.recipient = recipient
-        recipient.run { update(address, isLegacyGroupRecipient, isCommunityInboxRecipient) }
+        recipient.run {
+            update(
+                address = address,
+                isLegacyGroupRecipient = isLegacyGroupRecipient,
+                isCommunityInboxRecipient = isCommunityInboxRecipient,
+                isGroupsV2Recipient = isGroupV2Recipient
+            )
+        }
     }
 
     fun update(
         address: Address,
         isLegacyGroupRecipient: Boolean = false,
-        isCommunityInboxRecipient: Boolean = false
+        isCommunityInboxRecipient: Boolean = false,
+        isGroupsV2Recipient: Boolean = false,
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)?.displayName(Contact.ContactContext.REGULAR)
+            ?: contactDatabase.getContactWithAccountID(publicKey)?.displayName(Contact.ContactContext.REGULAR)
             ?: publicKey
 
-        if (isLegacyGroupRecipient) {
-            val members = DatabaseComponent.get(context).groupDatabase()
-                .getGroupMemberAddresses(address.toGroupString(), true)
-                .sorted()
-                .take(2)
+        if (isLegacyGroupRecipient || isGroupsV2Recipient) {
+            val members = if (isLegacyGroupRecipient) {
+                groupDatabase
+                    .getGroupMemberAddresses(address.toGroupString(), true)
+            } else {
+                storage.getMembers(address.serialize())
+                    .map { Address.fromSerialized(it.sessionId) }
+            }.sorted().take(2)
+
             if (members.size <= 1) {
                 publicKey = ""
                 displayName = ""
