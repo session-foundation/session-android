@@ -81,7 +81,11 @@ fun MemberItem(
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
-        ContactPhoto(accountId)
+        Avatar(
+            accountId = accountId,
+            isAdmin = true, //todo GROUPSV2 this needs to be calculated
+            modifier = Modifier.size(LocalDimensions.current.iconLarge)
+        )
 
         Column(
             modifier = Modifier.weight(1f),
@@ -159,13 +163,6 @@ fun LazyListScope.multiSelectMemberList(
             HorizontalDivider(color = LocalColors.current.borders)
         }
     }
-}
-
-
-@Composable
-fun ContactPhoto(sessionId: AccountId) {
-    Avatar(Address.fromSerialized(sessionId.hexString),
-        modifier = Modifier.size(LocalDimensions.current.iconLarge))
 }
 
 @Preview

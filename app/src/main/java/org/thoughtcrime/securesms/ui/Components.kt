@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -69,6 +70,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
@@ -427,42 +429,101 @@ fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
 
 //TODO This component should be fully rebuilt in Compose at some point ~~
 @Composable
+private fun BaseAvatar(
+    modifier: Modifier = Modifier,
+    isAdmin: Boolean = false,
+    update: (ProfilePictureView)->Unit
+){
+    Box(
+        modifier = modifier
+    ) {
+        // image
+        if (LocalInspectionMode.current) { // this part is used for previews only
+            Image(
+                painterResource(id = R.drawable.ic_profile_default),
+                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
+                contentScale = ContentScale.Inside,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(LocalDimensions.current.iconLarge)
+                    .clip(CircleShape)
+                    .border(1.dp, LocalColors.current.borders, CircleShape)
+            )
+        } else {
+            AndroidView(
+                factory = {
+                    ProfilePictureView(it)
+                },
+                update = update
+            )
+        }
+
+        // badge
+        if (isAdmin) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_crown_custom),
+                contentDescription = null,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(1.dp, 1.dp) // used to make up for trasparent padding in icon
+                    .size(LocalDimensions.current.badgeSize)
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAvatar() {
+    PreviewTheme {
+        Avatar(
+            modifier = Modifier.padding(20.dp),
+            isAdmin = true,
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235")
+        )
+    }
+}
+
+@Composable
 fun Avatar(
     recipient: Recipient,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isAdmin: Boolean = false
 ) {
-    AndroidView(
-        factory = {
-            ProfilePictureView(it).apply { update(recipient) }
-        },
-        modifier = modifier
+    BaseAvatar(
+        modifier = modifier,
+        isAdmin = isAdmin,
+        update = {
+            it.update(recipient)
+        }
     )
 }
 
 @Composable
 fun Avatar(
     userAddress: Address,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isAdmin: Boolean = false
 ) {
-    if (LocalInspectionMode.current) {
-        Image(
-            painterResource(id = R.drawable.ic_profile_default),
-            colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-            contentScale = ContentScale.Inside,
-            contentDescription = null,
-            modifier = Modifier
-                .size(LocalDimensions.current.iconLarge)
-                .clip(CircleShape)
-                .border(1.dp, LocalColors.current.borders, CircleShape)
-        )
-    } else {
-        AndroidView(
-            factory = {
-                ProfilePictureView(it).apply { update(userAddress) }
-            },
-            modifier = modifier
-        )
-    }
+    BaseAvatar(
+        modifier = modifier,
+        isAdmin = isAdmin,
+        update = {
+            it.update(userAddress)
+        }
+    )
+}
+
+@Composable
+fun Avatar(
+    accountId: AccountId,
+    modifier: Modifier = Modifier,
+    isAdmin: Boolean = false
+) {
+    Avatar(Address.fromSerialized(accountId.hexString),
+        modifier = modifier,
+        isAdmin = isAdmin
+    )
 }
 
 @Composable

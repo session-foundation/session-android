@@ -109,7 +109,7 @@ class MentionViewModel(
                             }
                     }
                 } else {
-                    emptySet()
+                    emptySet() //todo GROUPSV2 handle groupsv2
                 }
 
                 val contactContext = if (recipient.isCommunityRecipient) {
@@ -122,7 +122,7 @@ class MentionViewModel(
                     Member(
                         publicKey = contact.accountID,
                         name = contact.displayName(contactContext).orEmpty(),
-                        isModerator = contact.accountID in moderatorIDs,
+                        isModerator = contact.accountID in moderatorIDs, //todo GROUPSV2 handle groupsv2
                     )
                 }
             }

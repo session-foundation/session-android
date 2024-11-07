@@ -92,31 +92,32 @@ class ConversationViewModel(
         val conversationType = conversation?.getType()
         // Determining is the current user is an admin will depend on the kind of conversation we are in
         _isAdmin.value = when(conversationType) {
-        // for Groups V2
-        MessageType.GROUPS_V2 -> {
-            configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
-        }
-
-        // for legacy groups, check if the user created the group
-        MessageType.LEGACY_GROUP -> {
-            // for legacy groups, we check if the current user is the one who created the group
-            run {
-                val localUserAddress =
-                    textSecurePreferences.getLocalNumber() ?: return@run false
-                val group = storage.getGroup(conversation.address.toGroupString())
-                group?.admins?.contains(fromSerialized(localUserAddress)) ?: false
+            // for Groups V2
+            MessageType.GROUPS_V2 -> {
+                configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
             }
+
+            // for legacy groups, check if the user created the group
+            MessageType.LEGACY_GROUP -> {
+                // for legacy groups, we check if the current user is the one who created the group
+                run {
+                    val localUserAddress =
+                        textSecurePreferences.getLocalNumber() ?: return@run false
+                    val group = storage.getGroup(conversation.address.toGroupString())
+                    group?.admins?.contains(fromSerialized(localUserAddress)) ?: false
+                }
+            }
+
+            // for communities the the `isUserModerator` field
+            MessageType.COMMUNITY -> isUserCommunityManager()
+
+            // false in other cases
+            else -> false
         }
-
-        // for communities the the `isUserModerator` field
-        MessageType.COMMUNITY -> isUserCommunityManager()
-
-        // false in other cases
-        else -> false
-    }
 
         conversation
     }
+
     val expirationConfiguration: ExpirationConfiguration?
         get() = storage.getExpirationConfiguration(threadId)
 

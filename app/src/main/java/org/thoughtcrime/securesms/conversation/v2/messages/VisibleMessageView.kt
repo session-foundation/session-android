@@ -205,7 +205,7 @@ class VisibleMessageView : FrameLayout {
                         standardPublicKey = senderAccountID
                     }
                     val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
-                    binding.moderatorIconImageView.isVisible = !message.isOutgoing && isModerator
+                    binding.moderatorIconImageView.isVisible = isModerator //todo GROUPSV2 handle groupsv2
                 }
             }
         }
