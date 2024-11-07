@@ -612,8 +612,7 @@ object SnodeAPI {
 
         data class BatchKey(val snodeAddress: String, val publicKey: String)
 
-        @Suppress("OPT_IN_USAGE")
-        GlobalScope.launch {
+        scope.launch {
             val batches = hashMapOf<BatchKey, MutableList<RequestInfo>>()
 
             while (true) {
