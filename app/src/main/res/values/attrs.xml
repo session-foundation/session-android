@@ -31,6 +31,7 @@
     <attr name="onLightCell" format="reference|color"/>
 
     <attr name="accentColor" format="reference|color"/>
+    <attr name="onInvertedBackgroundPrimary" format="reference|color"/>
     <attr name="danger" format="reference|color"/>
     <attr name="backgroundSecondary" format="reference|color"/>
     <attr name="prominentButtonColor" format="reference|color"/>

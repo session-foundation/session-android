@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
-import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -49,7 +48,7 @@ class ConversationView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(thread: ThreadRecord, isTyping: Boolean) {
+    fun bind(thread: ThreadRecord, isTyping: Boolean, overriddenSnippet: CharSequence?) {
         this.thread = thread
         if (thread.isPinned) {
             binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
@@ -87,9 +86,9 @@ class ConversationView : LinearLayout {
         val textSize = if (unreadCount < 1000) 12.0f else 10.0f
         binding.unreadCountTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         binding.unreadCountIndicator.isVisible = (unreadCount != 0 && !thread.isRead)
-                || (configFactory.convoVolatile?.getConversationUnread(thread) == true)
+                || (configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
         binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
-        binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroup)
+        binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
         val senderDisplayName = getTitle(thread.recipient)
                 ?: thread.recipient.address.toString()
         binding.conversationViewDisplayNameTextView.text = senderDisplayName
@@ -102,13 +101,19 @@ class ConversationView : LinearLayout {
             R.drawable.ic_notifications_mentions
         }
         binding.muteIndicatorImageView.setImageResource(drawableRes)
-        binding.snippetTextView.text = highlightMentions(
-            text = thread.getDisplayBody(context),
-            formatOnly = true, // no styling here, only text formatting
-            threadID = thread.threadId,
-            context = context
-        )
-        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+
+        if (overriddenSnippet != null) {
+            binding.snippetTextView.text = overriddenSnippet
+        } else {
+            binding.snippetTextView.text = highlightMentions(
+                text = thread.getDisplayBody(context),
+                formatOnly = true, // no styling here, only text formatting
+                threadID = thread.threadId,
+                context = context
+            )
+        }
+
+        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead && overriddenSnippet == null) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
         if (isTyping) {
             binding.typingIndicatorView.root.startAnimation()

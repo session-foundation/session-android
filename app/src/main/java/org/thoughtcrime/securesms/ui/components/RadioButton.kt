@@ -71,23 +71,26 @@ fun RadioButton(
 
         Spacer(modifier = Modifier.width(20.dp))
         RadioButtonIndicator(
-            selected = selected && enabled, // disabled radio shouldn't be selected
+            selected = selected,
+            enabled = enabled,
             modifier = Modifier
-                .size(22.dp)
                 .align(Alignment.CenterVertically)
         )
     }
 }
 
 @Composable
-private fun RadioButtonIndicator(
+fun RadioButtonIndicator(
     selected: Boolean,
-    modifier: Modifier
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    size: Dp = 22.dp
 ) {
     Box(modifier = modifier) {
         AnimatedVisibility(
             selected,
             modifier = Modifier
+                .size(size)
                 .padding(2.5.dp)
                 .clip(CircleShape),
             enter = scaleIn(),
@@ -97,17 +100,18 @@ private fun RadioButtonIndicator(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        color = LocalColors.current.primary,
+                        color = if (enabled) LocalColors.current.primary else LocalColors.current.disabled,
                         shape = CircleShape
                     )
             )
         }
         Box(
             modifier = Modifier
+                .size(size)
                 .aspectRatio(1f)
                 .border(
                     width = LocalDimensions.current.borderStroke,
-                    color = LocalContentColor.current,
+                    color = if (enabled) LocalColors.current.text else LocalColors.current.disabled,
                     shape = CircleShape
                 )
         ) {}
@@ -137,17 +141,15 @@ fun <T> TitledRadioButton(
                     .weight(1f)
                     .align(Alignment.CenterVertically)
             ) {
-                Column {
+                Text(
+                    text = option.title(),
+                    style = LocalType.current.large
+                )
+                option.subtitle?.let {
                     Text(
-                        text = option.title(),
-                        style = LocalType.current.large
+                        text = it(),
+                        style = LocalType.current.extraSmall
                     )
-                    option.subtitle?.let {
-                        Text(
-                            text = it(),
-                            style = LocalType.current.extraSmall
-                        )
-                    }
                 }
             }
         }

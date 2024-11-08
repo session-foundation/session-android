@@ -30,6 +30,7 @@ public interface MmsSmsColumns {
 
   public static final String HAS_MENTION              = "has_mention";
   public static final String IS_DELETED               = "is_deleted";
+  public static final String IS_GROUP_UPDATE          = "is_group_update";
 
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;

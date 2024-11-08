@@ -85,9 +85,12 @@ class MentionViewModel(
                 }
 
                 val memberIDs = when {
-                    recipient.isClosedGroupRecipient -> {
+                    recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
                             .map { it.serialize() }
+                    }
+                    recipient.isGroupV2Recipient -> {
+                        storage.getMembers(recipient.address.serialize()).map { it.sessionId }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
@@ -106,7 +109,7 @@ class MentionViewModel(
                             }
                     }
                 } else {
-                    emptySet()
+                    emptySet() //todo GROUPSV2 handle groupsv2
                 }
 
                 val contactContext = if (recipient.isCommunityRecipient) {
@@ -119,7 +122,7 @@ class MentionViewModel(
                     Member(
                         publicKey = contact.accountID,
                         name = contact.displayName(contactContext).orEmpty(),
-                        isModerator = contact.accountID in moderatorIDs,
+                        isModerator = contact.accountID in moderatorIDs, //todo GROUPSV2 handle groupsv2
                     )
                 }
             }

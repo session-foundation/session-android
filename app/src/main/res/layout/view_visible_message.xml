@@ -49,13 +49,15 @@
             android:id="@+id/moderatorIconImageView"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:layout_marginEnd="-4dp"
-            android:layout_marginBottom="-4dp"
-            android:src="@drawable/ic_crown"
+            android:src="@drawable/ic_crown_custom"
+            android:layout_marginEnd="-1dp"
+            android:layout_marginBottom="-1dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/profilePictureView"
             app:layout_constraintEnd_toEndOf="@+id/profilePictureView"
-            tools:visibility="visible" />
+            tools:visibility="visible"/>
 
         <TextView
             android:id="@+id/senderNameTextView"
