@@ -18,6 +18,7 @@ interface ThemeColors {
     // properties to override for each theme
     val isLight: Boolean
     val primary: Color
+    val onInvertedBackgroundPrimary: Color
     val textAlert: Color
     val danger: Color
     val warning: Color
@@ -106,6 +107,7 @@ data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors
     override val disabled = disabledDark
     override val background = classicDark0
     override val backgroundSecondary = classicDark1
+    override val onInvertedBackgroundPrimary = background
     override val text = classicDark6
     override val textSecondary = classicDark5
     override val borders = classicDark3
@@ -126,6 +128,7 @@ data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColor
     override val disabled = disabledLight
     override val background = classicLight6
     override val backgroundSecondary = classicLight5
+    override val onInvertedBackgroundPrimary = primary
     override val text = classicLight0
     override val textSecondary = classicLight1
     override val borders = classicLight3
@@ -146,6 +149,7 @@ data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val disabled = disabledDark
     override val background = oceanDark2
     override val backgroundSecondary = oceanDark1
+    override val onInvertedBackgroundPrimary = background
     override val text = oceanDark7
     override val textSecondary = oceanDark5
     override val borders = oceanDark4
@@ -166,6 +170,7 @@ data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
     override val disabled = disabledLight
     override val background = oceanLight7
     override val backgroundSecondary = oceanLight6
+    override val onInvertedBackgroundPrimary = background
     override val text = oceanLight1
     override val textSecondary = oceanLight2
     override val borders = oceanLight3
