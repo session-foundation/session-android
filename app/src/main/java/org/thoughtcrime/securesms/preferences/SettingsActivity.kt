@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.preferences
+ package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
 import android.app.Activity
@@ -57,12 +57,14 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.canhub.cropper.CropImageContract
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
@@ -629,4 +631,8 @@ private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
     registerReceiver(receiver, IntentFilter("pathsBuilt"))
 
     awaitClose { unregisterReceiver(receiver) }
-}.onStart { emit(Unit) }.map { OnionRequestAPI.paths.isNotEmpty() }
+}.onStart { emit(Unit) }.map {
+    withContext(Dispatchers.Default) {
+        OnionRequestAPI.paths.isNotEmpty()
+    }
+}

@@ -190,8 +190,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             EmptyView(isNewAccount)
         }
 
-        IP2Country.configureIfNeeded(this@HomeActivity)
-
         // Set up new conversation button
         binding.newConversationButton.setOnClickListener { showStartConversation() }
         // Observe blocked contacts changed events

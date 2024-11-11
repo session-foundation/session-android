@@ -190,6 +190,10 @@ public class MediaSendActivity extends PassphraseRequiredActionBarActivity imple
 
   @Override
   public void onFolderSelected(@NonNull MediaFolder folder) {
+    if(folder == null || viewModel == null){
+      return;
+    }
+
     viewModel.onFolderSelected(folder.getBucketId());
 
     MediaPickerItemFragment fragment = MediaPickerItemFragment.newInstance(folder.getBucketId(), folder.getTitle(), viewModel.getMaxSelection());

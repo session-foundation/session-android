@@ -228,7 +228,7 @@ class MentionViewModel(
 
         // Add the remaining content
         sb.append(editable, offset, editable.length)
-        return sb.toString()
+        return sb.toString().trim()
     }
 
     data class Member(

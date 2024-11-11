@@ -62,6 +62,8 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
         binding.learnMoreButton.setOnClickListener { learnMore() }
         update(false)
         registerObservers()
+
+        IP2Country.configureIfNeeded(this)
     }
 
     private fun registerObservers() {

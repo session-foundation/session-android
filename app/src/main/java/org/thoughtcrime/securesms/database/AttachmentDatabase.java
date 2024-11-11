@@ -979,6 +979,12 @@ public class AttachmentDatabase extends Database {
 
       Bitmap bitmap = retriever.getFrameAtTime(1000);
 
+      try {
+        retriever.close();
+      } catch (IOException e) {
+        Log.w(TAG, "Error while closing the retriever in AttachmentDatabase > generateVideoThumbnail: "+e.toString());
+      }
+
       Log.i(TAG, "Generated video thumbnail...");
       return new ThumbnailData(bitmap);
     }
