@@ -831,8 +831,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun setUpLegacyGroupBanner() {
         val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
 
-        //TODO groupsv2, URL
-        val url = "https://getsession.org"
+        val url = "https://getsession.org/blog/session-groups-v2"
 
         with(binding) {
             outdatedGroupBanner.isVisible = shouldDisplayBanner
