@@ -657,20 +657,30 @@ public class ThreadDatabase extends Database {
     String[]       recipientsArg = new String[]{recipient.getAddress().serialize()};
     Cursor         cursor        = null;
 
+    boolean created = false;
+
     try {
-      cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
-      long threadId;
-      boolean created = false;
-      if (cursor != null && cursor.moveToFirst()) {
-        threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-      } else {
-        DatabaseComponent.get(context).recipientDatabase().setProfileSharing(recipient, true);
-        threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupOrCommunityRecipient(), distributionType);
-        created = true;
-      }
-      if (created && updateListener != null) {
-        updateListener.threadCreated(recipient.getAddress(), threadId);
-      }
+        long threadId;
+
+        // The synchronization here makes sure we don't create two threads for the same recipient at the same time
+        synchronized (this) {
+            cursor = db.query(TABLE_NAME, new String[]{ID}, where, recipientsArg, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+              threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            } else {
+              threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupOrCommunityRecipient(), distributionType);
+              created = true;
+            }
+        }
+
+        if (created) {
+          DatabaseComponent.get(context).recipientDatabase().setProfileSharing(recipient, true);
+
+          if (updateListener != null) {
+              updateListener.threadCreated(recipient.getAddress(), threadId);
+          }
+        }
+
       return threadId;
     } finally {
       if (cursor != null)
