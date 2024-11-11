@@ -5,33 +5,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.Avatar
-import org.thoughtcrime.securesms.ui.components.RadioButton
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -66,6 +59,7 @@ fun MemberItem(
     accountId: AccountId,
     title: String,
     onClick: (accountId: AccountId) -> Unit,
+    showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     subtitleColor: Color = LocalColors.current.textSecondary,
@@ -83,7 +77,7 @@ fun MemberItem(
     ) {
         Avatar(
             accountId = accountId,
-            isAdmin = true, //todo GROUPSV2 this needs to be calculated
+            isAdmin = showAsAdmin,
             modifier = Modifier.size(LocalDimensions.current.iconLarge)
         )
 
@@ -118,6 +112,7 @@ fun RadioMemberItem(
     accountId: AccountId,
     title: String,
     onClick: (accountId: AccountId) -> Unit,
+    showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     subtitleColor: Color = LocalColors.current.textSecondary
@@ -129,6 +124,7 @@ fun RadioMemberItem(
         subtitle = subtitle,
         subtitleColor = subtitleColor,
         onClick = onClick,
+        showAsAdmin = showAsAdmin,
         modifier = modifier
     ){
         RadioButtonIndicator(
@@ -157,6 +153,7 @@ fun LazyListScope.multiSelectMemberList(
                 selected = contact.selected,
                 accountId = contact.accountID,
                 title = contact.name,
+                showAsAdmin = false,
                 onClick = { onContactItemClicked(contact.accountID) }
             )
 

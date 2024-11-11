@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.groups.compose
 
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -56,7 +53,6 @@ import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BottomOptionsDialog
 import org.thoughtcrime.securesms.ui.components.BottomOptionsDialogItem
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -423,6 +419,7 @@ fun EditMemberItem(
         } else {
             LocalColors.current.textSecondary
         },
+        showAsAdmin = member.showAsAdmin,
         onClick = onClick,
         modifier = modifier
     ){
@@ -449,6 +446,7 @@ private fun EditGroupPreview() {
             canRemove = true,
             canResendInvite = false,
             canResendPromotion = false,
+            showAsAdmin = false,
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -459,6 +457,7 @@ private fun EditGroupPreview() {
             canRemove = true,
             canResendInvite = false,
             canResendPromotion = false,
+            showAsAdmin = true,
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -469,6 +468,7 @@ private fun EditGroupPreview() {
             canRemove = true,
             canResendInvite = false,
             canResendPromotion = false,
+            showAsAdmin = false,
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }

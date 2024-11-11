@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -34,6 +36,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 
 /**
@@ -52,6 +55,7 @@ class MentionViewModel(
     contactDatabase: SessionContactDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
+    configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val editable = MentionEditable()
@@ -108,8 +112,12 @@ class MentionViewModel(
                                 memberId.takeIf { roles.any { it.isModerator } }
                             }
                     }
+                } else if (recipient.isGroupV2Recipient) {
+                    configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
+                        it.groupMembers.all().filterTo(hashSetOf()) { it.isAdminOrBeingPromoted }
+                    }
                 } else {
-                    emptySet() //todo GROUPSV2 handle groupsv2
+                    emptySet()
                 }
 
                 val contactContext = if (recipient.isCommunityRecipient) {
@@ -122,7 +130,7 @@ class MentionViewModel(
                     Member(
                         publicKey = contact.accountID,
                         name = contact.displayName(contactContext).orEmpty(),
-                        isModerator = contact.accountID in moderatorIDs, //todo GROUPSV2 handle groupsv2
+                        isModerator = contact.accountID in moderatorIDs,
                     )
                 }
             }
@@ -263,6 +271,7 @@ class MentionViewModel(
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,
+        private val configFactory: ConfigFactoryProtocol,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -275,6 +284,7 @@ class MentionViewModel(
                 contactDatabase = contactDatabase,
                 memberDatabase = memberDatabase,
                 storage = storage,
+                configFactory = configFactory,
             ) as T
         }
     }

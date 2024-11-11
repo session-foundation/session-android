@@ -176,7 +176,8 @@ class EditGroupViewModel @AssistedInject constructor(
             canResendInvite = amIAdmin && member.sessionId != myAccountId.hexString &&
                     (member.inviteFailed || member.invitePending),
             status = status,
-            highlightStatus = highlightStatus
+            highlightStatus = highlightStatus,
+            showAsAdmin = member.isAdminOrBeingPromoted,
         )
     }
 
@@ -334,6 +335,7 @@ data class GroupMemberState(
     val name: String,
     val status: String,
     val highlightStatus: Boolean,
+    val showAsAdmin: Boolean,
     val canResendInvite: Boolean,
     val canResendPromotion: Boolean,
     val canRemove: Boolean,
