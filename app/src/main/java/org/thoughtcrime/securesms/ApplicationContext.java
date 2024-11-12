@@ -44,6 +44,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync;
 import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.session.libsession.messaging.groups.GroupManagerV2;
+import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
@@ -156,6 +157,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigUploader configUploader;
     @Inject ConfigToDatabaseSync configToDatabaseSync;
+    @Inject DestroyedGroupSync destroyedGroupSync;
     @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
     @Inject SnodeClock snodeClock;
     @Inject ExpiringMessageManager expiringMessageManager;
@@ -274,6 +276,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         configUploader.start();
         configToDatabaseSync.start();
         removeGroupMemberHandler.start();
+        destroyedGroupSync.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

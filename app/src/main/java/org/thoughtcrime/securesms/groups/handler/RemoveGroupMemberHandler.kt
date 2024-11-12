@@ -52,7 +52,6 @@ class RemoveGroupMemberHandler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val configFactory: ConfigFactoryProtocol,
     private val textSecurePreferences: TextSecurePreferences,
-    private val groupManager: GroupManagerV2,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,

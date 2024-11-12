@@ -13,6 +13,7 @@ sealed class GroupInfo {
         val priority: Long,
         val invited: Boolean,
         val name: String,
+        val destroyed: Boolean,
     ): GroupInfo() {
 
         init {
@@ -28,23 +29,7 @@ sealed class GroupInfo {
         val kicked: Boolean
             get() = adminKey == null && authData == null
 
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
 
-            other as ClosedGroupInfo
-
-            if (groupAccountId != other.groupAccountId) return false
-            if (!adminKey.contentEquals(other.adminKey)) return false
-            return authData.contentEquals(other.authData)
-        }
-
-        override fun hashCode(): Int {
-            var result = groupAccountId.hashCode()
-            result = 31 * result + adminKey.contentHashCode()
-            result = 31 * result + authData.contentHashCode()
-            return result
-        }
 
         fun hasAdminKey() = adminKey != null
     }

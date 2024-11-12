@@ -13,13 +13,19 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +40,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
@@ -57,6 +64,7 @@ import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.util.UUID
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
@@ -184,13 +192,33 @@ class ConversationViewModel(
                 repository.recipientUpdateFlow(threadId),
                 _openGroup,
             ) { a, b -> a to b }
-                .collect { (recipient, community) ->
+                .flatMapLatest { (recipient, community) ->
+                    // If the recipient is a group(v2) recipient, we need to listen for changes in the group's state
+                    // to get the "isDestroyed" data
+                    if (recipient?.isGroupV2Recipient == true) {
+                        (configFactory.configUpdateNotifications
+                            .filter { it is ConfigUpdateNotification.UserConfigsMerged ||
+                                    it is ConfigUpdateNotification.UserConfigsModified } as Flow<*>)
+                            .onStart { emit(Unit) }
+                            .map {
+                                Triple(
+                                    recipient,
+                                    community,
+                                    configFactory.getGroup(AccountId(recipient.address.serialize()))?.destroyed == true
+                                )
+                            }
+                    } else {
+                        flowOf(Triple(recipient, community, false))
+                    }
+                }
+                .collect { (recipient, community, isDestroyed) ->
                     _uiState.update {
                         it.copy(
                             shouldExit = recipient == null,
                             showInput = shouldShowInput(recipient, community),
                             enableInputMediaControls = shouldEnableInputMediaControls(recipient),
                             messageRequestState = buildMessageRequestState(recipient),
+                            isDestroyed = isDestroyed,
                         )
                     }
                 }
@@ -1034,7 +1062,16 @@ data class ConversationUiState(
     val shouldExit: Boolean = false,
     val showInput: Boolean = true,
     val enableInputMediaControls: Boolean = true,
-    val showLoader: Boolean = false
+    val showLoader: Boolean = false,
+    /**
+     * Whether this conversation is destroyed.
+     * Note: this is different from the conversation being deleted, which we won't be showing
+     * this conversation at all.
+     *
+     * As at now, only a group v2 conversation can be destroyed, for all other conversation types,
+     * this will always be false.
+     */
+    val isDestroyed: Boolean = false,
 )
 
 sealed interface MessageRequestUiState {

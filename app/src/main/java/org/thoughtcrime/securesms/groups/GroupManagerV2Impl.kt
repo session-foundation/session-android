@@ -738,6 +738,7 @@ class GroupManagerV2Impl @Inject constructor(
             priority = PRIORITY_VISIBLE,
             invited = !shouldAutoApprove,
             name = groupName,
+            destroyed = false,
         )
 
         configFactory.withMutableUserConfigs {

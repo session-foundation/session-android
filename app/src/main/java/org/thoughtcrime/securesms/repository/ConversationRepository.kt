@@ -179,9 +179,9 @@ class DefaultConversationRepository @Inject constructor(
         }
 
         val groupId = recipient.address.serialize()
-        return configFactory.withUserConfigs {
-            it.userGroups.getClosedGroup(groupId)?.kicked == true
-        } || configFactory.withGroupConfigs(AccountId(groupId)) { it.groupInfo.isDestroyed() }
+        return configFactory.withUserConfigs { configs ->
+            configs.userGroups.getClosedGroup(groupId)?.let { it.kicked || it.destroyed } == true
+        }
     }
 
     // This assumes that recipient.isContactRecipient is true
