@@ -32,7 +32,7 @@ class DestroyedGroupSync @Inject constructor(
                         it.groupInfo.isDestroyed()
                     }
 
-                    Log.d("DestroyedGroupSync", "Group ${update.groupId} is destroyed: $isDestroyed")
+                    Log.d("DestroyedGroupSync", "Group is destroyed: $isDestroyed")
 
                     if (isDestroyed) {
                         // If there's un-pushed group config updates, wait until they are pushed.
