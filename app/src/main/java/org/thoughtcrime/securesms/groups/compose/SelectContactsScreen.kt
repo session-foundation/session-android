@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -104,7 +105,8 @@ fun SelectContacts(
                 onClick = onDoneClicked,
                 modifier = Modifier
                     .padding(vertical = LocalDimensions.current.spacing)
-                    .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth),
+                    .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
+                    .qaTag(stringResource(R.string.AccessibilityId_selectContactConfirm)),
             ) {
                 Text(
                     stringResource(id = okButtonResId)

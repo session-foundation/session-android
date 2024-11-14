@@ -26,6 +26,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -48,7 +49,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(
                 horizontal = LocalDimensions.current.spacing,
                 vertical = LocalDimensions.current.xxxsSpacing
-            )
+            ).qaTag(stringResource(R.string.AccessibilityId_versionWarning))
         )
     }
 }
@@ -85,11 +86,11 @@ fun MemberItem(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
         ) {
-
             Text(
                 style = LocalType.current.h8,
                 text = title,
-                color = LocalColors.current.text
+                color = LocalColors.current.text,
+                modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_contact))
             )
 
             if (!subtitle.isNullOrEmpty()) {
@@ -97,6 +98,7 @@ fun MemberItem(
                     text = subtitle,
                     style = LocalType.current.small,
                     color = subtitleColor,
+                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_contactStatus))
                 )
             }
         }

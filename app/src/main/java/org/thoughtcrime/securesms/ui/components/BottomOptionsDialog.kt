@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.ui.components
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -16,7 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -37,6 +41,7 @@ fun <T> BottomOptionsDialog(
     onDismissRequest: () -> Unit,
     onOptionClick: (T) -> Unit,
     optionTitle: (T) -> String,
+    optionQaTag: (T) -> Int,
     optionIconRes: (T) -> Int,
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -55,6 +60,7 @@ fun <T> BottomOptionsDialog(
             BottomOptionItem(
                 text = optionTitle(option),
                 leadingIcon = optionIconRes(option),
+                qaTag = optionQaTag(option).takeIf { it != 0 }?.let { stringResource(it) },
                 onClick = {
                     onOptionClick(option)
                     onDismissRequest()
@@ -68,12 +74,16 @@ fun <T> BottomOptionsDialog(
 private fun BottomOptionItem(
     leadingIcon: Int,
     text: String,
+    qaTag: String?,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .clickable(onClick = onClick)
             .padding(LocalDimensions.current.smallSpacing)
+            .let { modifier ->
+                qaTag?.let { modifier.qaTag(it) } ?: modifier
+            }
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing),
         verticalAlignment = CenterVertically,
@@ -98,7 +108,8 @@ private fun BottomOptionItem(
 
 data class BottomOptionsDialogItem(
     val title: String,
-    val iconRes: Int,
+    @DrawableRes val iconRes: Int,
+    @StringRes val qaTag: Int = 0,
     val onClick: () -> Unit,
 )
 
@@ -115,6 +126,7 @@ fun BottomOptionsDialog(
         onDismissRequest = onDismissRequest,
         onOptionClick = { it.onClick() },
         optionTitle = { it.title },
-        optionIconRes = { it.iconRes }
+        optionIconRes = { it.iconRes },
+        optionQaTag = { it.qaTag }
     )
 }

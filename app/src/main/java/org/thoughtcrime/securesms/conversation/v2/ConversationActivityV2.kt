@@ -840,20 +840,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 .put(DATE_KEY, "")
                 .format()
             outdatedGroupBanner.setOnClickListener {
-                showSessionDialog {
-                    title(R.string.urlOpenBrowser)
-                    text(Phrase.from(this@ConversationActivityV2, R.string.urlOpenDescription)
-                            .put(URL_KEY, url)
-                            .format())
-                    cancelButton()
-                    dangerButton(R.string.open) {
-                        try {
-                            openUrl(url)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error opening URL", e)
-                        }
-                    }
-                }
+                showOpenUrlDialog(url)
             }
         }
     }

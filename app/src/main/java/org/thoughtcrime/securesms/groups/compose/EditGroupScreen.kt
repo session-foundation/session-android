@@ -54,6 +54,7 @@ import org.thoughtcrime.securesms.ui.components.BottomOptionsDialog
 import org.thoughtcrime.securesms.ui.components.BottomOptionsDialogItem
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -230,7 +231,8 @@ fun EditGroup(
                 if (showAddMembers) {
                     PrimaryOutlineButton(
                         stringResource(R.string.membersInvite),
-                        onClick = onAddMemberClick
+                        onClick = onAddMemberClick,
+                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_selectContact))
                     )
                 }
             }
@@ -367,7 +369,8 @@ private fun MemberOptionsDialog(
                 this += BottomOptionsDialogItem(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
                     iconRes = R.drawable.ic_delete_24,
-                    onClick = onRemove
+                    onClick = onRemove,
+                    qaTag = R.string.AccessibilityId_removeContact
                 )
             }
 
@@ -383,7 +386,8 @@ private fun MemberOptionsDialog(
                 this += BottomOptionsDialogItem(
                     title = "Resend invitation",
                     iconRes = R.drawable.ic_mail,
-                    onClick = onResendInvite
+                    onClick = onResendInvite,
+                    qaTag = R.string.AccessibilityId_resendInvite,
                 )
             }
 
@@ -391,7 +395,8 @@ private fun MemberOptionsDialog(
                 this += BottomOptionsDialogItem(
                     title = "Resend promotion",
                     iconRes = R.drawable.ic_mail,
-                    onClick = onResendPromotion
+                    onClick = onResendPromotion,
+                    qaTag = R.string.AccessibilityId_resendInvite,
                 )
             }
         }
