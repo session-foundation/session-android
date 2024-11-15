@@ -125,7 +125,7 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
             subprocess.check_call(f'git checkout {branch_name}', shell=True, cwd=fdroid_workspace)
         except subprocess.CalledProcessError:
             print(f'Branch {branch_name} not found. Creating a new branch.')
-            subprocess.check_call(f'git checkout -b {branch_name} origin/automation', shell=True, cwd=fdroid_workspace)
+            subprocess.check_call(f'git checkout -b {branch_name} origin/master', shell=True, cwd=fdroid_workspace)
         
     except subprocess.CalledProcessError:
         print(f'Failed to create a branch for the release. ')
@@ -204,11 +204,11 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
 
     # Create Pull Request for releases
     print('Creating a pull request...')
-    # subprocess.run(f'''\
-    #                gh pr create --base automation \
-    #                 --title "Release {build.version_name}" \
-    #                 --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
-    #                 ''', shell=True, check=True, cwd=fdroid_workspace)
+    subprocess.run(f'''\
+                   gh pr create --base master \
+                    --title "Release {build.version_name}" \
+                    --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
+                    ''', shell=True, check=True, cwd=fdroid_workspace)
     
 
 # Make sure gh command is available
