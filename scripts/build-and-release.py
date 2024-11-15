@@ -40,7 +40,7 @@ class BuildCredentials:
         self.key_password = credentials['key_password']
 
 def build_releases(project_root: str, flavor: str, credentials_property_prefix: str, credentials: BuildCredentials, huawei: bool=False) -> BuildResult:
-    (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=os.path.join(project_root, 'build'))
+    (keystore_fd, keystore_file) = tempfile.mkstemp(prefix='keystore_', suffix='.jks', dir=build_dir)
     try:
         with os.fdopen(keystore_fd, 'wb') as f:
             f.write(base64.b64decode(credentials.keystore_b64))
@@ -82,8 +82,9 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
 
 
 project_root = os.path.dirname(sys.path[0])
+build_dir = os.path.join(project_root, 'build')
 credentials_file_path = os.path.join(project_root, 'release-creds.toml')
-fdroid_repo_path = os.path.join(project_root, 'build/fdroidrepo')
+fdroid_repo_path = os.path.join(build_dir, 'fdroidrepo')
 
 def detect_android_sdk() -> str:
     sdk_dir = os.environ.get('ANDROID_HOME')
@@ -102,11 +103,11 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
     # Check if there's a git repo at the fdroid repo path by running git status
     try:
         subprocess.check_call(f'git -C {fdroid_repo_path} status', shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.check_call(f'git fetch', shell=True, cwd=fdroid_workspace)
+        subprocess.check_call(f'git fetch --depth=1', shell=True, cwd=fdroid_workspace)
         print(f'Found fdroid git repo at {fdroid_repo_path}')
     except subprocess.CalledProcessError:
         print(f'No fdroid git repo found at {fdroid_repo_path}. Cloning using gh.')
-        subprocess.run(f'gh repo clone session-foundation/session-fdroid {fdroid_repo_path} -- --depth=1', shell=True, check=True)
+        subprocess.run(f'gh repo clone session-foundation/session-fdroid {fdroid_repo_path} -- -b master --depth=1', shell=True, check=True)
 
     # Create a branch for the release
     print(f'Creating a branch for the fdroid release: {build.version_name}')
@@ -162,7 +163,7 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
     with open(metadata_file, 'w') as file:
         file.write(metadata_contents)
 
-    [keystore_fd, keystore_path] = tempfile.mkstemp(prefix='fdroid_keystore_', suffix='.p12', dir=os.path.join(project_root, 'build'))
+    [keystore_fd, keystore_path] = tempfile.mkstemp(prefix='fdroid_keystore_', suffix='.p12', dir=build_dir)
     config_file_path = os.path.join(fdroid_workspace, 'config.yml')
 
     try:
@@ -207,6 +208,7 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
     subprocess.run(f'''\
                    gh pr create --base master \
                     --title "Release {build.version_name}" \
+                    -R session-foundation/session-fdroid \
                     --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
                     ''', shell=True, check=True, cwd=fdroid_workspace)
     
@@ -224,6 +226,9 @@ if not os.path.isfile(credentials_file_path):
 with open(credentials_file_path, 'rb') as f:
     credentials = tomllib.load(f)
 
+# Make sure build folder exists
+if not os.path.isdir(build_dir):
+    os.makedirs(build_dir)
 
 print("Building play releases...")
 play_build_result = build_releases(
