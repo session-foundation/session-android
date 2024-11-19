@@ -15,8 +15,8 @@ configurations.configureEach {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 385
-def canonicalVersionName = "1.20.3"
+def canonicalVersionCode = 387
+def canonicalVersionName = "1.20.5"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -85,7 +85,7 @@ android {
         multiDexEnabled = true
 
         vectorDrawables.useSupportLibrary = true
-        project.ext.set("archivesBaseName", "session")
+        setProperty("archivesBaseName", "session-${versionName}")
 
         buildConfigField "long", "BUILD_TIMESTAMP", getLastCommitTimestamp() + "L"
         buildConfigField "String", "GIT_HASH", "\"$getGitHash\""

@@ -39,7 +39,7 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
     private val viewModel: MessageRequestsViewModel by viewModels()
 
     private val adapter: MessageRequestsAdapter by lazy {
-        MessageRequestsAdapter(context = this, cursor = threadDb.unapprovedConversationList, listener = this)
+        MessageRequestsAdapter(context = this, cursor = null, listener = this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
@@ -116,7 +116,7 @@ class MessageRequestsActivity : PassphraseRequiredActionBarActivity(), Conversat
     }
 
     private fun updateEmptyState() {
-        val threadCount = (binding.recyclerView.adapter as MessageRequestsAdapter).itemCount
+        val threadCount = adapter.itemCount
         binding.emptyStateContainer.isVisible = threadCount == 0
         binding.clearAllMessageRequestsButton.isVisible = threadCount != 0
     }

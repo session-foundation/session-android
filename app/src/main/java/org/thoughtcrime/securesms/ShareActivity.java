@@ -82,6 +82,8 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     private String mimeType;
     private boolean isPassingAlongMedia;
 
+    private ResolveMediaTask resolveTask;
+
     @Override
     protected void onCreate(Bundle icicle, boolean ready) {
         if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
@@ -190,7 +192,8 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         } else {
             contactsFragment.getView().setVisibility(View.GONE);
             progressWheel.setVisibility(View.VISIBLE);
-            new ResolveMediaTask(context).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra);
+            resolveTask = new ResolveMediaTask(context);
+            resolveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra);
         }
     }
 
@@ -260,6 +263,12 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     public void onContactDeselected(String number) {
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (resolveTask != null) resolveTask.cancel(true);
     }
 
     @SuppressLint("StaticFieldLeak")

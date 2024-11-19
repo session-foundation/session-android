@@ -638,8 +638,17 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       if (oldVersion < lokiV47) {
-        db.execSQL(SmsDatabase.ADD_IS_DELETED_COLUMN);
-        db.execSQL(MmsDatabase.ADD_IS_DELETED_COLUMN);
+        // Ideally we shouldn't need to check if the column exists, but somehow we get
+        // "duplicated column" from play store crashes.
+        // If you are keen you can investigate
+        // deep into this but for now, we will just check if the column exists before adding it.
+        if (!columnExists(db, SmsDatabase.TABLE_NAME, SmsDatabase.IS_DELETED)) {
+          db.execSQL(SmsDatabase.ADD_IS_DELETED_COLUMN);
+        }
+
+        if (!columnExists(db, MmsDatabase.TABLE_NAME, MmsDatabase.IS_DELETED)) {
+          db.execSQL(MmsDatabase.ADD_IS_DELETED_COLUMN);
+        }
       }
 
       if (oldVersion < lokiV48) {

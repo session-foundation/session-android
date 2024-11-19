@@ -228,9 +228,11 @@ class ConversationViewModel(
         viewModelScope.launch {
             OpenGroupManager.getCommunitiesWriteAccessFlow()
                 .map {
-                    if(openGroup?.groupId != null)
-                        it[openGroup?.groupId]
-                    else null
+                    withContext(Dispatchers.Default) {
+                        if (openGroup?.groupId != null)
+                            it[openGroup?.groupId]
+                        else null
+                    }
                 }
                 .filterNotNull()
                 .collect{
