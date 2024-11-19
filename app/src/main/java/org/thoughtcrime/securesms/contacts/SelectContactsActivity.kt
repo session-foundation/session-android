@@ -13,7 +13,9 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySelectContactsBinding
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import com.bumptech.glide.Glide
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class SelectContactsActivity : PassphraseRequiredActionBarActivity(), LoaderManager.LoaderCallbacks<List<String>> {
     private lateinit var binding: ActivitySelectContactsBinding
     private var members = listOf<String>()
