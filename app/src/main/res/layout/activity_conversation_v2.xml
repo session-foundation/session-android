@@ -326,7 +326,7 @@
             android:paddingHorizontal="@dimen/massive_spacing"
             android:paddingVertical="@dimen/small_spacing"
             android:textSize="@dimen/text_size"
-            android:text="@string/deleteAfterGroupPR1BlockUser"/>
+            tools:text="@string/deleteAfterGroupPR1BlockUser"/>
 
         <TextView
             android:id="@+id/sendAcceptsTextView"

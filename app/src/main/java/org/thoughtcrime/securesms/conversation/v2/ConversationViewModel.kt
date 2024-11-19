@@ -306,7 +306,11 @@ class ConversationViewModel(
                     R.string.messageRequestsAcceptDescription
                 },
                 // You can block a 1to1 conversation, or a normal groups v2 conversation
-                showBlockButton = recipient.is1on1 || recipient.isGroupV2Recipient,
+                blockButtonText = when {
+                    recipient.is1on1 -> application.getString(R.string.deleteAfterGroupPR1BlockUser)
+                    recipient.isGroupV2Recipient -> application.getString(R.string.block)
+                    else -> null
+                },
                 declineButtonText = if (recipient.isGroupV2Recipient) {
                     R.string.delete
                 } else {
@@ -1081,7 +1085,8 @@ sealed interface MessageRequestUiState {
 
     data class Visible(
         @StringRes val acceptButtonText: Int,
-        val showBlockButton: Boolean,
+        // If null, the block button shall not be shown
+        val blockButtonText: String? = null,
         @StringRes val declineButtonText: Int,
     ) : MessageRequestUiState
 }
