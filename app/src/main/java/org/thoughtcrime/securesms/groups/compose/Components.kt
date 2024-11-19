@@ -35,23 +35,21 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 @Composable
 fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
+    Text(
+        text = stringResource(R.string.groupInviteVersion),
+        color = LocalColors.current.textAlert,
+        style = LocalType.current.small,
+        maxLines = 2,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
             .background(LocalColors.current.warning)
-    ) {
-        Text(
-            text = stringResource(R.string.groupInviteVersion),
-            color = LocalColors.current.textAlert,
-            style = LocalType.current.small,
-            maxLines = 2,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(
+            .fillMaxWidth()
+            .padding(
                 horizontal = LocalDimensions.current.spacing,
                 vertical = LocalDimensions.current.xxxsSpacing
-            ).qaTag(stringResource(R.string.AccessibilityId_versionWarning))
-        )
-    }
+            )
+            .qaTag(stringResource(R.string.AccessibilityId_versionWarning))
+    )
 }
 
 @Composable
