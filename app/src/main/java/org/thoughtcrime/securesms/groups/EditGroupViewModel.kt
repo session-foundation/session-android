@@ -140,8 +140,12 @@ class EditGroupViewModel @AssistedInject constructor(
                 name = context.getString(R.string.you)
             }
 
-            pendingState == MemberPendingState.Inviting || pendingState == MemberPendingState.Promoting -> {
+            pendingState == MemberPendingState.Inviting -> {
                 status = context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
+            }
+
+            pendingState == MemberPendingState.Promoting -> {
+                status = context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
             }
 
             member.promotionPending -> {
