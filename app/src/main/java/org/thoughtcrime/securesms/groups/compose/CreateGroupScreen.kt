@@ -115,6 +115,10 @@ fun CreateGroup(
                 modifier = modifier.padding(vertical = LocalDimensions.current.xsSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                GroupMinimumVersionBanner()
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+
                 SessionOutlinedTextField(
                     text = groupName,
                     onChange = onGroupNameChanged,
@@ -127,7 +131,7 @@ fun CreateGroup(
                     onContinue = focusManager::clearFocus
                 )
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
                 SearchBar(
                     query = contactSearchQuery,
@@ -137,7 +141,7 @@ fun CreateGroup(
                     enabled = !showLoading
                 )
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
                 BottomFadingEdgeBox(
                     modifier = Modifier.weight(1f)
