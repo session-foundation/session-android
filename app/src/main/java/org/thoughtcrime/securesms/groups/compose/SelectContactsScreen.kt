@@ -70,7 +70,7 @@ fun SelectContacts(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
         BackAppBar(
-            title = stringResource(id = R.string.contactSelect),
+            title = stringResource(id = R.string.membersInvite),
             onBack = onBack,
         )
 
