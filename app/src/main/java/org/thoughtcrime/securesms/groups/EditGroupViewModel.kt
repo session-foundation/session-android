@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.groups
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -30,9 +31,11 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
-const val MAX_GROUP_NAME_LENGTH = 100
+
+const val MAX_GROUP_NAME_BYTES = 100
 
 @HiltViewModel(assistedFactory = EditGroupViewModel.Factory::class)
 class EditGroupViewModel @AssistedInject constructor(
@@ -256,17 +259,18 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onEditingNameChanged(value: String) {
-        // Cut off the group name so we don't exceed max length
-        if (value.length > MAX_GROUP_NAME_LENGTH) {
-            mutableEditingName.value = value.substring(0, MAX_GROUP_NAME_LENGTH)
-        } else {
-            mutableEditingName.value = value
-        }
+        mutableEditingName.value = value
     }
 
     fun onEditNameConfirmClicked() {
         val newName = mutableEditingName.value
         if (newName.isNullOrBlank()) {
+            return
+        }
+
+        // validate name length (needs to be less than 100 bytes)
+        if(newName.textSizeInBytes() > MAX_GROUP_NAME_BYTES){
+            mutableError.value = context.getString(R.string.groupNameEnterShorter)
             return
         }
 

@@ -12,8 +12,10 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
@@ -21,7 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CreateGroupViewModel @Inject constructor(
     configFactory: ConfigFactory,
-    @ApplicationContext appContext: Context,
+    @ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
 ): ViewModel() {
@@ -53,13 +55,20 @@ class CreateGroupViewModel @Inject constructor(
         viewModelScope.launch {
             val groupName = groupName.value.trim()
             if (groupName.isBlank()) {
-                mutableGroupNameError.value = "Group name cannot be empty"
+                mutableGroupNameError.value = appContext.getString(R.string.groupNameEnterPlease)
                 return@launch
             }
 
+            // validate name length (needs to be less than 100 bytes)
+            if(groupName.textSizeInBytes() > MAX_GROUP_NAME_BYTES){
+                mutableGroupNameError.value = appContext.getString(R.string.groupNameEnterShorter)
+                return@launch
+            }
+
+
             val selected = selectContactsViewModel.currentSelected
             if (selected.isEmpty()) {
-                mutableEvents.emit(CreateGroupEvent.Error("Please select at least one contact"))
+                mutableEvents.emit(CreateGroupEvent.Error(appContext.getString(R.string.groupCreateErrorNoMembers)))
                 return@launch
             }
 
@@ -77,7 +86,7 @@ class CreateGroupViewModel @Inject constructor(
 
             when (val recipient = createResult.getOrNull()) {
                 null -> {
-                    mutableEvents.emit(CreateGroupEvent.Error("Failed to create group"))
+                    mutableEvents.emit(CreateGroupEvent.Error(appContext.getString(R.string.groupErrorCreate)))
 
                 }
                 else -> {
@@ -91,11 +100,7 @@ class CreateGroupViewModel @Inject constructor(
     }
 
     fun onGroupNameChanged(name: String) {
-        mutableGroupName.value = if (name.length > MAX_GROUP_NAME_LENGTH) {
-            name.substring(0, MAX_GROUP_NAME_LENGTH)
-        } else {
-            name
-        }
+        mutableGroupName.value = name
 
         mutableGroupNameError.value = ""
     }
