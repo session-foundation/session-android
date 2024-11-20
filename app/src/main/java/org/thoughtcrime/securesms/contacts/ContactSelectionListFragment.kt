@@ -18,9 +18,6 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     private var cursorFilter: String? = null
     var onContactSelectedListener: OnContactSelectedListener? = null
 
-    val selectedContacts: List<String>
-        get() = listAdapter.selectedContacts.map { it.address.serialize() }
-
     private val multiSelect: Boolean by lazy {
         requireActivity().intent.getBooleanExtra(MULTI_SELECT, false)
     }
@@ -95,6 +92,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
             return
         }
         listAdapter.items = items
+        binding.loader.visibility = View.GONE
         binding.recyclerView.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
         binding.emptyStateContainer.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
