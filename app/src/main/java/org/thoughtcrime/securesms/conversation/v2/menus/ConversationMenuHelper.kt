@@ -419,7 +419,7 @@ object ConversationMenuHelper {
         doLeave: suspend () -> Unit,
     ) {
         val message = if (isAdmin) {
-            Phrase.from(context, R.string.groupDeleteDescription)
+            Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
         } else {

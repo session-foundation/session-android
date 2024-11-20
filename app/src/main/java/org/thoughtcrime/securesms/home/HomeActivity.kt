@@ -625,7 +625,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             // If you are an admin of this group you can delete it
             if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
                 title = getString(R.string.groupLeave)
-                message = Phrase.from(this, R.string.groupDeleteDescription)
+                message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
                     .put(GROUP_NAME_KEY, group.title)
                     .format()
             } else {
