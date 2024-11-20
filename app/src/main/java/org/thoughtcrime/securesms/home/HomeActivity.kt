@@ -616,8 +616,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
 
         val title: String
         val message: CharSequence
-        var positiveButtonId: Int = R.string.yes
-        var negativeButtonId: Int = R.string.no
+        var positiveButtonId: Int = R.string.delete
+        val negativeButtonId: Int = R.string.cancel
 
         if (recipient.isGroupOrCommunityRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
@@ -637,7 +637,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
 
             positiveButtonId = R.string.leave
-            negativeButtonId = R.string.cancel
         } else {
             // If this is a 1-on-1 conversation
             if (recipient.name != null) {
@@ -648,10 +647,9 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             }
             else {
                 // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
-                title = getString(R.string.clearMessages)
-                message = getString(R.string.clearMessagesNoteToSelfDescription)
-                positiveButtonId = R.string.clear
-                negativeButtonId = R.string.cancel
+                title = getString(R.string.noteToSelfHide)
+                message = getString(R.string.noteToSelfHideDescription)
+                positiveButtonId = R.string.hide
             }
         }
 
