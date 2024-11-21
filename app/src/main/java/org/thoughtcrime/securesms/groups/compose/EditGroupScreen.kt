@@ -26,8 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -45,12 +43,8 @@ import com.squareup.phrase.Phrase
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.GroupMember
-import network.loki.messenger.libsession_util.util.UserPic
-import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
@@ -58,8 +52,8 @@ import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.BottomOptionsDialog
-import org.thoughtcrime.securesms.ui.components.BottomOptionsDialogItem
+import org.thoughtcrime.securesms.ui.components.ActionSheet
+import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.qaTag
@@ -98,6 +92,9 @@ fun EditGroupScreen(
                 onResendPromotionClick = viewModel::onResendPromotionClicked,
                 showingError = viewModel.error.collectAsState().value,
                 onErrorDismissed = viewModel::onDismissError,
+                onMemberClicked = viewModel::onMemberClicked,
+                hideActionSheet = viewModel::hideActionBottomSheet,
+                clickedMember = viewModel.clickedMember.collectAsState().value,
             )
         }
 
@@ -132,6 +129,9 @@ fun EditGroup(
     onEditNameClicked: () -> Unit,
     onEditNameConfirmed: () -> Unit,
     onEditNameCancelClicked: () -> Unit,
+    onMemberClicked: (GroupMemberState) -> Unit,
+    hideActionSheet: () -> Unit,
+    clickedMember: GroupMemberState?,
     canEditName: Boolean,
     groupName: String,
     members: List<GroupMemberState>,
@@ -139,10 +139,6 @@ fun EditGroup(
     showingError: String?,
     onErrorDismissed: () -> Unit,
 ) {
-    val (showingOptionsDialogForMember, setShowingBottomModelForMember) = remember {
-        mutableStateOf<GroupMemberState?>(null)
-    }
-
     val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
         mutableStateOf<GroupMemberState?>(null)
     }
@@ -260,33 +256,33 @@ fun EditGroup(
                     EditMemberItem(
                         modifier = Modifier.fillMaxWidth(),
                         member = member,
-                        onClick = { setShowingBottomModelForMember(member) }
+                        onClick = { onMemberClicked(member) }
                     )
                 }
             }
         }
     }
 
-    if (showingOptionsDialogForMember != null) {
-        MemberOptionsDialog(
-            onDismissRequest = { setShowingBottomModelForMember(null) },
+    if (clickedMember != null) {
+        MemberActionSheet(
+            onDismissRequest = hideActionSheet,
             onRemove = {
-                setShowingConfirmRemovingMember(showingOptionsDialogForMember)
-                setShowingBottomModelForMember(null)
+                setShowingConfirmRemovingMember(clickedMember)
+                hideActionSheet()
             },
             onPromote = {
-                setShowingBottomModelForMember(null)
-                onPromoteClick(showingOptionsDialogForMember.accountId)
+                onPromoteClick(clickedMember.accountId)
+                hideActionSheet()
             },
             onResendInvite = {
-                setShowingBottomModelForMember(null)
-                onResendInviteClick(showingOptionsDialogForMember.accountId)
+                onResendInviteClick(clickedMember.accountId)
+                hideActionSheet()
             },
             onResendPromotion = {
-                setShowingBottomModelForMember(null)
-                onResendPromotionClick(showingOptionsDialogForMember.accountId)
+                onResendPromotionClick(clickedMember.accountId)
+                hideActionSheet()
             },
-            member = showingOptionsDialogForMember,
+            member = clickedMember,
         )
     }
 
@@ -368,7 +364,7 @@ private fun ConfirmRemovingMemberDialog(
 }
 
 @Composable
-private fun MemberOptionsDialog(
+private fun MemberActionSheet(
     member: GroupMemberState,
     onRemove: () -> Unit,
     onPromote: () -> Unit,
@@ -381,7 +377,7 @@ private fun MemberOptionsDialog(
     val options = remember(member) {
         buildList {
             if (member.canRemove) {
-                this += BottomOptionsDialogItem(
+                this += ActionSheetItemData(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
                     iconRes = R.drawable.ic_delete_24,
                     onClick = onRemove,
@@ -390,7 +386,7 @@ private fun MemberOptionsDialog(
             }
 
             if (BuildConfig.DEBUG && member.canPromote) {
-                this += BottomOptionsDialogItem(
+                this += ActionSheetItemData(
                     title = context.getString(R.string.adminPromoteToAdmin),
                     iconRes = R.drawable.ic_profile_default,
                     onClick = onPromote
@@ -398,7 +394,7 @@ private fun MemberOptionsDialog(
             }
 
             if (BuildConfig.DEBUG && member.canResendInvite) {
-                this += BottomOptionsDialogItem(
+                this += ActionSheetItemData(
                     title = "Resend invitation",
                     iconRes = R.drawable.ic_mail,
                     onClick = onResendInvite,
@@ -407,7 +403,7 @@ private fun MemberOptionsDialog(
             }
 
             if (BuildConfig.DEBUG && member.canResendPromotion) {
-                this += BottomOptionsDialogItem(
+                this += ActionSheetItemData(
                     title = "Resend promotion",
                     iconRes = R.drawable.ic_mail,
                     onClick = onResendPromotion,
@@ -417,7 +413,7 @@ private fun MemberOptionsDialog(
         }
     }
 
-    BottomOptionsDialog(
+    ActionSheet(
         items = options,
         onDismissRequest = onDismissRequest
     )
@@ -430,7 +426,7 @@ fun EditMemberItem(
     modifier: Modifier = Modifier
 ) {
     MemberItem(
-        enabled = member.canEdit,
+        enabled = member.clickable,
         accountId = member.accountId,
         title = member.name,
         subtitle = member.status,
@@ -466,6 +462,7 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -477,6 +474,7 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            clickable = true
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -488,6 +486,7 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -515,7 +514,10 @@ private fun EditGroupPreview3() {
             showAddMembers = true,
             onResendPromotionClick = {},
             showingError = "Error",
-            onErrorDismissed = {}
+            onErrorDismissed = {},
+            onMemberClicked = {},
+            hideActionSheet = {},
+            clickedMember = null
         )
     }
 }
@@ -534,6 +536,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -545,6 +548,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            clickable = true
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -556,6 +560,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -583,7 +588,10 @@ private fun EditGroupPreview() {
             showAddMembers = true,
             onResendPromotionClick = {},
             showingError = "Error",
-            onErrorDismissed = {}
+            onErrorDismissed = {},
+            onMemberClicked = {},
+            hideActionSheet = {},
+            clickedMember = null
         )
     }
 }
@@ -602,6 +610,7 @@ private fun EditGroupEditNamePreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -613,6 +622,7 @@ private fun EditGroupEditNamePreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            clickable = true
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -624,6 +634,7 @@ private fun EditGroupEditNamePreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            clickable = true
         )
 
 
@@ -644,7 +655,10 @@ private fun EditGroupEditNamePreview() {
             showAddMembers = true,
             onResendPromotionClick = {},
             showingError = "Error",
-            onErrorDismissed = {}
+            onErrorDismissed = {},
+            onMemberClicked = {},
+            hideActionSheet = {},
+            clickedMember = null
         )
     }
 }

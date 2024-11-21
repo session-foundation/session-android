@@ -36,7 +36,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> BottomOptionsDialog(
+fun <T> ActionSheet(
     options: Collection<T>,
     onDismissRequest: () -> Unit,
     onOptionClick: (T) -> Unit,
@@ -57,7 +57,7 @@ fun <T> BottomOptionsDialog(
         containerColor = LocalColors.current.backgroundSecondary,
     ) {
         for (option in options) {
-            BottomOptionItem(
+            ActionSheetItem(
                 text = optionTitle(option),
                 leadingIcon = optionIconRes(option),
                 qaTag = optionQaTag(option).takeIf { it != 0 }?.let { stringResource(it) },
@@ -71,7 +71,7 @@ fun <T> BottomOptionsDialog(
 }
 
 @Composable
-private fun BottomOptionItem(
+private fun ActionSheetItem(
     leadingIcon: Int,
     text: String,
     qaTag: String?,
@@ -106,7 +106,7 @@ private fun BottomOptionItem(
 }
 
 
-data class BottomOptionsDialogItem(
+data class ActionSheetItemData(
     val title: String,
     @DrawableRes val iconRes: Int,
     @StringRes val qaTag: Int = 0,
@@ -114,14 +114,14 @@ data class BottomOptionsDialogItem(
 )
 
 /**
- * A convenience function to display a [BottomOptionsDialog] with a collection of [BottomOptionsDialogItem].
+ * A convenience function to display a [ActionSheet] with a collection of [ActionSheetItemData].
  */
 @Composable
-fun BottomOptionsDialog(
-    items: Collection<BottomOptionsDialogItem>,
+fun ActionSheet(
+    items: Collection<ActionSheetItemData>,
     onDismissRequest: () -> Unit
 ) {
-    BottomOptionsDialog(
+    ActionSheet(
         options = items,
         onDismissRequest = onDismissRequest,
         onOptionClick = { it.onClick() },
