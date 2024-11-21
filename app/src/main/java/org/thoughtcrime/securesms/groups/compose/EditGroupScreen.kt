@@ -45,8 +45,12 @@ import com.squareup.phrase.Phrase
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.GroupMember
+import network.loki.messenger.libsession_util.util.UserPic
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState

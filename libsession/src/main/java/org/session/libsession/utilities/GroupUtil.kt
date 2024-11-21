@@ -1,5 +1,7 @@
 package org.session.libsession.utilities
 
+import network.loki.messenger.libsession_util.util.GroupMember
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
@@ -129,5 +131,21 @@ object GroupUtil {
             }
         }
         return memberMap
+    }
+}
+
+fun GroupMember.getMemberName(config: ConfigFactoryProtocol): String {
+    return config.withUserConfigs {
+        it.contacts.get(this.sessionId)?.displayName
+            ?: this.name
+            ?: truncateIdForDisplay(this.sessionId)
+    }
+}
+
+//todo GROUPSV2 Currently avatars use Recipients to display avatars, meaning unknown groups member are not currently using this avatar below but instead will try to fetch a recipient from the account ID, which won't be found so the unknown icon will be used - We need to have an avatar system that handles low level daat like a url
+fun GroupMember.getMemberAvatar(config: ConfigFactoryProtocol): UserPic {
+    return config.withUserConfigs {
+        it.contacts.get(this.sessionId)?.profilePicture
+            ?: this.profilePicture
     }
 }

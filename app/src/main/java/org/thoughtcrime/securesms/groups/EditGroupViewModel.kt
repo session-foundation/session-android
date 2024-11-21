@@ -29,7 +29,9 @@ import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.getMemberName
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -42,7 +44,7 @@ class EditGroupViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
     @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
-    configFactory: ConfigFactory,
+    private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
 ) : ViewModel() {
     // Input/Output state
@@ -136,7 +138,7 @@ class EditGroupViewModel @AssistedInject constructor(
     ): GroupMemberState {
         var status = ""
         var highlightStatus = false
-        var name = member.name.orEmpty().ifEmpty { member.sessionId }
+        var name = member.getMemberName(configFactory)
 
         when {
             member.sessionId == myAccountId.hexString -> {
