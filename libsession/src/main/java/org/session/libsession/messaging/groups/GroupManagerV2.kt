@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.groups
 
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
@@ -97,4 +98,6 @@ interface GroupManagerV2 {
         sender: AccountId,
         senderIsVerifiedAdmin: Boolean,
     )
+
+    fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
 }

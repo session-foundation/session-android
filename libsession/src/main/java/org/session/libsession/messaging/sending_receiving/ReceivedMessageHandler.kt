@@ -38,7 +38,7 @@ import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGr
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
-import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeVerifier
+import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.WebRtcUtils
@@ -697,7 +697,8 @@ private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
     val adminSignature = infoChanged.adminSignature
     val type = infoChanged.type
     val timestamp = message.sentTimestamp!!
-    verifyAdminSignature(closedGroup, adminSignature.toByteArray(), buildInfoChangeVerifier(type, timestamp))
+    verifyAdminSignature(closedGroup, adminSignature.toByteArray(), buildInfoChangeSignature(type, timestamp))
+
     storage.insertGroupInfoChange(message, closedGroup)
 }
 

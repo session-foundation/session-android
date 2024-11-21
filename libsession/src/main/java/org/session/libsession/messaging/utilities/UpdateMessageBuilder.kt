@@ -14,6 +14,7 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.utilities.Address
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
+import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.getExpirationTypeDisplayValue
@@ -44,7 +45,9 @@ object UpdateMessageBuilder {
         context: Context,
         updateMessageData: UpdateMessageData,
         configFactory: ConfigFactoryProtocol,
-        isOutgoing: Boolean = false
+        isOutgoing: Boolean,
+        messageTimestamp: Long,
+        expireStarted: Long,
     ): CharSequence {
         val updateData = updateMessageData.kind ?: return ""
 
@@ -180,7 +183,14 @@ object UpdateMessageBuilder {
                 }
             }
             is UpdateMessageData.Kind.GroupAvatarUpdated -> context.getString(R.string.groupDisplayPictureUpdated)
-            is UpdateMessageData.Kind.GroupExpirationUpdated -> TODO()
+            is UpdateMessageData.Kind.GroupExpirationUpdated -> {
+                buildExpirationTimerMessage(context, updateData.updatedExpiration, isGroup = true,
+                    senderId = updateData.updatingAdmin,
+                    isOutgoing = isOutgoing,
+                    timestamp = messageTimestamp,
+                    expireStarted = expireStarted
+                )
+            }
             is UpdateMessageData.Kind.GroupMemberUpdated -> {
                 val userPublicKey = storage.getUserPublicKey()!!
                 val number = updateData.sessionIds.size

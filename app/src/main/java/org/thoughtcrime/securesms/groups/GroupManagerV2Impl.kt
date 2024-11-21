@@ -15,6 +15,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Conversation
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.INVITE_STATUS_FAILED
@@ -32,7 +33,7 @@ import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
-import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeVerifier
+import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -852,7 +853,7 @@ class GroupManagerV2Impl @Inject constructor(
 
             val timestamp = clock.currentTimeMills()
             val signature = SodiumUtilities.sign(
-                buildInfoChangeVerifier(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
                 adminKey
             )
 
@@ -1009,6 +1010,38 @@ class GroupManagerV2Impl @Inject constructor(
             // The non-admin user shouldn't be able to delete other user's messages so we will
             // ignore the memberIds in the message
         }
+    }
+
+    override fun setExpirationTimer(
+        groupId: AccountId,
+        mode: ExpiryMode,
+        expiryChangeTimestampMs: Long
+    ) {
+        val adminKey = requireAdminAccess(groupId)
+
+        // Construct a message to notify the group members about the expiration timer change
+        val timestamp = clock.currentTimeMills()
+        val signature = SodiumUtilities.sign(
+            buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
+            adminKey
+        )
+
+        val message = GroupUpdated(
+            GroupUpdateMessage.newBuilder()
+                .setInfoChangeMessage(
+                    GroupUpdateInfoChangeMessage.newBuilder()
+                        .setType(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES)
+                        .setUpdatedExpiration(mode.expirySeconds.toInt())
+                        .setAdminSignature(ByteString.copyFrom(signature))
+
+                )
+                .build()
+        ).apply {
+            sentTimestamp = timestamp
+        }
+
+        MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false)
+        storage.insertGroupInfoChange(message, groupId)
     }
 
     private fun BatchResponse.requireAllRequestsSuccessful(errorMessage: String) {

@@ -57,8 +57,8 @@ class UpdateMessageData () {
             constructor(): this(emptyList(), null, "", false)
         }
         data object GroupAvatarUpdated: Kind()
-        class GroupExpirationUpdated(val updatedExpiration: Int = 0): Kind() {
-            constructor(): this(0)
+        class GroupExpirationUpdated(val updatedExpiration: Long, val updatingAdmin: String): Kind() {
+            constructor(): this(0L, "")
         }
         class OpenGroupInvitation(val groupUrl: String, val groupName: String): Kind() {
             constructor(): this("", "")
@@ -130,7 +130,10 @@ class UpdateMessageData () {
                     when (type) {
                         GroupUpdateInfoChangeMessage.Type.NAME -> Kind.GroupNameChange(infoChange.updatedName)
                         GroupUpdateInfoChangeMessage.Type.AVATAR -> Kind.GroupAvatarUpdated
-                        GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES -> Kind.GroupExpirationUpdated(infoChange.updatedExpiration)
+                        GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES -> Kind.GroupExpirationUpdated(
+                            updatedExpiration = infoChange.updatedExpiration.toLong(),
+                            updatingAdmin = groupUpdated.sender.orEmpty()
+                        )
                         else -> null
                     }?.let { UpdateMessageData(it) }
                 }

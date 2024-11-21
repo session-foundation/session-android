@@ -127,7 +127,9 @@ public abstract class MessageRecord extends DisplayRecord {
               context,
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
-              isOutgoing())
+              isOutgoing(),
+              getTimestamp(),
+              getExpireStarted())
       );
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
@@ -151,6 +153,15 @@ public abstract class MessageRecord extends DisplayRecord {
     }
 
     return new SpannableString(getBody());
+  }
+
+  public boolean isGroupExpirationTimerUpdate() {
+    if (!isGroupUpdateMessage()) {
+      return false;
+    }
+
+    UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(getBody());
+    return updateMessageData != null && updateMessageData.getKind() instanceof UpdateMessageData.Kind.GroupExpirationUpdated;
   }
 
   protected SpannableString emphasisAdded(String sequence) {

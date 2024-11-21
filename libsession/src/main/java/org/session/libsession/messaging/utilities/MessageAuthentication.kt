@@ -4,7 +4,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 
 object MessageAuthentication {
-    fun buildInfoChangeVerifier(
+    fun buildInfoChangeSignature(
         changeType: SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage.Type,
         timestamp: Long): ByteArray {
         return "INFO_CHANGE${changeType.number}$timestamp".toByteArray()

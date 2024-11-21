@@ -94,6 +94,14 @@ class ControlMessageView : LinearLayout {
                     }
                 }
             }
+
+            message.isGroupExpirationTimerUpdate -> {
+                binding.expirationTimerView.apply {
+                    isVisible = true
+                    setTimerIcon()
+                }
+            }
+
             message.isMediaSavedNotification -> {
                 binding.iconImageView.apply {
                     setImageDrawable(

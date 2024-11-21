@@ -208,6 +208,11 @@ public class ThreadRecord extends DisplayRecord {
         }
     }
 
+    @Override
+    public boolean isGroupUpdateMessage() {
+        return lastMessage != null && lastMessage.isGroupUpdateMessage();
+    }
+
     public long getCount()               { return count; }
 
     public int getUnreadCount()          { return unreadCount; }

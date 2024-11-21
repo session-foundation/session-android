@@ -426,15 +426,12 @@ class ConfigFactory @Inject constructor(
     }
 
     override fun getGroupAuth(groupId: AccountId): SwarmAuth? {
-        val (adminKey, authData) = withUserConfigs {
-            val group = it.userGroups.getClosedGroup(groupId.hexString)
-            group?.adminKey to group?.authData
-        }
+        val group = getGroup(groupId) ?: return null
 
-        return if (adminKey != null) {
-            OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
-        } else if (authData != null) {
-            GroupSubAccountSwarmAuth(groupId, this, authData)
+        return if (group.adminKey != null) {
+            OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!)
+        } else if (group.authData != null) {
+            GroupSubAccountSwarmAuth(groupId, this, group.authData!!)
         } else {
             null
         }
