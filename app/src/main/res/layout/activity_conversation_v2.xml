@@ -300,7 +300,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/large_spacing"
         app:layout_constraintTop_toBottomOf="@+id/outdatedGroupBanner"
-        android:contentDescription="@string/AccessibilityId_control_message"
+        android:contentDescription="@string/AccessibilityId_empty_conversation"
         tools:text="Some Control Message Text"
         />
 

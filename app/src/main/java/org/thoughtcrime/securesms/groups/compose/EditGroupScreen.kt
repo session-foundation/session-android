@@ -37,7 +37,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.squareup.phrase.Phrase
 import kotlinx.serialization.Serializable
@@ -100,7 +99,7 @@ fun EditGroupScreen(
         }
 
         horizontalSlideComposable<RouteSelectContacts> {
-            SelectContactsScreen(
+            InviteContactsScreen(
                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection,
                 onDoneClicked = {
                     viewModel.onContactSelected(it)
@@ -176,7 +175,8 @@ fun EditGroup(
                             modifier = Modifier.widthIn(
                                 min = LocalDimensions.current.mediumSpacing,
                                 max = maxNameWidth
-                            ),
+                            )
+                                .qaTag(stringResource(R.string.AccessibilityId_groupNameEnter)),
                             text = editingName.orEmpty(),
                             onChange = onEditingNameValueChanged,
                             textStyle = LocalType.current.h8,
@@ -244,7 +244,7 @@ fun EditGroup(
                     PrimaryOutlineButton(
                         stringResource(R.string.membersInvite),
                         onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_selectContact))
+                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
                     )
                 }
             }

@@ -8,7 +8,7 @@
         android:contentDescription="@string/AccessibilityId_groupMembers"
         android:title="@string/groupMembers"
         app:showAsAction="collapseActionView" />
-    
+
     <item
         android:id="@+id/menu_leave_group"
         android:contentDescription="@string/AccessibilityId_groupLeave"

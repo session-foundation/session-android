@@ -38,7 +38,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 object RouteSelectContacts
 
 @Composable
-fun SelectContactsScreen(
+fun InviteContactsScreen(
     excludingAccountIDs: Set<AccountId> = emptySet(),
     onDoneClicked: (selectedContacts: Set<AccountId>) -> Unit,
     onBackClicked: () -> Unit,
@@ -47,7 +47,7 @@ fun SelectContactsScreen(
         factory.create(excludingAccountIDs)
     }
 
-    SelectContacts(
+    InviteContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
@@ -59,7 +59,7 @@ fun SelectContactsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectContacts(
+fun InviteContacts(
     contacts: List<ContactItem>,
     onContactItemClicked: (accountId: AccountId) -> Unit,
     searchQuery: String,
@@ -79,7 +79,8 @@ fun SelectContacts(
             query = searchQuery,
             onValueChanged = onSearchQueryChanged,
             placeholder = stringResource(R.string.searchContacts),
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing),
+            modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
             backgroundColor = LocalColors.current.backgroundSecondary,
         )
 
@@ -130,7 +131,7 @@ private fun PreviewSelectContacts() {
     }
 
     PreviewTheme {
-        SelectContacts(
+        InviteContacts(
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "",

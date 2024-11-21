@@ -53,7 +53,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun MemberItem(
+fun  MemberItem(
     accountId: AccountId,
     title: String,
     showAsAdmin: Boolean,
@@ -73,7 +73,8 @@ fun MemberItem(
             .padding(
                 horizontal = LocalDimensions.current.smallSpacing,
                 vertical = LocalDimensions.current.xsSpacing
-            ),
+            )
+            .qaTag(stringResource(R.string.AccessibilityId_contact)),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {

@@ -39,6 +39,7 @@ import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -137,7 +138,8 @@ fun CreateGroup(
                     query = contactSearchQuery,
                     onValueChanged = onContactSearchQueryChanged,
                     placeholder = stringResource(R.string.searchContacts),
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                        .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
                     enabled = !showLoading
                 )
 
@@ -165,6 +167,7 @@ fun CreateGroup(
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.spacing)
                         .widthIn(min = LocalDimensions.current.minButtonWidth)
+                        .qaTag(stringResource(R.string.AccessibilityId_groupCreate))
                 ) {
                     LoadingArcOr(loading = showLoading) {
                         Text(stringResource(R.string.create))
