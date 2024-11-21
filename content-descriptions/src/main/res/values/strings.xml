@@ -83,6 +83,7 @@
     <string name="AccessibilityId_contactMentions">Contact mentions</string>
     <string name="AccessibilityId_done">Done</string>
     <string name="AccessibilityId_groupEdit">Edit group</string>
+    <string name="AccessibilityId_groupMembers">Group Members</string>
     <string name="AccessibilityId_groupName">Group name</string>
     <string name="AccessibilityId_groupLeave">Leave group</string>
     <string name="AccessibilityId_mentions_list">Mentions list</string>

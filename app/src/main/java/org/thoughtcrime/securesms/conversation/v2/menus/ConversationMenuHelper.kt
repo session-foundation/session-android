@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
@@ -99,9 +100,9 @@ object ConversationMenuHelper {
             val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.serialize())?.hasAdminKey() }
             if (hasAdminKey == true) {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
+            } else {
+                inflater.inflate(R.menu.menu_conversation_groups_v2, menu)
             }
-
-            inflater.inflate(R.menu.menu_conversation_groups_v2, menu)
         }
 
         // Open group menu
@@ -183,6 +184,7 @@ object ConversationMenuHelper {
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
+            R.id.menu_group_members -> { showGroupMembers(context, thread) }
             R.id.menu_leave_group -> { return leaveGroup(context, thread, threadID, factory, storage, groupManager) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
@@ -329,6 +331,11 @@ object ConversationMenuHelper {
                 context.startActivity(intent)
             }
         }
+    }
+
+
+    private fun showGroupMembers(context: Context, thread: Recipient) {
+        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.serialize()))
     }
 
     enum class GroupLeavingStatus {

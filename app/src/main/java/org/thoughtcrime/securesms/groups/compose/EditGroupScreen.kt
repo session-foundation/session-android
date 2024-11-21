@@ -56,6 +56,7 @@ import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -65,7 +66,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 @Composable
 fun EditGroupScreen(
     groupId: AccountId,
-    onFinish: () -> Unit,
+    onBack: () -> Unit,
 ) {
     val navController = rememberNavController()
     val viewModel = hiltViewModel<EditGroupViewModel, EditGroupViewModel.Factory> { factory ->
@@ -73,9 +74,9 @@ fun EditGroupScreen(
     }
 
     NavHost(navController = navController, startDestination = RouteEditGroup) {
-        composable<RouteEditGroup> {
+        horizontalSlideComposable<RouteEditGroup> {
             EditGroup(
-                onBackClick = onFinish,
+                onBack = onBack,
                 onAddMemberClick = { navController.navigate(RouteSelectContacts) },
                 onResendInviteClick = viewModel::onResendInviteClicked,
                 onPromoteClick = viewModel::onPromoteContact,
@@ -98,7 +99,7 @@ fun EditGroupScreen(
             )
         }
 
-        composable<RouteSelectContacts> {
+        horizontalSlideComposable<RouteSelectContacts> {
             SelectContactsScreen(
                 excludingAccountIDs = viewModel.excludingAccountIDsFromContactSelection,
                 onDoneClicked = {
@@ -118,7 +119,7 @@ private object RouteEditGroup
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditGroup(
-    onBackClick: () -> Unit,
+    onBack: () -> Unit,
     onAddMemberClick: () -> Unit,
     onResendInviteClick: (accountId: AccountId) -> Unit,
     onResendPromotionClick: (accountId: AccountId) -> Unit,
@@ -149,7 +150,7 @@ fun EditGroup(
         topBar = {
             BackAppBar(
                 title = stringResource(id = R.string.groupEdit),
-                onBack = onBackClick,
+                onBack = onBack,
             )
         }
     ) { paddingValues ->
@@ -426,7 +427,6 @@ fun EditMemberItem(
     modifier: Modifier = Modifier
 ) {
     MemberItem(
-        enabled = member.clickable,
         accountId = member.accountId,
         title = member.name,
         subtitle = member.status,
@@ -436,7 +436,7 @@ fun EditMemberItem(
             LocalColors.current.textSecondary
         },
         showAsAdmin = member.showAsAdmin,
-        onClick = onClick,
+        onClick = if(member.clickable) onClick else null,
         modifier = modifier
     ){
         if (member.canEdit) {
@@ -492,7 +492,7 @@ private fun EditGroupPreview3() {
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
 
         EditGroup(
-            onBackClick = {},
+            onBack = {},
             onAddMemberClick = {},
             onResendInviteClick = {},
             onPromoteClick = {},
@@ -566,7 +566,7 @@ private fun EditGroupPreview() {
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
 
         EditGroup(
-            onBackClick = {},
+            onBack = {},
             onAddMemberClick = {},
             onResendInviteClick = {},
             onPromoteClick = {},
@@ -637,9 +637,8 @@ private fun EditGroupEditNamePreview() {
             clickable = true
         )
 
-
         EditGroup(
-            onBackClick = {},
+            onBack = {},
             onAddMemberClick = {},
             onResendInviteClick = {},
             onPromoteClick = {},

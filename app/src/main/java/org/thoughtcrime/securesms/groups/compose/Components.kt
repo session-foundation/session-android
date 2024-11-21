@@ -54,19 +54,22 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 
 @Composable
 fun MemberItem(
-    enabled: Boolean,
     accountId: AccountId,
     title: String,
-    onClick: (accountId: AccountId) -> Unit,
     showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
+    onClick: ((accountId: AccountId) -> Unit)? = null,
     subtitle: String? = null,
     subtitleColor: Color = LocalColors.current.textSecondary,
     content: @Composable RowScope.() -> Unit = {},
 ) {
+    var itemModifier = modifier
+    if(onClick != null){
+        itemModifier = itemModifier.clickable(onClick = { onClick(accountId) })
+    }
+
     Row(
-        modifier = modifier
-            .clickable(enabled = enabled, onClick = { onClick(accountId) })
+        modifier = itemModifier
             .padding(
                 horizontal = LocalDimensions.current.smallSpacing,
                 vertical = LocalDimensions.current.xsSpacing
@@ -118,12 +121,11 @@ fun RadioMemberItem(
     subtitleColor: Color = LocalColors.current.textSecondary
 ) {
     MemberItem(
-        enabled = enabled,
         accountId = accountId,
         title = title,
         subtitle = subtitle,
         subtitleColor = subtitleColor,
-        onClick = onClick,
+        onClick = if(enabled) onClick else null,
         showAsAdmin = showAsAdmin,
         modifier = modifier
     ){

@@ -4,6 +4,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/menu_group_members"
+        android:contentDescription="@string/AccessibilityId_groupMembers"
+        android:title="@string/groupMembers"
+        app:showAsAction="collapseActionView" />
+    
+    <item
         android:id="@+id/menu_leave_group"
         android:contentDescription="@string/AccessibilityId_groupLeave"
         android:title="@string/groupLeave"

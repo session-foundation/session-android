@@ -8,16 +8,17 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 @AndroidEntryPoint
-class EditGroupActivity: PassphraseRequiredActionBarActivity() {
+class GroupMembersActivity: PassphraseRequiredActionBarActivity() {
 
     companion object {
-        private const val EXTRA_GROUP_ID = "EditClosedGroupActivity_groupID"
+        private const val EXTRA_GROUP_ID = "GroupMembersActivity_groupID"
 
         fun createIntent(context: Context, groupSessionId: String): Intent {
-            return Intent(context, EditGroupActivity::class.java).apply {
+            return Intent(context, GroupMembersActivity::class.java).apply {
                 putExtra(EXTRA_GROUP_ID, groupSessionId)
             }
         }
@@ -26,7 +27,7 @@ class EditGroupActivity: PassphraseRequiredActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         setContent {
             SessionMaterialTheme {
-                EditGroupScreen(
+                GroupMembersScreen (
                     groupId = AccountId(intent.getStringExtra(EXTRA_GROUP_ID)!!),
                     onBack = this::finish
                 )
