@@ -1099,12 +1099,18 @@ data class RetrieveOnce<T>(val retrieval: () -> T?) {
 
     val value: T?
         get() {
-            if (triedToRetrieve) { return _value }
+            synchronized(this) {
+                if (triedToRetrieve) {
+                    return _value
+                }
 
-            triedToRetrieve = true
-            _value = retrieval()
-            return _value
+                triedToRetrieve = true
+                _value = retrieval()
+                return _value
+            }
         }
 
-    fun updateTo(value: T?) { _value = value }
+    fun updateTo(value: T?) {
+        _value = value
+    }
 }
