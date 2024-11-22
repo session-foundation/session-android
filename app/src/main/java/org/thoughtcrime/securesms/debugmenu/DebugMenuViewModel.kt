@@ -27,7 +27,8 @@ class DebugMenuViewModel @Inject constructor(
             environments = Environment.entries.map { it.label },
             snackMessage = null,
             showEnvironmentWarningDialog = false,
-            showEnvironmentLoadingDialog = false
+            showEnvironmentLoadingDialog = false,
+            hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests()
         )
     )
     val uiState: StateFlow<UIState>
@@ -44,6 +45,11 @@ class DebugMenuViewModel @Inject constructor(
 
             is Commands.ShowEnvironmentWarningDialog ->
                 showEnvironmentWarningDialog(command.environment)
+
+            is Commands.HideMessageRequest -> {
+                textSecurePreferences.setHasHiddenMessageRequests(command.hide)
+                _uiState.value = _uiState.value.copy(hideMessageRequests = command.hide)
+            }
         }
     }
 
@@ -91,12 +97,14 @@ class DebugMenuViewModel @Inject constructor(
         val environments: List<String>,
         val snackMessage: String?,
         val showEnvironmentWarningDialog: Boolean,
-        val showEnvironmentLoadingDialog: Boolean
+        val showEnvironmentLoadingDialog: Boolean,
+        val hideMessageRequests: Boolean
     )
 
     sealed class Commands {
         object ChangeEnvironment : Commands()
         data class ShowEnvironmentWarningDialog(val environment: String) : Commands()
         object HideEnvironmentWarningDialog : Commands()
+        data class HideMessageRequest(val hide: Boolean) : Commands()
     }
 }

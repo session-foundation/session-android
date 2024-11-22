@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,10 +16,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
@@ -134,9 +139,66 @@ fun DebugMenu(
                         }
                     )
                 }
+
+                // Flags
+                DebugCell("Flags") {
+                    DebugSwitchRow(
+                        text = "Hide Message Requests",
+                        checked = uiState.hideMessageRequests,
+                        onCheckedChange = {
+                            sendCommand(DebugMenuViewModel.Commands.HideMessageRequest(it))
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun DebugSwitchRow(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+){
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            text = text,
+            style = LocalType.current.base,
+            modifier = Modifier.weight(1f)
+        )
+
+        SessionSwitch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
+    }
+
+}
+
+// todo Get proper styling that works well with ax on all themes and then move this composable in the components file
+@Composable
+fun SessionSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+){
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = LocalColors.current.primary,
+            checkedTrackColor = LocalColors.current.background,
+            uncheckedThumbColor = LocalColors.current.text,
+            uncheckedTrackColor = LocalColors.current.background,
+        )
+    )
 }
 
 @Composable
@@ -175,7 +237,8 @@ fun PreviewDebugMenu() {
                 environments = listOf("Development", "Production"),
                 snackMessage = null,
                 showEnvironmentWarningDialog = false,
-                showEnvironmentLoadingDialog = false
+                showEnvironmentLoadingDialog = false,
+                hideMessageRequests = true
             ),
             sendCommand = {},
             onClose = {}

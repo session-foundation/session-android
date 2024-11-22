@@ -21,6 +21,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
@@ -31,6 +32,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
+import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import java.io.IOException
 import java.util.Arrays
@@ -165,7 +167,7 @@ interface TextSecurePreferences {
     fun hasSeenLinkPreviewSuggestionDialog(): Boolean
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun hasHiddenMessageRequests(): Boolean
-    fun setHasHiddenMessageRequests()
+    fun setHasHiddenMessageRequests(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -913,6 +915,7 @@ interface TextSecurePreferences {
         @JvmStatic
         fun removeHasHiddenMessageRequests(context: Context) {
             removePreference(context, HAS_HIDDEN_MESSAGE_REQUESTS)
+            _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
         }
 
         @JvmStatic
@@ -988,7 +991,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setConfigurationMessageSynced(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, value)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
+        _events.tryEmit(TextSecurePreferences.CONFIGURATION_SYNCED)
     }
 
     override val pushEnabled: MutableStateFlow<Boolean> = MutableStateFlow(
@@ -1146,7 +1149,7 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setProfileName(name: String?) {
         setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        TextSecurePreferences._events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
+        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
     }
 
     override fun getProfileName(): String? {
@@ -1558,11 +1561,12 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override fun hasHiddenMessageRequests(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, false)
+        return getBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, false)
     }
 
-    override fun setHasHiddenMessageRequests() {
-        setBooleanPreference(TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS, true)
+    override fun setHasHiddenMessageRequests(hidden: Boolean) {
+        setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
+        _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

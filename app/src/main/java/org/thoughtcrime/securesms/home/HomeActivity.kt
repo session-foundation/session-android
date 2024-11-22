@@ -704,7 +704,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         showSessionDialog {
             text(getString(R.string.hide))
             button(R.string.yes) {
-                textSecurePreferences.setHasHiddenMessageRequests()
+                textSecurePreferences.setHasHiddenMessageRequests(true)
                 homeViewModel.tryReload()
             }
             button(R.string.no)
