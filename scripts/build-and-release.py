@@ -218,6 +218,11 @@ if shutil.which('gh') is None:
     print('`gh` command not found. It is required to automate fdroid releases. Please install it from https://cli.github.com/', file=sys.stderr)
     sys.exit(1)
 
+# Make sure fdroid command is available
+if shutil.which('fdroid') is None:
+    print('`fdroid` command not found. It is required to automate fdroid releases. Please install it from https://f-droid.org/', file=sys.stderr)
+    sys.exit(1)
+
 # Make sure credentials file exists
 if not os.path.isfile(credentials_file_path):
     print(f'Credentials file not found at {credentials_file_path}. You should ask the project maintainer for the file.', file=sys.stderr)
@@ -253,7 +258,7 @@ huawei_build_result = build_releases(
 # If the a github release draft exists, upload the apks to the release
 try:
     release_info = json.loads(subprocess.check_output(f'gh release view --json isDraft {play_build_result.version_name}', shell=True, cwd=project_root))
-    if release_info['draft'] == True:
+    if release_info['isDraft'] == True:
         print(f'Uploading build artifact to the release {play_build_result.version_name} draft...')
         files_to_upload = [*play_build_result.apk_paths,
                            play_build_result.bundle_path,
