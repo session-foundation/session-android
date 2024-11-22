@@ -668,7 +668,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   }
 
   private static boolean columnExists(@NonNull SQLiteDatabase db, @NonNull String table, @NonNull String column) {
-    try (Cursor cursor = db.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+    try (Cursor cursor = db.rawQuery("PRAGMA table_xinfo(" + table + ")", null)) {
       int nameColumnIndex = cursor.getColumnIndexOrThrow("name");
 
       while (cursor.moveToNext()) {
