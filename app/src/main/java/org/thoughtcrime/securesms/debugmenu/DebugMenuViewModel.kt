@@ -8,16 +8,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
     private val application: Application,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val configFactory: ConfigFactory
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -28,7 +32,8 @@ class DebugMenuViewModel @Inject constructor(
             snackMessage = null,
             showEnvironmentWarningDialog = false,
             showEnvironmentLoadingDialog = false,
-            hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests()
+            hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
+            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf()
         )
     )
     val uiState: StateFlow<UIState>
@@ -49,6 +54,14 @@ class DebugMenuViewModel @Inject constructor(
             is Commands.HideMessageRequest -> {
                 textSecurePreferences.setHasHiddenMessageRequests(command.hide)
                 _uiState.value = _uiState.value.copy(hideMessageRequests = command.hide)
+            }
+
+            is Commands.HideNoteToSelf -> {
+                textSecurePreferences.setHasHiddenNoteToSelf(command.hide)
+                configFactory.withMutableUserConfigs {
+                    it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
+                }
+                _uiState.value = _uiState.value.copy(hideNoteToSelf = command.hide)
             }
         }
     }
@@ -98,7 +111,8 @@ class DebugMenuViewModel @Inject constructor(
         val snackMessage: String?,
         val showEnvironmentWarningDialog: Boolean,
         val showEnvironmentLoadingDialog: Boolean,
-        val hideMessageRequests: Boolean
+        val hideMessageRequests: Boolean,
+        val hideNoteToSelf: Boolean
     )
 
     sealed class Commands {
@@ -106,5 +120,6 @@ class DebugMenuViewModel @Inject constructor(
         data class ShowEnvironmentWarningDialog(val environment: String) : Commands()
         object HideEnvironmentWarningDialog : Commands()
         data class HideMessageRequest(val hide: Boolean) : Commands()
+        data class HideNoteToSelf(val hide: Boolean) : Commands()
     }
 }

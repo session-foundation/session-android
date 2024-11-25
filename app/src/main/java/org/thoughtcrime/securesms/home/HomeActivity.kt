@@ -619,6 +619,38 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         var positiveButtonId: Int = R.string.delete
         val negativeButtonId: Int = R.string.cancel
 
+        // default delete action
+        var deleteAction: ()->Unit = {
+            lifecycleScope.launch(Dispatchers.Main) {
+                val context = this@HomeActivity
+                // Cancel any outstanding jobs
+                sessionJobDatabase
+                    .cancelPendingMessageSendJobs(threadID)
+
+                // Delete the conversation
+                val community = lokiThreadDatabase
+                    .getOpenGroupChat(threadID)
+                if (community != null) {
+                    OpenGroupManager.delete(
+                        community.server,
+                        community.room,
+                        context
+                    )
+                } else {
+                    lifecycleScope.launch(Dispatchers.Default) {
+                        threadDb.deleteConversation(threadID)
+                    }
+                }
+
+                // Update the badge count
+                messageNotifier.updateNotification(context)
+
+                // Notify the user
+                val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
+                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
+            }
+        }
+
         if (recipient.isGroupOrCommunityRecipient) {
             val group = groupDatabase.getGroup(recipient.address.toString()).orNull()
 
@@ -650,6 +682,11 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 title = getString(R.string.noteToSelfHide)
                 message = getString(R.string.noteToSelfHideDescription)
                 positiveButtonId = R.string.hide
+
+                // change the action for Note To Self, as they should only be hidden and the messages should remain undeleted
+                deleteAction = {
+                    homeViewModel.hideNoteToSelf()
+                }
             }
         }
 
@@ -657,34 +694,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             title(title)
             text(message)
             dangerButton(positiveButtonId) {
-                lifecycleScope.launch(Dispatchers.Main) {
-                    val context = this@HomeActivity
-                    // Cancel any outstanding jobs
-                    sessionJobDatabase
-                        .cancelPendingMessageSendJobs(threadID)
-
-                    // Delete the conversation
-                    val community = lokiThreadDatabase
-                        .getOpenGroupChat(threadID)
-                    if (community != null) {
-                        OpenGroupManager.delete(
-                            community.server,
-                            community.room,
-                            context
-                        )
-                    } else {
-                        lifecycleScope.launch(Dispatchers.Default) {
-                            threadDb.deleteConversation(threadID)
-                        }
-                    }
-
-                    // Update the badge count
-                    messageNotifier.updateNotification(context)
-
-                    // Notify the user
-                    val toastMessage = if (recipient.isGroupOrCommunityRecipient) R.string.groupMemberYouLeft else R.string.conversationsDeleted
-                    Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show()
-                }
+                deleteAction()
             }
             button(negativeButtonId)
         }

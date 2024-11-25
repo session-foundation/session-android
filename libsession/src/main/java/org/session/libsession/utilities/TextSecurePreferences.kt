@@ -22,6 +22,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
@@ -168,6 +169,8 @@ interface TextSecurePreferences {
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
+    fun hasHiddenNoteToSelf(): Boolean
+    fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -271,6 +274,7 @@ interface TextSecurePreferences {
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
+        const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -1567,6 +1571,15 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasHiddenMessageRequests(hidden: Boolean) {
         setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
         _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
+    }
+
+    override fun hasHiddenNoteToSelf(): Boolean {
+        return getBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, false)
+    }
+
+    override fun setHasHiddenNoteToSelf(hidden: Boolean) {
+        setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
+        _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

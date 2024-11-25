@@ -171,9 +171,8 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
-            // delete nts thread if needed
-            val ourThread = storage.getThreadId(recipient) ?: return
-            storage.deleteConversation(ourThread)
+            // hide nts thread if needed
+            preferences.setHasHiddenNoteToSelf(true)
         } else {
             // create note to self thread if needed (?)
             val address = recipient.address
@@ -182,6 +181,7 @@ class ConfigToDatabaseSync @Inject constructor(
             }
             threadDatabase.setHasSent(ourThread, true)
             storage.setPinned(ourThread, userProfile.ntsPriority > 0)
+            preferences.setHasHiddenNoteToSelf(false)
         }
 
         // Set or reset the shared library to use latest expiration config

@@ -22,7 +22,7 @@ Build instructions can be found in [BUILDING.md](BUILDING.md).
 
 ## Translations
 
-Want to help us translate Session into your language? You can do so at https://crowdin.com/project/session-android!
+Want to help us translate Session into your language? You can do so [here](https://crowdin.com/project/session-crossplatform-strings)!
 
 ## Verifying signatures
 

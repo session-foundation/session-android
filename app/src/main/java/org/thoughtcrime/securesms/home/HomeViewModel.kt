@@ -28,11 +28,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
@@ -45,6 +47,7 @@ class HomeViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     @ApplicationContextQualifier private val context: Context,
     private val typingStatusRepository: TypingStatusRepository,
+    private val configFactory: ConfigFactory
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -65,12 +68,18 @@ class HomeViewModel @Inject constructor(
         observeTypingStatus(),
         overrideMessageSnippets,
         messageRequests(),
-    ) { threads, typingStatus, overrideMessageSnippets, messageRequests ->
+        hasHiddenNoteToSelf()
+    ) { threads, typingStatus, overrideMessageSnippets, messageRequests, hideNoteToSelf ->
         Data(
             items = buildList {
                 messageRequests?.let { add(it) }
 
-                threads.mapTo(this) { thread ->
+                threads.mapNotNullTo(this) { thread ->
+                    // if the note to self is marked as hidden, do not add it
+                    if (thread.recipient.isLocalNumber && hideNoteToSelf) {
+                        return@mapNotNullTo null
+                    }
+
                     Item.Thread(
                         thread = thread,
                         isTyping = typingStatus.contains(thread.threadId),
@@ -86,6 +95,11 @@ class HomeViewModel @Inject constructor(
         .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
         .map { prefs.hasHiddenMessageRequests() }
         .onStart { emit(prefs.hasHiddenMessageRequests()) }
+
+    private fun hasHiddenNoteToSelf() = TextSecurePreferences.events
+        .filter { it == TextSecurePreferences.HAS_HIDDEN_NOTE_TO_SELF }
+        .map { prefs.hasHiddenNoteToSelf() }
+        .onStart { emit(prefs.hasHiddenNoteToSelf()) }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
                     .typingThreads
@@ -173,6 +187,13 @@ class HomeViewModel @Inject constructor(
             overrideMessageSnippets.update { it + (threadId to errorMessage) }
         } else {
             // No need to remove the message override, as the conversation will be removed from the list
+        }
+    }
+
+    fun hideNoteToSelf() {
+        prefs.setHasHiddenNoteToSelf(true)
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
         }
     }
 

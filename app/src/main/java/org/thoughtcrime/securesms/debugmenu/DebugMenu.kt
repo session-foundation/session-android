@@ -149,6 +149,14 @@ fun DebugMenu(
                             sendCommand(DebugMenuViewModel.Commands.HideMessageRequest(it))
                         }
                     )
+
+                    DebugSwitchRow(
+                        text = "Hide Note to Self",
+                        checked = uiState.hideNoteToSelf,
+                        onCheckedChange = {
+                            sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
+                        }
+                    )
                 }
             }
         }
@@ -238,7 +246,8 @@ fun PreviewDebugMenu() {
                 snackMessage = null,
                 showEnvironmentWarningDialog = false,
                 showEnvironmentLoadingDialog = false,
-                hideMessageRequests = true
+                hideMessageRequests = true,
+                hideNoteToSelf = false
             ),
             sendCommand = {},
             onClose = {}
