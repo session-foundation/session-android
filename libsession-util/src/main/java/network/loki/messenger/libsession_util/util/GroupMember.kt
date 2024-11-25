@@ -1,55 +1,89 @@
 package network.loki.messenger.libsession_util.util
 
-typealias InviteStatus = Int
-typealias PromotionStatus = Int
-typealias RemovedStatus = Int
+import org.session.libsignal.utilities.AccountId
+import java.util.EnumSet
 
-const val INVITE_STATUS_SENT = 1
-const val INVITE_STATUS_FAILED = 2
-const val INVITE_NOT_SENT = 3
+/**
+ * Represents a member of a group.
+ *
+ * Note: unlike a read-only data class, this class is mutable and it is not thread-safe
+ * in general. You have to synchronize access to it if you are going to use it in multiple threads.
+ */
+class GroupMember private constructor(@Suppress("CanBeParameter") private val nativePtr: Long) {
+    init {
+        if (nativePtr == 0L) {
+            throw NullPointerException("Native pointer is null")
+        }
+    }
 
-const val REMOVED_MEMBER = 1
-const val REMOVED_MEMBER_AND_MESSAGES = 2
+    external fun setInvited(failed: Boolean = false)
+    external fun setAccepted()
+    external fun setPromoted()
+    external fun setPromotionSent()
+    external fun setPromotionFailed()
+    external fun setPromotionAccepted()
+    external fun setRemoved(alsoRemoveMessages: Boolean)
 
-data class GroupMember(
-    val sessionId: String,
-    val name: String? = null,
-    val profilePicture: UserPic = UserPic.DEFAULT,
-    val admin: Boolean = false,
-    val supplement: Boolean = false,
-    private val inviteStatus: InviteStatus = INVITE_NOT_SENT,
-    private val promotionStatus: PromotionStatus = INVITE_NOT_SENT,
-    private val removedStatus: RemovedStatus = 0,
-) {
-    val accepted: Boolean get() = inviteStatus == 0 && !supplement
-    val inviteNotSent: Boolean get() = inviteStatus == INVITE_NOT_SENT
-    val invitePending: Boolean get() = inviteStatus > 0
-    val inviteFailed: Boolean get() = inviteStatus == INVITE_STATUS_FAILED
+    private external fun statusInt(): Int
+    val status: Status? get() = Status.entries.firstOrNull { it.nativeValue == statusInt() }
 
-    val promotionNotSent: Boolean get() = promotionStatus == INVITE_NOT_SENT
-    val promotionPending: Boolean get() = !admin && promotionStatus == INVITE_STATUS_SENT
-    val promotionFailed: Boolean get() = !admin && promotionStatus == INVITE_STATUS_FAILED
-    val promoted: Boolean get() = admin || promotionPending
-    val removed: Boolean get() = removedStatus > 0
-    val shouldRemoveMessages: Boolean get() = removedStatus == REMOVED_MEMBER_AND_MESSAGES
+    external fun profilePic(): UserPic?
+    external fun setProfilePic(pic: UserPic)
 
-    val isAdminOrBeingPromoted: Boolean get() = admin || promotionStatus == INVITE_STATUS_SENT
+    external fun setName(name: String)
 
-    fun setPromoteSent(): GroupMember
-        = copy(promotionStatus = INVITE_STATUS_SENT)
+    private external fun nameString(): String
+    val name: String get() = nameString()
 
-    fun setPromoteFailed(): GroupMember
-        = copy(promotionStatus = INVITE_STATUS_FAILED)
+    private external fun isAdmin(): Boolean
+    val admin: Boolean get() = isAdmin()
 
-    fun setRemoved(alsoRemoveMessages: Boolean): GroupMember
-        = copy(removedStatus = if (alsoRemoveMessages) REMOVED_MEMBER_AND_MESSAGES else REMOVED_MEMBER)
+    private external fun isSupplement(): Boolean
+    external fun setSupplement(supplement: Boolean)
+    val supplement: Boolean get() = isSupplement()
 
-    fun setAccepted(): GroupMember
-        = copy(inviteStatus = 0, supplement = false)
+    external fun accountIdString(): String
+    val accountId: AccountId get() = AccountId(accountIdString())
 
-    fun setInvited(): GroupMember
-        = copy(inviteStatus = INVITE_STATUS_SENT)
+    // The destruction of the native object is called by the GC
+    // Ideally we want to expose as Closable, however given the tiny footprint of the native object,
+    // it's perfectly ok to let the GC handle it.
+    private external fun destroy()
+    protected fun finalize() {
+        destroy()
+    }
 
-    fun setInviteFailed(): GroupMember = copy(inviteStatus = INVITE_STATUS_FAILED)
-    fun setPromoteSuccess(): GroupMember = copy(admin = true, promotionStatus = 0)
+    val removed: Boolean
+        get() = status in EnumSet.of(Status.REMOVED, Status.REMOVED_UNKNOWN, Status.REMOVED_INCLUDING_MESSAGES)
+
+    val isAdminOrBeingPromoted: Boolean
+        get() = admin || status in EnumSet.of(Status.PROMOTION_SENT, Status.PROMOTION_ACCEPTED)
+
+    val inviteFailed: Boolean
+        get() = status == Status.INVITE_FAILED
+
+    val shouldRemoveMessages: Boolean
+        get() = status == Status.REMOVED_INCLUDING_MESSAGES
+
+    enum class Status(val nativeValue: Int) {
+        INVITE_UNKNOWN(0),
+        INVITE_NOT_SENT(1),
+        INVITE_FAILED(2),
+        INVITE_SENT(3),
+        INVITE_ACCEPTED(4),
+
+        PROMOTION_UNKNOWN(5),
+        PROMOTION_NOT_SENT(6),
+        PROMOTION_FAILED(7),
+        PROMOTION_SENT(8),
+        PROMOTION_ACCEPTED(9),
+
+        REMOVED_UNKNOWN(10),
+        REMOVED(11),
+        REMOVED_INCLUDING_MESSAGES(12);
+    }
+
+    override fun toString(): String {
+        return "GroupMember(name=$name, admin=$admin, supplement=$supplement, status=$status)"
+    }
 }

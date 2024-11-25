@@ -389,7 +389,6 @@ interface ReadableGroupMembersConfig: ReadableConfig {
 interface MutableGroupMembersConfig : ReadableGroupMembersConfig, MutableConfig {
     fun getOrConstruct(pubKeyHex: String): GroupMember
     fun set(groupMember: GroupMember)
-    fun erase(groupMember: GroupMember): Boolean
     fun erase(pubKeyHex: String): Boolean
 }
 
@@ -408,7 +407,6 @@ class GroupMembersConfig private constructor(pointer: Long): ConfigBase(pointer)
     override fun namespace() = Namespace.CLOSED_GROUP_MEMBERS()
 
     external override fun all(): Stack<GroupMember>
-    external override fun erase(groupMember: GroupMember): Boolean
     external override fun erase(pubKeyHex: String): Boolean
     external override fun get(pubKeyHex: String): GroupMember?
     external override fun getOrConstruct(pubKeyHex: String): GroupMember

@@ -24,7 +24,6 @@ namespace util {
     jobject serialize_expiry(JNIEnv *env, const session::config::expiration_mode& mode, const std::chrono::seconds& time_seconds);
     std::pair<session::config::expiration_mode, long> deserialize_expiry(JNIEnv *env, jobject expiry_mode);
     jobject serialize_group_member(JNIEnv* env, const session::config::groups::member& member);
-    session::config::groups::member deserialize_group_member(JNIEnv* env, jobject member);
     jobject jlongFromOptional(JNIEnv* env, std::optional<long long> optional);
     jstring jstringFromOptional(JNIEnv* env, std::optional<std::string_view> optional);
     jobject serialize_account_id(JNIEnv* env, std::string_view session_id);

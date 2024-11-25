@@ -94,7 +94,7 @@ class MentionViewModel(
                             .map { it.serialize() }
                     }
                     recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.serialize()).map { it.sessionId }
+                        storage.getMembers(recipient.address.serialize()).map { it.accountIdString() }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)

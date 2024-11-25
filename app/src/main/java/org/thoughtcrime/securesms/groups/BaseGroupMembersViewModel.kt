@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups
 
-import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -67,7 +66,7 @@ abstract class BaseGroupMembersViewModel (
                         member = member,
                         myAccountId = currentUserId,
                         amIAdmin = displayInfo.isUserAdmin,
-                        pendingState = pending[AccountId(member.sessionId)]
+                        pendingState = pending[member.accountId]
                     )
                 }
             }
@@ -90,9 +89,13 @@ abstract class BaseGroupMembersViewModel (
         var isMyself = false
 
         when {
-            member.sessionId == myAccountId.hexString -> {
+            member.accountIdString() == myAccountId.hexString -> {
                 name = context.getString(R.string.you)
                 isMyself = true
+            }
+
+            member.removed -> {
+                status = ""
             }
 
             pendingState == MemberPendingState.Inviting -> {
@@ -103,33 +106,37 @@ abstract class BaseGroupMembersViewModel (
                 status = context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
             }
 
-            member.promotionPending -> {
+            member.status == GroupMember.Status.PROMOTION_SENT -> {
                 status = context.getString(R.string.adminPromotionSent)
             }
 
-            member.invitePending -> {
+            member.status == GroupMember.Status.INVITE_SENT -> {
                 status = context.getString(R.string.groupInviteSent)
             }
 
-            member.inviteFailed -> {
+            member.status == GroupMember.Status.INVITE_FAILED -> {
                 status = context.getString(R.string.groupInviteFailed)
                 highlightStatus = true
             }
 
-            member.promotionFailed -> {
+            member.status == GroupMember.Status.PROMOTION_FAILED -> {
                 status = context.getString(R.string.adminPromotionFailed)
                 highlightStatus = true
             }
         }
 
         return GroupMemberState(
-            accountId = AccountId(member.sessionId),
+            accountId = member.accountId,
             name = name,
-            canRemove = amIAdmin && member.sessionId != myAccountId.hexString && !member.isAdminOrBeingPromoted,
-            canPromote = amIAdmin && member.sessionId != myAccountId.hexString && !member.isAdminOrBeingPromoted,
-            canResendPromotion = amIAdmin && member.sessionId != myAccountId.hexString && member.promotionFailed,
-            canResendInvite = amIAdmin && member.sessionId != myAccountId.hexString &&
-                    (member.inviteFailed || member.invitePending),
+            canRemove = amIAdmin && member.accountId != myAccountId
+                    && !member.isAdminOrBeingPromoted && !member.removed,
+            canPromote = amIAdmin && member.accountId != myAccountId
+                    && !member.isAdminOrBeingPromoted && !member.removed,
+            canResendPromotion = amIAdmin && member.accountId != myAccountId
+                    && member.status == GroupMember.Status.PROMOTION_FAILED && !member.removed,
+            canResendInvite = amIAdmin && member.accountId != myAccountId
+                    && !member.removed
+                    && (member.status == GroupMember.Status.INVITE_SENT || member.status == GroupMember.Status.INVITE_FAILED),
             status = status,
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted,
@@ -141,12 +148,12 @@ abstract class BaseGroupMembersViewModel (
         members.sortWith(
             compareBy(
                 { !it.inviteFailed }, // Failed invite comes first (as false value is less than true)
-                { memberPendingState.value[AccountId(it.sessionId)] != MemberPendingState.Inviting }, // "Sending invite" comes first
-                { !it.invitePending }, // "Invite sent" comes first
+                { memberPendingState.value[it.accountId] != MemberPendingState.Inviting }, // "Sending invite" comes first
+                { it.status != GroupMember.Status.INVITE_SENT }, // "Invite sent" comes first
                 { !it.isAdminOrBeingPromoted }, // Admins come first
-                { it.sessionId != currentUserId.hexString }, // Being myself comes first
+                { it.accountIdString() != currentUserId.hexString }, // Being myself comes first
                 { it.name }, // Sort by name
-                { it.sessionId } // Last resort: sort by account ID
+                { it.accountIdString() } // Last resort: sort by account ID
             )
         )
     }

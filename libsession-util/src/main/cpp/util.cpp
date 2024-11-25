@@ -140,62 +140,11 @@ namespace util {
 
     jobject serialize_group_member(JNIEnv* env, const session::config::groups::member& member) {
         jclass group_member_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupMember");
-        jmethodID constructor = env->GetMethodID(group_member_class, "<init>", "(Ljava/lang/String;Ljava/lang/String;Lnetwork/loki/messenger/libsession_util/util/UserPic;ZZIII)V");
-        jobject user_pic = serialize_user_pic(env, member.profile_picture);
-        jstring session_id = env->NewStringUTF(member.session_id.data());
-        jstring name = env->NewStringUTF(member.name.data());
+        jmethodID constructor = env->GetMethodID(group_member_class, "<init>", "(J)V");
         return env->NewObject(group_member_class,
                               constructor,
-                              session_id,
-                              name,
-                              user_pic,
-                              (jboolean) member.admin,
-                              (jboolean) member.supplement,
-                              (jint) member.invite_status,
-                              (jint) member.promotion_status,
-                              (jint) member.removed_status
+                              reinterpret_cast<jlong>(new session::config::groups::member(member))
                           );
-    }
-
-    session::config::groups::member deserialize_group_member(JNIEnv* env, jobject member) {
-        jclass group_member_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupMember");
-        jfieldID session_id_field = env->GetFieldID(group_member_class, "sessionId", "Ljava/lang/String;");
-        jfieldID name_field = env->GetFieldID(group_member_class, "name", "Ljava/lang/String;");
-        jfieldID user_pic_field = env->GetFieldID(group_member_class,"profilePicture", "Lnetwork/loki/messenger/libsession_util/util/UserPic;");
-        jfieldID invite_status_field = env->GetFieldID(group_member_class, "inviteStatus", "I");
-        jfieldID admin_field = env->GetFieldID(group_member_class, "admin", "Z");
-        jfieldID promotion_status_field = env->GetFieldID(group_member_class, "promotionStatus", "I");
-        jfieldID removed_status_field = env->GetFieldID(group_member_class, "removedStatus", "I");
-        jfieldID supplement_field = env->GetFieldID(group_member_class, "supplement", "Z");
-        auto session_id = (jstring)env->GetObjectField(member, session_id_field);
-        auto session_id_bytes = env->GetStringUTFChars(session_id, nullptr);
-        auto name = (jstring)env->GetObjectField(member, name_field);
-        auto name_bytes = env->GetStringUTFChars(name, nullptr);
-        auto user_pic_jobject = env->GetObjectField(member, user_pic_field);
-        auto user_pic = deserialize_user_pic(env, user_pic_jobject);
-        auto url_bytes = env->GetStringUTFChars(user_pic.first, nullptr);
-        auto pic_key = ustring_from_bytes(env, user_pic.second);
-        auto invite_status = env->GetIntField(member, invite_status_field);
-        auto promotion_status = env->GetIntField(member, promotion_status_field);
-        auto removed_status = env->GetIntField(member, removed_status_field);
-        auto admin = env->GetBooleanField(member, admin_field);
-        auto supplement = env->GetBooleanField(member, supplement_field);
-
-        // set up the object
-        session::config::groups::member group_member(session_id_bytes);
-        group_member.name = name_bytes;
-        group_member.profile_picture.url = url_bytes;
-        group_member.profile_picture.set_key(pic_key);
-        group_member.invite_status = invite_status;
-        group_member.promotion_status = promotion_status;
-        group_member.removed_status = removed_status;
-        group_member.supplement = supplement;
-        group_member.admin = admin;
-
-        env->ReleaseStringUTFChars(user_pic.first, url_bytes);
-        env->ReleaseStringUTFChars(session_id, session_id_bytes);
-        env->ReleaseStringUTFChars(name, name_bytes);
-        return group_member;
     }
 
     jobject deserialize_swarm_auth(JNIEnv *env, session::config::groups::Keys::swarm_auth auth) {

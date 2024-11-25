@@ -136,16 +136,17 @@ object GroupUtil {
 
 fun GroupMember.getMemberName(config: ConfigFactoryProtocol): String {
     return config.withUserConfigs {
-        it.contacts.get(this.sessionId)?.displayName
-            ?: this.name
-            ?: truncateIdForDisplay(this.sessionId)
+        it.contacts.get(this.accountId.hexString)?.displayName
+            ?: this.name.takeIf { it.isNotBlank() }
+            ?: truncateIdForDisplay(this.accountId.hexString)
     }
 }
 
 //todo GROUPSV2 Currently avatars use Recipients to display avatars, meaning unknown groups member are not currently using this avatar below but instead will try to fetch a recipient from the account ID, which won't be found so the unknown icon will be used - We need to have an avatar system that handles low level daat like a url
 fun GroupMember.getMemberAvatar(config: ConfigFactoryProtocol): UserPic {
     return config.withUserConfigs {
-        it.contacts.get(this.sessionId)?.profilePicture
-            ?: this.profilePicture
+        it.contacts.get(this.accountId.hexString)?.profilePicture
+            ?: this.profilePic()
+            ?: UserPic.DEFAULT
     }
 }

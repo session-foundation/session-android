@@ -9,5 +9,10 @@ inline session::config::groups::Members* ptrToMembers(JNIEnv* env, jobject obj) 
     return (session::config::groups::Members*) env->GetLongField(obj, pointerField);
 }
 
+inline session::config::groups::member *ptrToMember(JNIEnv *env, jobject thiz) {
+    auto ptrField = env->GetFieldID(env->GetObjectClass(thiz), "nativePtr", "J");
+    return reinterpret_cast<session::config::groups::member*>(env->GetLongField(thiz, ptrField));
+}
+
 
 #endif //SESSION_ANDROID_GROUP_MEMBERS_H

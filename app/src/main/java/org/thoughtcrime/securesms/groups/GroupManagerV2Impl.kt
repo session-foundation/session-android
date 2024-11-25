@@ -18,8 +18,6 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
-import network.loki.messenger.libsession_util.util.INVITE_STATUS_FAILED
-import network.loki.messenger.libsession_util.util.INVITE_STATUS_SENT
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -128,25 +126,23 @@ class GroupManagerV2Impl @Inject constructor(
                 // Add members
                 for (member in memberAsRecipients) {
                     configs.groupMembers.set(
-                        GroupMember(
-                            sessionId = member.address.serialize(),
-                            name = member.name,
-                            profilePicture = member.profileAvatar?.let { url ->
+                        configs.groupMembers.getOrConstruct(member.address.serialize()).apply {
+                            setName(member.name.orEmpty())
+                            setProfilePic(member.profileAvatar?.let { url ->
                                 member.profileKey?.let { key -> UserPic(url, key) }
-                            } ?: UserPic.DEFAULT,
-                            inviteStatus = INVITE_STATUS_SENT
-                        )
+                            } ?: UserPic.DEFAULT)
+                            setInvited()
+                        }
                     )
                 }
 
                 // Add ourselves as admin
                 configs.groupMembers.set(
-                    GroupMember(
-                        sessionId = ourAccountId,
-                        name = ourProfile.displayName,
-                        profilePicture = ourProfile.profilePicture ?: UserPic.DEFAULT,
-                        admin = true
-                    )
+                    configs.groupMembers.getOrConstruct(ourAccountId).apply {
+                        setName(ourProfile.displayName.orEmpty())
+                        setProfilePic(ourProfile.profilePicture ?: UserPic.DEFAULT)
+                        setPromotionAccepted()
+                    }
                 )
 
                 // Manually re-key to prevent issue with linked admin devices
@@ -215,27 +211,21 @@ class GroupManagerV2Impl @Inject constructor(
             // Construct the new members in the config
             for (newMember in newMembers) {
                 val toSet = configs.groupMembers.get(newMember.hexString)
-                    ?.let { existing ->
-                        if (existing.inviteFailed || existing.invitePending) {
-                            existing.copy(
-                                inviteStatus = INVITE_STATUS_SENT,
-                                supplement = shareHistory
-                            )
-                        } else {
-                            existing
+                    ?.also { existing ->
+                        if (existing.status == GroupMember.Status.INVITE_FAILED || existing.status == GroupMember.Status.INVITE_SENT) {
+                            existing.setInvited()
+                            existing.setSupplement(shareHistory)
                         }
                     }
-                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).let { member ->
+                    ?: configs.groupMembers.getOrConstruct(newMember.hexString).also { member ->
                         val contact = configFactory.withUserConfigs { configs ->
                             configs.contacts.get(newMember.hexString)
                         }
 
-                        member.copy(
-                            name = contact?.name,
-                            profilePicture = contact?.profilePicture ?: UserPic.DEFAULT,
-                            inviteStatus = INVITE_STATUS_SENT,
-                            supplement = shareHistory
-                        )
+                        member.setName(contact?.name.orEmpty())
+                        member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
+                        member.setInvited()
+                        member.setSupplement(shareHistory)
                     }
 
                 configs.groupMembers.set(toSet)
@@ -413,7 +403,7 @@ class GroupManagerV2Impl @Inject constructor(
         val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
             val allMembers = config.groupMembers.all()
             allMembers.count { it.admin } == 1 &&
-                    allMembers.first { it.admin }.sessionId == storage.getUserPublicKey()
+                    allMembers.first { it.admin }.accountIdString() == storage.getUserPublicKey()
         }
 
         if (group?.kicked == false) {
@@ -511,13 +501,13 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableGroupConfigs(group) { configs ->
             promotedByMemberIDs.asSequence()
                 .mapNotNull { (member, success) ->
-                    configs.groupMembers.get(member.hexString)?.copy(
-                        promotionStatus = if (success) {
-                            INVITE_STATUS_SENT
+                    configs.groupMembers.get(member.hexString)?.apply {
+                        if (success) {
+                            setPromotionSent()
                         } else {
-                            INVITE_STATUS_FAILED
+                            setPromotionFailed()
                         }
-                    )
+                    }
                 }
                 .forEach(configs.groupMembers::set)
         }
@@ -560,7 +550,9 @@ class GroupManagerV2Impl @Inject constructor(
             for (member in members) {
                 val memberConfig = configs.groupMembers.get(member.hexString)
                 if (memberConfig != null) {
-                    configs.groupMembers.set(memberConfig.setRemoved(alsoRemoveMembersMessage))
+                    configs.groupMembers.set(memberConfig.apply {
+                        setRemoved(alsoRemoveMembersMessage)
+                    })
                 }
             }
         }
@@ -626,7 +618,9 @@ class GroupManagerV2Impl @Inject constructor(
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
                 configs.groupMembers.get(key)?.let { member ->
-                    configs.groupMembers.set(member.setPromoteSuccess().setAccepted())
+                    configs.groupMembers.set(member.apply {
+                        setPromotionAccepted()
+                    })
                 }
 
                 Unit
@@ -691,7 +685,8 @@ class GroupManagerV2Impl @Inject constructor(
                 groupId = groupId
             ) { configs ->
                 configs.groupMembers.get(userAuth.accountId.hexString)?.let { member ->
-                    configs.groupMembers.set(member.setPromoteSuccess())
+                    member.setPromotionAccepted()
+                    configs.groupMembers.set(member)
                 }
             }
         }
@@ -782,7 +777,9 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableGroupConfigs(groupId) { configs ->
             val member = configs.groupMembers.get(sender.hexString)
             if (member != null) {
-                configs.groupMembers.set(member.setAccepted())
+                configs.groupMembers.set(member.apply {
+                    setAccepted()
+                })
             } else {
                 Log.e(TAG, "User wasn't in the group membership to add!")
             }

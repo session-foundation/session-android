@@ -86,7 +86,7 @@ class ConfigFactory @Inject constructor(
     private val groupConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, GroupConfigsImpl>>()
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>(
-        extraBufferCapacity = 5, // The notifications are normally important so we can afford to buffer a few
+        extraBufferCapacity = 100, // The notifications are normally important so we can afford to buffer a few
         onBufferOverflow = BufferOverflow.SUSPEND
     )
     override val configUpdateNotifications get() = _configUpdateNotifications

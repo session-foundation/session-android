@@ -96,7 +96,7 @@ class ProfilePictureView @JvmOverloads constructor(
                     .getGroupMemberAddresses(address.toGroupString(), true)
             } else {
                 storage.getMembers(address.serialize())
-                    .map { Address.fromSerialized(it.sessionId) }
+                    .map { Address.fromSerialized(it.accountIdString()) }
             }.sorted().take(2)
 
             if (members.size <= 1) {

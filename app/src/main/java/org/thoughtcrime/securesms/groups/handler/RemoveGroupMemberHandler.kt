@@ -125,7 +125,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 SnodeAPI.buildAuthenticatedRevokeSubKeyBatchRequest(
                     groupAdminAuth = groupAuth,
                     subAccountTokens = pendingRemovals.map {
-                        configs.groupKeys.getSubAccountToken(AccountId(it.sessionId))
+                        configs.groupKeys.getSubAccountToken(it.accountId)
                     }
                 )
             ) { "Fail to create a revoke request" }
@@ -152,7 +152,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                         memberSessionIDs = pendingRemovals
                             .asSequence()
                             .filter { it.shouldRemoveMessages }
-                            .map { it.sessionId },
+                            .map { it.accountIdString() },
                     ),
                     auth = groupAuth,
                 )
@@ -179,7 +179,9 @@ class RemoveGroupMemberHandler @Inject constructor(
         // The essential part of the operation has been successful once we get to this point,
         // now we can go ahead and update the configs
         configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
-            pendingRemovals.forEach(configs.groupMembers::erase)
+            pendingRemovals.forEach {
+                configs.groupMembers.erase(it.accountIdString())
+            }
             configs.rekey()
         }
 
@@ -199,7 +201,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                         messageDataProvider.markUserMessagesAsDeleted(
                             threadId = threadId,
                             until = until,
-                            sender = member.sessionId,
+                            sender = member.accountIdString(),
                             displayedMessage = context.getString(R.string.deleteMessageDeletedGlobally)
                         )
                     } catch (e: Exception) {
@@ -257,11 +259,11 @@ class RemoveGroupMemberHandler @Inject constructor(
         data = Base64.encodeBytes(
             Sodium.encryptForMultipleSimple(
                 messages = Array(pendingRemovals.size) {
-                    AccountId(pendingRemovals[it].sessionId).pubKeyBytes
+                    pendingRemovals[it].accountId.pubKeyBytes
                         .plus(keys.currentGeneration().toString().toByteArray())
                 },
                 recipients = Array(pendingRemovals.size) {
-                    AccountId(pendingRemovals[it].sessionId).pubKeyBytes
+                    pendingRemovals[it].accountId.pubKeyBytes
                 },
                 ed25519SecretKey = adminKey,
                 domain = Sodium.KICKED_DOMAIN

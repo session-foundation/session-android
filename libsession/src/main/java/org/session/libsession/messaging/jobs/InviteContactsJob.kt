@@ -58,7 +58,9 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             configs.groupMembers.set(
                                 configs.groupMembers.getOrConstruct(
                                     memberSessionId
-                                ).setInvited()
+                                ).apply {
+                                    setInvited()
+                                }
                             )
                             configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberId)
                         }
@@ -93,7 +95,8 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                 results.forEach { (memberSessionId, result) ->
                     if (result.isFailure) {
                         configs.groupMembers.get(memberSessionId)?.let { member ->
-                            configs.groupMembers.set(member.setInviteFailed())
+                            member.setInvited(failed = true)
+                            configs.groupMembers.set(member)
                         }
                     }
                 }
