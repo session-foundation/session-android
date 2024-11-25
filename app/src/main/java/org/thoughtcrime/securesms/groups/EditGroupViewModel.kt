@@ -144,7 +144,9 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onEditNameConfirmClicked() {
         val newName = mutableEditingName.value
+
         if (newName.isNullOrBlank()) {
+            mutableError.value = context.getString(R.string.groupNameEnterPlease)
             return
         }
 
