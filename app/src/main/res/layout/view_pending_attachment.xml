@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
+    android:contentDescription="@string/AccessibilityId_attachmentsClickToDownload"
     android:orientation="horizontal"
     android:paddingHorizontal="12dp"
     android:paddingVertical="@dimen/small_spacing"

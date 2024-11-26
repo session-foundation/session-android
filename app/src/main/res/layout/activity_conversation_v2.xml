@@ -252,7 +252,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@+id/blockedBanner"
-        android:background="@color/outdated_client_banner_background_color"
+        android:background="?colorAccent"
         android:contentDescription="@string/AccessibilityId_outdated_group_banner"
         android:visibility="gone"
         tools:visibility="visible">
@@ -278,7 +278,7 @@
         android:layout_gravity="center"
         app:drawableTint="@color/black"
         app:layout_constraintTop_toBottomOf="@+id/outdatedDisappearingBanner"
-        android:background="@color/outdated_client_banner_background_color"
+        android:background="?colorAccent"
         android:paddingVertical="@dimen/very_small_spacing"
         android:gravity="center_horizontal"
         android:textColor="@color/black"
