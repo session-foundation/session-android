@@ -125,7 +125,8 @@ fun CreateGroup(
                     onChange = onGroupNameChanged,
                     placeholder = stringResource(R.string.groupNameEnter),
                     textStyle = LocalType.current.base,
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                        .qaTag(stringResource(R.string.AccessibilityId_groupNameEnter)),
                     error = groupNameError.takeIf { it.isNotBlank() },
                     enabled = !showLoading,
                     innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
