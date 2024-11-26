@@ -633,6 +633,7 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         authData: ByteArray,
         inviter: AccountId,
+        inviterName: String?,
         inviteMessageHash: String,
         inviteMessageTimestamp: Long,
     ): Unit = withContext(dispatcher) {
@@ -642,6 +643,7 @@ class GroupManagerV2Impl @Inject constructor(
             authDataOrAdminKey = authData,
             fromPromotion = false,
             inviter = inviter,
+            inviterName = inviterName,
             inviteMessageTimestamp = inviteMessageTimestamp,
         )
 
@@ -655,6 +657,7 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         adminKey: ByteArray,
         promoter: AccountId,
+        promoterName: String?,
         promoteMessageHash: String,
         promoteMessageTimestamp: Long,
     ): Unit = withContext(dispatcher) {
@@ -671,6 +674,7 @@ class GroupManagerV2Impl @Inject constructor(
                 authDataOrAdminKey = adminKey,
                 fromPromotion = true,
                 inviter = promoter,
+                inviterName = promoterName,
                 inviteMessageTimestamp = promoteMessageTimestamp,
             )
         } else {
@@ -715,6 +719,7 @@ class GroupManagerV2Impl @Inject constructor(
         authDataOrAdminKey: ByteArray,
         fromPromotion: Boolean,
         inviter: AccountId,
+        inviterName: String?,
         inviteMessageTimestamp: Long
     ) {
         // If we have already received an invitation in the past, we should not process this one
@@ -751,10 +756,11 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
             storage.insertGroupInviteControlMessage(
-                inviteMessageTimestamp,
-                inviter.hexString,
-                groupId,
-                groupName
+                sentTimestamp = inviteMessageTimestamp,
+                senderPublicKey = inviter.hexString,
+                senderName = inviterName,
+                closedGroup = groupId,
+                groupName = groupName
             )
         }
     }

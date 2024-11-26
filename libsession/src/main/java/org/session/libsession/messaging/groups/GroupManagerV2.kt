@@ -54,6 +54,7 @@ interface GroupManagerV2 {
         groupName: String,
         authData: ByteArray,
         inviter: AccountId,
+        inviterName: String?,
         inviteMessageHash: String,
         inviteMessageTimestamp: Long,
     )
@@ -63,6 +64,7 @@ interface GroupManagerV2 {
         groupName: String,
         adminKey: ByteArray,
         promoter: AccountId,
+        promoterName: String?,
         promoteMessageHash: String,
         promoteMessageTimestamp: Long,
     )

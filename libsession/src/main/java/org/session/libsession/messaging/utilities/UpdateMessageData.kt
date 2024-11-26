@@ -65,8 +65,13 @@ class UpdateMessageData () {
         }
         data object GroupLeaving: Kind()
         data object GroupErrorQuit: Kind()
-        class GroupInvitation(val groupAccountId: String, val invitingAdmin: String, val groupName: String) : Kind() {
-            constructor(): this("", "", "")
+        class GroupInvitation(
+            val groupAccountId: String,
+            val invitingAdminId: String,
+            val invitingAdminName: String?,
+            val groupName: String
+        ) : Kind() {
+            constructor(): this("", "", null, "")
         }
 
         class GroupKicked(val groupName: String) : Kind() {
