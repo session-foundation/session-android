@@ -19,7 +19,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextUtils
+import android.text.style.ImageSpan
 import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
@@ -99,6 +102,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
@@ -187,6 +191,7 @@ import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.isScrolledToBottom
@@ -831,14 +836,36 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     private fun setUpLegacyGroupBanner() {
         val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
 
+        //outdatedGroupBanner.isVisible = shouldDisplayBanner
+        //if (!shouldDisplayBanner) return
+
         val url = "https://getsession.org/blog/session-groups-v2"
 
         with(binding) {
-            outdatedGroupBanner.isVisible = shouldDisplayBanner
-            outdatedGroupBanner.text = Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
+            // Create a SpannableString with text
+            val text = SpannableString(
+                Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
                 //TODO groupsv2, date
                 .put(DATE_KEY, "")
                 .format()
+            )
+
+            // we need to add the inline icon
+            val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)
+            val imageSize = toPx(10, resources)
+            val imagePaddingTop = toPx(2, resources)
+            drawable?.setBounds(0, 0, imageSize, imageSize)
+            drawable?.setTint(getColorFromAttr(R.attr.message_sent_text_color))
+
+            // Create an ImageSpan with the drawable
+            val imageSpan = PaddedImageSpan(drawable!!, ImageSpan.ALIGN_BASELINE, imagePaddingTop)
+
+            // Append the image to the text
+            val spannable = SpannableString(text)
+            spannable.setSpan(imageSpan, text.length - 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+            outdatedGroupBanner.text = spannable
+
             outdatedGroupBanner.setOnClickListener {
                 showOpenUrlDialog(url)
             }

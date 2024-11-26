@@ -46,7 +46,6 @@
        <item name="menu_select_icon">@drawable/ic_baseline_check_circle_outline_24</item>
        <item name="menu_selectall_icon">@drawable/ic_baseline_select_all_24</item>
        <item name="menu_split_icon">@drawable/ic_baseline_call_split_24</item>
-       <item name="menu_popup_expand">@drawable/ic_baseline_launch_24</item>
        <item name="menu_info_icon">@drawable/ic_info_outline_white_24dp</item>
        <item name="menu_pin_icon">@drawable/ic_outline_pin_24</item>
        <item name="menu_unpin_icon">@drawable/ic_outline_pin_off_24</item>
@@ -180,7 +179,6 @@
         <item name="conversation_attach_image">@drawable/ic_image_dark</item>
         <item name="conversation_attach_video">@drawable/ic_movie_creation_dark</item>
         <item name="conversation_attach_sound">@drawable/ic_volume_up_dark</item>
-        <item name="conversation_attach">@drawable/ic_attach_white_24dp</item>
         <item name="conversation_number_picker_text_color_normal">@color/gray13</item>
         <item name="conversation_number_picker_text_color_selected">@color/white</item>
         <item name="conversation_sticker_footer_text_color">@color/core_grey_25</item>

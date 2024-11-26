@@ -276,19 +276,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        app:drawableTint="@color/black"
         app:layout_constraintTop_toBottomOf="@+id/outdatedDisappearingBanner"
         android:background="?colorAccent"
         android:paddingVertical="@dimen/very_small_spacing"
         android:gravity="center_horizontal"
-        android:textColor="@color/black"
+        android:textColor="?message_sent_text_color"
         android:paddingHorizontal="@dimen/medium_spacing"
         android:contentDescription="@string/AccessibilityId_outdated_group_banner"
         android:textSize="@dimen/very_small_font_size"
         tools:text="@string/groupLegacyBanner"
-        android:visibility="gone"
-        tools:visibility="visible"
-        app:drawableEndCompat="@drawable/ic_external" />
+        tools:visibility="visible" />
 
     <TextView
         android:padding="@dimen/medium_spacing"
