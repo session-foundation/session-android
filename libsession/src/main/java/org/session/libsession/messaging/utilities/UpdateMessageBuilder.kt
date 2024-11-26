@@ -291,11 +291,11 @@ object UpdateMessageBuilder {
                 }
             }
             is UpdateMessageData.Kind.GroupInvitation -> {
-                val invitingAdmin = Recipient.from(context, Address.fromSerialized(updateData.invitingAdmin), false)
                 val approved = configFactory.getGroup(AccountId(updateData.groupAccountId))?.invited == false
-                return if (invitingAdmin.name != null && !approved) {
+                val inviterName = updateData.invitingAdminName?.takeIf { it.isNotEmpty() } ?: getSenderName(updateData.invitingAdminId)
+                return if (!approved) {
                     Phrase.from(context, R.string.messageRequestGroupInvite)
-                        .put(NAME_KEY, invitingAdmin.name)
+                        .put(NAME_KEY, inviterName)
                         .put(GROUP_NAME_KEY, updateData.groupName)
                         .format()
                 } else {

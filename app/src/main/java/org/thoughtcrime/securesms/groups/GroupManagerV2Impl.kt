@@ -131,7 +131,6 @@ class GroupManagerV2Impl @Inject constructor(
                             setProfilePic(member.profileAvatar?.let { url ->
                                 member.profileKey?.let { key -> UserPic(url, key) }
                             } ?: UserPic.DEFAULT)
-                            setInvited()
                         }
                     )
                 }
@@ -213,7 +212,6 @@ class GroupManagerV2Impl @Inject constructor(
                 val toSet = configs.groupMembers.get(newMember.hexString)
                     ?.also { existing ->
                         if (existing.status == GroupMember.Status.INVITE_FAILED || existing.status == GroupMember.Status.INVITE_SENT) {
-                            existing.setInvited()
                             existing.setSupplement(shareHistory)
                         }
                     }
@@ -224,7 +222,6 @@ class GroupManagerV2Impl @Inject constructor(
 
                         member.setName(contact?.name.orEmpty())
                         member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
-                        member.setInvited()
                         member.setSupplement(shareHistory)
                     }
 
@@ -253,7 +250,6 @@ class GroupManagerV2Impl @Inject constructor(
             newMembers.map { configs.groupKeys.getSubAccountToken(it) }
         }
 
-
         // Call un-revocate API on new members, in case they have been removed before
         batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
             groupAdminAuth = groupAuth,
@@ -261,11 +257,25 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Call the API
-        val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
-        val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+        try {
+            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
+            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
 
-        // Make sure every request is successful
-        response.requireAllRequestsSuccessful("Failed to invite members")
+            // Make sure every request is successful
+            response.requireAllRequestsSuccessful("Failed to invite members")
+        } catch (e: Exception) {
+            // Update every member's status to "invite failed"
+            configFactory.withMutableGroupConfigs(group) { configs ->
+                for (newMember in newMembers) {
+                    configs.groupMembers.get(newMember.hexString)?.apply {
+                        setInvited(failed = true)
+                        configs.groupMembers.set(this)
+                    }
+                }
+            }
+
+            throw e
+        }
 
         // Send the invitation message to the new members
         JobQueue.shared.add(
@@ -633,6 +643,7 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         authData: ByteArray,
         inviter: AccountId,
+        inviterName: String?,
         inviteMessageHash: String,
         inviteMessageTimestamp: Long,
     ): Unit = withContext(dispatcher) {
@@ -642,6 +653,7 @@ class GroupManagerV2Impl @Inject constructor(
             authDataOrAdminKey = authData,
             fromPromotion = false,
             inviter = inviter,
+            inviterName = inviterName,
             inviteMessageTimestamp = inviteMessageTimestamp,
         )
 
@@ -655,6 +667,7 @@ class GroupManagerV2Impl @Inject constructor(
         groupName: String,
         adminKey: ByteArray,
         promoter: AccountId,
+        promoterName: String?,
         promoteMessageHash: String,
         promoteMessageTimestamp: Long,
     ): Unit = withContext(dispatcher) {
@@ -671,6 +684,7 @@ class GroupManagerV2Impl @Inject constructor(
                 authDataOrAdminKey = adminKey,
                 fromPromotion = true,
                 inviter = promoter,
+                inviterName = promoterName,
                 inviteMessageTimestamp = promoteMessageTimestamp,
             )
         } else {
@@ -715,6 +729,7 @@ class GroupManagerV2Impl @Inject constructor(
         authDataOrAdminKey: ByteArray,
         fromPromotion: Boolean,
         inviter: AccountId,
+        inviterName: String?,
         inviteMessageTimestamp: Long
     ) {
         // If we have already received an invitation in the past, we should not process this one
@@ -751,10 +766,11 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
             storage.insertGroupInviteControlMessage(
-                inviteMessageTimestamp,
-                inviter.hexString,
-                groupId,
-                groupName
+                sentTimestamp = inviteMessageTimestamp,
+                senderPublicKey = inviter.hexString,
+                senderName = inviterName,
+                closedGroup = groupId,
+                groupName = groupName
             )
         }
     }

@@ -42,7 +42,11 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
 
     override suspend fun execute(dispatcherName: String) {
         val configs = MessagingModuleConfiguration.shared.configFactory
-        val adminKey = requireNotNull(configs.withUserConfigs { it.userGroups.getClosedGroup(groupSessionId) }?.adminKey) {
+        val group = requireNotNull(configs.getGroup(AccountId(groupSessionId))) {
+            "Group must exist to invite"
+        }
+
+        val adminKey = requireNotNull(group.adminKey) {
             "User must be admin of group to invite"
         }
 
@@ -55,13 +59,6 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         // Make the request for this member
                         val memberId = AccountId(memberSessionId)
                         val (groupName, subAccount) = configs.withMutableGroupConfigs(sessionId) { configs ->
-                            configs.groupMembers.set(
-                                configs.groupMembers.getOrConstruct(
-                                    memberSessionId
-                                ).apply {
-                                    setInvited()
-                                }
-                            )
                             configs.groupInfo.getName() to configs.groupKeys.makeSubAccount(memberId)
                         }
 
@@ -93,11 +90,9 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
 
             configs.withMutableGroupConfigs(sessionId) { configs ->
                 results.forEach { (memberSessionId, result) ->
-                    if (result.isFailure) {
-                        configs.groupMembers.get(memberSessionId)?.let { member ->
-                            member.setInvited(failed = true)
-                            configs.groupMembers.set(member)
-                        }
+                    configs.groupMembers.get(memberSessionId)?.let { member ->
+                        member.setInvited(failed = result.isFailure)
+                        configs.groupMembers.set(member)
                     }
                 }
             }

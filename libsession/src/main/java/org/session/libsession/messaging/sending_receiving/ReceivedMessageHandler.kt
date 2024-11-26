@@ -57,6 +57,7 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -716,6 +717,7 @@ private fun handlePromotionMessage(message: GroupUpdated) {
                     groupName = promotion.name,
                     adminKey = keyPair.secretKey,
                     promoter = adminId,
+                    promoterName = message.profile?.displayName,
                     promoteMessageHash = message.serverHash!!,
                     promoteMessageTimestamp = message.sentTimestamp!!,
                 )
@@ -760,6 +762,7 @@ private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: Group
                     groupName = invite.name,
                     authData = invite.memberAuthData.toByteArray(),
                     inviter = adminId,
+                    inviterName = message.profile?.displayName,
                     inviteMessageHash = message.serverHash!!,
                     inviteMessageTimestamp = message.sentTimestamp!!,
                 )
