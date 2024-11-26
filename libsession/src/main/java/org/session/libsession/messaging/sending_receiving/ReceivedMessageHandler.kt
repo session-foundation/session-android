@@ -619,6 +619,20 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
         !inner.hasInviteMessage() && !inner.hasPromoteMessage()) {
         throw NullPointerException("Message wasn't polled from a closed group!")
     }
+
+    // Update profile if needed
+    if (message.profile != null) {
+        val profile = message.profile
+        val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
+        val profileManager = SSKEnvironment.shared.profileManager
+        if (profile.displayName?.isNotEmpty() == true) {
+            profileManager.setName(MessagingModuleConfiguration.shared.context, recipient, profile.displayName)
+        }
+        if (profile.profileKey?.isNotEmpty() == true && !profile.profilePictureURL.isNullOrEmpty()) {
+            profileManager.setProfilePicture(MessagingModuleConfiguration.shared.context, recipient, profile.profilePictureURL, profile.profileKey)
+        }
+    }
+
     when {
         inner.hasInviteMessage() -> handleNewLibSessionClosedGroupMessage(message)
         inner.hasInviteResponse() -> handleInviteResponse(message, closedGroup!!)

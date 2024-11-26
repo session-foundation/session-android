@@ -1,17 +1,17 @@
 package org.session.libsession.messaging.messages.control
 
+import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsignal.protos.SignalServiceProtos.Content
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 
 class GroupUpdated @JvmOverloads constructor(
     val inner: GroupUpdateMessage = GroupUpdateMessage.getDefaultInstance(),
-    val profile: LokiProfile? = null
+    val profile: Profile? = null
 ): ControlMessage() {
 
     override fun isValid(): Boolean {
-        return true // TODO: add the validation here
+        return true
     }
 
     override val isSelfSendValid: Boolean = true
@@ -26,11 +26,7 @@ class GroupUpdated @JvmOverloads constructor(
             if (message.hasDataMessage() && message.dataMessage.hasGroupUpdateMessage())
                 GroupUpdated(
                     inner = message.dataMessage.groupUpdateMessage,
-                    profile = if (message.dataMessage.hasProfile()) {
-                        message.dataMessage.profile
-                    } else {
-                        null
-                    }
+                    profile = Profile.fromProto(message.dataMessage)
                 )
             else null
     }
@@ -38,6 +34,7 @@ class GroupUpdated @JvmOverloads constructor(
     override fun toProto(): Content {
         val dataMessage = DataMessage.newBuilder()
             .setGroupUpdateMessage(inner)
+            .apply { profile?.let(this::setProfile) }
             .build()
         return Content.newBuilder()
             .setDataMessage(dataMessage)

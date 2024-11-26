@@ -617,7 +617,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setIsApproved(true)
             val responseData = GroupUpdateMessage.newBuilder()
                 .setInviteResponse(inviteResponse)
-            val responseMessage = GroupUpdated(responseData.build())
+            val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
             MessageSender.send(
                 responseMessage,
