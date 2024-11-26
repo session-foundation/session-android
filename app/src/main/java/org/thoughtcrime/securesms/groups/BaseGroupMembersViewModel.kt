@@ -119,6 +119,11 @@ abstract class BaseGroupMembersViewModel (
                 highlightStatus = true
             }
 
+            member.status == GroupMember.Status.REMOVED ||
+                    member.status == GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> {
+                status = context.getString(R.string.groupPendingRemoval)
+            }
+
             member.status == GroupMember.Status.PROMOTION_FAILED -> {
                 status = context.getString(R.string.adminPromotionFailed)
                 highlightStatus = true
