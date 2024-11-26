@@ -1,5 +1,7 @@
 package org.session.libsignal.utilities
 
+import org.session.libsignal.BuildConfig
+
 private val VALID_ACCOUNT_ID_PATTERN = Regex("[0-9]{2}[0-9a-fA-F]{64}")
 
 data class AccountId(
@@ -11,8 +13,10 @@ data class AccountId(
         )
 
     init {
-        check(VALID_ACCOUNT_ID_PATTERN.matches(hexString)) {
-            "Invalid account ID: $hexString"
+        if (BuildConfig.DEBUG) {
+            check(VALID_ACCOUNT_ID_PATTERN.matches(hexString)) {
+                "Invalid account ID: $hexString"
+            }
         }
     }
 
@@ -24,5 +28,15 @@ data class AccountId(
 
     override fun compareTo(other: AccountId): Int {
         return hexString.compareTo(other.hexString)
+    }
+
+    companion object {
+        fun fromString(accountId: String): AccountId? {
+            return if (VALID_ACCOUNT_ID_PATTERN.matches(accountId)) {
+                AccountId(accountId)
+            } else {
+                null
+            }
+        }
     }
 }

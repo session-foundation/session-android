@@ -149,9 +149,8 @@ object MessageSender {
         // Convert it to protobuf
         val proto = message.toProto()?.toBuilder() ?: throw Error.ProtoConversionFailed
         if (message is GroupUpdated) {
-            // Add all cases where we have to attach profile
-            if (message.inner.hasInviteResponse()) {
-                proto.mergeDataMessage(storage.getUserProfile().toProto())
+            if (message.profile != null) {
+                proto.mergeDataMessage(message.profile.toProto())
             }
         }
         // Serialize the protobuf

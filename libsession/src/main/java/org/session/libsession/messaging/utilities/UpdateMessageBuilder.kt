@@ -206,8 +206,10 @@ object UpdateMessageBuilder {
                                 if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
                                 .format()
-                            number == 2 && containsUser -> Phrase.from(context,
-                                if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
+                            number == 2 && containsUser && historyShared -> Phrase.from(context, R.string.groupMemberNewYouHistoryTwo)
+                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
+                                .format()
+                            number == 2 && containsUser -> Phrase.from(context, R.string.groupInviteYouAndOtherNew)
                                 .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,

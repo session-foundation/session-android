@@ -58,7 +58,7 @@
     <string name="appearanceZoomOut">تصغير</string>
     <string name="attachment">مرفق</string>
     <string name="attachmentsAdd">إضافة مرفق</string>
-    <string name="attachmentsAlbumUnnamed">ألبوم بدون إسم</string>
+    <string name="attachmentsAlbumUnnamed">البوم بدون اسم</string>
     <string name="attachmentsAutoDownload">تنزيل المرفقات تلقائيًا</string>
     <string name="attachmentsAutoDownloadDescription">تنزيل الوسائط والملفات من هذه الدردشة تلقائيًا.</string>
     <string name="attachmentsAutoDownloadModalDescription">هل تود تنزيل كافة الملفات تلقائيًا من <b>{conversation_name}</b>؟</string>
@@ -147,6 +147,7 @@
     <string name="callsNotificationsRequired">المكالمات الصوتية والمرئية تتطلب تمكين الاشعارات في اعدادات نظامك.</string>
     <string name="callsPermissionsRequired">صلاحيات الاتصال مطلوبة</string>
     <string name="callsPermissionsRequiredDescription">يمكنك تفعيل صَلاحِيَة \"المكالمات الصوتية والمرئية\" في إعدادات الخصوصية.</string>
+    <string name="callsPermissionsRequiredDescription1">يمكنك تمكين إذن \"المكالمات الصوتية والفيديو\" في إعدادات الأذونات.</string>
     <string name="callsReconnecting">جار إعادة الاتصال…</string>
     <string name="callsRinging">يرن حاليا...</string>
     <string name="callsSessionCall">{app_name} Call</string>
@@ -290,10 +291,26 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">تم حذف هذه الرسالة</string>
     <string name="deleteMessageDeletedLocally">تم حذف هذه الرسالة على هذا الجهاز</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="zero">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
+        <item quantity="one">هل أنت متأكد من حذف الرسالة من هذا الجهاز فقط؟</item>
+        <item quantity="two">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
+        <item quantity="few">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
+        <item quantity="many">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
+        <item quantity="other">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">هل أنت متأكد من أنك تريد حذف هذه الرسالة للجميع؟</string>
     <string name="deleteMessageDeviceOnly">حذف على هذا الجهاز فقط</string>
     <string name="deleteMessageDevicesAll">حذف على جميع أجهزتي</string>
     <string name="deleteMessageEveryone">حذف للجميع</string>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="zero">لا يمكن حذف بعض الرسائل التي حددتها من جميع أجهزتك</item>
+        <item quantity="one">لا يمكن حذف هذه الرسالة من جميع أجهزتك</item>
+        <item quantity="two">لا يمكن حذف بعض الرسائل التي حددتها من جميع أجهزتك</item>
+        <item quantity="few">لا يمكن حذف بعض الرسائل التي حددتها من جميع أجهزتك</item>
+        <item quantity="many">لا يمكن حذف بعض الرسائل التي حددتها من جميع أجهزتك</item>
+        <item quantity="other">لا يمكن حذف بعض الرسائل التي حددتها من جميع أجهزتك</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">هل أنت متيقِّن من أنك تريد مسح هذه الرسائل لدى الجميع؟</string>
     <string name="deleting">حذف</string>
     <string name="developerToolsToggle">تحويل أدوات المطور</string>
@@ -324,7 +341,7 @@
     <string name="disappearingMessagesSetYou"><b>أنت</b> قمت بتعيين الرسائل لتختفي بعد {time} من {disappearing_messages_type}.</string>
     <string name="disappearingMessagesTimer">المؤقت</string>
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> قام بإيقاف الرسائل المختفية. لن تختفي الرسائل التي يرسلها بعد الآن.</string>
-    <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> قام/ت بإيقاف تشغيل الرسائل المختفية <b>إيقاف</b>.</string>
+    <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> قام بإيقاف تشغيل الرسائل المختفية <b>إيقاف</b>.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>أنت</b> أوقفت <b>الرسائل المختفية</b>. لم تعد الرسائل التي ترسلها تختفي.</string>
     <string name="disappearingMessagesTurnedOffYouGroup"><b>قمت</b> بإيقاف <b>تشغيل</b> الرسائل المختفية.</string>
     <string name="disappearingMessagesTypeRead">القراءة</string>
@@ -470,7 +487,7 @@
     <string name="helpSupport">الدعم</string>
     <string name="helpWedLoveYourFeedback">نتطلع لقراءة أراءك</string>
     <string name="hide">إخفاء</string>
-    <string name="hideMenuBarDescription">Toggle system menu bar visibility</string>
+    <string name="hideMenuBarDescription">تبديل رؤية شريط قائمة النظام</string>
     <string name="hideOthers">إخفاء الآخرين</string>
     <string name="image">صورة</string>
     <string name="incognitoKeyboard">لوحة المفاتيح في وضع التستّر</string>
@@ -622,9 +639,9 @@
     <string name="notificationsFastModeDescription">ستتم إعلامك بالرسائل الجديدة بشكل موثوق وفوري باستخدام خوادم إشعارات جوجل.</string>
     <string name="notificationsFastModeDescriptionIos">سوف يتم إعلامك برسائل جديدة بشكل موثوق وفوري باستخدام خوادم إشعارات Apple.</string>
     <string name="notificationsGoToDevice">اذهب إلى إعدادات تنبيهات الجهاز</string>
-    <string name="notificationsHeaderAllMessages">التنبيهات - الكل</string>
-    <string name="notificationsHeaderMentionsOnly">التنبيهات - الإشعارات فقط</string>
-    <string name="notificationsHeaderMute">التنبيهات - مكتومة</string>
+    <string name="notificationsHeaderAllMessages">الإشعارات - الكل</string>
+    <string name="notificationsHeaderMentionsOnly">الإشعارات- الإشارات فقط</string>
+    <string name="notificationsHeaderMute">الإشعارات - مكتومة</string>
     <string name="notificationsIosGroup">{name} إلى {conversation_name}</string>
     <string name="notificationsIosRestart">ربما تلقيت رسائل أثناء إعادة تشغيل {device} الخاص بك.</string>
     <string name="notificationsLedColor">لون ضوء التنبيه LED</string>
@@ -819,7 +836,7 @@
     <string name="showLess">عرض أقل</string>
     <string name="stickers">الملصقات</string>
     <string name="supportGoTo">اِذهب اِلى صفحة الدعم</string>
-    <string name="systemInformationDesktop">System Information: {information}</string>
+    <string name="systemInformationDesktop">معلومات النظام: {information}</string>
     <string name="theContinue">التالي</string>
     <string name="theDefault">افتراضي</string>
     <string name="theError">خطأ</string>

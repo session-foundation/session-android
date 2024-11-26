@@ -183,10 +183,10 @@ object SodiumUtilities {
         }
 
         // Only support generating blinded keys for standard account ids
-        val accountId = AccountId(standardAccountId)
-        if (accountId.prefix != IdPrefix.STANDARD) return false
-        val blindedId = AccountId(blindedAccountId)
-        if (blindedId.prefix != IdPrefix.BLINDED) return false
+        val accountId = AccountId.fromString(standardAccountId)
+        if (accountId?.prefix != IdPrefix.STANDARD) return false
+        val blindedId = AccountId.fromString(blindedAccountId)
+        if (blindedId?.prefix != IdPrefix.BLINDED) return false
         val k = generateBlindingFactor(serverPublicKey) ?: return false
 
         // From the account id (ignoring 05 prefix) we have two possible ed25519 pubkeys;

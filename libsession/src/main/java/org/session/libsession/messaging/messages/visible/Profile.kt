@@ -3,6 +3,7 @@ package org.session.libsession.messaging.messages.visible
 import com.google.protobuf.ByteString
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.protos.SignalServiceProtos
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 
 class Profile(
     var displayName: String? = null,

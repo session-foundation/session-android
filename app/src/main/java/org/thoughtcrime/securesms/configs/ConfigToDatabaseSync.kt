@@ -40,6 +40,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
+import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -281,6 +282,21 @@ class ConfigToDatabaseSync @Inject constructor(
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
             if (!closedGroup.invited) {
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
+            }
+
+            if (closedGroup.kicked && storage.getMessageCount(threadId) == 0L) {
+                // If we don't have any messages in a "kicked" group, we will need to add a control
+                // message showing we were kicked
+                storage.insertIncomingInfoMessage(
+                    context = context,
+                    senderPublicKey = localUserPublicKey,
+                    groupID = closedGroup.groupAccountId.hexString,
+                    type = SignalServiceGroup.Type.KICKED,
+                    name = closedGroup.name,
+                    members = emptyList(),
+                    admins = emptyList(),
+                    sentTimestamp = clock.currentTimeMills(),
+                )
             }
         }
 

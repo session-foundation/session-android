@@ -499,7 +499,7 @@
     <string name="legacyGroupMemberNewYouOther"><b>Ty</b> oraz użytkownik <b>{other_name}</b> dołączyliście do grupy.</string>
     <string name="legacyGroupMemberTwoNew"><b>{name}</b> i <b>{other_name}</b> dołączyli do grupy.</string>
     <string name="legacyGroupMemberYouNew"><b>Dołączono</b> do grupy.</string>
-    <string name="linkPreviews">Previzualizări ale linkurilor</string>
+    <string name="linkPreviews">Podgląd linków</string>
     <string name="linkPreviewsDescription">Pokaż podglądy linków dla obsługiwanych adresów URL.</string>
     <string name="linkPreviewsEnable">Włącz podgląd linków</string>
     <string name="linkPreviewsErrorLoad">Nie można wczytać podlągu linku</string>

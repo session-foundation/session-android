@@ -186,7 +186,7 @@ class HomeViewModel @Inject constructor(
 
             overrideMessageSnippets.update { it + (threadId to errorMessage) }
         } else {
-            // No need to remove the message override, as the conversation will be removed from the list
+            overrideMessageSnippets.update { it - threadId }
         }
     }
 
