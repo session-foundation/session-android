@@ -152,6 +152,7 @@
     <string name="callsNotificationsRequired">Spraak- en video-oproepen vereisen dat meldingen zijn ingeschakeld in de systeeminstellingen van uw apparaat.</string>
     <string name="callsPermissionsRequired">Oproepmachtigingen vereist</string>
     <string name="callsPermissionsRequiredDescription">U kunt de machtiging \"Spraak- en video-oproepen\" inschakelen in de privacy-instellingen.</string>
+    <string name="callsPermissionsRequiredDescription1">U kunt de machtiging voor \"Spraak- en video-oproepen\" inschakelen in de privacy-instellingen.</string>
     <string name="callsReconnecting">Herverbinden…</string>
     <string name="callsRinging">Gaat over...</string>
     <string name="callsSessionCall">{app_name} Gesprek</string>
@@ -401,6 +402,7 @@
     <string name="groupCreateErrorNoMembers">Kies ten minste één ander groepslid.</string>
     <string name="groupDelete">Verwijder groep</string>
     <string name="groupDeleteDescription">Weet je zeker dat je <b>{group_name}</b> wilt verwijderen? Dit zal alle leden verwijderen en alle groepsinhoud wissen.</string>
+    <string name="groupDeletedMemberDescription">{group_name} is verwijderd door een groepsbeheerder. U kunt geen berichten meer versturen.</string>
     <string name="groupDescriptionEnter">Voer een groepsbeschrijving in</string>
     <string name="groupDisplayPictureUpdated">Groepsafbeelding bijgewerkt.</string>
     <string name="groupEdit">Groep bewerken</string>

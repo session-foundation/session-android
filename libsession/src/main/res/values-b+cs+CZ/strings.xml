@@ -154,6 +154,7 @@
     <string name="callsNotificationsRequired">Pro používání hlasových a video hovorů je třeba povolit upozornění/oznámení v systémových nastaveních zařízení.</string>
     <string name="callsPermissionsRequired">Požaduje se oprávnění k volání</string>
     <string name="callsPermissionsRequiredDescription">Oprávnění pro \"Hlasové a video hovory\" můžete povolit v nastavení Soukromí.</string>
+    <string name="callsPermissionsRequiredDescription1">Oprávnění pro \"Hlasové a video hovory\" můžete povolit v nastavení Oprávnění.</string>
     <string name="callsReconnecting">Opětovné připojení…</string>
     <string name="callsRinging">Vyzvání...</string>
     <string name="callsSessionCall">{app_name} hovor</string>
@@ -430,6 +431,7 @@
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
     <string name="groupDelete">Smazat skupinu</string>
     <string name="groupDeleteDescription">Jste si jisti, že chcete smazat <b>{group_name}</b>? Tímto odstraníte všechny členy a smažete veškerý obsah skupiny.</string>
+    <string name="groupDeletedMemberDescription">Skupina {group_name} byla smazána správcem skupiny. Nebudete moci posílat další zprávy.</string>
     <string name="groupDescriptionEnter">Zadejte popis skupiny</string>
     <string name="groupDisplayPictureUpdated">Obrázek skupiny aktualizován.</string>
     <string name="groupEdit">Upravit skupinu</string>
