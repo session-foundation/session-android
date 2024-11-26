@@ -45,7 +45,7 @@ class AdminStateSync @Inject constructor(
                             }
                         }
                     } else {
-                        // You can't really change the group config if you are admin so the reverse
+                        // You can't really change the group config if you are not admin so the reverse
                         // logic doesn't need to be done.
                     }
                 }
