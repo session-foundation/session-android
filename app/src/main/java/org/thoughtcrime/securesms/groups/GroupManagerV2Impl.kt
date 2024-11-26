@@ -131,7 +131,6 @@ class GroupManagerV2Impl @Inject constructor(
                             setProfilePic(member.profileAvatar?.let { url ->
                                 member.profileKey?.let { key -> UserPic(url, key) }
                             } ?: UserPic.DEFAULT)
-                            setInvited()
                         }
                     )
                 }
@@ -213,7 +212,6 @@ class GroupManagerV2Impl @Inject constructor(
                 val toSet = configs.groupMembers.get(newMember.hexString)
                     ?.also { existing ->
                         if (existing.status == GroupMember.Status.INVITE_FAILED || existing.status == GroupMember.Status.INVITE_SENT) {
-                            existing.setInvited()
                             existing.setSupplement(shareHistory)
                         }
                     }
@@ -224,7 +222,6 @@ class GroupManagerV2Impl @Inject constructor(
 
                         member.setName(contact?.name.orEmpty())
                         member.setProfilePic(contact?.profilePicture ?: UserPic.DEFAULT)
-                        member.setInvited()
                         member.setSupplement(shareHistory)
                     }
 
@@ -253,7 +250,6 @@ class GroupManagerV2Impl @Inject constructor(
             newMembers.map { configs.groupKeys.getSubAccountToken(it) }
         }
 
-
         // Call un-revocate API on new members, in case they have been removed before
         batchRequests += SnodeAPI.buildAuthenticatedUnrevokeSubKeyBatchRequest(
             groupAdminAuth = groupAuth,
@@ -261,11 +257,25 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Call the API
-        val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
-        val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
+        try {
+            val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
+            val response = SnodeAPI.getBatchResponse(swarmNode, group.hexString, batchRequests)
 
-        // Make sure every request is successful
-        response.requireAllRequestsSuccessful("Failed to invite members")
+            // Make sure every request is successful
+            response.requireAllRequestsSuccessful("Failed to invite members")
+        } catch (e: Exception) {
+            // Update every member's status to "invite failed"
+            configFactory.withMutableGroupConfigs(group) { configs ->
+                for (newMember in newMembers) {
+                    configs.groupMembers.get(newMember.hexString)?.apply {
+                        setInvited(failed = true)
+                        configs.groupMembers.set(this)
+                    }
+                }
+            }
+
+            throw e
+        }
 
         // Send the invitation message to the new members
         JobQueue.shared.add(
