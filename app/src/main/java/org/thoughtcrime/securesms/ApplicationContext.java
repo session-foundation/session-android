@@ -157,7 +157,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
     @Inject ConfigUploader configUploader;
-    @Inject ConfigToDatabaseSync configToDatabaseSync;
     @Inject AdminStateSync adminStateSync;
     @Inject DestroyedGroupSync destroyedGroupSync;
     @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
@@ -276,7 +275,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         snodeClock.start();
         pushRegistrationHandler.run();
         configUploader.start();
-        configToDatabaseSync.start();
         removeGroupMemberHandler.start();
         destroyedGroupSync.start();
         adminStateSync.start();

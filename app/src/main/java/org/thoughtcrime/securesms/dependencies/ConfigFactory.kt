@@ -48,6 +48,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -69,6 +70,7 @@ class ConfigFactory @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
+    private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -168,7 +170,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        val toDump = doWithMutableUserConfigs { configs ->
+        val result = doWithMutableUserConfigs { configs ->
             val config = when (userConfigType) {
                 UserConfigType.CONTACTS -> configs.contacts
                 UserConfigType.USER_PROFILE -> configs.userProfile
@@ -185,19 +187,22 @@ class ConfigFactory @Inject constructor(
 
             maxTimestamp?.let {
                 (config.dump() to it) to
-                listOf(ConfigUpdateNotification.UserConfigsMerged(userConfigType, it))
+                listOf(ConfigUpdateNotification.UserConfigsMerged(userConfigType))
             } ?: (null to emptyList())
         }
 
         // Dump now regardless so we can save the timestamp to the database
-        if (toDump != null) {
-            val (dump, timestamp) = toDump
+        if (result != null) {
+            val (dump, timestamp) = result
+
             configDatabase.storeConfig(
                 variant = userConfigType.configVariant,
                 publicKey = requiresCurrentUserAccountId().hexString,
                 data = dump,
                 timestamp = timestamp
             )
+
+            configToDatabaseSync.get().syncUserConfigs(userConfigType, timestamp)
         }
     }
 
@@ -290,7 +295,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        doWithMutableGroupConfigs(groupId, false) { configs ->
+        val changed = doWithMutableGroupConfigs(groupId, false) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -304,7 +309,12 @@ class ConfigFactory @Inject constructor(
 
             configs.dumpIfNeeded(clock)
 
-            Unit to (keysLoaded || infoMerged || membersMerged)
+            val changed = (keysLoaded || infoMerged || membersMerged)
+            changed to changed
+        }
+
+        if (changed) {
+            configToDatabaseSync.get().syncGroupConfigs(groupId)
         }
     }
 

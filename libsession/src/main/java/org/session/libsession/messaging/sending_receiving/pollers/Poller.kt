@@ -38,7 +38,7 @@ private class PromiseCanceledException : Exception("Promise canceled.")
 class Poller(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
-    private val lokiApiDatabase: LokiAPIDatabaseProtocol
+    private val lokiApiDatabase: LokiAPIDatabaseProtocol,
 ) {
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()

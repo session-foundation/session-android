@@ -203,10 +203,7 @@ sealed interface ConfigUpdateNotification {
     /**
      * The user configs have been merged from the server.
      */
-    data class UserConfigsMerged(
-        val configType: UserConfigType,
-        val timestamp: Long
-    ) : ConfigUpdateNotification
+    data class UserConfigsMerged(val configType: UserConfigType) : ConfigUpdateNotification
 
     data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
 }

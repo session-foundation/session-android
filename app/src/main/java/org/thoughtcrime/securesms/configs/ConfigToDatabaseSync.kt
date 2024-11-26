@@ -56,8 +56,6 @@ private const val TAG = "ConfigToDatabaseSync"
 /**
  * This class is responsible for syncing config system's data into the database.
  *
- * It does so by listening to the [ConfigFactoryProtocol.configUpdateNotifications] and updating the database accordingly.
- *
  * @see ConfigUploader For upload config system data into swarm automagically.
  */
 class ConfigToDatabaseSync @Inject constructor(
@@ -72,44 +70,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
 ) {
-    private var job: Job? = null
-
-    fun start() {
-        require(job == null) { "Already started" }
-
-        @Suppress("OPT_IN_USAGE")
-        job = GlobalScope.launch {
-            supervisorScope {
-                val job1 = async {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.UserConfigsMerged>()
-                        .debounce(800L)
-                        .collect { config ->
-                            try {
-                                Log.i(TAG, "Start syncing user configs")
-                                syncUserConfigs(config.configType, config.timestamp)
-                                Log.i(TAG, "Finished syncing user configs")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error syncing user configs", e)
-                            }
-                        }
-                }
-
-                val job2 = async {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                        .collect {
-                            syncGroupConfigs(it.groupId)
-                        }
-                }
-
-                job1.await()
-                job2.await()
-            }
-        }
-    }
-
-    private fun syncGroupConfigs(groupId: AccountId) {
+    fun syncGroupConfigs(groupId: AccountId) {
         val info = configFactory.withGroupConfigs(groupId) {
             UpdateGroupInfo(it.groupInfo)
         }
@@ -117,7 +78,7 @@ class ConfigToDatabaseSync @Inject constructor(
         updateGroup(info)
     }
 
-    private fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long) {
+    fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long) {
         val configUpdate = configFactory.withUserConfigs { configs ->
             when (userConfigType) {
                 UserConfigType.USER_PROFILE -> UpdateUserInfo(configs.userProfile)
