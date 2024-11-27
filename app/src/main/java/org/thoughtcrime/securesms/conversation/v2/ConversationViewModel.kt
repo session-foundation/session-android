@@ -289,8 +289,8 @@ class ConversationViewModel(
                 },
                 // You can block a 1to1 conversation, or a normal groups v2 conversation
                 blockButtonText = when {
-                    recipient.is1on1 -> application.getString(R.string.deleteAfterGroupPR1BlockUser)
-                    recipient.isGroupV2Recipient -> application.getString(R.string.block)
+                    recipient.is1on1 ||
+                            recipient.isGroupV2Recipient -> application.getString(R.string.block)
                     else -> null
                 },
                 declineButtonText = if (recipient.isGroupV2Recipient) {
