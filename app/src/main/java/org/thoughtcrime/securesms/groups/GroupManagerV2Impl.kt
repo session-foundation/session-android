@@ -58,6 +58,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.PollerFactory
 import javax.inject.Inject
@@ -71,6 +72,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val configFactory: ConfigFactory,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
+    private val threadDatabase: ThreadDatabase,
     private val pollerFactory: PollerFactory,
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     @ApplicationContext val application: Context,
@@ -763,6 +765,12 @@ class GroupManagerV2Impl @Inject constructor(
             approveGroupInvite(closedGroupInfo)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
+            // In most cases, when we receive invitation, the thread has just been created,
+            // and "has_sent" is set to false. But there are cases that we could be "re-invited"
+            // to a group, where we need to go through approval process again.
+            // For a conversation to be in a unapproved list, "has_sent" must be false, hence
+            // setting here explicitly. Details to be seen on ticket SES-2967.
+            threadDatabase.setHasSent(groupThreadId, false)
             storage.insertGroupInviteControlMessage(
                 sentTimestamp = inviteMessageTimestamp,
                 senderPublicKey = inviter.hexString,
