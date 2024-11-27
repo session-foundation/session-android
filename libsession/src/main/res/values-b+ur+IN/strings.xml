@@ -418,7 +418,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> اور <b>{count} دیگر</b> گروپ میں مدعو کیا گیا۔</string>
     <string name="groupMemberNewTwo"><b>{name}</b> اور <b>{other_name}</b> کو گروپ میں شامل ہونے کی دعوت دی گئی۔</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>آپ</b> اور <b>{count} دیگر</b> گروپ میں شامل ہونے کی دعوت دی گئی۔ چیٹ تاریخ شیئر کی گئی۔</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>آپ</b> اور <b>{name}</b> گروپ میں شامل ہونے کی دعوت دی گئی۔ چیٹ تاریخ شیئر کی گئی۔</string>
     <string name="groupMemberYouLeft"><b>آپ</b> نے گروپ چھوڑ دیا۔</string>
     <string name="groupMembers">گروپ کے اراکین</string>
     <string name="groupMembersNone">اس گروپ میں کوئی دیگر رکن نہیں ہیں۔</string>

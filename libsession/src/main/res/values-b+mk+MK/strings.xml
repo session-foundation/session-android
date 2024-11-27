@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> и <b>{count} други</b> беа поканети да се придружат на групата.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> беа поканети да се придружат на групата.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вие</b> и <b>{count} други</b> беа поканети да се придружат на групата. Историјата на разговорот е споделена.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Вие</b> и <b>{name}</b> беа поканети да се придружат на групата. Историјата на разговорот е споделена.</string>
     <string name="groupMemberYouLeft"><b>Вие</b> ја напуштивте групата.</string>
     <string name="groupMembers">Членови на групата</string>
     <string name="groupMembersNone">Нема други членови во оваа група.</string>

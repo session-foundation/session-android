@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> va <b>{count} boshqalar</b> guruhga qo\'shildi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> va <b>{other_name}</b> guruhga qo\'shildi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Siz</b> va <b>{count} boshqalar</b> guruhga qo\'shildilar. Suhbat tarixini ko\'rish imkoniyati berilgan.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Siz</b> va <b>{name}</b> guruhga qo\'shildi. Suhbat tarixini ko\'rish imkoniyati berilgan.</string>
     <string name="groupMemberYouLeft"><b>Siz</b> guruhni tark etdik.</string>
     <string name="groupMembers">Guruh aʼzolari</string>
     <string name="groupMembersNone">Ushbu guruhda boshqa a\'zolar yo\'q.</string>

@@ -452,7 +452,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> та ще <b>{count} інших</b> були запрошені приєднатися до групи.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> та <b>{other_name}</b> були запрошені приєднатися до групи.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ви</b> та <b>{count}</b> інших були запрошені приєднатися до групи. Було надано спільний доступ до історії чату.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ви</b> та <b>{name}</b> були запрошені приєднатися до групи. Було надано спільний доступ до історії чату.</string>
     <string name="groupMemberYouLeft"><b>Ви</b> покинули групу.</string>
     <string name="groupMembers">Учасники групи</string>
     <string name="groupMembersNone">Відсутні учасники у цій групі.</string>

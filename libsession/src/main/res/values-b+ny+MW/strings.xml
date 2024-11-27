@@ -255,7 +255,7 @@
     <string name="create">Yeretsani</string>
     <string name="cut">Dula</string>
     <string name="databaseErrorGeneric">Pakhala vuto la danga la data.\n\nTumizani zolembera zanu za mapulogalamu kuti mugawane ndi kukonza. Ngati izi sizichitika bwino, bwelersani {app_name} ndikubwezeretsanso akaunti yanu.\n\nChenjezo: Izi zidzakhudza kutayika kwa mauthenga onse, zolemba zomata, ndi data ya akaunti ya milungu iwiri.</string>
-    <string name="databaseErrorTimeout">Timazindikira {app_name} kutenga nthawi kuti ayambe.\n\nInu mungapitirize kudikira, kutulutsira chipangizo malipoti kuti azipeza mavuto, kapena yesani kuyambiranso Session.</string>
+    <string name="databaseErrorTimeout">Timazindikira {app_name} kutenga nthawi kuti ayambe.\n\nInu mungapitirize kudikira, kutulutsira chipangizo malipoti kuti azipeza mavuto, kapena yesani kuyambiranso {app_name}.</string>
     <string name="databaseErrorUpdate">Deta la pulogalamu yanu silikugwirizana ndi mtundu uwu wa {app_name}. Yikani pulogalamu yatsopanoyi ndikubwezerani akaunti yanu kuti mupange deta yatsopano ndikupitiriza kugwiritsa ntchito {app_name}.\n\nChenjezo: Izi zidzachititsa kuti mutaye mauthenga onse ndi zoyikapo zoposa masabata awo pafupifupi ziwiri.</string>
     <string name="databaseOptimizing">Kupanga bwino Database</string>
     <string name="debugLog">Lowani mu Debug Log</string>
@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ndi <b>{count} ena</b> anaitanidwa kuti alowe mu gulu.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ndi <b>{other_name}</b> anaitanidwa kuti alowe mu gulu.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Inu</b> ndi <b>{count} ena</b> anaitanidwa kuti alowe mu gulu. Mbiri ya macheza idagawidwa.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Inu</b> ndi <b>{name}</b> anaitanidwa kuti alowe mu gulu. Mbiri ya macheza idagawidwa.</string>
     <string name="groupMemberYouLeft"><b>Inu</b> achoka gulu.</string>
     <string name="groupMembers">Mamembala am gulu</string>
     <string name="groupMembersNone">Palibe mamembala ena mu gulu ili.</string>

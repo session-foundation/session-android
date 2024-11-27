@@ -432,7 +432,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> a <b>{count} ďalší</b> boli pozvaní, aby sa pripojili do skupiny.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> boli pozvaní, aby sa pripojili do skupiny.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vy</b> a <b>{count} ďalší</b> ste boli pozvaní, aby ste sa pripojili do skupiny. História chatu bola zdieľaná.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vy</b> a <b>{name}</b> ste boli pozvaní, aby ste sa pripojili do skupiny. História chatu bola zdieľaná.</string>
     <string name="groupMemberYouLeft"><b>Vy</b> ste opustili skupinu.</string>
     <string name="groupMembers">Členovia skupiny</string>
     <string name="groupMembersNone">V tejto skupine nie sú žiadni ďalší členovia.</string>

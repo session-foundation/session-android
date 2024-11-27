@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> او <b>{count} نور</b> ډله کې ګډون کولو ته بلل شوي.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> او <b>{other_name}</b> ډله کې ګډون کولو ته بلل شوي.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>تاسو</b> او <b>{count} نور</b> ډله کې ګډون کولو ته بلل شوی. د خبرو تاریخ شریک شوی.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>تاسو</b> او <b>{name}</b> ډله کې ګډون کولو ته بلل شوی. د خبرو تاریخ شریک شوی.</string>
     <string name="groupMemberYouLeft"><b>تاسو</b> ګروپ پریښود.</string>
     <string name="groupMembers">د ډلې غړي</string>
     <string name="groupMembersNone">په دی ګروپ کې نور غړي نشته.</string>

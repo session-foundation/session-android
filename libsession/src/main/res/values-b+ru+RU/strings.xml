@@ -450,7 +450,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> и <b>{count} других человек</b> были приглашены в группу.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> были приглашены в группу.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вы</b> и <b>{count} других пользователей</b> приглашены вступить в группу. История чата была передана.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Вы</b> и пользователь <b>{name}</b> приглашены вступить в группу. История чата была передана.</string>
     <string name="groupMemberYouLeft"><b>Вы</b> покинули группу.</string>
     <string name="groupMembers">Участники группы</string>
     <string name="groupMembersNone">В этой группе нет других участников.</string>

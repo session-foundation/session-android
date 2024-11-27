@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> at <b>{count} iba pa</b> ay inimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> at <b>{other_name}</b> ay inimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> ay inimbitahan na sumali sa grupo. Naibahagi ang kasaysayan ng chat.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ikaw</b> at <b>{name}</b> ay inimbitahan na sumali sa grupo. Naibahagi ang kasaysayan ng chat.</string>
     <string name="groupMemberYouLeft"><b>Ikaw</b> ay umalis sa grupo.</string>
     <string name="groupMembers">Mga Miyembro ng Grupo</string>
     <string name="groupMembersNone">Walang ibang miyembro sa grupong ito.</string>

@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> e <b>altri {count}</b> hanno ricevuto un invito a unirsi al gruppo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> e <b>{other_name}</b> hanno ricevuto un invito a unirsi al gruppo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> e <b>altri {count}</b> avete ricevuto un invito a unirvi al gruppo. La cronologia della chat è condivisa.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Tu</b> e <b>{name}</b> avete ricevuto un invito a unirvi al gruppo. La cronologia della chat è condivisa.</string>
     <string name="groupMemberYouLeft"><b>Hai</b> lasciato il gruppo.</string>
     <string name="groupMembers">Membri del gruppo</string>
     <string name="groupMembersNone">Non ci sono altri membri in questo gruppo.</string>

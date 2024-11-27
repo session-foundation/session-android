@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> と <b>{count}名</b> がグループに招待されました。</string>
     <string name="groupMemberNewTwo"><b>{name}</b> と <b>{other_name}</b> がグループに招待されました。</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>あなた</b> と <b>{count}名</b> がグループに招待されました。チャット履歴が共有されました。</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>あなた</b> と <b>{name}</b> がグループに招待されました。チャット履歴が共有されました。</string>
     <string name="groupMemberYouLeft"><b>You</b>がグループを退会しました</string>
     <string name="groupMembers">グループメンバー</string>
     <string name="groupMembersNone">このグループには他のメンバーがいません。</string>

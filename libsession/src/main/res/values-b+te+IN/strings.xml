@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> మరియు <b>{count} ఇతరులు</b> సమూహంలో చేరడానికి ఆహ్వానించబడ్డారు.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> మరియు <b>{other_name}</b> సమూహంలో చేరడానికి ఆహ్వానించబడ్డారు.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>మీరు</b> మరియు <b>{count} ఇతరులు</b> సమూహంలో చేరడానికి ఆహ్వానించబడ్డారు. చాట్ చరిత్ర పంచబడింది.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>మీరు</b> మరియు <b>{name}</b> సమూహంలో చేరడానికి ఆహ్వానించబడ్డారు. చాట్ చరిత్ర పంచబడింది.</string>
     <string name="groupMemberYouLeft"><b>మీరు</b> సమూహాన్ని వదిలారు.</string>
     <string name="groupMembers">సమూహ సభ్యులు</string>
     <string name="groupMembersNone">ఈ గ్రూపులో ఇతరులు సభ్యులు లేరు.</string>

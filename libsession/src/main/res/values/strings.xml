@@ -453,7 +453,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> and <b>{count} others</b> were invited to join the group.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> and <b>{other_name}</b> were invited to join the group.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>You</b> and <b>{count} others</b> were invited to join the group. Chat history was shared.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>You</b> and <b>{name}</b> were invited to join the group. Chat history was shared.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>You</b> and <b>{other_name}</b> were invited to join the group. Chat history was shared.</string>
     <string name="groupMemberYouLeft"><b>You</b> left the group.</string>
     <string name="groupMembers">Group Members</string>
     <string name="groupMembersNone">There are no other members in this group.</string>

@@ -426,7 +426,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> و <b>{count} سایرین</b> برای عضویت در گروه دعوت شدند.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> و <b>{other_name}</b> برای عضویت در گروه دعوت شدند.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>شما</b> و<b>{count} سایرین</b> دعوت شدید تا به گروه بپیوندید. تاریخچه ی چت به اشتراک گذاشته شد.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>شما</b> و <b>{name}</b> دعوت شدید تا به گروه بپیوندید. تاریخچه ی چت به اشتراک گذاشته شد.</string>
     <string name="groupMemberYouLeft"><b>شما</b> گروه را ترک کردید.</string>
     <string name="groupMembers">اعضای گروه</string>
     <string name="groupMembersNone">هیچ عضو دیگری در این گروه نیست.</string>

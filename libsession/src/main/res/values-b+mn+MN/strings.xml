@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> болон <b>{count} бусад</b> бүлэгт уригдлаа.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> болон <b>{other_name}</b> бүлэгт элсэхээр уригдсан байна.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Та</b> болон <b>{count} бусад</b> бүлэгт нэгдэх урилга авсан байна. Чатын түүх хуваалцагдсан.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Та</b> болон <b>{name}</b> бүлэгт нэгдэх урилга авсан байна. Чатын түүх хуваалцагдсан.</string>
     <string name="groupMemberYouLeft"><b>Та</b> бүлгээс гарлаа.</string>
     <string name="groupMembers">Бүлгийн гишүүд</string>
     <string name="groupMembersNone">Энэ бүлэгт өөр гишүүн байхгүй байна.</string>

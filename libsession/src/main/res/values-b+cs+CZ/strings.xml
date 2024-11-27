@@ -474,7 +474,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> a <b>{count} dalších</b> bylo pozváno do skupiny.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> byli pozváni do skupiny.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vy</b> a <b>{count} dalších</b> bylo pozváno do skupiny. Historie konverzace byla sdílena.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vy</b> a <b>{name}</b> byli pozváni do skupiny. Historie konverzace byla sdílena.</string>
     <string name="groupMemberYouLeft"><b>Opustil/a jste skupinu.</b></string>
     <string name="groupMembers">Členové skupiny</string>
     <string name="groupMembersNone">V této skupině nejsou žádní další členové.</string>

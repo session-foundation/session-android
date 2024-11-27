@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> og <b>{count} andre</b> ble invitert til å bli med i gruppen.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> og <b>{other_name}</b> ble invitert til å bli med i gruppen.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> og <b>{count} andre</b> ble invitert til å bli med i gruppen. Chat-historikk ble delt.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Du</b> og <b>{name}</b> ble invitert til å bli med i gruppen. Chat-historikk ble delt.</string>
     <string name="groupMemberYouLeft"><b>Du</b> forlot gruppen.</string>
     <string name="groupMembers">Gruppemedlemmer</string>
     <string name="groupMembersNone">Det er ingen andre medlemmer i denne gruppen.</string>

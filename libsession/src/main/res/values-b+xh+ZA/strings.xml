@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> kunye <b>{count} abanye abantu</b> babememelwe ukuba bajoyine iqela.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> kunye <b>{other_name}</b> babememelwe ukuba bajoyine iqela.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Mna</b> kunye <b>{count} abanye abantu</b> babememelwe ukuba bajoyine iqela. Imbali yencoko yenziwe yabelwana ngayo.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Mna</b> kunye <b>{name}</b> babememelwe ukuba bajoyine iqela. Imbali yencoko yenziwe yabelwana ngayo.</string>
     <string name="groupMemberYouLeft"><b>Mna</b> bashiye iqela.</string>
     <string name="groupMembers">Amalungu eQela</string>
     <string name="groupMembersNone">Akukho namanye amalungu kweli qela.</string>

@@ -426,7 +426,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> i <b>{count} drugih</b> su pozvani da se pridruže grupi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> i <b>{other_name}</b> su pozvani da se pridruže grupi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> i <b>{count} drugih</b> ste pozvani da se pridružite grupi. Istorija četa je podeljena.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> i <b>{name}</b> ste pozvani da se pridružite grupi. Istorija četa je podeljena.</string>
     <string name="groupMemberYouLeft"><b>Vi</b> ste napustili grupu.</string>
     <string name="groupMembers">Članovi grupe</string>
     <string name="groupMembersNone">Nema drugih članova u ovoj grupi.</string>

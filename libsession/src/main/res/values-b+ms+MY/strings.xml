@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dan <b>{count} lainnya</b> dijemput untuk menyertai kumpulan.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dan <b>{other_name}</b> dijemput untuk menyertai kumpulan.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Anda</b> dan <b>{count} yang lain</b> dijemput untuk menyertai kumpulan. Sejarah sembang telah dikongsi.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Anda</b> dan <b>{name}</b> dijemput untuk menyertai kumpulan. Sejarah sembang telah dikongsi.</string>
     <string name="groupMemberYouLeft"><b>Anda</b> meninggalkan kumpulan.</string>
     <string name="groupMembers">Ahli Kumpulan</string>
     <string name="groupMembersNone">Tiada ahli lain di dalam kumpulan ini.</string>

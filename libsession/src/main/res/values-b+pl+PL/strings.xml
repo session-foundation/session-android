@@ -431,7 +431,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> i <b>{count} innych użytkowników </b> zostali zaproszeni do grupy.</string>
     <string name="groupMemberNewTwo">Użytkownicy <b>{name}</b> oraz <b>{other_name}</b> zostali zaproszeni do grupy.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście zaproszeni do grupy. Udostępniono historię czatu.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ty</b> oraz użytkownik <b>{name}</b> zostaliście zaproszeni do grupy. Udostępniono historię czatu.</string>
     <string name="groupMemberYouLeft"><b>Opuszczasz</b> grupę.</string>
     <string name="groupMembers">Członkowie grupy</string>
     <string name="groupMembersNone">W grupie nie ma innych członków.</string>

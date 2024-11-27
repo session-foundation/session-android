@@ -442,7 +442,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> a <b>{count} eraill</b> wedi cael gwahoddiad i ymuno â\'r grŵp.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> wedi cael eu gwahodd i ymuno â\'r grŵp.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Chi</b> a <b>{count} eraill</b> ymunodd â\'r grŵp. Hanes sgwrs wedi cael ei rhannu.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Chi</b> a <b>{name}</b> ymunodd â\'r grŵp. Hanes sgwrs wedi cael ei rhannu.</string>
     <string name="groupMemberYouLeft"><b>Rydych chi</b> wedi gadael y grŵp.</string>
     <string name="groupMembers">Aelodau\'r grŵp</string>
     <string name="groupMembersNone">Nid oes aelodau eraill yn y grŵp hwn.</string>

@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ne <b>{count} abalala</b> mwakuyitibwa okwegatta mu kibiina.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ne <b>{other_name}</b> mwakuyitibwa okwegatta mu kibiina.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ggwe</b> ne <b>{count} abalala</b> mwakuyitibwa okwegatta mu kibiina. Ebika by\'obubaka by\'akugabana.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ggwe</b> ne <b>{name}</b> mwakuyitibwa okwegatta mu kibiina. Ebika by\'obubaka by\'akugabana.</string>
     <string name="groupMemberYouLeft"><b>Ggwe</b> wafuma mu kibiina.</string>
     <string name="groupMembers">Bonna</string>
     <string name="groupMembersNone">Tewali mirala mu kibiina kino.</string>

@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ಮತ್ತು <b>{count} ಇತರರನ್ನು</b> ಗುಂಪಿಗೆ ಸೇರಲು ಆಹ್ವಾನಿಸಲಾಗಿದೆ.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ಮತ್ತು <b>{other_name}</b> ಅವರನ್ನು ಗುಂಪಿಗೆ ಸೇರಲು ಆಹ್ವಾನಿಸಲಾಗಿದೆ.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>ನೀವು</b> ಮತ್ತು <b>{count} ಇತರರನ್ನು</b> ಗುಂಪಿಗೆ ಸೇರಲು ಆಹ್ವಾನಿಸಲಾಗಿದೆ. ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಹಂಚಲಾಗಿದೆ.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>ನೀವು</b> ಮತ್ತು <b>{name}</b> ಅವರಿಗೆ ಗುಂಪಿಗೆ ಸೇರಲು ಆಹ್ವಾನಿಸಲಾಗಿದೆ. ಚಾಟ್ ಇತಿಹಾಸವನ್ನು ಹಂಚಲಾಗಿದೆ.</string>
     <string name="groupMemberYouLeft"><b>ನೀವು</b> ಗುಂಪನ್ನು ತೊರೆದು ಹೋದಿದ್ದೀರಿ.</string>
     <string name="groupMembers">ಗುಂಪಿನೊಂದಿಗೆ ಸಂಪರ್ಕ</string>
     <string name="groupMembersNone">ಈ ಗುಂಪಿನಲ್ಲಿ ಇತರ ಸದಸ್ಯರಿಲ್ಲ.</string>

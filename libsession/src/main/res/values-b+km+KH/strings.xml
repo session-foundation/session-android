@@ -415,7 +415,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> និង <b>{count} គេផ្សេងទៀត</b> ត្រូវបានអញ្ជើញឱ្យចូលក្រុមនេះ។</string>
     <string name="groupMemberNewTwo"><b>{name}</b> និង <b>{other_name}</b> ត្រូវបានអញ្ជើញឱ្យចូលក្រុមនេះ។</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>អ្នក</b> និង <b>{count} គេផ្សេងទៀត</b> ត្រូវបានអញ្ជើញឱ្យចូលក្រុមនេះ។បានចែករំលែកប្រវត្តិការជជែក។</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>អ្នក</b> និង <b>{name}</b> ត្រូវបានអញ្ជើញឱ្យចូលក្រុមនេះ។បានចែករំលែកប្រវត្តិការជជែក។</string>
     <string name="groupMemberYouLeft"><b>អ្នក</b>បានចាកចេញពីក្រុម។</string>
     <string name="groupMembers">សមាជិកក្រុម</string>
     <string name="groupMembersNone">គ្មានសមាជិកផ្សេងទៀតនៅក្នុងក្រុមនេះទេ</string>

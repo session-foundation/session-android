@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> y <b>{count} más</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> y <b>{other_name}</b> fueron invitados a unirse al grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tú</b> y <b>{count} más</b> habéis sido invitados a uniros al grupo. El historial de mensajes ha sido compartido.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Tú</b> y <b>{name}</b> fueron invitados a unirse al grupo. El historial de chat fue compartido.</string>
     <string name="groupMemberYouLeft"><b>Tú</b> has abandonado el grupo.</string>
     <string name="groupMembers">Miembros del grupo</string>
     <string name="groupMembersNone">No hay otros miembros en este grupo.</string>

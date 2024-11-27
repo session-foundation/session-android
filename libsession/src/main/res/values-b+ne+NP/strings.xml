@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> र <b>{count} अन्य</b>लाई समूहमा सामेल हुन आमन्त्रित गरियो।</string>
     <string name="groupMemberNewTwo"><b>{name}</b> र <b>{other_name}</b>लाई समूहमा सामेल हुन आमन्त्रित गरियो।</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>तपाईं</b> र <b>{count} अन्य</b>लाई समूहमा सामेल हुन आमन्त्रित गरियो। च्याट इतिहास सेयर गरियो।</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>तपाईं</b> र <b>{name}</b>लाई समूहमा सामेल हुन आमन्त्रित गरियो। च्याट इतिहास सेयर गरियो।</string>
     <string name="groupMemberYouLeft"><b>तपाईं</b>ले समूह छोड्नुभयो।</string>
     <string name="groupMembers">समूह सदस्यहरू</string>
     <string name="groupMembersNone">यस समूहमा अरु कुनै सदस्यहरू छैनन्।</string>

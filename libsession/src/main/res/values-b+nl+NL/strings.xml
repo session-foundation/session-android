@@ -440,7 +440,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>U</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>U</b> en <b>{name}</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
     <string name="groupMemberYouLeft"><b>U</b> heeft de groep verlaten.</string>
     <string name="groupMembers">Groepsleden</string>
     <string name="groupMembersNone">Er zijn geen andere leden in deze groep.</string>

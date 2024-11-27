@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> û <b>{count} yên din</b> hatin dawetin ku tevlî komê bibin.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> û <b>{other_name}</b> hatin dawetin ku tevlî komê bibin.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Te</b> û <b>{count} yên din</b> hatin dawetin ku tevlî komê bibin. Dîroka sohbetê hate parve kirin.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Te</b> û <b>{name}</b> hatin dawetin ku tevlî komê bibin. Dîroka sohbetê hate parve kirin.</string>
     <string name="groupMemberYouLeft"><b>Tu</b> ji komê derketî.</string>
     <string name="groupMembers">Endamên Kom</string>
     <string name="groupMembersNone">Li vê komê ti endamên din nîne.</string>

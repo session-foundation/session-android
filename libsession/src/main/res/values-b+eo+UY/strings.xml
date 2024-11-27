@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> kaj <b>{other_name}</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo. Babilhistorio estis dividita.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> kaj <b>{name}</b> estis invititaj aniĝi al la grupo. Babilhistorio estis dividita.</string>
     <string name="groupMemberYouLeft"><b>Vi</b> forlasis la grupon.</string>
     <string name="groupMembers">Grupanoj</string>
     <string name="groupMembersNone">Ne estas aliaj membroj en ĉi tiu grupo.</string>

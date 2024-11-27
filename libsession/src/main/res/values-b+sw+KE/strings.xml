@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> na <b>{count} wengine</b> wamealikwa kujiunga na kundi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> na <b>{other_name}</b> wamealikwa kujiunga na kundi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Wewe</b> na <b>{count} wengine</b> mmealikwa kujiunga na kundi. Historia ya gumzo ilishirikiwa.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Wewe</b> na <b>{name}</b> mmealikwa kujiunga na kundi. Historia ya gumzo ilishirikiwa.</string>
     <string name="groupMemberYouLeft"><b>Wewe</b> umetoka kwenye kundi.</string>
     <string name="groupMembers">Wajumbe wa kikundi</string>
     <string name="groupMembersNone">Hakuna wanachama wengine katika kikundi hiki.</string>
