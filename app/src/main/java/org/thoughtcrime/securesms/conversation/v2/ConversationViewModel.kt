@@ -192,33 +192,13 @@ class ConversationViewModel(
                 repository.recipientUpdateFlow(threadId),
                 _openGroup,
             ) { a, b -> a to b }
-                .flatMapLatest { (recipient, community) ->
-                    // If the recipient is a group(v2) recipient, we need to listen for changes in the group's state
-                    // to get the "isDestroyed" data
-                    if (recipient?.isGroupV2Recipient == true) {
-                        (configFactory.configUpdateNotifications
-                            .filter { it is ConfigUpdateNotification.UserConfigsMerged ||
-                                    it is ConfigUpdateNotification.UserConfigsModified } as Flow<*>)
-                            .onStart { emit(Unit) }
-                            .map {
-                                Triple(
-                                    recipient,
-                                    community,
-                                    configFactory.getGroup(AccountId(recipient.address.serialize()))?.destroyed == true
-                                )
-                            }
-                    } else {
-                        flowOf(Triple(recipient, community, false))
-                    }
-                }
-                .collect { (recipient, community, isDestroyed) ->
+                .collect { (recipient, community) ->
                     _uiState.update {
                         it.copy(
                             shouldExit = recipient == null,
                             showInput = shouldShowInput(recipient, community),
                             enableInputMediaControls = shouldEnableInputMediaControls(recipient),
                             messageRequestState = buildMessageRequestState(recipient),
-                            isDestroyed = isDestroyed,
                         )
                     }
                 }
@@ -1069,15 +1049,6 @@ data class ConversationUiState(
     val showInput: Boolean = true,
     val enableInputMediaControls: Boolean = true,
     val showLoader: Boolean = false,
-    /**
-     * Whether this conversation is destroyed.
-     * Note: this is different from the conversation being deleted, which we won't be showing
-     * this conversation at all.
-     *
-     * As at now, only a group v2 conversation can be destroyed, for all other conversation types,
-     * this will always be false.
-     */
-    val isDestroyed: Boolean = false,
 )
 
 sealed interface MessageRequestUiState {

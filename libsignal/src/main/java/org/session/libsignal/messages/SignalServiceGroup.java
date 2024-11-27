@@ -44,6 +44,7 @@ public class SignalServiceGroup {
     LEAVING,
     ERROR_QUIT,
     KICKED,
+    DESTROYED,
   }
 
   private final byte[]                            groupId;

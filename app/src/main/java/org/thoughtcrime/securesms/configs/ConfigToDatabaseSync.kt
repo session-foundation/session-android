@@ -2,13 +2,6 @@ package org.thoughtcrime.securesms.configs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -31,7 +24,6 @@ import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGr
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
@@ -175,10 +167,14 @@ class ConfigToDatabaseSync @Inject constructor(
         val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
         val recipient = storage.getRecipientForThread(threadId) ?: return
         recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
-        profileManager.setName(context, recipient, groupInfoConfig.name ?: "")
+        profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
 
         if (groupInfoConfig.destroyed) {
-            storage.clearMessages(threadId)
+            handleDestroyedGroup(
+                threadId = threadId,
+                groupId = groupInfoConfig.id.hexString,
+                groupName = groupInfoConfig.name.orEmpty()
+            )
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 storage.trimThreadBefore(threadId, removeBefore)
@@ -284,7 +280,13 @@ class ConfigToDatabaseSync @Inject constructor(
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
             }
 
-            if (closedGroup.kicked && storage.getMessageCount(threadId) == 0L) {
+            if (closedGroup.destroyed) {
+                handleDestroyedGroup(
+                    threadId = threadId,
+                    groupId = closedGroup.groupAccountId.hexString,
+                    groupName = closedGroup.name
+                )
+            } else if (closedGroup.kicked && storage.getMessageCount(threadId) == 0L) {
                 // If we don't have any messages in a "kicked" group, we will need to add a control
                 // message showing we were kicked
                 storage.insertIncomingInfoMessage(
@@ -354,6 +356,29 @@ class ConfigToDatabaseSync @Inject constructor(
                 )
             }
         }
+    }
+
+    private fun handleDestroyedGroup(
+        threadId: Long,
+        groupId: String,
+        groupName: String,
+    ) {
+        storage.clearMessages(threadId)
+        val localUserPublicKey = storage.getUserPublicKey() ?: return Log.w(
+            TAG,
+            "No user public key when trying to handle destroyed group"
+        )
+        
+        storage.insertIncomingInfoMessage(
+            context = context,
+            senderPublicKey = localUserPublicKey,
+            groupID = groupId,
+            type = SignalServiceGroup.Type.DESTROYED,
+            name = groupName,
+            members = emptyList(),
+            admins = emptyList(),
+            sentTimestamp = clock.currentTimeMills(),
+        )
     }
 
     private data class UpdateConvoVolatile(val convos: List<Conversation?>)

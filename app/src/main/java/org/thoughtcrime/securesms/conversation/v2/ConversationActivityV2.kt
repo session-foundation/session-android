@@ -1191,15 +1191,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val openGroup = viewModel.openGroup
 
         // Get the correct placeholder text for this type of empty conversation
-        val isDestroyed = viewModel.uiState.value.isDestroyed
-
         val txtCS: CharSequence = when {
-            isDestroyed -> {
-                Phrase.from(this, R.string.groupDeletedMemberDescription)
-                    .put(GROUP_NAME_KEY, recipient.toShortString())
-                    .format()
-            }
-
             // note to self
             recipient.isLocalNumber -> getString(R.string.noteToSelfEmpty)
 
