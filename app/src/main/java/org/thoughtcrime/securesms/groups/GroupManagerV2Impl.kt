@@ -416,7 +416,7 @@ class GroupManagerV2Impl @Inject constructor(
                     allMembers.first { it.admin }.accountIdString() == storage.getUserPublicKey()
         }
 
-        if (group?.kicked == false) {
+        if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
             val destination = Destination.ClosedGroup(groupId.hexString)
             val sendMessageTasks = mutableListOf<Deferred<*>>()
 
@@ -435,18 +435,16 @@ class GroupManagerV2Impl @Inject constructor(
 
 
             // If we are not the only admin, send a left message for other admin to handle the member removal
-            if (!weAreTheOnlyAdmin) {
-                sendMessageTasks += async {
-                    MessageSender.send(
-                        GroupUpdated(
-                            GroupUpdateMessage.newBuilder()
-                                .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                                .build()
-                        ),
-                        destination,
-                        isSyncMessage = false
-                    ).await()
-                }
+            sendMessageTasks += async {
+                MessageSender.send(
+                    GroupUpdated(
+                        GroupUpdateMessage.newBuilder()
+                            .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                            .build()
+                    ),
+                    destination,
+                    isSyncMessage = false
+                ).await()
             }
 
             sendMessageTasks.awaitAll()

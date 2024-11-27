@@ -320,6 +320,11 @@ object UpdateMessageBuilder {
                     .put(GROUP_NAME_KEY, updateData.groupName)
                     .format()
             }
+            is UpdateMessageData.Kind.GroupDestroyed -> {
+                return Phrase.from(context, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, updateData.groupName)
+                    .format()
+            }
         }
     }
 
