@@ -10,6 +10,7 @@ import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
 import org.session.libsignal.utilities.AccountId
 
@@ -24,6 +25,7 @@ class MessagingModuleConfiguration(
     val tokenFetcher: TokenFetcher,
     val groupManagerV2: GroupManagerV2,
     val clock: SnodeClock,
+    val preferences: TextSecurePreferences
 ) {
 
     companion object {

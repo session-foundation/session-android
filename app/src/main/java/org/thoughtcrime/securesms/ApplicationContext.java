@@ -247,7 +247,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 this,
                 tokenFetcher,
                 groupManagerV2,
-                snodeClock
+                snodeClock,
+                textSecurePreferences
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");

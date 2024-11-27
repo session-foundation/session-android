@@ -4,6 +4,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -39,11 +41,13 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
@@ -551,6 +555,14 @@ object MessageSender {
         val destination = Destination.from(address)
         val job = MessageSendJob(message, destination)
         JobQueue.shared.add(job)
+
+        // if we are sending a 'Note to Self' make sure it is not hidden
+        if(address.serialize() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
+            MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
+            MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
+                it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
+            }
+        }
     }
 
     fun sendNonDurably(message: VisibleMessage, attachments: List<SignalAttachment>, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {

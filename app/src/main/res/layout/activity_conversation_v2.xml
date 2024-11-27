@@ -284,6 +284,7 @@
         android:paddingHorizontal="@dimen/medium_spacing"
         android:contentDescription="@string/AccessibilityId_outdated_group_banner"
         android:textSize="@dimen/very_small_font_size"
+        android:visibility="gone"
         tools:text="@string/groupLegacyBanner"
         tools:visibility="visible" />
 
@@ -310,10 +311,10 @@
         android:layout_marginBottom="@dimen/large_spacing"
         android:orientation="vertical"
         android:visibility="gone"
-        tools:visibility="gone">
+        tools:visibility="visible">
 
         <TextView
-            tools:visibility="invisible"
+
             android:id="@+id/messageRequestBlock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
