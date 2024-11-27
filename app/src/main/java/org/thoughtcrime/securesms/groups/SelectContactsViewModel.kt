@@ -99,6 +99,7 @@ class SelectContactsViewModel @AssistedInject constructor(
                 )
             }
             .toList()
+            .sortedBy { it.name }
     }
 
     fun onSearchQueryChanged(query: String) {
