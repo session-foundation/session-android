@@ -1015,6 +1015,10 @@ class GroupManagerV2Impl @Inject constructor(
         // Delete from swarm if we are admin
         val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (adminKey != null) {
+
+            // If hashes are given, these are the messages to delete. To be able to delete these
+            // messages from the swarm, the deletion request must be sent by an admin, or the messages
+            // belong to the requester.
             if (hashes.isNotEmpty() && (
                         senderIsVerifiedAdmin || storage.ensureMessageHashesAreSender(
                             hashes = hashes.toSet(),
@@ -1028,6 +1032,8 @@ class GroupManagerV2Impl @Inject constructor(
                 )
             }
 
+            // If memberIds are given, all messages belong to these members will be deleted on the
+            // swarm. These requests must be sent by an admin.
             if (memberIds.isNotEmpty() && senderIsVerifiedAdmin) {
                 val userMessageHashes = memberIds.flatMap { memberId ->
                     messageDataProvider.getUserMessageHashes(threadId, memberId)
