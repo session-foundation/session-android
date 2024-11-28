@@ -80,21 +80,11 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onContactSelected(contacts: Set<AccountId>) {
         performGroupOperation {
-            try {
-                // Mark the contacts as pending
-                memberPendingState.update { states ->
-                    states + contacts.associateWith { MemberPendingState.Inviting }
-                }
-
-                groupManager.inviteMembers(
-                    groupId,
-                    contacts.toList(),
-                    shareHistory = false
-                )
-            } finally {
-                // Remove pending state (so the real state will be revealed)
-                memberPendingState.update { states -> states - contacts }
-            }
+            groupManager.inviteMembers(
+                groupId,
+                contacts.toList(),
+                shareHistory = false
+            )
         }
     }
 
@@ -104,15 +94,7 @@ class EditGroupViewModel @AssistedInject constructor(
 
     fun onPromoteContact(memberSessionId: AccountId) {
         performGroupOperation {
-            try {
-                memberPendingState.update { states ->
-                    states + (memberSessionId to MemberPendingState.Promoting)
-                }
-
-                groupManager.promoteMember(groupId, listOf(memberSessionId))
-            } finally {
-                memberPendingState.update { states -> states - memberSessionId }
-            }
+            groupManager.promoteMember(groupId, listOf(memberSessionId))
         }
     }
 

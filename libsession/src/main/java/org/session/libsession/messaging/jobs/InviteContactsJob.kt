@@ -91,7 +91,11 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             configs.withMutableGroupConfigs(sessionId) { configs ->
                 results.forEach { (memberSessionId, result) ->
                     configs.groupMembers.get(memberSessionId)?.let { member ->
-                        member.setInvited(failed = result.isFailure)
+                        if (result.isFailure) {
+                            member.setInviteFailed()
+                        } else {
+                            member.setInviteSent()
+                        }
                         configs.groupMembers.set(member)
                     }
                 }

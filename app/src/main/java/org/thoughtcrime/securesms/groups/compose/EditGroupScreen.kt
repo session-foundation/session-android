@@ -42,12 +42,13 @@ import com.squareup.phrase.Phrase
 import kotlinx.serialization.Serializable
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
-import org.thoughtcrime.securesms.groups.GroupMemberStatus
+import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
@@ -425,7 +426,7 @@ fun EditMemberItem(
     MemberItem(
         accountId = member.accountId,
         title = member.name,
-        subtitle = member.status.getLabel(LocalContext.current),
+        subtitle = member.status?.getLabel(LocalContext.current),
         subtitleColor = if (member.highlightStatus) {
             LocalColors.current.danger
         } else {
@@ -451,7 +452,7 @@ private fun EditGroupPreview3() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
-            status = GroupMemberStatus.INVITE_SENT,
+            status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,
@@ -463,7 +464,7 @@ private fun EditGroupPreview3() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
-            status = GroupMemberStatus.PROMOTION_FAILED,
+            status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
             canRemove = true,
@@ -475,7 +476,7 @@ private fun EditGroupPreview3() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
-            status = GroupMemberStatus.MEMBER,
+            status = null,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,
@@ -525,7 +526,7 @@ private fun EditGroupPreview() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
-            status = GroupMemberStatus.INVITE_SENT,
+            status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,
@@ -537,7 +538,7 @@ private fun EditGroupPreview() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
-            status = GroupMemberStatus.PROMOTION_FAILED,
+            status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
             canRemove = true,
@@ -549,7 +550,7 @@ private fun EditGroupPreview() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
-            status = GroupMemberStatus.MEMBER,
+            status = null,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,
@@ -599,7 +600,7 @@ private fun EditGroupEditNamePreview() {
         val oneMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
             name = "Test User",
-            status = GroupMemberStatus.INVITE_SENT,
+            status = GroupMember.Status.INVITE_SENT,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,
@@ -611,7 +612,7 @@ private fun EditGroupEditNamePreview() {
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
             name = "Test User 2",
-            status = GroupMemberStatus.PROMOTION_FAILED,
+            status = GroupMember.Status.PROMOTION_FAILED,
             highlightStatus = true,
             canPromote = true,
             canRemove = true,
@@ -623,7 +624,7 @@ private fun EditGroupEditNamePreview() {
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
             name = "Test User 3",
-            status = GroupMemberStatus.MEMBER,
+            status = null,
             highlightStatus = false,
             canPromote = true,
             canRemove = true,

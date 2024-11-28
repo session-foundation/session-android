@@ -9,19 +9,26 @@ import java.util.EnumSet
  * Note: unlike a read-only data class, this class is mutable and it is not thread-safe
  * in general. You have to synchronize access to it if you are going to use it in multiple threads.
  */
-class GroupMember private constructor(@Suppress("CanBeParameter") private val nativePtr: Long) {
+class GroupMember private constructor(
+    // Constructed and used by native code.
+    @Suppress("CanBeParameter") private val nativePtr: Long
+) {
     init {
         if (nativePtr == 0L) {
             throw NullPointerException("Native pointer is null")
         }
     }
 
-    external fun setInvited(failed: Boolean = false)
-    external fun setAccepted()
+    external fun setInvited()
+    external fun setInviteSent()
+    external fun setInviteFailed()
+    external fun setInviteAccepted()
+
     external fun setPromoted()
     external fun setPromotionSent()
     external fun setPromotionFailed()
     external fun setPromotionAccepted()
+
     external fun setRemoved(alsoRemoveMessages: Boolean)
 
     private external fun statusInt(): Int

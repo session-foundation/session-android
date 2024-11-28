@@ -227,6 +227,7 @@ class GroupManagerV2Impl @Inject constructor(
                         member.setSupplement(shareHistory)
                     }
 
+                toSet.setInvited()
                 configs.groupMembers.set(toSet)
             }
 
@@ -270,7 +271,7 @@ class GroupManagerV2Impl @Inject constructor(
             configFactory.withMutableGroupConfigs(group) { configs ->
                 for (newMember in newMembers) {
                     configs.groupMembers.get(newMember.hexString)?.apply {
-                        setInvited(failed = true)
+                        setInviteFailed()
                         configs.groupMembers.set(this)
                     }
                 }
@@ -478,7 +479,15 @@ class GroupManagerV2Impl @Inject constructor(
         members: List<AccountId>
     ): Unit = withContext(dispatcher + SupervisorJob()) {
         val adminKey = requireAdminAccess(group)
-        val groupName = configFactory.withGroupConfigs(group) { it.groupInfo.getName() }
+        val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
+            // Update the group member's promotion status
+            members.asSequence()
+                .mapNotNull { configs.groupMembers.get(it.hexString) }
+                .onEach(GroupMember::setPromoted)
+                .forEach(configs.groupMembers::set)
+
+            configs.groupInfo.getName()
+        }
 
         // Send out the promote message to the members concurrently
         val promoteMessage = GroupUpdated(
@@ -800,7 +809,7 @@ class GroupManagerV2Impl @Inject constructor(
             val member = configs.groupMembers.get(sender.hexString)
             if (member != null) {
                 configs.groupMembers.set(member.apply {
-                    setAccepted()
+                    setInviteAccepted()
                 })
             } else {
                 Log.e(TAG, "User wasn't in the group membership to add!")

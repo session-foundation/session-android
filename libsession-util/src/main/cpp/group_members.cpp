@@ -89,14 +89,27 @@ Java_network_loki_messenger_libsession_1util_GroupMembersConfig_set(JNIEnv *env,
 extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setInvited(JNIEnv *env,
-                                                                         jobject thiz,
-                                                                         jboolean failed) {
-    ptrToMember(env, thiz)->set_invited(failed);
+                                                                         jobject thiz) {
+    ptrToMember(env, thiz)->invite_status = session::config::groups::INVITE_NOT_SENT;
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_network_loki_messenger_libsession_1util_util_GroupMember_setAccepted(JNIEnv *env,
+Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteSent(JNIEnv *env,
+                                                                            jobject thiz) {
+    ptrToMember(env, thiz)->set_invited();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteFailed(JNIEnv *env,
+                                                                              jobject thiz) {
+    ptrToMember(env, thiz)->set_invited(true);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteAccepted(JNIEnv *env,
                                                                           jobject thiz) {
     ptrToMember(env, thiz)->set_accepted();
 }
@@ -211,3 +224,4 @@ Java_network_loki_messenger_libsession_1util_util_GroupMember_setSupplement(JNIE
                                                                             jboolean supplement) {
     ptrToMember(env, thiz)->supplement = supplement;
 }
+
