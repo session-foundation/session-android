@@ -90,28 +90,28 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setInvited(JNIEnv *env,
                                                                          jobject thiz) {
-    ptrToMember(env, thiz)->invite_status = session::config::groups::INVITE_NOT_SENT;
+    ptrToMember(env, thiz)->invite_status = session::config::groups::STATUS_NOT_SENT;
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteSent(JNIEnv *env,
                                                                             jobject thiz) {
-    ptrToMember(env, thiz)->set_invited();
+    ptrToMember(env, thiz)->set_invite_sent();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteFailed(JNIEnv *env,
                                                                               jobject thiz) {
-    ptrToMember(env, thiz)->set_invited(true);
+    ptrToMember(env, thiz)->set_invite_failed();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setInviteAccepted(JNIEnv *env,
                                                                           jobject thiz) {
-    ptrToMember(env, thiz)->set_accepted();
+    ptrToMember(env, thiz)->set_invite_accepted();
 }
 
 extern "C"

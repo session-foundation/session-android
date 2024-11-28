@@ -135,7 +135,7 @@ inline jobject serialize_closed_group_info(JNIEnv* env, session::config::group_i
     jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
     jmethodID constructor = env->GetMethodID(group_info_class, "<init>","(Lorg/session/libsignal/utilities/AccountId;[B[BJZLjava/lang/String;Z)V");
     jobject return_object = env->NewObject(group_info_class,constructor,
-                                           session_id, admin_bytes, auth_bytes, (jlong)info.priority, info.invited, name, info.isDestroyed());
+                                           session_id, admin_bytes, auth_bytes, (jlong)info.priority, info.invited, name, info.is_destroyed());
     return return_object;
 }
 
@@ -167,7 +167,7 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     group_info.invited = env->GetBooleanField(info_serialized, invited_field);
     group_info.name = name;
     if (env->GetBooleanField(info_serialized, destroy_field)) {
-        group_info.markDestroyed();
+        group_info.mark_destroyed();
     }
 
     return group_info;
