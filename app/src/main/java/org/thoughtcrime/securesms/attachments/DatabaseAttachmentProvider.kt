@@ -189,6 +189,18 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
         return messageDB.getMessageIDs(serverIds, threadId)
     }
 
+    override fun getUserMessageHashes(threadId: Long, userPubKey: String): List<String> {
+        val component = DatabaseComponent.get(context)
+        val messages = component.mmsSmsDatabase().getUserMessages(threadId, userPubKey)
+        val messageDatabase = component.lokiMessageDatabase()
+        return messages.mapNotNull {
+            messageDatabase.getMessageServerHash(
+                messageID = it.id,
+                mms = it.isMms
+            )
+        }
+    }
+
     override fun deleteMessage(messageID: Long, isSms: Boolean) {
         val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
                                                    else DatabaseComponent.get(context).mmsDatabase()
