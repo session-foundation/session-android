@@ -196,6 +196,8 @@ interface TextSecurePreferences {
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
 
+    var migratedToGroupV2Config: Boolean
+
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
 
@@ -284,6 +286,7 @@ interface TextSecurePreferences {
         const val SELECTED_ACCENT_COLOR = "selected_accent_color"
         const val LAST_VERSION_CHECK = "pref_last_version_check"
         const val ENVIRONMENT = "debug_environment"
+        const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -988,6 +991,10 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
+
+    override var migratedToGroupV2Config: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, false)
+        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_GROUP_V2_CONFIG, value)
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)

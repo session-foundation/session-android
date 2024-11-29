@@ -1245,7 +1245,7 @@ open class Storage @Inject constructor(
         return recipientDatabase.isAutoDownloadFlagSet(recipient)
     }
 
-    override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long) {
+    override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
         val mappingDb = blindedIdMappingDatabase
         val moreContacts = contacts.filter { contact ->
             val id = AccountId(contact.id)
@@ -1285,11 +1285,13 @@ open class Storage @Inject constructor(
                     }
                 ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
-            getThreadId(recipient)?.let {
-                setExpirationConfiguration(
-                    getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > timestamp }
-                        ?: ExpirationConfiguration(it, contact.expiryMode, timestamp)
-                )
+            if (timestamp != null) {
+                getThreadId(recipient)?.let {
+                    setExpirationConfiguration(
+                        getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > timestamp }
+                            ?: ExpirationConfiguration(it, contact.expiryMode, timestamp)
+                    )
+                }
             }
             setRecipientHash(recipient, contact.hashCode().toString())
         }

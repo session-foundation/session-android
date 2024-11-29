@@ -211,7 +211,7 @@ interface StorageProtocol {
     fun setContact(contact: Contact)
     fun getRecipientForThread(threadId: Long): Recipient?
     fun getRecipientSettings(address: Address): RecipientSettings?
-    fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long)
+    fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
     fun addContacts(contacts: List<ConfigurationMessage.Contact>)
     fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean

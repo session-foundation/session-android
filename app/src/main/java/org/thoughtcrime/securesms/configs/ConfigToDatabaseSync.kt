@@ -63,6 +63,16 @@ class ConfigToDatabaseSync @Inject constructor(
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
 ) {
+    init {
+        if (!preferences.migratedToGroupV2Config) {
+            preferences.migratedToGroupV2Config = true
+
+            for (configType in UserConfigType.entries) {
+                syncUserConfigs(configType, null)
+            }
+        }
+    }
+
     fun syncGroupConfigs(groupId: AccountId) {
         val info = configFactory.withGroupConfigs(groupId) {
             UpdateGroupInfo(it.groupInfo)
@@ -71,7 +81,7 @@ class ConfigToDatabaseSync @Inject constructor(
         updateGroup(info)
     }
 
-    fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long) {
+    fun syncUserConfigs(userConfigType: UserConfigType, updateTimestamp: Long?) {
         val configUpdate = configFactory.withUserConfigs { configs ->
             when (userConfigType) {
                 UserConfigType.USER_PROFILE -> UpdateUserInfo(configs.userProfile)
@@ -104,7 +114,7 @@ class ConfigToDatabaseSync @Inject constructor(
         )
     }
 
-    private fun updateUser(userProfile: UpdateUserInfo, messageTimestamp: Long) {
+    private fun updateUser(userProfile: UpdateUserInfo, messageTimestamp: Long?) {
         val userPublicKey = storage.getUserPublicKey() ?: return
         // would love to get rid of recipient and context from this
         val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
@@ -139,11 +149,13 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         // Set or reset the shared library to use latest expiration config
-        storage.getThreadId(recipient)?.let {
-            storage.setExpirationConfiguration(
-                storage.getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
-                ExpirationConfiguration(it, userProfile.ntsExpiry, messageTimestamp)
-            )
+        if (messageTimestamp != null) {
+            storage.getThreadId(recipient)?.let { theadId ->
+                storage.setExpirationConfiguration(
+                    storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
+                    ExpirationConfiguration(theadId, userProfile.ntsExpiry, messageTimestamp)
+                )
+            }
         }
     }
 
@@ -187,7 +199,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private data class UpdateContacts(val contacts: List<Contact>)
 
-    private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long) {
+    private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long?) {
         storage.addLibSessionContacts(contacts.contacts, messageTimestamp)
     }
 
@@ -203,7 +215,7 @@ class ConfigToDatabaseSync @Inject constructor(
         )
     }
 
-    private fun updateUserGroups(userGroups: UpdateUserGroupsInfo, messageTimestamp: Long) {
+    private fun updateUserGroups(userGroups: UpdateUserGroupsInfo, messageTimestamp: Long?) {
         val localUserPublicKey = storage.getUserPublicKey() ?: return Log.w(
             TAG,
             "No user public key when trying to update user groups from config"
@@ -349,11 +361,14 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Start polling
                 LegacyClosedGroupPollerV2.shared.startPolling(group.accountId)
             }
-            storage.getThreadId(fromSerialized(groupId))?.let {
-                storage.setExpirationConfiguration(
-                    storage.getExpirationConfiguration(it)?.takeIf { it.updatedTimestampMs > messageTimestamp }
-                        ?: ExpirationConfiguration(it, afterSend(group.disappearingTimer), messageTimestamp)
-                )
+
+            if (messageTimestamp != null) {
+                storage.getThreadId(fromSerialized(groupId))?.let { theadId ->
+                    storage.setExpirationConfiguration(
+                        storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp }
+                            ?: ExpirationConfiguration(theadId, afterSend(group.disappearingTimer), messageTimestamp)
+                    )
+                }
             }
         }
     }
