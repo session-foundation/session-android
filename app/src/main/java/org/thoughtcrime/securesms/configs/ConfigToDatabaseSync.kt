@@ -2,6 +2,9 @@ package org.thoughtcrime.securesms.configs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -67,8 +70,10 @@ class ConfigToDatabaseSync @Inject constructor(
         if (!preferences.migratedToGroupV2Config) {
             preferences.migratedToGroupV2Config = true
 
-            for (configType in UserConfigType.entries) {
-                syncUserConfigs(configType, null)
+            GlobalScope.launch(Dispatchers.Default) {
+                for (configType in UserConfigType.entries) {
+                    syncUserConfigs(configType, null)
+                }
             }
         }
     }
