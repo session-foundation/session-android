@@ -107,7 +107,8 @@ class MentionViewModelTest {
             storage = mock {
                 on { getOpenGroup(threadID) } doReturn openGroup
             },
-            dispatcher = StandardTestDispatcher()
+            dispatcher = StandardTestDispatcher(),
+            configFactory = mock()
         )
     }
 
@@ -180,12 +181,12 @@ class MentionViewModelTest {
 
             // Should have normalised message with selected candidate
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1 ")
+                .isEqualTo("Hi @pubkey1")
 
             // Should have correct normalised message even with the last space deleted
             editable.delete(editable.length - 1, editable.length)
             assertThat(mentionViewModel.normalizeMessageBody())
-                .isEqualTo("Hi @pubkey1 ")
+                .isEqualTo("Hi @pubkey1")
         }
     }
 }

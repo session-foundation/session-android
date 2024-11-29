@@ -443,8 +443,8 @@ class DisappearingMessagesViewModelTest {
         mockStuff(mode)
 
         whenever(recipient.address).thenReturn(GROUP_ADDRESS)
-        whenever(recipient.isGroupOrCommunityRecipient).thenReturn(true)
         whenever(recipient.isLegacyGroupRecipient).thenReturn(true)
+        whenever(recipient.isGroupRecipient).thenReturn(true)
         whenever(groupDb.getGroup(any<String>())).thenReturn(Optional.of(groupRecord))
         whenever(groupRecord.admins).thenReturn(
             buildList {

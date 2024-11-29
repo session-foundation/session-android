@@ -44,7 +44,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             threadDb = mock(),
             textSecurePreferences = mock(),
             lokiMessageDb = mock(),
-            application = mock(),
+            application = application,
             reactionDb = mock(),
             configFactory = mock(),
             groupManagerV2 = mock()
