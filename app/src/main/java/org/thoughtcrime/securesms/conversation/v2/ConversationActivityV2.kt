@@ -853,7 +853,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             // we need to add the inline icon
             val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)
             val imageSize = toPx(10, resources)
-            val imagePaddingTop = toPx(2, resources)
+            val imagePaddingTop = toPx(4, resources)
             drawable?.setBounds(0, 0, imageSize, imageSize)
             drawable?.setTint(getColorFromAttr(R.attr.message_sent_text_color))
 

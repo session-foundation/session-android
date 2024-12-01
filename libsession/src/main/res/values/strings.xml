@@ -411,6 +411,7 @@
     <string name="groupCreate">Create Group</string>
     <string name="groupCreateErrorNoMembers">Please pick at least one other group member.</string>
     <string name="groupDelete">Delete Group</string>
+    <string name="groupDeleteDescriptionMember">Are you sure you want to delete <b>{group_name}</b>?</string>
     <string name="groupDeleteDescription">Are you sure you want to delete <b>{group_name}</b>? This will remove all members and delete all group content.</string>
     <string name="groupDeletedMemberDescription">{group_name} has been deleted by a group admin. You will not be able to send any more messages.</string>
     <string name="groupDescriptionEnter">Enter a group description</string>

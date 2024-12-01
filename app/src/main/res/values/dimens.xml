@@ -4,13 +4,12 @@
     <!-- Font Sizes -->
     <dimen name="tiny_font_size">9sp</dimen>
     <dimen name="very_small_font_size">12sp</dimen>
-    <dimen name="small_font_size">15sp</dimen>
-    <dimen name="medium_font_size">17sp</dimen>
+    <dimen name="small_font_size">14sp</dimen>
+    <dimen name="medium_font_size">16sp</dimen>
     <dimen name="large_font_size">20sp</dimen>
     <dimen name="very_large_font_size">26sp</dimen>
 
     <!-- Need to be temporary added until the theming is properly centralised in Compose -->
-    <dimen name="small2_font_size">16sp</dimen>
     <dimen name="medium2_font_size">18sp</dimen>
 
     <!-- Element Sizes -->

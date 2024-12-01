@@ -440,8 +440,7 @@ object ConversationMenuHelper {
         var positiveButton = R.string.leave
 
         if(isKicked){
-            //todo GROUPSV2 we will need a new string for this (that says delete instead of leave)
-            message = Phrase.from(context, R.string.groupLeaveDescription)
+            message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()
 
