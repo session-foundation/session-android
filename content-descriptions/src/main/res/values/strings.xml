@@ -169,7 +169,7 @@
     <string name="AccessibilityId_displayName">Display name</string>
 
     <!-- Misc. -->
-    <string name="AccessibilityId_navigateBack">Navigate Back</string>
+    <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
     <string name="AccessibilityId_expand">Expand</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>
