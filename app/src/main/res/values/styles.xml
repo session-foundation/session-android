@@ -83,7 +83,7 @@
     </style>
 
     <style name="TextAppearance.Session.Dialog.Message" parent="TextAppearance.AppCompat.Body1">
-        <item name="android:textSize">@dimen/small_font_size</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="ThemeOverlay.Session.AlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
@@ -162,19 +162,21 @@
     <style name="Widget.Session.Button.Dialog" parent="">
         <item name="android:gravity">center</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">@dimen/small_font_size</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
         <item name="android:textColor">?android:textColorPrimary</item>
     </style>
 
     <style name="Widget.Session.Button.Dialog.UnimportantText">
         <item name="android:background">@drawable/unimportant_dialog_text_button_background</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="Widget.Session.Button.Dialog.DangerText">
         <item name="android:background">@drawable/danger_dialog_text_button_background</item>
         <item name="android:textColor">?danger</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="Widget.Session.EditText.Compose" parent="@style/Signal.Text.Body">

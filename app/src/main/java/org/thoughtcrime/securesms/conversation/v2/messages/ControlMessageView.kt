@@ -21,6 +21,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
@@ -168,8 +169,10 @@ class ControlMessageView : LinearLayout {
                                     text(bodyTxt)
 
                                     button(R.string.sessionSettings) {
-                                        Intent(context, PrivacySettingsActivity::class.java)
-                                            .let(context::startActivity)
+                                        val intent = Intent(context, PrivacySettingsActivity::class.java)
+                                        // allow the screen to auto scroll to the appropriate toggle
+                                        intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                                        context.startActivity(intent)
                                     }
                                     cancelButton()
                                 }

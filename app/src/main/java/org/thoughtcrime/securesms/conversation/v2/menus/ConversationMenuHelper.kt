@@ -34,6 +34,7 @@ import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
@@ -221,7 +222,10 @@ object ConversationMenuHelper {
                 title(R.string.callsPermissionsRequired)
                 text(R.string.callsPermissionsRequiredDescription)
                 button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
-                    Intent(context, PrivacySettingsActivity::class.java).let(context::startActivity)
+                    val intent = Intent(context, PrivacySettingsActivity::class.java)
+                    // allow the screen to auto scroll to the appropriate toggle
+                    intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                    context.startActivity(intent)
                 }
                 cancelButton()
             }

@@ -66,6 +66,11 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
             }.let(category::addPreference)
         }
         initializeVisibility()
+
+    }
+
+    fun scrollToKey(key: String) {
+        scrollToPreference(key)
     }
 
     private fun setCall(isEnabled: Boolean) {

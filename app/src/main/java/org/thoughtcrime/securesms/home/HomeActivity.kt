@@ -44,7 +44,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
@@ -74,7 +73,6 @@ import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
-import org.thoughtcrime.securesms.util.IP2Country
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
@@ -670,15 +668,8 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                     .format()
             }
         } else {
-            // If this is a 1-on-1 conversation
-            if (recipient.name != null) {
-                title = getString(R.string.conversationsDelete)
-                message = Phrase.from(this, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.toShortString())
-                    .format()
-            }
-            else {
-                // If not group-related and we don't have a recipient name then this must be our Note to Self conversation
+            // Note to self
+            if (recipient.isLocalNumber) {
                 title = getString(R.string.noteToSelfHide)
                 message = getString(R.string.noteToSelfHideDescription)
                 positiveButtonId = R.string.hide
@@ -687,6 +678,12 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 deleteAction = {
                     homeViewModel.hideNoteToSelf()
                 }
+            }
+            else { // If this is a 1-on-1 conversation
+                title = getString(R.string.conversationsDelete)
+                message = Phrase.from(this, R.string.conversationsDeleteDescription)
+                    .put(NAME_KEY, recipient.toShortString())
+                    .format()
             }
         }
 
