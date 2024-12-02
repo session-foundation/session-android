@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,7 @@ import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -351,12 +353,11 @@ private fun ConfirmRemovingMemberDialog(
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        text = Phrase.from(context, R.string.groupRemoveDescription)
+        text = annotatedStringResource(Phrase.from(context, R.string.groupRemoveDescription)
             .put(NAME_KEY, member.name)
             .put(GROUP_NAME_KEY, groupName)
-            .format()
-            .toString(),
-        title = stringResource(R.string.remove),
+            .format()),
+        title = AnnotatedString(stringResource(R.string.remove)),
         buttons = buttons
     )
 }
