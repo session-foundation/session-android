@@ -99,7 +99,7 @@ class SelectContactsViewModel @AssistedInject constructor(
                 )
             }
             .toList()
-            .sortedBy { it.name }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     fun onSearchQueryChanged(query: String) {

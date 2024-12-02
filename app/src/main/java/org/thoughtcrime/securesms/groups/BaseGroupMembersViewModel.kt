@@ -114,7 +114,7 @@ abstract class BaseGroupMembersViewModel (
             }
                 .thenBy { !it.showAsAdmin } // Admins come first
                 .thenBy { it.accountId != currentUserId } // Being myself comes first
-                .thenBy { it.name } // Sort by name
+                .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
                 .thenBy { it.accountId } // Last resort: sort by account ID
         )
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -151,13 +153,24 @@ fun CreateGroup(
                         .nestedScroll(rememberNestedScrollInteropConnection()),
                     fadingColor = LocalColors.current.backgroundSecondary
                 ) { bottomContentPadding ->
-                    LazyColumn(
-                        contentPadding = PaddingValues(bottom = bottomContentPadding)) {
-                        multiSelectMemberList(
-                            contacts = items,
-                            onContactItemClicked = onContactItemClicked,
-                            enabled = !showLoading
+                    if(items.isEmpty()){
+                        Text(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xsSpacing),
+                            text = stringResource(R.string.contactNone),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
                         )
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(bottom = bottomContentPadding)
+                        ) {
+                            multiSelectMemberList(
+                                contacts = items,
+                                onContactItemClicked = onContactItemClicked,
+                                enabled = !showLoading
+                            )
+                        }
                     }
                 }
 
@@ -190,6 +203,30 @@ private fun CreateGroupPreview(
         ContactItem(accountID = AccountId(random), name = "Alice", false),
         ContactItem(accountID = AccountId(random), name = "Bob", true),
     )
+
+    PreviewTheme {
+        CreateGroup(
+            groupName = "",
+            onGroupNameChanged = {},
+            groupNameError = "",
+            contactSearchQuery = "",
+            onContactSearchQueryChanged = {},
+            onContactItemClicked = {},
+            showLoading = false,
+            items = previewMembers,
+            onCreateClicked = {},
+            onBack = {},
+            modifier = Modifier.background(LocalColors.current.backgroundSecondary),
+        )
+    }
+
+}
+
+@Preview
+@Composable
+private fun CreateEmptyGroupPreview(
+) {
+    val previewMembers = emptyList<ContactItem>()
 
     PreviewTheme {
         CreateGroup(
