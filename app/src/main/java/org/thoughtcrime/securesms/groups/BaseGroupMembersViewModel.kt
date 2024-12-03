@@ -73,8 +73,12 @@ abstract class BaseGroupMembersViewModel (
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
-        val name = member.getMemberName(configFactory)
         val isMyself = member.accountId == myAccountId
+        val name = if (isMyself) {
+            context.getString(R.string.you)
+        } else {
+            member.getMemberName(configFactory)
+        }
 
         val highlightStatus = member.status in EnumSet.of(
             GroupMember.Status.INVITE_FAILED,
