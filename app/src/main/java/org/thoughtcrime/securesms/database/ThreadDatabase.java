@@ -158,7 +158,6 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(4);
     long date                   = SnodeAPI.getNowWithOffset();
 
-    contentValues.put(THREAD_CREATION_DATE, date - date % 1000);
     contentValues.put(ADDRESS, address.serialize());
 
     if (group) contentValues.put(DISTRIBUTION_TYPE, distributionType);
