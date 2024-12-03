@@ -861,7 +861,7 @@ open class Storage @Inject constructor(
                 encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
                 encSecKey = encryptionKeyPair.privateKey.serialize(),
                 disappearingTimer = expirationTimer.toLong(),
-                joinedAt = (formationTimestamp / 1000L)
+                joinedAtSecs = (formationTimestamp / 1000L)
             )
             // shouldn't exist, don't use getOrConstruct + copy
             userGroups.set(groupInfo)
@@ -894,7 +894,7 @@ open class Storage @Inject constructor(
                 encSecKey = latestKeyPair.privateKey.serialize(),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
-                joinedAt = (existingGroup.formationTimestamp / 1000L)
+                joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
             )
             userGroups.set(groupInfo)
         }

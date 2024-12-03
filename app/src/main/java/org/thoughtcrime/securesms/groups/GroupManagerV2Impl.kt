@@ -109,7 +109,7 @@ class GroupManagerV2Impl @Inject constructor(
         // Create a group in the user groups config
         val group = configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.createGroup()
-                .copy(name = groupName, joinedAt = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp))
+                .copy(name = groupName, joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp))
                 .also(configs.userGroups::set)
         }
 
@@ -611,7 +611,7 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.set(group.copy(
                 invited = false,
-                joinedAt = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
             ))
         }
 
@@ -763,7 +763,7 @@ class GroupManagerV2Impl @Inject constructor(
             invited = !shouldAutoApprove,
             name = groupName,
             destroyed = false,
-            joinedAt = 0L
+            joinedAtSecs = 0L
         )
 
         configFactory.withMutableUserConfigs {

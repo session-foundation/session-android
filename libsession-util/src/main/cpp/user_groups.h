@@ -51,7 +51,7 @@ inline session::config::legacy_group_info deserialize_legacy_group_info(JNIEnv *
     auto enc_sec_key_field = env->GetFieldID(clazz, "encSecKey", "[B");
     auto priority_field = env->GetFieldID(clazz, "priority", "J");
     auto disappearing_timer_field = env->GetFieldID(clazz, "disappearingTimer", "J");
-    auto joined_at_field = env->GetFieldID(clazz, "joinedAt", "J");
+    auto joined_at_field = env->GetFieldID(clazz, "joinedAtSecs", "J");
     auto id = static_cast<jstring>(env->GetObjectField(info, id_field));
     jstring name = static_cast<jstring>(env->GetObjectField(info, name_field));
     jobject members_map = env->GetObjectField(info, members_field);
@@ -148,7 +148,7 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     jfieldID invited_field = env->GetFieldID(closed_group_class, "invited", "Z");
     jfieldID name_field = env->GetFieldID(closed_group_class, "name", "Ljava/lang/String;");
     jfieldID destroy_field = env->GetFieldID(closed_group_class, "destroyed", "Z");
-    jfieldID joined_at_field = env->GetFieldID(closed_group_class, "joinedAt", "J");
+    jfieldID joined_at_field = env->GetFieldID(closed_group_class, "joinedAtSecs", "J");
 
 
     jobject id_jobject = env->GetObjectField(info_serialized, id_field);

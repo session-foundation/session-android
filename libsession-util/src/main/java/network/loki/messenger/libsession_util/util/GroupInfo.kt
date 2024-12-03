@@ -14,7 +14,7 @@ sealed class GroupInfo {
         val invited: Boolean,
         val name: String,
         val destroyed: Boolean,
-        val joinedAt: Long, // In seconds
+        val joinedAtSecs: Long
     ): GroupInfo() {
 
         init {
@@ -43,7 +43,7 @@ sealed class GroupInfo {
         val encSecKey: ByteArray,
         val priority: Long,
         val disappearingTimer: Long,
-        val joinedAt: Long
+        val joinedAtSecs: Long
     ): GroupInfo() {
         companion object {
             @Suppress("FunctionName")
@@ -63,7 +63,7 @@ sealed class GroupInfo {
             if (!encSecKey.contentEquals(other.encSecKey)) return false
             if (priority != other.priority) return false
             if (disappearingTimer != other.disappearingTimer) return false
-            if (joinedAt != other.joinedAt) return false
+            if (joinedAtSecs != other.joinedAtSecs) return false
 
             return true
         }
@@ -76,7 +76,7 @@ sealed class GroupInfo {
             result = 31 * result + encSecKey.contentHashCode()
             result = 31 * result + priority.hashCode()
             result = 31 * result + disappearingTimer.hashCode()
-            result = 31 * result + joinedAt.hashCode()
+            result = 31 * result + joinedAtSecs.hashCode()
             return result
         }
 

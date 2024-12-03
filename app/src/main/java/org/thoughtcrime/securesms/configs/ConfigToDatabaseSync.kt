@@ -351,7 +351,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 val members = group.members.keys.map { fromSerialized(it) }
                 val admins = group.members.filter { it.value /*admin = true*/ }.keys.map { fromSerialized(it) }
                 val title = group.name
-                val formationTimestamp = (group.joinedAt * 1000L)
+                val formationTimestamp = (group.joinedAtSecs * 1000L)
                 storage.createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
                 storage.setProfileSharing(fromSerialized(groupId), true)
                 // Add the group to the user's set of public keys to poll for

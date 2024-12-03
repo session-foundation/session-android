@@ -534,7 +534,7 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
                 encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
                 encSecKey = encryptionKeyPair.privateKey.serialize(),
                 disappearingTimer = recipient.expireMessages.toLong(),
-                joinedAt = (group.formationTimestamp / 1000L)
+                joinedAtSecs = (group.formationTimestamp / 1000L)
             )
         }
         .forEach(this::set)
