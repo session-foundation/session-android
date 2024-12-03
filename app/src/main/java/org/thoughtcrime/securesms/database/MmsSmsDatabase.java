@@ -310,6 +310,22 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
+  public Set<MessageRecord> getAllMessageRecordsBefore(long threadId, long timestampMills) {
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.NORMALIZED_DATE_SENT + " < " + timestampMills;
+    Set<MessageRecord> identifiedMessages = new HashSet<>();
+
+    // Try everything with resources so that they auto-close on end of scope
+    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          identifiedMessages.add(messageRecord);
+        }
+      }
+    }
+    return identifiedMessages;
+  }
+
   public long getLastOutgoingTimestamp(long threadId) {
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;

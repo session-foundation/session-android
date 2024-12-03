@@ -5,6 +5,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
@@ -39,12 +40,15 @@ import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "ConfigToDatabaseSync"
@@ -65,6 +69,8 @@ class ConfigToDatabaseSync @Inject constructor(
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
+    private val conversationRepository: ConversationRepository,
+    private val mmsSmsDatabase: MmsSmsDatabase,
 ) {
     init {
         if (!preferences.migratedToGroupV2Config) {
@@ -194,10 +200,11 @@ class ConfigToDatabaseSync @Inject constructor(
             )
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
-                storage.trimThreadBefore(threadId, removeBefore)
+                val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
+                conversationRepository.markAsDeletedLocally(messages, context.getString(R.string.deleteMessageDeletedGlobally))
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
-                mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, removeAttachmentsBefore, onlyMedia = true)
+                mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore), onlyMedia = true)
             }
         }
     }
