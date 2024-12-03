@@ -156,7 +156,6 @@ public class ThreadDatabase extends Database {
 
   private long createThreadForRecipient(Address address, boolean group, int distributionType) {
     ContentValues contentValues = new ContentValues(4);
-    long date                   = SnodeAPI.getNowWithOffset();
 
     contentValues.put(ADDRESS, address.serialize());
 

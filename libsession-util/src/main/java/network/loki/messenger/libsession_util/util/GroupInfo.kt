@@ -14,6 +14,7 @@ sealed class GroupInfo {
         val invited: Boolean,
         val name: String,
         val destroyed: Boolean,
+        val joinedAt: Long, // In seconds
     ): GroupInfo() {
 
         init {

@@ -61,6 +61,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.PollerFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -108,7 +109,7 @@ class GroupManagerV2Impl @Inject constructor(
         // Create a group in the user groups config
         val group = configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.createGroup()
-                .copy(name = groupName)
+                .copy(name = groupName, joinedAt = TimeUnit.MILLISECONDS.toSeconds(groupCreationTimestamp))
                 .also(configs.userGroups::set)
         }
 
@@ -608,7 +609,10 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Clear the invited flag of the group in the config
         configFactory.withMutableUserConfigs { configs ->
-            configs.userGroups.set(group.copy(invited = false))
+            configs.userGroups.set(group.copy(
+                invited = false,
+                joinedAt = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+            ))
         }
 
         val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
@@ -759,6 +763,7 @@ class GroupManagerV2Impl @Inject constructor(
             invited = !shouldAutoApprove,
             name = groupName,
             destroyed = false,
+            joinedAt = 0L
         )
 
         configFactory.withMutableUserConfigs {
