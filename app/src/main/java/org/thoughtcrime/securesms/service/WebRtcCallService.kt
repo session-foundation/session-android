@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.service
 
+import android.app.ForegroundServiceStartNotAllowedException
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,6 +12,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.os.Build
+import android.os.PowerManager
 import android.os.ResultReceiver
 import android.telephony.TelephonyManager
 import androidx.core.app.ServiceCompat
@@ -22,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
@@ -32,6 +36,7 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_IN
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
+import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
@@ -328,6 +333,54 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         registerUncaughtExceptionHandler()
         networkChangedReceiver = NetworkChangeReceiver(::networkChange)
         networkChangedReceiver!!.register(this)
+
+        Log.w("ACL", "Lesssgo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        //if (appIsBackground(this)) {
+//        ServiceCompat.startForeground(this,
+//            CallNotificationBuilder.WEBRTC_NOTIFICATION,
+//            CallNotificationBuilder.getFirstCallNotification(this, "Initialising"),
+//            if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+//        )
+
+        // Get the KeyguardManager and PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        // Check if the phone is locked
+        val isPhoneLocked = keyguardManager.isKeyguardLocked
+
+        // Check if the screen is awake
+        val isScreenAwake = powerManager.isInteractive
+
+        // If the screen is off or phone is locked, wake it up
+        if (!isScreenAwake || isPhoneLocked) { wakeUpDevice() }
+
+
+//        ServiceCompat.startForeground(
+//            this,
+//            CallNotificationBuilder.WEBRTC_NOTIFICATION,
+//            Not
+//            CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
+//            if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+//        )
+    }
+
+    private fun wakeUpDevice() {
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        val wakeLock = powerManager.newWakeLock(
+            PowerManager.FULL_WAKE_LOCK or
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                    PowerManager.ON_AFTER_RELEASE,
+            "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
+        )
+
+        // Acquire the wake lock to wake up the device
+        wakeLock.acquire(3000) // Wake up for 3 seconds
+
+        // Dismiss the keyguard
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
+        keyguardLock.disableKeyguard()
     }
 
     private fun registerUncaughtExceptionHandler() {
@@ -724,25 +777,57 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
+    // Over the course of setting up a phonecall this method is called multiple times with `types` of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-        try {
-            ServiceCompat.startForeground(
-                this,
-                CallNotificationBuilder.WEBRTC_NOTIFICATION,
-                CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
-            )
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
+
+        val typeString = when (type) {
+            TYPE_INCOMING_RINGING    -> "TYPE_INCOMING_RINGING"
+            TYPE_OUTGOING_RINGING    -> "TYPE_OUTGOING_RINGING"
+            TYPE_ESTABLISHED         -> "TYPE_ESTABLISHED"
+            TYPE_INCOMING_CONNECTING -> "TYPE_INCOMING_CONNECTING"
+            TYPE_INCOMING_PRE_OFFER  -> "TYPE_INCOMING_PRE_OFFER"
+            WEBRTC_NOTIFICATION      -> "WEBRTC_NOTIFICATION"
+            else -> "We have no idea!"
+        }
+        Log.w("ACL", "Hit setCallInProgressNotification with type: $typeString")
+
+        // If notifications are enabled we'll try and start a foreground service to show the notification
+        var failedToStartForegroundService = false
+        if (CallNotificationBuilder.areNotificationsEnabled(this)) {
+            Log.w("ACL", "Notifications are ENABLED! About to try to call startForeground")
+            try {
+                ServiceCompat.startForeground(
+                    this,
+                    CallNotificationBuilder.WEBRTC_NOTIFICATION,
+                    CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
+                    if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+                )
+                Log.w("ACL", "Successfully called startForeground - about to bail.")
+                return
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
+                failedToStartForegroundService = true
+            }
+        } else {
+            Log.w("ACL", "Notifications are NOT enabled! Skipped attempt at startForeground and going straight to fullscreen intent attempt!")
         }
 
-        if (!CallNotificationBuilder.areNotificationsEnabled(this) && type == TYPE_INCOMING_PRE_OFFER) {
+
+
+
+        if (type == TYPE_INCOMING_PRE_OFFER && failedToStartForegroundService) {
+
+            Log.w("ACL", "About to create foregroundIntent and try to start the WebRtcCallActivity with type TYPE_INCOMING_PRE_OFFER")
+
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_BROUGHT_TO_FRONT or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             startActivity(foregroundIntent)
+            return
         }
+
+        Log.w("ACL", "type wasn't TYPE_INCOMING_PRE_OFFER - doing nothing =/")
     }
 
     private fun getOptionalRemoteRecipient(intent: Intent): Recipient? =
