@@ -56,6 +56,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -79,6 +80,7 @@ class GroupManagerV2Impl @Inject constructor(
     @ApplicationContext val application: Context,
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
+    private val lokiAPIDatabase: LokiAPIDatabase,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -472,6 +474,8 @@ class GroupManagerV2Impl @Inject constructor(
             storage.getThreadId(Address.fromSerialized(groupId.hexString))
                 ?.let(storage::deleteConversation)
             configFactory.removeGroup(groupId)
+            lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+            lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
         }
     }
 
