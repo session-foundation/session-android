@@ -2,6 +2,9 @@ package org.session.libsession.messaging.sending_receiving.pollers
 
 import android.util.SparseArray
 import androidx.core.util.valueIterator
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
@@ -27,9 +30,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
 
@@ -49,8 +49,9 @@ class Poller(
 
     // region Settings
     companion object {
-        private const val retryInterval: Long = 2 * 1000
-        private const val maxInterval: Long = 15 * 1000
+        private const val RETRY_INTERVAL_MS: Long       = 2  * 1000
+        private const val MAX_RETRY_INTERVAL_MS: Long   = 15 * 1000
+        private const val NEXT_RETRY_MULTIPLIER: Float = 1.2f // If we fail to poll we multiply our current retry interval by this (up to the above max) then try again
     }
     // endregion
 
@@ -59,7 +60,7 @@ class Poller(
         if (hasStarted) { return }
         Log.d(TAG, "Started polling.")
         hasStarted = true
-        setUpPolling(retryInterval)
+        setUpPolling(RETRY_INTERVAL_MS)
     }
 
     fun stopIfNeeded() {
@@ -72,11 +73,11 @@ class Poller(
         Log.d(TAG, "Retrieving user profile. for key = $userPublicKey")
         SnodeAPI.getSwarm(userPublicKey).bind {
             usedSnodes.clear()
-            deferred<Unit, Exception>().also {
-                pollNextSnode(userProfileOnly = true, it)
+            deferred<Unit, Exception>().also { exception ->
+                pollNextSnode(userProfileOnly = true, exception)
             }.promise
-        }.fail {
-            Log.e(TAG, "Failed to retrieve user profile.", it)
+        }.fail { exception ->
+            Log.e(TAG, "Failed to retrieve user profile.", exception)
         }
     }
     // endregion
@@ -91,14 +92,14 @@ class Poller(
             pollNextSnode(deferred = deferred)
             deferred.promise
         }.success {
-            val nextDelay = if (isCaughtUp) retryInterval else 0
+            val nextDelay = if (isCaughtUp) RETRY_INTERVAL_MS else 0
             Timer().schedule(object : TimerTask() {
                 override fun run() {
-                    thread.run { setUpPolling(retryInterval) }
+                    thread.run { setUpPolling(RETRY_INTERVAL_MS) }
                 }
             }, nextDelay)
         }.fail {
-            val nextDelay = minOf(maxInterval, (delay * 1.2).toLong())
+            val nextDelay = minOf(MAX_RETRY_INTERVAL_MS, (delay * NEXT_RETRY_MULTIPLIER).toLong())
             Timer().schedule(object : TimerTask() {
                 override fun run() {
                     thread.run { setUpPolling(nextDelay) }
@@ -231,8 +232,7 @@ class Poller(
             }
         }
     }
-
-
+    
     private fun poll(snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> {
         if (!hasStarted) { return Promise.ofFail(PromiseCanceledException()) }
         return GlobalScope.asyncPromise {
