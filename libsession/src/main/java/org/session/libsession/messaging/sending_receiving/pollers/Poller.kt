@@ -232,7 +232,7 @@ class Poller(
             }
         }
     }
-    
+
     private fun poll(snode: Snode, deferred: Deferred<Unit, Exception>): Promise<Unit, Exception> {
         if (!hasStarted) { return Promise.ofFail(PromiseCanceledException()) }
         return GlobalScope.asyncPromise {

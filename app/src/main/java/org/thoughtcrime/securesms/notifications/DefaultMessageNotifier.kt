@@ -224,14 +224,14 @@ class DefaultMessageNotifier : MessageNotifier {
                         sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
                     }
                     sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
-                } else if (notificationState.messageCount > 0) {
+                } else if (notificationState.notificationCount > 0) {
                     sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
                 } else {
                     cancelActiveNotifications(context)
                 }
 
                 cancelOrphanedNotifications(context, notificationState)
-                updateBadge(context, notificationState.messageCount)
+                updateBadge(context, notificationState.notificationCount)
 
                 if (playNotificationAudio) {
                     scheduleReminder(context, reminderCount)
@@ -289,7 +289,7 @@ class DefaultMessageNotifier : MessageNotifier {
         if (ApplicationContext.isAppVisible && notificationText == missedCallString) { return }
 
         builder.setThread(notifications[0].recipient)
-        builder.setMessageCount(notificationState.messageCount)
+        builder.setMessageCount(notificationState.notificationCount)
 
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
@@ -385,7 +385,7 @@ class DefaultMessageNotifier : MessageNotifier {
         val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
 
-        builder.setMessageCount(notificationState.messageCount, notificationState.threadCount)
+        builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
         builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
