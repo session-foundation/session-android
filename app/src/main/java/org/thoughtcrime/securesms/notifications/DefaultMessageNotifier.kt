@@ -268,7 +268,7 @@ class DefaultMessageNotifier : MessageNotifier {
 
         val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
-        val recipient = notifications[0].recipient
+        val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val messageIdTag = notifications[0].timestamp.toString()
 
@@ -287,10 +287,6 @@ class DefaultMessageNotifier : MessageNotifier {
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
 
         val notificationText = notifications[0].text
-
-        // TODO: We get missed call notifications whenever we get a call - I have no idea why, and it would be better to strip them out
-        // TODO: at the source - but I'll stop them here if we recognise the notification text and the home screen is visible
-
 
         // For some reason, even when we're starting a call we get a missed call notification - so we'll bail before that happens.
         // TODO: Probably better to fix this at the source so that this never gets called rather then here - do this.
@@ -311,7 +307,7 @@ class DefaultMessageNotifier : MessageNotifier {
         )
 
         builder.setPrimaryMessageBody(
-            recipient,
+            messageOriginator,
             notifications[0].individualRecipient,
             ss,
             notifications[0].slideDeck
@@ -323,12 +319,12 @@ class DefaultMessageNotifier : MessageNotifier {
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         builder.setAutoCancel(true)
 
-        val replyMethod = ReplyMethod.forRecipient(context, recipient)
+        val replyMethod = ReplyMethod.forRecipient(context, messageOriginator)
 
-        val canReply = canUserReplyToNotification(recipient)
+        val canReply = canUserReplyToNotification(messageOriginator)
 
-        val quickReplyIntent = if (canReply) notificationState.getQuickReplyIntent(context, recipient) else null
-        val remoteReplyIntent = if (canReply) notificationState.getRemoteReplyIntent(context, recipient, replyMethod) else null
+        val quickReplyIntent = if (canReply) notificationState.getQuickReplyIntent(context, messageOriginator) else null
+        val remoteReplyIntent = if (canReply) notificationState.getRemoteReplyIntent(context, messageOriginator, replyMethod) else null
 
         builder.addActions(
             notificationState.getMarkAsReadIntent(context, notificationId),
@@ -339,7 +335,7 @@ class DefaultMessageNotifier : MessageNotifier {
 
         if (canReply) {
             builder.addAndroidAutoAction(
-                notificationState.getAndroidAutoReplyIntent(context, recipient),
+                notificationState.getAndroidAutoReplyIntent(context, messageOriginator),
                 notificationState.getAndroidAutoHeardIntent(context, notificationId),
                 notifications[0].timestamp
             )
