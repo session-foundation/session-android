@@ -45,6 +45,7 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
@@ -280,12 +281,21 @@ class DefaultMessageNotifier : MessageNotifier {
 
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
 
-        val text = notifications[0].text
+        val notificationText = notifications[0].text
+
+        // TODO: We get missed call notifications whenever we get a call - I have no idea why, and it would be better to strip them out
+        // TODO: at the source - but I'll stop them here if we recognise the notification text and the home screen is visible
+
+
+        // For some reason, even when we're starting a call we get a missed call notification - so we'll bail before that happens.
+        // TODO: Probably better to fix this at the source so that this never gets called rather then here - do this.
+        val missedCallString = Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, notifications[0].recipient.name).format()
+        if (ApplicationContext.isAppVisible && notificationText == missedCallString) { return }
 
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.messageCount)
 
-        val builderCS = text ?: ""
+        val builderCS = notificationText ?: ""
         val ss = highlightMentions(
             builderCS,
             false,
@@ -331,7 +341,6 @@ class DefaultMessageNotifier : MessageNotifier {
         }
 
         val iterator: ListIterator<NotificationItem> = notifications.listIterator(notifications.size)
-
         while (iterator.hasPrevious()) {
             val item = iterator.previous()
             builder.addMessageBody(item.recipient, item.individualRecipient, item.text)
@@ -363,6 +372,8 @@ class DefaultMessageNotifier : MessageNotifier {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
+
+
         NotificationManagerCompat.from(context).notify(notificationId, notification)
         Log.i(TAG, "Posted notification. $notification")
     }

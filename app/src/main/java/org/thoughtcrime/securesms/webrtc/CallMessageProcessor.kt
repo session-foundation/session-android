@@ -2,15 +2,18 @@ package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -36,7 +39,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.webrtc.IceCandidate
 import network.loki.messenger.R
-
+import org.session.libsession.utilities.NonTranslatableStringConstants
 
 
 class CallMessageProcessor(private val context: Context, private val textSecurePreferences: TextSecurePreferences, lifecycle: Lifecycle, private val storage: StorageProtocol) {
@@ -56,11 +59,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         fun safeStartForegroundService(context: Context, intent: Intent) {
             Log.w("ACL", "Hit safeStartForegroundService for intent action: " + intent.action)
 
-            // TODO: This is super-ugly - we're forcing a full-screen intent to wake the device up so we can
-            // TODO: successfully call `startForegroundService` in the second catch block below. This works
-            // TODO: even if the device is locked and Session has been closed down - but it's UUUUGLY. Need
-            // TODO: to find a better way.
-            showIncomingCallNotification(context)
+
 
             // If the foreground service crashes then it's possible for one of these intents to
             // be started in the background (in which case 'startService' will throw a
@@ -71,6 +70,12 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 try { ContextCompat.startForegroundService(context, intent) }
                 catch (e2: Exception) {
                     Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
+
+                    // TODO: This is super-ugly - we're forcing a full-screen intent to wake the device up so we can
+                    // TODO: successfully call `startForegroundService` in the second catch block below. This works
+                    // TODO: even if the device is locked and Session has been closed down - but it's UUUUGLY. Need
+                    // TODO: to find a better way.
+                    showIncomingCallNotification(context)
                 }
             }
         }
@@ -87,8 +92,46 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
             notificationManager?.createNotificationChannel(channel)
         }
 
+        private fun wakeUpDeviceIfLocked(context: Context) {
+
+            // Get the KeyguardManager and PowerManager
+            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+            // Check if the phone is locked
+            val isPhoneLocked = keyguardManager.isKeyguardLocked
+
+            // Check if the screen is awake
+            val isScreenAwake = powerManager.isInteractive
+
+            if (!isScreenAwake) {
+
+                Log.w("ACL", "CMP: Screen is NOT awake - waking it up!")
+
+
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.FULL_WAKE_LOCK or
+                            PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                            PowerManager.ON_AFTER_RELEASE,
+                    "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
+                )
+
+                // Acquire the wake lock to wake up the device
+                wakeLock.acquire(3000) // Wake up for 3 seconds
+            } else {
+                Log.w("ACL", "CMP: Screen is awake - doing nothing")
+            }
+            // Dismiss the keyguard
+            //val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            //val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
+            //keyguardLock.disableKeyguard()
+        }
+
         @SuppressLint("MissingPermission")
         fun showIncomingCallNotification(context: Context) {
+
+            wakeUpDeviceIfLocked(context)
+
             createNotificationChannel(context)
 
             val notificationIntent = Intent(context, WebRtcCallActivity::class.java)
@@ -108,7 +151,8 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 .setFullScreenIntent(pendingIntent, true)
 
             NotificationManagerCompat.from(context).notify(999, notificationBuilder.build())
-        }    }
+        }
+    }
 
     init {
         lifecycle.coroutineScope.launch(IO) {

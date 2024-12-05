@@ -334,7 +334,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         networkChangedReceiver = NetworkChangeReceiver(::networkChange)
         networkChangedReceiver!!.register(this)
 
-        Log.w("ACL", "Lesssgo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        //Log.w("ACL", "Lesssgo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         //if (appIsBackground(this)) {
 //        ServiceCompat.startForeground(this,
 //            CallNotificationBuilder.WEBRTC_NOTIFICATION,
@@ -342,18 +342,10 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 //            if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
 //        )
 
-        // Get the KeyguardManager and PowerManager
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
 
-        // Check if the phone is locked
-        val isPhoneLocked = keyguardManager.isKeyguardLocked
-
-        // Check if the screen is awake
-        val isScreenAwake = powerManager.isInteractive
 
         // If the screen is off or phone is locked, wake it up
-        if (!isScreenAwake || isPhoneLocked) { wakeUpDevice() }
+        //if (!isScreenAwake || isPhoneLocked) { wakeUpDevice() }
 
 
 //        ServiceCompat.startForeground(
@@ -365,23 +357,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 //        )
     }
 
-    private fun wakeUpDevice() {
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val wakeLock = powerManager.newWakeLock(
-            PowerManager.FULL_WAKE_LOCK or
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                    PowerManager.ON_AFTER_RELEASE,
-            "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
-        )
 
-        // Acquire the wake lock to wake up the device
-        wakeLock.acquire(3000) // Wake up for 3 seconds
-
-        // Dismiss the keyguard
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
-        keyguardLock.disableKeyguard()
-    }
 
     private fun registerUncaughtExceptionHandler() {
         uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
@@ -777,8 +753,50 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
+    private fun wakeUpDeviceIfLocked() {
+
+        // Get the KeyguardManager and PowerManager
+        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+
+        // Check if the phone is locked
+        val isPhoneLocked = keyguardManager.isKeyguardLocked
+
+        // Check if the screen is awake
+        val isScreenAwake = powerManager.isInteractive
+
+        if (!isScreenAwake) {
+
+            Log.w("ACL", "Screen is NOT awake - waking it up!")
+
+            val wakeLock = powerManager.newWakeLock(
+                PowerManager.FULL_WAKE_LOCK or
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
+                "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
+            )
+
+            // Acquire the wake lock to wake up the device
+            wakeLock.acquire(3000) // Wake up for 3 seconds
+
+            val startTime = System.currentTimeMillis()
+            while (!powerManager.isInteractive) { /* Busy wait until we're awake */ }
+            val endTime = System.currentTimeMillis()
+            val duration = endTime - startTime
+            Log.w("ACL", "Woken up in $duration ms")
+        } else {
+            Log.w("ACL", "Screen is awake - doing nothing")
+        }
+        // Dismiss the keyguard
+        val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
+        keyguardLock.disableKeyguard()
+    }
+
     // Over the course of setting up a phonecall this method is called multiple times with `types` of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
+
+        wakeUpDeviceIfLocked()
+
 
         val typeString = when (type) {
             TYPE_INCOMING_RINGING    -> "TYPE_INCOMING_RINGING"
@@ -789,7 +807,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             WEBRTC_NOTIFICATION      -> "WEBRTC_NOTIFICATION"
             else -> "We have no idea!"
         }
-        Log.w("ACL", "Hit setCallInProgressNotification with type: $typeString")
+        Log.w("ACL", "NOOOOOOOOOOTIFICATION - Hit setCallInProgressNotification with type: $typeString")
 
         // If notifications are enabled we'll try and start a foreground service to show the notification
         var failedToStartForegroundService = false
@@ -815,9 +833,13 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 
 
 
-        if (type == TYPE_INCOMING_PRE_OFFER && failedToStartForegroundService) {
+        if ((type == TYPE_INCOMING_PRE_OFFER || type == TYPE_INCOMING_RINGING) && failedToStartForegroundService) {
+        //if (failedToStartForegroundService) {
 
-            Log.w("ACL", "About to create foregroundIntent and try to start the WebRtcCallActivity with type TYPE_INCOMING_PRE_OFFER")
+            Log.w("ACL", "DID SOMETHING - foregroundIntent to WebRtcCallActivity for TYPE_INCOMING_PRE_OFFER")
+            wakeUpDeviceIfLocked()
+
+
 
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
