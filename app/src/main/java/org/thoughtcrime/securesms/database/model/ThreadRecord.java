@@ -103,7 +103,7 @@ public class ThreadRecord extends DisplayRecord {
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
         // no need to display anything if there are no messages
-        if(lastMessage == null){
+        if (lastMessage == null){
             return "";
         }
         else if (isGroupUpdateMessage()) {

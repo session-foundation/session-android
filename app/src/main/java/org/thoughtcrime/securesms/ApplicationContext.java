@@ -148,7 +148,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     CallMessageProcessor callMessageProcessor;
     MessagingModuleConfiguration messagingModuleConfiguration;
 
-    private volatile boolean isAppVisible;
+    public static volatile boolean isAppVisible;
 
     @Override
     public Object getSystemService(String name) {
