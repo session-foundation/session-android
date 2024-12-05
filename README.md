@@ -71,6 +71,11 @@ Copyright 2019-2021 The Oxen Project
 
 Licensed under the GPLv3: http://www.gnu.org/licenses/gpl-3.0.html
 
+## Attributions
+
+This project uses [Lucide Icon Font](https://lucide.dev/), which is licensed under the
+[ISC License](third_party_licenses/LucideLicense.txt).
+
 ## Socials
 <a href="https://twitter.com/session_app">
   <img align="left" width="26px" src="https://www.vectorlogo.zone/logos/twitter/twitter-official.svg" />
