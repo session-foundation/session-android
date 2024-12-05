@@ -33,22 +33,6 @@
             android:orientation="vertical"
             android:background="@color/transparent_black_70">
 
-            <org.thoughtcrime.securesms.components.emoji.EmojiEditText
-                android:id="@+id/mediasend_caption"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp"
-                style="@style/Signal.Text.Body"
-                android:textSize="@dimen/medium_font_size"
-                android:maxLines="3"
-                android:maxLength="240"
-                android:autoText="true"
-                android:inputType="textAutoCorrect|textCapSentences|textMultiLine"
-                android:background="@null"/>
-
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/mediasend_media_rail"
                 android:layout_width="match_parent"
@@ -77,15 +61,6 @@
                     android:paddingEnd="8dp"
                     android:orientation="horizontal"
                     android:background="@drawable/compose_background_camera">
-
-                    <org.thoughtcrime.securesms.components.emoji.EmojiToggle
-                        android:id="@+id/mediasend_emoji_toggle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="@dimen/conversation_compose_height"
-                        android:layout_gravity="bottom"
-                        android:paddingStart="4dp"
-                        android:paddingEnd="6dp"
-                        android:background="?selectableItemBackgroundBorderless" />
 
                     <Space
                         android:layout_width="0dp"
@@ -119,7 +94,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:scaleType="fitCenter"
-                        android:padding="10dp"
+                        android:padding="6dp"
                         android:contentDescription="@string/send"
                         android:src="@drawable/ic_arrow_up"
                         android:background="@drawable/accent_dot"/>
@@ -138,13 +113,6 @@
                 android:visibility="gone"
                 tools:visibility="visible"
                 tools:text="160/160 (1)" />
-
-            <ViewStub
-                android:id="@+id/mediasend_emoji_drawer_stub"
-                android:layout="@layout/scribble_fragment_emojidrawer_stub"
-                android:inflatedId="@+id/emoji_drawer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
 
         </LinearLayout>
 

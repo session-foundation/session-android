@@ -12,13 +12,13 @@
     <item
         android:title="@string/save"
         android:id="@+id/menu_context_save_attachment"
-        android:icon="?menu_save_icon"
+        android:icon="@drawable/ic_arrow_down_to_line"
         app:showAsAction="always" />
 
     <item
         android:title="@plurals/deleteMessage"
         android:id="@+id/menu_context_delete_message"
-        android:icon="?menu_trash_icon"
+        android:icon="@drawable/ic_trash_2"
         app:showAsAction="always" />
 
     <item

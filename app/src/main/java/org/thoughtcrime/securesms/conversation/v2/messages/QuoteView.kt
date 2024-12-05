@@ -97,14 +97,17 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         if (!hasAttachments) {
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
-            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(ResourcesCompat.getColor(resources, R.color.white, context.theme))
-            val backgroundColor = context.getAccentColor()
-            binding.quoteViewAttachmentPreviewContainer.backgroundTintList = ColorStateList.valueOf(backgroundColor)
+            binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(
+                context.getColorFromAttr(
+                    if(isOutgoingMessage && mode == Mode.Regular) R.attr.message_sent_text_color
+                    else R.attr.message_received_text_color
+                )
+            )
             binding.quoteViewAttachmentPreviewImageView.isVisible = false
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_microphone)
+                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
                     // A missing file name is the legacy way to determine if an audio attachment is
                     // a voice note vs. other arbitrary audio attachments.
@@ -118,7 +121,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     }
                 }
                 attachments.documentSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_document_large_light)
+                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
                     binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
                 }

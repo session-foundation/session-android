@@ -65,7 +65,7 @@ class InputBarRecordingView : RelativeLayout {
 
     fun show(scope: CoroutineScope) {
         startTimestamp = Date().time
-        binding.recordButtonOverlayImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_microphone, context.theme))
+        binding.recordButtonOverlayImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_mic, context.theme))
         binding.inputBarCancelButton.alpha = 0.0f
         binding.inputBarMiddleContentContainer.alpha = 1.0f
         binding.lockView.alpha = 1.0f

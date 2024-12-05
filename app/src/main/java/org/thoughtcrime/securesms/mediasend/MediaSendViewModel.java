@@ -1,24 +1,24 @@
 package org.thoughtcrime.securesms.mediasend;
 
 import android.app.Application;
+import android.content.Context;
+import android.net.Uri;
+
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
-import android.content.Context;
-import android.net.Uri;
-import androidx.annotation.NonNull;
-import android.text.TextUtils;
 
 import com.annimon.stream.Stream;
 
+import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.mms.MediaConstraints;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
 import org.thoughtcrime.securesms.util.SingleLiveEvent;
-import org.session.libsession.utilities.Util;
-import org.session.libsignal.utilities.guava.Optional;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -228,13 +228,6 @@ class MediaSendViewModel extends ViewModel {
       selectedMedia.setValue(selected);
       countButtonState.setValue(new CountButtonState(selected.size(), countButtonVisibility));
       BlobProvider.getInstance().delete(context, lastImageCapture.get().getUri());
-    }
-  }
-
-
-  void onCaptionChanged(@NonNull String newCaption) {
-    if (position.getValue() >= 0 && !Util.isEmpty(selectedMedia.getValue())) {
-      selectedMedia.getValue().get(position.getValue()).setCaption(TextUtils.isEmpty(newCaption) ? null : newCaption);
     }
   }
 

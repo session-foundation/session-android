@@ -50,6 +50,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -483,7 +484,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                     Divider()
 
                     LargeItemButton(R.string.sessionClearData,
-                        R.drawable.ic_delete,
+                        R.drawable.ic_trash_2,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
                         dangerButtonColors()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
@@ -562,8 +563,9 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                         // empty state
                         else -> {
                             Image(
-                                modifier = Modifier.align(Alignment.Center),
-                                painter = painterResource(id = R.drawable.ic_pictures),
+                                modifier = Modifier.align(Alignment.Center)
+                                    .size(40.dp),
+                                painter = painterResource(id = R.drawable.ic_image),
                                 contentDescription = null,
                                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary)
                             )

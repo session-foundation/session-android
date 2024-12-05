@@ -24,6 +24,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -40,11 +42,13 @@ import com.squareup.phrase.Phrase;
 import java.security.Signature;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.components.AnimatingToggle;
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider;
 import org.thoughtcrime.securesms.service.KeyCachingService;
 import org.thoughtcrime.securesms.util.AnimationCompleteListener;
+import org.thoughtcrime.securesms.util.ResUtil;
 
 //TODO Rename to ScreenLockActivity and refactor to Kotlin.
 public class PassphrasePromptActivity extends BaseActionBarActivity {
@@ -68,10 +72,16 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
 
   private KeyCachingService keyCachingService;
 
+  private int accentColor;
+  private int errorColor;
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     Log.i(TAG, "onCreate()");
     super.onCreate(savedInstanceState);
+
+    accentColor = ThemeUtil.getThemedColor(this, R.attr.accentColor);
+    errorColor = ThemeUtil.getThemedColor(this, R.attr.danger);
 
     setContentView(R.layout.prompt_passphrase_activity);
     initializeResources();
@@ -171,7 +181,7 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
     fingerprintListener           = new FingerprintListener();
 
     fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-    fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN);
+    fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
 
     lockScreenButton.setOnClickListener(v -> resumeScreenLock());
   }
@@ -251,15 +261,15 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
           // authentication failed
           onAuthenticationFailed();
         } else {
-          fingerprintPrompt.setImageResource(R.drawable.ic_check_white_48dp);
-          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.green_500), PorterDuff.Mode.SRC_IN);
+          fingerprintPrompt.setImageResource(R.drawable.ic_check);
+          fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
           fingerprintPrompt.animate().setInterpolator(new BounceInterpolator()).scaleX(1.1f).scaleY(1.1f).setDuration(500).setListener(new AnimationCompleteListener() {
             @Override
             public void onAnimationEnd(Animator animation) {
               handleAuthenticated();
 
               fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-              fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN);
+              fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
             }
           }).start();
         }
@@ -281,15 +291,15 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
         return;
       }
 
-      fingerprintPrompt.setImageResource(R.drawable.ic_check_white_48dp);
-      fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.green_500), PorterDuff.Mode.SRC_IN);
+      fingerprintPrompt.setImageResource(R.drawable.ic_check);
+      fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
       fingerprintPrompt.animate().setInterpolator(new BounceInterpolator()).scaleX(1.1f).scaleY(1.1f).setDuration(500).setListener(new AnimationCompleteListener() {
         @Override
         public void onAnimationEnd(Animator animation) {
           handleAuthenticated();
 
           fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN);
+          fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
         }
       }).start();
     }
@@ -299,7 +309,7 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
       Log.w(TAG, "onAuthenticationFailed()");
 
       fingerprintPrompt.setImageResource(R.drawable.ic_close_white_48dp);
-      fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.red_500), PorterDuff.Mode.SRC_IN);
+      fingerprintPrompt.getBackground().setColorFilter(errorColor, PorterDuff.Mode.SRC_IN);
 
       TranslateAnimation shake = new TranslateAnimation(0, 30, 0, 0);
       shake.setDuration(50);
@@ -311,7 +321,7 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
         @Override
         public void onAnimationEnd(Animation animation) {
           fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-          fingerprintPrompt.getBackground().setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN);
+          fingerprintPrompt.getBackground().setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
         }
 
         @Override

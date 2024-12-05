@@ -195,7 +195,7 @@ fun EditGroup(
                             modifier = Modifier.size(LocalDimensions.current.spacing),
                             onClick = onEditNameConfirmed) {
                             Icon(
-                                painter = painterResource(R.drawable.check),
+                                painter = painterResource(R.drawable.ic_check),
                                 contentDescription = stringResource(R.string.AccessibilityId_confirm),
                                 tint = LocalColors.current.text,
                             )
@@ -378,7 +378,7 @@ private fun MemberActionSheet(
             if (member.canRemove) {
                 this += ActionSheetItemData(
                     title = context.resources.getQuantityString(R.plurals.groupRemoveUserOnly, 1),
-                    iconRes = R.drawable.ic_delete_24,
+                    iconRes = R.drawable.ic_trash_2,
                     onClick = onRemove,
                     qaTag = R.string.AccessibilityId_removeContact
                 )
