@@ -51,31 +51,24 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
 
 
 
-        // TODO: While fine if the app is in the foreground, you cannot do this in modern Android if the
+        // While fine if the app is in the foreground, you cannot do this in modern Android if the
         // device is locked (i.e., if you get a call when the device is locked & attempt start the
         // foreground service) it will throw an error like:
         //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
         //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
         fun safeStartForegroundService(context: Context, intent: Intent) {
-            Log.w("ACL", "Hit safeStartForegroundService for intent action: " + intent.action)
-
-
-
-            // If the foreground service crashes then it's possible for one of these intents to
-            // be started in the background (in which case 'startService' will throw a
-            // 'BackgroundServiceStartNotAllowedException' exception) so catch that case and try
-            // to re-start the service in the foreground
+            // Attempt to start the call service..
             try { context.startService(intent) }
             catch(e: Exception) {
+                // ..however due to tightened restrictions in Android 12 and above this will not
+                // work (BackgroundServiceStartNotAllowedException) if the device is asleep / locked
+                // so we have to wake the device first and then try to start it as a foreground service.
+                // Note: Attempting to start a foreground service while the device is asleep / locked
+                // will also cause an exception.
+                wakeUpDeviceIfLocked(context)
                 try { ContextCompat.startForegroundService(context, intent) }
                 catch (e2: Exception) {
                     Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
-
-                    // TODO: This is super-ugly - we're forcing a full-screen intent to wake the device up so we can
-                    // TODO: successfully call `startForegroundService` in the second catch block below. This works
-                    // TODO: even if the device is locked and Session has been closed down - but it's UUUUGLY. Need
-                    // TODO: to find a better way.
-                    showIncomingCallNotification(context)
                 }
             }
         }
@@ -92,23 +85,11 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
             notificationManager?.createNotificationChannel(channel)
         }
 
+        // Wake the device up if it's asleep / locked - used when we receive an incoming call
         private fun wakeUpDeviceIfLocked(context: Context) {
-
-            // Get the KeyguardManager and PowerManager
-            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-            // Check if the phone is locked
-            val isPhoneLocked = keyguardManager.isKeyguardLocked
-
-            // Check if the screen is awake
             val isScreenAwake = powerManager.isInteractive
-
             if (!isScreenAwake) {
-
-                Log.w("ACL", "CMP: Screen is NOT awake - waking it up!")
-
-
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
                             PowerManager.ACQUIRE_CAUSES_WAKEUP or
@@ -116,41 +97,9 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                     "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
                 )
 
-                // Acquire the wake lock to wake up the device
-                wakeLock.acquire(3000) // Wake up for 3 seconds
-            } else {
-                Log.w("ACL", "CMP: Screen is awake - doing nothing")
+                // We only need the wake lock briefly
+                wakeLock.acquire(3000)
             }
-            // Dismiss the keyguard
-            //val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            //val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
-            //keyguardLock.disableKeyguard()
-        }
-
-        @SuppressLint("MissingPermission")
-        fun showIncomingCallNotification(context: Context) {
-
-            wakeUpDeviceIfLocked(context)
-
-            createNotificationChannel(context)
-
-            val notificationIntent = Intent(context, WebRtcCallActivity::class.java)
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                notificationIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val notificationBuilder = NotificationCompat.Builder(context, "WakeUpChannelID")
-                .setContentTitle("Incoming Call")
-                .setContentText("Tap to answer")
-                .setSmallIcon(R.drawable.ic_baseline_call_24)
-                .setPriority(NotificationCompat.PRIORITY_MAX) // Used for devices below API 26
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .setFullScreenIntent(pendingIntent, true)
-
-            NotificationManagerCompat.from(context).notify(999, notificationBuilder.build())
         }
     }
 
@@ -164,8 +113,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 
-                // if the user has not enabled voice/video calls
-                // or if the user has not granted audio/microphone permissions
+                // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
                 if (
                     !textSecurePreferences.isCallNotificationsEnabled() ||
                         !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)

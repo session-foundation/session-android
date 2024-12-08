@@ -235,7 +235,6 @@ public class KeyCachingService extends Service {
 
   private void foregroundService() {
     if (TextSecurePreferences.isPasswordDisabled(this) && !TextSecurePreferences.isScreenLockEnabled(this)) {
-      Log.w("ACL", "Stopping foreground service in KeyCachingService");
       stopForeground(true);
       return;
     }
