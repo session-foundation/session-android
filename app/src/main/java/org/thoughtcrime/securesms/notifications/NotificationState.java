@@ -3,20 +3,18 @@ package org.thoughtcrime.securesms.notifications;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
-import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
-
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import org.session.libsession.utilities.recipients.Recipient.VibrateState;
+import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 
 public class NotificationState {
 
@@ -36,68 +34,47 @@ public class NotificationState {
   }
 
   public void addNotification(NotificationItem item) {
+    // Add this new notification at the beginning of the list
     notifications.addFirst(item);
 
-    if (threads.contains(item.getThreadId())) {
-      threads.remove(item.getThreadId());
-    }
-
+    // Put a notification at the front by removing it then re-adding it?
+    threads.remove(item.getThreadId());
     threads.add(item.getThreadId());
+
     notificationCount++;
   }
 
   public @Nullable Uri getRingtone(@NonNull Context context) {
     if (!notifications.isEmpty()) {
       Recipient recipient = notifications.getFirst().getRecipient();
-
-      if (recipient != null) {
-        return NotificationChannels.getMessageRingtone(context, recipient);
-      }
+      return NotificationChannels.getMessageRingtone(context, recipient);
     }
 
-    return null;
+    return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
   }
 
   public VibrateState getVibrate() {
     if (!notifications.isEmpty()) {
       Recipient recipient = notifications.getFirst().getRecipient();
-
-      if (recipient != null) {
-        return recipient.resolve().getMessageVibrate();
-      }
+      return recipient.resolve().getMessageVibrate();
     }
-
     return VibrateState.DEFAULT;
   }
 
-  public boolean hasMultipleThreads() {
-    return threads.size() > 1;
-  }
-
-  public LinkedHashSet<Long> getThreads() {
-    return threads;
-  }
-
-  public int getThreadCount() {
-    return threads.size();
-  }
-
-  public int getMessageCount() {
-    return notificationCount;
-  }
-
-  public List<NotificationItem> getNotifications() {
-    return notifications;
-  }
+  public boolean hasMultipleThreads()              { return threads.size() > 1; }
+  public LinkedHashSet<Long> getThreads()          { return threads;            }
+  public int getThreadCount()                      { return threads.size();     }
+  public int getNotificationCount()                { return notificationCount;  }
+  public List<NotificationItem> getNotifications() { return notifications;      }
 
   public List<NotificationItem> getNotificationsForThread(long threadId) {
-    LinkedList<NotificationItem> list = new LinkedList<>();
+    LinkedList<NotificationItem> notificationsInThread = new LinkedList<>();
 
     for (NotificationItem item : notifications) {
-      if (item.getThreadId() == threadId) list.addFirst(item);
+      if (item.getThreadId() == threadId) notificationsInThread.addFirst(item);
     }
 
-    return list;
+    return notificationsInThread;
   }
 
   public PendingIntent getMarkAsReadIntent(Context context, int notificationId) {
@@ -111,7 +88,7 @@ public class NotificationState {
 
     Intent intent = new Intent(MarkReadReceiver.CLEAR_ACTION);
     intent.setClass(context, MarkReadReceiver.class);
-    intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
+    intent.setData((Uri.parse("custom://" + System.currentTimeMillis())));
     intent.putExtra(MarkReadReceiver.THREAD_IDS_EXTRA, threadArray);
     intent.putExtra(MarkReadReceiver.NOTIFICATION_ID_EXTRA, notificationId);
 
@@ -171,7 +148,7 @@ public class NotificationState {
     Intent intent = new Intent(AndroidAutoHeardReceiver.HEARD_ACTION);
     intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
     intent.setClass(context, AndroidAutoHeardReceiver.class);
-    intent.setData((Uri.parse("custom://"+System.currentTimeMillis())));
+    intent.setData((Uri.parse("custom://" + System.currentTimeMillis())));
     intent.putExtra(AndroidAutoHeardReceiver.THREAD_IDS_EXTRA, threadArray);
     intent.putExtra(AndroidAutoHeardReceiver.NOTIFICATION_ID_EXTRA, notificationId);
     intent.setPackage(context.getPackageName());
@@ -223,6 +200,4 @@ public class NotificationState {
 
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
-
-
 }

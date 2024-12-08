@@ -45,6 +45,7 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
@@ -223,14 +224,14 @@ class DefaultMessageNotifier : MessageNotifier {
                         sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
                     }
                     sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
-                } else if (notificationState.messageCount > 0) {
+                } else if (notificationState.notificationCount > 0) {
                     sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
                 } else {
                     cancelActiveNotifications(context)
                 }
 
                 cancelOrphanedNotifications(context, notificationState)
-                updateBadge(context, notificationState.messageCount)
+                updateBadge(context, notificationState.notificationCount)
 
                 if (playNotificationAudio) {
                     scheduleReminder(context, reminderCount)
@@ -262,7 +263,7 @@ class DefaultMessageNotifier : MessageNotifier {
 
         val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
-        val recipient = notifications[0].recipient
+        val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val messageIdTag = notifications[0].timestamp.toString()
 
@@ -280,12 +281,17 @@ class DefaultMessageNotifier : MessageNotifier {
 
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
 
-        val text = notifications[0].text
+        val notificationText = notifications[0].text
+
+        // For some reason, even when we're starting a call we get a missed call notification - so we'll bail before that happens.
+        // TODO: Probably better to fix this at the source so that this never gets called rather then here - do this.
+        val missedCallString = Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, notifications[0].recipient.name).format()
+        if (ApplicationContext.isAppVisible && notificationText == missedCallString) { return }
 
         builder.setThread(notifications[0].recipient)
-        builder.setMessageCount(notificationState.messageCount)
+        builder.setMessageCount(notificationState.notificationCount)
 
-        val builderCS = text ?: ""
+        val builderCS = notificationText ?: ""
         val ss = highlightMentions(
             builderCS,
             false,
@@ -296,7 +302,7 @@ class DefaultMessageNotifier : MessageNotifier {
         )
 
         builder.setPrimaryMessageBody(
-            recipient,
+            messageOriginator,
             notifications[0].individualRecipient,
             ss,
             notifications[0].slideDeck
@@ -308,12 +314,12 @@ class DefaultMessageNotifier : MessageNotifier {
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         builder.setAutoCancel(true)
 
-        val replyMethod = ReplyMethod.forRecipient(context, recipient)
+        val replyMethod = ReplyMethod.forRecipient(context, messageOriginator)
 
-        val canReply = canUserReplyToNotification(recipient)
+        val canReply = canUserReplyToNotification(messageOriginator)
 
-        val quickReplyIntent = if (canReply) notificationState.getQuickReplyIntent(context, recipient) else null
-        val remoteReplyIntent = if (canReply) notificationState.getRemoteReplyIntent(context, recipient, replyMethod) else null
+        val quickReplyIntent = if (canReply) notificationState.getQuickReplyIntent(context, messageOriginator) else null
+        val remoteReplyIntent = if (canReply) notificationState.getRemoteReplyIntent(context, messageOriginator, replyMethod) else null
 
         builder.addActions(
             notificationState.getMarkAsReadIntent(context, notificationId),
@@ -324,14 +330,13 @@ class DefaultMessageNotifier : MessageNotifier {
 
         if (canReply) {
             builder.addAndroidAutoAction(
-                notificationState.getAndroidAutoReplyIntent(context, recipient),
+                notificationState.getAndroidAutoReplyIntent(context, messageOriginator),
                 notificationState.getAndroidAutoHeardIntent(context, notificationId),
                 notifications[0].timestamp
             )
         }
 
         val iterator: ListIterator<NotificationItem> = notifications.listIterator(notifications.size)
-
         while (iterator.hasPrevious()) {
             val item = iterator.previous()
             builder.addMessageBody(item.recipient, item.individualRecipient, item.text)
@@ -363,6 +368,8 @@ class DefaultMessageNotifier : MessageNotifier {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
+
+
         NotificationManagerCompat.from(context).notify(notificationId, notification)
         Log.i(TAG, "Posted notification. $notification")
     }
@@ -378,7 +385,7 @@ class DefaultMessageNotifier : MessageNotifier {
         val builder = MultipleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
         val notifications = notificationState.notifications
 
-        builder.setMessageCount(notificationState.messageCount, notificationState.threadCount)
+        builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
         builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
         builder.setGroup(NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))

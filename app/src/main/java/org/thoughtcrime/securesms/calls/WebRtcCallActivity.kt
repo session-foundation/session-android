@@ -262,7 +262,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                 Orientation.REVERSED_LANDSCAPE -> 90f
                 else -> 0f
             }
-
+R.drawable.ic_baseline_call_24
             userAvatar.animate().cancel()
             userAvatar.animate().rotation(rotation).start()
             contactAvatar.animate().cancel()

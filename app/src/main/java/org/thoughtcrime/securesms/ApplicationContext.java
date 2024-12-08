@@ -169,7 +169,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
 
-    private volatile boolean isAppVisible;
+    public static volatile boolean isAppVisible;
 
     @Override
     public Object getSystemService(String name) {

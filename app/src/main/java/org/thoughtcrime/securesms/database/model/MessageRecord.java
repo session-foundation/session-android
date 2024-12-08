@@ -32,6 +32,7 @@ import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
