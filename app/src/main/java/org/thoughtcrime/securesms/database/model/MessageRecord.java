@@ -134,11 +134,8 @@ public abstract class MessageRecord extends DisplayRecord {
       } else if (isOutgoingCall()) {
         callType = CallMessageType.CALL_OUTGOING;
       } else if (isMissedCall()) {
-        Log.w("ACL", "We think CALL_MISSSED");
-
         callType = CallMessageType.CALL_MISSED;
       } else {
-        Log.w("ACL", "We think CALL_FIRST_MISSSED");
         callType = CallMessageType.CALL_FIRST_MISSED;
       }
       return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().serialize()));

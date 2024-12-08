@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.service
 
-import android.app.ForegroundServiceStartNotAllowedException
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -22,6 +21,12 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.UUID
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
@@ -49,6 +54,7 @@ import org.thoughtcrime.securesms.webrtc.UncaughtExceptionHandlerManager
 import org.thoughtcrime.securesms.webrtc.WiredHeadsetStateReceiver
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.data.Event
+import org.thoughtcrime.securesms.webrtc.data.State as CallState
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
@@ -59,13 +65,6 @@ import org.webrtc.PeerConnection.IceConnectionState.DISCONNECTED
 import org.webrtc.PeerConnection.IceConnectionState.FAILED
 import org.webrtc.RtpReceiver
 import org.webrtc.SessionDescription
-import java.util.UUID
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 @AndroidEntryPoint
 class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
@@ -333,31 +332,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         registerUncaughtExceptionHandler()
         networkChangedReceiver = NetworkChangeReceiver(::networkChange)
         networkChangedReceiver!!.register(this)
-
-        //Log.w("ACL", "Lesssgo!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        //if (appIsBackground(this)) {
-//        ServiceCompat.startForeground(this,
-//            CallNotificationBuilder.WEBRTC_NOTIFICATION,
-//            CallNotificationBuilder.getFirstCallNotification(this, "Initialising"),
-//            if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
-//        )
-
-
-
-        // If the screen is off or phone is locked, wake it up
-        //if (!isScreenAwake || isPhoneLocked) { wakeUpDevice() }
-
-
-//        ServiceCompat.startForeground(
-//            this,
-//            CallNotificationBuilder.WEBRTC_NOTIFICATION,
-//            Not
-//            CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-//            if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
-//        )
     }
-
-
 
     private fun registerUncaughtExceptionHandler() {
         uncaughtExceptionHandlerManager = UncaughtExceptionHandlerManager().apply {
@@ -660,6 +635,20 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
+    /**
+     * Handles remote ICE candidates received from a signaling server.
+     *
+     * This function is called when a new ICE candidate is received for a specific call.
+     * It extracts the candidate information from the intent, creates IceCandidate objects,
+     * and passes them to the CallManager to be added to the PeerConnection.
+     *
+     * @param intent The intent containing the remote ICE candidate information.
+     *               The intent should contain the following extras:
+     *               - EXTRA_CALL_ID: The ID of the call.
+     *               - EXTRA_ICE_SDP_MID: An array of SDP media stream identification strings.
+     *               - EXTRA_ICE_SDP_LINE_INDEX: An array of SDP media line indexes.
+     *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
+     */
     private fun handleRemoteIceCandidate(intent: Intent) {
         val callId = getCallId(intent)
         val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
@@ -754,7 +743,6 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     }
 
     private fun wakeUpDeviceIfLocked() {
-
         // Get the KeyguardManager and PowerManager
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -766,9 +754,6 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         val isScreenAwake = powerManager.isInteractive
 
         if (!isScreenAwake) {
-
-            Log.w("ACL", "Screen is NOT awake - waking it up!")
-
             val wakeLock = powerManager.newWakeLock(
                 PowerManager.FULL_WAKE_LOCK or
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
@@ -777,69 +762,46 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             )
 
             // Acquire the wake lock to wake up the device
-            wakeLock.acquire(3000) // Wake up for 3 seconds
+            wakeLock.acquire(3000)
 
-            val startTime = System.currentTimeMillis()
-            while (!powerManager.isInteractive) { /* Busy wait until we're awake */ }
-            val endTime = System.currentTimeMillis()
-            val duration = endTime - startTime
-            Log.w("ACL", "Woken up in $duration ms")
-        } else {
-            Log.w("ACL", "Screen is awake - doing nothing")
+            while (!powerManager.isInteractive) {
+                /* Busy wait until we're awake - typically takes less than ~10ms */
+            }
         }
+
         // Dismiss the keyguard
         val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
         keyguardLock.disableKeyguard()
     }
 
-    // Over the course of setting up a phonecall this method is called multiple times with `types` of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
+    // Over the course of setting up a phone call this method is called multiple times with `types`
+    // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
 
         wakeUpDeviceIfLocked()
 
-
-        val typeString = when (type) {
-            TYPE_INCOMING_RINGING    -> "TYPE_INCOMING_RINGING"
-            TYPE_OUTGOING_RINGING    -> "TYPE_OUTGOING_RINGING"
-            TYPE_ESTABLISHED         -> "TYPE_ESTABLISHED"
-            TYPE_INCOMING_CONNECTING -> "TYPE_INCOMING_CONNECTING"
-            TYPE_INCOMING_PRE_OFFER  -> "TYPE_INCOMING_PRE_OFFER"
-            WEBRTC_NOTIFICATION      -> "WEBRTC_NOTIFICATION"
-            else -> "We have no idea!"
-        }
-        Log.w("ACL", "NOOOOOOOOOOTIFICATION - Hit setCallInProgressNotification with type: $typeString")
-
         // If notifications are enabled we'll try and start a foreground service to show the notification
         var failedToStartForegroundService = false
         if (CallNotificationBuilder.areNotificationsEnabled(this)) {
-            Log.w("ACL", "Notifications are ENABLED! About to try to call startForeground")
             try {
                 ServiceCompat.startForeground(
                     this,
-                    CallNotificationBuilder.WEBRTC_NOTIFICATION,
+                    WEBRTC_NOTIFICATION,
                     CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
                     if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
                 )
-                Log.w("ACL", "Successfully called startForeground - about to bail.")
                 return
             } catch (e: IllegalStateException) {
                 Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
                 failedToStartForegroundService = true
             }
         } else {
-            Log.w("ACL", "Notifications are NOT enabled! Skipped attempt at startForeground and going straight to fullscreen intent attempt!")
+            // Notifications are NOT enabled! Skipped attempt at startForeground and going straight to fullscreen intent attempt!
         }
 
-
-
-
         if ((type == TYPE_INCOMING_PRE_OFFER || type == TYPE_INCOMING_RINGING) && failedToStartForegroundService) {
-        //if (failedToStartForegroundService) {
 
-            Log.w("ACL", "DID SOMETHING - foregroundIntent to WebRtcCallActivity for TYPE_INCOMING_PRE_OFFER")
             wakeUpDeviceIfLocked()
-
-
 
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
@@ -848,8 +810,6 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             startActivity(foregroundIntent)
             return
         }
-
-        Log.w("ACL", "type wasn't TYPE_INCOMING_PRE_OFFER - doing nothing =/")
     }
 
     private fun getOptionalRemoteRecipient(intent: Intent): Recipient? =
