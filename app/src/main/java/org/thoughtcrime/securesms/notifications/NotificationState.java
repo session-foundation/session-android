@@ -37,12 +37,8 @@ public class NotificationState {
     // Add this new notification at the beginning of the list
     notifications.addFirst(item);
 
-    // TODO: This doesn't make sense - why would be remove a threadId from the threads LinkedHashSet<Long> and then immediately put it back? `add` already only adds it if doesn't already exist - skipping this for now as a test -ACL
-    /*
-    if (threads.contains(item.getThreadId())) {
-      threads.remove(item.getThreadId());
-    }
-    */
+    // Put a notification at the front by removing it then re-adding it?
+    threads.remove(item.getThreadId());
     threads.add(item.getThreadId());
 
     notificationCount++;
@@ -53,9 +49,6 @@ public class NotificationState {
       Recipient recipient = notifications.getFirst().getRecipient();
       return NotificationChannels.getMessageRingtone(context, recipient);
     }
-
-    // TODO: Going to try returning the default ringtone for a notification rather than null here - seems like a more sensible option.
-    //return null;
 
     return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
   }

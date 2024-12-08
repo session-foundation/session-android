@@ -1,19 +1,12 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
-import android.annotation.SuppressLint
-import android.app.KeyguardManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.PowerManager
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -25,6 +18,7 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
@@ -34,37 +28,27 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.webrtc.IceCandidate
-import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-
 
 class CallMessageProcessor(private val context: Context, private val textSecurePreferences: TextSecurePreferences, lifecycle: Lifecycle, private val storage: StorageProtocol) {
-
-
 
     companion object {
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
 
 
-
-        // While fine if the app is in the foreground, you cannot do this in modern Android if the
-        // device is locked (i.e., if you get a call when the device is locked & attempt start the
-        // foreground service) it will throw an error like:
-        //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
-        //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
         fun safeStartForegroundService(context: Context, intent: Intent) {
             // Attempt to start the call service..
             try { context.startService(intent) }
             catch(e: Exception) {
-                // ..however due to tightened restrictions in Android 12 and above this will not
-                // work (BackgroundServiceStartNotAllowedException) if the device is asleep / locked
-                // so we have to wake the device first and then try to start it as a foreground service.
-                // Note: Attempting to start a foreground service while the device is asleep / locked
-                // will also cause an exception.
+                // While fine if the app is in the foreground, you cannot start a foreground service easily
+                // in Android 12 and above if the device is locked (i.e., if you get a call when the device is
+                // locked & attempt start the foreground service) it will throw aa BackgroundServiceStartNotAllowedException such as:
+                //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
+                //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
+                //
+                // ..as such, we'll wake the device up before attempting to start the foreground service.
                 wakeUpDeviceIfLocked(context)
                 try { ContextCompat.startForegroundService(context, intent) }
                 catch (e2: Exception) {
@@ -73,19 +57,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
             }
         }
 
-        fun createNotificationChannel(context: Context) {
-            val channel = NotificationChannel(
-                "WakeUpChannelID", // CHANNEL_ID,
-                "WakeUpChannelName", //CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notifications for incoming calls"
-            }
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            notificationManager?.createNotificationChannel(channel)
-        }
-
-        // Wake the device up if it's asleep / locked - used when we receive an incoming call
+        // Wake the device up if it's asleep / locked (used when we receive an incoming call)
         private fun wakeUpDeviceIfLocked(context: Context) {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             val isScreenAwake = powerManager.isInteractive

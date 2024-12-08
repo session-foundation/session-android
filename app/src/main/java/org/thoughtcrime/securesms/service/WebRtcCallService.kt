@@ -743,6 +743,8 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     }
 
     private fun wakeUpDeviceIfLocked() {
+        Log.w("ACL", "Hit WRCS.wakeUpDeviceIfLocked at: ${System.currentTimeMillis()} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
         // Get the KeyguardManager and PowerManager
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -765,12 +767,19 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             wakeLock.acquire(3000)
 
             while (!powerManager.isInteractive) {
-                /* Busy wait until we're awake - typically takes less than ~10ms */
+                /* Busy wait until we're awake - typically this takes less than ~10ms */
             }
         }
 
-        // Dismiss the keyguard
-        val keyguardLock = keyguardManager.newKeyguardLock("MyApp:KeyguardLock")
+        // Dismiss the keyguard.
+        // Note: This will NOT work if Session itself has a lock on it, which is what we want, as
+        // otherwise this would be a lock-bypass mechanism! When Session has a lock the user must
+        // unlock their device, then unlock Session - however without a lock on Session (but with
+        // one on the device) then this will bypass the device lock to show the full-screen intent
+        // regarding the incoming call.
+        // TODO: When we move to a minimum Android API of 27 (our minimum is API 26 as of 9th Dec 2024) then replace these deprecated calls.
+        // TODO: If we try to remove them before this it gets messy because the replacements only came in at API 27.
+        val keyguardLock = keyguardManager.newKeyguardLock("{${NonTranslatableStringConstants.APP_NAME}:KeyguardLock")
         keyguardLock.disableKeyguard()
     }
 

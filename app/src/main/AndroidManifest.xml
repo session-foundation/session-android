@@ -44,7 +44,13 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" /> <!-- We cannot declare this is good fair because we don't implement `ConnectionService` - see: https://developer.android.com/reference/android/telecom/ConnectionService -->
+
+    <!-- Google may (potentially) insist we implement `ConnectionService` to request MANAGE_OWN_CALLS - see:
+           - https://developer.android.com/reference/android/Manifest.permission#MANAGE_OWN_CALLS
+           - https://developer.android.com/reference/android/telecom/ConnectionService
+    -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
     <uses-permission android:name="android.app.role.DIALER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
