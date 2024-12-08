@@ -201,10 +201,17 @@ class ConfigToDatabaseSync @Inject constructor(
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
-                conversationRepository.markAsDeletedLocally(messages, context.getString(R.string.deleteMessageDeletedGlobally))
+                val (controlMessages, visibleMessages) = messages.partition { it.isControlMessage }
+
+                // Mark visible messages as deleted, and control messages actually deleted.
+                conversationRepository.markAsDeletedLocally(visibleMessages.toSet(), context.getString(R.string.deleteMessageDeletedGlobally))
+                conversationRepository.deleteMessages(controlMessages.toSet(), threadId)
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
-                mmsDatabase.deleteMessagesInThreadBeforeDate(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore), onlyMedia = true)
+                val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
+                    .filterTo(mutableSetOf()) { it.isMms }
+
+                conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }
         }
     }
