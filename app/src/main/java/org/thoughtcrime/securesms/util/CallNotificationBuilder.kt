@@ -25,42 +25,17 @@ class CallNotificationBuilder {
     companion object {
         const val WEBRTC_NOTIFICATION = 313388
 
-        const val TYPE_INCOMING_RINGING = 1
-        const val TYPE_OUTGOING_RINGING = 2
-        const val TYPE_ESTABLISHED = 3
+        const val TYPE_INCOMING_RINGING    = 1
+        const val TYPE_OUTGOING_RINGING    = 2
+        const val TYPE_ESTABLISHED         = 3
         const val TYPE_INCOMING_CONNECTING = 4
-        const val TYPE_INCOMING_PRE_OFFER = 5
+        const val TYPE_INCOMING_PRE_OFFER  = 5
 
         @JvmStatic
         fun areNotificationsEnabled(context: Context): Boolean {
             val notificationManager = NotificationManagerCompat.from(context)
             return notificationManager.areNotificationsEnabled()
         }
-
-//        @JvmStatic
-//        fun getFirstCallNotification(context: Context, callerName: String): Notification {
-//            val contentIntent = Intent(context, SettingsActivity::class.java)
-//
-//            val pendingIntent = PendingIntent.getActivity(context, 0, contentIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-//
-//            val titleTxt = context.getSubbedString(R.string.callsMissedCallFrom, NAME_KEY to callerName)
-//            val bodyTxt = context.getSubbedCharSequence(
-//                R.string.callsYouMissedCallPermissions,
-//                NAME_KEY to callerName
-//            )
-//
-//            val builder = NotificationCompat.Builder(context, NotificationChannels.CALLS)
-//                    .setSound(null)
-//                    .setSmallIcon(R.drawable.ic_baseline_call_24)
-//                    .setContentIntent(pendingIntent)
-//                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-//                    .setContentTitle(titleTxt)
-//                    .setContentText(bodyTxt)
-//                    .setStyle(NotificationCompat.BigTextStyle().bigText(bodyTxt))
-//                    .setAutoCancel(true)
-//
-//            return builder.build()
-//        }
 
         @JvmStatic
         fun getCallInProgressNotification(context: Context, type: Int, recipient: Recipient?): Notification {
