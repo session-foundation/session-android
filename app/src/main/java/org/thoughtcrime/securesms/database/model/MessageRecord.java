@@ -38,8 +38,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.util.List;
 import java.util.Objects;
 
-import kotlin.Lazy;
-
 /**
  * The base class for message record models that are displayed in
  * conversations, as opposed to models that are displayed in a thread list.
