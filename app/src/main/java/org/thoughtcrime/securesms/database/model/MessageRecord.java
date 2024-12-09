@@ -23,6 +23,7 @@ import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.calls.CallMessageType;
@@ -36,6 +37,8 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
 import java.util.Objects;
+
+import kotlin.Lazy;
 
 /**
  * The base class for message record models that are displayed in
@@ -55,6 +58,9 @@ public abstract class MessageRecord extends DisplayRecord {
   public  final long                      id;
   private final List<ReactionRecord>      reactions;
   private final boolean                   hasMention;
+
+  @Nullable
+  private UpdateMessageData               groupUpdateMessage;
 
   public final boolean isNotDisappearAfterRead() {
     return expireStarted == getTimestamp();
@@ -115,10 +121,43 @@ public abstract class MessageRecord extends DisplayRecord {
     return isExpirationTimerUpdate() || isCallLog() || isDataExtractionNotification();
   }
 
+  /**
+   * @return Decoded group update message. Only valid if the message is a group update message.
+   */
+  @Nullable
+  public UpdateMessageData getGroupUpdateMessage() {
+    if (isGroupUpdateMessage()) {
+      groupUpdateMessage = UpdateMessageData.Companion.fromJSON(getBody());
+    }
+
+    return groupUpdateMessage;
+  }
+
+  /**
+   * @return Whether the date text can be shown for this message. By default, every message
+   *         can show a date break, only certain messages can't. Note: a positive value
+   *         DOES NOT guarantee the date break will be shown, only a negative value can
+   *         hide the date break.
+   */
+  public boolean canShowDateBreak() {
+    UpdateMessageData update = getGroupUpdateMessage();
+
+    if (update == null) {
+      return true;
+    }
+
+    if (update.getKind() instanceof UpdateMessageData.Kind.GroupDestroyed ||
+      update.getKind() instanceof UpdateMessageData.Kind.GroupKicked) {
+      return false;
+    }
+
+    return true;
+  }
+
   @Override
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {
-      UpdateMessageData updateMessageData = UpdateMessageData.Companion.fromJSON(getBody());
+      UpdateMessageData updateMessageData = getGroupUpdateMessage();
       if (updateMessageData == null) {
         return "";
       }
