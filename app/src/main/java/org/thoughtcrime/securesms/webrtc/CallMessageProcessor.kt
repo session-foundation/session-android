@@ -47,7 +47,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
                 //
                 // ..as such, we'll wake the device up before attempting to start the foreground service.
-                wakeUpDeviceAndDismissKeyguardIfNecessary(context)
+                wakeUpDeviceAndDismissKeyguard(context)
                 try { ContextCompat.startForegroundService(context, intent) }
                 catch (e2: Exception) {
                     Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
@@ -56,7 +56,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         }
 
         // Wake the device up if it's asleep / locked (used when we receive an incoming call)
-        private fun wakeUpDeviceAndDismissKeyguardIfNecessary(context: Context) {
+        private fun wakeUpDeviceAndDismissKeyguard(context: Context) {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
             val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 

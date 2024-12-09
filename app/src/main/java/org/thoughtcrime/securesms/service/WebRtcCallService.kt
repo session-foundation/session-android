@@ -743,8 +743,6 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     }
 
     private fun wakeUpDeviceIfLockedAndDismissKeyguard() {
-        Log.w("ACL", "Hit WRCS.wakeUpDeviceIfLocked at: ${System.currentTimeMillis()} !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
         // Get the KeyguardManager and PowerManager
         val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
