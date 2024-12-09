@@ -852,6 +852,12 @@ class GroupManagerV2Impl @Inject constructor(
             )
         }
 
+        // Clear all messages in the group
+        val threadId = storage.getThreadId(Address.fromSerialized(groupId.hexString))
+        if (threadId != null) {
+            storage.clearMessages(threadId)
+        }
+
         // Insert a message to indicate we were kicked
         storage.insertIncomingInfoMessage(
             context = application,
