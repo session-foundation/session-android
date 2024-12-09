@@ -35,11 +35,13 @@ import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
+import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_DISCONNECTED
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_INCOMING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_INIT
@@ -311,6 +313,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onStart() {
         super.onStart()
+        val openHomeActivityIntent = Intent(this, HomeActivity::class.java)
 
         uiJob = lifecycleScope.launch {
 
@@ -331,6 +334,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                             wantsToAnswer = false
                         }
                         CALL_CONNECTED -> wantsToAnswer = false
+                        CALL_DISCONNECTED -> {
+                            // Rather than leave a dangling activity start the Home activity and close this one
+                            startActivity(openHomeActivityIntent)
+                            finish()
+                        }
                         else -> {}
                     }
                     updateControls(state)
