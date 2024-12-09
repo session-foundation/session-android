@@ -335,9 +335,10 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
                         }
                         CALL_CONNECTED -> wantsToAnswer = false
                         CALL_DISCONNECTED -> {
-                            // Rather than leave a dangling activity start the Home activity and close this one
-                            startActivity(openHomeActivityIntent)
-                            finish()
+                            // Get rid of the activity when the call is over.
+                            // Note: We call remove task so that if the activity was started by a fullscreen
+                            // intent when the device was locked this stale activity doesn't hang around.
+                            finishAndRemoveTask()
                         }
                         else -> {}
                     }

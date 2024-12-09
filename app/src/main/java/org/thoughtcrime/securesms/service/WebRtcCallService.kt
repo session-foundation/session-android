@@ -812,8 +812,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         if ((type == TYPE_INCOMING_PRE_OFFER || type == TYPE_INCOMING_RINGING) && failedToStartForegroundService) {
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
-                //.setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_BROUGHT_TO_FRONT or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             startActivity(foregroundIntent)
             return
