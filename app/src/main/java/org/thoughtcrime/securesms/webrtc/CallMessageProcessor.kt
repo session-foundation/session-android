@@ -1,8 +1,7 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
@@ -37,7 +36,6 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
     companion object {
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
 
-
         fun safeStartForegroundService(context: Context, intent: Intent) {
             // Attempt to start the call service..
             try { context.startService(intent) }
@@ -49,7 +47,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
                 //
                 // ..as such, we'll wake the device up before attempting to start the foreground service.
-                wakeUpDeviceIfLocked(context)
+                wakeUpDeviceAndDismissKeyguardIfNecessary(context)
                 try { ContextCompat.startForegroundService(context, intent) }
                 catch (e2: Exception) {
                     Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
@@ -58,9 +56,14 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
         }
 
         // Wake the device up if it's asleep / locked (used when we receive an incoming call)
-        private fun wakeUpDeviceIfLocked(context: Context) {
+        private fun wakeUpDeviceAndDismissKeyguardIfNecessary(context: Context) {
             val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+
+            // Check if the screen is awake & if the phone is locked
+            val isPhoneLocked = keyguardManager.isKeyguardLocked
             val isScreenAwake = powerManager.isInteractive
+
             if (!isScreenAwake) {
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
@@ -71,6 +74,11 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
 
                 // We only need the wake lock briefly
                 wakeLock.acquire(3000)
+            }
+
+            if (isPhoneLocked) {
+                val keyguardLock = keyguardManager.newKeyguardLock("{${NonTranslatableStringConstants.APP_NAME}:KeyguardLock")
+                keyguardLock.disableKeyguard()
             }
         }
     }
