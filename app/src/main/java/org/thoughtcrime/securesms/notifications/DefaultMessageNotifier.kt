@@ -28,8 +28,6 @@ import android.database.Cursor
 import android.os.AsyncTask
 import android.os.Build
 import android.text.TextUtils
-import android.widget.Toast
-import androidx.camera.core.impl.utils.ContextUtil.getApplicationContext
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -47,7 +45,6 @@ import org.session.libsession.messaging.utilities.AccountId
 import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -71,8 +68,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
-import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.preferences.ShareLogsDialog
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
@@ -373,7 +368,6 @@ class DefaultMessageNotifier : MessageNotifier {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
-
 
         NotificationManagerCompat.from(context).notify(notificationId, notification)
         Log.i(TAG, "Posted notification. $notification")
