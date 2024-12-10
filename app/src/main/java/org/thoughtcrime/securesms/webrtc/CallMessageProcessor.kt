@@ -27,6 +27,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.webrtc.IceCandidate
@@ -34,51 +35,26 @@ import org.webrtc.IceCandidate
 class CallMessageProcessor(private val context: Context, private val textSecurePreferences: TextSecurePreferences, lifecycle: Lifecycle, private val storage: StorageProtocol) {
 
     companion object {
+        private const val TAG = "CallMessageProcessor"
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
 
         fun safeStartForegroundService(context: Context, intent: Intent) {
+            // Wake up the device (if required) before attempting to start any services - otherwise on Android 12 and above we get
+            // a BackgroundServiceStartNotAllowedException such as:
+            //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
+            //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
+            (context.applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+
             // Attempt to start the call service..
-            try { context.startService(intent) }
-            catch(e: Exception) {
-                // While fine if the app is in the foreground, you cannot start a foreground service easily
-                // in Android 12 and above if the device is locked (i.e., if you get a call when the device is
-                // locked & attempt start the foreground service) it will throw aa BackgroundServiceStartNotAllowedException such as:
-                //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
-                //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
-                //
-                // ..as such, we'll wake the device up before attempting to start the foreground service.
-                wakeUpDeviceAndDismissKeyguard(context)
-                try { ContextCompat.startForegroundService(context, intent) }
-                catch (e2: Exception) {
-                    Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.e("Loki", "Unable to start service: ${e.message}", e)
+                try {
+                    ContextCompat.startForegroundService(context, intent)
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Unable to start CallMessage intent: ${e2.message}", e2)
                 }
-            }
-        }
-
-        // Wake the device up if it's asleep / locked (used when we receive an incoming call)
-        private fun wakeUpDeviceAndDismissKeyguard(context: Context) {
-            val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-
-            // Check if the screen is awake & if the phone is locked
-            val isPhoneLocked = keyguardManager.isKeyguardLocked
-            val isScreenAwake = powerManager.isInteractive
-
-            if (!isScreenAwake) {
-                val wakeLock = powerManager.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK or
-                            PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                            PowerManager.ON_AFTER_RELEASE,
-                    "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
-                )
-
-                // We only need the wake lock briefly
-                wakeLock.acquire(3000)
-            }
-
-            if (isPhoneLocked) {
-                val keyguardLock = keyguardManager.newKeyguardLock("{${NonTranslatableStringConstants.APP_NAME}:KeyguardLock")
-                keyguardLock.disableKeyguard()
             }
         }
     }
@@ -136,16 +112,15 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
-        val recipientAddress = callMessage.sender ?: return
-        val callId = callMessage.callId ?: return
-        val sdp = callMessage.sdps.firstOrNull() ?: return
+        val recipientAddress = callMessage.sender ?: return Log.w(TAG, "Cannot answer incoming call without sender")
+        val callId = callMessage.callId ?: return Log.w(TAG, "Cannot answer incoming call without callId" )
+        val sdp = callMessage.sdps.firstOrNull() ?: return Log.w(TAG, "Cannot answer incoming call without sdp")
         val answerIntent = WebRtcCallService.incomingAnswer(
                 context = context,
                 address = Address.fromSerialized(recipientAddress),
                 sdp = sdp,
                 callId = callId
         )
-
         safeStartForegroundService(context, answerIntent)
     }
 

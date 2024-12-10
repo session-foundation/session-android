@@ -198,7 +198,6 @@ class DefaultMessageNotifier : MessageNotifier {
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
         var playNotificationAudio = signal // Local copy of the argument so we can modify it
         var telcoCursor: Cursor? = null
-        val pushCursor: Cursor? = null
 
         try {
             telcoCursor = get(context).mmsSmsDatabase().unread // TODO: add a notification specific lighter query here
@@ -286,7 +285,7 @@ class DefaultMessageNotifier : MessageNotifier {
         // For some reason, even when we're starting a call we get a missed call notification - so we'll bail before that happens.
         // TODO: Probably better to fix this at the source so that this never gets called rather then here - do this.
         val missedCallString = Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, notifications[0].recipient.name).format()
-        if (ApplicationContext.isAppVisible && notificationText == missedCallString) { return }
+        if ((context.applicationContext as ApplicationContext).isAppVisible && notificationText == missedCallString) { return }
 
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.notificationCount)

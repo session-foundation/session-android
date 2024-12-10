@@ -34,6 +34,7 @@ import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.util.CallNotificationBuilder
@@ -743,52 +744,13 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
-    private fun wakeUpDeviceIfLockedAndDismissKeyguard() {
-        // Get the KeyguardManager and PowerManager
-        val keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
 
-        // Check if the phone is locked
-        val isPhoneLocked = keyguardManager.isKeyguardLocked
-
-        // Check if the screen is awake
-        val isScreenAwake = powerManager.isInteractive
-
-        if (!isScreenAwake) {
-            val wakeLock = powerManager.newWakeLock(
-                PowerManager.FULL_WAKE_LOCK or
-                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                        PowerManager.ON_AFTER_RELEASE,
-                "${NonTranslatableStringConstants.APP_NAME}:WakeLock"
-            )
-
-            // Acquire the wake lock to wake up the device
-            wakeLock.acquire(3000)
-
-            while (!powerManager.isInteractive) {
-                /* Busy wait until we're awake - typically this takes less than ~10ms */
-            }
-        }
-
-        // Dismiss the keyguard.
-        // Note: This will NOT work if Session itself has a lock on it, which is what we want, as
-        // otherwise this would be a lock-bypass mechanism! When Session has a lock the user must
-        // unlock their device, then unlock Session - however without a lock on Session (but with
-        // one on the device) then this will bypass the device lock to show the full-screen intent
-        // regarding the incoming call.
-        // TODO: When we move to a minimum Android API of 27 (our minimum is API 26 as of 9th Dec 2024) then replace these deprecated calls.
-        // TODO: If we try to remove them before this it gets messy because the replacements only came in at API 27.
-        if (isPhoneLocked) {
-            val keyguardLock = keyguardManager.newKeyguardLock("{${NonTranslatableStringConstants.APP_NAME}:KeyguardLock")
-            keyguardLock.disableKeyguard()
-        }
-    }
 
     // Over the course of setting up a phone call this method is called multiple times with `types`
     // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
 
-        wakeUpDeviceIfLockedAndDismissKeyguard()
+        (applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
 
         // If notifications are enabled we'll try and start a foreground service to show the notification
         var failedToStartForegroundService = false

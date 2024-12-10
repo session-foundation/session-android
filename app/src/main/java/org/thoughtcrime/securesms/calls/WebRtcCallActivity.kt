@@ -313,7 +313,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
     override fun onStart() {
         super.onStart()
-        val openHomeActivityIntent = Intent(this, HomeActivity::class.java)
 
         uiJob = lifecycleScope.launch {
 
