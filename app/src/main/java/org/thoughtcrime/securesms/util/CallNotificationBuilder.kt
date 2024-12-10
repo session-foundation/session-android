@@ -73,9 +73,7 @@ class CallNotificationBuilder {
                             R.string.decline
                     ))
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallService
-                    builder.setFullScreenIntent(getFullScreenPendingIntent(
-                        context
-                    ), true)
+                    builder.setFullScreenIntent(getFullScreenPendingIntent(context), true)
                     builder.addAction(getActivityNotificationAction(
                             context,
                             if (type == TYPE_INCOMING_PRE_OFFER) WebRtcCallActivity.ACTION_PRE_OFFER else WebRtcCallActivity.ACTION_ANSWER,
@@ -118,9 +116,10 @@ class CallNotificationBuilder {
 
         private fun getFullScreenPendingIntent(context: Context): PendingIntent {
             val intent = Intent(context, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
+                // When launching the call activity do NOT keep it in the history when finished, as it does not pass through CALL_DISCONNECTED
+                // if the call was denied outright, and without this the "dead" activity will sit around in the history when the device is unlocked.
+                .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
-
             return PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         }
 

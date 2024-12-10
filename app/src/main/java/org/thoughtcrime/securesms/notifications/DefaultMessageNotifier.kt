@@ -282,11 +282,6 @@ class DefaultMessageNotifier : MessageNotifier {
 
         val notificationText = notifications[0].text
 
-        // For some reason, even when we're starting a call we get a missed call notification - so we'll bail before that happens.
-        // TODO: Probably better to fix this at the source so that this never gets called rather then here - do this.
-        val missedCallString = Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, notifications[0].recipient.name).format()
-        if ((context.applicationContext as ApplicationContext).isAppVisible && notificationText == missedCallString) { return }
-
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.notificationCount)
 

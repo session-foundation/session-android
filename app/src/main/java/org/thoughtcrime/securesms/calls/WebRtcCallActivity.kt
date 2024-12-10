@@ -459,5 +459,11 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
         uiJob?.cancel()
         binding.fullscreenRenderer.removeAllViews()
         binding.floatingRenderer.removeAllViews()
+
+        // Close the activity when it loses focus. This is required because if this activity is started via
+        // a fullscreen intent when the device is locked and the user declines the call then the CALL_DISCONNECTED
+        // never hits which closes the activity - so we'll force-close it here otherwise we get a stale / broken
+        // activity hanging around.
+        finishAndRemoveTask()
     }
 }

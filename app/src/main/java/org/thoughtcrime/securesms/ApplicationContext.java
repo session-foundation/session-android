@@ -513,6 +513,17 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             // Acquire the wake lock to wake up the device
             wakeLock.acquire(3000);
+
+            // Wait for the device to actually wake up
+            AtomicBoolean stopWaitingForWakeUp = new AtomicBoolean(false);
+            long MAX_WAIT_PERIOD_MS = 50L;
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(() -> stopWaitingForWakeUp.set(true), MAX_WAIT_PERIOD_MS);
+
+            // Busy-wait until the screen is interactive - to be safe, we'll wait a maximum of 50ms.
+            do {
+                 /* Typically this loop runs very briefly - for somewhere in the order of 10ms or less */
+            } while (!powerManager.isInteractive() && !stopWaitingForWakeUp.get());
         }
 
         // Dismiss the keyguard.
