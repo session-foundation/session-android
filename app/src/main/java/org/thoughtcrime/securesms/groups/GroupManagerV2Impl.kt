@@ -593,11 +593,13 @@ class GroupManagerV2Impl @Inject constructor(
                     "No thread has been created for the group"
                 }
 
+            val groupInviteMessageHash = lokiDatabase.groupInviteMessageHash(threadId)
+
             // Whether approved or not, delete the invite
             lokiDatabase.deleteGroupInviteReferrer(threadId)
 
             if (approved) {
-                approveGroupInvite(group)
+                approveGroupInvite(group, groupInviteMessageHash)
             } else {
                 configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
                 storage.deleteConversation(threadId)
@@ -606,6 +608,7 @@ class GroupManagerV2Impl @Inject constructor(
 
     private suspend fun approveGroupInvite(
         group: GroupInfo.ClosedGroupInfo,
+        inviteMessageHash: String?
     ) {
         val key = requireNotNull(storage.getUserPublicKey()) {
             "Our account ID is not available"
@@ -653,6 +656,16 @@ class GroupManagerV2Impl @Inject constructor(
                 Unit
             }
         }
+
+        // Delete the invite once we have approved
+        if (inviteMessageHash != null) {
+            val auth = requireNotNull(storage.userAuth)
+            SnodeAPI.deleteMessage(
+                publicKey = auth.accountId.hexString,
+                swarmAuth = auth,
+                serverHashes = listOf(inviteMessageHash)
+            )
+        }
     }
 
     override suspend fun handleInvitation(
@@ -672,11 +685,8 @@ class GroupManagerV2Impl @Inject constructor(
             inviter = inviter,
             inviterName = inviterName,
             inviteMessageTimestamp = inviteMessageTimestamp,
+            inviteMessageHash = inviteMessageHash,
         )
-
-        // Once we are done, delete the invite message remotely
-        val auth = requireNotNull(storage.userAuth) { "No current user available" }
-        SnodeAPI.deleteMessage(groupId.hexString, auth, listOf(inviteMessageHash))
     }
 
     override suspend fun handlePromotion(
@@ -703,6 +713,7 @@ class GroupManagerV2Impl @Inject constructor(
                 inviter = promoter,
                 inviterName = promoterName,
                 inviteMessageTimestamp = promoteMessageTimestamp,
+                inviteMessageHash = promoteMessageHash
             )
         } else {
             // If we have the group in the config, we can just update the admin key
@@ -747,13 +758,9 @@ class GroupManagerV2Impl @Inject constructor(
         fromPromotion: Boolean,
         inviter: AccountId,
         inviterName: String?,
-        inviteMessageTimestamp: Long
+        inviteMessageTimestamp: Long,
+        inviteMessageHash: String,
     ) {
-        // If we have already received an invitation in the past, we should not process this one
-        if (configFactory.getGroup(groupId)?.invited == true) {
-            return
-        }
-
         val recipient =
             Recipient.from(application, Address.fromSerialized(groupId.hexString), false)
 
@@ -780,9 +787,9 @@ class GroupManagerV2Impl @Inject constructor(
         storage.setRecipientApproved(recipient, shouldAutoApprove)
 
         if (shouldAutoApprove) {
-            approveGroupInvite(closedGroupInfo)
+            approveGroupInvite(closedGroupInfo, inviteMessageHash)
         } else {
-            lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString)
+            lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString, inviteMessageHash)
             // In most cases, when we receive invitation, the thread has just been created,
             // and "has_sent" is set to false. But there are cases that we could be "re-invited"
             // to a group, where we need to go through approval process again.
