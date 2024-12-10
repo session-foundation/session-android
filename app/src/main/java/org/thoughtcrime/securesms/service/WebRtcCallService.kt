@@ -3,7 +3,7 @@ package org.thoughtcrime.securesms.service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -19,11 +19,18 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.UUID
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
 import org.thoughtcrime.securesms.util.CallNotificationBuilder
@@ -32,6 +39,7 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_IN
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_PRE_OFFER
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
+import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
@@ -44,6 +52,7 @@ import org.thoughtcrime.securesms.webrtc.UncaughtExceptionHandlerManager
 import org.thoughtcrime.securesms.webrtc.WiredHeadsetStateReceiver
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.data.Event
+import org.thoughtcrime.securesms.webrtc.data.State as CallState
 import org.thoughtcrime.securesms.webrtc.locks.LockManager
 import org.webrtc.DataChannel
 import org.webrtc.IceCandidate
@@ -54,13 +63,6 @@ import org.webrtc.PeerConnection.IceConnectionState.DISCONNECTED
 import org.webrtc.PeerConnection.IceConnectionState.FAILED
 import org.webrtc.RtpReceiver
 import org.webrtc.SessionDescription
-import java.util.UUID
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 @AndroidEntryPoint
 class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
@@ -631,6 +633,20 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
+    /**
+     * Handles remote ICE candidates received from a signaling server.
+     *
+     * This function is called when a new ICE candidate is received for a specific call.
+     * It extracts the candidate information from the intent, creates IceCandidate objects,
+     * and passes them to the CallManager to be added to the PeerConnection.
+     *
+     * @param intent The intent containing the remote ICE candidate information.
+     *               The intent should contain the following extras:
+     *               - EXTRA_CALL_ID: The ID of the call.
+     *               - EXTRA_ICE_SDP_MID: An array of SDP media stream identification strings.
+     *               - EXTRA_ICE_SDP_LINE_INDEX: An array of SDP media line indexes.
+     *               - EXTRA_ICE_SDP: An array of SDP candidate strings.
+     */
     private fun handleRemoteIceCandidate(intent: Intent) {
         val callId = getCallId(intent)
         val sdpMids = intent.getStringArrayExtra(EXTRA_ICE_SDP_MID) ?: return
@@ -724,24 +740,40 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
     }
 
+
+
+    // Over the course of setting up a phone call this method is called multiple times with `types`
+    // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-        try {
-            ServiceCompat.startForeground(
-                this,
-                CallNotificationBuilder.WEBRTC_NOTIFICATION,
-                CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE else 0
-            )
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
+        // Wake the device if needed
+        (applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+
+        // If notifications are enabled we'll try and start a foreground service to show the notification
+        var failedToStartForegroundService = false
+        if (CallNotificationBuilder.areNotificationsEnabled(this)) {
+            try {
+                ServiceCompat.startForeground(
+                    this,
+                    WEBRTC_NOTIFICATION,
+                    CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
+                    if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+                )
+                return
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to setCallInProgressNotification as a foreground service for type: ${type}, trying to update instead", e)
+                failedToStartForegroundService = true
+            }
+        } else {
+            // Notifications are NOT enabled! Skipped attempt at startForeground and going straight to fullscreen intent attempt!
         }
 
-        if (!CallNotificationBuilder.areNotificationsEnabled(this) && type == TYPE_INCOMING_PRE_OFFER) {
+        if ((type == TYPE_INCOMING_PRE_OFFER || type == TYPE_INCOMING_RINGING) && failedToStartForegroundService) {
             // Start an intent for the fullscreen call activity
             val foregroundIntent = Intent(this, WebRtcCallActivity::class.java)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_BROUGHT_TO_FRONT or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP)
                 .setAction(WebRtcCallActivity.ACTION_FULL_SCREEN_INTENT)
             startActivity(foregroundIntent)
+            return
         }
     }
 

@@ -248,8 +248,6 @@ public class KeyCachingService extends Service {
             .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString();
     builder.setContentTitle(unlockedTxt);
-
-    builder.setContentText(getString(R.string.lockAppUnlock));
     builder.setSmallIcon(R.drawable.icon_cached);
     builder.setWhen(0);
     builder.setPriority(Notification.PRIORITY_MIN);

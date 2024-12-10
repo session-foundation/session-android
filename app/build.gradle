@@ -13,8 +13,8 @@ configurations.forEach {
     it.exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 389
-def canonicalVersionName = "1.20.7"
+def canonicalVersionCode = 390
+def canonicalVersionName = "1.20.8"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -299,7 +299,7 @@ dependencies {
     implementation 'androidx.media3:media3-ui:1.4.0'
     implementation 'org.conscrypt:conscrypt-android:2.5.2'
     implementation 'org.signal:aesgcmprovider:0.0.3'
-    implementation 'io.github.webrtc-sdk:android:125.6422.04'
+    implementation 'io.github.webrtc-sdk:android:125.6422.06.1'
     implementation "me.leolin:ShortcutBadger:1.1.16"
     implementation 'se.emilsjolander:stickylistheaders:2.7.0'
     implementation 'com.jpardogo.materialtabstrip:library:1.0.9'

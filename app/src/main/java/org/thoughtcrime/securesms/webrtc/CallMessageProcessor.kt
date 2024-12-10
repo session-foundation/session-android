@@ -1,9 +1,10 @@
 package org.thoughtcrime.securesms.webrtc
 
 import android.Manifest
-import android.app.NotificationManager
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.coroutineScope
@@ -16,6 +17,7 @@ import org.session.libsession.messaging.messages.control.CallMessage
 import org.session.libsession.messaging.utilities.WebRtcUtils
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ANSWER
@@ -25,27 +27,34 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ThreadUtils
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
-import org.thoughtcrime.securesms.util.CallNotificationBuilder
 import org.webrtc.IceCandidate
-
 
 class CallMessageProcessor(private val context: Context, private val textSecurePreferences: TextSecurePreferences, lifecycle: Lifecycle, private val storage: StorageProtocol) {
 
     companion object {
+        private const val TAG = "CallMessageProcessor"
         private const val VERY_EXPIRED_TIME = 15 * 60 * 1000L
 
-        fun safeStartService(context: Context, intent: Intent) {
-            // If the foreground service crashes then it's possible for one of these intents to
-            // be started in the background (in which case 'startService' will throw a
-            // 'BackgroundServiceStartNotAllowedException' exception) so catch that case and try
-            // to re-start the service in the foreground
-            try { context.startService(intent) }
-            catch(e: Exception) {
-                try { ContextCompat.startForegroundService(context, intent) }
-                catch (e2: Exception) {
-                    Log.e("Loki", "Unable to start CallMessage intent: ${e2.message}")
+        fun safeStartForegroundService(context: Context, intent: Intent) {
+            // Wake up the device (if required) before attempting to start any services - otherwise on Android 12 and above we get
+            // a BackgroundServiceStartNotAllowedException such as:
+            //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
+            //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
+            (context as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+
+            // Attempt to start the call service..
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.e("Loki", "Unable to start service: ${e.message}", e)
+                try {
+                    ContextCompat.startForegroundService(context, intent)
+                } catch (e2: Exception) {
+                    Log.e(TAG, "Unable to start CallMessage intent: ${e2.message}", e2)
                 }
             }
         }
@@ -61,8 +70,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 Log.i("Loki", "Contact is approved?: $approvedContact")
                 if (!approvedContact && storage.getUserPublicKey() != sender) continue
 
-                // if the user has not enabled voice/video calls
-                // or if the user has not granted audio/microphone permissions
+                // If the user has not enabled voice/video calls or if the user has not granted audio/microphone permissions
                 if (
                     !textSecurePreferences.isCallNotificationsEnabled() ||
                         !Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)
@@ -101,21 +109,20 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
     private fun incomingHangup(callMessage: CallMessage) {
         val callId = callMessage.callId ?: return
         val hangupIntent = WebRtcCallService.remoteHangupIntent(context, callId)
-        safeStartService(context, hangupIntent)
+        safeStartForegroundService(context, hangupIntent)
     }
 
     private fun incomingAnswer(callMessage: CallMessage) {
-        val recipientAddress = callMessage.sender ?: return
-        val callId = callMessage.callId ?: return
-        val sdp = callMessage.sdps.firstOrNull() ?: return
+        val recipientAddress = callMessage.sender ?: return Log.w(TAG, "Cannot answer incoming call without sender")
+        val callId = callMessage.callId ?: return Log.w(TAG, "Cannot answer incoming call without callId" )
+        val sdp = callMessage.sdps.firstOrNull() ?: return Log.w(TAG, "Cannot answer incoming call without sdp")
         val answerIntent = WebRtcCallService.incomingAnswer(
                 context = context,
                 address = Address.fromSerialized(recipientAddress),
                 sdp = sdp,
                 callId = callId
         )
-
-        safeStartService(context, answerIntent)
+        safeStartForegroundService(context, answerIntent)
     }
 
     private fun handleIceCandidates(callMessage: CallMessage) {
@@ -131,7 +138,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 address = Address.fromSerialized(sender)
         )
-        safeStartService(context, iceIntent)
+        safeStartForegroundService(context, iceIntent)
     }
 
     private fun incomingPreOffer(callMessage: CallMessage) {
@@ -144,7 +151,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 callTime = callMessage.sentTimestamp!!
         )
-        safeStartService(context, incomingIntent)
+        safeStartForegroundService(context, incomingIntent)
     }
 
     private fun incomingCall(callMessage: CallMessage) {
@@ -158,7 +165,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
                 callId = callId,
                 callTime = callMessage.sentTimestamp!!
         )
-        safeStartService(context, incomingIntent)
+        safeStartForegroundService(context, incomingIntent)
     }
 
     private fun CallMessage.iceCandidates(): List<IceCandidate> {
