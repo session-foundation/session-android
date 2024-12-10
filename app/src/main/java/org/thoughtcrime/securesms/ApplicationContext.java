@@ -26,10 +26,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.os.PowerManager;
-import android.os.SystemClock;
-
 import androidx.annotation.NonNull;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
@@ -37,7 +34,20 @@ import androidx.core.graphics.drawable.IconCompat;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
-
+import dagger.hilt.EntryPoints;
+import dagger.hilt.android.HiltAndroidApp;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.Security;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Timer;
+import java.util.concurrent.Executors;
+import javax.inject.Inject;
+import network.loki.messenger.BuildConfig;
+import network.loki.messenger.R;
+import network.loki.messenger.libsession_util.ConfigBase;
+import network.loki.messenger.libsession_util.UserProfile;
 import org.conscrypt.Conscrypt;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
@@ -93,26 +103,8 @@ import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
-import org.webrtc.PeerConnectionFactory;
 import org.webrtc.PeerConnectionFactory.InitializationOptions;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Timer;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.inject.Inject;
-
-import dagger.hilt.EntryPoints;
-import dagger.hilt.android.HiltAndroidApp;
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
-import network.loki.messenger.libsession_util.ConfigBase;
-import network.loki.messenger.libsession_util.UserProfile;
+import org.webrtc.PeerConnectionFactory;
 
 /**
  * Will be called once when the TextSecure process is created.
