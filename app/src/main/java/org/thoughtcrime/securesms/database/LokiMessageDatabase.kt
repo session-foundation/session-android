@@ -32,6 +32,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         private const val messageType = "message_type"
         private const val serverHash = "server_hash"
         const val invitingSessionId = "inviting_session_id"
+        const val invitingMessageHash = "inviting_message_hash"
 
         @JvmStatic
         val createMessageIDTableCommand = "CREATE TABLE $messageIDTable ($messageID INTEGER PRIMARY KEY, $serverID INTEGER DEFAULT 0, $friendRequestStatus INTEGER DEFAULT 0);"
@@ -50,7 +51,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         @JvmStatic
         val createSmsHashTableCommand = "CREATE TABLE IF NOT EXISTS $smsHashTable ($messageID INTEGER PRIMARY KEY, $serverHash STRING);"
         @JvmStatic
-        val createGroupInviteTableCommand = "CREATE TABLE IF NOT EXISTS $groupInviteTable ($threadID INTEGER PRIMARY KEY, $invitingSessionId STRING);"
+        val createGroupInviteTableCommand = "CREATE TABLE IF NOT EXISTS $groupInviteTable ($threadID INTEGER PRIMARY KEY, $invitingSessionId STRING, $invitingMessageHash STRING);"
         @JvmStatic
         val createThreadDeleteTrigger = "CREATE TRIGGER IF NOT EXISTS $groupInviteDeleteTrigger AFTER DELETE ON ${ThreadDatabase.TABLE_NAME} BEGIN DELETE FROM $groupInviteTable WHERE $threadID = OLD.${ThreadDatabase.ID}; END;"
 
@@ -318,10 +319,11 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         )
     }
 
-    fun addGroupInviteReferrer(groupThreadId: Long, referrerSessionId: String) {
-        val contentValues = ContentValues(2).apply {
+    fun addGroupInviteReferrer(groupThreadId: Long, referrerSessionId: String, messageHash: String) {
+        val contentValues = ContentValues(3).apply {
             put(threadID, groupThreadId)
             put(invitingSessionId, referrerSessionId)
+            put(invitingMessageHash, messageHash)
         }
         databaseHelper.writableDatabase.insertOrUpdate(
             groupInviteTable, contentValues, "$threadID = ?", arrayOf(groupThreadId.toString())
@@ -331,6 +333,12 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
     fun groupInviteReferrer(groupThreadId: Long): String? {
         return databaseHelper.readableDatabase.get(groupInviteTable, "$threadID = ?", arrayOf(groupThreadId.toString())) {cursor ->
             cursor.getString(invitingSessionId)
+        }
+    }
+
+    fun groupInviteMessageHash(groupThreadId: Long): String? {
+        return databaseHelper.readableDatabase.get(groupInviteTable, "$threadID = ?", arrayOf(groupThreadId.toString())) { cursor ->
+            cursor.getString(invitingMessageHash)
         }
     }
 
