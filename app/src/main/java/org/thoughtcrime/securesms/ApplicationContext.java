@@ -515,19 +515,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             // Acquire the wake lock to wake up the device
             wakeLock.acquire(3000);
-
-            // Wait for the device to actually wake up
-            ThreadUtils.queue(() -> {
-                long MAX_WAIT_PERIOD_MS = 50L;
-                final long start = SystemClock.uptimeMillis();
-                while (!powerManager.isInteractive() && SystemClock.uptimeMillis() - start <= MAX_WAIT_PERIOD_MS) {
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        // If we were woken up we'll just proceed - we typically only need to wait less than 10ms
-                    }
-                }
-            });
         }
 
         // Dismiss the keyguard.
