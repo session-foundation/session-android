@@ -27,6 +27,7 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PRE_OFFER
 import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.PROVISIONAL_ANSWER
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
@@ -43,7 +44,7 @@ class CallMessageProcessor(private val context: Context, private val textSecureP
             // a BackgroundServiceStartNotAllowedException such as:
             //      Unable to start CallMessage intent: startForegroundService() not allowed due to mAllowStartForeground false:
             //      service network.loki.messenger/org.thoughtcrime.securesms.service.WebRtcCallService
-            (context.applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+            (context as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
 
             // Attempt to start the call service..
             try {

@@ -30,6 +30,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
@@ -745,7 +746,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     // Over the course of setting up a phone call this method is called multiple times with `types`
     // of PRE_OFFER -> RING_INCOMING -> ICE_MESSAGE
     private fun setCallInProgressNotification(type: Int, recipient: Recipient?) {
-
+        // Wake the device if needed
         (applicationContext as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
 
         // If notifications are enabled we'll try and start a foreground service to show the notification

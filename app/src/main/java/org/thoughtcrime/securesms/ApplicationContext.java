@@ -28,6 +28,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.pm.ShortcutInfoCompat;
@@ -495,6 +496,12 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     // endregion
 
+    // Method to wake up the screen and dismiss the keyguard.
+    // Call this method off the main thread because it deliberately busy-waits for the device to wake up.
+    // For example, you can call it via:
+    //      ThreadUtils.queue {
+    //          (context as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
+    //      }
     public void wakeUpDeviceAndDismissKeyguardIfRequired() {
         // Get the KeyguardManager and PowerManager
         KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
@@ -515,15 +522,17 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             wakeLock.acquire(3000);
 
             // Wait for the device to actually wake up
-            AtomicBoolean stopWaitingForWakeUp = new AtomicBoolean(false);
-            long MAX_WAIT_PERIOD_MS = 50L;
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(() -> stopWaitingForWakeUp.set(true), MAX_WAIT_PERIOD_MS);
-
-            // Busy-wait until the screen is interactive - to be safe, we'll wait a maximum of 50ms.
-            do {
-                 /* Typically this loop runs very briefly - for somewhere in the order of 10ms or less */
-            } while (!powerManager.isInteractive() && !stopWaitingForWakeUp.get());
+            ThreadUtils.queue(() -> {
+                long MAX_WAIT_PERIOD_MS = 50L;
+                final long start = SystemClock.uptimeMillis();
+                while (!powerManager.isInteractive() && SystemClock.uptimeMillis() - start <= MAX_WAIT_PERIOD_MS) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        // If we were woken up we'll just proceed - we typically only need to wait less than 10ms
+                    }
+                }
+            });
         }
 
         // Dismiss the keyguard.
