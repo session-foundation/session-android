@@ -285,14 +285,6 @@ class DefaultMessageNotifier : MessageNotifier {
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.notificationCount)
 
-        //val missedCallString = Phrase.from(context, R.string.callsMissedCallFrom).put(NAME_KEY, notifications[0].recipient.name).format()
-        //if (ApplicationContext.isAppVisible && notificationText == missedCallString) { return }
-
-//        for (n in notifications) {
-//            if n.
-//        }
-
-
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
             builderCS,
