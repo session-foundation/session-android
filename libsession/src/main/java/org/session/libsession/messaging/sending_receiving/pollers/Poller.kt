@@ -45,8 +45,8 @@ class Poller(private val configFactory: ConfigFactoryProtocol, debounceTimer: Ti
 
     // region Settings
     companion object {
-        private const val RETRY_INTERVAL_MS: Long       = 2  * 1000
-        private const val MAX_RETRY_INTERVAL_MS: Long   = 15 * 1000
+        private const val RETRY_INTERVAL_MS: Long      = 2  * 1000
+        private const val MAX_RETRY_INTERVAL_MS: Long  = 15 * 1000
         private const val NEXT_RETRY_MULTIPLIER: Float = 1.2f // If we fail to poll we multiply our current retry interval by this (up to the above max) then try again
     }
     // endregion

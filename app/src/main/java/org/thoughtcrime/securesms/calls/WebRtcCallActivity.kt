@@ -40,7 +40,6 @@ import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_DISCONNECTED
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_INCOMING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_INIT

@@ -30,7 +30,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker
