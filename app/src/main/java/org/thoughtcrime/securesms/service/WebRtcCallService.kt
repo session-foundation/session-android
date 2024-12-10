@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.service
 
-import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
@@ -12,7 +10,6 @@ import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
 import android.os.Build
-import android.os.PowerManager
 import android.os.ResultReceiver
 import android.telephony.TelephonyManager
 import androidx.core.app.ServiceCompat
@@ -31,7 +28,6 @@ import javax.inject.Inject
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.FutureTaskListener
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext

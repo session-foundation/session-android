@@ -155,7 +155,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
-    public String WAKELOCK_TAG      = NonTranslatableStringConstants.APP_NAME + "WakeLock";
+    public String WAKELOCK_TAG      = NonTranslatableStringConstants.APP_NAME + ":WakeLock";
 
     @Override
     public Object getSystemService(String name) {

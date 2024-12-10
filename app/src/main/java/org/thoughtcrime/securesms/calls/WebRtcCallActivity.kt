@@ -35,7 +35,6 @@ import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
