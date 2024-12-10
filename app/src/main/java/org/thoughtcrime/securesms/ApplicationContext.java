@@ -496,12 +496,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
     // endregion
 
-    // Method to wake up the screen and dismiss the keyguard.
-    // Call this method off the main thread because it deliberately busy-waits for the device to wake up.
-    // For example, you can call it via:
-    //      ThreadUtils.queue {
-    //          (context as ApplicationContext).wakeUpDeviceAndDismissKeyguardIfRequired()
-    //      }
+    // Method to wake up the screen and dismiss the keyguard
     public void wakeUpDeviceAndDismissKeyguardIfRequired() {
         // Get the KeyguardManager and PowerManager
         KeyguardManager keyguardManager = (KeyguardManager)getSystemService(Context.KEYGUARD_SERVICE);
