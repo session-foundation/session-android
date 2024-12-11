@@ -43,6 +43,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -209,12 +210,23 @@ class ConfigToDatabaseSync @Inject constructor(
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
                 val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
-                    .filterTo(mutableSetOf()) { it.isMms }
+                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && (
+                            // Must not be a link preview, or an audio message
+                            !it.isLinkPreview && !it.isAudioMessage)
+                    }
 
                 conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }
         }
     }
+
+    // Whether this mms message is purely a link preview
+    private val MmsMessageRecord.isLinkPreview: Boolean
+        get() = this.slideDeck.slides.isEmpty() && this.linkPreviews.isNotEmpty()
+
+    // Whether this message is purely an audio message
+    private val MmsMessageRecord.isAudioMessage: Boolean
+        get() = this.slideDeck.audioSlide != null
 
     private data class UpdateContacts(val contacts: List<Contact>)
 
