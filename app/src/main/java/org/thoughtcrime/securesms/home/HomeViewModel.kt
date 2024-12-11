@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext as ApplicationContextQualifier
+import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -30,9 +33,6 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.observeChanges
-import java.util.Locale
-import javax.inject.Inject
-import dagger.hilt.android.qualifiers.ApplicationContext as ApplicationContextQualifier
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -41,7 +41,7 @@ class HomeViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     @ApplicationContextQualifier private val context: Context,
 ) : ViewModel() {
-    // SharedFlow that emits whenever the user asks us to reload  the conversation
+    // SharedFlow that emits whenever the user asks us to reload the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -102,7 +102,7 @@ class HomeViewModel @Inject constructor(
         .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
         .onStart { emit(Unit) }
 
-    fun tryReload() = manualReloadTrigger.tryEmit(Unit)
+    fun tryReload() =  manualReloadTrigger.tryEmit(Unit)
 
     data class Data(
         val threads: List<ThreadRecord> = emptyList(),
@@ -118,6 +118,8 @@ class HomeViewModel @Inject constructor(
         count.toString(),
         DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), timestamp)
     ) else null
+
+    fun markSeedAsViewed() = prefs.setHasViewedSeed(true)
 
     data class MessageRequests(val count: String, val timestamp: String)
 

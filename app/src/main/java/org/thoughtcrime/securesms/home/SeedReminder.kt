@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 @Composable
-internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
+internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit, onDismiss: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,7 +90,7 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
 
         // The "X" icon is placed as a sibling to the Column, positioned at the top-right corner.
         IconButton(
-            onClick = { /* foo */ }, // TODO: Handle click
+            onClick = { onDismiss() },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 // Negative offsets to nudge the icon closer to the top-right corner
@@ -114,6 +114,6 @@ private fun PreviewSeedReminder(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
     PreviewTheme(colors) {
-        SeedReminder { }
+        SeedReminder(startRecoveryPasswordActivity = {}, onDismiss = {})
     }
 }

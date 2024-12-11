@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.format.DateUtils
+import android.view.View.GONE
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.PluralsRes
@@ -175,12 +176,22 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             binding.globalSearchInputLayout.requestFocus()
         }
         binding.sessionToolbar.disableClipping()
+
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
-                if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
+                if (!textSecurePreferences.getHasViewedSeed()) {
+                    SeedReminder(
+                        startRecoveryPasswordActivity = { start<RecoveryPasswordActivity>() },
+                        onDismiss = {
+                            homeViewModel.markSeedAsViewed()
+                            binding.seedReminderView.visibility = GONE
+                        }
+                    )
+                }
             }
         }
+
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
@@ -237,7 +248,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
-                pushRegistry.refresh(false)
+                pushRegistry.refresh(force = false)
                 if (textSecurePreferences.getLocalNumber() != null) {
                     OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
