@@ -5,12 +5,18 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class RecoveryPasswordActivity : BaseActionBarActivity() {
+
+    @Inject
+    internal lateinit var prefs: TextSecurePreferences
 
     companion object {
         const val RESULT_RECOVERY_HIDDEN = "recovery_hidden"
@@ -33,6 +39,12 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
                     val returnIntent = Intent()
                     returnIntent.putExtra(RESULT_RECOVERY_HIDDEN, true)
                     setResult(RESULT_OK, returnIntent)
+
+                    // Hiding the recovery password permanently implies that you have viewed the seed - this then
+                    // hides the banner about viewing the recovery password.
+                    prefs.setHasViewedSeed(true)
+                    prefs.getHasViewedSeed()
+
                     finish()
                 },
                 copyMnemonic = viewModel::copyMnemonic
