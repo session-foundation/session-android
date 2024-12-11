@@ -4,8 +4,6 @@
 
     <attr name="attachment_type_selector_background" format="color"/>
     <attr name="attachment_type_selector_hide_button_background" format="color"/>
-    <attr name="attachment_document_icon_small" format="reference" />
-    <attr name="attachment_document_icon_large" format="reference" />
     <attr name="attachment_document_extension_text_color" format="color" />
 
     <attr name="conversation_list_item_background" format="reference"/>
@@ -36,8 +34,6 @@
     <attr name="conversation_emoji_toggle" format="reference"/>
     <attr name="conversation_sticker_toggle" format="reference"/>
     <attr name="conversation_keyboard_toggle" format="reference"/>
-    <attr name="conversation_attach_camera" format="reference"/>
-    <attr name="conversation_attach_image" format="reference"/>
     <attr name="conversation_attach_video" format="reference"/>
     <attr name="conversation_attach_sound" format="reference"/>
     <attr name="conversation_number_picker_text_color_normal" format="reference|color"/>
@@ -109,8 +105,6 @@
     <attr name="menu_save_icon" format="reference" />
     <attr name="menu_reply_icon" format="reference" />
     <attr name="menu_block_icon" format="reference" />
-    <attr name="menu_photo_library_icon" format="reference" />
-    <attr name="menu_delete_icon" format="reference" />
     <attr name="menu_info_icon" format="reference" />
     <attr name="menu_pin_icon" format="reference" />
     <attr name="menu_unpin_icon" format="reference" />
@@ -233,12 +227,6 @@
         </attr>
     </declare-styleable>
 
-    <declare-styleable name="DocumentView">
-        <attr name="doc_titleColor" format="color" />
-        <attr name="doc_captionColor" format="color" />
-        <attr name="doc_downloadButtonTint" format="color" />
-    </declare-styleable>
-
     <declare-styleable name="ConversationItemThumbnail">
         <attr name="conversationThumbnail_minWidth" format="dimension" />
         <attr name="conversationThumbnail_maxWidth" format="dimension" />
@@ -252,12 +240,6 @@
 
     <declare-styleable name="MaxHeightScrollView">
         <attr name="scrollView_maxHeight" format="dimension" />
-    </declare-styleable>
-
-    <declare-styleable name="LabeledEditText">
-        <attr name="labeledEditText_label" format="string" />
-        <attr name="labeledEditText_background" format="color" />
-        <attr name="labeledEditText_textLayout" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="KeyboardPageSearchView">

@@ -250,7 +250,7 @@ fun CellButtons(
             onReply?.let {
                 LargeItemButton(
                     R.string.reply,
-                    R.drawable.ic_message_details__reply,
+                    R.drawable.ic_reply,
                     onClick = it
                 )
                 Divider()
@@ -266,7 +266,7 @@ fun CellButtons(
             onSave?.let {
                 LargeItemButton(
                     R.string.save,
-                    R.drawable.ic_baseline_save_24,
+                    R.drawable.ic_arrow_down_to_line,
                     onClick = it
                 )
                 Divider()
@@ -283,7 +283,7 @@ fun CellButtons(
 
             LargeItemButton(
                 R.string.delete,
-                R.drawable.ic_delete,
+                R.drawable.ic_trash_2,
                 colors = dangerButtonColors(),
                 onClick = onDelete
             )

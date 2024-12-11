@@ -218,4 +218,4 @@ open class ThumbnailView @JvmOverloads constructor(
 
 private fun <T> RequestBuilder<T>.missingThumbnailPicture(
     inProgress: Boolean
-) = takeIf { inProgress } ?: apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture))
+) = takeIf { inProgress } ?: apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture)) //todo ICONS replace with  /!\ and test tint

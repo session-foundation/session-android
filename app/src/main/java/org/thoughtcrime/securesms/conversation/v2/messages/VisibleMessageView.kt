@@ -93,7 +93,11 @@ class VisibleMessageView : FrameLayout {
         ViewEmojiReactionsBinding.bind(binding.emojiReactionsView.inflate())
     }
 
-    private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
+    private val swipeToReplyIcon by lazy {
+        val d = ContextCompat.getDrawable(context, R.drawable.ic_reply)!!.mutate()
+        d.setTint(context.getColorFromAttr(R.attr.colorControlNormal))
+        d
+    }
     private val swipeToReplyIconRect = Rect()
     private var dx = 0.0f
     private var previousTranslationX = 0.0f
@@ -463,6 +467,7 @@ class VisibleMessageView : FrameLayout {
         val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.marginBottom - (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
+        //todo the position for this icon doesn't seem right
         swipeToReplyIconRect.left = left
         swipeToReplyIconRect.top = top
         swipeToReplyIconRect.right = right

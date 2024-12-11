@@ -140,12 +140,12 @@
 
         <ImageView
             android:id="@+id/recordButtonOverlayImageView"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             app:tint="@color/white"
             android:scaleType="centerInside"
             android:layout_centerInParent="true"
-            android:src="@drawable/ic_microphone" />
+            android:src="@drawable/ic_mic" />
 
     </RelativeLayout>
 

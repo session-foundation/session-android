@@ -35,15 +35,13 @@
        <item name="media_overview_toolbar_background">@color/transparent</item>
        <item name="media_overview_header_foreground">?android:textColorPrimary</item>
        <item name="menu_accept_icon">@drawable/ic_baseline_done_24</item>
-       <item name="menu_trash_icon">@drawable/ic_baseline_delete_24</item>
+       <item name="menu_trash_icon">@drawable/ic_trash_2</item>
        <item name="menu_block_icon">@drawable/ic_baseline_block_24</item>
        <item name="menu_forward_icon">@drawable/ic_baseline_forward_24</item>
-       <item name="menu_save_icon">@drawable/ic_baseline_save_24</item>
-       <item name="menu_photo_library_icon">@drawable/ic_baseline_photo_library_24</item>
-       <item name="menu_delete_icon">@drawable/ic_baseline_delete_24</item>
+       <item name="menu_save_icon">@drawable/ic_arrow_down_to_line</item>=
        <item name="menu_copy_icon">@drawable/ic_copy</item>
-       <item name="menu_reply_icon">@drawable/ic_baseline_reply_24</item>
-       <item name="menu_select_icon">@drawable/ic_baseline_check_circle_outline_24</item>
+       <item name="menu_reply_icon">@drawable/ic_reply</item>
+       <item name="menu_select_icon">@drawable/ic_circle_check</item>
        <item name="menu_selectall_icon">@drawable/ic_baseline_select_all_24</item>
        <item name="menu_split_icon">@drawable/ic_baseline_call_split_24</item>
        <item name="menu_info_icon">@drawable/ic_info_outline_white_24dp</item>
@@ -54,8 +52,6 @@
        <item name="accentColor">?colorAccent</item>
        <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
        <item name="prominentButtonColor">?colorAccent</item>
-       <item name="attachment_document_icon_small">@drawable/ic_document_small_dark</item>
-       <item name="attachment_document_icon_large">@drawable/ic_document_large_dark</item>
        <item name="colorError">?danger</item>
 
        <item name="conversation_icon_attach_audio">@drawable/ic_audio_dark</item>
@@ -133,9 +129,6 @@
 
         <item name="android:navigationBarColor">@color/compose_view_background</item>
 
-        <item name="attachment_document_icon_small">@drawable/ic_document_small_dark</item>
-        <item name="attachment_document_icon_large">@drawable/ic_document_large_dark</item>
-
         <item name="conversation_list_item_background">@drawable/conversation_list_item_background_dark</item>
         <item name="conversation_list_item_contact_color">#ffdddddd</item>
         <item name="conversation_list_item_subject_color">#ffdddddd</item>
@@ -175,8 +168,6 @@
         <item name="conversation_editor_text_color">#ffeeeeee</item>
         <item name="conversation_input_inline_attach_icon_tint">@color/core_grey_05</item>
         <item name="conversation_transport_popup_background">@color/black</item>
-        <item name="conversation_attach_camera">@drawable/ic_photo_camera_dark</item>
-        <item name="conversation_attach_image">@drawable/ic_image_dark</item>
         <item name="conversation_attach_video">@drawable/ic_movie_creation_dark</item>
         <item name="conversation_attach_sound">@drawable/ic_volume_up_dark</item>
         <item name="conversation_number_picker_text_color_normal">@color/gray13</item>

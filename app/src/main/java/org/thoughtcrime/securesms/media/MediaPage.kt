@@ -155,6 +155,7 @@ private fun ThumbnailRow(
                     } else {
                         // The resource given by the placeholder needs tinting according to our theme.
                         // But the missing thumbnail picture does not.
+                        //todo ICONS replace with  /!\ and simplify logic >> Do we need a bg for broken image? right now the icon is floating
                         var (placeholder, shouldTint) = if (item.hasPlaceholder) {
                             item.placeholder(LocalContext.current) to true
                         } else {
@@ -211,7 +212,8 @@ private fun ThumbnailRow(
                                     .fillMaxSize()
                                     .background(Color.Black.copy(alpha = 0.4f)),
                                 contentScale = ContentScale.Inside,
-                                painter = painterResource(R.drawable.ic_check_white_48dp),
+                                painter = painterResource(R.drawable.ic_check),
+                                colorFilter = ColorFilter.tint(Color.White),
                                 contentDescription = stringResource(R.string.AccessibilityId_select),
                             )
                         }
