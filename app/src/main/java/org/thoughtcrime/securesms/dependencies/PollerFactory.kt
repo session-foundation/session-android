@@ -8,6 +8,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.snode.SnodeClock
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import java.util.concurrent.ConcurrentHashMap
@@ -26,9 +27,7 @@ class PollerFactory(
 
     fun pollerFor(sessionId: AccountId): ClosedGroupPoller? {
         // Check if the group is currently in our config and approved, don't start if it isn't
-        val invited = configFactory.withUserConfigs {
-            it.userGroups.getClosedGroup(sessionId.hexString)?.invited
-        }
+        val invited = configFactory.getGroup(sessionId)?.invited
 
         if (invited != false) return null
 

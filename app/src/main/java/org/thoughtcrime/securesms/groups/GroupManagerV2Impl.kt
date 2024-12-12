@@ -62,6 +62,7 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.PollerFactory
+import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -790,6 +791,10 @@ class GroupManagerV2Impl @Inject constructor(
             approveGroupInvite(closedGroupInfo, inviteMessageHash)
         } else {
             lokiDatabase.addGroupInviteReferrer(groupThreadId, inviter.hexString, inviteMessageHash)
+            // Clear existing message in the thread whenever we receive an invitation that we can't
+            // auto approve
+            storage.clearMessages(groupThreadId)
+
             // In most cases, when we receive invitation, the thread has just been created,
             // and "has_sent" is set to false. But there are cases that we could be "re-invited"
             // to a group, where we need to go through approval process again.
@@ -865,6 +870,11 @@ class GroupManagerV2Impl @Inject constructor(
             storage.clearMessages(threadId)
         }
 
+        // Clear all polling states
+        lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
+        SessionMetaProtocol.clearReceivedMessages()
+
         // Insert a message to indicate we were kicked
         storage.insertIncomingInfoMessage(
             context = application,
@@ -874,8 +884,10 @@ class GroupManagerV2Impl @Inject constructor(
             name = groupName,
             members = emptyList(),
             admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
+            sentTimestamp = clock.currentTimeMills (),
         )
+
+        configFactory.deleteGroupConfigs(groupId)
     }
 
     override suspend fun setName(groupId: AccountId, newName: String): Unit =

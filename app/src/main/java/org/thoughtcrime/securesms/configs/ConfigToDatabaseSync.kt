@@ -307,7 +307,7 @@ class ConfigToDatabaseSync @Inject constructor(
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
-            if (!closedGroup.invited) {
+            if (!closedGroup.invited && !closedGroup.kicked) {
                 pollerFactory.pollerFor(closedGroup.groupAccountId)?.start()
             }
 
