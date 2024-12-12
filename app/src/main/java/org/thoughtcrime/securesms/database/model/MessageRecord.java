@@ -131,27 +131,6 @@ public abstract class MessageRecord extends DisplayRecord {
     return groupUpdateMessage;
   }
 
-  /**
-   * @return Whether the date text can be shown for this message. By default, every message
-   *         can show a date break, only certain messages can't. Note: a positive value
-   *         DOES NOT guarantee the date break will be shown, only a negative value can
-   *         hide the date break.
-   */
-  public boolean canShowDateBreak() {
-    UpdateMessageData update = getGroupUpdateMessage();
-
-    if (update == null) {
-      return true;
-    }
-
-    if (update.getKind() instanceof UpdateMessageData.Kind.GroupDestroyed ||
-      update.getKind() instanceof UpdateMessageData.Kind.GroupKicked) {
-      return false;
-    }
-
-    return true;
-  }
-
   @Override
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {

@@ -193,11 +193,7 @@ class ConfigToDatabaseSync @Inject constructor(
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
 
         if (groupInfoConfig.destroyed) {
-            handleDestroyedGroup(
-                threadId = threadId,
-                groupId = groupInfoConfig.id.hexString,
-                groupName = groupInfoConfig.name.orEmpty()
-            )
+            handleDestroyedGroup(threadId = threadId)
         } else {
             groupInfoConfig.deleteBefore?.let { removeBefore ->
                 val messages = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeBefore))
@@ -304,6 +300,7 @@ class ConfigToDatabaseSync @Inject constructor(
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             profileManager.setName(context, recipient, closedGroup.name)
             val threadId = storage.getOrCreateThreadIdFor(recipient.address)
+            threadDatabase.setDate(threadId, TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs))
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
@@ -312,24 +309,7 @@ class ConfigToDatabaseSync @Inject constructor(
             }
 
             if (closedGroup.destroyed) {
-                handleDestroyedGroup(
-                    threadId = threadId,
-                    groupId = closedGroup.groupAccountId.hexString,
-                    groupName = closedGroup.name
-                )
-            } else if (closedGroup.kicked && storage.getMessageCount(threadId) == 0L) {
-                // If we don't have any messages in a "kicked" group, we will need to add a control
-                // message showing we were kicked
-                storage.insertIncomingInfoMessage(
-                    context = context,
-                    senderPublicKey = localUserPublicKey,
-                    groupID = closedGroup.groupAccountId.hexString,
-                    type = SignalServiceGroup.Type.KICKED,
-                    name = closedGroup.name,
-                    members = emptyList(),
-                    admins = emptyList(),
-                    sentTimestamp = clock.currentTimeMills(),
-                )
+                handleDestroyedGroup(threadId = threadId)
             }
         }
 
@@ -394,25 +374,8 @@ class ConfigToDatabaseSync @Inject constructor(
 
     private fun handleDestroyedGroup(
         threadId: Long,
-        groupId: String,
-        groupName: String,
     ) {
         storage.clearMessages(threadId)
-        val localUserPublicKey = storage.getUserPublicKey() ?: return Log.w(
-            TAG,
-            "No user public key when trying to handle destroyed group"
-        )
-        
-        storage.insertIncomingInfoMessage(
-            context = context,
-            senderPublicKey = localUserPublicKey,
-            groupID = groupId,
-            type = SignalServiceGroup.Type.DESTROYED,
-            name = groupName,
-            members = emptyList(),
-            admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
-        )
     }
 
     private data class UpdateConvoVolatile(val convos: List<Conversation?>)

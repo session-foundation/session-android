@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database.model;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY;
+import static org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
 
@@ -66,11 +67,15 @@ public class ThreadRecord extends DisplayRecord {
   private           final String invitingAdminId;
   private           final long    dateSent;
 
+  @NonNull
+  private           final GroupThreadStatus groupThreadStatus;
+
   public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
                       @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
                       long snippetType,  int distributionType, boolean archived, long expiresIn,
-                      long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId)
+                      long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
+                      @NonNull GroupThreadStatus groupThreadStatus)
   {
     super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
     this.snippetUri         = snippetUri;
@@ -86,6 +91,7 @@ public class ThreadRecord extends DisplayRecord {
     this.initialRecipientHash = recipient.hashCode();
     this.invitingAdminId    = invitingAdminId;
     this.dateSent           = date;
+    this.groupThreadStatus  = groupThreadStatus;
   }
 
     public @Nullable Uri getSnippetUri() {
@@ -104,8 +110,18 @@ public class ThreadRecord extends DisplayRecord {
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
-        // no need to display anything if there are no messages
-        if(lastMessage == null){
+        if (groupThreadStatus == GroupThreadStatus.Kicked) {
+            return Phrase.from(context, R.string.groupRemovedYou)
+                    .put(GROUP_NAME_KEY, getName())
+                    .format()
+                    .toString();
+        } else if (groupThreadStatus == GroupThreadStatus.Destroyed) {
+            return Phrase.from(context, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, getName())
+                    .format()
+                    .toString();
+        } else if (lastMessage == null){
+            // no need to display anything if there are no messages
             return "";
         }
         else if (isGroupUpdateMessage()) {

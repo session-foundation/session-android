@@ -864,18 +864,6 @@ class GroupManagerV2Impl @Inject constructor(
         if (threadId != null) {
             storage.clearMessages(threadId)
         }
-
-        // Insert a message to indicate we were kicked
-        storage.insertIncomingInfoMessage(
-            context = application,
-            senderPublicKey = userId,
-            groupID = groupId.hexString,
-            type = SignalServiceGroup.Type.KICKED,
-            name = groupName,
-            members = emptyList(),
-            admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills(),
-        )
     }
 
     override suspend fun setName(groupId: AccountId, newName: String): Unit =

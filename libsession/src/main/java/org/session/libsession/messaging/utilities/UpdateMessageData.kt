@@ -32,8 +32,6 @@ class UpdateMessageData () {
         JsonSubTypes.Type(Kind.GroupInvitation::class, name = "GroupInvitation"),
         JsonSubTypes.Type(Kind.GroupLeaving::class, name = "GroupLeaving"),
         JsonSubTypes.Type(Kind.GroupErrorQuit::class, name = "GroupErrorQuit"),
-        JsonSubTypes.Type(Kind.GroupKicked::class, name = "GroupKicked"),
-        JsonSubTypes.Type(Kind.GroupDestroyed::class, name = "GroupDestroyed")
     )
     sealed class Kind {
         data object GroupCreation: Kind()
@@ -74,14 +72,6 @@ class UpdateMessageData () {
         ) : Kind() {
             constructor(): this("", "", null, "")
         }
-
-        class GroupKicked(val groupName: String) : Kind() {
-            constructor(): this("")
-        }
-
-        class GroupDestroyed(val groupName: String) : Kind() {
-            constructor(): this("")
-        }
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME)
@@ -112,12 +102,10 @@ class UpdateMessageData () {
                 SignalServiceGroup.Type.QUIT -> UpdateMessageData(Kind.GroupMemberLeft(members, name))
                 SignalServiceGroup.Type.LEAVING -> UpdateMessageData(Kind.GroupLeaving)
                 SignalServiceGroup.Type.ERROR_QUIT -> UpdateMessageData(Kind.GroupErrorQuit)
-                SignalServiceGroup.Type.KICKED -> UpdateMessageData(Kind.GroupKicked(name))
                 SignalServiceGroup.Type.UNKNOWN,
                 SignalServiceGroup.Type.UPDATE,
                 SignalServiceGroup.Type.DELIVER,
                 SignalServiceGroup.Type.REQUEST_INFO -> null
-                SignalServiceGroup.Type.DESTROYED -> UpdateMessageData(Kind.GroupDestroyed(name))
             }
         }
 

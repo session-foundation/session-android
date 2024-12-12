@@ -31,8 +31,10 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.jetbrains.annotations.NotNull;
+import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
+import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
@@ -41,6 +43,7 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
+import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
@@ -48,10 +51,12 @@ import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.contacts.ContactUtil;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
+import org.thoughtcrime.securesms.dependencies.ConfigFactoryKt;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -64,6 +69,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import network.loki.messenger.libsession_util.util.GroupInfo;
 
 public class ThreadDatabase extends Database {
 
@@ -924,9 +931,26 @@ public class ThreadDatabase extends Database {
         }
       }
 
+      final GroupThreadStatus groupThreadStatus;
+      if (recipient.isGroupV2Recipient()) {
+        GroupInfo.ClosedGroupInfo group = ConfigFactoryProtocolKt.getGroup(
+                MessagingModuleConfiguration.getShared().getConfigFactory(),
+                new AccountId(recipient.getAddress().serialize())
+        );
+        if (group != null && group.getDestroyed()) {
+          groupThreadStatus = GroupThreadStatus.Destroyed;
+        } else if (group != null && group.getKicked()) {
+          groupThreadStatus = GroupThreadStatus.Kicked;
+        } else {
+          groupThreadStatus = GroupThreadStatus.None;
+        }
+      } else {
+        groupThreadStatus = GroupThreadStatus.None;
+      }
+
       return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {

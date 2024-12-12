@@ -313,16 +313,6 @@ object UpdateMessageBuilder {
             is UpdateMessageData.Kind.GroupErrorQuit -> {
                 return context.getString(R.string.groupLeaveErrorFailed)
             }
-            is UpdateMessageData.Kind.GroupKicked -> {
-                return Phrase.from(context, R.string.groupRemovedYou)
-                    .put(GROUP_NAME_KEY, updateData.groupName)
-                    .format()
-            }
-            is UpdateMessageData.Kind.GroupDestroyed -> {
-                return Phrase.from(context, R.string.groupDeletedMemberDescription)
-                    .put(GROUP_NAME_KEY, updateData.groupName)
-                    .format()
-            }
         }
     }
 

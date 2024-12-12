@@ -161,6 +161,7 @@ import org.thoughtcrime.securesms.database.ReactionDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -1189,6 +1190,28 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val blindedRecipient = viewModel.blindedRecipient
         val openGroup = viewModel.openGroup
 
+        val groupThreadStatus = viewModel.groupV2ThreadState
+
+        // Special state handling for kicked/destroyed groups
+        if (groupThreadStatus != GroupThreadStatus.None) {
+            binding.placeholderText.isVisible = true
+            binding.conversationRecyclerView.isVisible = false
+            binding.placeholderText.text = when (groupThreadStatus) {
+                GroupThreadStatus.Kicked -> Phrase.from(this, R.string.groupRemovedYou)
+                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .format()
+                    .toString()
+
+                GroupThreadStatus.Destroyed -> Phrase.from(this, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, recipient.toShortString())
+                    .format()
+                    .toString()
+
+                else -> ""
+            }
+            return
+        }
+
         // Get the correct placeholder text for this type of empty conversation
         val txtCS: CharSequence = when {
             // note to self
@@ -1223,6 +1246,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
         val showPlaceholder = adapter.itemCount == 0 || isDestroyed
         binding.placeholderText.isVisible = showPlaceholder
+        binding.conversationRecyclerView.visibility = if (showPlaceholder) View.INVISIBLE else View.VISIBLE
         if (showPlaceholder) {
             binding.placeholderText.text = txtCS
         }
