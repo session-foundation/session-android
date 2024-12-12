@@ -5,11 +5,14 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import network.loki.messenger.R
+import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.BaseActionBarActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 
-
+@AndroidEntryPoint
 class RecoveryPasswordActivity : BaseActionBarActivity() {
 
     companion object {
@@ -17,6 +20,8 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
     }
 
     private val viewModel: RecoveryPasswordViewModel by viewModels()
+
+    @Inject lateinit var prefs: TextSecurePreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,5 +43,9 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
                 copyMnemonic = viewModel::copyMnemonic
             )
         }
+
+        // Set the seed as having been viewed when the user has seen this activity, which
+        // removes the reminder banner on the HomeActivity.
+        prefs.setHasViewedSeed(true)
     }
 }
