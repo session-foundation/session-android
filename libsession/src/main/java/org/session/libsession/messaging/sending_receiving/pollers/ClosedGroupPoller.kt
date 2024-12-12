@@ -182,15 +182,19 @@ class ClosedGroupPoller(
         }
 
         val groupMessageRetrieval = async {
+            val lastHash = lokiApiDatabase.getLastMessageHashValue(
+                snode,
+                closedGroupSessionId.hexString,
+                Namespace.CLOSED_GROUP_MESSAGES()
+            ).orEmpty()
+
+            Log.d(TAG, "Retrieving group message since lastHash = $lastHash")
+
             SnodeAPI.sendBatchRequest(
                 snode = snode,
                 publicKey = closedGroupSessionId.hexString,
                 request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                    lastHash = lokiApiDatabase.getLastMessageHashValue(
-                        snode,
-                        closedGroupSessionId.hexString,
-                        Namespace.CLOSED_GROUP_MESSAGES()
-                    ).orEmpty(),
+                    lastHash = lastHash,
                     auth = groupAuth,
                     namespace = Namespace.CLOSED_GROUP_MESSAGES(),
                     maxSize = null,

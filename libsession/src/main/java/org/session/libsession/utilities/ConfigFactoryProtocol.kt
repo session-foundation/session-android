@@ -75,6 +75,8 @@ interface ConfigFactoryProtocol {
         keysPush: ConfigPushResult?
     )
 
+    fun deleteGroupConfigs(groupId: AccountId)
+
 }
 
 class ConfigMessage(

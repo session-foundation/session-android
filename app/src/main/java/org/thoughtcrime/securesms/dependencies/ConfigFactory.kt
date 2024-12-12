@@ -271,7 +271,15 @@ class ConfigFactory @Inject constructor(
             it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
         }
 
+        deleteGroupConfigs(groupId)
+    }
+
+    override fun deleteGroupConfigs(groupId: AccountId) {
         configDatabase.deleteGroupConfigs(groupId)
+
+        synchronized(groupConfigs) {
+            groupConfigs.remove(groupId)
+        }
     }
 
     override fun decryptForUser(
