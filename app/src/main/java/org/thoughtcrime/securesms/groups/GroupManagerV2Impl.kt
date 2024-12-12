@@ -884,7 +884,7 @@ class GroupManagerV2Impl @Inject constructor(
             name = groupName,
             members = emptyList(),
             admins = emptyList(),
-            sentTimestamp = clock.currentTimeMills (),
+            sentTimestamp = clock.currentTimeMills(),
         )
 
         configFactory.deleteGroupConfigs(groupId)
