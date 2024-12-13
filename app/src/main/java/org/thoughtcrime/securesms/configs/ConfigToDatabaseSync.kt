@@ -312,7 +312,15 @@ class ConfigToDatabaseSync @Inject constructor(
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             profileManager.setName(context, recipient, closedGroup.name)
             val threadId = storage.getOrCreateThreadIdFor(recipient.address)
-            threadDatabase.setDate(threadId, TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs))
+
+            // If we don't already have a date and the config has a date, use it
+            if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {
+                threadDatabase.setDate(
+                    threadId,
+                    TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs)
+                )
+            }
+
             groupThreadsToKeep[closedGroup.groupAccountId] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)

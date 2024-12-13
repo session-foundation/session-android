@@ -579,7 +579,7 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public Long getLastUpdated(long threadId) {
+  public long getLastUpdated(long threadId) {
     SQLiteDatabase db     = databaseHelper.getReadableDatabase();
     Cursor         cursor = db.query(TABLE_NAME, new String[]{THREAD_CREATION_DATE}, ID_WHERE, new String[]{String.valueOf(threadId)}, null, null, null);
 
