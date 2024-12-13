@@ -599,6 +599,8 @@ class GroupManagerV2Impl @Inject constructor(
             // Whether approved or not, delete the invite
             lokiDatabase.deleteGroupInviteReferrer(threadId)
 
+            storage.clearMessages(threadId)
+
             if (approved) {
                 approveGroupInvite(group, groupInviteMessageHash)
             } else {
