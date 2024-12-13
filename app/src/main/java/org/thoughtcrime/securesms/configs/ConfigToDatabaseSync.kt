@@ -206,23 +206,15 @@ class ConfigToDatabaseSync @Inject constructor(
             }
             groupInfoConfig.deleteAttachmentsBefore?.let { removeAttachmentsBefore ->
                 val messagesWithAttachment = mmsSmsDatabase.getAllMessageRecordsBefore(threadId, TimeUnit.SECONDS.toMillis(removeAttachmentsBefore))
-                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && (
-                            // Must not be a link preview, or an audio message
-                            !it.isLinkPreview && !it.isAudioMessage)
-                    }
+                    .filterTo(mutableSetOf()) { it is MmsMessageRecord && it.containsAttachment }
 
                 conversationRepository.markAsDeletedLocally(messagesWithAttachment,  context.getString(R.string.deleteMessageDeletedGlobally))
             }
         }
     }
 
-    // Whether this mms message is purely a link preview
-    private val MmsMessageRecord.isLinkPreview: Boolean
-        get() = this.slideDeck.slides.isEmpty() && this.linkPreviews.isNotEmpty()
-
-    // Whether this message is purely an audio message
-    private val MmsMessageRecord.isAudioMessage: Boolean
-        get() = this.slideDeck.audioSlide != null
+    private val MmsMessageRecord.containsAttachment: Boolean
+        get() = this.slideDeck.slides.isNotEmpty() && this.slideDeck.audioSlide == null
 
     private data class UpdateContacts(val contacts: List<Contact>)
 
