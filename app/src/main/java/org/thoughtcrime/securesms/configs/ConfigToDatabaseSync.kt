@@ -36,7 +36,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsDatabase
@@ -153,7 +152,7 @@ class ConfigToDatabaseSync @Inject constructor(
             // create note to self thread if needed (?)
             val address = recipient.address
             val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
-                storage.setThreadDate(it, 0)
+                storage.setThreadCreationDate(it, 0)
             }
             threadDatabase.setHasSent(ourThread, true)
             storage.setPinned(ourThread, userProfile.ntsPriority > 0)
@@ -315,7 +314,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
             // If we don't already have a date and the config has a date, use it
             if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {
-                threadDatabase.setDate(
+                threadDatabase.setCreationDate(
                     threadId,
                     TimeUnit.SECONDS.toMillis(closedGroup.joinedAtSecs)
                 )
@@ -370,7 +369,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 PushRegistryV1.subscribeGroup(group.accountId, publicKey = localUserPublicKey)
                 // Notify the user
                 val threadID = storage.getOrCreateThreadIdFor(fromSerialized(groupId))
-                threadDatabase.setDate(threadID, formationTimestamp)
+                threadDatabase.setCreationDate(threadID, formationTimestamp)
 
                 // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
                 // which in turn allows us to show the `groupNoMessages` control message text.

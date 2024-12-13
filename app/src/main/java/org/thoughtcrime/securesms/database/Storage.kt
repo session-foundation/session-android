@@ -1281,7 +1281,7 @@ open class Storage @Inject constructor(
             } else {
                 (
                     getThreadId(address) ?: getOrCreateThreadIdFor(address).also {
-                        setThreadDate(it, 0)
+                        setThreadCreationDate(it, 0)
                     }
                 ).also { setPinned(it, contact.priority == PRIORITY_PINNED) }
             }
@@ -1435,9 +1435,9 @@ open class Storage @Inject constructor(
         return threadDB.isPinned(threadID)
     }
 
-    override fun setThreadDate(threadId: Long, newDate: Long) {
+    override fun setThreadCreationDate(threadId: Long, newDate: Long) {
         val threadDb = threadDatabase
-        threadDb.setDate(threadId, newDate)
+        threadDb.setCreationDate(threadId, newDate)
     }
 
     override fun getLastLegacyRecipient(threadRecipient: String): String? =

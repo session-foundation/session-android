@@ -56,7 +56,6 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
-import org.thoughtcrime.securesms.dependencies.ConfigFactoryKt;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -375,7 +374,7 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  public void setDate(long threadId, long date) {
+  public void setCreationDate(long threadId, long date) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(THREAD_CREATION_DATE, date);
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
