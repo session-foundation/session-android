@@ -1842,11 +1842,15 @@ open class Storage @Inject constructor(
     override fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean) {
         val recipientDb = recipientDatabase
         recipientDb.setBlocked(recipients, isBlocked)
-        configFactory.withMutableUserConfigs { configs ->
-            recipients.filter { it.isContactRecipient && !it.isLocalNumber }.forEach { recipient ->
-                configs.contacts.upsertContact(recipient.address.serialize()) {
-                    this.blocked = isBlocked
-                }
+
+        if (!fromConfigUpdate) {
+            configFactory.withMutableUserConfigs { configs ->
+                recipients.filter { it.isContactRecipient && !it.isLocalNumber }
+                    .forEach { recipient ->
+                        configs.contacts.upsertContact(recipient.address.serialize()) {
+                            this.blocked = isBlocked
+                        }
+                    }
             }
         }
     }

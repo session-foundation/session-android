@@ -5,12 +5,14 @@ import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
@@ -1080,6 +1082,12 @@ class GroupManagerV2Impl @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    override fun onBlocked(accountId: AccountId) {
+        GlobalScope.launch {
+            respondToInvitation(accountId, false)
         }
     }
 

@@ -342,10 +342,14 @@ class ConversationViewModel(
     }
 
     fun block() {
-        // inviting admin will be true if this request is a closed group message request
+        // inviting admin will be non-null if this request is a closed group message request
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
             repository.setBlocked(threadId, recipient, true)
+
+            if (recipient.isGroupV2Recipient) {
+                groupManagerV2.onBlocked(AccountId(recipient.address.serialize()))
+            }
         }
     }
 

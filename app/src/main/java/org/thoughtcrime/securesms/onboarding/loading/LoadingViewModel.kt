@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -73,11 +74,12 @@ internal class LoadingViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                configFactory.configUpdateNotifications
-                    .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
-                    .onStart { emit(ConfigUpdateNotification.UserConfigsModified) }
+                (configFactory.configUpdateNotifications
+                    .filterIsInstance<ConfigUpdateNotification.UserConfigsMerged>() as Flow<*>)
+                    .onStart { emit(Unit) }
                     .filter {
-                        configFactory.withUserConfigs { configs ->
+                        prefs.getLocalNumber() != null &&
+                                configFactory.withUserConfigs { configs ->
                             !configs.userProfile.getName().isNullOrEmpty()
                         }
                     }
@@ -85,6 +87,7 @@ internal class LoadingViewModel @Inject constructor(
                     .first()
                 onSuccess()
             } catch (e: Exception) {
+                Log.d("LoadingViewModel", "Failed to load user configs", e)
                 onFail()
             }
         }

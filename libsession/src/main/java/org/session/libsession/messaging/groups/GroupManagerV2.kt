@@ -102,4 +102,6 @@ interface GroupManagerV2 {
     )
 
     fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
+
+    fun onBlocked(accountId: AccountId)
 }
