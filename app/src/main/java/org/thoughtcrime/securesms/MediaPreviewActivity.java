@@ -406,14 +406,13 @@ public class MediaPreviewActivity extends PassphraseRequiredActionBarActivity im
   @SuppressWarnings("CodeBlock2Expr")
   @SuppressLint("InlinedApi")
   private void saveToDisk() {
-    Log.w("ACL", "Asked to save to disk!");
     MediaItem mediaItem = getCurrentMediaItem();
     if (mediaItem == null) return;
 
     SaveAttachmentTask.showOneTimeWarningDialogOrSave(this, 1, () -> {
       Permissions.with(this)
               .request(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-              .maxSdkVersion(Build.VERSION_CODES.P)
+              .maxSdkVersion(Build.VERSION_CODES.P) // Note: P is API 28
               .withPermanentDenialDialog(getPermanentlyDeniedStorageText())
               .onAnyDenied(() -> {
                 Toast.makeText(this, getPermanentlyDeniedStorageText(), Toast.LENGTH_LONG).show();
