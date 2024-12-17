@@ -1,5 +1,6 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
