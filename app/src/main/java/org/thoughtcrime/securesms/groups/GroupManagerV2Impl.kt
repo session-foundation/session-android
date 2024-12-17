@@ -47,7 +47,6 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
-import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInfoChangeMessage
@@ -1085,12 +1084,12 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override fun onBlocked(accountId: AccountId) {
+    override fun onBlocked(groupAccountId: AccountId) {
         GlobalScope.launch(dispatcher) {
-            respondToInvitation(accountId, false)
+            respondToInvitation(groupAccountId, false)
 
             // Remove this group from config regardless
-            configFactory.removeGroup(accountId)
+            configFactory.removeGroup(groupAccountId)
         }
     }
 

@@ -103,5 +103,8 @@ interface GroupManagerV2 {
 
     fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
 
-    fun onBlocked(accountId: AccountId)
+    /**
+     * Should be called whenever a group invite is blocked
+     */
+    fun onBlocked(groupAccountId: AccountId)
 }
