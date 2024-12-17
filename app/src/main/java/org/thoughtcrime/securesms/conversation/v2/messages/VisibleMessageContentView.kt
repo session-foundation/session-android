@@ -174,7 +174,8 @@ class VisibleMessageContentView : ConstraintLayout {
             }
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                hideBody = true // TODO: check if this is still the logic we want
+                // ACL HERE!
+                //hideBody = true // TODO: check if this is still the logic we want
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
