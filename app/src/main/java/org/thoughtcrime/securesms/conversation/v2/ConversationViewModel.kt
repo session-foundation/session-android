@@ -346,10 +346,10 @@ class ConversationViewModel(
         val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
         if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
             repository.setBlocked(threadId, recipient, true)
+        }
 
-            if (recipient.isGroupV2Recipient) {
-                groupManagerV2.onBlocked(AccountId(recipient.address.serialize()))
-            }
+        if (this.recipient?.isGroupV2Recipient == true) {
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
         }
     }
 

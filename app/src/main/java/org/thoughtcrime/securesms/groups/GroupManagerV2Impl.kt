@@ -1086,8 +1086,11 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun onBlocked(accountId: AccountId) {
-        GlobalScope.launch {
+        GlobalScope.launch(dispatcher) {
             respondToInvitation(accountId, false)
+
+            // Remove this group from config regardless
+            configFactory.removeGroup(accountId)
         }
     }
 
