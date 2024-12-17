@@ -174,13 +174,16 @@ class VisibleMessageContentView : ConstraintLayout {
             }
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                // ACL HERE!
-                //hideBody = true // TODO: check if this is still the logic we want
+                // Show any message that came with document attached
+                hideBody = false
+
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                 } else {
-                    hideBody = true
+                    // If this is a pending attachment that the user hasn't agreed to automatically download then we'll
+                    // also display any attached message that came with the file.
+                    hideBody = false
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.DOCUMENT,
