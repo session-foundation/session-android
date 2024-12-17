@@ -20,6 +20,8 @@ import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import java.util.Locale
+import kotlin.math.roundToInt
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -38,8 +40,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
-import java.util.Locale
-import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
@@ -148,6 +148,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 // When in a link preview ensure the bodyTextView can expand to the full width
                 binding.bodyTextView.maxWidth = binding.linkPreviewView.root.layoutParams.width
             }
+
             // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
                 hideBody = true
@@ -172,6 +173,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
+
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
                 // Show any message that came with document attached
@@ -194,6 +196,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
+
             // IMAGE / VIDEO
             message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
@@ -205,7 +208,7 @@ class VisibleMessageContentView : ConstraintLayout {
                         isStart = isStartOfMessageCluster,
                         isEnd = isEndOfMessageCluster
                     )
-                    binding.albumThumbnailView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
+                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
                     onContentClick.add { event ->
