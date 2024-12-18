@@ -129,7 +129,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private val onPickImage = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ){ result ->
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
         val inputFile: Uri? = result.data?.data ?: viewModel.getTempFile()?.let(Uri::fromFile)
@@ -139,7 +139,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     private val hideRecoveryLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         if(result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true){
             viewModel.permanentlyHidePassword()
