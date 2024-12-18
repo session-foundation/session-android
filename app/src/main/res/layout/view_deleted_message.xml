@@ -13,8 +13,8 @@
         android:id="@+id/deletedMessageViewIconImageView"
         android:layout_width="19dp"
         android:layout_height="19dp"
-        android:layout_marginStart="18dp"
-        android:src="@drawable/ic_delete"
+        android:layout_marginStart="16dp"
+        android:src="@drawable/ic_trash_2"
         app:tint="?android:textColorPrimary" />
 
     <TextView

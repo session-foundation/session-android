@@ -53,7 +53,7 @@ fun AppBarPreview(
                 actionModeActions = {
                     IconButton(onClick = {}) {
                         Icon(
-                            painter = painterResource(id = R.drawable.check),
+                            painter = painterResource(id = R.drawable.ic_check),
                             contentDescription = "check"
                         )
                     }

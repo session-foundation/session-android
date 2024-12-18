@@ -11,6 +11,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewOpenGroupInvitationBinding
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.OpenGroupUrlParser
+import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.v2.dialogs.JoinOpenGroupDialog
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -29,8 +30,10 @@ class OpenGroupInvitationView : LinearLayout {
         val data = umd.kind as UpdateMessageData.Kind.OpenGroupInvitation
         this.data = data
         val iconID = if (message.isOutgoing) R.drawable.ic_globe else R.drawable.ic_plus
+
         val backgroundColor = if (!message.isOutgoing) context.getAccentColor()
         else ContextCompat.getColor(context, R.color.transparent_black_6)
+
         with(binding){
             openGroupInvitationIconImageView.setImageResource(iconID)
             openGroupInvitationIconBackground.backgroundTintList = ColorStateList.valueOf(backgroundColor)

@@ -117,6 +117,6 @@
         android:contentDescription="@string/AccessibilityId_delete"
         android:text="@string/delete"
         app:drawableTint="?attr/colorControlNormal"
-        tools:drawableStartCompat="@drawable/ic_baseline_delete_24" />
+        tools:drawableStartCompat="@drawable/ic_trash_2" />
 
 </LinearLayout>

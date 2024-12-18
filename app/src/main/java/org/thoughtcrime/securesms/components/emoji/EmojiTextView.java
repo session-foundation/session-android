@@ -14,7 +14,6 @@ import android.util.TypedValue;
 import network.loki.messenger.R;
 import org.thoughtcrime.securesms.components.emoji.EmojiProvider.EmojiDrawable;
 import org.thoughtcrime.securesms.components.emoji.parsing.EmojiParser;
-import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
 
@@ -26,7 +25,6 @@ public class EmojiTextView extends AppCompatTextView {
   private CharSequence previousText;
   private BufferType   previousBufferType = BufferType.NORMAL;
   private float        originalFontSize;
-  private boolean      useSystemEmoji;
   private boolean      sizeChangeInProgress;
   private int          maxLength;
   private CharSequence overflowText;
@@ -81,9 +79,8 @@ public class EmojiTextView extends AppCompatTextView {
     previousText         = text;
     previousOverflowText = overflowText;
     previousBufferType   = type;
-    useSystemEmoji       = useSystemEmoji();
 
-    if (useSystemEmoji || candidates == null || candidates.size() == 0) {
+    if (candidates == null || candidates.size() == 0) {
       super.setText(new SpannableStringBuilder(Optional.fromNullable(text).or("")).append(Optional.fromNullable(overflowText).or("")), BufferType.NORMAL);
 
       if (getEllipsize() == TextUtils.TruncateAt.END && maxLength > 0) {
@@ -117,7 +114,7 @@ public class EmojiTextView extends AppCompatTextView {
 
       EmojiParser.CandidateList newCandidates = EmojiProvider.getCandidates(newContent);
 
-      if (useSystemEmoji || newCandidates == null || newCandidates.size() == 0) {
+      if (newCandidates == null || newCandidates.size() == 0) {
         super.setText(newContent, BufferType.NORMAL);
       } else {
         CharSequence emojified = EmojiProvider.emojify(newCandidates, newContent, this, false);
@@ -166,13 +163,9 @@ public class EmojiTextView extends AppCompatTextView {
     return Util.equals(finalPrevText, finalText)                 &&
            Util.equals(finalPrevOverflowText, finalOverflowText) &&
            Util.equals(previousBufferType, bufferType)           &&
-           useSystemEmoji == useSystemEmoji()                    &&
            !sizeChangeInProgress;
   }
 
-  private boolean useSystemEmoji() {
-   return TextSecurePreferences.isSystemEmojiPreferred(getContext());
-  }
 
   @Override
   protected void onSizeChanged(int w, int h, int oldw, int oldh) {

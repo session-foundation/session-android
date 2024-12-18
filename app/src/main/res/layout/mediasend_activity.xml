@@ -62,7 +62,7 @@
         android:layout_marginStart="32dp"
         android:layout_gravity="bottom|start"
         android:padding="12dp"
-        android:src="@drawable/ic_camera_filled_24"
+        android:src="@drawable/ic_camera"
         app:tint="?android:textColorPrimary"
         android:background="@drawable/media_camera_button_background"
         android:elevation="4dp"

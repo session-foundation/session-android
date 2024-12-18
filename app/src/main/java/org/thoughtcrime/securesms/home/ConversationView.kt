@@ -130,7 +130,7 @@ class ConversationView : LinearLayout {
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
             }
             thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dot_dot_dot)
-            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_filled_circle_check)
+            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
         binding.profilePictureView.update(thread.recipient)
