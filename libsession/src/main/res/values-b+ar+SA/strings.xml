@@ -637,7 +637,7 @@
     <string name="notificationsFastMode">الوضع السريع</string>
     <string name="notificationsFastModeDescription">ستتم إعلامك بالرسائل الجديدة بشكل موثوق وفوري باستخدام خوادم إشعارات جوجل.</string>
     <string name="notificationsFastModeDescriptionIos">سوف يتم إعلامك برسائل جديدة بشكل موثوق وفوري باستخدام خوادم إشعارات Apple.</string>
-    <string name="notificationsGoToDevice">اذهب إلى إعدادات تنبيهات الجهاز</string>
+    <string name="notificationsGoToDevice">اذهب إلى إعدادات إشعارات الجهاز</string>
     <string name="notificationsHeaderAllMessages">الإشعارات - الكل</string>
     <string name="notificationsHeaderMentionsOnly">الإشعارات- الإشارات فقط</string>
     <string name="notificationsHeaderMute">الإشعارات - مكتومة</string>
@@ -834,7 +834,7 @@
     <string name="showAll">إظهار الكل</string>
     <string name="showLess">عرض أقل</string>
     <string name="stickers">الملصقات</string>
-    <string name="supportGoTo">اِذهب اِلى صفحة الدعم</string>
+    <string name="supportGoTo">الذهاب لصفحة الدعم</string>
     <string name="systemInformationDesktop">معلومات النظام: {information}</string>
     <string name="theContinue">التالي</string>
     <string name="theDefault">افتراضي</string>

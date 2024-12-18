@@ -27,6 +27,7 @@
     <string name="adminPromotionFailedDescription">Failed to promote {name} in {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Failed to promote {name} and {count} others in {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Failed to promote {name} and {other_name} in {group_name}</string>
+    <string name="adminPromotionNotSent">Promotion not sent</string>
     <string name="adminPromotionSent">Admin promotion sent</string>
     <string name="adminRemove">Remove Admins</string>
     <string name="adminRemoveAsAdmin">Remove as Admin</string>
@@ -411,8 +412,8 @@
     <string name="groupCreate">Create Group</string>
     <string name="groupCreateErrorNoMembers">Please pick at least one other group member.</string>
     <string name="groupDelete">Delete Group</string>
-    <string name="groupDeleteDescriptionMember">Are you sure you want to delete <b>{group_name}</b>?</string>
     <string name="groupDeleteDescription">Are you sure you want to delete <b>{group_name}</b>? This will remove all members and delete all group content.</string>
+    <string name="groupDeleteDescriptionMember">Are you sure you want to delete <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} has been deleted by a group admin. You will not be able to send any more messages.</string>
     <string name="groupDescriptionEnter">Enter a group description</string>
     <string name="groupDisplayPictureUpdated">Group display picture updated.</string>
@@ -426,6 +427,7 @@
     <string name="groupInviteFailedMultiple">Failed to invite {name} and {count} others to {group_name}</string>
     <string name="groupInviteFailedTwo">Failed to invite {name} and {other_name} to {group_name}</string>
     <string name="groupInviteFailedUser">Failed to invite {name} to {group_name}</string>
+    <string name="groupInviteNotSent">Invite not sent</string>
     <string name="groupInviteReinvite"><b>{name}</b> invited you to rejoin <b>{group_name}</b>, where you are an Admin.</string>
     <string name="groupInviteReinviteYou">You were invited to rejoin <b>{group_name}</b>, where you are an Admin.</string>
     <plurals name="groupInviteSending">
