@@ -151,7 +151,10 @@ class VisibleMessageContentView : ConstraintLayout {
 
             // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
-                hideBody = true
+
+                // Show any text message associated with the audio message (which may be a voice clip - but could also be a mp3 or such)
+                hideBody = false
+
                 // Audio attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
@@ -162,7 +165,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
-                    hideBody = true
+                    // If it's an audio message but we haven't downloaded it yet show it as pending
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.AUDIO,
@@ -176,16 +179,14 @@ class VisibleMessageContentView : ConstraintLayout {
 
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                // Show any message that came with document attached
+                // Show any message that came with the attached document
                 hideBody = false
 
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                 } else {
-                    // If this is a pending attachment that the user hasn't agreed to automatically download then we'll
-                    // also display any attached message that came with the file.
-                    hideBody = false
+                    // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.DOCUMENT,
