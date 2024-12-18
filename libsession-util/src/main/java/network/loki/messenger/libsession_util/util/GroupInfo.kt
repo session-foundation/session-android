@@ -13,6 +13,7 @@ sealed class GroupInfo {
         val priority: Long,
         val invited: Boolean,
         val name: String,
+        val kicked: Boolean,
         val destroyed: Boolean,
         val joinedAtSecs: Long
     ): GroupInfo() {
@@ -26,11 +27,6 @@ sealed class GroupInfo {
                 "Auth data must be non-empty if present"
             }
         }
-
-        val kicked: Boolean
-            get() = adminKey == null && authData == null
-
-
 
         fun hasAdminKey() = adminKey != null
     }
