@@ -425,6 +425,9 @@ dependencies {
 
     // Note: ZXing 3.5.3 is the latest stable release as of 2024/08/21
     implementation "com.google.zxing:core:$zxingVersion"
+
+    // Note: 1.1.0 is the latest stable release as of 2024/12/18
+    implementation "androidx.biometric:biometric:1.1.0"
 }
 
 static def getLastCommitTimestamp() {

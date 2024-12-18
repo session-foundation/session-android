@@ -16,44 +16,38 @@
  */
 package org.thoughtcrime.securesms
 
-import android.animation.Animator
 import android.app.KeyguardManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.PorterDuff
-import android.hardware.biometrics.BiometricPrompt
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
-import android.view.animation.Animation
 import android.view.animation.BounceInterpolator
-import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-//import androidx.core.hardware.fingerprint.FingerprintManagerCompat
-import androidx.core.os.CancellationSignal
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import com.squareup.phrase.Phrase
+import java.lang.Exception
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockTimeout
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.PassphrasePromptActivity.FingerprintListener
 import org.thoughtcrime.securesms.components.AnimatingToggle
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
-import org.thoughtcrime.securesms.util.AnimationCompleteListener
-import java.lang.Exception
-import java.security.Signature
 
 class PassphrasePromptActivity : BaseActionBarActivity() {
 
+    // TODO: Put the TAG back when happy
     companion object {
-        private val TAG: String = PassphrasePromptActivity::class.java.getSimpleName()
+        private val TAG: String = "ACL" // PassphrasePromptActivity::class.java.getSimpleName()
     }
 
     private var fingerprintPrompt: ImageView? = null
@@ -61,9 +55,9 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private var visibilityToggle: AnimatingToggle? = null
 
-    private var fingerprintManager: FingerprintManagerCompat? = null
-    private var fingerprintCancellationSignal: CancellationSignal? = null
-    private var fingerprintListener: FingerprintListener? = null
+
+    private var biometricPrompt: BiometricPrompt? = null
+    private var promptInfo: BiometricPrompt. PromptInfo? = null
 
     private val biometricSecretProvider = BiometricSecretProvider()
 
@@ -76,7 +70,6 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate()")
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.prompt_passphrase_activity)
         initializeResources()
 
@@ -89,15 +82,67 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
-                keyCachingService!!.setMasterSecret(Any())
+                keyCachingService?.setMasterSecret(Any())
                 keyCachingService = null
             }
         }, BIND_AUTO_CREATE)
+
+        // Set up biometric prompt and prompt info
+        val executor = ContextCompat.getMainExecutor(this)
+        biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                Log.w(TAG, "Authentication error: $errorCode $errString")
+                onAuthenticationFailed()
+            }
+
+            override fun onAuthenticationFailed() {
+                Log.w(TAG, "onAuthenticationFailed()")
+                showAuthenticationFailedUI()
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                Log.i(TAG, "onAuthenticationSucceeded")
+                val cryptoObject = result.cryptoObject
+                val signature = cryptoObject?.signature
+                if (signature == null && hasSignatureObject) {
+                    // If we expected a signature but didn't get one, treat this as failure
+                    onAuthenticationFailed()
+                    return
+                } else if (signature == null && !hasSignatureObject) {
+                    // If there was no signature needed we can handle this as success
+                    showAuthenticationSuccessUI()
+                    return
+                }
+
+                // Perform signature verification as before
+                try {
+                    val random = biometricSecretProvider.getRandomData()
+                    signature!!.update(random)
+                    val signed = signature.sign()
+                    val verified = biometricSecretProvider.verifySignature(random, signed)
+
+                    if (!verified) {
+                        onAuthenticationFailed()
+                        return
+                    }
+
+                    showAuthenticationSuccessUI()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Signature verification failed", e)
+                    onAuthenticationFailed()
+                }
+            }
+        })
+
+        promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Unlock Session")
+            .setNegativeButtonText("Cancel")
+            // If we needed it, we could also add things like `setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)` here
+            .build()
     }
 
-    public override fun onResume() {
+    override fun onResume() {
         super.onResume()
-
         setLockTypeVisibility()
 
         if (isScreenLockEnabled(this) && !authenticated && !failure) {
@@ -107,11 +152,39 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         failure = false
     }
 
-    public override fun onPause() {
+    override fun onPause() {
         super.onPause()
+        // If needed, cancel authentication:
+        biometricPrompt?.cancelAuthentication()
+    }
 
-        if (isScreenLockEnabled(this)) {
-            pauseScreenLock()
+    private fun resumeScreenLock() {
+        val keyguardManager = getSystemService(KEYGUARD_SERVICE) as KeyguardManager
+
+        // Note: `isKeyguardSecure` just returns whether the keyguard is locked via a pin, pattern,
+        // or password - in which case it's actually correct to allow the user in, as we have nothing
+        // to authenticate against! (we use the system authentication - not our own custom auth.).
+        if (!keyguardManager.isKeyguardSecure) {
+            Log.w(TAG, "Keyguard not secure...")
+            setScreenLockEnabled(applicationContext, false)
+            setScreenLockTimeout(applicationContext, 0)
+            handleAuthenticated()
+            return
+        }
+
+        // Attempt to get a signature for biometric authentication
+        val signature = biometricSecretProvider.getOrCreateBiometricSignature(this)
+        hasSignatureObject = (signature != null)
+
+        if (signature != null) {
+            // Biometrics are enrolled and the key is available
+            val cryptoObject = BiometricPrompt.CryptoObject(signature)
+            biometricPrompt?.authenticate(promptInfo!!, cryptoObject)
+        } else {
+            // No biometric key available (no biometrics enrolled or key cannot be created)
+            // Fallback to device credentials (PIN, pattern, or password)
+            val intent = keyguardManager.createConfirmDeviceCredentialIntent("Unlock Session", "")
+            startActivityForResult(intent, 1)
         }
     }
 
@@ -132,14 +205,29 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         }
     }
 
+    private fun showAuthenticationFailedUI() {
+        fingerprintPrompt?.setImageResource(R.drawable.ic_close_white_48dp)
+        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.red_500), PorterDuff.Mode.SRC_IN)
+        // Note: We can apply a 'shake' animation here if we wish
+    }
+
+    private fun showAuthenticationSuccessUI() {
+        fingerprintPrompt?.setImageResource(R.drawable.ic_check_white_48dp)
+        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.green_500), PorterDuff.Mode.SRC_IN)
+        // Animate and call handleAuthenticated() on animation end
+        fingerprintPrompt?.animate()
+            ?.setInterpolator(BounceInterpolator())
+            ?.scaleX(1.1f)
+            ?.scaleY(1.1f)
+            ?.setDuration(500)
+            ?.withEndAction {
+                handleAuthenticated()
+            }?.start()
+    }
+
     private fun handleAuthenticated() {
         authenticated = true
-        //TODO Replace with a proper call.
-        if (keyCachingService != null) {
-            keyCachingService!!.setMasterSecret(Any())
-        }
-
-        // Finish and proceed with the next intent.
+        keyCachingService?.setMasterSecret(Any())
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
         if (nextIntent != null) {
             try {
@@ -151,171 +239,33 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         finish()
     }
 
-    private fun initializeResources() {
-        val statusTitle = findViewById<TextView?>(R.id.app_lock_status_title)
-        if (statusTitle != null) {
-            val c = applicationContext
-            val lockedTxt = Phrase.from(c, R.string.lockAppLocked)
-                .put(APP_NAME_KEY, c.getString(R.string.app_name))
-                .format().toString()
-            statusTitle.text = lockedTxt
-        }
-
-        visibilityToggle = findViewById<AnimatingToggle?>(R.id.button_toggle)
-        fingerprintPrompt = findViewById<ImageView>(R.id.fingerprint_auth_container)
-        lockScreenButton = findViewById<Button>(R.id.lock_screen_auth_container)
-        fingerprintManager = FingerprintManagerCompat.from(this)
-        fingerprintCancellationSignal = CancellationSignal()
-        fingerprintListener = FingerprintListener()
-
-        fingerprintPrompt!!.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-        fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
-
-        lockScreenButton!!.setOnClickListener(View.OnClickListener { v: View? -> resumeScreenLock() })
-    }
-
     private fun setLockTypeVisibility() {
+        // Instead of checking fingerprint hardware with FingerprintManagerCompat:
+        // Use BiometricManager if desired to check availability (not shown here).
+        // For simplicity, show/hide UI depending on user’s screen lock preference.
         if (isScreenLockEnabled(this)) {
-            if (fingerprintManager!!.isHardwareDetected() && fingerprintManager!!.hasEnrolledFingerprints()) {
-                fingerprintPrompt!!.setVisibility(View.VISIBLE)
-                lockScreenButton!!.visibility = View.GONE
-            } else {
-                fingerprintPrompt!!.setVisibility(View.GONE)
-                lockScreenButton!!.visibility = View.VISIBLE
-            }
+            // Show fingerprintPrompt or lockScreenButton depending on your conditions
+            fingerprintPrompt?.visibility = View.VISIBLE
+            lockScreenButton?.visibility = View.GONE
         } else {
-            fingerprintPrompt!!.setVisibility(View.GONE)
-            lockScreenButton!!.visibility = View.GONE
+            fingerprintPrompt?.visibility = View.GONE
+            lockScreenButton?.visibility = View.GONE
         }
     }
 
-    private fun resumeScreenLock() {
-        val keyguardManager = checkNotNull(getSystemService(KEYGUARD_SERVICE) as KeyguardManager)
+    private fun initializeResources() {
+        val statusTitle = findViewById<TextView>(R.id.app_lock_status_title)
+        statusTitle?.text = Phrase.from(applicationContext, R.string.lockAppLocked)
+            .put(APP_NAME_KEY, getString(R.string.app_name))
+            .format().toString()
 
-        if (!keyguardManager.isKeyguardSecure) {
-            Log.w(TAG, "Keyguard not secure...")
-            setScreenLockEnabled(applicationContext, false)
-            setScreenLockTimeout(applicationContext, 0)
-            handleAuthenticated()
-            return
-        }
+        visibilityToggle  = findViewById(R.id.button_toggle)
+        fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)
+        lockScreenButton  = findViewById(R.id.lock_screen_auth_container)
 
-        if (fingerprintManager!!.isHardwareDetected() && fingerprintManager!!.hasEnrolledFingerprints()) {
-            Log.i(TAG, "Listening for fingerprints...")
-            fingerprintCancellationSignal = CancellationSignal()
-            var signature: Signature?
-            try {
-                signature = biometricSecretProvider.getOrCreateBiometricSignature(this)
-                hasSignatureObject = true
-            } catch (e: Exception) {
-                signature = null
-                hasSignatureObject = false
-                Log.e(TAG, "Error getting / creating signature", e)
-            }
-            fingerprintManager.authenticate(
-                if (signature == null) null else FingerprintManagerCompat.CryptoObject(signature),
-                0,
-                fingerprintCancellationSignal,
-                fingerprintListener,
-                null
-            )
-        } else {
-            Log.i(TAG, "firing intent...")
-            val intent = keyguardManager.createConfirmDeviceCredentialIntent("Unlock Session", "")
-            startActivityForResult(intent, 1)
-        }
+        fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp)
+        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
+
+        lockScreenButton?.setOnClickListener { resumeScreenLock() }
     }
-
-    private fun pauseScreenLock() {
-        if (fingerprintCancellationSignal != null) {
-            fingerprintCancellationSignal!!.cancel()
-        }
-    }
-
-    private inner class FingerprintListener : FingerprintManagerCompat.AuthenticationCallback() {
-        override fun onAuthenticationError(errMsgId: Int, errString: CharSequence?) {
-            Log.w(TAG, "Authentication error: " + errMsgId + " " + errString)
-            onAuthenticationFailed()
-        }
-
-        override fun onAuthenticationSucceeded(result: FingerprintManagerCompat.AuthenticationResult) {
-            Log.i(TAG, "onAuthenticationSucceeded")
-            if (result.getCryptoObject() == null || result.getCryptoObject().getSignature() == null) {
-                if (hasSignatureObject) {
-                    // authentication failed
-                    onAuthenticationFailed()
-                } else {
-                    fingerprintPrompt!!.setImageResource(R.drawable.ic_check_white_48dp)
-                    fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.green_500), PorterDuff.Mode.SRC_IN)
-
-                    fingerprintPrompt!!.animate()
-                        .setInterpolator(BounceInterpolator())
-                        .scaleX(1.1f)
-                        .scaleY(1.1f)
-                        .setDuration(500)
-                        .setListener(object : AnimationCompleteListener() {
-                            override fun onAnimationEnd(animation: Animator) {
-                                handleAuthenticated()
-
-                                fingerprintPrompt!!.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-                                fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
-                            }
-                        })
-                        .start()
-                }
-                return
-            }
-            // Signature object now successfully unlocked
-            var authenticationSucceeded = false
-            try {
-                val signature = result.getCryptoObject().getSignature()
-                val random = biometricSecretProvider.getRandomData()
-                signature!!.update(random)
-                val signed = signature.sign()
-                authenticationSucceeded = biometricSecretProvider.verifySignature(random, signed)
-            } catch (e: Exception) {
-                Log.e(TAG, "onAuthentication signature generation and verification failed", e)
-            }
-            if (!authenticationSucceeded) {
-                onAuthenticationFailed()
-                return
-            }
-
-            fingerprintPrompt!!.setImageResource(R.drawable.ic_check_white_48dp)
-            fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.green_500), PorterDuff.Mode.SRC_IN)
-            fingerprintPrompt!!.animate().setInterpolator(BounceInterpolator()).scaleX(1.1f).scaleY(1.1f).setDuration(500).setListener(object : AnimationCompleteListener() {
-                override fun onAnimationEnd(animation: Animator) {
-                    handleAuthenticated()
-
-                    fingerprintPrompt!!.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-                    fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
-                }
-            }).start()
-        }
-
-        override fun onAuthenticationFailed() {
-            Log.w(TAG, "onAuthenticationFailed()")
-
-            fingerprintPrompt!!.setImageResource(R.drawable.ic_close_white_48dp)
-            fingerprintPrompt!!.background.setColorFilter(getResources().getColor(R.color.red_500), PorterDuff.Mode.SRC_IN)
-
-            val shake = TranslateAnimation(0f, 30f, 0f, 0f)
-            shake.setDuration(50)
-            shake.setRepeatCount(7)
-            shake.setAnimationListener(object : Animation.AnimationListener {
-                override fun onAnimationStart(animation: Animation?) {}
-
-                override fun onAnimationEnd(animation: Animation?) {
-                    fingerprintPrompt!!.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-                    fingerprintPrompt!!.getBackground().setColorFilter(getResources().getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
-                }
-
-                override fun onAnimationRepeat(animation: Animation?) {}
-            })
-
-            fingerprintPrompt!!.startAnimation(shake)
-        }
-    }
-
-
 }
