@@ -17,10 +17,12 @@
 package org.thoughtcrime.securesms
 
 import android.app.KeyguardManager
+import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.graphics.PorterDuff
+import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
@@ -30,6 +32,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import com.squareup.phrase.Phrase
 import java.lang.Exception
 import network.loki.messenger.R
@@ -42,6 +45,8 @@ import org.thoughtcrime.securesms.components.AnimatingToggle
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
+import java.io.File
+import java.io.FileOutputStream
 
 class PassphrasePromptActivity : BaseActionBarActivity() {
 
@@ -55,14 +60,12 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private var visibilityToggle: AnimatingToggle? = null
 
-
     private var biometricPrompt: BiometricPrompt? = null
     private var promptInfo: BiometricPrompt. PromptInfo? = null
-
     private val biometricSecretProvider = BiometricSecretProvider()
 
-    private var authenticated = false
-    private var failure = false
+    private var authenticated      = false
+    private var failure            = false
     private var hasSignatureObject = true
 
     private var keyCachingService: KeyCachingService? = null
@@ -229,59 +232,130 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
+        if (nextIntent == null) {
+            Log.w(TAG, "Got a null nextIntent - cannot proceed.")
+            finish()
+        }
+
+        // Are we sharing something or just unlocking the device? We'll assume sharing for now.
+        var intentRegardsExternalSharing = true
 
         val bundle = intent.extras
         if (bundle != null) {
             for (key in bundle.keySet()) {
-                Log.w(TAG, "We can see an extra with key $key and value: " + bundle.get(key))
-            }
-        } else {
-            Log.w(TAG, "We don't have any extras!")
-        }
+                val value = bundle.get(key)
+                Log.w(TAG, "We can see an extra with key $key and value: $value")
 
-
-        if (nextIntent != null) {
-            try {
-                // When sharing a `content://` URI we need to ensure that the intent includes the
-                // proper permission flags to grant URI access - to make sure we'll grant them ourselves.
-                nextIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                nextIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-
-                // Check and handle ClipData for URIs
-                val clipData = nextIntent.clipData
-                if (clipData != null) {
-                    for (i in 0 until clipData.itemCount) {
-                        val uri = clipData.getItemAt(i).uri
-                        if (uri != null) {
-                            // Grant URI permissions to the receiving app
-                            grantUriPermission(
-                                nextIntent.`package` ?: nextIntent.component?.packageName ?: packageName,
-                                uri,
-                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                            )
-                        }
-                    }
+                // If this is just a standard fingerprint unlock and not sharing anything proceed to Main
+                if (value is Intent && value.action == "android.intent.action.MAIN") {
+                    intentRegardsExternalSharing = false
+                    break
                 }
-
-                startActivity(nextIntent)
-            } catch (e: SecurityException) {
-                Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", e)
             }
         }
+
+        try {
+            if (intentRegardsExternalSharing) {
+                // Attempt to rewrite any URIs from clipData into our own FileProvider
+                val rewrittenIntent = rewriteShareIntentUris(nextIntent!!)
+                startActivity(rewrittenIntent)
+            } else {
+                startActivity(nextIntent)
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", e)
+        }
+
         finish()
     }
 
+    // Rewrite the original share Intent, copying any URIs it contains to our app's private cache,
+    // and return a new "rewritten" Intent that references the local copies of URIs via our FileProvider.
+    private fun rewriteShareIntentUris(originalIntent: Intent): Intent {
+        val rewrittenIntent = Intent(originalIntent)
+        val originalClipData = originalIntent.clipData
+
+        originalClipData?.let { clipData ->
+            var newClipData: ClipData? = null
+
+            for (i in 0 until clipData.itemCount) {
+                val item = clipData.getItemAt(i)
+                val originalUri = item.uri
+
+                if (originalUri != null) {
+                    // First, copy the file locally.
+                    val localUri = copyFileToCache(originalUri)
+
+                    if (localUri != null) {
+                        // Create a ClipData from the localUri, not the originalUri!
+                        if (newClipData == null) {
+                            newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
+                        } else {
+                            newClipData.addItem(ClipData.Item(localUri))
+                        }
+                    } else {
+                        // If copying fails, handle gracefully.
+                        // Ideally, don't fallback to originalUri because that may cause SecurityException again.
+                        Log.e(TAG, "Could not rewrite URI: $originalUri")
+                    }
+                }
+            }
+
+            if (newClipData != null) {
+                rewrittenIntent.clipData = newClipData
+                rewrittenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } else {
+                // If no newClipData was created, clear it to prevent referencing the old inaccessible URIs
+                rewrittenIntent.clipData = null
+            }
+        }
+
+        return rewrittenIntent
+    }
+
+    /**
+     * Copies the file referenced by [uri] to our app's cache directory and returns
+     * a content URI from our own FileProvider.
+     */
+    private fun copyFileToCache(uri: Uri): Uri? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri)
+            if (inputStream == null) {
+                Log.w(TAG, "Could not open input stream to cache shared content - aborting.")
+                return null
+            }
+
+            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}")
+            inputStream.use { input ->
+                FileOutputStream(tempFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            // Check that the file exists and is not empty
+            if (!tempFile.exists() || tempFile.length() == 0L) {
+                Log.w(TAG, "Failed to copy the file to cache or the file is empty.")
+                return null
+            }
+
+            Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
+
+            // Return a URI from our FileProvider
+            FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error copying file to cache", e)
+            null
+        }
+    }
+
     private fun setLockTypeVisibility() {
-        // Instead of checking fingerprint hardware with FingerprintManagerCompat:
-        // Use BiometricManager if desired to check availability (not shown here).
-        // For simplicity, show/hide UI depending on user’s screen lock preference.
+        // Show/hide UI depending on user’s screen lock preference.
         if (isScreenLockEnabled(this)) {
-            // Show fingerprintPrompt or lockScreenButton depending on your conditions
             fingerprintPrompt?.visibility = View.VISIBLE
-            lockScreenButton?.visibility = View.GONE
+            lockScreenButton?.visibility  = View.GONE
         } else {
             fingerprintPrompt?.visibility = View.GONE
-            lockScreenButton?.visibility = View.GONE
+            lockScreenButton?.visibility  = View.GONE
         }
     }
 
