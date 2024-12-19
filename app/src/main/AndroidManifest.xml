@@ -270,7 +270,7 @@
         <activity
             android:name="org.thoughtcrime.securesms.PassphrasePromptActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstancePerTask"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:name="org.thoughtcrime.securesms.giph.ui.GiphyActivity"
