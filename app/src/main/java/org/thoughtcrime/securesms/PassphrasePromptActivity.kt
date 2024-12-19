@@ -229,8 +229,40 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
+
+        val bundle = intent.extras
+        if (bundle != null) {
+            for (key in bundle.keySet()) {
+                Log.w(TAG, "We can see an extra with key $key and value: " + bundle.get(key))
+            }
+        } else {
+            Log.w(TAG, "We don't have any extras!")
+        }
+
+
         if (nextIntent != null) {
             try {
+                // When sharing a `content://` URI we need to ensure that the intent includes the
+                // proper permission flags to grant URI access - to make sure we'll grant them ourselves.
+                nextIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                nextIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+
+                // Check and handle ClipData for URIs
+                val clipData = nextIntent.clipData
+                if (clipData != null) {
+                    for (i in 0 until clipData.itemCount) {
+                        val uri = clipData.getItemAt(i).uri
+                        if (uri != null) {
+                            // Grant URI permissions to the receiving app
+                            grantUriPermission(
+                                nextIntent.`package` ?: nextIntent.component?.packageName ?: packageName,
+                                uri,
+                                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            )
+                        }
+                    }
+                }
+
                 startActivity(nextIntent)
             } catch (e: SecurityException) {
                 Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", e)
