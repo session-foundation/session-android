@@ -269,6 +269,8 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     protected void onDestroy() {
         super.onDestroy();
         if (resolveTask != null) resolveTask.cancel(true);
+
+        // TODO: Clean up our local cache now, I guess? We'll likely need to keep track of the intent we were given for this
     }
 
     @SuppressLint("StaticFieldLeak")
