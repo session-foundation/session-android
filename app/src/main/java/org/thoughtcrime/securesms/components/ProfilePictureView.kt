@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.components
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -59,13 +60,16 @@ class ProfilePictureView @JvmOverloads constructor(
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
-    private val unknownRecipientDrawable by lazy { ResourceContactPhoto(R.drawable.ic_profile_default)
-        .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
 
     constructor(context: Context, sender: Recipient): this(context) {
         update(sender)
+    }
+
+    private fun createUnknownRecipientDrawable(): Drawable {
+        return ResourceContactPhoto(R.drawable.ic_profile_default)
+            .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
     }
 
     fun update(recipient: Recipient) {
@@ -173,28 +177,28 @@ class ProfilePictureView @JvmOverloads constructor(
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 glide.load(signalProfilePicture)
-                    .placeholder(unknownRecipientDrawable)
+                    .placeholder(createUnknownRecipientDrawable())
                     .centerCrop()
                     .error(glide.load(placeholder))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .circleCrop()
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
-                glide.clear(imageView)
                 glide.load(unknownOpenGroupDrawable)
                     .centerCrop()
                     .circleCrop()
                     .into(imageView)
             } else {
                 glide.load(placeholder)
-                    .placeholder(unknownRecipientDrawable)
+                    .placeholder(createUnknownRecipientDrawable())
                     .centerCrop()
                     .circleCrop()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE).circleCrop().into(imageView)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imageView)
             }
         } else {
-            glide.load(unknownRecipientDrawable)
-                .centerCrop()
+            glide.load(createUnknownRecipientDrawable())
+                .fitCenter()
                 .into(imageView)
         }
     }

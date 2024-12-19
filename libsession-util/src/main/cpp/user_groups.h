@@ -133,9 +133,10 @@ inline jobject serialize_closed_group_info(JNIEnv* env, session::config::group_i
     jstring name = util::jstringFromOptional(env, info.name);
 
     jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
-    jmethodID constructor = env->GetMethodID(group_info_class, "<init>","(Lorg/session/libsignal/utilities/AccountId;[B[BJZLjava/lang/String;ZJ)V");
+    jmethodID constructor = env->GetMethodID(group_info_class, "<init>","(Lorg/session/libsignal/utilities/AccountId;[B[BJZLjava/lang/String;ZZJ)V");
     jobject return_object = env->NewObject(group_info_class,constructor,
-                                           session_id, admin_bytes, auth_bytes, (jlong)info.priority, info.invited, name, info.is_destroyed(), info.joined_at);
+                                           session_id, admin_bytes, auth_bytes, (jlong)info.priority, info.invited, name,
+                                           info.kicked(), info.is_destroyed(), info.joined_at);
     return return_object;
 }
 
@@ -148,6 +149,7 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     jfieldID invited_field = env->GetFieldID(closed_group_class, "invited", "Z");
     jfieldID name_field = env->GetFieldID(closed_group_class, "name", "Ljava/lang/String;");
     jfieldID destroy_field = env->GetFieldID(closed_group_class, "destroyed", "Z");
+    jfieldID kicked_field = env->GetFieldID(closed_group_class, "kicked", "Z");
     jfieldID joined_at_field = env->GetFieldID(closed_group_class, "joinedAtSecs", "J");
 
 
@@ -168,6 +170,11 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     group_info.invited = env->GetBooleanField(info_serialized, invited_field);
     group_info.name = name;
     group_info.joined_at = env->GetLongField(info_serialized, joined_at_field);
+
+    if (env->GetBooleanField(info_serialized, kicked_field)) {
+        group_info.mark_kicked();
+    }
+
     if (env->GetBooleanField(info_serialized, destroy_field)) {
         group_info.mark_destroyed();
     }

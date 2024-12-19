@@ -787,7 +787,8 @@ class GroupManagerV2Impl @Inject constructor(
             invited = !shouldAutoApprove,
             name = groupName,
             destroyed = false,
-            joinedAtSecs = 0L
+            joinedAtSecs = 0L,
+            kicked = false,
         )
 
         configFactory.withMutableUserConfigs {
@@ -869,8 +870,7 @@ class GroupManagerV2Impl @Inject constructor(
         configFactory.withMutableUserConfigs {
             it.userGroups.set(
                 group.copy(
-                    authData = null,
-                    adminKey = null,
+                    kicked = true,
                     name = groupName
                 )
             )

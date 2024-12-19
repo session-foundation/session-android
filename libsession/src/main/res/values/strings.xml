@@ -29,6 +29,7 @@
     <string name="adminPromotionFailedDescriptionTwo">Failed to promote {name} and {other_name} in {group_name}</string>
     <string name="adminPromotionNotSent">Promotion not sent</string>
     <string name="adminPromotionSent">Admin promotion sent</string>
+    <string name="adminPromotionStatusUnknown">Promotion status unknown</string>
     <string name="adminRemove">Remove Admins</string>
     <string name="adminRemoveAsAdmin">Remove as Admin</string>
     <string name="adminRemoveCommunityNone">There are no Admins in this Community.</string>
@@ -435,6 +436,7 @@
         <item quantity="other">Sending invites</item>
     </plurals>
     <string name="groupInviteSent">Invite sent</string>
+    <string name="groupInviteStatusUnknown">Invite status unknown</string>
     <string name="groupInviteSuccessful">Group invite successful</string>
     <string name="groupInviteVersion">Users must have the latest release to receive invitations</string>
     <string name="groupInviteYou"><b>You</b> were invited to join the group.</string>
