@@ -17,7 +17,6 @@ sealed class GroupInfo {
         val destroyed: Boolean,
         val joinedAtSecs: Long
     ): GroupInfo() {
-
         init {
             require(adminKey == null || adminKey.isNotEmpty()) {
                 "Admin key must be non-empty if present"
@@ -29,6 +28,17 @@ sealed class GroupInfo {
         }
 
         fun hasAdminKey() = adminKey != null
+
+        companion object {
+            /**
+             * Generate the group's admin key(64 bytes) from seed (32 bytes, normally used
+             * in group promotions).
+             *
+             * Use of JvmStatic makes the JNI signature less esoteric.
+             */
+            @JvmStatic
+            external fun adminKeyFromSeed(seed: ByteArray): ByteArray
+        }
     }
 
     data class LegacyGroupInfo(
