@@ -117,10 +117,10 @@ public abstract class PassphraseRequiredActionBarActivity extends BaseActionBarA
     Log.i(TAG, "routeApplicationState(), state: " + state);
 
     switch (state) {
-    case STATE_PROMPT_PASSPHRASE:        return getPromptPassphraseIntent();
-    case STATE_UPGRADE_DATABASE:         return getUpgradeDatabaseIntent();
-    case STATE_WELCOME_SCREEN:           return getWelcomeIntent();
-    default:                             return null;
+      case STATE_PROMPT_PASSPHRASE:        return getPromptPassphraseIntent();
+      case STATE_UPGRADE_DATABASE:         return getUpgradeDatabaseIntent();
+      case STATE_WELCOME_SCREEN:           return getWelcomeIntent();
+      default:                             return null;
     }
   }
 

@@ -34,6 +34,8 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.squareup.phrase.Phrase
+import java.io.File
+import java.io.FileOutputStream
 import java.lang.Exception
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -45,8 +47,6 @@ import org.thoughtcrime.securesms.components.AnimatingToggle
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
-import java.io.File
-import java.io.FileOutputStream
 
 class PassphrasePromptActivity : BaseActionBarActivity() {
 
@@ -55,13 +55,12 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         private val TAG: String = "ACL" // PassphrasePromptActivity::class.java.getSimpleName()
     }
 
-    private var fingerprintPrompt: ImageView? = null
-    private var lockScreenButton: Button? = null
-
+    private var fingerprintPrompt: ImageView?      = null
+    private var lockScreenButton: Button?          = null
     private var visibilityToggle: AnimatingToggle? = null
 
-    private var biometricPrompt: BiometricPrompt? = null
-    private var promptInfo: BiometricPrompt. PromptInfo? = null
+    private var biometricPrompt: BiometricPrompt?       = null
+    private var promptInfo: BiometricPrompt.PromptInfo? = null
     private val biometricSecretProvider = BiometricSecretProvider()
 
     private var authenticated      = false
@@ -71,7 +70,7 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     private var keyCachingService: KeyCachingService? = null
 
     public override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "onCreate()")
+        Log.i(TAG, "Creating PassphrasePromptActivity")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.prompt_passphrase_activity)
         initializeResources()
@@ -138,8 +137,8 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         })
 
         promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock Session")
-            .setNegativeButtonText("Cancel")
+            .setTitle("Unlock Session") // TODO: Need a string for this, like `lockUnlockSession` -> "Unlock {app_name}" or similar
+            .setNegativeButtonText(this.applicationContext.getString(R.string.cancel))
             // If we needed it, we could also add things like `setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)` here
             .build()
     }
@@ -231,6 +230,15 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     private fun handleAuthenticated() {
         authenticated = true
         keyCachingService?.setMasterSecret(Any())
+
+        // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
+        // take us to the ShareActivity if this is an external share - however, in this latter case
+        // Intent.FLAG_GRANT_READ_URI_PERMISSION is only granted to THIS activity, not the share
+        // activity, which can cause external sharing to fail on some specific devices such as a
+        // Pixel 7a running Android API 35 (while it will work on other devices - very odd!).
+        // Regardless, we have to mitigate against this when sharing - so we duplicate and save any
+        // sharing intent URI to our local cache, and then share THAT via the sharing activity as
+        // a workaround.
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
         if (nextIntent == null) {
             Log.w(TAG, "Got a null nextIntent - cannot proceed.")
@@ -238,27 +246,33 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         }
 
         // Are we sharing something or just unlocking the device? We'll assume sharing for now.
-        var intentRegardsExternalSharing = true
+        var intentIsRegardingExternalSharing = true
 
         val bundle = intent.extras
         if (bundle != null) {
             for (key in bundle.keySet()) {
                 val value = bundle.get(key)
-                Log.w(TAG, "We can see an extra with key $key and value: $value")
 
-                // If this is just a standard fingerprint unlock and not sharing anything proceed to Main
+                // If this is just a standard fingerprint unlock and not sharing anything then set
+                // our flag to proceed to the MainActivity.
                 if (value is Intent && value.action == "android.intent.action.MAIN") {
-                    intentRegardsExternalSharing = false
+                    intentIsRegardingExternalSharing = false
                     break
                 }
             }
         }
 
         try {
-            if (intentRegardsExternalSharing) {
+            if (intentIsRegardingExternalSharing) {
                 // Attempt to rewrite any URIs from clipData into our own FileProvider
                 val rewrittenIntent = rewriteShareIntentUris(nextIntent!!)
-                startActivity(rewrittenIntent)
+                if (rewrittenIntent != null) {
+                    startActivity(rewrittenIntent)
+                } else {
+                    // Moan and bail.
+                    // Note: We'll hit the `finish()` call on the last line from here so no need to call it specifically
+                    Log.e(TAG, "Cannot use null rewrittenIntent for external sharing - bailing.")
+                }
             } else {
                 startActivity(nextIntent)
             }
@@ -271,7 +285,12 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     // Rewrite the original share Intent, copying any URIs it contains to our app's private cache,
     // and return a new "rewritten" Intent that references the local copies of URIs via our FileProvider.
-    private fun rewriteShareIntentUris(originalIntent: Intent): Intent {
+    // We do this to prevent a SecurityException being thrown regarding ephemeral permissions to
+    // view the shared URI which may be available to THIS PassphrasePromptActivity, but which is NOT
+    // then valid on the actual ShareActivity which we transfer the Intent through to. With a
+    // rewritten copy of the original Intent that references our own cached copy of the URI we have
+    // full control to grant Intent.FLAG_GRANT_READ_URI_PERMISSION to any activity we wish.
+    private fun rewriteShareIntentUris(originalIntent: Intent): Intent? {
         val rewrittenIntent = Intent(originalIntent)
         val originalClipData = originalIntent.clipData
 
@@ -283,20 +302,20 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
                 val originalUri = item.uri
 
                 if (originalUri != null) {
-                    // First, copy the file locally.
+                    // First, copy the file locally..
                     val localUri = copyFileToCache(originalUri)
 
                     if (localUri != null) {
-                        // Create a ClipData from the localUri, not the originalUri!
+                        // ..then create a ClipData from the localUri, not the originalUri!
                         if (newClipData == null) {
                             newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
                         } else {
                             newClipData.addItem(ClipData.Item(localUri))
                         }
                     } else {
-                        // If copying fails, handle gracefully.
-                        // Ideally, don't fallback to originalUri because that may cause SecurityException again.
+                        // Moan if copying the originalUri failed - not much we can do in this case but let the calling function handle things
                         Log.e(TAG, "Could not rewrite URI: $originalUri")
+                        return null
                     }
                 }
             }
@@ -313,10 +332,8 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         return rewrittenIntent
     }
 
-    /**
-     * Copies the file referenced by [uri] to our app's cache directory and returns
-     * a content URI from our own FileProvider.
-     */
+    // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
+    // our own FileProvider.
     private fun copyFileToCache(uri: Uri): Uri? {
         return try {
             val inputStream = contentResolver.openInputStream(uri)
