@@ -69,6 +69,8 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private var keyCachingService: KeyCachingService? = null
 
+    private val createdFiles = mutableListOf<File>()
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "Creating PassphrasePromptActivity")
         super.onCreate(savedInstanceState)
@@ -264,9 +266,16 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
         try {
             if (intentIsRegardingExternalSharing) {
-                // Attempt to rewrite any URIs from clipData into our own FileProvider
+                // Clear our list of created files
+                createdFiles.clear()
+
+                // Attempt to rewrite any URIs from clipData into our own FileProvider (this also populates the createdFiles list)
                 val rewrittenIntent = rewriteShareIntentUris(nextIntent!!)
+
                 if (rewrittenIntent != null) {
+                    // Get the file paths of all created files and add them to our intent then start the activity
+                    val createdFilePaths = createdFiles.map { it.absolutePath }
+                    rewrittenIntent.putStringArrayListExtra("cached_file_paths", ArrayList(createdFilePaths))
                     startActivity(rewrittenIntent)
                 } else {
                     // Moan and bail.
@@ -355,6 +364,9 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
                 return null
             }
 
+            // Add the created file to our list so we can clean it up (i.e., delete it) when we're done with it
+            createdFiles.add(tempFile)
+
             Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
 
             // Return a URI from our FileProvider
@@ -363,6 +375,16 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
             Log.e(TAG, "Error copying file to cache", e)
             null
         }
+    }
+
+    // Delete our cached URI files when we're done with them
+    private fun cleanupCreatedFiles() {
+        for (file in createdFiles) {
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+        createdFiles.clear()
     }
 
     private fun setLockTypeVisibility() {

@@ -52,9 +52,11 @@ import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
@@ -86,6 +88,8 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     protected void onCreate(Bundle icicle, boolean ready) {
+        Log.i("ACL", "Hit ShareActivity.onCreate() --------------------------------");
+
         if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
             getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_ALL);
         }
@@ -271,6 +275,28 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         if (resolveTask != null) resolveTask.cancel(true);
 
         // TODO: Clean up our local cache now, I guess? We'll likely need to keep track of the intent we were given for this
+//        Intent i = getIntent();
+//        if (i != null) {
+//            ArrayList<String> cachedFilePaths = i.getStringArrayListExtra("cached_file_paths");
+//            if (cachedFilePaths != null) {
+//                Log.i("ACL", "Cleaning up!");
+//                for (String filePath : cachedFilePaths) {
+//                    File file = new File(filePath);
+//                    if (file.exists()) {
+//                        boolean deletionSuccessful = file.delete();
+//                        if (!deletionSuccessful) {
+//                            Log.w("ACL", "Failed to delete cached file: " + filePath);
+//                        } else {
+//                            Log.i("ACL", "Deleted cached file: " + filePath);
+//                        }
+//                    }
+//                }
+//            } else {
+//                Log.w("ACL", "Nothing to clean up!");
+//            }
+//        } else {
+//            Log.w("ACL", "Intent was null in ShareActivity.onDestroy!");
+//        }
     }
 
     @SuppressLint("StaticFieldLeak")

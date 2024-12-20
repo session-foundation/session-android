@@ -152,7 +152,7 @@ Java_network_loki_messenger_libsession_1util_util_GroupMember_setRemoved(JNIEnv 
 extern "C"
 JNIEXPORT jint JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_statusInt(JNIEnv *env, jobject thiz) {
-    return static_cast<jint>(ptrToMember(env, thiz)->status());
+    return static_cast<jint>(ptrToMembers(env, thiz)->get_status(*ptrToMember(env, thiz)));
 }
 
 extern "C"
