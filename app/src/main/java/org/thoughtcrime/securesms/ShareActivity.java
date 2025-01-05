@@ -32,12 +32,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.squareup.phrase.Phrase;
-
+import dagger.hilt.android.AndroidEntryPoint;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import network.loki.messenger.R;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.ViewUtil;
@@ -51,15 +53,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-
-import dagger.hilt.android.AndroidEntryPoint;
-import network.loki.messenger.R;
 
 /**
  * An activity to quickly share content with contacts
@@ -88,13 +81,18 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     protected void onCreate(Bundle icicle, boolean ready) {
-        Log.i("ACL", "Hit ShareActivity.onCreate() --------------------------------");
+        Log.i(TAG, "ShareActivity.onCreate()");
 
-        if (!getIntent().hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-            getIntent().putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_ALL);
+        Intent i = getIntent();
+        if (!i.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
+            i.putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_ALL);
         }
 
-        getIntent().putExtra(ContactSelectionListFragment.REFRESHABLE, false);
+        i.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
+
+        // Ensure that the Intent has permission to read any URI (e.g., add it via a bitwise OR op.)
+        int intentFlags = i.getFlags();
+        i.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         setContentView(R.layout.share_activity);
 
@@ -107,6 +105,11 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     @Override
     protected void onNewIntent(Intent intent) {
         Log.i(TAG, "onNewIntent()");
+
+        // Ensure that the Intent has permission to read any URI (e.g., add it via a bitwise OR op.)
+        int intentFlags = intent.getFlags();
+        intent.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
         super.onNewIntent(intent);
         setIntent(intent);
         initializeMedia();
@@ -118,9 +121,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         if (!isPassingAlongMedia && resolvedExtra != null) {
             BlobProvider.getInstance().delete(this, resolvedExtra);
 
-            if (!isFinishing()) {
-                finish();
-            }
+            if (!isFinishing()) { finish(); }
         }
     }
 
@@ -266,8 +267,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     }
 
     @Override
-    public void onContactDeselected(String number) {
-    }
+    public void onContactDeselected(String number) { /* Nothing */ }
 
     @Override
     protected void onDestroy() {
@@ -311,11 +311,11 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         protected Uri doInBackground(Uri... uris) {
             try {
                 if (uris.length != 1 || uris[0] == null) {
+                    Log.w(TAG, "Invalid URI passed to ResolveMediaTask - bailing.");
                     return null;
                 }
 
                 InputStream inputStream;
-
                 if ("file".equals(uris[0].getScheme())) {
                     inputStream = new FileInputStream(uris[0].getPath());
                 } else {
@@ -323,6 +323,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
                 }
 
                 if (inputStream == null) {
+                    Log.w(TAG, "Failed to create input stream during ShareActivity - bailing.");
                     return null;
                 }
 
