@@ -42,7 +42,7 @@
         <ImageView
             android:id="@+id/search_clear"
             android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_close_white_18dp"
+            android:src="@drawable/ic_x"
             android:layout_gravity="center_vertical"
             android:layout_width="20dp"
             android:layout_height="20dp"

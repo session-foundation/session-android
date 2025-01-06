@@ -8,7 +8,7 @@
         android:title=""
         android:contentDescription="@string/AccessibilityId_qrView"
         android:icon="@drawable/ic_qr_code"
-        app:iconTint="?colorControlNormal"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
 </menu>

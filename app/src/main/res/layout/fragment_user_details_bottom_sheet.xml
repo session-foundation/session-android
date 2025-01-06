@@ -80,7 +80,8 @@
                 android:layout_height="24dp"
                 android:layout_marginLeft="@dimen/large_spacing"
                 android:contentDescription="@string/AccessibilityId_cancel"
-                android:src="@drawable/ic_baseline_clear_24" />
+                app:tint="?colorControlNormal"
+                android:src="@drawable/ic_x" />
 
             <EditText
                 android:id="@+id/nicknameEditText"
@@ -103,7 +104,8 @@
                 android:layout_height="24dp"
                 android:layout_marginRight="@dimen/large_spacing"
                 android:contentDescription="@string/AccessibilityId_apply"
-                android:src="@drawable/ic_baseline_done_24" />
+                android:src="@drawable/ic_check"
+                app:tint="?colorControlNormal"/>
 
         </LinearLayout>
 

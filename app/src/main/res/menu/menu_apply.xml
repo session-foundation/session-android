@@ -6,7 +6,8 @@
     <item
         android:title="@string/set"
         android:id="@+id/applyButton"
-        android:icon="?menu_accept_icon"
+        android:icon="@drawable/ic_check"
+        app:iconTint="?colorControlNormal"
         app:showAsAction="always|withText"/>
 
 </menu>

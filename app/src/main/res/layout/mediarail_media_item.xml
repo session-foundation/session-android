@@ -45,8 +45,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|top"
         android:layout_margin="1dp"
-        android:src="@drawable/ic_x_28"
+        android:src="@drawable/ic_x"
         android:visibility="gone"
+        app:tint="@color/core_white"
         tools:visibility="visible"/>
 
 </FrameLayout>

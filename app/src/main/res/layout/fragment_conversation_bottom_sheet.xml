@@ -67,7 +67,7 @@
         style="@style/BottomSheetActionItem"
         android:text="@string/blockUnblock"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_baseline_done_24"
+        app:drawableStartCompat="@drawable/ic_check"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 

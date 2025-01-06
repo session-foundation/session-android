@@ -162,7 +162,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         setContentView(binding.root)
 
         // set the toolbar icon to a close icon
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_baseline_close_24)
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_x)
 
         // set the compose dialog content
         binding.avatarDialog.setThemedContent {

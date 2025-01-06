@@ -39,7 +39,7 @@ public class SearchToolbar extends Toolbar {
   }
 
   private void initialize() {
-    setNavigationIcon(getContext().getResources().getDrawable(R.drawable.ic_baseline_clear_24));
+    setNavigationIcon(getContext().getResources().getDrawable(R.drawable.ic_x));
     inflateMenu(R.menu.conversation_list_search);
 
     this.searchItem = getMenu().findItem(R.id.action_filter_search);

@@ -69,7 +69,7 @@ class CallNotificationBuilder {
                     builder.addAction(getServiceNotificationAction(
                             context,
                             WebRtcCallService.ACTION_DENY_CALL,
-                            R.drawable.ic_close_grey600_32dp,
+                            R.drawable.ic_x,
                             R.string.decline
                     ))
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallService

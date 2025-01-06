@@ -34,7 +34,6 @@
        <item name="colorSurface">?backgroundSecondary</item>
        <item name="media_overview_toolbar_background">@color/transparent</item>
        <item name="media_overview_header_foreground">?android:textColorPrimary</item>
-       <item name="menu_accept_icon">@drawable/ic_baseline_done_24</item>
        <item name="menu_trash_icon">@drawable/ic_trash_2</item>
        <item name="menu_block_icon">@drawable/ic_ban</item>
        <item name="menu_forward_icon">@drawable/ic_baseline_forward_24</item>

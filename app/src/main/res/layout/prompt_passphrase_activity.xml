@@ -64,8 +64,8 @@
             android:backgroundTint="?colorAccent"
             app:tint="?message_sent_text_color"
             android:padding="20dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="88dp"
+            android:layout_height="88dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="32dp"
             tools:visibility="visible"/>

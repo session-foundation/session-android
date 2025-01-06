@@ -308,7 +308,7 @@ public class PassphrasePromptActivity extends BaseActionBarActivity {
     public void onAuthenticationFailed() {
       Log.w(TAG, "onAuthenticationFailed()");
 
-      fingerprintPrompt.setImageResource(R.drawable.ic_close_white_48dp);
+      fingerprintPrompt.setImageResource(R.drawable.ic_x);
       fingerprintPrompt.getBackground().setColorFilter(errorColor, PorterDuff.Mode.SRC_IN);
 
       TranslateAnimation shake = new TranslateAnimation(0, 30, 0, 0);
