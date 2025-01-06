@@ -258,7 +258,7 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                             if (extraKey != null) {
                                 val rewrittenPath: String? = localUri.path
                                 Log.i(TAG, "Rewritten path is: " + rewrittenPath)
-                                rewrittenIntent.putExtra(extraKey, localUri.path)//.toString())
+                                rewrittenIntent.putExtra(extraKey, localUri)//.toString())
                             }
 
 
@@ -287,11 +287,17 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         return rewrittenIntent
     }
 
+    private fun getFileExtension(filePath: String): String {
+        val extension = filePath.substringAfterLast('.', "")
+        return if (extension.length in 1..4) ".$extension" else ""
+    }
+
     // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
     // our own FileProvider.
     private fun copyFileToCache(uri: Uri): Uri? {
 
         Log.i(TAG, "copyFileToCache: Incoming OG uri: " + uri.path)
+        val fileExtension = if (uri.path == null) "" else getFileExtension(uri.path!!)
 
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -300,7 +306,7 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                 return null
             }
 
-            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}")
+            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}$fileExtension")
             inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
