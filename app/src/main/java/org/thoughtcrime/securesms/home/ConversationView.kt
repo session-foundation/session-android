@@ -51,14 +51,9 @@ class ConversationView : LinearLayout {
     fun bind(thread: ThreadRecord, isTyping: Boolean, overriddenSnippet: CharSequence?) {
         this.thread = thread
         if (thread.isPinned) {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                0,
-                0,
-                R.drawable.ic_pin,
-                0
-            )
+            binding.iconPinned.isVisible = true
         } else {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+            binding.iconPinned.isVisible = false
         }
         binding.root.background = if (thread.unreadCount > 0) {
             ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
