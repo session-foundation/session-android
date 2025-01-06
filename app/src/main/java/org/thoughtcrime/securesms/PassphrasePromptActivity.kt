@@ -69,7 +69,7 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private var keyCachingService: KeyCachingService? = null
 
-    private val createdFiles = mutableListOf<File>()
+
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "Creating PassphrasePromptActivity")
@@ -244,50 +244,28 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
         if (nextIntent == null) {
             Log.w(TAG, "Got a null nextIntent - cannot proceed.")
-            finish()
+        } else {
+            startActivity(nextIntent)
         }
 
-        // Are we sharing something or just unlocking the device? We'll assume sharing for now.
-        var intentIsRegardingExternalSharing = true
+//        // Are we sharing something or just unlocking the device? We'll assume sharing for now.
+//        var intentIsRegardingExternalSharing = true
+//
+//        val bundle = intent.extras
+//        if (bundle != null) {
+//            for (key in bundle.keySet()) {
+//                val value = bundle.get(key)
+//
+//                // If this is just a standard fingerprint unlock and not sharing anything then set
+//                // our flag to proceed to the MainActivity.
+//                if (value is Intent && value.action == "android.intent.action.MAIN") {
+//                    intentIsRegardingExternalSharing = false
+//                    break
+//                }
+//            }
+//        }
 
-        val bundle = intent.extras
-        if (bundle != null) {
-            for (key in bundle.keySet()) {
-                val value = bundle.get(key)
 
-                // If this is just a standard fingerprint unlock and not sharing anything then set
-                // our flag to proceed to the MainActivity.
-                if (value is Intent && value.action == "android.intent.action.MAIN") {
-                    intentIsRegardingExternalSharing = false
-                    break
-                }
-            }
-        }
-
-        try {
-            if (intentIsRegardingExternalSharing) {
-                // Clear our list of created files
-                createdFiles.clear()
-
-                // Attempt to rewrite any URIs from clipData into our own FileProvider (this also populates the createdFiles list)
-                val rewrittenIntent = rewriteShareIntentUris(nextIntent!!)
-
-                if (rewrittenIntent != null) {
-                    // Get the file paths of all created files and add them to our intent then start the activity
-                    val createdFilePaths = createdFiles.map { it.absolutePath }
-                    rewrittenIntent.putStringArrayListExtra("cached_file_paths", ArrayList(createdFilePaths))
-                    startActivity(rewrittenIntent)
-                } else {
-                    // Moan and bail.
-                    // Note: We'll hit the `finish()` call on the last line from here so no need to call it specifically
-                    Log.e(TAG, "Cannot use null rewrittenIntent for external sharing - bailing.")
-                }
-            } else {
-                startActivity(nextIntent)
-            }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", e)
-        }
 
         finish()
     }
@@ -376,6 +354,8 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
             null
         }
     }
+
+    private val createdFiles = mutableListOf<File>()
 
     // Delete our cached URI files when we're done with them
     private fun cleanupCreatedFiles() {

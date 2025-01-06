@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.calls
 
 import android.content.Context
+import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -9,7 +10,7 @@ import android.provider.Settings
 import androidx.core.content.ContextCompat.getSystemService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity.SENSOR_SERVICE
+//import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity.SENSOR_SERVICE
 import org.thoughtcrime.securesms.webrtc.Orientation
 import kotlin.math.asin
 

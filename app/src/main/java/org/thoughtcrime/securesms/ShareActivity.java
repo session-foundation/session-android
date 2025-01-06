@@ -62,7 +62,7 @@ import org.thoughtcrime.securesms.util.MediaUtil;
 @AndroidEntryPoint
 public class ShareActivity extends PassphraseRequiredActionBarActivity
         implements ContactSelectionListFragment.OnContactSelectedListener {
-    private static final String TAG = ShareActivity.class.getSimpleName();
+    private static final String TAG = "ACL"; //ShareActivity.class.getSimpleName();
 
     public static final String EXTRA_THREAD_ID = "thread_id";
     public static final String EXTRA_ADDRESS_MARSHALLED = "address_marshalled";
@@ -81,7 +81,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     protected void onCreate(Bundle icicle, boolean ready) {
-        Log.i(TAG, "ShareActivity.onCreate()");
+        Log.i(TAG, "Hit ShareActivity.onCreate()");
 
         Intent i = getIntent();
         if (!i.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
@@ -90,9 +90,42 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
         i.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
 
+        // Are we sharing something or just unlocking the device?
+        boolean intentIsRegardingExternalSharing = IsIntentRegardingExternalSharing(i);
+
+        if (intentIsRegardingExternalSharing) {
+            try {
+                Log.w("ACL", "Found that this intent is regarding external sharing!");
+
+//                if (intentIsRegardingExternalSharing) {
+//                    // Clear our list of created files
+//                    createdFiles.clear()
+//
+//                    // Attempt to rewrite any URIs from clipData into our own FileProvider (this also populates the createdFiles list)
+//                    val rewrittenIntent = rewriteShareIntentUris(nextIntent!!)
+//
+//                    if (rewrittenIntent != null) {
+//                        // Get the file paths of all created files and add them to our intent then start the activity
+//                        val createdFilePaths = createdFiles.map { it.absolutePath }
+//                        rewrittenIntent.putStringArrayListExtra("cached_file_paths", ArrayList(createdFilePaths))
+//                        startActivity(rewrittenIntent)
+//                    } else {
+//                        // Moan and bail.
+//                        // Note: We'll hit the `finish()` call on the last line from here so no need to call it specifically
+//                        Log.e(TAG, "Cannot use null rewrittenIntent for external sharing - bailing.")
+//                    }
+//                } else {
+//                    startActivity(nextIntent)
+//                }
+            } catch (SecurityException se) {
+                Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", se);
+            }
+        }
+
+
         // Ensure that the Intent has permission to read any URI (e.g., add it via a bitwise OR op.)
-        int intentFlags = i.getFlags();
-        i.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        //int intentFlags = i.getFlags();
+        //i.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         setContentView(R.layout.share_activity);
 
@@ -142,12 +175,37 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     }
 
     private void initializeToolbar() {
-        TextView tootlbarTitle = findViewById(R.id.title);
-        tootlbarTitle.setText(
+        TextView toolbarTitle = findViewById(R.id.title);
+        toolbarTitle.setText(
                 Phrase.from(getApplicationContext(), R.string.shareToSession)
                         .put(APP_NAME_KEY, getString(R.string.app_name))
                         .format().toString()
         );
+    }
+
+    // Method to determine if a given Intent is regarding external sharing (true) or not (false)
+    private boolean IsIntentRegardingExternalSharing(Intent i) {
+        Log.w("ACL", "Checking if this intent is regarding external sharing!");
+
+
+        // We'll assume the Intent is regarding external sharing for now and change that if we find out otherwise
+        boolean intentIsRegardingExternalSharing = true;
+        Bundle bundle = i.getExtras();
+        if (bundle != null) {
+            for (String key : bundle.keySet()) {
+                Object value = bundle.get(key);
+
+                // If this is just a standard fingerprint unlock and not sharing anything then set our flag accordingly
+                if (value instanceof Intent) {
+                    String action = ((Intent)value).getAction();
+                    if (action != null && action.equals("android.intent.action.MAIN")) {
+                        intentIsRegardingExternalSharing = false;
+                        break;
+                    }
+                }
+            }
+        }
+        return intentIsRegardingExternalSharing;
     }
 
     private void initializeResources() {
