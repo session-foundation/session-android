@@ -83,7 +83,18 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
     protected void onCreate(Bundle icicle, boolean ready) {
         Log.i(TAG, "Hit ShareActivity.onCreate()");
 
+        setContentView(R.layout.share_activity);
+
         Intent i = getIntent();
+        Bundle b = i.getExtras();
+        if (b != null) {
+            for (String key : b.keySet()) {
+                Log.w(TAG, "ShareActivity >> Key: " + key + " --> " + b.get(key));
+            }
+        } else {
+            Log.i(TAG, "Bundle was null in ShareActivity");
+        }
+
         if (!i.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
             i.putExtra(ContactSelectionListFragment.DISPLAY_MODE, DisplayMode.FLAG_ALL);
         }
@@ -91,12 +102,11 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         i.putExtra(ContactSelectionListFragment.REFRESHABLE, false);
 
         // Are we sharing something or just unlocking the device?
-        boolean intentIsRegardingExternalSharing = IsIntentRegardingExternalSharing(i);
-
-        if (intentIsRegardingExternalSharing) {
-            try {
-                Log.w("ACL", "Found that this intent is regarding external sharing!");
-
+//        boolean intentIsRegardingExternalSharing = IsIntentRegardingExternalSharing(i);
+//
+//        if (intentIsRegardingExternalSharing) {
+//            try {
+//                Log.w("ACL", "Found that this intent is regarding external sharing!");
 //                if (intentIsRegardingExternalSharing) {
 //                    // Clear our list of created files
 //                    createdFiles.clear()
@@ -117,17 +127,15 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 //                } else {
 //                    startActivity(nextIntent)
 //                }
-            } catch (SecurityException se) {
-                Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", se);
-            }
-        }
+//            } catch (SecurityException se) {
+//                Log.w(TAG, "Access permission not passed from PassphraseActivity, retry sharing.", se);
+//            }
+//        }
 
 
         // Ensure that the Intent has permission to read any URI (e.g., add it via a bitwise OR op.)
         //int intentFlags = i.getFlags();
         //i.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        setContentView(R.layout.share_activity);
 
         initializeToolbar();
         initializeResources();
@@ -137,11 +145,11 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Log.i(TAG, "onNewIntent()");
+        Log.i(TAG, "Hit ShareActivity.onNewIntent()");
 
         // Ensure that the Intent has permission to read any URI (e.g., add it via a bitwise OR op.)
-        int intentFlags = intent.getFlags();
-        intent.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        //int intentFlags = intent.getFlags();
+        //intent.setFlags(intentFlags | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         super.onNewIntent(intent);
         setIntent(intent);
@@ -253,7 +261,9 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
             resolvedPlaintext = charSequenceExtra;
             handleResolvedMedia(getIntent(), false);
         } else {
-            contactsFragment.getView().setVisibility(View.GONE);
+            if (contactsFragment != null && contactsFragment.getView() != null) {
+                contactsFragment.getView().setVisibility(View.GONE);
+            }
             progressWheel.setVisibility(View.VISIBLE);
             resolveTask = new ResolveMediaTask(context);
             resolveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra);
@@ -377,7 +387,7 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
                 if ("file".equals(uris[0].getScheme())) {
                     inputStream = new FileInputStream(uris[0].getPath());
                 } else {
-                    inputStream = context.getContentResolver().openInputStream(uris[0]);
+                    inputStream = context.getContentResolver().openInputStream(uris[0]); // <-- This is line 380
                 }
 
                 if (inputStream == null) {

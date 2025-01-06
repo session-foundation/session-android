@@ -277,95 +277,95 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     // then valid on the actual ShareActivity which we transfer the Intent through to. With a
     // rewritten copy of the original Intent that references our own cached copy of the URI we have
     // full control to grant Intent.FLAG_GRANT_READ_URI_PERMISSION to any activity we wish.
-    private fun rewriteShareIntentUris(originalIntent: Intent): Intent? {
-        val rewrittenIntent = Intent(originalIntent)
-        val originalClipData = originalIntent.clipData
-
-        originalClipData?.let { clipData ->
-            var newClipData: ClipData? = null
-
-            for (i in 0 until clipData.itemCount) {
-                val item = clipData.getItemAt(i)
-                val originalUri = item.uri
-
-                if (originalUri != null) {
-                    // First, copy the file locally..
-                    val localUri = copyFileToCache(originalUri)
-
-                    if (localUri != null) {
-                        // ..then create a ClipData from the localUri, not the originalUri!
-                        if (newClipData == null) {
-                            newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
-                        } else {
-                            newClipData.addItem(ClipData.Item(localUri))
-                        }
-                    } else {
-                        // Moan if copying the originalUri failed - not much we can do in this case but let the calling function handle things
-                        Log.e(TAG, "Could not rewrite URI: $originalUri")
-                        return null
-                    }
-                }
-            }
-
-            if (newClipData != null) {
-                rewrittenIntent.clipData = newClipData
-                rewrittenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } else {
-                // If no newClipData was created, clear it to prevent referencing the old inaccessible URIs
-                rewrittenIntent.clipData = null
-            }
-        }
-
-        return rewrittenIntent
-    }
+//    private fun rewriteShareIntentUris(originalIntent: Intent): Intent? {
+//        val rewrittenIntent = Intent(originalIntent)
+//        val originalClipData = originalIntent.clipData
+//
+//        originalClipData?.let { clipData ->
+//            var newClipData: ClipData? = null
+//
+//            for (i in 0 until clipData.itemCount) {
+//                val item = clipData.getItemAt(i)
+//                val originalUri = item.uri
+//
+//                if (originalUri != null) {
+//                    // First, copy the file locally..
+//                    val localUri = copyFileToCache(originalUri)
+//
+//                    if (localUri != null) {
+//                        // ..then create a ClipData from the localUri, not the originalUri!
+//                        if (newClipData == null) {
+//                            newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
+//                        } else {
+//                            newClipData.addItem(ClipData.Item(localUri))
+//                        }
+//                    } else {
+//                        // Moan if copying the originalUri failed - not much we can do in this case but let the calling function handle things
+//                        Log.e(TAG, "Could not rewrite URI: $originalUri")
+//                        return null
+//                    }
+//                }
+//            }
+//
+//            if (newClipData != null) {
+//                rewrittenIntent.clipData = newClipData
+//                rewrittenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+//            } else {
+//                // If no newClipData was created, clear it to prevent referencing the old inaccessible URIs
+//                rewrittenIntent.clipData = null
+//            }
+//        }
+//
+//        return rewrittenIntent
+//    }
 
     // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
     // our own FileProvider.
-    private fun copyFileToCache(uri: Uri): Uri? {
-        return try {
-            val inputStream = contentResolver.openInputStream(uri)
-            if (inputStream == null) {
-                Log.w(TAG, "Could not open input stream to cache shared content - aborting.")
-                return null
-            }
+//    private fun copyFileToCache(uri: Uri): Uri? {
+//        return try {
+//            val inputStream = contentResolver.openInputStream(uri)
+//            if (inputStream == null) {
+//                Log.w(TAG, "Could not open input stream to cache shared content - aborting.")
+//                return null
+//            }
+//
+//            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}")
+//            inputStream.use { input ->
+//                FileOutputStream(tempFile).use { output ->
+//                    input.copyTo(output)
+//                }
+//            }
+//
+//            // Check that the file exists and is not empty
+//            if (!tempFile.exists() || tempFile.length() == 0L) {
+//                Log.w(TAG, "Failed to copy the file to cache or the file is empty.")
+//                return null
+//            }
+//
+//            // Add the created file to our list so we can clean it up (i.e., delete it) when we're done with it
+//            createdFiles.add(tempFile)
+//
+//            Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
+//
+//            // Return a URI from our FileProvider
+//            FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
+//        } catch (e: Exception) {
+//            Log.e(TAG, "Error copying file to cache", e)
+//            null
+//        }
+//    }
 
-            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}")
-            inputStream.use { input ->
-                FileOutputStream(tempFile).use { output ->
-                    input.copyTo(output)
-                }
-            }
-
-            // Check that the file exists and is not empty
-            if (!tempFile.exists() || tempFile.length() == 0L) {
-                Log.w(TAG, "Failed to copy the file to cache or the file is empty.")
-                return null
-            }
-
-            // Add the created file to our list so we can clean it up (i.e., delete it) when we're done with it
-            createdFiles.add(tempFile)
-
-            Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
-
-            // Return a URI from our FileProvider
-            FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error copying file to cache", e)
-            null
-        }
-    }
-
-    private val createdFiles = mutableListOf<File>()
+    //private val createdFiles = mutableListOf<File>()
 
     // Delete our cached URI files when we're done with them
-    private fun cleanupCreatedFiles() {
-        for (file in createdFiles) {
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-        createdFiles.clear()
-    }
+//    private fun cleanupCreatedFiles() {
+//        for (file in createdFiles) {
+//            if (file.exists()) {
+//                file.delete()
+//            }
+//        }
+//        createdFiles.clear()
+//    }
 
     private fun setLockTypeVisibility() {
         // Show/hide UI depending on user’s screen lock preference.
