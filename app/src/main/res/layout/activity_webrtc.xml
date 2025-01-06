@@ -187,7 +187,7 @@
     <ImageView
         android:id="@+id/switchCameraButton"
         android:background="@drawable/call_controls_background"
-        android:src="@drawable/ic_baseline_flip_camera_android_24"
+        android:src="@drawable/ic_switch_camera"
         android:padding="@dimen/medium_spacing"
         app:tint="@color/call_action_foreground"
         android:layout_width="@dimen/large_button_height"
