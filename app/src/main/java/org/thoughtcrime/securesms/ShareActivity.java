@@ -342,6 +342,10 @@ public class ShareActivity extends PassphraseRequiredActionBarActivity
         super.onDestroy();
         if (resolveTask != null) resolveTask.cancel(true);
 
+        // NO NO NO NO NO --- this is way too early
+        // TODO: Figure out when to call the below
+        //PassphraseRequiredActionBarActivity.Companion.cleanupCreatedFiles();
+
         // TODO: Clean up our local cache now, I guess? We'll likely need to keep track of the intent we were given for this
 //        Intent i = getIntent();
 //        if (i != null) {

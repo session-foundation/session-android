@@ -38,6 +38,17 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
 
         // If we're sharing files we need to cache the data from the share Intent to maintain control of it
         private val cachedIntentFiles = mutableListOf<File>()
+
+        // TODO: We need to call this - but if we call it in onDestroy that may be too soon because we actually want to use it..... leaving it for now.
+        fun cleanupCreatedFiles() {
+            for (file in cachedIntentFiles) {
+                if (file.exists()) {
+                    Log.i(TAG, "Deleting: " + file.path)
+                    file.delete()
+                }
+            }
+            cachedIntentFiles.clear()
+        }
     }
 
     private var clearKeyReceiver: BroadcastReceiver? = null
@@ -258,7 +269,8 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                             if (extraKey != null) {
                                 val rewrittenPath: String? = localUri.path
                                 Log.i(TAG, "Rewritten path is: " + rewrittenPath)
-                                rewrittenIntent.putExtra(extraKey, localUri)//.toString())
+                                // CAREFUL: Do NOT put the localUri path in the extra - put the localUri itself!
+                                rewrittenIntent.putExtra(extraKey, localUri)
                             }
 
 
@@ -287,6 +299,8 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         return rewrittenIntent
     }
 
+
+
     private fun getFileExtension(filePath: String): String {
         val extension = filePath.substringAfterLast('.', "")
         return if (extension.length in 1..4) ".$extension" else ""
@@ -295,9 +309,14 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
     // our own FileProvider.
     private fun copyFileToCache(uri: Uri): Uri? {
-
         Log.i(TAG, "copyFileToCache: Incoming OG uri: " + uri.path)
         val fileExtension = if (uri.path == null) "" else getFileExtension(uri.path!!)
+
+        var filename = uri.lastPathSegment
+        if (filename == null || filename == "") {
+            filename = "shared_content_${System.currentTimeMillis()}"
+        }
+        Log.i(TAG, "Actual filename: " + filename)
 
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -306,7 +325,7 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                 return null
             }
 
-            val tempFile = File(cacheDir, "shared_content_${System.currentTimeMillis()}$fileExtension")
+            val tempFile = File(cacheDir, filename)
             inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
@@ -332,16 +351,6 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
             Log.e(TAG, "Error copying file to cache", e)
             null
         }
-    }
-
-    // TODO: We need to call this - but if we call it in onDestroy that may be too soon because we actually want to use it..... leaving it for now.
-    private fun cleanupCreatedFiles() {
-        for (file in cachedIntentFiles) {
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-        cachedIntentFiles.clear()
     }
 
     private fun getUpgradeDatabaseIntent(): Intent {
