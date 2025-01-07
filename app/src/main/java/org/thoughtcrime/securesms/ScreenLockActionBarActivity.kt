@@ -11,37 +11,35 @@ import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import java.io.File
+import java.io.FileOutputStream
+import java.lang.Exception
+import java.util.Locale
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
-import java.io.File
-import java.io.FileOutputStream
-import java.lang.Exception
-import java.util.Locale
 
-//TODO AC: Rename to ScreenLockActionBarActivity.
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
+    private val TAG = ScreenLockActionBarActivity::class.java.simpleName
 
     companion object {
-        private val TAG = ScreenLockActionBarActivity::class.java.simpleName
-
         const val LOCALE_EXTRA: String = "locale_extra"
 
         private const val STATE_NORMAL            = 0
-        private const val STATE_PROMPT_PASSPHRASE = 1 //TODO AC: Rename to STATE_SCREEN_LOCKED
-        private const val STATE_UPGRADE_DATABASE  = 2 //TODO AC: Rename to STATE_MIGRATE_DATA
+        private const val STATE_SCREEN_LOCKED     = 1
+        private const val STATE_UPGRADE_DATABASE  = 2
         private const val STATE_WELCOME_SCREEN    = 3
 
         private fun getStateName(state: Int): String {
             return when (state) {
-                STATE_NORMAL            -> "STATE_NORMAL"
-                STATE_PROMPT_PASSPHRASE -> "STATE_PROMPT_PASSPHRASE"
-                STATE_UPGRADE_DATABASE  -> "STATE_UPGRADE_DATABASE"
-                STATE_WELCOME_SCREEN    -> "STATE_WELCOME_SCREEN"
-                else                    -> "UNKNOWN_STATE"
+                STATE_NORMAL           -> "STATE_NORMAL"
+                STATE_SCREEN_LOCKED    -> "STATE_SCREEN_LOCKED"
+                STATE_UPGRADE_DATABASE -> "STATE_UPGRADE_DATABASE"
+                STATE_WELCOME_SCREEN   -> "STATE_WELCOME_SCREEN"
+                else                   -> "UNKNOWN_STATE"
             }
         }
 
@@ -73,7 +71,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
-            Log.w(TAG, "We aren't finishing so calling onCreate(savedInstanceState, true);")
+            Log.w(TAG, "We aren't finishing so calling onCreate(savedInstanceState, true)")
             onCreate(savedInstanceState, true)
         }
     }
@@ -130,7 +128,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         Log.i(TAG, "routeApplicationState() -  ${getStateName(state)}")
 
         return when (state) {
-            STATE_PROMPT_PASSPHRASE -> getPromptPassphraseIntent()
+            STATE_SCREEN_LOCKED -> getPromptPassphraseIntent()
             STATE_UPGRADE_DATABASE  -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN    -> getWelcomeIntent()
             else -> null
@@ -141,7 +139,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         return if (getLocalNumber(this) == null) {
             STATE_WELCOME_SCREEN
         } else if (locked) {
-            STATE_PROMPT_PASSPHRASE
+            STATE_SCREEN_LOCKED
         } else if (DatabaseUpgradeActivity.isUpdate(this)) {
             STATE_UPGRADE_DATABASE
         } else {
@@ -150,9 +148,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     private fun getPromptPassphraseIntent(): Intent {
-        val intent = intent
-        val bundle = intent.extras
-
         // If this is an attempt to externally share something while the app is locked then we need
         // to rewrite the intent to reference a cached copy of the shared file.
         // Note: We CANNOT just add `Intent.FLAG_GRANT_READ_URI_PERMISSION` to this intent as we
@@ -165,7 +160,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         }
     }
 
-    // Unused at present but useful for debugging!
+    // Unused at present - but useful for debugging!
     private fun printIntentExtras(i: Intent, prefix: String = "") {
         val bundle = i.extras
         if (bundle != null) {
@@ -188,7 +183,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         // Clear original clipData
         rewrittenIntent.clipData = null
-
 
         // Take the first extra key which relates to a file stream
         val extraKey: String? = rewrittenIntent.extras
@@ -261,9 +255,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         var filename = uri.lastPathSegment
 
         // Create a filename if we don't have one
-        if (filename == null || filename == "") {
-            filename = "shared_content_${System.currentTimeMillis()}"
-        }
+        if (filename == null || filename == "") { filename = "shared_content_${System.currentTimeMillis()}" }
 
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -290,10 +282,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
             // Uncomment if you're debugging this - but for privacy reasons it's likely not a good idea to print filenames to the console
             //Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
-
-            // Return a URI from our FileProvider
-            val rewrittenUri = "$packageName.fileprovider"
-            //Log.i(TAG, "Rewritten URI is: " + rewrittenUri)
 
             FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
         } catch (e: Exception) {
