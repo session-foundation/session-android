@@ -20,7 +20,7 @@ import com.google.android.material.tabs.TabLayout;
 
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.NonTranslatableStringConstants;
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity;
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.session.libsession.utilities.ViewUtil;
@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 
 import network.loki.messenger.R;
 
-public class GiphyActivity extends PassphraseRequiredActionBarActivity
+public class GiphyActivity extends ScreenLockActionBarActivity
     implements GiphyActivityToolbar.OnLayoutChangedListener,
                GiphyActivityToolbar.OnFilterChangedListener,
                GiphyAdapter.OnItemClickListener

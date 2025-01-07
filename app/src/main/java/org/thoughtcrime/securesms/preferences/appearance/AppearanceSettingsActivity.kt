@@ -15,11 +15,11 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.util.ThemeState
 
 @AndroidEntryPoint
-class AppearanceSettingsActivity: PassphraseRequiredActionBarActivity(), View.OnClickListener {
+class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickListener {
 
     companion object {
         private const val SCROLL_PARCEL = "scroll_parcel"

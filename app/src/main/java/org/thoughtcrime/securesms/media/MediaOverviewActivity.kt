@@ -7,12 +7,12 @@ import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.ui.setComposeContent
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MediaOverviewActivity : PassphraseRequiredActionBarActivity() {
+class MediaOverviewActivity : ScreenLockActionBarActivity() {
     @Inject
     lateinit var viewModelFactory: MediaOverviewViewModel.AssistedFactory
 

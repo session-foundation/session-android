@@ -46,7 +46,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
@@ -84,7 +84,7 @@ private const val NEW_ACCOUNT = "HomeActivity_NEW_ACCOUNT"
 private const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
 
 @AndroidEntryPoint
-class HomeActivity : PassphraseRequiredActionBarActivity(),
+class HomeActivity : ScreenLockActionBarActivity(),
     ConversationClickListener,
     GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
 

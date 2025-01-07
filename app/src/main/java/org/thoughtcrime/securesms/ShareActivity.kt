@@ -33,7 +33,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.FileInputStream
 import java.io.IOException
-import java.io.InputStream
 import java.lang.IllegalArgumentException
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
@@ -57,7 +56,14 @@ import org.thoughtcrime.securesms.util.MediaUtil
 
  // An activity to quickly share content with contacts.
 @AndroidEntryPoint
-class ShareActivity : PassphraseRequiredActionBarActivity(), OnContactSelectedListener {
+class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
+     private val TAG = ShareActivity::class.java.simpleName
+
+     companion object {
+         const val EXTRA_THREAD_ID          = "thread_id"
+         const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
+         const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
+     }
 
     private var contactsFragment: ContactSelectionListFragment? = null
     private var searchToolbar: SearchToolbar? = null
@@ -133,31 +139,6 @@ class ShareActivity : PassphraseRequiredActionBarActivity(), OnContactSelectedLi
             .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
     }
-
-    // Method to determine if a given Intent is regarding external sharing (true) or not (false)
-//    private fun IsIntentRegardingExternalSharing(i: Intent): Boolean {
-//        Log.w("ACL", "Checking if this intent is regarding external sharing!")
-//
-//
-//        // We'll assume the Intent is regarding external sharing for now and change that if we find out otherwise
-//        var intentIsRegardingExternalSharing = true
-//        val bundle = i.getExtras()
-//        if (bundle != null) {
-//            for (key in bundle.keySet()) {
-//                val value = bundle.get(key)
-//
-//                // If this is just a standard fingerprint unlock and not sharing anything then set our flag accordingly
-//                if (value is Intent) {
-//                    val action = value.action
-//                    if (action != null && action == "android.intent.action.MAIN") {
-//                        intentIsRegardingExternalSharing = false
-//                        break
-//                    }
-//                }
-//            }
-//        }
-//        return intentIsRegardingExternalSharing
-//    }
 
     private fun initializeResources() {
         progressWheel = findViewById<View>(R.id.progress_wheel)
@@ -282,37 +263,9 @@ class ShareActivity : PassphraseRequiredActionBarActivity(), OnContactSelectedLi
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }
 
-    protected override fun onDestroy() {
+    override fun onDestroy() {
         super.onDestroy()
         if (resolveTask != null) resolveTask!!.cancel(true)
-
-        // NO NO NO NO NO --- this is way too early
-        // TODO: Figure out when to call the below
-        //PassphraseRequiredActionBarActivity.Companion.cleanupCreatedFiles();
-
-        // TODO: Clean up our local cache now, I guess? We'll likely need to keep track of the intent we were given for this
-//        Intent i = getIntent();
-//        if (i != null) {
-//            ArrayList<String> cachedFilePaths = i.getStringArrayListExtra("cached_file_paths");
-//            if (cachedFilePaths != null) {
-//                Log.i("ACL", "Cleaning up!");
-//                for (String filePath : cachedFilePaths) {
-//                    File file = new File(filePath);
-//                    if (file.exists()) {
-//                        boolean deletionSuccessful = file.delete();
-//                        if (!deletionSuccessful) {
-//                            Log.w("ACL", "Failed to delete cached file: " + filePath);
-//                        } else {
-//                            Log.i("ACL", "Deleted cached file: " + filePath);
-//                        }
-//                    }
-//                }
-//            } else {
-//                Log.w("ACL", "Nothing to clean up!");
-//            }
-//        } else {
-//            Log.w("ACL", "Intent was null in ShareActivity.onDestroy!");
-//        }
     }
 
     @SuppressLint("StaticFieldLeak")
@@ -326,7 +279,6 @@ class ShareActivity : PassphraseRequiredActionBarActivity(), OnContactSelectedLi
                 } else {
                     Log.i(TAG, "Resolved URI: " + uris[0]!!.toString() + " - " + uris[0]!!.path)
                 }
-
 
                 var inputStream = if ("file" == uris[0]!!.scheme) {
                     FileInputStream(uris[0]!!.path)
@@ -371,14 +323,5 @@ class ShareActivity : PassphraseRequiredActionBarActivity(), OnContactSelectedLi
             resolvedExtra = uri
             handleResolvedMedia(intent, true)
         }
-    }
-
-    companion object {
-        // TODO: Put the tag back when happy
-        private const val TAG = "ACL" //ShareActivity.class.getSimpleName();
-
-        const val EXTRA_THREAD_ID          = "thread_id"
-        const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
-        const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
     }
 }

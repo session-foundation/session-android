@@ -13,7 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityDisappearingMessagesBinding
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -22,7 +22,7 @@ import org.thoughtcrime.securesms.ui.setThemedContent
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DisappearingMessagesActivity: PassphraseRequiredActionBarActivity() {
+class DisappearingMessagesActivity: ScreenLockActionBarActivity() {
 
     private lateinit var binding : ActivityDisappearingMessagesBinding
 

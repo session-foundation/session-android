@@ -23,10 +23,10 @@ import java.lang.Exception
 import java.util.Locale
 
 //TODO AC: Rename to ScreenLockActionBarActivity.
-abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
+abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     companion object {
-        private val TAG = PassphraseRequiredActionBarActivity::class.java.simpleName
+        private val TAG = ScreenLockActionBarActivity::class.java.simpleName
 
         const val LOCALE_EXTRA: String = "locale_extra"
 
@@ -50,13 +50,14 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
 
         // Called from ConversationActivity.onDestroy() to clean up any cached files that might exist
         fun cleanupCachedFiles() {
+            var filesDeletedSuccessfully = true
             for (file in cachedIntentFiles) {
                 if (file.exists()) {
-                    Log.i(TAG, "Deleting cached shared file: " + file.path)
                     val success = file.delete()
-                    if (!success) { Log.w(TAG, "Failed to delete a cached shared file.") }
+                    if (!success) { filesDeletedSuccessfully = false }
                 }
             }
+            if (!filesDeletedSuccessfully) { Log.w(TAG, "Failed to delete one or more cached shared file(s).") }
             cachedIntentFiles.clear()
         }
     }
@@ -64,18 +65,8 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     private var clearKeyReceiver: BroadcastReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "Hit PassphraseRequiredActionBarActivity.onCreate(" + savedInstanceState + ")")
+        Log.i(TAG, "Hit ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
         super.onCreate(savedInstanceState)
-
-        if (savedInstanceState != null) {
-            val externalShareIntent = savedInstanceState.getParcelable<Intent?>("next_intent")
-            if (externalShareIntent == null) {
-                Log.w(TAG, "Got a null externalShareIntent!")
-                //finish()
-            } else {
-                Log.w(TAG, "Got a NON-NULL externalShareIntent - we can work with this!")
-            }
-        }
 
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
         routeApplicationState(locked)
@@ -95,7 +86,7 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     }
 
     override fun onDestroy() {
-        Log.i(TAG, "Hit PassphraseRequiredActionBarActivity.onDestroy()")
+        Log.i(TAG, "ScreenLockActionBarActivity.onDestroy()")
         super.onDestroy()
         removeClearKeyReceiver(this)
     }

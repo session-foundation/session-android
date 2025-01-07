@@ -31,7 +31,7 @@ import org.session.libsession.utilities.concurrent.SimpleTask;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity;
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment;
@@ -49,11 +49,11 @@ import network.loki.messenger.R;
  * This activity is intended to be launched via {@link #startActivityForResult(Intent, int)}.
  * It will return the {@link Media} that the user decided to send.
  */
-public class MediaSendActivity extends PassphraseRequiredActionBarActivity implements MediaPickerFolderFragment.Controller,
-                                                                                      MediaPickerItemFragment.Controller,
-                                                                                      MediaSendFragment.Controller,
-                                                                                      ImageEditorFragment.Controller,
-                                                                                      Camera1Fragment.Controller
+public class MediaSendActivity extends ScreenLockActionBarActivity implements MediaPickerFolderFragment.Controller,
+                                                                              MediaPickerItemFragment.Controller,
+                                                                              MediaSendFragment.Controller,
+                                                                              ImageEditorFragment.Controller,
+                                                                              Camera1Fragment.Controller
 {
   private static final String TAG = MediaSendActivity.class.getSimpleName();
 

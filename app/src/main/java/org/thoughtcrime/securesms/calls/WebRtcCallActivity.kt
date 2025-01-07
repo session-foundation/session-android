@@ -33,7 +33,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.WebRtcCallService
@@ -50,7 +50,7 @@ import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.EA
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 
 @AndroidEntryPoint
-class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
+class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
     companion object {
         const val ACTION_PRE_OFFER = "pre-offer"

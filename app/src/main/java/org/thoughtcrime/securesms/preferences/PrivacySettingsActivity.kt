@@ -3,11 +3,10 @@ package org.thoughtcrime.securesms.preferences
 import android.os.Bundle
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
-import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 
 @AndroidEntryPoint
-class PrivacySettingsActivity : PassphraseRequiredActionBarActivity() {
+class PrivacySettingsActivity : ScreenLockActionBarActivity() {
 
     companion object{
         const val SCROLL_KEY = "privacy_scroll_key"
