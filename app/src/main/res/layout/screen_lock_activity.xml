@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="org.thoughtcrime.securesms.PassphrasePromptActivity">
+    tools:context="org.thoughtcrime.securesms.ScreenLockActivity">
 
     <View android:id="@+id/shim"
           android:layout_width="match_parent"

@@ -47,12 +47,8 @@ import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
 
-class PassphrasePromptActivity : BaseActionBarActivity() {
-
-    // TODO: Put the TAG back when happy
-    companion object {
-        private val TAG: String = "ACL" // PassphrasePromptActivity::class.java.getSimpleName()
-    }
+class ScreenLockActivity : BaseActionBarActivity() {
+    private val TAG: String = ScreenLockActivity::class.java.getSimpleName()
 
     private var fingerprintPrompt: ImageView?      = null
     private var lockScreenButton: Button?          = null
@@ -72,13 +68,13 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     private var errorColor:  Int = -1
 
     public override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "Creating PassphrasePromptActivity")
+        Log.i(TAG, "Creating ScreenLockActivity")
         super.onCreate(savedInstanceState)
 
-        accentColor = ThemeUtil.getThemedColor(this, R.attr.accentColor);
-        errorColor = ThemeUtil.getThemedColor(this, R.attr.danger);
+        accentColor = ThemeUtil.getThemedColor(this, R.attr.accentColor)
+        errorColor = ThemeUtil.getThemedColor(this, R.attr.danger)
 
-        setContentView(R.layout.prompt_passphrase_activity)
+        setContentView(R.layout.screen_lock_activity)
         initializeResources()
 
         // Start and bind to the KeyCachingService instance.
@@ -98,14 +94,21 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         // Set up biometric prompt and prompt info
         val executor = ContextCompat.getMainExecutor(this)
         biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
+
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 Log.w(TAG, "Authentication error: $errorCode $errString")
                 onAuthenticationFailed()
             }
 
+            var justGainedFocus = true
             override fun onAuthenticationFailed() {
                 Log.w(TAG, "onAuthenticationFailed()")
-                showAuthenticationFailedUI()
+                // Don't shake the fingerprint if we haven't yet attempted to authenticate
+                if (justGainedFocus) {
+                    justGainedFocus = false
+                } else {
+                    showAuthenticationFailedUI()
+                }
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {

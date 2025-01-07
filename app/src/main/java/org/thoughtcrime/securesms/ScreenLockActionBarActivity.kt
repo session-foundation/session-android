@@ -2,11 +2,14 @@ package org.thoughtcrime.securesms
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.OpenableColumns
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -49,14 +52,20 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         // Called from ConversationActivity.onDestroy() to clean up any cached files that might exist
         fun cleanupCachedFiles() {
-            var filesDeletedSuccessfully = true
+            val numFilesToDelete = cachedIntentFiles.size
+            var numFilesDeleted = 0
             for (file in cachedIntentFiles) {
                 if (file.exists()) {
                     val success = file.delete()
-                    if (!success) { filesDeletedSuccessfully = false }
+                    if (success) { numFilesDeleted++ }
                 }
             }
-            if (!filesDeletedSuccessfully) { Log.w(TAG, "Failed to delete one or more cached shared file(s).") }
+            if (numFilesDeleted < numFilesToDelete) {
+                val failCount = numFilesToDelete - numFilesDeleted
+                Log.w(TAG, "Failed to delete $failCount cached shared file(s).")
+            } else if (numFilesToDelete > 0 && numFilesDeleted == numFilesToDelete) {
+                Log.i(TAG, "Cached shared files deleted.")
+            }
             cachedIntentFiles.clear()
         }
     }
@@ -64,7 +73,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     private var clearKeyReceiver: BroadcastReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.i(TAG, "Hit ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
+        Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
         super.onCreate(savedInstanceState)
 
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
@@ -72,7 +81,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         if (!isFinishing) {
             initializeClearKeyReceiver()
-            Log.w(TAG, "We aren't finishing so calling onCreate(savedInstanceState, true)")
             onCreate(savedInstanceState, true)
         }
     }
@@ -126,12 +134,12 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     private fun getIntentForState(state: Int): Intent? {
-        Log.i(TAG, "routeApplicationState() -  ${getStateName(state)}")
+        Log.i(TAG, "routeApplicationState() - ${getStateName(state)}")
 
         return when (state) {
-            STATE_SCREEN_LOCKED -> getPromptPassphraseIntent()
-            STATE_UPGRADE_DATABASE  -> getUpgradeDatabaseIntent()
-            STATE_WELCOME_SCREEN    -> getWelcomeIntent()
+            STATE_SCREEN_LOCKED    -> getScreenUnlockIntent()
+            STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
+            STATE_WELCOME_SCREEN   -> getWelcomeIntent()
             else -> null
         }
     }
@@ -148,16 +156,16 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         }
     }
 
-    private fun getPromptPassphraseIntent(): Intent {
+    private fun getScreenUnlockIntent(): Intent {
         // If this is an attempt to externally share something while the app is locked then we need
         // to rewrite the intent to reference a cached copy of the shared file.
         // Note: We CANNOT just add `Intent.FLAG_GRANT_READ_URI_PERMISSION` to this intent as we
         // pass it around because we don't have permission to do that (i.e., it doesn't work).
-        if (intent.action === "android.intent.action.SEND") {
+        if (intent.action == "android.intent.action.SEND") {
             val rewrittenIntent = rewriteShareIntentUris(intent)
-            return getRoutedIntent(PassphrasePromptActivity::class.java, rewrittenIntent)
+            return getRoutedIntent(ScreenLockActivity::class.java, rewrittenIntent)
         } else {
-            return getRoutedIntent(PassphrasePromptActivity::class.java, intent)
+            return getRoutedIntent(ScreenLockActivity::class.java, intent)
         }
     }
 
@@ -169,6 +177,43 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 Log.w(TAG, "${prefix}: Key: " + key + " --> Value: " + bundle.get(key))
             }
         }
+    }
+
+    // Unused at present - but useful for debugging!
+    private fun printIntentClipData(i: Intent, prefix: String = "") {
+        i.clipData?.let { clipData ->
+            for (i in 0 until clipData.itemCount) {
+                val item = clipData.getItemAt(i)
+                if (item.uri != null) { Log.i(TAG, "${prefix}: Item $i has uri: ${item.uri}") }
+                if (item.text != null) { Log.i(TAG, "${prefix}: Item $i has text: ${item.text}") }
+            }
+        }
+    }
+
+    fun getFileNameFromUri(context: Context, uri: Uri): String? {
+        var result: String? = null
+
+        // If we're dealing with a content URI, query the provider to get the actual file name
+        if (uri.scheme.equals("content", ignoreCase = true)) {
+            val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                    result = cursor.getString(nameIndex)
+                }
+            }
+        }
+
+        // If we still don't have a name, fallback to the Uri path
+        if (result.isNullOrEmpty()) {
+            result = uri.path
+            val cut = result?.lastIndexOf('/') ?: -1
+            if (cut != -1) {
+                result = result?.substring(cut + 1)
+            }
+        }
+
+        return result
     }
 
     // Rewrite the original share Intent, copying any URIs it contains to our app's private cache,
@@ -196,14 +241,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             return originalIntent
         }
 
-        // Get the path of the file we're sharing
-        val streamUriPath = rewrittenIntent.extras?.getString(extraKey)
-
-        // If we're sharing a local file in the downloads folder we don't need to do anything special - we can just use the original intent
-        if (streamUriPath?.startsWith("content://com.android.providers.downloads") == true) {
-            return originalIntent
-        }
-
         // Grab and rewrite the original intent's clipData - adding it to our rewrittenIntent as we go
         val originalClipData = originalIntent.clipData
         originalClipData?.let { clipData ->
@@ -215,22 +252,22 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 if (originalUri != null) {
                     // First, copy the file locally..
                     val localUri = copyFileToCache(originalUri)
-                    Log.i(TAG, "rewriteShareIntentUris: localUri is: " + localUri)
+
+                    // ..then grab the real filename, using a fallback if we couldn't get it from the original Uri..
+                    val fileName = getFileNameFromUri(this, originalUri) ?: "Shared Content"
 
                     if (localUri != null) {
-                        // ..then create a ClipData from the localUri, not the originalUri!
+                        // ..then create the new ClipData with the localUri and filename
                         if (newClipData == null) {
-                            newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
+                            newClipData = ClipData.newUri(contentResolver, fileName, localUri)
 
-                            // CAREFUL: Do NOT put the localUri.path in the extra - put the localUri itself!
+                            // Make sure to also set the "android.intent.extra.STREAM" extra
                             rewrittenIntent.putExtra(extraKey, localUri)
                         } else {
-                            // If we already have some clipData we can add to it rather than recreating it
                             newClipData.addItem(ClipData.Item(localUri))
                         }
                     } else {
-                        // Moan if copying the originalUri failed - not much we can do in this case but let the calling function handle things
-                        Log.e(TAG, "Could not rewrite URI: $originalUri")
+                        Log.e(TAG, "Could not rewrite Uri - bailing.")
                         return null
                     }
                 }
@@ -250,13 +287,9 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         return rewrittenIntent
     }
 
-    // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
-    // our own FileProvider.
     private fun copyFileToCache(uri: Uri): Uri? {
-        var filename = uri.lastPathSegment
-
-        // Create a filename if we don't have one
-        if (filename == null || filename == "") { filename = "shared_content_${System.currentTimeMillis()}" }
+        // Get the actual display name if possible
+        val fileName = getFileNameFromUri(this, uri) ?: "shared_content_${System.currentTimeMillis()}"
 
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -265,25 +298,24 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 return null
             }
 
-            val tempFile = File(cacheDir, filename)
+            // Create a File in your cache directory using the retrieved name
+            val tempFile = File(cacheDir, fileName)
             inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)
                 }
             }
 
-            // Check that the file exists and is not empty
+            // Verify the file actually exists and isn't empty
             if (!tempFile.exists() || tempFile.length() == 0L) {
                 Log.w(TAG, "Failed to copy the file to cache or the file is empty.")
                 return null
             }
 
-            // Add the created file to our list so we can clean it up (i.e., delete it) when we're done with it
+            // Record the file so you can delete it when you're done
             cachedIntentFiles.add(tempFile)
 
-            // Uncomment if you're debugging this - but for privacy reasons it's likely not a good idea to print filenames to the console
-            //Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
-
+            // Return a FileProvider Uri that references this cached file
             FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
