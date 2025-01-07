@@ -23,9 +23,10 @@ import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
-    private val TAG = ScreenLockActionBarActivity::class.java.simpleName
 
     companion object {
+        private val TAG = ScreenLockActionBarActivity::class.java.simpleName
+
         const val LOCALE_EXTRA: String = "locale_extra"
 
         private const val STATE_NORMAL            = 0
