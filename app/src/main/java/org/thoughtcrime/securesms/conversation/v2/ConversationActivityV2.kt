@@ -985,6 +985,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             cancelVoiceMessage()
             tearDownRecipientObserver()
         }
+
+        // Delete any files we might have locally cached when sharing (which we need to do
+        // when passing through files when the app is locked).
+        cleanupCachedFiles()
+
         super.onDestroy()
     }
     // endregion

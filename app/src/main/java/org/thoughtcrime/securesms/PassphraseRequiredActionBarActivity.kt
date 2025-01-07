@@ -26,8 +26,7 @@ import java.util.Locale
 abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
 
     companion object {
-        // TODO: Put back tag when happy
-        private const val TAG = "ACL" //PassphraseRequiredActionBarActivity.class.getSimpleName();
+        private val TAG = PassphraseRequiredActionBarActivity::class.java.simpleName
 
         const val LOCALE_EXTRA: String = "locale_extra"
 
@@ -36,15 +35,26 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         private const val STATE_UPGRADE_DATABASE  = 2 //TODO AC: Rename to STATE_MIGRATE_DATA
         private const val STATE_WELCOME_SCREEN    = 3
 
+        private fun getStateName(state: Int): String {
+            return when (state) {
+                STATE_NORMAL            -> "STATE_NORMAL"
+                STATE_PROMPT_PASSPHRASE -> "STATE_PROMPT_PASSPHRASE"
+                STATE_UPGRADE_DATABASE  -> "STATE_UPGRADE_DATABASE"
+                STATE_WELCOME_SCREEN    -> "STATE_WELCOME_SCREEN"
+                else                    -> "UNKNOWN_STATE"
+            }
+        }
+
         // If we're sharing files we need to cache the data from the share Intent to maintain control of it
         private val cachedIntentFiles = mutableListOf<File>()
 
-        // TODO: We need to call this - but if we call it in onDestroy that may be too soon because we actually want to use it..... leaving it for now.
-        fun cleanupCreatedFiles() {
+        // Called from ConversationActivity.onDestroy() to clean up any cached files that might exist
+        fun cleanupCachedFiles() {
             for (file in cachedIntentFiles) {
                 if (file.exists()) {
-                    Log.i(TAG, "Deleting: " + file.path)
-                    file.delete()
+                    Log.i(TAG, "Deleting cached shared file: " + file.path)
+                    val success = file.delete()
+                    if (!success) { Log.w(TAG, "Failed to delete a cached shared file.") }
                 }
             }
             cachedIntentFiles.clear()
@@ -67,45 +77,9 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
             }
         }
 
-        /*
-        // 1) Check if we have a share intent
-        if (intent?.action == Intent.ACTION_SEND) {
-            Log.w(TAG, "We received an external share request!")
-
-            // 2) Rewrite ephemeral URIs immediately
-            val rewrittenIntent = rewriteShareIntentUris(intent)
-            if (rewrittenIntent == null) {
-                // If rewriting failed (e.g. openInputStream() SecurityException) there's no point in continuing
-                Log.e(TAG, "Rewriting ephemeral URIs failed - cannot proceed.")
-                finish()
-                return
-            }
-
-            // 3) Now we have URIs that point to our own FileProvider
-            // Next we decide: is the user locked (needs passphrase) or not?
-            val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
-            if (locked) {
-                // Go to passphrase prompt, and embed the "rewritten" share Intent
-                val promptIntent = getRoutedIntent(PassphrasePromptActivity::class.java, rewrittenIntent)
-                startActivity(promptIntent)
-                finish()
-                return
-            } else {
-                // Already unlocked, so go straight to the final "ShareActivity"
-                val shareIntent = Intent(this, ShareActivity::class.java).apply {
-                    putExtra("rewritten_intent", rewrittenIntent)
-                }
-                startActivity(shareIntent)
-                finish()
-                return
-            }
-        }
-        */
-
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
         routeApplicationState(locked)
 
-        //super.onCreate(savedInstanceState);
         if (!isFinishing) {
             initializeClearKeyReceiver()
             Log.w(TAG, "We aren't finishing so calling onCreate(savedInstanceState, true);")
@@ -162,25 +136,13 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     }
 
     private fun getIntentForState(state: Int): Intent? {
-        Log.i(TAG, "routeApplicationState(), state: $state")
+        Log.i(TAG, "routeApplicationState() -  ${getStateName(state)}")
 
         return when (state) {
-            STATE_PROMPT_PASSPHRASE -> {
-                Log.i(TAG, "Routing intent to getPromptPassphraseIntent")
-                getPromptPassphraseIntent()
-            }
-            STATE_UPGRADE_DATABASE  -> {
-                Log.i(TAG, "Routing intent to getUpgradeDatabaseIntent")
-                getUpgradeDatabaseIntent()
-            }
-            STATE_WELCOME_SCREEN    -> {
-                Log.i(TAG, "Routing intent to getWelcomeIntent")
-                getWelcomeIntent()
-            }
-            else -> {
-                Log.i(TAG, "Not routing intent in `getIntentForState` - returning null")
-                null
-            }
+            STATE_PROMPT_PASSPHRASE -> getPromptPassphraseIntent()
+            STATE_UPGRADE_DATABASE  -> getUpgradeDatabaseIntent()
+            STATE_WELCOME_SCREEN    -> getWelcomeIntent()
+            else -> null
         }
     }
 
@@ -197,37 +159,28 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     }
 
     private fun getPromptPassphraseIntent(): Intent {
-        val i = intent
-        val b = i.extras
-        if (b != null) {
-            for (key in b.keySet()) {
-                Log.w(TAG, "PRABA-OG-intent >> Key: " + key + " --> " + b.get(key))
-            }
-        }
+        val intent = intent
+        val bundle = intent.extras
 
         // If this is an attempt to externally share something while the app is locked then we need
-        // to write the intent to our own local storage - otherwise the ephemeral permission expires.
+        // to rewrite the intent to reference a cached copy of the shared file.
         // Note: We CANNOT just add `Intent.FLAG_GRANT_READ_URI_PERMISSION` to this intent as we
         // pass it around because we don't have permission to do that (i.e., it doesn't work).
-        Log.w(TAG, "Action is: " + i.action)
-        if (i.action === "android.intent.action.SEND") {
-            Log.w(TAG, "Intent action is to SEND - re-writing Intent!")
-
-            val rewrittenIntent = rewriteShareIntentUris(i)
-            if (rewrittenIntent != null) {
-                val b2 = rewrittenIntent.extras
-                if (b2 != null) {
-                    for (key in b2.keySet()) {
-                        Log.w(TAG, "PRABA-Rewritten-intent >> Key: " + key + " --> " + b2.get(key))
-                    }
-                }
-            } else {
-                Log.i(TAG, "Rewritten intent was NULLLLLLLLLLLLLLLLLl!")
-            }
-
+        if (intent.action === "android.intent.action.SEND") {
+            val rewrittenIntent = rewriteShareIntentUris(intent)
             return getRoutedIntent(PassphrasePromptActivity::class.java, rewrittenIntent)
         } else {
-            return getRoutedIntent(PassphrasePromptActivity::class.java, i)
+            return getRoutedIntent(PassphrasePromptActivity::class.java, intent)
+        }
+    }
+
+    // Unused at present but useful for debugging!
+    private fun printIntentExtras(i: Intent, prefix: String = "") {
+        val bundle = i.extras
+        if (bundle != null) {
+            for (key in bundle.keySet()) {
+                Log.w(TAG, "${prefix}: Key: " + key + " --> Value: " + bundle.get(key))
+            }
         }
     }
 
@@ -237,18 +190,14 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
     // view the shared URI which may be available to THIS PassphrasePromptActivity, but which is NOT
     // then valid on the actual ShareActivity which we transfer the Intent through to. With a
     // rewritten copy of the original Intent that references our own cached copy of the URI we have
-    // full control to grant Intent.FLAG_GRANT_READ_URI_PERMISSION to any activity we wish.
+    // full control over it.
+    // Note: We delete any cached file(s) in ConversationActivity.onDestroy.
     private fun rewriteShareIntentUris(originalIntent: Intent): Intent? {
         val rewrittenIntent = Intent(originalIntent)
-        rewrittenIntent.clipData = null // Clear original clipData
 
+        // Clear original clipData
+        rewrittenIntent.clipData = null
 
-        for (ek: String in rewrittenIntent.extras?.keySet()!!) {
-            Log.i(TAG, "EK is: " + ek)
-        }
-
-        //val extraKey = rewrittenIntent.extras?.keySet()?.first()
-        //val extraKey: String? = rewrittenIntent.extras?.keySet()?.takeIf { it.toString() == "android.intent.extra.STREAM" }?.first()
 
         // Take the first extra key which relates to a file stream
         val extraKey: String? = rewrittenIntent.extras
@@ -261,22 +210,18 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
             return originalIntent
         }
 
+        // Get the path of the file we're sharing
         val streamUriPath = rewrittenIntent.extras?.getString(extraKey)
-        Log.i(TAG, "Stream URI path is: " + streamUriPath)
 
+        // If we're sharing a local file in the downloads folder we don't need to do anything special - we can just use the original intent
         if (streamUriPath?.startsWith("content://com.android.providers.downloads") == true) {
-            Log.i(TAG, "Shared file stream is a local file - no need to cache & rewrite - returning original intent.")
             return originalIntent
         }
 
+        // Grab and rewrite the original intent's clipData - adding it to our rewrittenIntent as we go
         val originalClipData = originalIntent.clipData
-
         originalClipData?.let { clipData ->
-            Log.i(TAG, "Found clipData to rewrite.")
             var newClipData: ClipData? = null
-
-            Log.i(TAG, "Looking at extraKey: " + extraKey + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
             for (i in 0 until clipData.itemCount) {
                 val item = clipData.getItemAt(i)
                 val originalUri = item.uri
@@ -291,14 +236,10 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                         if (newClipData == null) {
                             newClipData = ClipData.newUri(contentResolver, "Shared Content", localUri)
 
-                            if (extraKey != null) {
-                                val rewrittenPath: String? = localUri.path
-                                Log.i(TAG, "Rewritten path is: " + rewrittenPath)
-
-                                // CAREFUL: Do NOT put the localUri path in the extra - put the localUri itself!
-                                rewrittenIntent.putExtra(extraKey, localUri)
-                            }
+                            // CAREFUL: Do NOT put the localUri.path in the extra - put the localUri itself!
+                            rewrittenIntent.putExtra(extraKey, localUri)
                         } else {
+                            // If we already have some clipData we can add to it rather than recreating it
                             newClipData.addItem(ClipData.Item(localUri))
                         }
                     } else {
@@ -308,7 +249,6 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                     }
                 }
             }
-
 
             if (newClipData != null) {
                 Log.i(TAG, "Adding newClipData to rewrittenIntent.")
@@ -324,24 +264,15 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         return rewrittenIntent
     }
 
-
-
-    private fun getFileExtension(filePath: String): String {
-        val extension = filePath.substringAfterLast('.', "")
-        return if (extension.length in 1..4) ".$extension" else ""
-    }
-
     // Copy the file referenced by `uri` to our app's cache directory and return a content URI from
     // our own FileProvider.
     private fun copyFileToCache(uri: Uri): Uri? {
-        Log.i(TAG, "copyFileToCache: Incoming OG uri: " + uri.path)
-        val fileExtension = if (uri.path == null) "" else getFileExtension(uri.path!!)
-
         var filename = uri.lastPathSegment
+
+        // Create a filename if we don't have one
         if (filename == null || filename == "") {
             filename = "shared_content_${System.currentTimeMillis()}"
         }
-        Log.i(TAG, "Actual filename: " + filename)
 
         return try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -366,11 +297,13 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
             // Add the created file to our list so we can clean it up (i.e., delete it) when we're done with it
             cachedIntentFiles.add(tempFile)
 
-            Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
+            // Uncomment if you're debugging this - but for privacy reasons it's likely not a good idea to print filenames to the console
+            //Log.i(TAG, "File copied to cache: ${tempFile.absolutePath}, size=${tempFile.length()} bytes")
 
             // Return a URI from our FileProvider
             val rewrittenUri = "$packageName.fileprovider"
-            Log.i(TAG, "Rewritten URI is: " + rewrittenUri)
+            //Log.i(TAG, "Rewritten URI is: " + rewrittenUri)
+
             FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
@@ -378,23 +311,15 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         }
     }
 
-    private fun getUpgradeDatabaseIntent(): Intent {
-        return getRoutedIntent(DatabaseUpgradeActivity::class.java, getConversationListIntent())
-    }
+    private fun getUpgradeDatabaseIntent(): Intent { return getRoutedIntent(DatabaseUpgradeActivity::class.java, getConversationListIntent()) }
 
-    private fun getWelcomeIntent(): Intent {
-        return getRoutedIntent(LandingActivity::class.java, getConversationListIntent())
-    }
+    private fun getWelcomeIntent(): Intent { return getRoutedIntent(LandingActivity::class.java, getConversationListIntent()) }
 
-    private fun getConversationListIntent(): Intent {
-        return Intent(this, HomeActivity::class.java)
-    }
+    private fun getConversationListIntent(): Intent { return Intent(this, HomeActivity::class.java) }
 
     private fun getRoutedIntent(destination: Class<*>?, nextIntent: Intent?): Intent {
         val intent = Intent(this, destination)
-        if (nextIntent != null) {
-            intent.putExtra("next_intent", nextIntent)
-        }
+        if (nextIntent != null) { intent.putExtra("next_intent", nextIntent) }
         return intent
     }
 

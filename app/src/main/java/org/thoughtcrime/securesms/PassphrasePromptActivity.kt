@@ -69,7 +69,7 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
     private var keyCachingService: KeyCachingService? = null
 
     private var accentColor: Int = -1
-    private var errorColor: Int  = -1
+    private var errorColor:  Int = -1
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "Creating PassphrasePromptActivity")
