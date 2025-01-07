@@ -2,13 +2,11 @@ package org.thoughtcrime.securesms
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.OpenableColumns
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
@@ -257,7 +255,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                     val fileName = getFileNameFromUri(this, originalUri) ?: "Shared Content"
 
                     if (localUri != null) {
-                        // ..then create the new ClipData with the localUri and filename
+                        // ..then create the new ClipData with the localUri and filename.
                         if (newClipData == null) {
                             newClipData = ClipData.newUri(contentResolver, fileName, localUri)
 

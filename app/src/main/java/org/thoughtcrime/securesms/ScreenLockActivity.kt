@@ -146,7 +146,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
         })
 
         promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Unlock Session") // TODO: Need a string for this, like `lockUnlockSession` -> "Unlock {app_name}" or similar
+            .setTitle("Unlock Session") // TODO: Need a string for this, like `lockAppUnlock` -> "Unlock {app_name}" or similar - have informed Rebecca
             .setNegativeButtonText(this.applicationContext.getString(R.string.cancel))
             // If we needed it, we could also add things like `setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)` here
             .build()
@@ -190,7 +190,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
         } else {
             // No biometric key available (no biometrics enrolled or key cannot be created)
             // Fallback to device credentials (PIN, pattern, or password)
-            // TODO: Need a string for this, like `lockUnlockSession` -> "Unlock {app_name}" or similar
+            // TODO: Need a string for this, like `lockAppUnlock` -> "Unlock {app_name}" or similar - have informed Rebecca
             val intent = keyguardManager.createConfirmDeviceCredentialIntent("Unlock Session", "")
             startActivityForResult(intent, 1)
         }
