@@ -78,6 +78,7 @@
     <!-- TODO: Refactor this to use color resources -->
     <style name="Base.Theme.Session.ForceDark" parent="Theme.Session.DayNight">
         <item name="colorPrimary">#171717</item>
+        <item name="colorAccent">@color/classic_accent</item>
         <item name="android:textColorPrimary">#FFFFFF</item>
         <item name="android:textColorSecondary">#DFFFFFFF</item>
         <item name="android:textColorTertiary">#90FFFFFF</item>

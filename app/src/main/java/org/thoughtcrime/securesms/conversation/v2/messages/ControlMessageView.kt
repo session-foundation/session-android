@@ -3,11 +3,15 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import androidx.compose.ui.graphics.Color
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -56,6 +60,10 @@ class ControlMessageView : LinearLayout {
     @Inject lateinit var disappearingMessages: DisappearingMessages
 
     val controlContentView: View get() = binding.controlContentView
+
+    val iconSize by lazy {
+        resources.getDimensionPixelSize(R.dimen.medium_spacing)
+    }
 
     init {
         layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
@@ -127,15 +135,30 @@ class ControlMessageView : LinearLayout {
                 binding.root.contentDescription = context.getString(R.string.AccessibilityId_message_request_config_message)
             }
             message.isCallLog -> {
-                val drawable = when {
-                    message.isIncomingCall -> R.drawable.ic_incoming_call
-                    message.isOutgoingCall -> R.drawable.ic_outgoing_call
+                val drawableRes = when {
+                    message.isIncomingCall -> R.drawable.ic_phone_incoming
+                    message.isOutgoingCall -> R.drawable.ic_phone_outgoing
                     else -> R.drawable.ic_missed_call
                 }
+
+                // Since this is using text drawable we need to go the long way around to size and style the drawable
+                // We could set the colour and style directly in the drawable's xml but it then makes it non reusable
+                // This will all be simplified  once we turn this all to Compose
+                val icon = ResourcesCompat.getDrawable(resources, drawableRes, context.theme)?.toBitmap()
+                icon?.let{
+                    val drawable = BitmapDrawable(resources, Bitmap.createScaledBitmap(icon, iconSize, iconSize, true));
+                    binding.callTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        drawable,null, null, null)
+
+                    val iconTint = when {
+                        message.isIncomingCall || message.isOutgoingCall -> R.attr.message_received_text_color
+                        else -> R.attr.danger
+                    }
+
+                    drawable.setTint(context.getColorFromAttr(iconTint))
+                }
+
                 binding.textView.isVisible = false
-                binding.callTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                    ResourcesCompat.getDrawable(resources, drawable, context.theme),
-                    null, null, null)
                 binding.callTextView.text = messageBody
 
                 if (message.expireStarted > 0 && message.expiresIn > 0) {
