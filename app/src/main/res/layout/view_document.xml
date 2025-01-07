@@ -22,7 +22,7 @@
         android:id="@+id/documentViewIconImageView"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@drawable/ic_document_large_light"
+        android:src="@drawable/ic_file"
         app:tint="?android:textColorPrimary" />
 
     <TextView

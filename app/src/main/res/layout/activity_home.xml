@@ -67,7 +67,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
-                        android:src="@drawable/ic_baseline_search_24"
+                        android:src="@drawable/ic_search"
                         app:tint="?sessionLogoTint" />
 
                 </RelativeLayout>
@@ -174,6 +174,7 @@
             android:layout_marginBottom="@dimen/new_conversation_button_bottom_offset"
             app:rippleColor="@color/button_primary_ripple"
             android:src="@drawable/ic_plus"
+            app:maxImageSize="32dp"
             android:tint="?message_sent_text_color"/>
 
     </RelativeLayout>

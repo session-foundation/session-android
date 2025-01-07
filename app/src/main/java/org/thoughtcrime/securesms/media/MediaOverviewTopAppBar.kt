@@ -33,7 +33,7 @@ fun MediaOverviewTopAppBar(
         actionModeActions = {
             IconButton(onClick = onSaveClicked) {
                 Icon(
-                    painterResource(R.drawable.ic_baseline_save_24),
+                    painterResource(R.drawable.ic_arrow_down_to_line),
                     contentDescription = stringResource(R.string.save),
                     tint = LocalColors.current.text,
                 )
@@ -41,7 +41,7 @@ fun MediaOverviewTopAppBar(
 
             IconButton(onClick = onDeleteClicked) {
                 Icon(
-                    painterResource(R.drawable.ic_baseline_delete_24),
+                    painterResource(R.drawable.ic_trash_2),
                     contentDescription = stringResource(R.string.delete),
                     tint = LocalColors.current.text,
                 )

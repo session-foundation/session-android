@@ -22,7 +22,7 @@
             android:layout_gravity="center_vertical"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:src="@drawable/ic_baseline_search_24"
+            android:src="@drawable/ic_search"
             android:scaleType="centerInside"
             app:tint="?searchIconColor"
             android:contentDescription="@string/search" />

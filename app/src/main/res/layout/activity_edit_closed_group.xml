@@ -85,8 +85,9 @@
                     android:textAlignment="center"
                     android:paddingStart="24dp"
                     android:paddingEnd="0dp"
-                    android:drawableEnd="@drawable/ic_baseline_edit_24"
                     android:drawablePadding="@dimen/small_spacing"
+                    app:drawableEndCompat="@drawable/ic_pencil"
+                    app:drawableTint="?android:textColorPrimary"
                     tools:text="SomeGroupName"/>
 
             </LinearLayout>

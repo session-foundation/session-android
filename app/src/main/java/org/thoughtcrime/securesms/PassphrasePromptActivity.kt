@@ -24,19 +24,23 @@ import android.graphics.PorterDuff
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
+import android.view.animation.Animation
 import android.view.animation.BounceInterpolator
+import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.Runnable
 import java.lang.Exception
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockTimeout
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.AnimatingToggle
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
@@ -64,9 +68,16 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private var keyCachingService: KeyCachingService? = null
 
+    private var accentColor: Int = -1
+    private var errorColor: Int  = -1
+
     public override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "Creating PassphrasePromptActivity")
         super.onCreate(savedInstanceState)
+
+        accentColor = ThemeUtil.getThemedColor(this, R.attr.accentColor);
+        errorColor = ThemeUtil.getThemedColor(this, R.attr.danger);
+
         setContentView(R.layout.prompt_passphrase_activity)
         initializeResources()
 
@@ -201,13 +212,37 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
 
     private fun showAuthenticationFailedUI() {
         fingerprintPrompt?.setImageResource(R.drawable.ic_close_white_48dp)
-        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.red_500), PorterDuff.Mode.SRC_IN)
-        // Note: We can apply a 'shake' animation here if we wish
+        fingerprintPrompt?.background?.setColorFilter(errorColor, PorterDuff.Mode.SRC_IN)
+
+        // Define and perform a "shake" animation on authentication failed
+        val shake = TranslateAnimation(0f, 30f, 0f, 0f).apply {
+            duration = 50
+            repeatCount = 7
+            setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationStart(animation: Animation?) {}
+
+                override fun onAnimationEnd(animation: Animation?) {
+                    fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp)
+                    fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
+                }
+
+                override fun onAnimationRepeat(animation: Animation?) {}
+            })
+        }
+        fingerprintPrompt?.startAnimation(shake)
     }
 
     private fun showAuthenticationSuccessUI() {
+        Log.i(TAG, "Hit showAuthenticationSuccessUI -> heading to handleAuthenticated()")
+
         fingerprintPrompt?.setImageResource(R.drawable.ic_check_white_48dp)
-        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.green_500), PorterDuff.Mode.SRC_IN)
+        fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
+
+        val endAction = Runnable {
+            fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp);
+            fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
+        }
+
         // Animate and call handleAuthenticated() on animation end
         fingerprintPrompt?.animate()
             ?.setInterpolator(BounceInterpolator())
@@ -215,8 +250,11 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
             ?.scaleY(1.1f)
             ?.setDuration(500)
             ?.withEndAction {
+                endAction
+                // CAREFUL: Do NOT put this `handleAuthenticated()` call inside the endAction - it does not fire and we end up stuck at this unlock activity!
                 handleAuthenticated()
-            }?.start()
+            }
+            ?.start()
     }
 
     private fun handleAuthenticated() {
@@ -224,13 +262,7 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         keyCachingService?.setMasterSecret(Any())
 
         // The 'nextIntent' will take us to the MainActivity if this is a standard unlock, or it will
-        // take us to the ShareActivity if this is an external share - however, in this latter case
-        // Intent.FLAG_GRANT_READ_URI_PERMISSION is only granted to THIS activity, not the share
-        // activity, which can cause external sharing to fail on some specific devices such as a
-        // Pixel 7a running Android API 35 (while it will work on other devices - very odd!).
-        // Regardless, we have to mitigate against this when sharing - so we duplicate and save any
-        // sharing intent URI to our local cache, and then share THAT via the sharing activity as
-        // a workaround.
+        // take us to the ShareActivity if this is an external share.
         val nextIntent = intent.getParcelableExtra<Intent?>("next_intent")
         if (nextIntent == null) {
             Log.w(TAG, "Got a null nextIntent - cannot proceed.")
@@ -263,7 +295,7 @@ class PassphrasePromptActivity : BaseActionBarActivity() {
         lockScreenButton  = findViewById(R.id.lock_screen_auth_container)
 
         fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-        fingerprintPrompt?.background?.setColorFilter(resources.getColor(R.color.signal_primary), PorterDuff.Mode.SRC_IN)
+        fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
 
         lockScreenButton?.setOnClickListener { resumeScreenLock() }
     }

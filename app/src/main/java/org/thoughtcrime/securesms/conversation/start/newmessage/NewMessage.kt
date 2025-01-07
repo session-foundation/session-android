@@ -161,7 +161,7 @@ private fun EnterAccountId(
                             .fillMaxWidth(),
                         style = LocalType.current.small,
                         color = LocalColors.current.textSecondary,
-                        iconRes = R.drawable.ic_circle_question_mark,
+                        iconRes = R.drawable.ic_circle_help,
                         onClick = onHelp
                     )
                 }

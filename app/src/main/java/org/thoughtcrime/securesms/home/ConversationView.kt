@@ -96,7 +96,7 @@ class ConversationView : LinearLayout {
         val recipient = thread.recipient
         binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
-            R.drawable.ic_outline_notifications_off_24
+            R.drawable.ic_volume_off
         } else {
             R.drawable.ic_notifications_mentions
         }
@@ -129,8 +129,8 @@ class ConversationView : LinearLayout {
                 drawable?.setTint(ThemeUtil.getThemedColor(context, R.attr.danger))
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
             }
-            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dot_dot_dot)
-            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_filled_circle_check)
+            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
+            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
         binding.profilePictureView.update(thread.recipient)

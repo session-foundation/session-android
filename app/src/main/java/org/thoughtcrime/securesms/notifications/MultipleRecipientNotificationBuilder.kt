@@ -57,7 +57,7 @@ class MultipleRecipientNotificationBuilder(context: Context, privacy: Notificati
 
     fun addActions(markAsReadIntent: PendingIntent?) {
         val markAllAsReadAction = NotificationCompat.Action(
-            R.drawable.check,
+            R.drawable.ic_check,
             context.getString(R.string.messageMarkRead),
             markAsReadIntent
         )

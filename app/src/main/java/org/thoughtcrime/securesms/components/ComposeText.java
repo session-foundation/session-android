@@ -15,6 +15,7 @@ import android.view.inputmethod.InputConnection;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.os.BuildCompat;
 import androidx.core.view.inputmethod.EditorInfoCompat;
 import androidx.core.view.inputmethod.InputConnectionCompat;
@@ -22,9 +23,8 @@ import androidx.core.view.inputmethod.InputContentInfoCompat;
 
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.components.emoji.EmojiEditText;
 
-public class ComposeText extends EmojiEditText {
+public class ComposeText extends AppCompatEditText {
 
     private CharSequence    hint;
     private SpannableString subHint;
@@ -101,31 +101,6 @@ public class ComposeText extends EmojiEditText {
         }
     }
 
-    public void setCursorPositionChangedListener(@Nullable CursorPositionChangedListener listener) {
-        this.cursorPositionChangedListener = listener;
-    }
-
-    public void setTransport() {
-        final boolean useSystemEmoji = TextSecurePreferences.isSystemEmojiPreferred(getContext());
-        final boolean isIncognito    = TextSecurePreferences.isIncognitoKeyboardEnabled(getContext());
-
-        int imeOptions = (getImeOptions() & ~EditorInfo.IME_MASK_ACTION) | EditorInfo.IME_ACTION_SEND;
-        int inputType  = getInputType();
-
-        setImeActionLabel(null, 0);
-
-        if (useSystemEmoji) {
-            inputType = (inputType & ~InputType.TYPE_MASK_VARIATION) | InputType.TYPE_TEXT_VARIATION_SHORT_MESSAGE;
-        }
-
-        setInputType(inputType);
-        if (isIncognito) {
-            setImeOptions(imeOptions | 16777216);
-        } else {
-            setImeOptions(imeOptions);
-        }
-    }
-
     @Override
     public InputConnection onCreateInputConnection(EditorInfo editorInfo) {
         InputConnection inputConnection = super.onCreateInputConnection(editorInfo);
@@ -139,10 +114,6 @@ public class ComposeText extends EmojiEditText {
 
         EditorInfoCompat.setContentMimeTypes(editorInfo, new String[] {"image/jpeg", "image/png", "image/gif"});
         return InputConnectionCompat.createWrapper(inputConnection, editorInfo, new CommitContentListener(mediaListener));
-    }
-
-    public void setMediaListener(@Nullable InputPanel.MediaListener mediaListener) {
-        this.mediaListener = mediaListener;
     }
 
     private void initialize() {

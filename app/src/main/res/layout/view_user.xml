@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="64dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="?attr/selectableItemBackground"
     android:contentDescription="@string/AccessibilityId_contact"
     android:orientation="vertical">
@@ -42,8 +43,8 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_marginStart="@dimen/medium_spacing"
-            android:foreground="@drawable/radial_multi_select"
-            android:src="@drawable/padded_circle_accent_select"/>
+            android:src="@drawable/ic_radio_unselected"
+            app:tint="?colorControlNormal"/>
 
     </LinearLayout>
 

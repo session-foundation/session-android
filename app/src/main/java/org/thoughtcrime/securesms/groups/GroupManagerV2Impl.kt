@@ -501,7 +501,7 @@ class GroupManagerV2Impl @Inject constructor(
             GroupUpdateMessage.newBuilder()
                 .setPromoteMessage(
                     DataMessage.GroupUpdatePromoteMessage.newBuilder()
-                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey))
+                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
                         .setName(groupName)
                 )
                 .build()
@@ -693,7 +693,7 @@ class GroupManagerV2Impl @Inject constructor(
         handleInvitation(
             groupId = groupId,
             groupName = groupName,
-            authDataOrAdminKey = authData,
+            authDataOrAdminSeed = authData,
             fromPromotion = false,
             inviter = inviter,
             inviterName = inviterName,
@@ -721,7 +721,7 @@ class GroupManagerV2Impl @Inject constructor(
             handleInvitation(
                 groupId = groupId,
                 groupName = groupName,
-                authDataOrAdminKey = adminKey,
+                authDataOrAdminSeed = adminKey,
                 fromPromotion = true,
                 inviter = promoter,
                 inviterName = promoterName,
@@ -759,7 +759,7 @@ class GroupManagerV2Impl @Inject constructor(
      *
      * @param groupId the group ID
      * @param groupName the group name
-     * @param authDataOrAdminKey the auth data or admin key. If this is an invitation, this is the auth data, if this is a promotion, this is the admin key.
+     * @param authDataOrAdminSeed the auth data or admin key. If this is an invitation, this is the auth data, if this is a promotion, this is the admin key.
      * @param fromPromotion true if this is a promotion, false if this is an invitation
      * @param inviter the invite message sender
      * @return The newly created group info if the invitation is processed, null otherwise.
@@ -767,7 +767,7 @@ class GroupManagerV2Impl @Inject constructor(
     private suspend fun handleInvitation(
         groupId: AccountId,
         groupName: String,
-        authDataOrAdminKey: ByteArray,
+        authDataOrAdminSeed: ByteArray,
         fromPromotion: Boolean,
         inviter: AccountId,
         inviterName: String?,
@@ -781,8 +781,8 @@ class GroupManagerV2Impl @Inject constructor(
             storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
             groupAccountId = groupId,
-            adminKey = authDataOrAdminKey.takeIf { fromPromotion },
-            authData = authDataOrAdminKey.takeIf { !fromPromotion },
+            adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) },
+            authData = authDataOrAdminSeed.takeIf { !fromPromotion },
             priority = PRIORITY_VISIBLE,
             invited = !shouldAutoApprove,
             name = groupName,

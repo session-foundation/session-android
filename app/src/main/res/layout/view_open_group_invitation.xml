@@ -23,7 +23,7 @@
             android:layout_height="20dp"
             android:src="@drawable/ic_plus"
             android:layout_centerInParent="true"
-            app:tint="@color/white" />
+            app:tint="?message_sent_text_color" />
 
     </RelativeLayout>
 

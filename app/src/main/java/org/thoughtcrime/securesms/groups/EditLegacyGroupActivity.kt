@@ -104,9 +104,6 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
         super.onCreate(savedInstanceState, isReady)
         setContentView(R.layout.activity_edit_closed_group)
 
-        supportActionBar!!.setHomeAsUpIndicator(
-                ThemeUtil.getThemedDrawableResId(this, R.attr.actionModeCloseDrawable))
-
         groupID = intent.getStringExtra(groupIDKey)!!
         val groupInfo = DatabaseComponent.get(this).groupDatabase().getGroup(groupID).get()
         originalName = groupInfo.title

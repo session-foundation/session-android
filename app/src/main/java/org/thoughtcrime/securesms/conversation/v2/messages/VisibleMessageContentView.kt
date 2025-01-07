@@ -20,6 +20,8 @@ import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import java.util.Locale
+import kotlin.math.roundToInt
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -38,8 +40,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
-import java.util.Locale
-import kotlin.math.roundToInt
 
 class VisibleMessageContentView : ConstraintLayout {
     private val binding: ViewVisibleMessageContentBinding by lazy { ViewVisibleMessageContentBinding.bind(this) }
@@ -148,9 +148,13 @@ class VisibleMessageContentView : ConstraintLayout {
                 // When in a link preview ensure the bodyTextView can expand to the full width
                 binding.bodyTextView.maxWidth = binding.linkPreviewView.root.layoutParams.width
             }
+
             // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
-                hideBody = true
+
+                // Show any text message associated with the audio message (which may be a voice clip - but could also be a mp3 or such)
+                hideBody = false
+
                 // Audio attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
@@ -161,7 +165,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
-                    hideBody = true
+                    // If it's an audio message but we haven't downloaded it yet show it as pending
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.AUDIO,
@@ -172,14 +176,17 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
+
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                hideBody = true // TODO: check if this is still the logic we want
+                // Show any message that came with the attached document
+                hideBody = false
+
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                 } else {
-                    hideBody = true
+                    // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.DOCUMENT,
@@ -190,6 +197,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
+
             // IMAGE / VIDEO
             message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
@@ -201,7 +209,7 @@ class VisibleMessageContentView : ConstraintLayout {
                         isStart = isStartOfMessageCluster,
                         isEnd = isEndOfMessageCluster
                     )
-                    binding.albumThumbnailView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
+                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
                     onContentClick.add { event ->

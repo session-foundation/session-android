@@ -93,7 +93,11 @@ class VisibleMessageView : FrameLayout {
         ViewEmojiReactionsBinding.bind(binding.emojiReactionsView.inflate())
     }
 
-    private val swipeToReplyIcon = ContextCompat.getDrawable(context, R.drawable.ic_baseline_reply_24)!!.mutate()
+    private val swipeToReplyIcon by lazy {
+        val d = ContextCompat.getDrawable(context, R.drawable.ic_reply)!!.mutate()
+        d.setTint(context.getColorFromAttr(R.attr.colorControlNormal))
+        d
+    }
     private val swipeToReplyIconRect = Rect()
     private var dx = 0.0f
     private var previousTranslationX = 0.0f
@@ -404,14 +408,14 @@ class VisibleMessageView : FrameLayout {
             // Non-mms messages (or quote messages, which happen to be mms for some reason) display 'Sending'..
             if (!message.isMms || (message as? MmsMessageRecord)?.quote != null) {
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.sending
                 )
             } else {
                 // ..and Mms messages display 'Uploading'.
                 MessageStatusInfo(
-                    R.drawable.ic_delivery_status_sending,
+                    R.drawable.ic_circle_dots_custom,
                     context.getColorFromAttr(R.attr.message_status_color),
                     R.string.uploading
                 )
@@ -419,19 +423,19 @@ class VisibleMessageView : FrameLayout {
         }
         message.isResyncing ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sending,
+                R.drawable.ic_circle_dots_custom,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.messageStatusSyncing
             )
         message.isRead || message.isIncoming ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_read,
+                R.drawable.ic_eye,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.read
             )
         message.isSyncing || message.isSent -> // syncing should happen silently in the bg so we can mark it as sent
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_sent,
+                R.drawable.ic_circle_check,
                 context.getColorFromAttr(R.attr.message_status_color),
                 R.string.disappearingMessagesSent
             )
@@ -463,6 +467,7 @@ class VisibleMessageView : FrameLayout {
         val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.marginBottom - (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
+        //todo the position for this icon doesn't seem right
         swipeToReplyIconRect.left = left
         swipeToReplyIconRect.top = top
         swipeToReplyIconRect.right = right

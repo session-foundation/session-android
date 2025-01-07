@@ -106,7 +106,7 @@ class ControlMessageView : LinearLayout {
             message.isMediaSavedNotification -> {
                 binding.iconImageView.apply {
                     setImageDrawable(
-                        ResourcesCompat.getDrawable(resources, R.drawable.ic_file_download_white_36dp, context.theme)
+                        ResourcesCompat.getDrawable(resources, R.drawable.ic_arrow_down_to_line, context.theme)
                     )
                     isVisible = true
                 }

@@ -55,7 +55,7 @@ class UserView : LinearLayout {
 
         val address = user.address.serialize()
         binding.profilePictureView.update(user)
-        binding.actionIndicatorImageView.setImageResource(R.drawable.ic_baseline_edit_24)
+        binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.name else getUserDisplayName(address)
         when (actionIndicator) {
             ActionIndicator.None -> {
@@ -63,14 +63,14 @@ class UserView : LinearLayout {
             }
             ActionIndicator.Menu -> {
                 binding.actionIndicatorImageView.visibility = View.VISIBLE
-                binding.actionIndicatorImageView.setImageResource(R.drawable.ic_more_horiz_white)
+                binding.actionIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
             }
             ActionIndicator.Tick -> {
                 binding.actionIndicatorImageView.visibility = View.VISIBLE
                 if (isSelected) {
-                    binding.actionIndicatorImageView.setImageResource(R.drawable.padded_circle_accent)
+                    binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_selected)
                 } else {
-                    binding.actionIndicatorImageView.setImageDrawable(null)
+                    binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
                 }
             }
         }
@@ -79,9 +79,9 @@ class UserView : LinearLayout {
     fun toggleCheckbox(isSelected: Boolean = false) {
         binding.actionIndicatorImageView.visibility = View.VISIBLE
         if (isSelected) {
-            binding.actionIndicatorImageView.setImageResource(R.drawable.padded_circle_accent)
+            binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_selected)
         } else {
-            binding.actionIndicatorImageView.setImageDrawable(null)
+            binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         }
     }
 

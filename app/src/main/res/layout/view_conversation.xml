@@ -146,9 +146,10 @@
                     android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:layout_gravity="center"
-                    android:src="@drawable/ic_outline_notifications_off_24"
+                    android:src="@drawable/ic_volume_off"
                     android:layout_marginTop="1dp"
-                    android:layout_marginEnd="6dp" />
+                    android:layout_marginEnd="6dp"
+                    app:tint="?colorControlNormal" />
 
                 <RelativeLayout
                     android:layout_weight="1"
@@ -178,7 +179,8 @@
                     android:id="@+id/statusIndicatorImageView"
                     android:layout_width="@dimen/conversation_view_status_indicator_size"
                     android:layout_height="@dimen/conversation_view_status_indicator_size"
-                    android:layout_marginStart="@dimen/medium_spacing" />
+                    android:layout_marginStart="@dimen/medium_spacing"
+                    app:tint="?colorControlNormal" />
 
             </LinearLayout>
 

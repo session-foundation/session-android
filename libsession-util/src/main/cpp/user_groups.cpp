@@ -1,6 +1,8 @@
 #include "user_groups.h"
 #include "oxenc/hex.h"
 
+#include "session/ed25519.hpp"
+
 extern "C"
 JNIEXPORT jint JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupInfo_00024LegacyGroupInfo_00024Companion_NAME_1MAX_1LENGTH(
@@ -323,4 +325,22 @@ Java_network_loki_messenger_libsession_1util_UserGroupsConfig_eraseClosedGroup(J
     bool return_value = config->erase_group(session_id_bytes);
     env->ReleaseStringUTFChars(session_id, session_id_bytes);
     return return_value;
+}
+
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_network_loki_messenger_libsession_1util_util_GroupInfo_00024ClosedGroupInfo_adminKeyFromSeed(
+        JNIEnv *env, jclass clazz, jbyteArray seed) {
+    auto len = env->GetArrayLength(seed);
+    if (len != 32) {
+        env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Seed must be 32 bytes");
+        return nullptr;
+    }
+
+    auto seed_bytes = env->GetByteArrayElements(seed, nullptr);
+    auto admin_key = session::ed25519::ed25519_key_pair(
+            session::ustring_view(reinterpret_cast<unsigned char *>(seed_bytes), 32)).second;
+    env->ReleaseByteArrayElements(seed, seed_bytes, 0);
+
+    return util::bytes_from_ustring(env, session::ustring_view(admin_key.data(), admin_key.size()));
 }

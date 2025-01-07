@@ -41,7 +41,7 @@ fun QrImage(
     string: String?,
     modifier: Modifier = Modifier,
     contentPadding: Dp = LocalDimensions.current.smallSpacing,
-    icon: Int = R.drawable.session_shield
+    icon: Int = R.drawable.ic_recovery_password_custom
 ) {
     var bitmap: Bitmap? by remember {
         mutableStateOf(null)

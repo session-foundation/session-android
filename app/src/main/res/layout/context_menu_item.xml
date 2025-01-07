@@ -16,7 +16,7 @@
         android:id="@+id/context_menu_item_icon"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        tools:src="@drawable/ic_message"/>
+        tools:src="@drawable/ic_message_square"/>
 
     <LinearLayout
         android:layout_width="match_parent"

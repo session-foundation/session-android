@@ -7,7 +7,8 @@
         android:id="@+id/action_qr_code"
         android:title=""
         android:contentDescription="@string/AccessibilityId_qrView"
-        android:icon="@drawable/ic_qr_code_24"
+        android:icon="@drawable/ic_qr_code"
+        app:iconTint="?colorControlNormal"
         app:showAsAction="always" />
 
 </menu>
