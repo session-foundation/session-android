@@ -244,13 +244,41 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         val rewrittenIntent = Intent(originalIntent)
         rewrittenIntent.clipData = null // Clear original clipData
 
-        val extraKey = rewrittenIntent.extras?.keySet()?.first()
+
+        for (ek: String in rewrittenIntent.extras?.keySet()!!) {
+            Log.i(TAG, "EK is: " + ek)
+        }
+
+
+        //val extraKey = rewrittenIntent.extras?.keySet()?.first()
+        //val extraKey: String? = rewrittenIntent.extras?.keySet()?.takeIf { it.toString() == "android.intent.extra.STREAM" }?.first()
+
+        // Take the first extra key which relates to a file stream
+        val extraKey: String? = rewrittenIntent.extras
+            ?.keySet()
+            ?.firstOrNull { it == "android.intent.extra.STREAM" }
+
+        // If we couldn't find one then we have nothing to re-write and we'll just return the original intent
+        if (extraKey == null) {
+            Log.i(TAG, "No stream to rewrite - returning original intent")
+            return originalIntent
+        }
+
+        val streamUriPath = rewrittenIntent.extras?.getString(extraKey)
+        Log.i(TAG, "Stream URI path is: " + streamUriPath)
+
+        if (streamUriPath?.startsWith("content://com.android.providers.downloads") == true) {
+            Log.i(TAG, "Shared file stream is a local file - no need to cache & rewrite - returning original intent.")
+            return originalIntent
+        }
 
         val originalClipData = originalIntent.clipData
 
         originalClipData?.let { clipData ->
             Log.i(TAG, "Found clipData to rewrite.")
             var newClipData: ClipData? = null
+
+            Log.i(TAG, "Looking at extraKey: " + extraKey + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
             for (i in 0 until clipData.itemCount) {
                 val item = clipData.getItemAt(i)
@@ -269,11 +297,10 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                             if (extraKey != null) {
                                 val rewrittenPath: String? = localUri.path
                                 Log.i(TAG, "Rewritten path is: " + rewrittenPath)
+
                                 // CAREFUL: Do NOT put the localUri path in the extra - put the localUri itself!
                                 rewrittenIntent.putExtra(extraKey, localUri)
                             }
-
-
                         } else {
                             newClipData.addItem(ClipData.Item(localUri))
                         }
@@ -284,6 +311,7 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
                     }
                 }
             }
+
 
             if (newClipData != null) {
                 Log.i(TAG, "Adding newClipData to rewrittenIntent.")
