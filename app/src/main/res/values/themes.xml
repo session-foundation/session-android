@@ -36,7 +36,6 @@
        <item name="media_overview_header_foreground">?android:textColorPrimary</item>
        <item name="menu_trash_icon">@drawable/ic_trash_2</item>
        <item name="menu_block_icon">@drawable/ic_ban</item>
-       <item name="menu_forward_icon">@drawable/ic_baseline_forward_24</item>
        <item name="menu_save_icon">@drawable/ic_arrow_down_to_line</item>=
        <item name="menu_copy_icon">@drawable/ic_copy</item>
        <item name="menu_reply_icon">@drawable/ic_reply</item>
@@ -93,8 +92,6 @@
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.AppCompat.ActionBar</item>
 
-        <item name="conversation_emoji_toggle">@drawable/ic_emoji_filled_keyboard_24</item>
-        <item name="conversation_sticker_toggle">@drawable/ic_sticker_filled_keyboard_24</item>
         <item name="conversation_keyboard_toggle">@drawable/ic_baseline_keyboard_24</item>
         <item name="conversation_input_background">@drawable/compose_background_dark</item>
     </style>

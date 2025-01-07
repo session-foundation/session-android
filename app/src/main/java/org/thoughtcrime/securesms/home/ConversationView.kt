@@ -122,7 +122,7 @@ class ConversationView : LinearLayout {
         when {
             !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
             thread.isFailed -> {
-                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_error)?.mutate()
+                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_triangle_alert)?.mutate()
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
                 binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, R.attr.danger))
             }

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/media_preview__forward"
-        android:icon="?menu_forward_icon"
+        android:icon="@drawable/ic_share"
         app:iconTint="?android:textColorPrimary"
         android:title="@string/share"
         app:showAsAction="always" />
