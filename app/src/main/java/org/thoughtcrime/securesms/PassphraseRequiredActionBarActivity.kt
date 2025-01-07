@@ -65,8 +65,6 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
             } else {
                 Log.w(TAG, "Got a NON-NULL externalShareIntent - we can work with this!")
             }
-        } else {
-            Log.w(TAG, "PassphraseRequiredActionBarActivity.onCreate() received a null savedInstanceState Bundle.")
         }
 
         /*
@@ -248,7 +246,6 @@ abstract class PassphraseRequiredActionBarActivity : BaseActionBarActivity() {
         for (ek: String in rewrittenIntent.extras?.keySet()!!) {
             Log.i(TAG, "EK is: " + ek)
         }
-
 
         //val extraKey = rewrittenIntent.extras?.keySet()?.first()
         //val extraKey: String? = rewrittenIntent.extras?.keySet()?.takeIf { it.toString() == "android.intent.extra.STREAM" }?.first()
