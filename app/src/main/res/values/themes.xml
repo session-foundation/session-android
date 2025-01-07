@@ -151,9 +151,6 @@
 
         <item name="verification_background">@color/core_grey_95</item>
 
-        <item name="dialog_info_icon">@drawable/ic_info_outline_dark</item>
-        <item name="dialog_alert_icon">@drawable/ic_warning_dark</item>
-
         <item name="device_link_item_card_background">@color/device_link_item_background_dark</item>
 
         <item name="fab_color">?colorAccent</item>

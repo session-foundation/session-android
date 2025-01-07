@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
@@ -117,12 +118,13 @@ class ConversationView : LinearLayout {
         }
         binding.typingIndicatorView.root.visibility = if (isTyping) View.VISIBLE else View.GONE
         binding.statusIndicatorImageView.visibility = View.VISIBLE
+        binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)) // tertiary in the current xml styling is actually what figma uses as secondary text color...
         when {
             !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
             thread.isFailed -> {
                 val drawable = ContextCompat.getDrawable(context, R.drawable.ic_error)?.mutate()
-                drawable?.setTint(ThemeUtil.getThemedColor(context, R.attr.danger))
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
+                binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, R.attr.danger))
             }
             thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
             thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)

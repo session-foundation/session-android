@@ -79,9 +79,6 @@
     <attr name="conversation_pinned_background_color" format="reference|color" />
     <attr name="conversation_pinned_icon_color" format="reference|color" />
 
-    <attr name="dialog_info_icon" format="reference" />
-    <attr name="dialog_alert_icon" format="reference" />
-
     <attr name="conversation_icon_attach_video" format="reference" />
 
     <attr name="device_link_item_card_background" format="reference|color" />

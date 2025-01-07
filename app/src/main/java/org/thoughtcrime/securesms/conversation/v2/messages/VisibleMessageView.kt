@@ -394,13 +394,13 @@ class VisibleMessageView : FrameLayout {
 
     private fun getMessageStatusInfo(message: MessageRecord): MessageStatusInfo? = when {
         message.isFailed ->
-            MessageStatusInfo(R.drawable.ic_delivery_status_failed,
+            MessageStatusInfo(R.drawable.ic_triangle_alert,
                 getThemedColor(context, R.attr.danger),
                 R.string.messageStatusFailedToSend
             )
         message.isSyncFailed ->
             MessageStatusInfo(
-                R.drawable.ic_delivery_status_failed,
+                R.drawable.ic_triangle_alert,
                 context.getColor(R.color.accent_orange),
                 R.string.messageStatusFailedToSync
             )

@@ -145,8 +145,7 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="@dimen/small_font_size"
-                    android:textColor="?android:textColorPrimary"
-                    android:alpha="0.4"
+                    android:textColor="?android:textColorTertiary"
                     tools:text="9:41 AM" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>

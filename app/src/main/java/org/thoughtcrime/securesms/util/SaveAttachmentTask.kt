@@ -55,7 +55,6 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 // potential risks of other apps accessing their saved attachments.
                 context.showSessionDialog {
                     title(R.string.warning)
-                    iconAttribute(R.attr.dialog_alert_icon)
                     text(context.getString(R.string.attachmentsWarning))
                     dangerButton(R.string.save) {
                         // Set our 'haveWarned' SharedPref and perform the save on accept
