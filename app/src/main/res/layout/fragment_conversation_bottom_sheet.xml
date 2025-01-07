@@ -109,7 +109,7 @@
         android:visibility="gone"
         tools:visibility="visible"
         app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_outline_mark_chat_read_24" />
+        app:drawableStartCompat="@drawable/ic_mail_open" />
 
     <TextView
         android:id="@+id/deleteTextView"
