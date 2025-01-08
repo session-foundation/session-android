@@ -384,7 +384,6 @@ fun PreviewMessageDetailsButtons(
 fun PreviewMessageDetails(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
-    val context = LocalContext.current
     PreviewTheme(colors) {
         MessageDetails(
             state = MessageDetailsState(

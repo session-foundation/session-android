@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
