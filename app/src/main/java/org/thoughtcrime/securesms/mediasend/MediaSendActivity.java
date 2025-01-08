@@ -238,13 +238,7 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
   @Override
   public void onMediaSelected(@NonNull Media media) {
     viewModel.onSingleMediaSelected(this, media);
-
-
-
-    Log.i("ACL", "Hit onMediaSelected - uri is: " + media.getUri().toString());
     String filename = getFileNameFromUri(this, media.getUri());
-    Log.i("ACL", "Attempting to get the filename got us: " + filename);
-
     navigateToMediaSend(recipient);
   }
 

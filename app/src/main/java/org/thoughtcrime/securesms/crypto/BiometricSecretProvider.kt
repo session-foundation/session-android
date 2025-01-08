@@ -26,7 +26,7 @@ class BiometricSecretProvider {
 
     fun getRandomData() = Util.getSecretBytes(32)
 
-    private fun createAsymmetricKey(context: Context) {
+    private fun createAsymmetricKey() {
         val keyGenerator = KeyPairGenerator.getInstance(
             KeyProperties.KEY_ALGORITHM_EC, ANDROID_KEYSTORE
         )
@@ -54,33 +54,6 @@ class BiometricSecretProvider {
         keyGenerator.generateKeyPair()
     }
 
-//    fun getOrCreateBiometricSignature(context: Context): Signature {
-//        val ks = KeyStore.getInstance(ANDROID_KEYSTORE)
-//        ks.load(null)
-//        if (!ks.containsAlias(BIOMETRIC_ASYM_KEY_ALIAS)
-//            || !ks.entryInstanceOf(BIOMETRIC_ASYM_KEY_ALIAS, KeyStore.PrivateKeyEntry::class.java)
-//            || !TextSecurePreferences.getFingerprintKeyGenerated(context)
-//        ) {
-//            createAsymmetricKey(context)
-//            TextSecurePreferences.setFingerprintKeyGenerated(context)
-//        }
-//        val signature = try {
-//            val key = ks.getKey(BIOMETRIC_ASYM_KEY_ALIAS, null) as PrivateKey
-//            val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
-//            signature.initSign(key)
-//            signature
-//        } catch (e: InvalidKeyException) {
-//            ks.deleteEntry(BIOMETRIC_ASYM_KEY_ALIAS)
-//            createAsymmetricKey(context)
-//            TextSecurePreferences.setFingerprintKeyGenerated(context)
-//            val key = ks.getKey(BIOMETRIC_ASYM_KEY_ALIAS, null) as PrivateKey
-//            val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
-//            signature.initSign(key)
-//            signature
-//        }
-//        return signature
-//    }
-
     /**
      * Returns a Signature object initialized for signing with a private key protected by biometrics.
      *
@@ -106,7 +79,7 @@ class BiometricSecretProvider {
         ) {
             // Create the key if it doesn't exist or isn't properly tracked
             try {
-                createAsymmetricKey(context)
+                createAsymmetricKey()
                 TextSecurePreferences.setFingerprintKeyGenerated(context)
             } catch (e: Exception) {
                 // If key generation fails (e.g. due to no biometrics), return null
@@ -124,7 +97,7 @@ class BiometricSecretProvider {
             // If the key is invalid for some reason, recreate it
             ks.deleteEntry(BIOMETRIC_ASYM_KEY_ALIAS)
             return try {
-                createAsymmetricKey(context)
+                createAsymmetricKey()
                 TextSecurePreferences.setFingerprintKeyGenerated(context)
                 val key = ks.getKey(BIOMETRIC_ASYM_KEY_ALIAS, null) as PrivateKey
                 val signature = Signature.getInstance(SIGNATURE_ALGORITHM)
