@@ -138,14 +138,12 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
     private final ThumbnailView image;
     private final View          outline;
     private final View          deleteButton;
-    private final View          captionIndicator;
 
     MediaViewHolder(@NonNull View itemView) {
       super(itemView);
       image            = itemView.findViewById(R.id.rail_item_image);
       outline          = itemView.findViewById(R.id.rail_item_outline);
       deleteButton     = itemView.findViewById(R.id.rail_item_delete);
-      captionIndicator = itemView.findViewById(R.id.rail_item_caption);
     }
 
     void bind(@NonNull Media media, boolean isActive, @NonNull RequestManager glideRequests,
@@ -157,8 +155,6 @@ public class MediaRailAdapter extends RecyclerView.Adapter<MediaRailAdapter.Medi
       image.setRoundedCorners(toPx(5, image.getResources()));
 
       outline.setVisibility(isActive ? View.VISIBLE : View.GONE);
-
-      captionIndicator.setVisibility(media.getCaption().isPresent() ? View.VISIBLE : View.GONE);
 
       if (editable && isActive) {
         deleteButton.setVisibility(View.VISIBLE);

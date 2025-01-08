@@ -101,8 +101,6 @@
     <attr name="theme_preview_background" format="reference|color"/>
     <attr name="theme_preview_border" format="reference|color"/>
 
-    <attr name="conversation_icon_attach_video" format="reference" />
-
     <attr name="device_link_item_card_background" format="reference|color" />
 
     <attr name="linkpreview_background_color" format="color" />

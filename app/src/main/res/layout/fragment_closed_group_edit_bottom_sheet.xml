@@ -11,7 +11,8 @@
     <TextView
         android:id="@+id/removeFromGroup"
         style="@style/BottomSheetActionItem"
-        android:drawableStart="@drawable/ic_phonelink_erase_white_24dp"
-        android:text="@string/remove" />
+        android:text="@string/remove"
+        app:drawableStartCompat="@drawable/ic_trash_2"
+        app:drawableTint="?android:textColorPrimary" />
 
 </LinearLayout>

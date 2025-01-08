@@ -6,29 +6,27 @@ import android.graphics.Outline
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewOutlineProvider
-import android.view.ViewTreeObserver
 import android.widget.FrameLayout
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ThumbnailViewBinding
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.utilities.Util.equals
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.SettableFuture
 import org.thoughtcrime.securesms.components.GlideBitmapListeningTarget
 import org.thoughtcrime.securesms.components.GlideDrawableListeningTarget
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri
-import com.bumptech.glide.RequestBuilder
-import com.bumptech.glide.RequestManager
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.afterMeasured
 import java.lang.Float.min
@@ -53,6 +51,12 @@ open class ThumbnailView @JvmOverloads constructor(
     private val dimensDelegate = ThumbnailDimensDelegate()
 
     private var slide: Slide? = null
+
+    private val errorDrawable by lazy {
+        val drawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_triangle_alert, context.theme)
+        drawable?.setTint(context.getColorFromAttr(android.R.attr.textColorTertiary))
+        drawable
+    }
 
     init {
         attrs?.let { context.theme.obtainStyledAttributes(it, R.styleable.ThumbnailView, 0, 0) }
@@ -178,7 +182,7 @@ open class ThumbnailView @JvmOverloads constructor(
         .overrideDimensions()
         .transition(DrawableTransitionOptions.withCrossFade())
         .transform(CenterCrop())
-        .missingThumbnailPicture(slide.isInProgress)
+        .missingThumbnailPicture(slide.isInProgress, errorDrawable)
 
     private fun buildPlaceholderGlideRequest(
         glide: RequestManager,
@@ -186,8 +190,6 @@ open class ThumbnailView @JvmOverloads constructor(
     ): RequestBuilder<Bitmap> = glide.asBitmap()
         .load(slide.getPlaceholderRes(context.theme))
         .diskCacheStrategy(DiskCacheStrategy.NONE)
-        .overrideDimensions()
-        .fitCenter()
 
     open fun clear(glideRequests: RequestManager) {
         glideRequests.clear(binding.thumbnailImage)
@@ -217,5 +219,6 @@ open class ThumbnailView @JvmOverloads constructor(
 }
 
 private fun <T> RequestBuilder<T>.missingThumbnailPicture(
-    inProgress: Boolean
-) = takeIf { inProgress } ?: apply(RequestOptions.errorOf(R.drawable.ic_missing_thumbnail_picture)) //todo ICONS replace with  /!\ and test tint
+    inProgress: Boolean,
+    errorDrawable: Drawable?
+) = takeIf { inProgress } ?: apply(RequestOptions.errorOf(errorDrawable))
