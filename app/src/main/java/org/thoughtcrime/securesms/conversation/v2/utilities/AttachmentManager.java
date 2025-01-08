@@ -382,16 +382,6 @@ public class AttachmentManager {
         void onAttachmentChanged();
     }
 
-    // Check if a string is just an integer number or not, e.g., "20" returns true, "20.jpg" false.
-    private static boolean isNumeric(String str) {
-        try {
-            Integer.parseInt(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
     public enum MediaType {
         IMAGE, GIF, AUDIO, VIDEO, DOCUMENT, VCARD;
 
