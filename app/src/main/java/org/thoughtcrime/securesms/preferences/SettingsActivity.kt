@@ -129,7 +129,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     private val onPickImage = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ){ result ->
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
         val inputFile: Uri? = result.data?.data ?: viewModel.getTempFile()?.let(Uri::fromFile)
@@ -139,7 +139,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     private val hideRecoveryLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         if(result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true){
             viewModel.permanentlyHidePassword()
@@ -161,7 +161,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         setContentView(binding.root)
 
         // set the toolbar icon to a close icon
-        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_baseline_close_24)
+        supportActionBar?.setHomeAsUpIndicator(R.drawable.ic_x)
 
         // set the compose dialog content
         binding.avatarDialog.setThemedContent {

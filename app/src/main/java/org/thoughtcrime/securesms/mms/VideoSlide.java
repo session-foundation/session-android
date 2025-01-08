@@ -55,7 +55,7 @@ public class VideoSlide extends Slide {
 
   @Override
   public @DrawableRes int getPlaceholderRes(Theme theme) {
-    return ResUtil.getDrawableRes(theme, R.attr.conversation_icon_attach_video);
+    return R.drawable.ic_square_play;
   }
 
   @Override

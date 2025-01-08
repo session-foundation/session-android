@@ -57,7 +57,7 @@
         android:scaleType="centerInside"
         android:layout_width="@dimen/medium_profile_picture_size"
         android:layout_height="@dimen/medium_profile_picture_size"
-        app:tint="@color/call_action_foreground" />
+        app:tint="@color/white" />
 
     <TextView
         app:layout_constraintTop_toTopOf="parent"
@@ -172,9 +172,9 @@
     <ImageView
         android:id="@+id/endCallButton"
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_end_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?danger"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -187,9 +187,9 @@
     <ImageView
         android:id="@+id/switchCameraButton"
         android:background="@drawable/call_controls_background"
-        android:src="@drawable/ic_baseline_flip_camera_android_24"
+        android:src="@drawable/ic_switch_camera"
         android:padding="@dimen/medium_spacing"
-        app:tint="@color/call_action_foreground"
+        app:tint="@color/white"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
@@ -204,7 +204,7 @@
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_background"
         app:tint="@color/state_list_call_action_foreground"
-        android:src="@drawable/ic_baseline_videocam_24"
+        android:src="@drawable/ic_video"
         android:padding="@dimen/medium_spacing"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -224,7 +224,7 @@
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_mic_background"
-        app:tint="@color/call_action_foreground"
+        app:tint="@color/white"
         app:layout_constraintEnd_toStartOf="@id/speakerPhoneButton"
         app:layout_constraintStart_toEndOf="@id/enableCameraButton"/>
 
@@ -246,9 +246,9 @@
 
     <ImageView
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_answer_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?colorAccent"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -262,9 +262,9 @@
 
     <ImageView
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_end_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?danger"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"

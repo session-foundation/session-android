@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/media_preview__forward"
-        android:icon="?menu_forward_icon"
-        android:iconTint="?android:textColorPrimary"
+        android:icon="@drawable/ic_share"
+        app:iconTint="?android:textColorPrimary"
         android:title="@string/share"
         app:showAsAction="always" />
 
@@ -13,6 +13,7 @@
         android:icon="@drawable/ic_arrow_down_to_line"
         android:iconTint="?android:textColorPrimary"
         android:title="@string/save"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 
     <item
@@ -20,6 +21,7 @@
         android:icon="@drawable/ic_images"
         android:iconTint="?android:textColorPrimary"
         android:title="@string/conversationsSettingsAllMedia"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="ifRoom" />
 
     <item
@@ -27,5 +29,6 @@
         android:icon="@drawable/ic_trash_2"
         android:iconTint="?android:textColorPrimary"
         android:title="@string/delete"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="ifRoom" />
 </menu>

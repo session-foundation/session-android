@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
@@ -22,10 +23,12 @@
         android:layout_above="@+id/camera_capture_button"
         android:layout_marginBottom="40dp"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/ic_switch_camera_32"
+        android:src="@drawable/ic_switch_camera"
         android:scaleType="fitCenter"
+        android:rotation="90"
         android:background="?selectableItemBackgroundBorderless"
         android:visibility="gone"
+        app:tint="@color/white"
         tools:visibility="visible" />
 
 </RelativeLayout>

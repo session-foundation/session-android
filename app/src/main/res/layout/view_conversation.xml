@@ -44,13 +44,12 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/unreadCountIndicator"
+                    app:layout_constraintEnd_toStartOf="@id/iconPinned"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constrainedWidth="true"
                     app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintHorizontal_bias="0"
-                    android:drawablePadding="4dp"
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textAlignment="viewStart"
@@ -58,15 +57,32 @@
                     android:textStyle="bold"
                     android:textColor="?android:textColorPrimary"
                     app:drawableTint="?conversation_pinned_icon_color"
-                    tools:drawableRight="@drawable/ic_pin"
                     tools:text="I'm a very long display name. What are you going to do about it?" />
+
+                <ImageView
+                    android:id="@+id/iconPinned"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginStart="4dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/conversationViewDisplayNameTextView"
+                    app:layout_constraintEnd_toStartOf="@id/unreadCountIndicator"
+                    app:layout_constrainedWidth="true"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintHorizontal_bias="0"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_pin"
+                    app:tint="?colorControlNormal"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
 
                 <RelativeLayout
                     android:id="@+id/unreadCountIndicator"
                     android:layout_width="wrap_content"
                     android:layout_height="20dp"
                     android:layout_marginStart="4dp"
-                    app:layout_constraintStart_toEndOf="@id/conversationViewDisplayNameTextView"
+                    app:layout_constraintStart_toEndOf="@id/iconPinned"
                     app:layout_constraintEnd_toStartOf="@id/unreadMentionIndicator"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -129,8 +145,7 @@
                     android:maxLines="1"
                     android:ellipsize="end"
                     android:textSize="@dimen/small_font_size"
-                    android:textColor="?android:textColorPrimary"
-                    android:alpha="0.4"
+                    android:textColor="?android:textColorTertiary"
                     tools:text="9:41 AM" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>

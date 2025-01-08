@@ -214,7 +214,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     }
 
     private fun showAuthenticationFailedUI() {
-        fingerprintPrompt?.setImageResource(R.drawable.ic_close_white_48dp)
+        fingerprintPrompt?.setImageResource(R.drawable.ic_x)
         fingerprintPrompt?.background?.setColorFilter(errorColor, PorterDuff.Mode.SRC_IN)
 
         // Define and perform a "shake" animation on authentication failed

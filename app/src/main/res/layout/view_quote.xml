@@ -104,7 +104,7 @@
         android:layout_marginStart="@dimen/small_spacing"
         android:layout_marginEnd="@dimen/small_spacing"
         android:padding="6dp"
-        android:src="@drawable/ic_close_white_48dp"
+        android:src="@drawable/ic_x"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

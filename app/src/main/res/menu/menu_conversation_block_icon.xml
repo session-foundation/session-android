@@ -6,6 +6,7 @@
         app:actionLayout="@layout/layout_conversation_block_icon"
         app:showAsAction="always"
         android:title="@string/block"
+        app:iconTint="?android:textColorPrimary"
         android:id="@+id/menu_block_delete" />
 
 </menu>

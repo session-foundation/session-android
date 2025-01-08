@@ -56,7 +56,7 @@
             android:padding="6dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/ic_close_white_48dp"
+            android:src="@drawable/ic_x"
             app:tint="?android:textColorPrimary" />
 
     </RelativeLayout>

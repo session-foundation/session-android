@@ -46,7 +46,8 @@
         android:clickable="true"
         android:contentDescription="@string/AccessibilityId_close"
         android:focusable="true"
-        android:src="@drawable/ic_baseline_close_24"
+        android:src="@drawable/ic_x"
+        app:tint="?android:textColorPrimary"
         app:layout_constraintBottom_toBottomOf="@id/titleText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/titleText" />

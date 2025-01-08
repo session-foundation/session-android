@@ -46,7 +46,7 @@ class CallNotificationBuilder {
 
             val builder = NotificationCompat.Builder(context, NotificationChannels.CALLS)
                     .setSound(null)
-                    .setSmallIcon(R.drawable.ic_baseline_call_24)
+                    .setSmallIcon(R.drawable.ic_phone)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true)
 
@@ -69,7 +69,7 @@ class CallNotificationBuilder {
                     builder.addAction(getServiceNotificationAction(
                             context,
                             WebRtcCallService.ACTION_DENY_CALL,
-                            R.drawable.ic_close_grey600_32dp,
+                            R.drawable.ic_x,
                             R.string.decline
                     ))
                     // If notifications aren't enabled, we will trigger the intent from WebRtcCallService
@@ -77,7 +77,7 @@ class CallNotificationBuilder {
                     builder.addAction(getActivityNotificationAction(
                             context,
                             if (type == TYPE_INCOMING_PRE_OFFER) WebRtcCallActivity.ACTION_PRE_OFFER else WebRtcCallActivity.ACTION_ANSWER,
-                            R.drawable.ic_phone_grey600_32dp,
+                            R.drawable.ic_phone,
                             R.string.accept
                     ))
                     builder.priority = NotificationCompat.PRIORITY_MAX
@@ -87,7 +87,7 @@ class CallNotificationBuilder {
                     builder.addAction(getServiceNotificationAction(
                             context,
                             WebRtcCallService.ACTION_LOCAL_HANGUP,
-                            R.drawable.ic_call_end_grey600_32dp,
+                            R.drawable.ic_phone_fill_custom,
                             R.string.cancel
                     ))
                 }
@@ -96,7 +96,7 @@ class CallNotificationBuilder {
                     builder.addAction(getServiceNotificationAction(
                             context,
                             WebRtcCallService.ACTION_LOCAL_HANGUP,
-                            R.drawable.ic_call_end_grey600_32dp,
+                            R.drawable.ic_phone_fill_custom,
                             R.string.callsEnd
                     )).setUsesChronometer(true)
                 }

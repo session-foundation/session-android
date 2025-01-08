@@ -4,7 +4,8 @@
     <item
         android:title="@string/call"
         android:contentDescription="@string/AccessibilityId_call"
-        android:icon="@drawable/ic_baseline_call_24"
+        android:icon="@drawable/ic_phone"
         app:showAsAction="always"
+        app:iconTint="?android:textColorPrimary"
         android:id="@+id/menu_call"/>
 </menu>

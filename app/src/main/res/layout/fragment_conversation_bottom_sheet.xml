@@ -39,7 +39,7 @@
         android:contentDescription="@string/AccessibilityId_pin"
         android:text="@string/pin"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_outline_pin_24"
+        app:drawableStartCompat="@drawable/ic_pin"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -48,7 +48,7 @@
         style="@style/BottomSheetActionItem"
         android:text="@string/pinUnpin"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_outline_pin_off_24"
+        app:drawableStartCompat="@drawable/ic_pin_off"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -67,7 +67,7 @@
         style="@style/BottomSheetActionItem"
         android:text="@string/blockUnblock"
         android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_baseline_done_24"
+        app:drawableStartCompat="@drawable/ic_check"
         app:drawableTint="?attr/colorControlNormal"
         tools:visibility="visible" />
 
@@ -109,7 +109,7 @@
         android:visibility="gone"
         tools:visibility="visible"
         app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_outline_mark_chat_read_24" />
+        app:drawableStartCompat="@drawable/ic_mail_open" />
 
     <TextView
         android:id="@+id/deleteTextView"
