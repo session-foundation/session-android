@@ -19,19 +19,21 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.annotation.DrawableRes
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
+import org.session.libsession.utilities.FileUtils
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.conversation.v2.Util
 import org.thoughtcrime.securesms.util.MediaUtil
+import kotlin.String
 
 abstract class Slide(@JvmField protected val context: Context, protected val attachment: Attachment) {
     val contentType: String
@@ -140,6 +142,14 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
         return hashCode(contentType, hasAudio(), hasImage(), hasVideo(), uri, thumbnailUri, transferState)
     }
 
+    private fun sanitiseFilename(rawName: String?): String {
+        // If rawName is null or if it's just a number, return an empty string
+        if (rawName == null || rawName.toIntOrNull() != null) {
+            return ""
+        }
+        return rawName
+    }
+
     companion object {
         @JvmStatic
         protected fun constructAttachmentFromUri(
@@ -155,9 +165,12 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             voiceNote: Boolean,
             quote: Boolean
         ): Attachment {
-            val resolvedType =
-                Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
+            val resolvedType = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
+
+            // Try to extract a filename from the Uri if we weren't provided one
+            val extractedFilename = FileUtils.extractFilenameFromUriIfRequired(context, uri, fileName)
+
             return UriAttachment(
                 uri,
                 if (hasThumbnail) uri else null,
@@ -166,7 +179,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
                 size,
                 width,
                 height,
-                fileName,
+                extractedFilename,
                 fastPreflightId,
                 voiceNote,
                 quote,

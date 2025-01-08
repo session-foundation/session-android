@@ -3,10 +3,13 @@ package org.thoughtcrime.securesms.mediasend;
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -190,9 +193,7 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
 
   @Override
   public void onFolderSelected(@NonNull MediaFolder folder) {
-    if(folder == null || viewModel == null){
-      return;
-    }
+    if (viewModel == null) { return; }
 
     viewModel.onFolderSelected(folder.getBucketId());
 
@@ -204,9 +205,46 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
                                .commit();
   }
 
+  public String getFileNameFromUri2(Uri uri) {
+    String result = null;
+
+    // Check if the URI has a content scheme
+    if ("content".equalsIgnoreCase(uri.getScheme())) {
+      String[] projection = {OpenableColumns.DISPLAY_NAME};
+      ContentResolver contentResolver = this.getContentResolver();
+
+      try (Cursor cursor = contentResolver.query(uri, projection, null, null, null)) {
+        if (cursor != null && cursor.moveToFirst()) {
+          int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
+          result = cursor.getString(nameIndex);
+        }
+      }
+    }
+
+    // If we still don't have a name, fallback to the URI path
+    if (result == null || result.isEmpty()) {
+      String path = uri.getPath();
+      if (path != null) {
+        int cut = path.lastIndexOf('/');
+        if (cut != -1) {
+          result = path.substring(cut + 1);
+        }
+      }
+    }
+
+    return result;
+  }
+
   @Override
   public void onMediaSelected(@NonNull Media media) {
     viewModel.onSingleMediaSelected(this, media);
+
+
+
+    Log.i("ACL", "Hit onMediaSelected - uri is: " + media.getUri().toString());
+    String filename = getFileNameFromUri(this, media.getUri());
+    Log.i("ACL", "Attempting to get the filename got us: " + filename);
+
     navigateToMediaSend(recipient);
   }
 

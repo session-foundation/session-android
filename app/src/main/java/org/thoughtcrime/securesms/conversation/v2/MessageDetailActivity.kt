@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -383,6 +384,7 @@ fun PreviewMessageDetailsButtons(
 fun PreviewMessageDetails(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
 ) {
+    val context = LocalContext.current
     PreviewTheme(colors) {
         MessageDetails(
             state = MessageDetailsState(
@@ -393,7 +395,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        context = context
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -401,7 +404,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        context = context
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -409,7 +413,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        context = context
                     )
 
                 ),

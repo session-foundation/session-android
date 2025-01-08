@@ -12,6 +12,7 @@ import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
@@ -90,6 +91,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.FileUtils
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -198,6 +200,7 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
+import java.util.Date
 import java.util.LinkedList
 import java.util.Locale
 import java.util.concurrent.ExecutionException
@@ -2006,15 +2009,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val media = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
                 for (item in media) {
+                    // We don't have a filename here - so we'll extract one from the Uri (passing 'null' as the filename forces best-effort extraction)
+                    val extractedFilename = FileUtils.extractFilenameFromUriIfRequired(this, item.uri, filename = null)
+
                     when {
                         MediaUtil.isVideoType(item.mimeType) -> {
                             slideDeck.addSlide(VideoSlide(this, item.uri, 0, item.caption.orNull()))
                         }
                         MediaUtil.isGif(item.mimeType) -> {
+                            // ACL
+                            //slideDeck.addSlide(GifSlide(this, item.uri, extractedFilename, 0, item.width, item.height, item.caption.orNull()))
                             slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
                         }
                         MediaUtil.isImageType(item.mimeType) -> {
-                            slideDeck.addSlide(ImageSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
+                            slideDeck.addSlide(ImageSlide(this, item.uri, extractedFilename, 0, item.width, item.height, item.caption.orNull()))
                         }
                         else -> {
                             Log.d("Loki", "Asked to send an unexpected media type: '" + item.mimeType + "'. Skipping.")
@@ -2113,6 +2121,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // exits before transmitting the audio!
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
+        // Genarate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
+        val now = System.currentTimeMillis()
+        val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd-HHmmss", Locale.getDefault())
+        val formattedDate = dateTimeFormat.format(Date(now))
+        val voiceMessageFilename = applicationContext.getString(R.string.messageVoice).replace(" ", "") + "_$formattedDate" + ".aac"
+
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
         if (voiceMessageDurationMS != 0L && voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
@@ -2131,7 +2145,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         future.addListener(object : ListenableFuture.Listener<Pair<Uri, Long>> {
 
             override fun onSuccess(result: Pair<Uri, Long>) {
-                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, result.second, MediaTypes.AUDIO_AAC, true)
+                val audioSlide = AudioSlide(this@ConversationActivityV2, result.first, voiceMessageFilename, result.second, MediaTypes.AUDIO_AAC, true)
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
                 sendAttachments(slideDeck.asAttachments(), null)

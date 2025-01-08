@@ -23,6 +23,7 @@ import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.showSessionDialog
+import java.util.Locale
 
 /**
  * Saves attachment files to an external storage using [MediaStore] API.
@@ -141,8 +142,12 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
 
             val fileParts: Array<String> = getFileNameParts(fileName)
             val base = fileParts[0]
-            val extension = fileParts[1]
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+            val extension = fileParts[1].lowercase(Locale.getDefault())
+
+            // Some files (Giphy GIFs, for example) turn up as just a number with no file extension - so we'll use the contentType as
+            // the mimetype for those & all others are picked up via `getMimeTypeFromExtension`.
+            val mimeType = if (extension.isEmpty()) contentType else MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+
             val contentValues = ContentValues()
             contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
@@ -172,7 +177,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 }
                 contentValues.put(MediaStore.MediaColumns.DATA, dataPath)
             }
-            return context.contentResolver.insert(outputUri, contentValues)
+            return context.contentResolver.insert(outputUri, contentValues) // <-- This is line 175 of SaveAttachmentTask
         }
 
         private fun getExternalPathToFileForType(context: Context, contentType: String): String {
@@ -244,6 +249,8 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
     override fun onPostExecute(result: Pair<Int, String?>) {
         super.onPostExecute(result)
         val context = contextReference.get() ?: return
+
+        Log.i("ACL", "onPostExecute - second is: '" + result.second + "'")
 
         when (result.first) {
             RESULT_FAILURE -> {

@@ -116,7 +116,7 @@ public class Media implements Parcelable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    Media media = (Media) o;
+    Media media = (Media)o;
 
     return uri.equals(media.uri);
   }
