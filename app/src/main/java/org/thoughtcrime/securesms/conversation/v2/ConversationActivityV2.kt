@@ -1827,6 +1827,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             return null
         }
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1936,9 +1937,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun selectGif() = AttachmentManager.selectGif(this, PICK_GIF)
 
-    private fun showDocumentPicker() {
-        AttachmentManager.selectDocument(this, PICK_DOCUMENT)
-    }
+    private fun showDocumentPicker() = AttachmentManager.selectDocument(this, PICK_DOCUMENT)
 
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
@@ -1947,13 +1946,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun showCamera() {
-        attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient);
-    }
+    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient) }
 
-    override fun onAttachmentChanged() {
-        // Do nothing
-    }
+    override fun onAttachmentChanged() { /* Do nothing */ }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -2017,8 +2012,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             slideDeck.addSlide(VideoSlide(this, item.uri, 0, item.caption.orNull()))
                         }
                         MediaUtil.isGif(item.mimeType) -> {
-                            // ACL
-                            //slideDeck.addSlide(GifSlide(this, item.uri, extractedFilename, 0, item.width, item.height, item.caption.orNull()))
                             slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
                         }
                         MediaUtil.isImageType(item.mimeType) -> {

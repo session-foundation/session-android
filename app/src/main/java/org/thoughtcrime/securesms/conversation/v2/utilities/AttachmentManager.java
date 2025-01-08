@@ -183,9 +183,6 @@ public class AttachmentManager {
 
                     if (cursor != null && cursor.moveToFirst()) {
                         String fileName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
-
-                        Log.i("ACL", "AttachmentManager.getContentResolverSlideInfo sees filename: " + fileName);
-
                         long   fileSize = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE));
                         String mimeType = context.getContentResolver().getType(uri);
 
@@ -215,18 +212,10 @@ public class AttachmentManager {
                     mediaSize = PartAuthority.getAttachmentSize(context, uri);
                     fileName  = PartAuthority.getAttachmentFileName(context, uri);
                     mimeType  = PartAuthority.getAttachmentContentType(context, uri);
-
-                    Log.i("ACL", "AttachmentManager.getManuallyCalculatedSlideInfo sees filename: " + fileName);
-
                 }
 
-                if (mediaSize == null) {
-                    mediaSize = MediaUtil.getMediaSize(context, uri);
-                }
-
-                if (mimeType == null) {
-                    mimeType = MediaUtil.getMimeType(context, uri);
-                }
+                if (mediaSize == null) { mediaSize = MediaUtil.getMediaSize(context, uri); }
+                if (mimeType == null)  { mimeType  = MediaUtil.getMimeType(context, uri);  }
 
                 if (width == 0 || height == 0) {
                     Pair<Integer, Integer> dimens = MediaUtil.getDimensions(context, mimeType, uri);

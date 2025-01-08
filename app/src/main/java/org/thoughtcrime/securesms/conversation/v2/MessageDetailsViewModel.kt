@@ -2,12 +2,13 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -23,7 +24,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -36,9 +36,6 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
-import java.util.Date
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -46,8 +43,7 @@ class MessageDetailsViewModel @Inject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val repository: ConversationRepository,
-    private val attachmentFactory: AttachmentFactory
+    private val repository: ConversationRepository
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -119,20 +115,7 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
-//    fun Attachment(slide: Slide): Attachment =
-//        Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
-
-    fun Attachment(slide: Slide): Attachment {
-
-        Log.i("ACL", "Slide filename is: " + slide.fileName)
-
-        return attachmentFactory.create(
-            slide.details,
-            slide.fileName.orNull(),
-            slide.uri,
-            slide is ImageSlide
-        )
-    }
+    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
 
     fun onClickImage(index: Int) {
         val state = state.value
@@ -179,62 +162,12 @@ data class MessageDetailsState(
     val canReply = record?.isOpenGroupInvitation != true
 }
 
-class AttachmentFactory @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    fun create(
-        fileDetails: List<TitledText>,
-        fileName: String?,
-        uri: Uri?,
-        hasImage: Boolean
-    ): Attachment {
-        return Attachment(context, fileDetails, fileName, uri, hasImage)
-    }
-}
-
-class Attachment(
-    private val context: Context,
+data class Attachment(
     val fileDetails: List<TitledText>,
     val fileName: String?,
     val uri: Uri?,
     val hasImage: Boolean
-) {
-    fun getFileNameFromUri(uri: Uri): String? {
-        var result: String? = null
-
-        // If we're dealing with a content URI, query the provider to get the actual file name
-        if (uri.scheme.equals("content", ignoreCase = true)) {
-            val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                    result = cursor.getString(nameIndex)
-                }
-            }
-        }
-
-        // If we still don't have a name, fallback to the Uri path
-        if (result.isNullOrEmpty()) {
-            result = uri.path
-            val cut = result?.lastIndexOf('/') ?: -1
-            if (cut != -1) {
-                result = result?.substring(cut + 1)
-            }
-        }
-
-        return result
-    }
-
-    init {
-        Log.i("ACL", "Attachment created with fileName: $fileName and hasImage: $hasImage")
-        Log.i("ACL", "Attachment uri is: $uri")
-
-        if (uri != null) {
-            val tempFilename = getFileNameFromUri(uri)
-            Log.i("ACL", "Temp filename is: $tempFilename")
-        }
-    }
-}
+)
 
 sealed class Event {
     object Finish: Event()

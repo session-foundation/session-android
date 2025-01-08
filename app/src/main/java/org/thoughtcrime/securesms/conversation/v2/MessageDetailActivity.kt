@@ -395,8 +395,7 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true,
-                        context = context
+                        hasImage = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -404,8 +403,7 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true,
-                        context = context
+                        hasImage = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -413,8 +411,7 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true,
-                        context = context
+                        hasImage = true
                     )
 
                 ),
