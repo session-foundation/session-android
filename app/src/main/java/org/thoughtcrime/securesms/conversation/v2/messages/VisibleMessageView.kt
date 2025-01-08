@@ -62,6 +62,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
@@ -106,6 +107,8 @@ class VisibleMessageView : FrameLayout {
     private var longPressCallback: Runnable? = null
     private var onDownTimestamp = 0L
     private var onDoubleTap: (() -> Unit)? = null
+    private var isOutgoing: Boolean = false
+
     var indexInAdapter: Int = -1
     var snIsSelected = false
         set(value) {
@@ -158,6 +161,7 @@ class VisibleMessageView : FrameLayout {
         onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
         lastSentMessageId: Long
     ) {
+        isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
         val thread = threadDb.getRecipientForThreadId(threadID) ?: return
@@ -461,13 +465,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     override fun onDraw(canvas: Canvas) {
-        val spacing = context.resources.getDimensionPixelSize(R.dimen.small_spacing)
+        val spacing = context.resources.getDimensionPixelSize(R.dimen.medium_spacing)
         val iconSize = toPx(24, context.resources)
-        val left = binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
-        val top = height - (binding.messageInnerContainer.height / 2) - binding.profilePictureView.marginBottom - (iconSize / 2)
+        val left =  if(isOutgoing) binding.messageInnerContainer.right + spacing
+            else binding.messageInnerContainer.left + binding.messageContentView.root.right + spacing
+        val top = (binding.messageInnerContainer.height / 2) + (iconSize / 2)
         val right = left + iconSize
         val bottom = top + iconSize
-        //todo the position for this icon doesn't seem right
+
         swipeToReplyIconRect.left = left
         swipeToReplyIconRect.top = top
         swipeToReplyIconRect.right = right
