@@ -397,7 +397,7 @@ class VisibleMessageView : FrameLayout {
         message.isSyncFailed ->
             MessageStatusInfo(
                 R.drawable.ic_delivery_status_failed,
-                context.getColor(R.color.accent_orange),
+                context.getColorFromAttr(R.attr.warning),
                 R.string.messageStatusFailedToSync
             )
         message.isPending -> {
