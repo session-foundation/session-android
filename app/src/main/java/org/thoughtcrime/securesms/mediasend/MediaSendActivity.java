@@ -205,40 +205,9 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
                                .commit();
   }
 
-  public String getFileNameFromUri2(Uri uri) {
-    String result = null;
-
-    // Check if the URI has a content scheme
-    if ("content".equalsIgnoreCase(uri.getScheme())) {
-      String[] projection = {OpenableColumns.DISPLAY_NAME};
-      ContentResolver contentResolver = this.getContentResolver();
-
-      try (Cursor cursor = contentResolver.query(uri, projection, null, null, null)) {
-        if (cursor != null && cursor.moveToFirst()) {
-          int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
-          result = cursor.getString(nameIndex);
-        }
-      }
-    }
-
-    // If we still don't have a name, fallback to the URI path
-    if (result == null || result.isEmpty()) {
-      String path = uri.getPath();
-      if (path != null) {
-        int cut = path.lastIndexOf('/');
-        if (cut != -1) {
-          result = path.substring(cut + 1);
-        }
-      }
-    }
-
-    return result;
-  }
-
   @Override
   public void onMediaSelected(@NonNull Media media) {
     viewModel.onSingleMediaSelected(this, media);
-    String filename = getFileNameFromUri(this, media.getUri());
     navigateToMediaSend(recipient);
   }
 

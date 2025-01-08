@@ -142,14 +142,6 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
         return hashCode(contentType, hasAudio(), hasImage(), hasVideo(), uri, thumbnailUri, transferState)
     }
 
-    private fun sanitiseFilename(rawName: String?): String {
-        // If rawName is null or if it's just a number, return an empty string
-        if (rawName == null || rawName.toIntOrNull() != null) {
-            return ""
-        }
-        return rawName
-    }
-
     companion object {
         @JvmStatic
         protected fun constructAttachmentFromUri(

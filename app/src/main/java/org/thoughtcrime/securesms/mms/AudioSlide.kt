@@ -27,6 +27,10 @@ import org.session.libsession.messaging.sending_receiving.attachments.UriAttachm
 import org.session.libsession.utilities.MediaTypes
 
 class AudioSlide : Slide {
+
+    override val contentDescription: String
+        get() = context.getString(R.string.audio)
+
     constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean) : super(context, constructAttachmentFromUri(context, uri, MediaTypes.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, filename, null, voiceNote, false))
 
     constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean) : super(context, UriAttachment(uri, null, contentType, AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, filename, null, voiceNote, false, null))
@@ -36,9 +40,7 @@ class AudioSlide : Slide {
     override fun hasPlaceholder() = true
     override fun hasImage() = true
     override fun hasAudio() = true
-    //fun getContentDescription() = context.getString(R.string.audio)
 
     @DrawableRes
     override fun getPlaceholderRes(theme: Resources.Theme?) = R.drawable.ic_volume_2
-
 }
