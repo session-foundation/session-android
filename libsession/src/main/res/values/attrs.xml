@@ -13,7 +13,7 @@
     <attr name="ic_arrow_forward" format="reference" />
     <attr name="ic_visibility_on" format="reference" />
     <attr name="ic_visibility_off" format="reference" />
-
+    
     <attr name="emoji_text_color" format="color" />
 
     <attr name="emoji_category_recent" format="reference"/>
