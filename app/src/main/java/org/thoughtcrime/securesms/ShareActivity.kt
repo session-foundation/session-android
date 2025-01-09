@@ -57,18 +57,21 @@ import org.thoughtcrime.securesms.util.MediaUtil
  // An activity to quickly share content with contacts.
 @AndroidEntryPoint
 class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
-     private val TAG = ShareActivity::class.java.simpleName
 
-     companion object {
-         const val EXTRA_THREAD_ID          = "thread_id"
-         const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
-         const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
-     }
+    private val TAG = ShareActivity::class.java.simpleName
 
-    private var contactsFragment: ContactSelectionListFragment? = null
-    private var searchToolbar: SearchToolbar? = null
-    private var searchAction: ImageView? = null
-    private var progressWheel: View? = null
+    companion object {
+        const val EXTRA_THREAD_ID          = "thread_id"
+        const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
+        const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
+    }
+
+    // Lateinit UI elements
+    private lateinit var contactsFragment: ContactSelectionListFragment
+    private lateinit var searchToolbar: SearchToolbar
+    private lateinit var searchAction: ImageView
+    private lateinit var progressWheel: View
+
     private var resolvedExtra: Uri? = null
     private var resolvedPlaintext: CharSequence? = null
     private var mimeType: String? = null
@@ -138,26 +141,21 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         progressWheel = findViewById<View>(R.id.progress_wheel)
         searchToolbar = findViewById<SearchToolbar>(R.id.search_toolbar)
         searchAction = findViewById<ImageView>(R.id.search_action)
-        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment?
-        contactsFragment?.onContactSelectedListener = this
+        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment
+        contactsFragment.onContactSelectedListener = this
     }
 
     private fun initializeSearch() {
-        searchAction!!.setOnClickListener(View.OnClickListener { v: View? ->
-            searchToolbar!!.display(
-                searchAction!!.x + (searchAction!!.width  / 2),
-                searchAction!!.y + (searchAction!!.height / 2)
+        searchAction.setOnClickListener(View.OnClickListener { v: View? ->
+            searchToolbar.display(
+                searchAction.x + (searchAction.width  / 2),
+                searchAction.y + (searchAction.height / 2)
             )
         })
 
-        searchToolbar!!.setListener(object : SearchListener {
-            override fun onSearchTextChange(text: String?) {
-                if (contactsFragment != null) { contactsFragment!!.setQueryFilter(text) }
-            }
-
-            override fun onSearchClosed() {
-                if (contactsFragment != null) { contactsFragment!!.resetQueryFilter() }
-            }
+        searchToolbar.setListener(object : SearchListener {
+            override fun onSearchTextChange(text: String?) { contactsFragment.setQueryFilter(text) }
+            override fun onSearchClosed() { contactsFragment.resetQueryFilter() }
         })
     }
 
@@ -211,8 +209,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             ViewUtil.fadeIn(contactsFragment!!.requireView(), 300)
             ViewUtil.fadeOut(progressWheel!!, 300)
         } else if (!hasResolvedDestination) {
-            contactsFragment!!.requireView().visibility = View.VISIBLE
-            progressWheel!!.visibility = View.GONE
+            contactsFragment.requireView().visibility = View.VISIBLE
+            progressWheel.visibility = View.GONE
         } else {
             createConversation(threadId, address, distributionType)
         }
