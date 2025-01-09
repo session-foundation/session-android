@@ -12,6 +12,10 @@ import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Exception
@@ -135,11 +139,15 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         Log.i(TAG, "routeApplicationState() - ${getStateName(state)}")
 
         return when (state) {
-            STATE_SCREEN_LOCKED    -> getScreenUnlockIntent()
+            STATE_SCREEN_LOCKED -> {
+                // If we hit the screen lock from an external share we cache the incoming file to
+                // share - so we do this off the main thread.
+                lifecycleScope.launch { getScreenUnlockIntent() }
+            }
             STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN   -> getWelcomeIntent()
             else -> null
-        }
+        } as Intent?
     }
 
     private fun getApplicationState(locked: Boolean): Int {
@@ -154,7 +162,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         }
     }
 
-    private fun getScreenUnlockIntent(): Intent {
+    private suspend fun getScreenUnlockIntent(): Intent {
         // If this is an attempt to externally share something while the app is locked then we need
         // to rewrite the intent to reference a cached copy of the shared file.
         // Note: We CANNOT just add `Intent.FLAG_GRANT_READ_URI_PERMISSION` to this intent as we
@@ -217,12 +225,12 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     // Rewrite the original share Intent, copying any URIs it contains to our app's private cache,
     // and return a new "rewritten" Intent that references the local copies of URIs via our FileProvider.
     // We do this to prevent a SecurityException being thrown regarding ephemeral permissions to
-    // view the shared URI which may be available to THIS PassphrasePromptActivity, but which is NOT
+    // view the shared URI which may be available to THIS ScreenLockActivity, but which is NOT
     // then valid on the actual ShareActivity which we transfer the Intent through to. With a
     // rewritten copy of the original Intent that references our own cached copy of the URI we have
     // full control over it.
     // Note: We delete any cached file(s) in ConversationActivity.onDestroy.
-    private fun rewriteShareIntentUris(originalIntent: Intent): Intent? {
+    private suspend fun rewriteShareIntentUris(originalIntent: Intent): Intent? = withContext(Dispatchers.IO) {
         val rewrittenIntent = Intent(originalIntent)
 
         // Clear original clipData
@@ -236,7 +244,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         // If we couldn't find one then we have nothing to re-write and we'll just return the original intent
         if (extraKey == null) {
             Log.i(TAG, "No stream to rewrite - returning original intent")
-            return originalIntent
+            return@withContext originalIntent
         }
 
         // Grab and rewrite the original intent's clipData - adding it to our rewrittenIntent as we go
@@ -252,7 +260,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                     val localUri = copyFileToCache(originalUri)
 
                     // ..then grab the real filename, using a fallback if we couldn't get it from the original Uri..
-                    val fileName = getFileNameFromUri(this, originalUri) ?: "Shared Content"
+                    val fileName = getFileNameFromUri(this@ScreenLockActionBarActivity, originalUri) ?: "Shared Content"
 
                     if (localUri != null) {
                         // ..then create the new ClipData with the localUri and filename.
@@ -266,7 +274,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                         }
                     } else {
                         Log.e(TAG, "Could not rewrite Uri - bailing.")
-                        return null
+                        return@withContext null
                     }
                 }
             }
@@ -282,18 +290,18 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             }
         }
 
-        return rewrittenIntent
+        rewrittenIntent
     }
 
-    private fun copyFileToCache(uri: Uri): Uri? {
+    private suspend fun copyFileToCache(uri: Uri): Uri? = withContext(Dispatchers.IO) {
         // Get the actual display name if possible
-        val fileName = getFileNameFromUri(this, uri) ?: "shared_content_${System.currentTimeMillis()}"
+        val fileName = getFileNameFromUri(this@ScreenLockActionBarActivity, uri) ?: "shared_content_${System.currentTimeMillis()}"
 
-        return try {
+        try {
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
                 Log.w(TAG, "Could not open input stream to cache shared content - aborting.")
-                return null
+                return@withContext null
             }
 
             // Create a File in your cache directory using the retrieved name
@@ -307,14 +315,14 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             // Verify the file actually exists and isn't empty
             if (!tempFile.exists() || tempFile.length() == 0L) {
                 Log.w(TAG, "Failed to copy the file to cache or the file is empty.")
-                return null
+                return@withContext null
             }
 
             // Record the file so you can delete it when you're done
             cachedIntentFiles.add(tempFile)
 
             // Return a FileProvider Uri that references this cached file
-            FileProvider.getUriForFile(this, "$packageName.fileprovider", tempFile)
+            FileProvider.getUriForFile(this@ScreenLockActionBarActivity, "$packageName.fileprovider", tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
             null

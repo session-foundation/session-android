@@ -80,27 +80,21 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
         // Replacement for the deprecated `onBackPressed` method
         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
-            if (searchToolbar!!.isVisible) searchToolbar!!.collapse()
+            if (searchToolbar?.isVisible == true) searchToolbar?.collapse()
             else finish()
         }
 
         setContentView(R.layout.share_activity)
 
-        val i = intent
-        val b = i.extras
-        if (b != null) {
-            for (key in b.keySet()) {
-                Log.w(TAG, "ShareActivity >> Key: " + key + " --> " + b.get(key))
+        val bundle = intent.extras
+        if (bundle != null) {
+            if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
+                intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
             }
+            intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
         } else {
             Log.i(TAG, "Bundle was null in ShareActivity")
         }
-
-        if (!i.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-            i.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
-        }
-
-        i.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
 
         initializeToolbar()
         initializeResources()
@@ -145,7 +139,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         searchToolbar = findViewById<SearchToolbar>(R.id.search_toolbar)
         searchAction = findViewById<ImageView>(R.id.search_action)
         contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment?
-        contactsFragment!!.onContactSelectedListener = this
+        contactsFragment?.onContactSelectedListener = this
     }
 
     private fun initializeSearch() {

@@ -55,15 +55,15 @@ object FileUtils {
 
     // Method to attempt to get a filename from a URI - if there's already a non-null or empty filename we'll return that
     @JvmStatic
-    fun extractFilenameFromUriIfRequired(context: Context, uri: Uri, filename: String?): String? {
+    fun extractFilenameFromUriIfRequired(context: Context, uri: Uri, filename: String?): String {
         var extractedFilename = filename
 
         // Check if fileName is null/empty
         if (extractedFilename.isNullOrEmpty()) {
             // If we're dealing with a content URI, query the provider to get the actual file name
-            if ("content".equals(uri.getScheme(), ignoreCase = true)) {
+            if ("content".equals(uri.scheme, ignoreCase = true)) {
                 val projection = arrayOf<String?>(OpenableColumns.DISPLAY_NAME)
-                val cursor = context.getContentResolver().query(uri, projection, null, null, null)
+                val cursor = context.contentResolver.query(uri, projection, null, null, null)
                 if (cursor != null) {
                     try {
                         if (cursor.moveToFirst()) {
@@ -77,8 +77,8 @@ object FileUtils {
             }
 
             // If we still don't have a name, fallback to the Uri path (hopefully something sane, but possibly just a number)
-            if (extractedFilename == null || extractedFilename.isEmpty()) {
-                extractedFilename = uri.getPath() // e.g. "/storage/emulated/0/Download/cat.jpg"
+            if (extractedFilename.isNullOrEmpty()) {
+                extractedFilename = uri.path // e.g. "/storage/emulated/0/Download/cat.jpg"
                 if (extractedFilename != null) {
                     val cut = extractedFilename.lastIndexOf('/')
                     if (cut != -1) {
