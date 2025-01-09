@@ -171,7 +171,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             charSequenceExtra = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
         }
         catch (e: Exception) {
-            Log.w(TAG, "Yeah, nah...", e)
+            // It's not necessarily an issue if there's no text extra when sharing files - but we do
+            // have to catch any failed attempt.
         }
         mimeType = getMimeType(streamExtra)
 
@@ -183,9 +184,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             resolvedPlaintext = charSequenceExtra
             handleResolvedMedia(intent, false)
         } else {
-            if (contactsFragment != null && contactsFragment!!.view != null) {
-                contactsFragment!!.requireView().visibility = View.GONE
-            }
+            contactsFragment?.view?.visibility = View.GONE
             progressWheel!!.visibility = View.VISIBLE
             resolveTask = ResolveMediaTask(context)
             resolveTask!!.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra)
