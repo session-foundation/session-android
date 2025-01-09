@@ -238,7 +238,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private fun showAuthenticationSuccessUI() {
         Log.i(TAG, "Authentication successful.")
 
-        fingerprintPrompt?.setImageResource(R.drawable.ic_x)
+        fingerprintPrompt?.setImageResource(R.drawable.ic_check)
         fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
 
         val endAction = Runnable {

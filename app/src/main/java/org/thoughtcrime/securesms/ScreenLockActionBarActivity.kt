@@ -128,26 +128,30 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     }
 
     private fun routeApplicationState(locked: Boolean) {
-        val intent = getIntentForState(getApplicationState(locked))
-        if (intent != null) {
-            startActivity(intent)
-            finish()
+
+        lifecycleScope.launch {
+            val state = getApplicationState(locked)
+
+            // Note: getIntentForState is suspend because it _may_ perform a file copy for any
+            // incoming file to be shared - so we do this off the main thread.
+            val intent = getIntentForState(state)
+
+            if (intent != null) {
+                startActivity(intent)
+                finish()
+            }
         }
     }
 
-    private fun getIntentForState(state: Int): Intent? {
+    private suspend fun getIntentForState(state: Int): Intent? {
         Log.i(TAG, "routeApplicationState() - ${getStateName(state)}")
 
         return when (state) {
-            STATE_SCREEN_LOCKED -> {
-                // If we hit the screen lock from an external share we cache the incoming file to
-                // share - so we do this off the main thread.
-                lifecycleScope.launch { getScreenUnlockIntent() }
-            }
+            STATE_SCREEN_LOCKED    -> getScreenUnlockIntent() // Note: This is a suspend function
             STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN   -> getWelcomeIntent()
             else -> null
-        } as Intent?
+        }
     }
 
     private fun getApplicationState(locked: Boolean): Int {
