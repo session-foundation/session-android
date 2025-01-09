@@ -78,32 +78,26 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     private var isPassingAlongMedia = false
     private var resolveTask: ResolveMediaTask? = null
 
-    override fun onCreate(icicle: Bundle?, ready: Boolean) {
-        Log.i(TAG, "Hit ShareActivity.onCreate()")
+     override fun onCreate(icicle: Bundle?, ready: Boolean) {
+         Log.i(TAG, "Hit ShareActivity.onCreate()")
 
-        // Replacement for the deprecated `onBackPressed` method
-        onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
-            if (searchToolbar?.isVisible == true) searchToolbar?.collapse()
-            else finish()
-        }
+         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
+             if (searchToolbar.isVisible == true) searchToolbar.collapse()
+             else finish()
+         }
 
-        setContentView(R.layout.share_activity)
+         if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
+             intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
+         }
+         intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
 
-        val bundle = intent.extras
-        if (bundle != null) {
-            if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-                intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
-            }
-            intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
-        } else {
-            Log.i(TAG, "Bundle was null in ShareActivity")
-        }
+         setContentView(R.layout.share_activity)
 
-        initializeToolbar()
-        initializeResources()
-        initializeSearch()
-        initializeMedia()
-    }
+         initializeToolbar()
+         initializeResources()
+         initializeSearch()
+         initializeMedia()
+     }
 
     override fun onNewIntent(intent: Intent) {
         Log.i(TAG, "Hit ShareActivity.onNewIntent()")
