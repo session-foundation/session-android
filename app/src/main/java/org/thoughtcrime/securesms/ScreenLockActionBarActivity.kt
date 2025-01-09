@@ -26,6 +26,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.util.FileProviderUtil
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
@@ -326,7 +327,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             cachedIntentFiles.add(tempFile)
 
             // Return a FileProvider Uri that references this cached file
-            FileProvider.getUriForFile(this@ScreenLockActionBarActivity, "$packageName.fileprovider", tempFile)
+            FileProvider.getUriForFile(this@ScreenLockActionBarActivity, FileProviderUtil.AUTHORITY, tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
             null

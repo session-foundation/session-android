@@ -383,7 +383,7 @@
             android:grantUriPermissions="true" />
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="network.loki.messenger.fileprovider"
+            android:authorities="network.loki.securesms.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
