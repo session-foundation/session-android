@@ -30,11 +30,12 @@ import android.view.animation.TranslateAnimation
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.Runnable
 import java.lang.Exception
+import kotlinx.coroutines.Runnable
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
@@ -48,11 +49,11 @@ import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
 
 class ScreenLockActivity : BaseActionBarActivity() {
-    private val TAG: String = ScreenLockActivity::class.java.getSimpleName()
+    private val TAG: String = ScreenLockActivity::class.java.simpleName
 
-    private var fingerprintPrompt: ImageView?      = null
-    private var lockScreenButton: Button?          = null
-    private var visibilityToggle: AnimatingToggle? = null
+    private lateinit var fingerprintPrompt: ImageView
+    private lateinit var lockScreenButton: Button
+    private lateinit var visibilityToggle: AnimatingToggle
 
     private var biometricPrompt: BiometricPrompt?       = null
     private var promptInfo: BiometricPrompt.PromptInfo? = null
@@ -72,7 +73,7 @@ class ScreenLockActivity : BaseActionBarActivity() {
         super.onCreate(savedInstanceState)
 
         accentColor = ThemeUtil.getThemedColor(this, R.attr.accentColor)
-        errorColor = ThemeUtil.getThemedColor(this, R.attr.danger)
+        errorColor  = ThemeUtil.getThemedColor(this, R.attr.danger)
 
         setContentView(R.layout.screen_lock_activity)
         initializeResources()
@@ -92,23 +93,41 @@ class ScreenLockActivity : BaseActionBarActivity() {
         }, BIND_AUTO_CREATE)
 
         // Set up biometric prompt and prompt info
-        val executor = ContextCompat.getMainExecutor(this)
+        val context = this
+        val executor = ContextCompat.getMainExecutor(context)
         biometricPrompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
 
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 Log.w(TAG, "Authentication error: $errorCode $errString")
-                onAuthenticationFailed()
+
+                when (errorCode) {
+                    // User cancelled the biometric overlay by clicking "Cancel" or clicking off it
+                    BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                    BiometricPrompt.ERROR_USER_CANCELED -> {
+                        onAuthenticationFailed()
+                        finish()
+                    }
+
+                    // User made 5 incorrect biometric login attempts so they get a timeout
+                    // Note: The SYSTEM provides the localised error "Too many attempts. Try again later.".
+                    BiometricPrompt.ERROR_LOCKOUT -> {
+                        Toast.makeText(context, errString, Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+
+                    // User made a large number of incorrect biometric login attempts and Android disabled
+                    // the fingerprint sensor until they lock the device then log back in via non-biometric means.
+                    // Note: The SYSTEM provides the localised error "Too many attempts. Fingerprint sensor disabled."
+                    BiometricPrompt.ERROR_LOCKOUT_PERMANENT -> {
+                        Toast.makeText(context, errString, Toast.LENGTH_SHORT).show()
+                        finish()
+                    }
+                }
             }
 
-            var justGainedFocus = true
             override fun onAuthenticationFailed() {
                 Log.w(TAG, "onAuthenticationFailed()")
-                // Don't shake the fingerprint if we haven't yet attempted to authenticate
-                if (justGainedFocus) {
-                    justGainedFocus = false
-                } else {
-                    showAuthenticationFailedUI()
-                }
+                showAuthenticationFailedUI()
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -214,8 +233,8 @@ class ScreenLockActivity : BaseActionBarActivity() {
     }
 
     private fun showAuthenticationFailedUI() {
-        fingerprintPrompt?.setImageResource(R.drawable.ic_x)
-        fingerprintPrompt?.background?.setColorFilter(errorColor, PorterDuff.Mode.SRC_IN)
+        fingerprintPrompt.setImageResource(R.drawable.ic_x)
+        fingerprintPrompt.background?.setColorFilter(errorColor, PorterDuff.Mode.SRC_IN)
 
         // Define and perform a "shake" animation on authentication failed
         val shake = TranslateAnimation(0f, 30f, 0f, 0f).apply {
@@ -225,29 +244,29 @@ class ScreenLockActivity : BaseActionBarActivity() {
                 override fun onAnimationStart(animation: Animation?) {}
 
                 override fun onAnimationEnd(animation: Animation?) {
-                    fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-                    fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
+                    fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
+                    fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
                 }
 
                 override fun onAnimationRepeat(animation: Animation?) {}
             })
         }
-        fingerprintPrompt?.startAnimation(shake)
+        fingerprintPrompt.startAnimation(shake)
     }
 
     private fun showAuthenticationSuccessUI() {
         Log.i(TAG, "Authentication successful.")
 
-        fingerprintPrompt?.setImageResource(R.drawable.ic_check)
-        fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
+        fingerprintPrompt.setImageResource(R.drawable.ic_check)
+        fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
 
         val endAction = Runnable {
-            fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-            fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
+            fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
+            fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
         }
 
         // Animate and call handleAuthenticated() on animation end
-        fingerprintPrompt?.animate()
+        fingerprintPrompt.animate()
             ?.setInterpolator(BounceInterpolator())
             ?.scaleX(1.1f)
             ?.scaleY(1.1f)
@@ -279,11 +298,11 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private fun setLockTypeVisibility() {
         // Show/hide UI depending on user’s screen lock preference.
         if (isScreenLockEnabled(this)) {
-            fingerprintPrompt?.visibility = View.VISIBLE
-            lockScreenButton?.visibility  = View.GONE
+            fingerprintPrompt.visibility = View.VISIBLE
+            lockScreenButton.visibility  = View.GONE
         } else {
-            fingerprintPrompt?.visibility = View.GONE
-            lockScreenButton?.visibility  = View.GONE
+            fingerprintPrompt.visibility = View.GONE
+            lockScreenButton.visibility  = View.GONE
         }
     }
 
@@ -297,9 +316,9 @@ class ScreenLockActivity : BaseActionBarActivity() {
         fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)
         lockScreenButton  = findViewById(R.id.lock_screen_auth_container)
 
-        fingerprintPrompt?.setImageResource(R.drawable.ic_fingerprint_white_48dp)
-        fingerprintPrompt?.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
+        fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
+        fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
 
-        lockScreenButton?.setOnClickListener { resumeScreenLock() }
+        lockScreenButton.setOnClickListener { resumeScreenLock() }
     }
 }

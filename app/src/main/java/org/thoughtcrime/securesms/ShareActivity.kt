@@ -183,7 +183,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             handleResolvedMedia(intent, false)
         } else {
             contactsFragment?.view?.visibility = View.GONE
-            progressWheel!!.visibility = View.VISIBLE
+            progressWheel.visibility = View.VISIBLE
             resolveTask = ResolveMediaTask(context)
             resolveTask!!.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, streamExtra)
         }
@@ -206,8 +206,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         val hasResolvedDestination = threadId != -1L && address != null && distributionType != -1
 
         if (!hasResolvedDestination && animate) {
-            ViewUtil.fadeIn(contactsFragment!!.requireView(), 300)
-            ViewUtil.fadeOut(progressWheel!!, 300)
+            ViewUtil.fadeIn(contactsFragment.requireView(), 300)
+            ViewUtil.fadeOut(progressWheel, 300)
         } else if (!hasResolvedDestination) {
             contactsFragment.requireView().visibility = View.VISIBLE
             progressWheel.visibility = View.GONE
