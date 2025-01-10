@@ -58,7 +58,6 @@ object FileUtils {
     fun extractFilenameFromUriIfRequired(context: Context, uri: Uri, filename: String?): String {
         var extractedFilename = filename
 
-        // Check if fileName is null/empty
         if (extractedFilename.isNullOrEmpty()) {
             // If we're dealing with a content URI, query the provider to get the actual file name
             if ("content".equals(uri.scheme, ignoreCase = true)) {
@@ -76,21 +75,29 @@ object FileUtils {
                 }
             }
 
-            // If we still don't have a name, fallback to the Uri path (hopefully something sane, but possibly just a number)
+            // If we still don't have a name, fallback to parsing the Uri path
             if (extractedFilename.isNullOrEmpty()) {
-                extractedFilename = uri.path // e.g. "/storage/emulated/0/Download/cat.jpg"
-                if (extractedFilename != null) {
-                    val cut = extractedFilename.lastIndexOf('/')
-                    if (cut != -1) {
-                        // Grab just the filename from the path
-                        extractedFilename = extractedFilename.substring(cut + 1)
+                val path = uri.path // e.g. "/blob/multi-session-disk/video/mp4/test.mp4/2107842/..."
+                if (!path.isNullOrEmpty()) {
+                    val pathSegments = path.split("/")
+
+                    // Look for the segment that has a dot — e.g., "test.mp4"
+                    val fileSegment = pathSegments.find { it.contains('.') }
+
+                    extractedFilename = if (!fileSegment.isNullOrEmpty()) {
+                        fileSegment
+                    } else {
+                        // If we can't find a segment that looks like a filename then fall back to the
+                        // original "take everything after last slash" behaviour.
+                        val cut = path.lastIndexOf('/')
+                        if (cut != -1) { path.substring(cut + 1) } else { path }
                     }
                 }
             }
         }
 
-        // If our final extracted filename is just a number then we'll return an empty string and Session
-        // can call the file "session-<DateTime>.<FileExtension>" on save as a last resort.
+        // If our final extracted filename is just a number,
+        // we consider it invalid and return an empty string
         if (extractedFilename == null || extractedFilename.toIntOrNull() != null) {
             extractedFilename = ""
         }

@@ -260,11 +260,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
         fingerprintPrompt.setImageResource(R.drawable.ic_check)
         fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
 
-        val endAction = Runnable {
-            fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp);
-            fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN);
-        }
-
         // Animate and call handleAuthenticated() on animation end
         fingerprintPrompt.animate()
             ?.setInterpolator(BounceInterpolator())
@@ -272,7 +267,8 @@ class ScreenLockActivity : BaseActionBarActivity() {
             ?.scaleY(1.1f)
             ?.setDuration(500)
             ?.withEndAction {
-                endAction
+                fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
+                fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
                 // CAREFUL: Do NOT put this `handleAuthenticated()` call inside the endAction - it does not fire and we end up stuck at this unlock activity!
                 handleAuthenticated()
             }

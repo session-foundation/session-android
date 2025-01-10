@@ -2006,10 +2006,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 for (item in media) {
                     // We don't have a filename here - so we'll extract one from the Uri (passing 'null' as the filename forces best-effort extraction)
                     val extractedFilename = FileUtils.extractFilenameFromUriIfRequired(this, item.uri, filename = null)
+                    Log.i(TAG, "*** Uri path is: " + item.uri.path)
+                    Log.i(TAG, "*** Extracted filename is: $extractedFilename")
 
                     when {
                         MediaUtil.isVideoType(item.mimeType) -> {
-                            slideDeck.addSlide(VideoSlide(this, item.uri, 0, item.caption.orNull()))
+                            slideDeck.addSlide(VideoSlide(this, item.uri, extractedFilename, 0, item.caption.orNull()))
                         }
                         MediaUtil.isGif(item.mimeType) -> {
                             slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
