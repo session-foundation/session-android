@@ -19,22 +19,19 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.annotation.DrawableRes
 import com.squareup.phrase.Phrase
+import kotlin.String
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
-import org.session.libsession.utilities.FileUtils
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.util.MediaUtil
-import kotlin.String
 
 abstract class Slide(@JvmField protected val context: Context, protected val attachment: Attachment) {
     val contentType: String
@@ -160,10 +157,6 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
         ): Attachment {
             val resolvedType = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
-
-            // Try to extract a filename from the Uri if we weren't provided one
-            //val extractedFilename = FileUtils.getFilenameFromUri(context, uri)
-            Log.i("ACL2", "constructAttachmentFromUri got filename: " + fileName)
 
             return UriAttachment(
                 uri,

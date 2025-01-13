@@ -58,11 +58,10 @@ import androidx.viewpager.widget.ViewPager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.squareup.phrase.Phrase;
+import dagger.hilt.android.AndroidEntryPoint;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.WeakHashMap;
-
-import dagger.hilt.android.AndroidEntryPoint;
 import kotlin.Unit;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;

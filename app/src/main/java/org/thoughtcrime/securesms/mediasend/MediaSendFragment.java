@@ -18,7 +18,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageButton;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -28,10 +27,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
-
 import com.bumptech.glide.Glide;
-
-import org.session.libsession.utilities.FileUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import network.loki.messenger.R;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -50,17 +55,6 @@ import org.thoughtcrime.securesms.scribbles.ImageEditorFragment;
 import org.thoughtcrime.securesms.util.CharacterCalculator.CharacterState;
 import org.thoughtcrime.securesms.util.PushCharacterCalculator;
 import org.thoughtcrime.securesms.util.Stopwatch;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import network.loki.messenger.R;
 
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
@@ -381,10 +375,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                     .withMimeType(MediaTypes.IMAGE_JPEG)
                                     .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
 
-              String filename = media.getFilename();  //FileUtils.getFilenameFromUri(requireContext(), uri);
-              Log.i("ACL2", "When processing media, filename is: " + filename);
-
-              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption(), Optional.of(filename));
+              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption(), Optional.of(media.getFilename()));
 
               updatedMedia.add(updated);
               renderTimer.split("item");

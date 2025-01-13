@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.mediasend;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -9,20 +8,10 @@ import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Video;
 import android.provider.OpenableColumns;
 import android.util.Pair;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
-
 import com.annimon.stream.Stream;
-
-import org.session.libsession.utilities.FileUtils;
-import org.session.libsession.utilities.Util;
-import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.mms.PartAuthority;
-import org.thoughtcrime.securesms.util.MediaUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,8 +21,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import network.loki.messenger.R;
+import org.session.libsession.utilities.FileUtils;
+import org.session.libsession.utilities.Util;
+import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.mms.PartAuthority;
+import org.thoughtcrime.securesms.util.MediaUtil;
 
 /**
  * Handles the retrieval of media present on the user's device.
@@ -141,80 +134,12 @@ class MediaRepository {
         List<Media> videos = getMediaInBucket(context, bucketId, Video.Media.EXTERNAL_CONTENT_URI, false);
         List<Media> media  = new ArrayList<>(images.size() + videos.size());
 
-        int imageCount = 0;
-        for (Media imageMedia : images) {
-            Log.i("ACL", "Image " + (imageCount++) + "==============================");
-            //var im = images.get(0);
-            Log.i("ACL", "imageMedia uri: " + imageMedia.getUri());
-            Log.i("ACL", "imageMedia path: " + imageMedia.getUri().getPath());
-            Log.i("ACL", "imageMedia scheme: " + imageMedia.getUri().getScheme());
-            Log.i("ACL", "imageMedia lastPathSegment: " + imageMedia.getUri().getLastPathSegment());
-
-            Uri uri = imageMedia.getUri();
-            String scheme = uri.getScheme();
-
-            if ("content".equalsIgnoreCase(scheme)) {
-                Log.i("ACL", "Looking at Uri scheme 'content'");
-                String[] projection = new String[]{OpenableColumns.DISPLAY_NAME};
-
-                ContentResolver contentRes = context.getContentResolver();
-                if (contentRes == null) {
-                    Log.i("ACL", "imageMedia - Failed to get a content resolver.");
-                } else {
-                    Log.i("ACL", "imageMedia - Successfully got a content resolver");
-                }
-
-                Cursor cursor = contentRes.query(uri, projection, null, null, null);
-
-                if (cursor != null) {
-                    Log.i("ACL", "imageMedia - Got a cursor from content resolver.");
-                    try {
-                        if (cursor.moveToFirst()) {
-                            int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
-                            String extractedFilename = cursor.getString(nameIndex);
-                            Log.i("ACL", "imageMedia extracted filename: " + extractedFilename);
-                        }
-                    } finally {
-                        cursor.close();
-                    }
-                } else {
-                    Log.i("ACL", "imageMedia - Could not get cursor from content resolver.");
-                }
-            }
-
-        }
-
         media.addAll(images);
         media.addAll(videos);
         Collections.sort(media, (o1, o2) -> Long.compare(o2.getDate(), o1.getDate()));
 
         return media;
     }
-
-//    private @Nullable String getFilenameFromUri(Context context, Uri uri) {
-//        String extractedFilename = null;
-//        String scheme = uri.getScheme();
-//        if ("content".equalsIgnoreCase(scheme)) {
-//            String[] projection = new String[]{OpenableColumns.DISPLAY_NAME};
-//            ContentResolver contentRes = context.getContentResolver();
-//            if (contentRes != null) {
-//                Cursor cursor = contentRes.query(uri, projection, null, null, null);
-//                if (cursor != null) {
-//                    try {
-//                        if (cursor.moveToFirst()) {
-//                            int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
-//                            extractedFilename = cursor.getString(nameIndex);
-//                        }
-//                    } finally {
-//                        cursor.close();
-//                    }
-//                }
-//            }
-//        }
-//
-//        Log.i("ACL", "getFilenameFromUri got: " + extractedFilename);
-//        return extractedFilename;
-//    }
 
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId, @NonNull Uri contentUri, boolean hasOrientation) {

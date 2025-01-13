@@ -223,8 +223,6 @@ public class AttachmentManager {
                     height = dimens.second;
                 }
 
-                Log.w("ACL3", "creating slide with filename: " + fileName);
-
                 Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
                 return mediaType.createSlide(context, uri, fileName, mimeType, mediaSize, width, height);
             }

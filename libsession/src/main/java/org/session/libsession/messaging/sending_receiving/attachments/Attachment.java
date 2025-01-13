@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.sending_receiving.attachments;
 
 import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -70,9 +69,7 @@ public abstract class Attachment {
   @Nullable
   public abstract Uri getThumbnailUri();
 
-  public int getTransferState() {
-    return transferState;
-  }
+  public int getTransferState() { return transferState; }
 
   public boolean isInProgress() {
     return transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_DONE &&
@@ -80,65 +77,38 @@ public abstract class Attachment {
             transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING;
   }
 
-  public long getSize() {
-    return size;
-  }
+  public long getSize() { return size; }
 
   @Nullable
-  public String getFileName() {
-    return fileName;
-  }
+  public String getFileName() { return fileName; }
 
   @NonNull
-  public String getContentType() {
-    return contentType;
-  }
+  public String getContentType() { return contentType; }
 
   @Nullable
-  public String getLocation() {
-    return location;
-  }
+  public String getLocation() { return location; }
 
   @Nullable
-  public String getKey() {
-    return key;
-  }
+  public String getKey() { return key; }
 
   @Nullable
-  public String getRelay() {
-    return relay;
-  }
+  public String getRelay() { return relay; }
 
   @Nullable
-  public byte[] getDigest() {
-    return digest;
-  }
+  public byte[] getDigest() { return digest; }
 
   @Nullable
-  public String getFastPreflightId() {
-    return fastPreflightId;
-  }
+  public String getFastPreflightId() { return fastPreflightId; }
 
-  public boolean isVoiceNote() {
-    return voiceNote;
-  }
+  public boolean isVoiceNote() { return voiceNote; }
 
-  public int getWidth() {
-    return width;
-  }
+  public int getWidth() { return width; }
 
-  public int getHeight() {
-    return height;
-  }
+  public int getHeight() { return height; }
 
-  public boolean isQuote() {
-    return quote;
-  }
+  public boolean isQuote() { return quote; }
 
-  public @Nullable String getCaption() {
-    return caption;
-  }
+  public @Nullable String getCaption() { return caption; }
 
   public String getUrl() { return url; }
 }
-

@@ -71,15 +71,12 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             val contentType = checkNotNull(MediaUtil.getJpegCorrectedMimeTypeIfRequired(attachment.contentType))
             var fileName = attachment.fileName
 
-            Log.i("ACL", "Saving attachment - initial filename is: " + fileName);
-
             // Added for SES-2624 to prevent Android API 28 devices and lower from crashing because
             // for unknown reasons it provides us with an empty filename when saving files.
-            // TODO: Further investigation into root cause and fix!
+            // TODO: Further investigation into root cause and fix! <-- Fanchao
+            // TODO: Missing filename issue should be fixed - added filenames from filepicker to attachments (you cannot always extract from the Uri) -ACL 2025-01-13
+            // TODO: Delete the above comment lines when perfectly happy with the fix! -ACL 2025-01-13
             if (fileName.isNullOrEmpty()) fileName = generateOutputFileName(contentType, attachment.date)
-
-            Log.i("ACL", "Saving attachment - after generateOutputFileName we have: " + fileName);
-
 
             fileName = sanitizeOutputFileName(fileName)
             val outputUri: Uri = getMediaStoreContentUriForType(contentType)
@@ -142,7 +139,8 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
 
             // TODO: This method may pass an empty string as the filename in Android API 28 and below. This requires
             // TODO: follow-up investigation, but has temporarily been worked around, see:
-            // TODO: https://github.com/session-foundation/session-android/commit/afbb71351a74220c312a09c25cc1c79738453c12
+            // TODO: https://github.com/session-foundation/session-android/commit/afbb71351a74220c312a09c25cc1c79738453c12 <-- Fanchao
+            // TODO: Should all be fixed now - remove comments above when entirely happy w/ the fix. -ACL 2025-01-13
 
             val fileParts: Array<String> = getFileNameParts(fileName)
             val base = fileParts[0]
@@ -272,5 +270,4 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
     }
 
     data class Attachment(val uri: Uri, val contentType: String, val date: Long, val fileName: String?)
-
 }

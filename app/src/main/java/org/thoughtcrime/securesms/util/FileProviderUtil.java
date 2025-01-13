@@ -5,8 +5,6 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
-import org.session.libsignal.utilities.Log;
-
 import java.io.File;
 
 public class FileProviderUtil {
@@ -14,7 +12,6 @@ public class FileProviderUtil {
   public static final String AUTHORITY = "network.loki.securesms.fileprovider";
 
   public static Uri getUriFor(@NonNull Context context, @NonNull File file) {
-    Log.i("ACL", "Hit getUriFor - file is: " + file.getName());
     return FileProvider.getUriForFile(context, AUTHORITY, file);
   }
 

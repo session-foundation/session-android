@@ -752,11 +752,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (mediaURI != null && mediaType != null) {
             if (mimeType != null &&
                         (AttachmentManager.MediaType.IMAGE == mediaType ||
-                        AttachmentManager.MediaType.GIF == mediaType    ||
-                        AttachmentManager.MediaType.VIDEO == mediaType)
+                        AttachmentManager.MediaType.GIF    == mediaType ||
+                        AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
-                val filename = null // ACL put this back to getting from FileUtils
-                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent(), filename)
+                val filename = FileUtils.getFilenameFromUri(this, mediaURI) ?: "null"
+                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent(), Optional.of(filename))
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -2010,20 +2010,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
-                    // We don't have a filename here - so we'll extract one from the Uri (passing 'null' as the filename forces best-effort extraction)
-                    var mediaFilename: String = media.filename //filename ?: FileUtils.getFilenameFromUri(this, media.uri)).toString()
-                    Log.i("ACL2", "ConvoActivity has: " + mediaFilename)
+                    // Grab the filename from the Media item (populated on selection from the file picker)
+                    var mediaFilename: String = media.filename
 
-                    Log.i(TAG, "*** Uri path is: " + media.uri.path)
-                    Log.i(TAG, "*** Extracted filename is: $mediaFilename")
-
+                    // If we somehow couldn't get the filename (or it was null) then we'll provide a fallback filename with a formatted timestamp
                     val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
                     val formattedDate = dateFormatter.format(System.currentTimeMillis())
                     when {
-                        // Note: "null" (string) is the correct comparison because `getFilenameFromUri` can return null but the Slide constructors req. non-null!
+                        // Note: "null" (as a string) is the correct comparison because `media.getFilename` returns it if the actual filename var is null.
                         MediaUtil.isVideoType(media.mimeType) -> {
                             if (mediaFilename == "null") {
-                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.video)}-${formattedDate}"
+                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.video)}-${formattedDate}" // Session-Video-<Date>
                             }
                             slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))
 
@@ -2032,11 +2029,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             if (mediaFilename == "null") {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
                             }
-                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
+                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-Gif-<Date>
                         }
                         MediaUtil.isImageType(media.mimeType) -> {
                             if (mediaFilename == "null") {
-                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.image)}-${formattedDate}"
+                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.image)}-${formattedDate}" // Session-Image-<Date>
                             }
                             slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
                         }
