@@ -90,7 +90,6 @@
         tools:replace="android:allowBackup,android:label" >
 
         <!-- Disable all analytics -->
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />

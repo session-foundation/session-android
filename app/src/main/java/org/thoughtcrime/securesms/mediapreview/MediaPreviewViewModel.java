@@ -127,7 +127,6 @@ public class MediaPreviewViewModel extends ViewModel {
                         if (cursor.moveToFirst()) {
                             int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
                             extractedFilename = cursor.getString(nameIndex);
-                            Log.i("ACL", "MediaPreviewViewModel - extracted filename: " + extractedFilename);
                         }
                     } finally {
                         cursor.close();

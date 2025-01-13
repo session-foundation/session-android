@@ -134,25 +134,23 @@ public class AttachmentManager {
                                               @NonNull final MediaType mediaType,
                                               @NonNull final MediaConstraints constraints,
                                               final int width,
-                                              final int height)
+                                              final int height,
+                                              final String filename)
     {
         final SettableFuture<Boolean> result = new SettableFuture<>();
 
         new AsyncTask<Void, Void, Slide>() {
             @Override
-            protected void onPreExecute() {
-
-            }
+            protected void onPreExecute() { /* Nothing */ }
 
             @Override
             protected @Nullable Slide doInBackground(Void... params) {
                 try {
                     if (PartAuthority.isLocalUri(uri)) {
-                        return getManuallyCalculatedSlideInfo(uri, width, height);
+                        return getManuallyCalculatedSlideInfo(uri, width, height, filename);
                     } else {
                         Slide result = getContentResolverSlideInfo(uri, width, height);
-
-                        if (result == null) return getManuallyCalculatedSlideInfo(uri, width, height);
+                        if (result == null) return getManuallyCalculatedSlideInfo(uri, width, height, filename);
                         else                return result;
                     }
                 } catch (IOException e) {
@@ -202,15 +200,21 @@ public class AttachmentManager {
                 return null;
             }
 
-            private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height) throws IOException {
-                long start      = System.currentTimeMillis();
-                Long mediaSize  = null;
-                String fileName = null;
-                String mimeType = null;
+            private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height, String filename) throws IOException {
+                long start           = System.currentTimeMillis();
+                Long mediaSize       = null;
+                String mediaFilename = null;
+                String mimeType      = null;
 
                 if (PartAuthority.isLocalUri(uri)) {
                     mediaSize = PartAuthority.getAttachmentSize(context, uri);
-                    fileName  = PartAuthority.getAttachmentFileName(context, uri);
+
+                    if (filename == null) {
+                        mediaFilename = PartAuthority.getAttachmentFileName(context, uri);
+                    } else {
+                        mediaFilename = filename;
+                    }
+
                     mimeType  = PartAuthority.getAttachmentContentType(context, uri);
                 }
 
@@ -224,7 +228,7 @@ public class AttachmentManager {
                 }
 
                 Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
-                return mediaType.createSlide(context, uri, fileName, mimeType, mediaSize, width, height);
+                return mediaType.createSlide(context, uri, mediaFilename, mimeType, mediaSize, width, height);
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 

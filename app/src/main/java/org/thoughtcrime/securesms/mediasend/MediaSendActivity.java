@@ -22,6 +22,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import com.squareup.phrase.Phrase;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import network.loki.messenger.R;
@@ -257,6 +258,9 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
     public void onImageCaptured(@NonNull byte[] data, int width, int height) {
         Log.i(TAG, "Camera image captured.");
 
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
+        String formattedDate = dateFormatter.format(System.currentTimeMillis());
+
         SimpleTask.run(getLifecycle(), () -> {
             try {
                 Uri uri = BlobProvider.getInstance()
@@ -271,7 +275,7 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
                         data.length,
                         Optional.of(Media.ALL_MEDIA_BUCKET_ID),
                         Optional.absent(),
-                        Optional.of("Photo" + System.currentTimeMillis())
+                        Optional.of("Photo-" + formattedDate)
                 );
             } catch (IOException e) {
                 return null;
