@@ -1,10 +1,11 @@
 package org.thoughtcrime.securesms.mediasend;
 
+import static org.session.libsession.utilities.FileUtils.BAD_FILENAME;
+
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.NonNull;
-
 import org.session.libsignal.utilities.guava.Optional;
 
 /**
@@ -86,7 +87,7 @@ public class Media implements Parcelable {
   }
 
   public String getFilename() {
-    if (filename == null) { return "null"; } else { return filename.get(); }
+    if (filename == null) { return BAD_FILENAME; } else { return filename.get(); }
   }
 
   @Override

@@ -232,6 +232,10 @@ class MediaRepository {
             height = dimens.second;
         }
 
+        // CAREFUL: Do not use the raw media.filename here - when sharing from within Session the
+        // media filename is populated, but when external sharing it is NOT. The `getFilenameFromUri`
+        // method attempts both techniques in sequence - if the result is null then the calling code
+        // will have to the MeACL
         String filename = FileUtils.getFilenameFromUri(context, media.getUri());
 
         return new Media(media.getUri(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption(), Optional.of(filename));

@@ -88,8 +88,10 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:supportsRtl="true"
         android:theme="@style/Theme.Session.DayNight"
-        android:enableOnBackInvokedCallback="true"
+
         tools:replace="android:allowBackup,android:label" >
+
+        <!-- ACL android:enableOnBackInvokedCallback="true" -->
 
         <!-- Disable all analytics -->
 

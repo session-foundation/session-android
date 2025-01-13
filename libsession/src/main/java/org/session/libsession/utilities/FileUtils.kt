@@ -3,7 +3,6 @@ package org.session.libsession.utilities
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import androidx.documentfile.provider.DocumentFile
 import org.session.libsignal.utilities.Log
 import java.io.File
 import java.io.FileInputStream
@@ -13,6 +12,8 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 object FileUtils {
+
+    const val BAD_FILENAME = "bad_filename"
 
     @JvmStatic
     @Throws(IOException::class)
@@ -79,6 +80,32 @@ object FileUtils {
                 }
             }
         }
+
+        // If the uri did not contain sufficient details to get the filename directly from the content resolver
+        // then we'll attempt to extract it from the uri path. For example, it's possible we could end up with
+        // a uri path such as:
+        //
+        //      uri path: /blob/multi-session-disk/image/jpeg/cat.jpeg/3050/3a507d6a-f2f9-41d1-97a0-319de47e3a8d
+        //
+        // from which we'd want to extract the filename "cat.jpeg".
+        if (extractedFilename == null && uri.path != null) {
+            extractedFilename = attemptUriPathExtraction(uri.path!!)
+        }
+
+        if (extractedFilename == null) {
+            Log.w("FileUtils", "Failed to get filename from content resolver or Uri path")
+            return BAD_FILENAME
+        }
+
+        return extractedFilename
+    }
+
+    private fun attemptUriPathExtraction(uriPath: String): String? {
+        // Split the path by "/" then traverse the segments in reverse order looking for the first one containing a dot
+        val segments = uriPath.split("/")
+        val extractedFilename = segments.asReversed().firstOrNull { it.contains('.') }
+
+        // If found, return the identified filename, otherwise we'll be returning null
         return extractedFilename
     }
 

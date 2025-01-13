@@ -78,26 +78,26 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     private var isPassingAlongMedia = false
     private var resolveTask: ResolveMediaTask? = null
 
-     override fun onCreate(icicle: Bundle?, ready: Boolean) {
-         Log.i(TAG, "Hit ShareActivity.onCreate()")
+    override fun onCreate(icicle: Bundle?, ready: Boolean) {
+        Log.i(TAG, "Hit ShareActivity.onCreate()")
 
-         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
-             if (searchToolbar.isVisible == true) searchToolbar.collapse()
-             else finish()
-         }
+//         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
+//             if (searchToolbar.isVisible == true) searchToolbar.collapse()
+//             else finish()
+//         }
 
-         if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-             intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
-         }
-         intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
+        if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
+            intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
+        }
+        intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
 
-         setContentView(R.layout.share_activity)
+        setContentView(R.layout.share_activity)
 
-         initializeToolbar()
-         initializeResources()
-         initializeSearch()
-         initializeMedia()
-     }
+        initializeToolbar()
+        initializeResources()
+        initializeSearch()
+        initializeMedia()
+    }
 
     override fun onNewIntent(intent: Intent) {
         Log.i(TAG, "Hit ShareActivity.onNewIntent()")
@@ -112,6 +112,12 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             BlobProvider.getInstance().delete(this, resolvedExtra!!)
             if (!isFinishing) { finish() }
         }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if (searchToolbar.isVisible == true) searchToolbar.collapse()
+        else finish()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

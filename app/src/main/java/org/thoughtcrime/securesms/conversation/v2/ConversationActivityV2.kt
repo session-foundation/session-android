@@ -91,6 +91,7 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.FileUtils
+import org.session.libsession.utilities.FileUtils.BAD_FILENAME
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -2017,22 +2018,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
                     val formattedDate = dateFormatter.format(System.currentTimeMillis())
                     when {
-                        // Note: "null" (as a string) is the correct comparison because `media.getFilename` returns it if the actual filename var is null.
+                        // Note: Both media.getFilename and FileUtils.getFilenameFromUri return the BAD_FILENAME constant if extraction failed
                         MediaUtil.isVideoType(media.mimeType) -> {
-                            if (mediaFilename == "null") {
+                            if (mediaFilename == BAD_FILENAME) {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.video)}-${formattedDate}" // Session-Video-<Date>
                             }
                             slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))
 
                         }
                         MediaUtil.isGif(media.mimeType) -> {
-                            if (mediaFilename == "null") {
+                            if (mediaFilename == "BAD_FILENAME") {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
                             }
                             slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-Gif-<Date>
                         }
                         MediaUtil.isImageType(media.mimeType) -> {
-                            if (mediaFilename == "null") {
+                            if (mediaFilename == BAD_FILENAME) {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.image)}-${formattedDate}" // Session-Image-<Date>
                             }
                             slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
