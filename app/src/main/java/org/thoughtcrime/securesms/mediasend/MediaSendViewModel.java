@@ -77,23 +77,6 @@ class MediaSendViewModel extends ViewModel {
     repository.getPopulatedMedia(context, newMedia, populatedMedia -> {
       Util.runOnMain(() -> {
 
-        Log.i("ACL", "Hit onSelectedMediaChanged");
-
-        if (newMedia.size() > 0) {
-          Media m = newMedia.get(0);
-
-          String setFilename = m.getFilename();
-          Log.i("ACL", "set filename: " + setFilename);
-
-          String extractedFilename = FileUtils.getFilenameFromUri(context, m.getUri());
-          Log.i("ACL", "Extracted filename: " + extractedFilename);
-
-          Log.i("ACL", "uri path: " + m.getUri().getPath());
-          Log.i("ACL", "uri last segment: " + m.getUri().getLastPathSegment());
-        }
-
-
-
         List<Media> filteredMedia = getFilteredMedia(context, populatedMedia, mediaConstraints);
 
         if (filteredMedia.size() != newMedia.size()) {

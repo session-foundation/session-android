@@ -79,16 +79,11 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     private var resolveTask: ResolveMediaTask? = null
 
     override fun onCreate(icicle: Bundle?, ready: Boolean) {
-        Log.i(TAG, "Hit ShareActivity.onCreate()")
-
-//         onBackPressedDispatcher.addCallback(this /* lifecycle owner */) {
-//             if (searchToolbar.isVisible == true) searchToolbar.collapse()
-//             else finish()
-//         }
 
         if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
             intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
         }
+
         intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
 
         setContentView(R.layout.share_activity)
@@ -100,7 +95,6 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     override fun onNewIntent(intent: Intent) {
-        Log.i(TAG, "Hit ShareActivity.onNewIntent()")
         super.onNewIntent(intent)
         setIntent(intent)
         initializeMedia()
@@ -115,9 +109,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
-        if (searchToolbar.isVisible == true) searchToolbar.collapse()
-        else finish()
+        if (searchToolbar.isVisible()) searchToolbar.collapse()
+        else super.onBackPressed();
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

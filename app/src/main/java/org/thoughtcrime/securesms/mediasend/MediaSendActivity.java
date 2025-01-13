@@ -3,13 +3,10 @@ package org.thoughtcrime.securesms.mediasend;
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -19,14 +16,15 @@ import android.view.animation.OvershootInterpolator;
 import android.view.animation.ScaleAnimation;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
-
 import com.squareup.phrase.Phrase;
-
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import network.loki.messenger.R;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.Util;
@@ -38,12 +36,6 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import network.loki.messenger.R;
 
 /**
  * Encompasses the entire flow of sending media, starting from the selection process to the actual
@@ -63,7 +55,6 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
     public static final String EXTRA_MEDIA     = "media";
     public static final String EXTRA_MESSAGE   = "message";
 
-
     private static final String KEY_ADDRESS   = "address";
     private static final String KEY_BODY      = "body";
     private static final String KEY_MEDIA     = "media";
@@ -73,7 +64,6 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
     private static final String TAG_ITEM_PICKER   = "item_picker";
     private static final String TAG_SEND          = "send";
     private static final String TAG_CAMERA        = "camera";
-
 
     private Recipient          recipient;
     private MediaSendViewModel viewModel;
@@ -122,9 +112,7 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
         setContentView(R.layout.mediasend_activity);
         setResult(RESULT_CANCELED);
 
-        if (savedInstanceState != null) {
-            return;
-        }
+        if (savedInstanceState != null) { return; }
 
         countButton     = findViewById(R.id.mediasend_count_button);
         countButtonText = findViewById(R.id.mediasend_count_button_text);
@@ -207,14 +195,12 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
 
     @Override
     public void onMediaSelected(@NonNull Media media) {
-        Log.i("ACL", "onMediaSelected filename: " + media.getFilename());
         viewModel.onSingleMediaSelected(this, media);
         navigateToMediaSend(recipient);
     }
 
     @Override
     public void onAddMediaClicked(@NonNull String bucketId) {
-        // TODO: Get actual folder title somehow
         MediaPickerFolderFragment folderFragment = MediaPickerFolderFragment.newInstance(recipient);
         MediaPickerItemFragment   itemFragment   = MediaPickerItemFragment.newInstance(bucketId, "", viewModel.getMaxSelection());
 

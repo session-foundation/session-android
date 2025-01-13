@@ -232,7 +232,8 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        // CAREFUL: Do not use the raw media.filename here - when sharing from within Session the
+        // CAREFUL: Use `getFilenameFromUri` here rather than `media.filename` - this is because when
+        // performing from within Session the
         // media filename is populated, but when external sharing it is NOT. The `getFilenameFromUri`
         // method attempts both techniques in sequence - if the result is null then the calling code
         // will have to the MeACL

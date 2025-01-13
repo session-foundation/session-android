@@ -12,7 +12,10 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 object FileUtils {
+    private val TAG = FileUtils::class.java.simpleName
 
+    // Should we be unable to extract a filename from a Uri then we'll return this to inform
+    // the calling it code that it must deal with this case and construct a suitable placeholder.
     const val BAD_FILENAME = "bad_filename"
 
     @JvmStatic
@@ -64,7 +67,7 @@ object FileUtils {
     // the filename rather than the actual filename like "cat.jpg" etc. In such a case returning
     // null from this method means that the calling code must construct a suitable placeholder filename.
     @JvmStatic
-    fun getFilenameFromUri(context: Context, uri: Uri): String? {
+    fun getFilenameFromUri(context: Context, uri: Uri): String {
         var extractedFilename: String? = null
         val scheme = uri.scheme
         if ("content".equals(scheme, ignoreCase = true)) {
@@ -93,7 +96,7 @@ object FileUtils {
         }
 
         if (extractedFilename == null) {
-            Log.w("FileUtils", "Failed to get filename from content resolver or Uri path")
+            Log.w(TAG, "Failed to get filename from content resolver or Uri path")
             return BAD_FILENAME
         }
 

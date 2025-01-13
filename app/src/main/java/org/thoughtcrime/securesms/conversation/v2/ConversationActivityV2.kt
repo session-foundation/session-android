@@ -2030,7 +2030,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             if (mediaFilename == "BAD_FILENAME") {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
                             }
-                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-Gif-<Date>
+                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-GIF-<Date>
                         }
                         MediaUtil.isImageType(media.mimeType) -> {
                             if (mediaFilename == BAD_FILENAME) {

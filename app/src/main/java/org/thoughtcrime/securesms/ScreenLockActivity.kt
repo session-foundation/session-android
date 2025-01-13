@@ -123,6 +123,11 @@ class ScreenLockActivity : BaseActionBarActivity() {
                         Toast.makeText(context, errString, Toast.LENGTH_SHORT).show()
                         finish()
                     }
+
+                    else -> {
+                        Log.w(TAG, "Unhandled authentication error: $errorCode $errString")
+                        finish()
+                    }
                 }
             }
 
@@ -133,22 +138,24 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 Log.i(TAG, "onAuthenticationSucceeded")
-                val cryptoObject = result.cryptoObject
-                val signature = cryptoObject?.signature
-                if (signature == null && hasSignatureObject) {
+
+                val signature = result.cryptoObject?.signature
+
+                if (signature == null) {
                     // If we expected a signature but didn't get one, treat this as failure
-                    onAuthenticationFailed()
-                    return
-                } else if (signature == null && !hasSignatureObject) {
-                    // If there was no signature needed we can handle this as success
-                    showAuthenticationSuccessUI()
+                    if (hasSignatureObject) {
+                        onAuthenticationFailed()
+                    } else {
+                        // If there was no signature needed, handle as success
+                        showAuthenticationSuccessUI()
+                    }
                     return
                 }
 
-                // Perform signature verification as before
+                // Perform signature verification
                 try {
                     val random = biometricSecretProvider.getRandomData()
-                    signature!!.update(random)
+                    signature.update(random)
                     val signed = signature.sign()
                     val verified = biometricSecretProvider.verifySignature(random, signed)
 
@@ -181,7 +188,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
     override fun onPause() {
         super.onPause()
-        // If needed, cancel authentication:
         biometricPrompt?.cancelAuthentication()
     }
 
@@ -270,7 +276,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
             ?.withEndAction {
                 fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
                 fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
-                // CAREFUL: Do NOT put this `handleAuthenticated()` call inside the endAction - it does not fire and we end up stuck at this unlock activity!
                 handleAuthenticated()
             }
             ?.start()
