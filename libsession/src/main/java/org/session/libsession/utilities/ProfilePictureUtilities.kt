@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import okio.Buffer
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
@@ -102,7 +103,7 @@ object ProfilePictureUtilities {
         // this can throw an error
         id = retryIfNeeded(4) {
             FileServerApi.upload(data)
-        }.get()
+        }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
         val url = "${FileServerApi.server}/file/$id"

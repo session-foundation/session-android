@@ -20,6 +20,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
@@ -145,9 +146,9 @@ class ClearAllDataDialog : DialogFragment() {
                     val deletionResultMap: Map<String, Boolean>? = try {
                         val openGroups = DatabaseComponent.get(requireContext()).lokiThreadDatabase().getAllOpenGroups()
                         openGroups.map { it.value.server }.toSet().forEach { server ->
-                            OpenGroupApi.deleteAllInboxMessages(server).get()
+                            OpenGroupApi.deleteAllInboxMessages(server).await()
                         }
-                        SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).get()
+                        SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).await()
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
                         null
