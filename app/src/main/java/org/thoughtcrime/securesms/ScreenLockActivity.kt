@@ -32,11 +32,13 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.biometric.BiometricPrompt
+import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
 import com.squareup.phrase.Phrase
 import java.lang.Exception
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockTimeout
@@ -291,13 +293,30 @@ class ScreenLockActivity : BaseActionBarActivity() {
     }
 
     private fun setLockTypeVisibility() {
-        // Show/hide UI depending on user’s screen lock preference.
-        if (isScreenLockEnabled(this)) {
-            fingerprintPrompt.visibility = View.VISIBLE
-            lockScreenButton.visibility  = View.GONE
+        if (TextSecurePreferences.isScreenLockEnabled(this)) {
+            val biometricManager = BiometricManager.from(this)
+            when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
+                BiometricManager.BIOMETRIC_SUCCESS -> {
+                    // Biometrics are available and enrolled
+                    fingerprintPrompt.visibility = View.VISIBLE
+                    lockScreenButton.visibility = View.GONE
+                }
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+                BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                    // Either no hardware, hardware unavailable, or no biometrics enrolled
+                    fingerprintPrompt.visibility = View.GONE
+                    lockScreenButton.visibility = View.VISIBLE
+                }
+                else -> {
+                    // Handle unexpected cases
+                    fingerprintPrompt.visibility = View.GONE
+                    lockScreenButton.visibility = View.GONE
+                }
+            }
         } else {
             fingerprintPrompt.visibility = View.GONE
-            lockScreenButton.visibility  = View.GONE
+            lockScreenButton.visibility = View.GONE
         }
     }
 
