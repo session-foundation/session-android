@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.dependencies
 
 import android.content.Context
+import android.os.SystemClock
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -247,7 +248,12 @@ class ConfigFactory @Inject constructor(
 
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
         val (result, changed) = lock.write {
-            cb(configs)
+            val start = SystemClock.uptimeMillis()
+            cb(configs).also {
+                if (SystemClock.uptimeMillis() - start >= 500) {
+                    Log.e("ConfigFactory", "Lock too long", RuntimeException("Holding group write lock for ${SystemClock.uptimeMillis() - start}ms"))
+                }
+            }
         }
 
         if (changed) {

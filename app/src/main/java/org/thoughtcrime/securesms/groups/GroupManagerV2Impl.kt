@@ -218,7 +218,8 @@ class GroupManagerV2Impl @Inject constructor(
             for (newMember in newMembers) {
                 val toSet = configs.groupMembers.get(newMember.hexString)
                     ?.also { existing ->
-                        if (existing.status == GroupMember.Status.INVITE_FAILED || existing.status == GroupMember.Status.INVITE_SENT) {
+                        val status = configs.groupMembers.status(existing)
+                        if (status == GroupMember.Status.INVITE_FAILED || status == GroupMember.Status.INVITE_SENT) {
                             existing.setSupplement(shareHistory)
                         }
                     }

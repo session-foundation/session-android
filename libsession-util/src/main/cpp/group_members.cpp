@@ -150,12 +150,6 @@ Java_network_loki_messenger_libsession_1util_util_GroupMember_setRemoved(JNIEnv 
 }
 
 extern "C"
-JNIEXPORT jint JNICALL
-Java_network_loki_messenger_libsession_1util_util_GroupMember_statusInt(JNIEnv *env, jobject thiz) {
-    return static_cast<jint>(ptrToMember(env, thiz)->status());
-}
-
-extern "C"
 JNIEXPORT void JNICALL
 Java_network_loki_messenger_libsession_1util_util_GroupMember_setName(JNIEnv *env, jobject thiz,
                                                                       jstring name) {
@@ -225,3 +219,18 @@ Java_network_loki_messenger_libsession_1util_util_GroupMember_setSupplement(JNIE
     ptrToMember(env, thiz)->supplement = supplement;
 }
 
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_network_loki_messenger_libsession_1util_GroupMembersConfig_statusInt(JNIEnv *env, jobject thiz,
+                                                                       jobject group_member) {
+    return static_cast<jint>(ptrToMembers(env, thiz)->get_status(*ptrToMember(env, group_member)));
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_network_loki_messenger_libsession_1util_GroupMembersConfig_setPendingSend(JNIEnv *env,
+                                                                               jobject thiz,
+                                                                               jstring pub_key_hex,
+                                                                               jboolean pending) {
+    ptrToMembers(env, thiz)->set_pending_send(util::string_from_jstring(env, pub_key_hex), pending);
+}

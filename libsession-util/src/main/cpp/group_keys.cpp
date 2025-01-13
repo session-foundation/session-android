@@ -21,33 +21,35 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newI
                                                                                         jbyteArray initial_dump,
                                                                                         jlong info_pointer,
                                                                                         jlong members_pointer) {
-    std::lock_guard lock{util::util_mutex_};
-    auto user_key_bytes = util::ustring_from_bytes(env, user_secret_key);
-    auto pub_key_bytes = util::ustring_from_bytes(env, group_public_key);
-    std::optional<session::ustring> secret_key_optional{std::nullopt};
-    std::optional<session::ustring> initial_dump_optional{std::nullopt};
+    return jni_utils::run_catching_cxx_exception_or_throws<jlong>(env, [=] {
+        std::lock_guard lock{util::util_mutex_};
+        auto user_key_bytes = util::ustring_from_bytes(env, user_secret_key);
+        auto pub_key_bytes = util::ustring_from_bytes(env, group_public_key);
+        std::optional<session::ustring> secret_key_optional{std::nullopt};
+        std::optional<session::ustring> initial_dump_optional{std::nullopt};
 
-    if (group_secret_key && env->GetArrayLength(group_secret_key) > 0) {
-        auto secret_key_bytes = util::ustring_from_bytes(env, group_secret_key);
-        secret_key_optional = secret_key_bytes;
-    }
+        if (group_secret_key && env->GetArrayLength(group_secret_key) > 0) {
+            auto secret_key_bytes = util::ustring_from_bytes(env, group_secret_key);
+            secret_key_optional = secret_key_bytes;
+        }
 
-    if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
-        auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
-        initial_dump_optional = initial_dump_bytes;
-    }
+        if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
+            auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
+            initial_dump_optional = initial_dump_bytes;
+        }
 
-    auto info = reinterpret_cast<session::config::groups::Info*>(info_pointer);
-    auto members = reinterpret_cast<session::config::groups::Members*>(members_pointer);
+        auto info = reinterpret_cast<session::config::groups::Info*>(info_pointer);
+        auto members = reinterpret_cast<session::config::groups::Members*>(members_pointer);
 
-    auto* keys = new session::config::groups::Keys(user_key_bytes,
-                                                   pub_key_bytes,
-                                                   secret_key_optional,
-                                                   initial_dump_optional,
-                                                   *info,
-                                                   *members);
+        auto* keys = new session::config::groups::Keys(user_key_bytes,
+                                                       pub_key_bytes,
+                                                       secret_key_optional,
+                                                       initial_dump_optional,
+                                                       *info,
+                                                       *members);
 
-    return reinterpret_cast<jlong>(keys);
+        return reinterpret_cast<jlong>(keys);
+    });
 }
 
 extern "C"
