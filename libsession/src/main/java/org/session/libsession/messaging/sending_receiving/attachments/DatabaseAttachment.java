@@ -5,6 +5,7 @@ import android.net.Uri;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsignal.utilities.Log;
 
 public class DatabaseAttachment extends Attachment {
 
@@ -27,6 +28,8 @@ public class DatabaseAttachment extends Attachment {
     this.hasData      = hasData;
     this.hasThumbnail = hasThumbnail;
     this.mmsId        = mmsId;
+
+    Log.i("ACL", "Creating database attachment - filename is: " + fileName);
   }
 
   @Override

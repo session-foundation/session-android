@@ -35,7 +35,6 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import com.squareup.phrase.Phrase
 import java.lang.Exception
-import kotlinx.coroutines.Runnable
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled

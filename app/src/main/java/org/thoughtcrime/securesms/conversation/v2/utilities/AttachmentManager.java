@@ -223,6 +223,8 @@ public class AttachmentManager {
                     height = dimens.second;
                 }
 
+                Log.w("ACL3", "creating slide with filename: " + fileName);
+
                 Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
                 return mediaType.createSlide(context, uri, fileName, mimeType, mediaSize, width, height);
             }
@@ -396,12 +398,12 @@ public class AttachmentManager {
             if (mimeType == null) { mimeType = "application/octet-stream"; }
 
             // Try to extract a filename from the Uri if we weren't provided one
-            String extractedFilename = FileUtils.extractFilenameFromUriIfRequired(context, uri, filename);
+            String extractedFilename = FileUtils.getFilenameFromUri(context, uri);
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
                 //case GIF:      return new GifSlide(context, uri, extractedFilename, dataSize, width, height, null);
-                case GIF:      return new GifSlide(context, uri, dataSize, width, height, null);
+                case GIF:      return new GifSlide(context, uri, filename, dataSize, width, height, null);
                 case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false);
                 case VIDEO:    return new VideoSlide(context, uri, dataSize);
                 case VCARD:

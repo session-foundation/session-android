@@ -12,7 +12,6 @@ import android.content.res.Resources
 import android.database.Cursor
 import android.graphics.Rect
 import android.graphics.Typeface
-import android.icu.text.SimpleDateFormat
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
@@ -200,6 +199,7 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.LinkedList
 import java.util.Locale
@@ -750,8 +750,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mediaType = AttachmentManager.MediaType.from(intent.type)
         val mimeType =  MediaUtil.getMimeType(this, mediaURI)
         if (mediaURI != null && mediaType != null) {
-            if (mimeType != null && (AttachmentManager.MediaType.IMAGE == mediaType || AttachmentManager.MediaType.GIF == mediaType || AttachmentManager.MediaType.VIDEO == mediaType)) {
-                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+            if (mimeType != null &&
+                        (AttachmentManager.MediaType.IMAGE == mediaType ||
+                        AttachmentManager.MediaType.GIF == mediaType    ||
+                        AttachmentManager.MediaType.VIDEO == mediaType)
+            ) {
+                val filename = null // ACL put this back to getting from FileUtils
+                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent(), filename)
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -1806,7 +1811,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient ?: return
-        val media = Media(contentUri, MediaUtil.getMimeType(this, contentUri)!!, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+        val filename = FileUtils.getFilenameFromUri(this, contentUri)
+        val media = Media(contentUri, MediaUtil.getMimeType(this, contentUri)!!, 0, 0, 0, 0, Optional.absent(), Optional.absent(), Optional.of(filename))
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -2001,26 +2007,41 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             TAKE_PHOTO -> {
                 intent ?: return
                 val body = intent.getStringExtra(MediaSendActivity.EXTRA_MESSAGE)
-                val media = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
+                val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
-                for (item in media) {
+                for (media in mediaList) {
                     // We don't have a filename here - so we'll extract one from the Uri (passing 'null' as the filename forces best-effort extraction)
-                    val extractedFilename = FileUtils.extractFilenameFromUriIfRequired(this, item.uri, filename = null)
-                    Log.i(TAG, "*** Uri path is: " + item.uri.path)
-                    Log.i(TAG, "*** Extracted filename is: $extractedFilename")
+                    var mediaFilename: String = media.filename //filename ?: FileUtils.getFilenameFromUri(this, media.uri)).toString()
+                    Log.i("ACL2", "ConvoActivity has: " + mediaFilename)
 
+                    Log.i(TAG, "*** Uri path is: " + media.uri.path)
+                    Log.i(TAG, "*** Extracted filename is: $mediaFilename")
+
+                    val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
+                    val formattedDate = dateFormatter.format(System.currentTimeMillis())
                     when {
-                        MediaUtil.isVideoType(item.mimeType) -> {
-                            slideDeck.addSlide(VideoSlide(this, item.uri, extractedFilename, 0, item.caption.orNull()))
+                        // Note: "null" (string) is the correct comparison because `getFilenameFromUri` can return null but the Slide constructors req. non-null!
+                        MediaUtil.isVideoType(media.mimeType) -> {
+                            if (mediaFilename == "null") {
+                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.video)}-${formattedDate}"
+                            }
+                            slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))
+
                         }
-                        MediaUtil.isGif(item.mimeType) -> {
-                            slideDeck.addSlide(GifSlide(this, item.uri, 0, item.width, item.height, item.caption.orNull()))
+                        MediaUtil.isGif(media.mimeType) -> {
+                            if (mediaFilename == "null") {
+                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
+                            }
+                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
                         }
-                        MediaUtil.isImageType(item.mimeType) -> {
-                            slideDeck.addSlide(ImageSlide(this, item.uri, extractedFilename, 0, item.width, item.height, item.caption.orNull()))
+                        MediaUtil.isImageType(media.mimeType) -> {
+                            if (mediaFilename == "null") {
+                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.image)}-${formattedDate}"
+                            }
+                            slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
                         }
                         else -> {
-                            Log.d("Loki", "Asked to send an unexpected media type: '" + item.mimeType + "'. Skipping.")
+                            Log.d("Loki", "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
                     }
                 }

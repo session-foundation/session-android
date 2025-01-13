@@ -81,6 +81,11 @@ class MediaSendViewModel extends ViewModel {
 
         List<Media> filteredMedia = getFilteredMedia(context, populatedMedia, mediaConstraints);
 
+        if (filteredMedia.size() > 0) {
+          var fm0 = filteredMedia.get(0);
+          Log.i("ACL", "fm0 uri: " + fm0.getUri());
+        }
+
         if (filteredMedia.size() != newMedia.size()) {
           error.setValue(Error.ITEM_TOO_LARGE);
         } else if (filteredMedia.size() > MAX_SELECTION) {

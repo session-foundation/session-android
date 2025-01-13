@@ -22,19 +22,16 @@ import android.net.Uri;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import network.loki.messenger.R;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.MediaTypes;
 import org.thoughtcrime.securesms.util.MediaUtil;
-import org.thoughtcrime.securesms.util.ResUtil;
 
 public class VideoSlide extends Slide {
 
   public VideoSlide(Context context, Uri uri, long dataSize) {
-    // Note: Giving null as the filename argument forces a best-effort attempt to retrieve from the Uri
-    this(context, uri, FileUtils.extractFilenameFromUriIfRequired(context, uri, null), dataSize, null);
+    this(context, uri, FileUtils.getFilenameFromUri(context, uri), dataSize, null);
   }
 
   public VideoSlide(Context context, Uri uri, String filename, long dataSize, @Nullable String caption) {

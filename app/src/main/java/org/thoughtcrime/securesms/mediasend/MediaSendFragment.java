@@ -31,6 +31,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.bumptech.glide.Glide;
 
+import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
@@ -358,8 +359,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                   .setCancelable(false)
                                   .create();
           dialog.show();
-          dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size),
-                                       getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
+          dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size), getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
         };
         Util.runOnMainDelayed(progressTimer, 250);
       }
@@ -381,7 +381,10 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                     .withMimeType(MediaTypes.IMAGE_JPEG)
                                     .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
 
-              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
+              String filename = media.getFilename();  //FileUtils.getFilenameFromUri(requireContext(), uri);
+              Log.i("ACL2", "When processing media, filename is: " + filename);
+
+              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption(), Optional.of(filename));
 
               updatedMedia.add(updated);
               renderTimer.split("item");

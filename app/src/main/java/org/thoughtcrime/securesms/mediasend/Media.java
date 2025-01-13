@@ -23,8 +23,9 @@ public class Media implements Parcelable {
 
   private Optional<String> bucketId;
   private Optional<String> caption;
+  private Optional<String> filename;
 
-  public Media(@NonNull Uri uri, @NonNull String mimeType, long date, int width, int height, long size, Optional<String> bucketId, Optional<String> caption) {
+  public Media(@NonNull Uri uri, @NonNull String mimeType, long date, int width, int height, long size, Optional<String> bucketId, Optional<String> caption, Optional<String> filename) {
     this.uri      = uri;
     this.mimeType = mimeType;
     this.date     = date;
@@ -33,6 +34,7 @@ public class Media implements Parcelable {
     this.size     = size;
     this.bucketId = bucketId;
     this.caption  = caption;
+    this.filename = filename;
   }
 
   protected Media(Parcel in) {
@@ -44,6 +46,7 @@ public class Media implements Parcelable {
     size     = in.readLong();
     bucketId = Optional.fromNullable(in.readString());
     caption  = Optional.fromNullable(in.readString());
+    filename = Optional.fromNullable(in.readString());
   }
 
   public Uri getUri() {
@@ -82,6 +85,10 @@ public class Media implements Parcelable {
     this.caption = Optional.fromNullable(caption);
   }
 
+  public String getFilename() {
+    if (filename == null) { return "null"; } else { return filename.get(); }
+  }
+
   @Override
   public int describeContents() {
     return 0;
@@ -97,6 +104,7 @@ public class Media implements Parcelable {
     dest.writeLong(size);
     dest.writeString(bucketId.orNull());
     dest.writeString(caption.orNull());
+    dest.writeString(filename.orNull());
   }
 
   public static final Creator<Media> CREATOR = new Creator<Media>() {

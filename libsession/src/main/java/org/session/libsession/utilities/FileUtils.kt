@@ -3,6 +3,8 @@ package org.session.libsession.utilities
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.documentfile.provider.DocumentFile
+import org.session.libsignal.utilities.Log
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -11,6 +13,7 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 object FileUtils {
+
     @JvmStatic
     @Throws(IOException::class)
     fun getFileDigest(fin: FileInputStream): ByteArray? {
@@ -53,55 +56,99 @@ object FileUtils {
         directory.delete()
     }
 
-    // Method to attempt to get a filename from a URI - if there's already a non-null or empty filename we'll return that
+//    // Method to attempt to get a filename from a URI - if there's already a non-null or empty filename we'll return that
+//    @JvmStatic
+//    fun extractFilenameFromUriIfRequired(context: Context, uri: Uri, filename: String?): String {
+//        var extractedFilename = filename
+//
+//        Log.w("ACL", "Initial extracted filename is: " + extractedFilename)
+//        Log.w("ACL", "Uri path is: " + uri.path)
+//        Log.w("ACL", "Uri scheme is: " + uri.scheme)
+//
+//        extractedFilename = DocumentFile.fromSingleUri(context, uri)?.name
+//        Log.w("ACL", "DocumentFile name is: " + extractedFilename)
+//
+//        if (extractedFilename.isNullOrEmpty()) {
+//            // If we're dealing with a content URI, query the provider to get the actual file name
+//            if ("content".equals(uri.scheme, ignoreCase = true)) {
+//                Log.i("ACL", "Looking at Uri scheme 'content'")
+//                val projection = arrayOf<String?>(OpenableColumns.DISPLAY_NAME)
+//
+//                val contentRes = context.contentResolver
+//                if (contentRes == null) {
+//                    Log.i("ACL", "Failed to get a content resolver.")
+//                } else {
+//                    Log.i("ACL", "Successfully got a content resolver")
+//                }
+//
+//                //val cursor = context.contentResolver.query(uri, projection, null, null, null)
+//                val cursor = contentRes.query(uri, projection, null, null, null)
+//
+//                if (cursor != null) {
+//
+//                    Log.i("ACL", "Got a cursor from content resolver.")
+//                    try {
+//                        if (cursor.moveToFirst()) {
+//                            val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+//                            extractedFilename = cursor.getString(nameIndex)
+//                        }
+//                    } finally {
+//                        cursor.close()
+//                    }
+//                } else {
+//                    Log.i("ACL", "Could not get cursor from content resolver.")
+//                }
+//            }
+//
+//            // If we still don't have a name, fallback to parsing the Uri path
+//            if (extractedFilename.isNullOrEmpty()) {
+//                val path = uri.path // e.g. "/blob/multi-session-disk/video/mp4/test.mp4/2107842/..."
+//                if (!path.isNullOrEmpty()) {
+//                    val pathSegments = path.split("/")
+//
+//                    // Look for the segment that has a dot — e.g., "test.mp4"
+//                    val fileSegment = pathSegments.find { it.contains('.') }
+//
+//                    extractedFilename = if (!fileSegment.isNullOrEmpty()) {
+//                        fileSegment
+//                    } else {
+//                        // If we can't find a segment that looks like a filename then fall back to the
+//                        // original "take everything after last slash" behaviour.
+//                        val cut = path.lastIndexOf('/')
+//                        if (cut != -1) { path.substring(cut + 1) } else { path }
+//                    }
+//                }
+//            }
+//        }
+//
+//        // If our final extracted filename is just a number,
+//        // we consider it invalid and return an empty string
+//        if (extractedFilename == null || extractedFilename.toIntOrNull() != null) {
+//            extractedFilename = ""
+//        }
+//
+//        return extractedFilename
+//    }
+
     @JvmStatic
-    fun extractFilenameFromUriIfRequired(context: Context, uri: Uri, filename: String?): String {
-        var extractedFilename = filename
-
-        if (extractedFilename.isNullOrEmpty()) {
-            // If we're dealing with a content URI, query the provider to get the actual file name
-            if ("content".equals(uri.scheme, ignoreCase = true)) {
-                val projection = arrayOf<String?>(OpenableColumns.DISPLAY_NAME)
-                val cursor = context.contentResolver.query(uri, projection, null, null, null)
-                if (cursor != null) {
-                    try {
-                        if (cursor.moveToFirst()) {
-                            val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                            extractedFilename = cursor.getString(nameIndex)
-                        }
-                    } finally {
-                        cursor.close()
-                    }
-                }
-            }
-
-            // If we still don't have a name, fallback to parsing the Uri path
-            if (extractedFilename.isNullOrEmpty()) {
-                val path = uri.path // e.g. "/blob/multi-session-disk/video/mp4/test.mp4/2107842/..."
-                if (!path.isNullOrEmpty()) {
-                    val pathSegments = path.split("/")
-
-                    // Look for the segment that has a dot — e.g., "test.mp4"
-                    val fileSegment = pathSegments.find { it.contains('.') }
-
-                    extractedFilename = if (!fileSegment.isNullOrEmpty()) {
-                        fileSegment
-                    } else {
-                        // If we can't find a segment that looks like a filename then fall back to the
-                        // original "take everything after last slash" behaviour.
-                        val cut = path.lastIndexOf('/')
-                        if (cut != -1) { path.substring(cut + 1) } else { path }
+    fun getFilenameFromUri(context: Context, uri: Uri): String? {
+        var extractedFilename: String? = null
+        val scheme = uri.scheme
+        if ("content".equals(scheme, ignoreCase = true)) {
+            val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+            val contentRes = context.contentResolver
+            if (contentRes != null) {
+                val cursor = contentRes.query(uri, projection, null, null, null)
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val nameIndex = it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                        extractedFilename = it.getString(nameIndex)
                     }
                 }
             }
         }
 
-        // If our final extracted filename is just a number,
-        // we consider it invalid and return an empty string
-        if (extractedFilename == null || extractedFilename.toIntOrNull() != null) {
-            extractedFilename = ""
-        }
-
+        Log.i("ACL", "getFilenameFromUri got: $extractedFilename")
         return extractedFilename
     }
 

@@ -10,8 +10,8 @@ public class GifSlide extends ImageSlide {
 
     public GifSlide(Context context, Attachment attachment) { super(context, attachment); }
 
-    public GifSlide(Context context, Uri uri, long size, int width, int height, @Nullable String caption) {
-        super(context, constructAttachmentFromUri(context, uri, MediaTypes.IMAGE_GIF, size, width, height, true, null, caption, false, false));
+    public GifSlide(Context context, Uri uri, String filename, long size, int width, int height, @Nullable String caption) {
+        super(context, constructAttachmentFromUri(context, uri, MediaTypes.IMAGE_GIF, size, width, height, true, filename, caption, false, false));
     }
 
     @Override

@@ -61,6 +61,8 @@ import com.squareup.phrase.Phrase;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.WeakHashMap;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import kotlin.Unit;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;
@@ -90,6 +92,7 @@ import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 /**
  * Activity for displaying media attachments in-app
  */
+@AndroidEntryPoint
 public class MediaPreviewActivity extends ScreenLockActionBarActivity implements RecipientModifiedListener,
                                                                                  LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
                                                                                  MediaRailAdapter.RailItemListener

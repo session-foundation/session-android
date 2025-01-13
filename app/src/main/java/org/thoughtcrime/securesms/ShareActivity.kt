@@ -237,7 +237,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             val mimeType = MediaUtil.getMimeType(applicationContext, uri)
             if (mimeType != null) return mimeType
         }
-        return MediaUtil.getCorrectedMimeType(intent.type)
+        return MediaUtil.getJpegCorrectedMimeTypeIfRequired(intent.type)
     }
 
     override fun onContactSelected(number: String?) {

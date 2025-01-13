@@ -30,6 +30,7 @@ import org.session.libsession.utilities.FileUtils
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -161,7 +162,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
 
             // Try to extract a filename from the Uri if we weren't provided one
-            val extractedFilename = FileUtils.extractFilenameFromUriIfRequired(context, uri, fileName)
+            //val extractedFilename = FileUtils.getFilenameFromUri(context, uri)
+            Log.i("ACL2", "constructAttachmentFromUri got filename: " + fileName)
 
             return UriAttachment(
                 uri,
@@ -171,7 +173,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
                 size,
                 width,
                 height,
-                extractedFilename,
+                fileName,
                 fastPreflightId,
                 voiceNote,
                 quote,
