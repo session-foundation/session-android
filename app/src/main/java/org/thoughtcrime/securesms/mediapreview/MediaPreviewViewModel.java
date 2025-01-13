@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import javax.inject.Inject;
-import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord;
 import org.thoughtcrime.securesms.mediasend.Media;
@@ -28,8 +27,6 @@ public class MediaPreviewViewModel extends ViewModel {
 
     @Inject
     public MediaPreviewViewModel(@ApplicationContext Context context) { this.context = context; }
-
-    public Context getContext() { return context; }
 
     private final MutableLiveData<PreviewData> previewData = new MutableLiveData<>();
 

@@ -2007,7 +2007,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val uri = intent.data ?: return Log.w(TAG, "Failed to get GIF Uri")
 
                 // Note: GIF images returned from Giphy don't have filenames - so the best we can do is synthesize a
-                // reasonable one using the current date such as: "GIF-Image-2025-01-14-085923.gif".
+                // reasonable one using the current date such as: "GIF-Image-2025-01-14-085923.gif". I am NOT calling
+                // this "Session-GIF-<DATE>" as per below as a fallback because it's not _really_ coming from Session
+                // - it's coming from Giphy.
                 val filename = "${this.getString(R.string.gif)}-${this.getString(R.string.image)}-${formattedDate}.gif"
 
                 val type   = AttachmentManager.MediaType.GIF
@@ -2036,7 +2038,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                         }
                         MediaUtil.isGif(media.mimeType) -> {
-                            if (mediaFilename == "BAD_FILENAME") {
+                            if (mediaFilename == BAD_FILENAME) {
                                 mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
                             }
                             slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-GIF-<Date>

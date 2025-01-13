@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.session.libsession.utilities.FileUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Exception
@@ -201,32 +202,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         }
     }
 
-    fun getFileNameFromUri(context: Context, uri: Uri): String? {
-        var result: String? = null
-
-        // If we're dealing with a content URI, query the provider to get the actual file name
-        if (uri.scheme.equals("content", ignoreCase = true)) {
-            val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    val nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                    result = cursor.getString(nameIndex)
-                }
-            }
-        }
-
-        // If we still don't have a name, fallback to the Uri path
-        if (result.isNullOrEmpty()) {
-            result = uri.path
-            val cut = result?.lastIndexOf('/') ?: -1
-            if (cut != -1) {
-                result = result?.substring(cut + 1)
-            }
-        }
-
-        return result
-    }
-
     // Rewrite the original share Intent, copying any URIs it contains to our app's private cache,
     // and return a new "rewritten" Intent that references the local copies of URIs via our FileProvider.
     // We do this to prevent a SecurityException being thrown regarding ephemeral permissions to
@@ -241,13 +216,8 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         // Clear original clipData
         rewrittenIntent.clipData = null
 
-        // Take the first extra key which relates to a file stream
-        val extraKey: String? = rewrittenIntent.extras
-            ?.keySet()
-            ?.firstOrNull { it == "android.intent.extra.STREAM" }
-
         // If we couldn't find one then we have nothing to re-write and we'll just return the original intent
-        if (extraKey == null) {
+        if (!rewrittenIntent.hasExtra(Intent.EXTRA_STREAM)) {
             Log.i(TAG, "No stream to rewrite - returning original intent")
             return@withContext originalIntent
         }
@@ -265,7 +235,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                     val localUri = copyFileToCache(originalUri)
 
                     // ..then grab the real filename, using a fallback if we couldn't get it from the original Uri..
-                    val fileName = getFileNameFromUri(this@ScreenLockActionBarActivity, originalUri) ?: "Shared Content"
+                    val fileName = FileUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, originalUri)
 
                     if (localUri != null) {
                         // ..then create the new ClipData with the localUri and filename.
@@ -273,7 +243,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                             newClipData = ClipData.newUri(contentResolver, fileName, localUri)
 
                             // Make sure to also set the "android.intent.extra.STREAM" extra
-                            rewrittenIntent.putExtra(extraKey, localUri)
+                            rewrittenIntent.putExtra(Intent.EXTRA_STREAM, localUri)
                         } else {
                             newClipData.addItem(ClipData.Item(localUri))
                         }
@@ -300,7 +270,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     private suspend fun copyFileToCache(uri: Uri): Uri? = withContext(Dispatchers.IO) {
         // Get the actual display name if possible
-        val fileName = getFileNameFromUri(this@ScreenLockActionBarActivity, uri) ?: "shared_content_${System.currentTimeMillis()}"
+        val fileName = FileUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, uri)
 
         try {
             val inputStream = contentResolver.openInputStream(uri)

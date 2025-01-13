@@ -16,6 +16,7 @@
  */
 package org.thoughtcrime.securesms.conversation.v2.utilities;
 
+import static org.session.libsession.utilities.FileUtils.BAD_FILENAME;
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.Manifest;
@@ -404,12 +405,30 @@ public class AttachmentManager {
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
-                //case GIF:      return new GifSlide(context, uri, extractedFilename, dataSize, width, height, null);
-                case GIF:      return new GifSlide(context, uri, filename, dataSize, width, height, null);
+
+                // TEMPORARY: This works using `filename` - which is actually correct in this instance.
+                //case GIF:      return new GifSlide(context, uri, filename, dataSize, width, height, null);
+                case GIF: {
+
+
+                    // GIFs may come from Giphy, in which case we'll have BAD_FILENAME as the filename - and instead of that
+                    // we'll pass through null to prompt generation of a sane filename using a formatted timestamp. However
+                    // if we DO have a good filename we'll use it.
+
+                    // CLEANUP IN PROGRESS ACL
+//                    Log.i("ACL", "extracted: " + extractedFilename);
+//                    Log.i("ACL", "filename: " + filename);
+//                    String gifFilename = null;
+//                    if (!extractedFilename.equals(BAD_FILENAME)) { gifFilename = extractedFilename; }
+//                    Log.i("ACL", "gifFilename: " + gifFilename);
+
+                    return new GifSlide(context, uri, filename, dataSize, width, height, null);
+                }
+
                 case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false);
                 case VIDEO:    return new VideoSlide(context, uri, dataSize);
                 case VCARD:
-                case DOCUMENT: return new DocumentSlide(context, uri, mimeType, dataSize, extractedFilename);
+                case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);
                 default:       throw  new AssertionError("unrecognized enum");
             }
         }
