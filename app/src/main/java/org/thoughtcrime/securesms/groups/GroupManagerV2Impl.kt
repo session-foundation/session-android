@@ -414,71 +414,73 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(groupId: AccountId, deleteOnLeave: Boolean) = withContext(dispatcher + SupervisorJob()) {
+    override suspend fun leaveGroup(groupId: AccountId) = withContext(dispatcher + SupervisorJob()) {
         val group = configFactory.getGroup(groupId)
 
-        // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-        val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
-            val allMembers = config.groupMembers.all()
-            allMembers.count { it.admin } == 1 &&
-                    allMembers.first { it.admin }.accountIdString() == storage.getUserPublicKey()
-        }
-
-        if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
-            val destination = Destination.ClosedGroup(groupId.hexString)
-            val sendMessageTasks = mutableListOf<Deferred<*>>()
-
-            // Always send a "XXX left" message to the group if we can
-            sendMessageTasks += async {
-                MessageSender.send(
-                    GroupUpdated(
-                        GroupUpdateMessage.newBuilder()
-                            .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                            .build()
-                    ),
-                    destination,
-                    isSyncMessage = false
-                ).await()
+        if (group?.destroyed != true) {
+            // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
+            val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
+                val allMembers = config.groupMembers.all()
+                allMembers.count { it.admin } == 1 &&
+                        allMembers.first { it.admin }
+                            .accountIdString() == storage.getUserPublicKey()
             }
 
+            if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
+                val destination = Destination.ClosedGroup(groupId.hexString)
+                val sendMessageTasks = mutableListOf<Deferred<*>>()
 
-            // If we are not the only admin, send a left message for other admin to handle the member removal
-            sendMessageTasks += async {
-                MessageSender.send(
-                    GroupUpdated(
-                        GroupUpdateMessage.newBuilder()
-                            .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                            .build()
-                    ),
-                    destination,
-                    isSyncMessage = false
-                ).await()
+                // Always send a "XXX left" message to the group if we can
+                sendMessageTasks += async {
+                    MessageSender.send(
+                        GroupUpdated(
+                            GroupUpdateMessage.newBuilder()
+                                .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
+                                .build()
+                        ),
+                        destination,
+                        isSyncMessage = false
+                    ).await()
+                }
+
+
+                // If we are not the only admin, send a left message for other admin to handle the member removal
+                sendMessageTasks += async {
+                    MessageSender.send(
+                        GroupUpdated(
+                            GroupUpdateMessage.newBuilder()
+                                .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                .build()
+                        ),
+                        destination,
+                        isSyncMessage = false
+                    ).await()
+                }
+
+                sendMessageTasks.awaitAll()
             }
 
-            sendMessageTasks.awaitAll()
-        }
+            // If we are the only admin, leaving this group will destroy the group
+            if (weAreTheOnlyAdmin) {
+                configFactory.withMutableGroupConfigs(groupId) { configs ->
+                    configs.groupInfo.destroyGroup()
+                }
 
-        // If we are the only admin, leaving this group will destroy the group
-        if (weAreTheOnlyAdmin) {
-            configFactory.withMutableGroupConfigs(groupId) { configs ->
-                configs.groupInfo.destroyGroup()
+                // Must wait until the config is pushed, otherwise if we go through the rest
+                // of the code it will destroy the conversation, destroying the necessary configs
+                // along the way, we won't be able to push the "destroyed" state anymore.
+                configFactory.waitUntilGroupConfigsPushed(groupId)
             }
-
-            // Must wait until the config is pushed, otherwise if we go through the rest
-            // of the code it will destroy the conversation, destroying the necessary configs
-            // along the way, we won't be able to push the "destroyed" state anymore.
-            configFactory.waitUntilGroupConfigsPushed(groupId)
         }
 
         pollerFactory.pollerFor(groupId)?.stop()
 
-        if (deleteOnLeave) {
-            storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                ?.let(storage::deleteConversation)
-            configFactory.removeGroup(groupId)
-            lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-            lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
-        }
+        // Delete conversation and group configs
+        storage.getThreadId(Address.fromSerialized(groupId.hexString))
+            ?.let(storage::deleteConversation)
+        configFactory.removeGroup(groupId)
+        lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
     }
 
     override suspend fun promoteMember(
