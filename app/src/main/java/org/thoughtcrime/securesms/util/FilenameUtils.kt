@@ -6,12 +6,14 @@ import android.provider.OpenableColumns
 import java.text.SimpleDateFormat
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
+import java.util.Date
+import java.util.Locale
 
 object FilenameUtils {
     private const val TAG = "FilenameUtils"
 
     private fun getFormattedDate(): String {
-        val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
+        val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss", Locale.getDefault())
         return dateFormatter.format(System.currentTimeMillis())
     }
 
@@ -21,6 +23,9 @@ object FilenameUtils {
     // GIFs picked from Giphy don't have filenames (we just get a GUID) - so synthesize a more reasonable filename such as "GIF-Image-<Date>.gif"
     @JvmStatic
     fun constructPickedGifFilename(context: Context): String = "${context.getString(R.string.gif)}-${context.getString(R.string.image)}-${getFormattedDate()}.gif"
+
+    @JvmStatic
+    fun constructVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
 
     // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
     @JvmStatic

@@ -1808,7 +1808,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient ?: return
-
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
@@ -2118,11 +2117,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // exits before transmitting the audio!
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
-        // Genarate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
-        val now = System.currentTimeMillis()
-        val dateTimeFormat = SimpleDateFormat("yyyy-MM-dd-HHmmss", Locale.getDefault())
-        val formattedDate = dateTimeFormat.format(Date(now))
-        val voiceMessageFilename = applicationContext.getString(R.string.messageVoice).replace(" ", "") + "_$formattedDate" + ".aac"
+        // Generate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
+        val voiceMessageFilename = FilenameUtils.constructVoiceMessageFilename(applicationContext)
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
