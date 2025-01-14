@@ -116,7 +116,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                onBackPressedDispatcher.onBackPressed()
+                onBackPressed()
                 return true
             }
         }
