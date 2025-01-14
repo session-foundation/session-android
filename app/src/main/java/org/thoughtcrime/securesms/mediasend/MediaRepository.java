@@ -22,10 +22,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import network.loki.messenger.R;
-import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.mms.PartAuthority;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 /**
@@ -170,9 +170,9 @@ class MediaRepository {
                 int    width       = cursor.getInt(cursor.getColumnIndexOrThrow(getWidthColumn(orientation)));
                 int    height      = cursor.getInt(cursor.getColumnIndexOrThrow(getHeightColumn(orientation)));
                 long   size        = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.SIZE));
-                String filename    = FileUtils.getFilenameFromUri(context, uri);
+                String filename    = FilenameUtils.getFilenameFromUri(context, uri);
 
-                media.add(new Media(uri, mimetype, dateTaken, width, height, size, Optional.of(bucketId), Optional.absent(), Optional.of(filename)));
+                media.add(new Media(uri, filename, mimetype, dateTaken, width, height, size, Optional.of(bucketId), Optional.absent()));
             }
         }
 
@@ -236,10 +236,10 @@ class MediaRepository {
         // performing from within Session the
         // media filename is populated, but when external sharing it is NOT. The `getFilenameFromUri`
         // method attempts both techniques in sequence - if the result is null then the calling code
-        // will have to the MeACL
-        String filename = FileUtils.getFilenameFromUri(context, media.getUri());
+        // will have to the Me ACL
+        String filename = FilenameUtils.getFilenameFromUri(context, media.getUri());
 
-        return new Media(media.getUri(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption(), Optional.of(filename));
+        return new Media(media.getUri(), filename, media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
 
     private Media getContentResolverPopulatedMedia(@NonNull Context context, @NonNull Media media) throws IOException {
@@ -265,9 +265,9 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        String filename = FileUtils.getFilenameFromUri(context, media.getUri());
+        String filename = FilenameUtils.getFilenameFromUri(context, media.getUri());
 
-        return new Media(media.getUri(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption(), Optional.of(filename));
+        return new Media(media.getUri(), filename, media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
 
     private static class FolderResult {

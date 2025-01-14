@@ -22,7 +22,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import com.squareup.phrase.Phrase;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import network.loki.messenger.R;
@@ -37,6 +36,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 
 /**
  * Encompasses the entire flow of sending media, starting from the selection process to the actual
@@ -257,25 +257,22 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
     @Override
     public void onImageCaptured(@NonNull byte[] data, int width, int height) {
         Log.i(TAG, "Camera image captured.");
-
-        SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd-HHmmss");
-        String formattedDate = dateFormatter.format(System.currentTimeMillis());
-
         SimpleTask.run(getLifecycle(), () -> {
             try {
                 Uri uri = BlobProvider.getInstance()
                         .forData(data)
                         .withMimeType(MediaTypes.IMAGE_JPEG)
                         .createForSingleSessionOnDisk(this, e -> Log.w(TAG, "Failed to write to disk.", e));
+
                 return new Media(uri,
+                        FilenameUtils.constructPhotoFilename(),
                         MediaTypes.IMAGE_JPEG,
                         System.currentTimeMillis(),
                         width,
                         height,
                         data.length,
                         Optional.of(Media.ALL_MEDIA_BUCKET_ID),
-                        Optional.absent(),
-                        Optional.of("Photo-" + formattedDate)
+                        Optional.absent()
                 );
             } catch (IOException e) {
                 return null;

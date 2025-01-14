@@ -90,8 +90,6 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.FileUtils
-import org.session.libsession.utilities.FileUtils.BAD_FILENAME
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -189,6 +187,7 @@ import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
@@ -214,7 +213,6 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.minutes
-
 
 private const val TAG = "ConversationActivityV2"
 
@@ -750,18 +748,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mediaURI = intent.data
         val mediaType = AttachmentManager.MediaType.from(intent.type)
         val mimeType =  MediaUtil.getMimeType(this, mediaURI)
+
         if (mediaURI != null && mediaType != null) {
+            val filename = FilenameUtils.getFilenameFromUri(this, mediaURI)
+
             if (mimeType != null &&
                         (AttachmentManager.MediaType.IMAGE == mediaType ||
                         AttachmentManager.MediaType.GIF    == mediaType ||
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
-                val filename = FileUtils.getFilenameFromUri(this, mediaURI)
-                val media = Media(mediaURI, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent(), Optional.of(filename))
+                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
-                prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
+                prepMediaForSending(mediaURI, mediaType, filename).addListener(object : ListenableFuture.Listener<Boolean> {
 
                     override fun onSuccess(result: Boolean?) {
                         sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
@@ -1647,12 +1647,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         sendEmojiRemoval(emoji, message)
     }
 
-    /**
-     * Called when the user is attempting to clear all instance of a specific emoji.
-     */
-    override fun onClearAll(emoji: String, messageId: MessageId) {
-        viewModel.onEmojiClear(emoji, messageId)
-    }
+    // Called when the user is attempting to clear all instance of a specific emoji
+    override fun onClearAll(emoji: String, messageId: MessageId) { viewModel.onEmojiClear(emoji, messageId) }
 
     override fun onMicrophoneButtonMove(event: MotionEvent) {
         val rawX = event.rawX
@@ -1812,8 +1808,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun commitInputContent(contentUri: Uri) {
         val recipient = viewModel.recipient ?: return
-        val filename = FileUtils.getFilenameFromUri(this, contentUri)
-        val media = Media(contentUri, MediaUtil.getMimeType(this, contentUri)!!, 0, 0, 0, 0, Optional.absent(), Optional.absent(), Optional.of(filename))
+
+        val mimeType = MediaUtil.getMimeType(this, contentUri)!!
+        val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
+        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -1844,12 +1842,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             message.sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
         lifecycleScope.launch(Dispatchers.Default) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = smsDb.insertMessageOutbox(
                 viewModel.threadId,
                 outgoingTextMessage,
@@ -1858,7 +1857,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 true
             )
-            // Send it
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
@@ -1875,6 +1873,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val recipient = viewModel.recipient ?: return null
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
+
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
@@ -1897,18 +1896,21 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             sentTimestamp
         } else 0
         val outgoingTextMessage = OutgoingMediaMessage.from(message, recipient, attachments, localQuote, linkPreview, expiresInMs, expireStartedAtMs)
+
         // Clear the input bar
         binding.inputBar.text = ""
         binding.inputBar.cancelQuoteDraft()
         binding.inputBar.cancelLinkPreviewDraft()
+
         // Reset the attachment manager
         attachmentManager.clear()
+
         // Reset attachments button if needed
         if (isShowingAttachmentOptions) { toggleAttachmentOptions() }
 
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.IO) {
-            // Put the message in the database
+            // Put the message in the database and send it
             message.id = mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
                 viewModel.threadId,
@@ -1916,7 +1918,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 null,
                 runThreadUpdate = true
             )
-            // Send it
             MessageSender.send(message, recipient.address, attachments, quote, linkPreview)
         }
 
@@ -1992,26 +1993,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // If we somehow couldn't get the filename (or it was null) then we'll provide a fallback filename with a formatted timestamp
-        val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
-        val formattedDate = dateFormatter.format(System.currentTimeMillis())
-
         when (requestCode) {
             PICK_DOCUMENT -> {
                 intent ?: return Log.w(TAG, "Failed to get document Intent")
                 val uri = intent.data ?: return Log.w(TAG, "Failed to get document Uri")
-                prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT).addListener(mediaPreppedListener)
+                val filename = FilenameUtils.constructPickedGifFilename(this)
+                prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT, filename).addListener(mediaPreppedListener)
             }
             PICK_GIF -> {
                 intent ?: return Log.w(TAG, "Failed to get GIF Intent")
-                val uri = intent.data ?: return Log.w(TAG, "Failed to get GIF Uri")
+                val uri = intent.data ?: return Log.w(TAG, "Failed to get picked GIF Uri")
 
-                // Note: GIF images returned from Giphy don't have filenames - so the best we can do is synthesize a
-                // reasonable one using the current date such as: "GIF-Image-2025-01-14-085923.gif". I am NOT calling
-                // this "Session-GIF-<DATE>" as per below as a fallback because it's not _really_ coming from Session
-                // - it's coming from Giphy.
-                val filename = "${this.getString(R.string.gif)}-${this.getString(R.string.image)}-${formattedDate}.gif"
-
+                val filename = FilenameUtils.constructPickedGifFilename(this)
                 val type   = AttachmentManager.MediaType.GIF
                 val width  = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
                 val height = intent.getIntExtra(GiphyActivity.EXTRA_HEIGHT, 0)
@@ -2025,30 +2018,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val mediaList = intent.getParcelableArrayListExtra<Media>(MediaSendActivity.EXTRA_MEDIA) ?: return
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
-                    // Grab the filename from the Media item (populated on selection from the file picker)
-                    var mediaFilename: String = media.filename
-
+                    val mediaFilename: String? = media.filename
                     when {
-                        // Note: Both media.getFilename and FileUtils.getFilenameFromUri return the BAD_FILENAME constant if extraction failed
-                        MediaUtil.isVideoType(media.mimeType) -> {
-                            if (mediaFilename == BAD_FILENAME) {
-                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.video)}-${formattedDate}" // Session-Video-<Date>
-                            }
-                            slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))
-
-                        }
-                        MediaUtil.isGif(media.mimeType) -> {
-                            if (mediaFilename == BAD_FILENAME) {
-                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.gif)}-${formattedDate}"
-                            }
-                            slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) // Session-GIF-<Date>
-                        }
-                        MediaUtil.isImageType(media.mimeType) -> {
-                            if (mediaFilename == BAD_FILENAME) {
-                                mediaFilename = "${this.getString(R.string.app_name)}-${this.getString(R.string.image)}-${formattedDate}" // Session-Image-<Date>
-                            }
-                            slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))
-                        }
+                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
+                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
+                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) }
                         else -> {
                             Log.d(TAG, "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
@@ -2069,12 +2043,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    // Used for sending documents
-    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean> {
-        return prepMediaForSending(uri, type, null, null, null)
-    }
+    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, filename: String): ListenableFuture<Boolean>  =  prepMediaForSending(uri, type, null, null, filename)
 
-    // Used for sending Giphy GIFs
     private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, width: Int?, height: Int?, filename: String?): ListenableFuture<Boolean> {
         return attachmentManager.setMedia(glide, uri, type, MediaConstraints.getPushMediaConstraints(), width ?: 0, height ?: 0, filename)
     }

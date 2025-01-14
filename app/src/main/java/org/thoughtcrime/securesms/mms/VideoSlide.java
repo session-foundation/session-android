@@ -24,14 +24,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import network.loki.messenger.R;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.MediaTypes;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 public class VideoSlide extends Slide {
 
-  public VideoSlide(Context context, Uri uri, long dataSize) {
-    this(context, uri, FileUtils.getFilenameFromUri(context, uri), dataSize, null);
+  public VideoSlide(Context context, Uri uri, String filename, long dataSize) {
+    this(context, uri, filename, dataSize, null);
   }
 
   public VideoSlide(Context context, Uri uri, String filename, long dataSize, @Nullable String caption) {

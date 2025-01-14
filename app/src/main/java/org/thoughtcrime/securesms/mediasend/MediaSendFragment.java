@@ -64,10 +64,9 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                                            InputAwareLayout.OnKeyboardShownListener,
                                                            InputAwareLayout.OnKeyboardHiddenListener
 {
-
   private static final String TAG = MediaSendFragment.class.getSimpleName();
 
-  private static final String KEY_ADDRESS   = "address";
+  private static final String KEY_ADDRESS = "address";
 
   private InputAwareLayout  hud;
   private View              captionAndRail;
@@ -119,7 +118,6 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-
     initViewModel();
   }
 
@@ -375,7 +373,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
                                     .withMimeType(MediaTypes.IMAGE_JPEG)
                                     .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
 
-              Media updated = new Media(uri, MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption(), Optional.of(media.getFilename()));
+              Media updated = new Media(uri, media.getFilename(), MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
 
               updatedMedia.add(updated);
               renderTimer.split("item");

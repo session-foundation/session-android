@@ -7,20 +7,18 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.session.libsession.utilities.FileUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Exception
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
@@ -28,6 +26,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.FileProviderUtil
+import org.thoughtcrime.securesms.util.FilenameUtils
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
@@ -235,7 +234,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                     val localUri = copyFileToCache(originalUri)
 
                     // ..then grab the real filename, using a fallback if we couldn't get it from the original Uri..
-                    val fileName = FileUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, originalUri)
+                    val fileName = FilenameUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, originalUri)
 
                     if (localUri != null) {
                         // ..then create the new ClipData with the localUri and filename.
@@ -270,7 +269,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     private suspend fun copyFileToCache(uri: Uri): Uri? = withContext(Dispatchers.IO) {
         // Get the actual display name if possible
-        val fileName = FileUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, uri)
+        val fileName = FilenameUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, uri)
 
         try {
             val inputStream = contentResolver.openInputStream(uri)

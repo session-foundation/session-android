@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.mediapreview;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.provider.OpenableColumns;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -16,9 +14,11 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import javax.inject.Inject;
+import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.MediaDatabase.MediaRecord;
 import org.thoughtcrime.securesms.mediasend.Media;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 
 @HiltViewModel
 public class MediaPreviewViewModel extends ViewModel {
@@ -95,10 +95,7 @@ public class MediaPreviewViewModel extends ViewModel {
     }
 
     private int getCursorPosition(int position) {
-        if (cursor == null) {
-            return 0;
-        }
-
+        if (cursor == null) { return 0;  }
         if (leftIsRecent) return position;
         else              return cursor.getCount() - 1 - position;
     }
@@ -108,39 +105,21 @@ public class MediaPreviewViewModel extends ViewModel {
                 : mediaRecord.getAttachment().getDataUri();
 
         if (uri == null) {
+            Log.w("MediaPreviewViewModel", "MediaPreviewViewModel cannot construct Media from a null Uri - bailing.");
             return null;
         }
 
-        String scheme = uri.getScheme();
-        String extractedFilename = null;
-        if ("content".equalsIgnoreCase(scheme)) {
-            String[] projection = new String[]{OpenableColumns.DISPLAY_NAME};
-            ContentResolver contentRes = context.getContentResolver();
-            if (contentRes != null) {
-                Cursor cursor = contentRes.query(uri, projection, null, null, null);
-
-                if (cursor != null) {
-                    try {
-                        if (cursor.moveToFirst()) {
-                            int nameIndex = cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME);
-                            extractedFilename = cursor.getString(nameIndex);
-                        }
-                    } finally {
-                        cursor.close();
-                    }
-                }
-            }
-        }
+        String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri);
 
         return new Media(uri,
+                extractedFilename,
                 mediaRecord.getContentType(),
                 mediaRecord.getDate(),
                 mediaRecord.getAttachment().getWidth(),
                 mediaRecord.getAttachment().getHeight(),
                 mediaRecord.getAttachment().getSize(),
                 Optional.absent(),
-                Optional.fromNullable(mediaRecord.getAttachment().getCaption()),
-                Optional.fromNullable(extractedFilename)
+                Optional.fromNullable(mediaRecord.getAttachment().getCaption())
         );
     }
 

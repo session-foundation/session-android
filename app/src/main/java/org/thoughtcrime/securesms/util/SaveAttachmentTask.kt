@@ -179,7 +179,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 }
                 contentValues.put(MediaStore.MediaColumns.DATA, dataPath)
             }
-            return context.contentResolver.insert(outputUri, contentValues) // <-- This is line 175 of SaveAttachmentTask
+            return context.contentResolver.insert(outputUri, contentValues)
         }
 
         private fun getExternalPathToFileForType(context: Context, contentType: String): String {
@@ -251,8 +251,6 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
     override fun onPostExecute(result: Pair<Int, String?>) {
         super.onPostExecute(result)
         val context = contextReference.get() ?: return
-
-        Log.i("ACL", "onPostExecute - second is: '" + result.second + "'")
 
         when (result.first) {
             RESULT_FAILURE -> {

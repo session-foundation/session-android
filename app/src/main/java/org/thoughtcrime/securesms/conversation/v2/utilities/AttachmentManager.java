@@ -16,7 +16,6 @@
  */
 package org.thoughtcrime.securesms.conversation.v2.utilities;
 
-import static org.session.libsession.utilities.FileUtils.BAD_FILENAME;
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 
 import android.Manifest;
@@ -42,7 +41,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import network.loki.messenger.R;
-import org.session.libsession.utilities.FileUtils;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
@@ -61,6 +59,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.providers.BlobProvider;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
 public class AttachmentManager {
@@ -401,34 +400,19 @@ public class AttachmentManager {
             if (mimeType == null) { mimeType = "application/octet-stream"; }
 
             // Try to extract a filename from the Uri if we weren't provided one
-            String extractedFilename = FileUtils.getFilenameFromUri(context, uri);
+            String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri);
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
-
-                // TEMPORARY: This works using `filename` - which is actually correct in this instance.
-                //case GIF:      return new GifSlide(context, uri, filename, dataSize, width, height, null);
-                case GIF: {
-
-
-                    // GIFs may come from Giphy, in which case we'll have BAD_FILENAME as the filename - and instead of that
-                    // we'll pass through null to prompt generation of a sane filename using a formatted timestamp. However
-                    // if we DO have a good filename we'll use it.
-
-                    // CLEANUP IN PROGRESS ACL
-//                    Log.i("ACL", "extracted: " + extractedFilename);
-//                    Log.i("ACL", "filename: " + filename);
-//                    String gifFilename = null;
-//                    if (!extractedFilename.equals(BAD_FILENAME)) { gifFilename = extractedFilename; }
-//                    Log.i("ACL", "gifFilename: " + gifFilename);
-
-                    return new GifSlide(context, uri, filename, dataSize, width, height, null);
-                }
-
                 case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false);
-                case VIDEO:    return new VideoSlide(context, uri, dataSize);
+                case VIDEO:    return new VideoSlide(context, uri, extractedFilename, dataSize);
                 case VCARD:
                 case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);
+                case GIF: {
+                    // GIFs picked from Giphy don't have a filename to extract so we synthesize a suitable one
+                    String pickedGifFilename = FilenameUtils.constructPickedGifFilename(context);
+                    return new GifSlide(context, uri, pickedGifFilename, dataSize, width, height, null);
+                }
                 default:       throw  new AssertionError("unrecognized enum");
             }
         }
