@@ -22,6 +22,7 @@ object FilenameUtils {
     @JvmStatic
     fun constructPickedGifFilename(context: Context): String = "${context.getString(R.string.gif)}-${context.getString(R.string.image)}-${getFormattedDate()}.gif"
 
+    // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
     @JvmStatic
     fun constructFallbackMediaFilenameFromMimeType(context: Context, mimeType: String): String {
         return if (MediaUtil.isVideoType(mimeType)) {
@@ -74,7 +75,7 @@ object FilenameUtils {
 
         // Uri filename extraction failed - synthesize a filename from the media's MIME type
         if (extractedFilename == null && mimeType != null) {
-
+            constructFallbackMediaFilenameFromMimeType(context, mimeType)
         }
 
         if (extractedFilename == null) {
