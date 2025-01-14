@@ -1,7 +1,11 @@
 package org.thoughtcrime.securesms.groups.compose
 
+import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -26,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
@@ -36,6 +42,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -53,9 +60,9 @@ import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
+import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -99,6 +106,7 @@ fun EditGroupScreen(
                 onMemberClicked = viewModel::onMemberClicked,
                 hideActionSheet = viewModel::hideActionBottomSheet,
                 clickedMember = viewModel.clickedMember.collectAsState().value,
+                showLoading = viewModel.inProgress.collectAsState().value,
             )
         }
 
@@ -141,6 +149,7 @@ fun EditGroup(
     members: List<GroupMemberState>,
     showAddMembers: Boolean,
     showingError: String?,
+    showLoading: Boolean,
     onErrorDismissed: () -> Unit,
 ) {
     val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
@@ -157,115 +166,138 @@ fun EditGroup(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Box {
+            Column(modifier = Modifier.padding(paddingValues)) {
+                GroupMinimumVersionBanner()
 
-            GroupMinimumVersionBanner()
+                // Group name title
+                Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
+                    if (showNameEditing) {
+                        GroupNameContainer {
+                            IconButton(
+                                modifier = Modifier.size(LocalDimensions.current.spacing),
+                                onClick = onEditNameCancelClicked
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_x),
+                                    contentDescription = stringResource(R.string.AccessibilityId_cancel),
+                                    tint = LocalColors.current.text,
+                                )
+                            }
 
-            // Group name title
-            Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
-                if (showNameEditing) {
-                    GroupNameContainer {
-                        IconButton(
-                            modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameCancelClicked) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_x),
-                                contentDescription = stringResource(R.string.AccessibilityId_cancel),
-                                tint = LocalColors.current.text,
-                            )
-                        }
-
-                        SessionOutlinedTextField(
-                            modifier = Modifier.widthIn(
-                                min = LocalDimensions.current.mediumSpacing,
-                                max = maxNameWidth
-                            )
-                                .qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                            text = editingName.orEmpty(),
-                            onChange = onEditingNameValueChanged,
-                            textStyle = LocalType.current.h8,
-                            singleLine = true,
-                            innerPadding = PaddingValues(
-                                horizontal = LocalDimensions.current.spacing,
-                                vertical = LocalDimensions.current.smallSpacing
-                            )
-                        )
-
-                        IconButton(
-                            modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameConfirmed) {
-                            Icon(
-                                painter = painterResource(R.drawable.check),
-                                contentDescription = stringResource(R.string.AccessibilityId_confirm),
-                                tint = LocalColors.current.text,
-                            )
-                        }
-                    }
-
-
-                } else {
-                    GroupNameContainer {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = groupName,
-                            style = LocalType.current.h4,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.widthIn(max = maxNameWidth)
-                                .padding(vertical = LocalDimensions.current.smallSpacing),
-                        )
-
-                        Box(modifier = Modifier.weight(1f)) {
-                            if (canEditName) {
-                                IconButton(
-                                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                                    onClick = onEditNameClicked
-                                ) {
-                                    Icon(
-                                        painterResource(R.drawable.ic_baseline_edit_24),
-                                        contentDescription = stringResource(R.string.edit),
-                                        tint = LocalColors.current.text,
+                            SessionOutlinedTextField(
+                                modifier = Modifier
+                                    .widthIn(
+                                        min = LocalDimensions.current.mediumSpacing,
+                                        max = maxNameWidth
                                     )
+                                    .qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                text = editingName.orEmpty(),
+                                onChange = onEditingNameValueChanged,
+                                textStyle = LocalType.current.h8,
+                                singleLine = true,
+                                innerPadding = PaddingValues(
+                                    horizontal = LocalDimensions.current.spacing,
+                                    vertical = LocalDimensions.current.smallSpacing
+                                )
+                            )
+
+                            IconButton(
+                                modifier = Modifier.size(LocalDimensions.current.spacing),
+                                onClick = onEditNameConfirmed
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.check),
+                                    contentDescription = stringResource(R.string.AccessibilityId_confirm),
+                                    tint = LocalColors.current.text,
+                                )
+                            }
+                        }
+
+
+                    } else {
+                        GroupNameContainer {
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = groupName,
+                                style = LocalType.current.h4,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .widthIn(max = maxNameWidth)
+                                    .padding(vertical = LocalDimensions.current.smallSpacing),
+                            )
+
+                            Box(modifier = Modifier.weight(1f)) {
+                                if (canEditName) {
+                                    IconButton(
+                                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                        onClick = onEditNameClicked
+                                    ) {
+                                        Icon(
+                                            painterResource(R.drawable.ic_baseline_edit_24),
+                                            contentDescription = stringResource(R.string.edit),
+                                            tint = LocalColors.current.text,
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // Header & Add member button
-            Row(
-                modifier = Modifier.padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxsSpacing
-                ),
-                verticalAlignment = CenterVertically
-            ) {
-                Text(
-                    stringResource(R.string.groupMembers),
-                    modifier = Modifier.weight(1f),
-                    style = LocalType.current.large,
-                    color = LocalColors.current.text
-                )
-
-                if (showAddMembers) {
-                    PrimaryOutlineButton(
-                        stringResource(R.string.membersInvite),
-                        onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
+                // Header & Add member button
+                Row(
+                    modifier = Modifier.padding(
+                        horizontal = LocalDimensions.current.smallSpacing,
+                        vertical = LocalDimensions.current.xxsSpacing
+                    ),
+                    verticalAlignment = CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.groupMembers),
+                        modifier = Modifier.weight(1f),
+                        style = LocalType.current.large,
+                        color = LocalColors.current.text
                     )
+
+                    if (showAddMembers) {
+                        PrimaryOutlineButton(
+                            stringResource(R.string.membersInvite),
+                            onClick = onAddMemberClick,
+                            modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
+                        )
+                    }
+                }
+
+
+                // List of members
+                LazyColumn(modifier = Modifier) {
+                    items(members) { member ->
+                        // Each member's view
+                        EditMemberItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            member = member,
+                            onClick = { onMemberClicked(member) }
+                        )
+                    }
                 }
             }
 
-
-            // List of members
-            LazyColumn(modifier = Modifier) {
-                items(members) { member ->
-                    // Each member's view
-                    EditMemberItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        member = member,
-                        onClick = { onMemberClicked(member) }
+            if (showLoading) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {}
                     )
+                    .padding(paddingValues)
+                    .background(LocalColors.current.backgroundSecondary.copy(alpha = 0.8f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AndroidView(factory = {
+                        LayoutInflater.from(it).inflate(R.layout.view_spin_kit_loader, null)
+                    })
                 }
             }
         }
@@ -515,7 +547,8 @@ private fun EditGroupPreview3() {
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = true,
         )
     }
 }
@@ -589,7 +622,8 @@ private fun EditGroupPreview() {
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = false,
         )
     }
 }
@@ -655,7 +689,8 @@ private fun EditGroupEditNamePreview() {
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = false,
         )
     }
 }

@@ -291,9 +291,9 @@ fun LoadingDialog(
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
                     title?.let {
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
                         Text(
                             it,
                             modifier = Modifier.align(Alignment.CenterHorizontally)

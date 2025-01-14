@@ -196,7 +196,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
         lifecycleScope.launch {
             viewModel.showLoader.collect {
-                binding.loader.isVisible = it
+                binding.loader.root.isVisible = it
             }
         }
 
@@ -303,7 +303,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun updateDisplayName(displayName: String): Boolean {
-        binding.loader.isVisible = true
+        binding.loader.root.isVisible = true
 
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
@@ -324,7 +324,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
             Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        binding.loader.isVisible = false
+        binding.loader.root.isVisible = false
         return updateWasSuccessful
     }
     // endregion

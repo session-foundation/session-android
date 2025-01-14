@@ -264,6 +264,9 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
+        // Before we send the invitation, we need to make sure the configs are pushed
+        configFactory.waitUntilGroupConfigsPushed(group)
+
         // Call the API
         try {
             val swarmNode = SnodeAPI.getSingleTargetSnode(group.hexString).await()
