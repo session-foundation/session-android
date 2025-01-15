@@ -265,7 +265,7 @@ public class MediaSendActivity extends ScreenLockActionBarActivity implements Me
                         .createForSingleSessionOnDisk(this, e -> Log.w(TAG, "Failed to write to disk.", e));
 
                 return new Media(uri,
-                        FilenameUtils.constructPhotoFilename(),
+                        FilenameUtils.constructPhotoFilename(this),
                         MediaTypes.IMAGE_JPEG,
                         System.currentTimeMillis(),
                         width,

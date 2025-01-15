@@ -6,7 +6,6 @@ import android.provider.OpenableColumns
 import java.text.SimpleDateFormat
 import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
-import java.util.Date
 import java.util.Locale
 
 object FilenameUtils {
@@ -18,11 +17,7 @@ object FilenameUtils {
     }
 
     @JvmStatic
-    fun constructPhotoFilename(): String = "Photo-${getFormattedDate()}.jpg"
-
-    // GIFs picked from Giphy don't have filenames (we just get a GUID) - so synthesize a more reasonable filename such as "GIF-Image-<Date>.gif"
-    @JvmStatic
-    fun constructPickedGifFilename(context: Context): String = "${context.getString(R.string.gif)}-${context.getString(R.string.image)}-${getFormattedDate()}.gif"
+    fun constructPhotoFilename(context: Context): String = "${context.getString(R.string.app_name)}-Photo-${getFormattedDate()}.jpg"
 
     @JvmStatic
     fun constructVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
@@ -78,7 +73,10 @@ object FilenameUtils {
             extractedFilename = attemptUriPathExtraction(uri.path!!)
         }
 
-        // Uri filename extraction failed - synthesize a filename from the media's MIME type
+        // Uri filename extraction failed - synthesize a filename from the media's MIME type.
+        // Note: Giphy picked GIFs will use this to get a filename like "Session-GIF-<Date>" - but pre-saved GIFs
+        // chosen via the file-picker or similar will use the existing saved filename as they will be caught in
+        // the filename extraction code above.
         if (extractedFilename == null) {
             extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType)
         }

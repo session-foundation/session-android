@@ -179,7 +179,6 @@ public class AttachmentManager {
                     cursor = context.getContentResolver().query(uri, null, null, null, null);
 
                     if (cursor != null && cursor.moveToFirst()) {
-                        String fileName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
                         long   fileSize = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE));
                         String mimeType = context.getContentResolver().getType(uri);
 
@@ -190,7 +189,7 @@ public class AttachmentManager {
                         }
 
                         Log.d(TAG, "remote slide with size " + fileSize + " took " + (System.currentTimeMillis() - start) + "ms");
-                        return mediaType.createSlide(context, uri, fileName, mimeType, fileSize, width, height);
+                        return mediaType.createSlide(context, uri, mimeType, fileSize, width, height);
                     }
                 } finally {
                     if (cursor != null) cursor.close();
@@ -202,11 +201,9 @@ public class AttachmentManager {
             private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height) throws IOException {
                 long start           = System.currentTimeMillis();
                 Long mediaSize       = null;
-                String mediaFilename = null;
                 String mimeType      = null;
 
                 if (PartAuthority.isLocalUri(uri)) {
-                    mediaFilename = PartAuthority.getAttachmentFileName(context, uri);
                     mediaSize = PartAuthority.getAttachmentSize(context, uri);
                     mimeType  = PartAuthority.getAttachmentContentType(context, uri);
                 }
@@ -221,7 +218,7 @@ public class AttachmentManager {
                 }
 
                 Log.d(TAG, "local slide with size " + mediaSize + " took " + (System.currentTimeMillis() - start) + "ms");
-                return mediaType.createSlide(context, uri, mediaFilename, mimeType, mediaSize, width, height);
+                return mediaType.createSlide(context, uri, mimeType, mediaSize, width, height);
             }
         }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
@@ -384,7 +381,6 @@ public class AttachmentManager {
 
         public @NonNull Slide createSlide(@NonNull Context context,
                                           @NonNull Uri uri,
-                                          String filename,
                                           @Nullable String mimeType,
                                           long dataSize,
                                           int width,
@@ -393,7 +389,7 @@ public class AttachmentManager {
             if (mimeType == null) { mimeType = "application/octet-stream"; }
 
             // Try to extract a filename from the Uri if we weren't provided one
-            String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri);
+            String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri, mimeType);
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
@@ -401,11 +397,7 @@ public class AttachmentManager {
                 case VIDEO:    return new VideoSlide(context, uri, extractedFilename, dataSize);
                 case VCARD:
                 case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);
-                case GIF: {
-                    // GIFs picked from Giphy don't have a filename to extract so we synthesize a suitable one
-                    String pickedGifFilename = FilenameUtils.constructPickedGifFilename(context);
-                    return new GifSlide(context, uri, pickedGifFilename, dataSize, width, height, null);
-                }
+                case GIF:      return new GifSlide(context, uri, extractedFilename, dataSize, width, height, null);
                 default:       throw  new AssertionError("unrecognized enum");
             }
         }
