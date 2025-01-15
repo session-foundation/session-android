@@ -81,7 +81,7 @@ object FilenameUtils {
             extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType)
         }
 
-        return extractedFilename
+        return extractedFilename!!
     }
 
     private fun attemptUriPathExtraction(uriPath: String): String? {
