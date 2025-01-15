@@ -77,10 +77,11 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
-        super.onCreate(savedInstanceState)
 
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
         routeApplicationState(locked)
+
+        super.onCreate(savedInstanceState)
 
         if (!isFinishing) {
             initializeClearKeyReceiver()

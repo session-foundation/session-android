@@ -29,7 +29,7 @@ object FilenameUtils {
 
     // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
     @JvmStatic
-    fun constructFallbackMediaFilenameFromMimeType(context: Context, mimeType: String): String {
+    fun constructFallbackMediaFilenameFromMimeType(context: Context, mimeType: String?): String {
         return if (MediaUtil.isVideoType(mimeType)) {
             "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}-${getFormattedDate()}" // Session-Video-<Date>
         } else if (MediaUtil.isGif(mimeType)) {
@@ -37,8 +37,8 @@ object FilenameUtils {
         } else if (MediaUtil.isImageType(mimeType)) {
             "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}-${getFormattedDate()}" // Session-Image-<Date>
         } else {
-            Log.d(TAG, "Asked to construct a filename for an unsupported media type: $mimeType - returning timestamp.")
-            System.currentTimeMillis().toString()
+            Log.d(TAG, "Asked to construct a filename for an unsupported media type: $mimeType.")
+            "${context.getString(R.string.app_name)}-${getFormattedDate()}" // Session-<Date> - best we can do
         }
     }
 
@@ -79,13 +79,8 @@ object FilenameUtils {
         }
 
         // Uri filename extraction failed - synthesize a filename from the media's MIME type
-        if (extractedFilename == null && mimeType != null) {
-            constructFallbackMediaFilenameFromMimeType(context, mimeType)
-        }
-
         if (extractedFilename == null) {
-            Log.w(TAG, "Failed to get filename from content resolver or Uri path - returning current timestamp as filename due to extreme fallback")
-            extractedFilename = System.currentTimeMillis().toString()
+            extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType)
         }
 
         return extractedFilename

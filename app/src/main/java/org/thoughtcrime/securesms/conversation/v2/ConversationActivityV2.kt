@@ -1996,7 +1996,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             PICK_DOCUMENT -> {
                 intent ?: return Log.w(TAG, "Failed to get document Intent")
                 val uri = intent.data ?: return Log.w(TAG, "Failed to get document Uri")
+
+                //val filename = FilenameUtils.getFilenameFromUri(this, uri) THIS IS CORRECT
                 val filename = FilenameUtils.constructPickedGifFilename(this)
+                Log.i("ACL", "Setting a DOCUMENT name to: " + filename)
+
                 prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT, filename).addListener(mediaPreppedListener)
             }
             PICK_GIF -> {
@@ -2018,6 +2022,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
+                    Log.i("ACL", "Media filename is: $mediaFilename")
                     when {
                         MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
                         MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
