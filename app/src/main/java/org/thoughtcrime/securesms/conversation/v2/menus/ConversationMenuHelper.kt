@@ -414,7 +414,7 @@ object ConversationMenuHelper {
                     doLeave = {
                         try {
                             channel.send(GroupLeavingStatus.Leaving)
-                            groupManager.leaveGroup(accountId, true)
+                            groupManager.leaveGroup(accountId)
                             channel.send(GroupLeavingStatus.Left)
                         } catch (e: Exception) {
                             channel.send(GroupLeavingStatus.Error)

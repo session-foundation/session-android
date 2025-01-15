@@ -4,6 +4,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.GroupUtil
 
 class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: String?) : Job {
@@ -32,7 +33,7 @@ class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: 
         }
 
         try {
-            val bytes = OpenGroupApi.downloadOpenGroupProfilePicture(server, room, imageId).get()
+            val bytes = OpenGroupApi.downloadOpenGroupProfilePicture(server, room, imageId).await()
 
             // Once the download is complete the imageId might no longer match, so we need to fetch it again just in case
             val postDownloadStoredImageId = storage.getOpenGroup(room, server)?.imageId

@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
@@ -114,7 +115,9 @@ class MentionViewModel(
                     }
                 } else if (recipient.isGroupV2Recipient) {
                     configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
-                        it.groupMembers.all().filterTo(hashSetOf()) { it.isAdminOrBeingPromoted }
+                        it.groupMembers.allWithStatus()
+                            .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
+                            .mapTo(hashSetOf()) { (member, _) -> member.accountId.toString() }
                     }
                 } else {
                     emptySet()

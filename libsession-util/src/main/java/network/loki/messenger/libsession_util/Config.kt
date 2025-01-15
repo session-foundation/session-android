@@ -384,12 +384,19 @@ class GroupInfoConfig private constructor(pointer: Long): ConfigBase(pointer), M
 interface ReadableGroupMembersConfig: ReadableConfig {
     fun all(): List<GroupMember>
     fun get(pubKeyHex: String): GroupMember?
+    fun status(groupMember: GroupMember): GroupMember.Status
+}
+
+fun ReadableGroupMembersConfig.allWithStatus(): Sequence<Pair<GroupMember, GroupMember.Status>> {
+    return all().asSequence().map { it to status(it) }
 }
 
 interface MutableGroupMembersConfig : ReadableGroupMembersConfig, MutableConfig {
     fun getOrConstruct(pubKeyHex: String): GroupMember
     fun set(groupMember: GroupMember)
     fun erase(pubKeyHex: String): Boolean
+
+    fun setPendingSend(pubKeyHex: String, pending: Boolean)
 }
 
 class GroupMembersConfig private constructor(pointer: Long): ConfigBase(pointer), MutableGroupMembersConfig {
@@ -411,6 +418,13 @@ class GroupMembersConfig private constructor(pointer: Long): ConfigBase(pointer)
     external override fun get(pubKeyHex: String): GroupMember?
     external override fun getOrConstruct(pubKeyHex: String): GroupMember
     external override fun set(groupMember: GroupMember)
+    external override fun setPendingSend(pubKeyHex: String, pending: Boolean)
+
+    private external fun statusInt(groupMember: GroupMember): Int
+    override fun status(groupMember: GroupMember): GroupMember.Status {
+        val statusInt = statusInt(groupMember)
+        return GroupMember.Status.entries.first { it.nativeValue == statusInt }
+    }
 }
 
 sealed class ConfigSig(pointer: Long) : Config(pointer)

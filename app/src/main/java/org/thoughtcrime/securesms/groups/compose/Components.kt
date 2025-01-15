@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
 
 
 @Composable
@@ -42,7 +43,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
         maxLines = 2,
         textAlign = TextAlign.Center,
         modifier = Modifier
-            .background(LocalColors.current.warning)
+            .background(primaryOrange)
             .fillMaxWidth()
             .padding(
                 horizontal = LocalDimensions.current.spacing,

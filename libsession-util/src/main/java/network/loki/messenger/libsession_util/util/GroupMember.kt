@@ -31,9 +31,6 @@ class GroupMember private constructor(
 
     external fun setRemoved(alsoRemoveMessages: Boolean)
 
-    private external fun statusInt(): Int
-    val status: Status? get() = Status.entries.firstOrNull { it.nativeValue == statusInt() }
-
     external fun profilePic(): UserPic?
     external fun setProfilePic(pic: UserPic)
 
@@ -60,37 +57,43 @@ class GroupMember private constructor(
         destroy()
     }
 
-    val removed: Boolean
-        get() = status in EnumSet.of(Status.REMOVED, Status.REMOVED_UNKNOWN, Status.REMOVED_INCLUDING_MESSAGES)
+    fun isRemoved(status: Status): Boolean {
+        return status in EnumSet.of(Status.REMOVED, Status.REMOVED_UNKNOWN, Status.REMOVED_INCLUDING_MESSAGES)
+    }
 
-    val isAdminOrBeingPromoted: Boolean
-        get() = admin || status in EnumSet.of(Status.PROMOTION_SENT, Status.PROMOTION_ACCEPTED)
+    fun isAdminOrBeingPromoted(status: Status): Boolean {
+        return admin || status in EnumSet.of(Status.PROMOTION_SENT, Status.PROMOTION_ACCEPTED)
+    }
 
-    val inviteFailed: Boolean
-        get() = status == Status.INVITE_FAILED
+    fun inviteFailed(status: Status): Boolean {
+        return status == Status.INVITE_FAILED
+    }
 
-    val shouldRemoveMessages: Boolean
-        get() = status == Status.REMOVED_INCLUDING_MESSAGES
+    fun shouldRemoveMessages(status: Status): Boolean {
+        return status == Status.REMOVED_INCLUDING_MESSAGES
+    }
 
     enum class Status(val nativeValue: Int) {
         INVITE_UNKNOWN(0),
         INVITE_NOT_SENT(1),
-        INVITE_FAILED(2),
-        INVITE_SENT(3),
-        INVITE_ACCEPTED(4),
+        INVENT_SENDING(2),
+        INVITE_FAILED(3),
+        INVITE_SENT(4),
+        INVITE_ACCEPTED(5),
 
-        PROMOTION_UNKNOWN(5),
-        PROMOTION_NOT_SENT(6),
-        PROMOTION_FAILED(7),
-        PROMOTION_SENT(8),
-        PROMOTION_ACCEPTED(9),
+        PROMOTION_UNKNOWN(6),
+        PROMOTION_NOT_SENT(7),
+        PROMOTION_SENDING(8),
+        PROMOTION_FAILED(9),
+        PROMOTION_SENT(10),
+        PROMOTION_ACCEPTED(11),
 
-        REMOVED_UNKNOWN(10),
-        REMOVED(11),
-        REMOVED_INCLUDING_MESSAGES(12);
+        REMOVED_UNKNOWN(12),
+        REMOVED(13),
+        REMOVED_INCLUDING_MESSAGES(14);
     }
 
     override fun toString(): String {
-        return "GroupMember(name=$name, admin=$admin, supplement=$supplement, status=$status)"
+        return "GroupMember(name=$name, admin=$admin, supplement=$supplement)"
     }
 }

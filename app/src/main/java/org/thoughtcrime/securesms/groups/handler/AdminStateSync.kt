@@ -3,14 +3,12 @@ package org.thoughtcrime.securesms.groups.handler
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
 import java.util.EnumSet
 import javax.inject.Inject
@@ -71,7 +69,7 @@ class AdminStateSync @Inject constructor(
 
     private fun isMemberPromotionPending(groupId: AccountId, localNumber: String): Boolean {
         return configFactory.withGroupConfigs(groupId) { groupConfigs ->
-            val status = groupConfigs.groupMembers.get(localNumber)?.status
+            val status = groupConfigs.groupMembers.get(localNumber)?.let(groupConfigs.groupMembers::status)
             status != null && status in EnumSet.of(
                 GroupMember.Status.PROMOTION_SENT,
                 GroupMember.Status.PROMOTION_FAILED,

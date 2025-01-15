@@ -1131,7 +1131,7 @@ open class Storage @Inject constructor(
         return groupDatabase.getAllGroups(includeInactive)
     }
 
-    override fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
+    override suspend fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
         return OpenGroupManager.addOpenGroup(urlAsString, context)
     }
 

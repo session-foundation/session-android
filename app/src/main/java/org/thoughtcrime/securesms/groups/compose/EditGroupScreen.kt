@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -54,9 +55,10 @@ import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
+import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -102,6 +104,7 @@ fun EditGroupScreen(
                 onMemberClicked = viewModel::onMemberClicked,
                 hideActionSheet = viewModel::hideActionBottomSheet,
                 clickedMember = viewModel.clickedMember.collectAsState().value,
+                showLoading = viewModel.inProgress.collectAsState().value,
             )
         }
 
@@ -122,7 +125,7 @@ fun EditGroupScreen(
 @Serializable
 private object RouteEditGroup
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditGroup(
     onBack: () -> Unit,
@@ -144,6 +147,7 @@ fun EditGroup(
     members: List<GroupMemberState>,
     showAddMembers: Boolean,
     showingError: String?,
+    showLoading: Boolean,
     onErrorDismissed: () -> Unit,
 ) {
     val (showingConfirmRemovingMember, setShowingConfirmRemovingMember) = remember {
@@ -160,43 +164,46 @@ fun EditGroup(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Box {
+            Column(modifier = Modifier.padding(paddingValues)) {
+                GroupMinimumVersionBanner()
 
-            GroupMinimumVersionBanner()
+                // Group name title
+                Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
+                    if (showNameEditing) {
+                        GroupNameContainer {
+                            IconButton(
+                                modifier = Modifier.size(LocalDimensions.current.spacing),
+                                onClick = onEditNameCancelClicked
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_x),
+                                    contentDescription = stringResource(R.string.AccessibilityId_cancel),
+                                    tint = LocalColors.current.text,
+                                )
+                            }
 
-            // Group name title
-            Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
-                if (showNameEditing) {
-                    GroupNameContainer {
+                            SessionOutlinedTextField(
+                                modifier = Modifier
+                                    .widthIn(
+                                        min = LocalDimensions.current.mediumSpacing,
+                                        max = maxNameWidth
+                                    )
+                                    .qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                text = editingName.orEmpty(),
+                                onChange = onEditingNameValueChanged,
+                                textStyle = LocalType.current.h8,
+                                singleLine = true,
+                                innerPadding = PaddingValues(
+                                    horizontal = LocalDimensions.current.spacing,
+                                    vertical = LocalDimensions.current.smallSpacing
+                                )
+                            )
+
                         IconButton(
                             modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameCancelClicked) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_x),
-                                contentDescription = stringResource(R.string.AccessibilityId_cancel),
-                                tint = LocalColors.current.text,
-                            )
-                        }
-
-                        SessionOutlinedTextField(
-                            modifier = Modifier.widthIn(
-                                min = LocalDimensions.current.mediumSpacing,
-                                max = maxNameWidth
-                            )
-                                .qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                            text = editingName.orEmpty(),
-                            onChange = onEditingNameValueChanged,
-                            textStyle = LocalType.current.h8,
-                            singleLine = true,
-                            innerPadding = PaddingValues(
-                                horizontal = LocalDimensions.current.spacing,
-                                vertical = LocalDimensions.current.smallSpacing
-                            )
-                        )
-
-                        IconButton(
-                            modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameConfirmed) {
+                            onClick = onEditNameConfirmed
+                        ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_check),
                                 contentDescription = stringResource(R.string.AccessibilityId_confirm),
@@ -206,16 +213,17 @@ fun EditGroup(
                     }
 
 
-                } else {
-                    GroupNameContainer {
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            text = groupName,
-                            style = LocalType.current.h4,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.widthIn(max = maxNameWidth)
-                                .padding(vertical = LocalDimensions.current.smallSpacing),
-                        )
+                    } else {
+                        GroupNameContainer {
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                text = groupName,
+                                style = LocalType.current.h4,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .widthIn(max = maxNameWidth)
+                                    .padding(vertical = LocalDimensions.current.smallSpacing),
+                            )
 
                         Box(modifier = Modifier.weight(1f)) {
                             if (canEditName) {
@@ -235,40 +243,41 @@ fun EditGroup(
                 }
             }
 
-            // Header & Add member button
-            Row(
-                modifier = Modifier.padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxsSpacing
-                ),
-                verticalAlignment = CenterVertically
-            ) {
-                Text(
-                    stringResource(R.string.groupMembers),
-                    modifier = Modifier.weight(1f),
-                    style = LocalType.current.large,
-                    color = LocalColors.current.text
-                )
-
-                if (showAddMembers) {
-                    PrimaryOutlineButton(
-                        stringResource(R.string.membersInvite),
-                        onClick = onAddMemberClick,
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
+                // Header & Add member button
+                Row(
+                    modifier = Modifier.padding(
+                        horizontal = LocalDimensions.current.smallSpacing,
+                        vertical = LocalDimensions.current.xxsSpacing
+                    ),
+                    verticalAlignment = CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.groupMembers),
+                        modifier = Modifier.weight(1f),
+                        style = LocalType.current.large,
+                        color = LocalColors.current.text
                     )
+
+                    if (showAddMembers) {
+                        PrimaryOutlineButton(
+                            stringResource(R.string.membersInvite),
+                            onClick = onAddMemberClick,
+                            modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
+                        )
+                    }
                 }
-            }
 
 
-            // List of members
-            LazyColumn(modifier = Modifier) {
-                items(members) { member ->
-                    // Each member's view
-                    EditMemberItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        member = member,
-                        onClick = { onMemberClicked(member) }
-                    )
+                // List of members
+                LazyColumn(modifier = Modifier) {
+                    items(members) { member ->
+                        // Each member's view
+                        EditMemberItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            member = member,
+                            onClick = { onMemberClicked(member) }
+                        )
+                    }
                 }
             }
         }
@@ -306,6 +315,10 @@ fun EditGroup(
             member = showingConfirmRemovingMember,
             groupName = groupName,
         )
+    }
+
+    if (showLoading) {
+        LoadingDialog()
     }
 
     val context = LocalContext.current
@@ -519,7 +532,8 @@ private fun EditGroupPreview3() {
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = true,
         )
     }
 }
@@ -593,7 +607,8 @@ private fun EditGroupPreview() {
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = false,
         )
     }
 }
@@ -661,7 +676,8 @@ private fun EditGroupEditNamePreview(
             onErrorDismissed = {},
             onMemberClicked = {},
             hideActionSheet = {},
-            clickedMember = null
+            clickedMember = null,
+            showLoading = false,
         )
     }
 }

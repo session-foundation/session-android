@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
+import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.MessageDataProvider
@@ -105,7 +106,10 @@ class RemoveGroupMemberHandler @Inject constructor(
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
 
         val (pendingRemovals, batchCalls) = configFactory.withGroupConfigs(groupAccountId) { configs ->
-            val pendingRemovals = configs.groupMembers.all().filter { it.removed }
+            val pendingRemovals = configs.groupMembers.allWithStatus()
+                .filter { (member, status) -> member.isRemoved(status) }
+                .toList()
+
             if (pendingRemovals.isEmpty()) {
                 // Skip if there are no pending removals
                 return@withGroupConfigs pendingRemovals to emptyList()
@@ -124,8 +128,8 @@ class RemoveGroupMemberHandler @Inject constructor(
             calls += checkNotNull(
                 SnodeAPI.buildAuthenticatedRevokeSubKeyBatchRequest(
                     groupAdminAuth = groupAuth,
-                    subAccountTokens = pendingRemovals.map {
-                        configs.groupKeys.getSubAccountToken(it.accountId)
+                    subAccountTokens = pendingRemovals.map { (member, _) ->
+                        configs.groupKeys.getSubAccountToken(member.accountId)
                     }
                 )
             ) { "Fail to create a revoke request" }
@@ -135,7 +139,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 namespace = Namespace.REVOKED_GROUP_MESSAGES(),
                 message = buildGroupKickMessage(
                     groupAccountId.hexString,
-                    pendingRemovals,
+                    pendingRemovals.map { it.first },
                     configs.groupKeys,
                     adminKey
                 ),
@@ -143,7 +147,7 @@ class RemoveGroupMemberHandler @Inject constructor(
             )
 
             // Call No 3. Conditionally send the `GroupUpdateDeleteMemberContent`
-            if (pendingRemovals.any { it.shouldRemoveMessages }) {
+            if (pendingRemovals.any { (member, status) -> member.shouldRemoveMessages(status) }) {
                 calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
                     namespace = Namespace.CLOSED_GROUP_MESSAGES(),
                     message = buildDeleteGroupMemberContentMessage(
@@ -151,8 +155,8 @@ class RemoveGroupMemberHandler @Inject constructor(
                         groupAccountId = groupAccountId.hexString,
                         memberSessionIDs = pendingRemovals
                             .asSequence()
-                            .filter { it.shouldRemoveMessages }
-                            .map { it.accountIdString() },
+                            .filter { (member, status) -> member.shouldRemoveMessages(status) }
+                            .map { (member, _) -> member.accountIdString() },
                     ),
                     auth = groupAuth,
                 )
@@ -179,8 +183,8 @@ class RemoveGroupMemberHandler @Inject constructor(
         // The essential part of the operation has been successful once we get to this point,
         // now we can go ahead and update the configs
         configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
-            pendingRemovals.forEach {
-                configs.groupMembers.erase(it.accountIdString())
+            pendingRemovals.forEach { (member, _) ->
+                configs.groupMembers.erase(member.accountIdString())
             }
             configs.rekey()
         }
@@ -191,12 +195,12 @@ class RemoveGroupMemberHandler @Inject constructor(
 
         // Try to delete members' message. It's ok to fail as they will be re-tried in different
         // cases (a.k.a the GroupUpdateDeleteMemberContent message handling) and could be by different admins.
-        val deletingMessagesForMembers = pendingRemovals.filter { it.shouldRemoveMessages }
+        val deletingMessagesForMembers = pendingRemovals.filter { (member, status) -> member.shouldRemoveMessages(status) }
         if (deletingMessagesForMembers.isNotEmpty()) {
             val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
             if (threadId != null) {
                 val until = clock.currentTimeMills()
-                for (member in deletingMessagesForMembers) {
+                for ((member, _) in deletingMessagesForMembers) {
                     try {
                         messageDataProvider.markUserMessagesAsDeleted(
                             threadId = threadId,

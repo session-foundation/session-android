@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.AssistedFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
@@ -50,14 +50,16 @@ abstract class BaseGroupMembersViewModel (
                     val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                         ?: return@withContext null
 
-                    val memberState = storage.getMembers(groupId.hexString)
-                        .map { member ->
+                    val memberState = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
+                        .map { (member, status) ->
                             createGroupMember(
                                 member = member,
+                                status = status,
                                 myAccountId = currentUserId,
                                 amIAdmin = displayInfo.isUserAdmin,
                             )
                         }
+                        .toList()
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
@@ -70,6 +72,7 @@ abstract class BaseGroupMembersViewModel (
 
     private fun createGroupMember(
         member: GroupMember,
+        status: GroupMember.Status,
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
@@ -80,7 +83,7 @@ abstract class BaseGroupMembersViewModel (
             member.getMemberName(configFactory)
         }
 
-        val highlightStatus = member.status in EnumSet.of(
+        val highlightStatus = status in EnumSet.of(
             GroupMember.Status.INVITE_FAILED,
             GroupMember.Status.PROMOTION_FAILED
         )
@@ -89,17 +92,17 @@ abstract class BaseGroupMembersViewModel (
             accountId = member.accountId,
             name = name,
             canRemove = amIAdmin && member.accountId != myAccountId
-                    && !member.isAdminOrBeingPromoted && !member.removed,
+                    && !member.isAdminOrBeingPromoted(status) && !member.isRemoved(status),
             canPromote = amIAdmin && member.accountId != myAccountId
-                    && !member.isAdminOrBeingPromoted && !member.removed,
+                    && !member.isAdminOrBeingPromoted(status) && !member.isRemoved(status),
             canResendPromotion = amIAdmin && member.accountId != myAccountId
-                    && member.status == GroupMember.Status.PROMOTION_FAILED && !member.removed,
+                    && status == GroupMember.Status.PROMOTION_FAILED && !member.isRemoved(status),
             canResendInvite = amIAdmin && member.accountId != myAccountId
-                    && !member.removed
-                    && (member.status == GroupMember.Status.INVITE_SENT || member.status == GroupMember.Status.INVITE_FAILED),
-            status = member.status?.takeIf { !isMyself }, // Status is only meant for other members
+                    && !member.isRemoved(status)
+                    && (status == GroupMember.Status.INVITE_SENT || status == GroupMember.Status.INVITE_FAILED),
+            status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
-            showAsAdmin = member.isAdminOrBeingPromoted,
+            showAsAdmin = member.isAdminOrBeingPromoted(status),
             clickable = !isMyself
         )
     }
@@ -147,10 +150,10 @@ data class GroupMemberState(
 fun GroupMember.Status.getLabel(context: Context): String {
     return when (this) {
         GroupMember.Status.INVITE_FAILED -> context.getString(R.string.groupInviteFailed)
-        GroupMember.Status.INVITE_NOT_SENT -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
+        GroupMember.Status.INVENT_SENDING -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
         GroupMember.Status.INVITE_SENT -> context.getString(R.string.groupInviteSent)
         GroupMember.Status.PROMOTION_FAILED -> context.getString(R.string.adminPromotionFailed)
-        GroupMember.Status.PROMOTION_NOT_SENT -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
+        GroupMember.Status.PROMOTION_SENDING -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
         GroupMember.Status.PROMOTION_SENT -> context.getString(R.string.adminPromotionSent)
         GroupMember.Status.REMOVED,
         GroupMember.Status.REMOVED_UNKNOWN,
@@ -158,6 +161,8 @@ fun GroupMember.Status.getLabel(context: Context): String {
 
         GroupMember.Status.INVITE_UNKNOWN,
         GroupMember.Status.INVITE_ACCEPTED,
+        GroupMember.Status.INVITE_NOT_SENT,
+        GroupMember.Status.PROMOTION_NOT_SENT,
         GroupMember.Status.PROMOTION_UNKNOWN,
         GroupMember.Status.PROMOTION_ACCEPTED -> ""
     }
