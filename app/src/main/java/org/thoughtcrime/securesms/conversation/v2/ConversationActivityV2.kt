@@ -1992,9 +1992,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
-        // Note: Any file types that use `prepMediaForSending` obtain the filename via the AttachmentManager's
-        // getContentResolverSlideInfo or getManuallyCalculatedSlideInfo methods - while for images and photos
-        // we'll construct the filename from the Uri and pass it through to the relevant Slide type's constructor.
+        // Note: In the case of documents or GIFs, filename provision is performed as part of the
+        // `prepMediaForSending` operations, while for images it occurs when Media is created in
+        // this class' `commitInputContent` method.
         when (requestCode) {
             PICK_DOCUMENT -> {
                 intent ?: return Log.w(TAG, "Failed to get document Intent")
@@ -2017,7 +2017,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val slideDeck = SlideDeck()
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
-                    Log.i("ACL", "Media filename is: $mediaFilename")
                     when {
                         MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
                         MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
