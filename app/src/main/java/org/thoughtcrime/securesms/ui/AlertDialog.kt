@@ -286,6 +286,9 @@ fun LoadingDialog(
                 Box {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
+                        //TODO: Leave this as hardcoded color for now as the dialog background (scrim)
+                        // always seems to be dark. Can can revisit later when we have more control over
+                        // the scrim color.
                         color = Color.White
                     )
                 }
