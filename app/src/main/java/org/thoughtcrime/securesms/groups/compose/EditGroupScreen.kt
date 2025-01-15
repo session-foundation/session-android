@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups.compose
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -34,10 +33,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -127,7 +129,7 @@ fun EditGroupScreen(
 @Serializable
 private object RouteEditGroup
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun EditGroup(
     onBack: () -> Unit,
@@ -292,12 +294,15 @@ fun EditGroup(
                         onClick = {}
                     )
                     .padding(paddingValues)
-                    .background(LocalColors.current.backgroundSecondary.copy(alpha = 0.8f)),
+                    .semantics { invisibleToUser() },
                     contentAlignment = Alignment.Center
                 ) {
-                    AndroidView(factory = {
-                        LayoutInflater.from(it).inflate(R.layout.view_spin_kit_loader, null)
-                    })
+                    AndroidView(
+                        factory = {
+                            LayoutInflater.from(it).inflate(R.layout.view_spin_kit_loader, null)
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }
