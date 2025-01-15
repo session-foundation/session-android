@@ -134,8 +134,7 @@ public class AttachmentManager {
                                               @NonNull final MediaType mediaType,
                                               @NonNull final MediaConstraints constraints,
                                               final int width,
-                                              final int height,
-                                              final String filename)
+                                              final int height)
     {
         final SettableFuture<Boolean> result = new SettableFuture<>();
 
@@ -147,10 +146,10 @@ public class AttachmentManager {
             protected @Nullable Slide doInBackground(Void... params) {
                 try {
                     if (PartAuthority.isLocalUri(uri)) {
-                        return getManuallyCalculatedSlideInfo(uri, width, height, filename);
+                        return getManuallyCalculatedSlideInfo(uri, width, height);
                     } else {
                         Slide result = getContentResolverSlideInfo(uri, width, height);
-                        if (result == null) return getManuallyCalculatedSlideInfo(uri, width, height, filename);
+                        if (result == null) return getManuallyCalculatedSlideInfo(uri, width, height);
                         else                return result;
                     }
                 } catch (IOException e) {
@@ -200,21 +199,15 @@ public class AttachmentManager {
                 return null;
             }
 
-            private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height, String filename) throws IOException {
+            private @NonNull Slide getManuallyCalculatedSlideInfo(Uri uri, int width, int height) throws IOException {
                 long start           = System.currentTimeMillis();
                 Long mediaSize       = null;
                 String mediaFilename = null;
                 String mimeType      = null;
 
                 if (PartAuthority.isLocalUri(uri)) {
+                    mediaFilename = PartAuthority.getAttachmentFileName(context, uri);
                     mediaSize = PartAuthority.getAttachmentSize(context, uri);
-
-                    if (filename == null) {
-                        mediaFilename = PartAuthority.getAttachmentFileName(context, uri);
-                    } else {
-                        mediaFilename = filename;
-                    }
-
                     mimeType  = PartAuthority.getAttachmentContentType(context, uri);
                 }
 
@@ -389,13 +382,13 @@ public class AttachmentManager {
     public enum MediaType {
         IMAGE, GIF, AUDIO, VIDEO, DOCUMENT, VCARD;
 
-        public @NonNull Slide createSlide(@NonNull  Context context,
-                                          @NonNull  Uri     uri,
-                                          @Nullable String filename,
+        public @NonNull Slide createSlide(@NonNull Context context,
+                                          @NonNull Uri uri,
+                                          String filename,
                                           @Nullable String mimeType,
-                                          long    dataSize,
-                                          int     width,
-                                          int     height)
+                                          long dataSize,
+                                          int width,
+                                          int height)
         {
             if (mimeType == null) { mimeType = "application/octet-stream"; }
 

@@ -761,7 +761,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
-                prepMediaForSending(mediaURI, mediaType, filename).addListener(object : ListenableFuture.Listener<Boolean> {
+                prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
 
                     override fun onSuccess(result: Boolean?) {
                         sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
@@ -1992,27 +1992,22 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
+        // Note: Any file types that use `prepMediaForSending` obtain the filename via the AttachmentManager's
+        // getContentResolverSlideInfo or getManuallyCalculatedSlideInfo methods - while for images and photos
+        // we'll construct the filename from the Uri and pass it through to the relevant Slide type's constructor.
         when (requestCode) {
             PICK_DOCUMENT -> {
                 intent ?: return Log.w(TAG, "Failed to get document Intent")
                 val uri = intent.data ?: return Log.w(TAG, "Failed to get document Uri")
-
-                //val filename = FilenameUtils.getFilenameFromUri(this, uri) THIS IS CORRECT
-                val filename = FilenameUtils.constructPickedGifFilename(this)
-                Log.i("ACL", "Setting a DOCUMENT name to: " + filename)
-
-                prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT, filename).addListener(mediaPreppedListener)
+                prepMediaForSending(uri, AttachmentManager.MediaType.DOCUMENT).addListener(mediaPreppedListener)
             }
             PICK_GIF -> {
                 intent ?: return Log.w(TAG, "Failed to get GIF Intent")
                 val uri = intent.data ?: return Log.w(TAG, "Failed to get picked GIF Uri")
-
-                val filename = FilenameUtils.constructPickedGifFilename(this)
                 val type   = AttachmentManager.MediaType.GIF
                 val width  = intent.getIntExtra(GiphyActivity.EXTRA_WIDTH, 0)
                 val height = intent.getIntExtra(GiphyActivity.EXTRA_HEIGHT, 0)
-
-                prepMediaForSending(uri, type, width, height, filename).addListener(mediaPreppedListener)
+                prepMediaForSending(uri, type, width, height).addListener(mediaPreppedListener)
             }
             PICK_FROM_LIBRARY,
             TAKE_PHOTO -> {
@@ -2047,10 +2042,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, filename: String): ListenableFuture<Boolean>  =  prepMediaForSending(uri, type, null, null, filename)
+    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType): ListenableFuture<Boolean>  =  prepMediaForSending(uri, type, null, null)
 
-    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, width: Int?, height: Int?, filename: String?): ListenableFuture<Boolean> {
-        return attachmentManager.setMedia(glide, uri, type, MediaConstraints.getPushMediaConstraints(), width ?: 0, height ?: 0, filename)
+    private fun prepMediaForSending(uri: Uri, type: AttachmentManager.MediaType, width: Int?, height: Int?): ListenableFuture<Boolean> {
+        return attachmentManager.setMedia(glide, uri, type, MediaConstraints.getPushMediaConstraints(), width ?: 0, height ?: 0)
     }
 
     override fun startRecordingVoiceMessage() {

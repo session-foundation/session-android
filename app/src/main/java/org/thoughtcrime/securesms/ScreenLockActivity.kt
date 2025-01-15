@@ -27,7 +27,6 @@ import android.view.View
 import android.view.animation.Animation
 import android.view.animation.BounceInterpolator
 import android.view.animation.TranslateAnimation
-import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -53,7 +52,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private val TAG: String = ScreenLockActivity::class.java.simpleName
 
     private lateinit var fingerprintPrompt: ImageView
-    private lateinit var lockScreenButton: Button
     private lateinit var visibilityToggle: AnimatingToggle
 
     private var biometricPrompt: BiometricPrompt?       = null
@@ -298,40 +296,10 @@ class ScreenLockActivity : BaseActionBarActivity() {
     }
 
     private fun setLockTypeVisibility() {
-        //if (TextSecurePreferences.isScreenLockEnabled(this)) {
-
-
-            //val canAuthenticate =
-            //fingerprintPrompt.visibility = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG
-
-            val screenLockEnabled = TextSecurePreferences.isScreenLockEnabled(this)
-            val biometricManager = BiometricManager.from(this)
-            val authenticationPossible = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
-            fingerprintPrompt.visibility = if (screenLockEnabled && authenticationPossible) View.VISIBLE else View.GONE
-
-//            when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-//                BiometricManager.BIOMETRIC_SUCCESS -> {
-//                    // Biometrics are available and enrolled
-//                    fingerprintPrompt.visibility = View.VISIBLE
-//                    lockScreenButton.visibility = View.GONE
-//                }
-//                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
-//                BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE,
-//                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
-//                    // Either no hardware, hardware unavailable, or no biometrics enrolled
-//                    fingerprintPrompt.visibility = View.GONE
-//                    lockScreenButton.visibility = View.VISIBLE
-//                }
-//                else -> {
-//                    // Handle unexpected cases
-//                    fingerprintPrompt.visibility = View.GONE
-//                    lockScreenButton.visibility = View.GONE
-//                }
-//            }
-//        } else {
-//            fingerprintPrompt.visibility = View.GONE
-//            lockScreenButton.visibility = View.GONE
-//        }
+        val screenLockEnabled = TextSecurePreferences.isScreenLockEnabled(this)
+        val biometricManager = BiometricManager.from(this)
+        val authenticationPossible = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+        fingerprintPrompt.visibility = if (screenLockEnabled && authenticationPossible) View.VISIBLE else View.GONE
     }
 
     private fun initializeResources() {
@@ -342,11 +310,8 @@ class ScreenLockActivity : BaseActionBarActivity() {
 
         visibilityToggle  = findViewById(R.id.button_toggle)
         fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)
-        lockScreenButton  = findViewById(R.id.lock_screen_auth_container)
 
         fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
         fingerprintPrompt.background?.setColorFilter(accentColor, PorterDuff.Mode.SRC_IN)
-
-        lockScreenButton.setOnClickListener { resumeScreenLock() }
     }
 }

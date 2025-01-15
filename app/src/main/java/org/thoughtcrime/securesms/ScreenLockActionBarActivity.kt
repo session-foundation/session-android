@@ -231,16 +231,14 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 val originalUri = item.uri
 
                 if (originalUri != null) {
-                    // First, copy the file locally..
-                    val localUri = copyFileToCache(originalUri)
-
-                    // ..then grab the real filename, using a fallback if we couldn't get it from the original Uri..
-                    val fileName = FilenameUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, originalUri)
+                    // Get a suitable filename and copy the file to our cache directory..
+                    val filename = FilenameUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, originalUri)
+                    val localUri = copyFileToCache(originalUri, filename)
 
                     if (localUri != null) {
                         // ..then create the new ClipData with the localUri and filename.
                         if (newClipData == null) {
-                            newClipData = ClipData.newUri(contentResolver, fileName, localUri)
+                            newClipData = ClipData.newUri(contentResolver, filename, localUri)
 
                             // Make sure to also set the "android.intent.extra.STREAM" extra
                             rewrittenIntent.putExtra(Intent.EXTRA_STREAM, localUri)
@@ -268,10 +266,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         rewrittenIntent
     }
 
-    private suspend fun copyFileToCache(uri: Uri): Uri? = withContext(Dispatchers.IO) {
-        // Get the actual display name if possible
-        val fileName = FilenameUtils.getFilenameFromUri(this@ScreenLockActionBarActivity, uri)
-
+    private suspend fun copyFileToCache(uri: Uri, filename: String): Uri? = withContext(Dispatchers.IO) {
         try {
             val inputStream = contentResolver.openInputStream(uri)
             if (inputStream == null) {
@@ -280,7 +275,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             }
 
             // Create a File in your cache directory using the retrieved name
-            val tempFile = File(cacheDir, fileName)
+            val tempFile = File(cacheDir, filename)
             inputStream.use { input ->
                 FileOutputStream(tempFile).use { output ->
                     input.copyTo(output)

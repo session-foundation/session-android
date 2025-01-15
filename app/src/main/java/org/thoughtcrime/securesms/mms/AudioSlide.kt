@@ -44,7 +44,6 @@ class AudioSlide : Slide {
     override fun hasImage() = true
     override fun hasAudio() = true
 
-
     @DrawableRes
     override fun getPlaceholderRes(theme: Resources.Theme?) = R.drawable.ic_volume_2
 }
