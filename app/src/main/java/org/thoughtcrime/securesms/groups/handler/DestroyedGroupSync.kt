@@ -8,6 +8,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.utilities.Log
+import org.session.libsession.messaging.groups.GroupScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,6 +19,7 @@ import javax.inject.Singleton
 @Singleton
 class DestroyedGroupSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
+    private val groupScope: GroupScope,
 ) {
     private var job: Job? = null
 
@@ -35,15 +37,17 @@ class DestroyedGroupSync @Inject constructor(
                     Log.d("DestroyedGroupSync", "Group is destroyed: $isDestroyed")
 
                     if (isDestroyed) {
-                        // If there's un-pushed group config updates, wait until they are pushed.
-                        // This is important, as the pushing process might need to access the UserGroupConfig,
-                        // if we delete the UserGroupConfig before the pushing process, the pushing
-                        // process will fail.
-                        configFactory.waitUntilGroupConfigsPushed(update.groupId)
+                        groupScope.launch(update.groupId, "DestroyedGroupSync") {
+                            // If there's un-pushed group config updates, wait until they are pushed.
+                            // This is important, as the pushing process might need to access the UserGroupConfig,
+                            // if we delete the UserGroupConfig before the pushing process, the pushing
+                            // process will fail.
+                            configFactory.waitUntilGroupConfigsPushed(update.groupId)
 
-                        configFactory.withMutableUserConfigs { configs ->
-                            configs.userGroups.getClosedGroup(update.groupId.hexString)?.let { group ->
-                                configs.userGroups.set(group.copy(destroyed = true))
+                            configFactory.withMutableUserConfigs { configs ->
+                                configs.userGroups.getClosedGroup(update.groupId.hexString)?.let { group ->
+                                    configs.userGroups.set(group.copy(destroyed = true))
+                                }
                             }
                         }
                     }

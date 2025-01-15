@@ -260,7 +260,7 @@ object MessageSender {
                         SnodeAPI.sendMessage(
                             auth = groupAuth,
                             message = snodeMessage,
-                            namespace = namespace
+                            namespace = namespace,
                         )
                     }
                 } else {

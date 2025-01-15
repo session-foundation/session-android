@@ -238,6 +238,13 @@ class ClosedGroupPoller(
                 saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
                 saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
 
+                // As soon as we have handled config messages, the polling count as successful,
+                // as normally the outside world really only cares about configs.
+                val currentState = state.value as? StartedState
+                if (currentState != null && !currentState.hadAtLeastOneSuccessfulPoll) {
+                    mutableState.value = currentState.copy(hadAtLeastOneSuccessfulPoll = true)
+                }
+
                 val regularMessages = groupMessageRetrieval.await()
                 handleMessages(regularMessages, snode)
             }
@@ -266,12 +273,6 @@ class ClosedGroupPoller(
                     addSuppressed(errors[index])
                 }
             }
-        }
-
-        // Update the state to indicate that we had at least one successful poll
-        val currentState = state.value as? StartedState
-        if (currentState != null && !currentState.hadAtLeastOneSuccessfulPoll) {
-            mutableState.value = currentState.copy(hadAtLeastOneSuccessfulPoll = true)
         }
     }
 
