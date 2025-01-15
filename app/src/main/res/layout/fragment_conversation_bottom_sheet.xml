@@ -14,7 +14,7 @@
         style="@style/BottomSheetActionItem"
         android:contentDescription="@string/AccessibilityId_contactUserDetails"
         android:text="@string/contactUserDetails"
-        app:drawableStartCompat="@drawable/ic_info_outline_white_24dp"
+        app:drawableStartCompat="@drawable/ic_info"
         app:drawableTint="?attr/colorControlNormal" />
 
     <TextView

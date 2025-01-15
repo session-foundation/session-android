@@ -5,7 +5,7 @@
     <item
         android:title="@string/learnMore"
         android:id="@+id/learnMoreButton"
-        android:icon="@drawable/ic_info_outline_white_24dp"
+        android:icon="@drawable/ic_info"
         app:iconTint="?android:textColorPrimary"
         app:showAsAction="always" />
 

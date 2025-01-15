@@ -135,7 +135,7 @@
         android:background="?backgroundSecondary">
         <ImageView
             android:id="@+id/videocam_off_icon"
-            android:src="@drawable/ic_baseline_videocam_off_24"
+            android:src="@drawable/ic_video_off"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
@@ -160,7 +160,7 @@
 
     <ImageView
         android:id="@+id/swap_view_icon"
-        android:src="@drawable/ic_baseline_screen_rotation_alt_24"
+        android:src="@drawable/ic_repeat_2"
         app:layout_constraintTop_toTopOf="@id/floating_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/floating_renderer_container"
         app:tint="?android:textColorPrimary"

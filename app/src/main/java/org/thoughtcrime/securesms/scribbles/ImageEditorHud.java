@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.util.AttributeSet;
@@ -96,7 +97,7 @@ public final class ImageEditorHud extends LinearLayout {
   }
 
   private void updateCropAspectLockImage(boolean cropAspectLocked) {
-    cropAspectLock.setImageDrawable(getResources().getDrawable(cropAspectLocked ? R.drawable.ic_crop_lock_32 : R.drawable.ic_crop_unlock_32));
+    cropAspectLock.setImageDrawable(ResourcesCompat.getDrawable(getResources(), cropAspectLocked ? R.drawable.ic_crop_lock_custom : R.drawable.ic_crop_unlock_custom, getContext().getTheme()));
   }
 
   private void initializeVisibilityMap() {

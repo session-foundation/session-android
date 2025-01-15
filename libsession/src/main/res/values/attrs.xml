@@ -26,7 +26,6 @@
     <attr name="emoji_category_symbol" format="reference"/>
     <attr name="emoji_category_flags" format="reference"/>
     <attr name="emoji_category_emoticons" format="reference"/>
-    <attr name="emoji_show_less_icon" format="reference|color" />
 
     <attr name="conversation_pinned_background_color" format="reference|color" />
     <attr name="conversation_pinned_icon_color" format="reference|color" />

@@ -352,13 +352,16 @@ fun ExpandButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Surface(
         shape = CircleShape,
         color = blackAlpha40,
-        modifier = modifier,
+        modifier = modifier
+            .clickable { onClick() },
         contentColor = Color.White,
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.ic_expand),
+            painter = painterResource(id = R.drawable.ic_maximize_2),
             contentDescription = stringResource(id = R.string.AccessibilityId_expand),
-            modifier = Modifier.clickable { onClick() },
+            modifier = Modifier
+                .padding(LocalDimensions.current.xxsSpacing)
+                .size(LocalDimensions.current.xsSpacing),
         )
     }
 }

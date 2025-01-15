@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -47,10 +48,17 @@ class ControlMessageView : LinearLayout {
 
     private val binding = ViewControlMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
-    private val infoDrawable by lazy {
-        val d = ResourcesCompat.getDrawable(resources, R.drawable.ic_info_outline_white_24dp, context.theme)
-        d?.setTint(context.getColorFromAttr(R.attr.message_received_text_color))
-        d
+    val iconSize by lazy {
+        resources.getDimensionPixelSize(R.dimen.medium_spacing)
+    }
+
+    private val infoDrawable: Drawable? by lazy {
+        val icon = ResourcesCompat.getDrawable(resources, R.drawable.ic_info, context.theme)?.toBitmap()
+        if(icon != null) {
+            val d = BitmapDrawable(resources, Bitmap.createScaledBitmap(icon, iconSize, iconSize, true))
+            d.setTint(context.getColorFromAttr(R.attr.message_received_text_color))
+            d
+        } else null
     }
 
     constructor(context: Context) : super(context)
@@ -60,10 +68,6 @@ class ControlMessageView : LinearLayout {
     @Inject lateinit var disappearingMessages: DisappearingMessages
 
     val controlContentView: View get() = binding.controlContentView
-
-    val iconSize by lazy {
-        resources.getDimensionPixelSize(R.dimen.medium_spacing)
-    }
 
     init {
         layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.WRAP_CONTENT)
@@ -138,7 +142,7 @@ class ControlMessageView : LinearLayout {
                 val drawableRes = when {
                     message.isIncomingCall -> R.drawable.ic_phone_incoming
                     message.isOutgoingCall -> R.drawable.ic_phone_outgoing
-                    else -> R.drawable.ic_missed_call
+                    else -> R.drawable.ic_phone_missed
                 }
 
                 // Since this is using text drawable we need to go the long way around to size and style the drawable

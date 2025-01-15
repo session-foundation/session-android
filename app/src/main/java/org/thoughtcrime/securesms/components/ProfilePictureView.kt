@@ -68,7 +68,7 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     private fun createUnknownRecipientDrawable(): Drawable {
-        return ResourceContactPhoto(R.drawable.ic_profile_default)
+        return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
             .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
     }
 

@@ -440,7 +440,7 @@ private fun BaseAvatar(
         // image
         if (LocalInspectionMode.current) { // this part is used for previews only
             Image(
-                painterResource(id = R.drawable.ic_profile_default),
+                painterResource(id = R.drawable.ic_user_filled_custom),
                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
                 contentScale = ContentScale.Inside,
                 contentDescription = null,

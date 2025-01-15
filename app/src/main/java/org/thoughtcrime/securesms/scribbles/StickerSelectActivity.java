@@ -36,11 +36,11 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
   public static final String EXTRA_STICKER_FILE = "extra_sticker_file";
 
   private static final int[] TAB_TITLES = new int[] {
-      R.drawable.ic_tag_faces_white_24dp,
-      R.drawable.ic_work_white_24dp,
-      R.drawable.ic_pets_white_24dp,
-      R.drawable.ic_local_dining_white_24dp,
-      R.drawable.ic_wb_sunny_white_24dp
+      R.drawable.ic_emoji_custom,
+      R.drawable.ic_briefcase,
+      R.drawable.ic_paw_print,
+      R.drawable.ic_utensils_crossed,
+      R.drawable.ic_sun
   };
 
   @Override

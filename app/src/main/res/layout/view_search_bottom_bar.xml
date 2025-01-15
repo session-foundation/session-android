@@ -29,7 +29,7 @@
                 android:layout_marginStart="16dp"
                 android:padding="4dp"
                 android:background="?selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_baseline_keyboard_arrow_up_24"
+                android:src="@drawable/ic_chevron_up"
                 android:tint="?colorAccent"
                 tools:ignore="UseAppTint" />
 
@@ -40,7 +40,7 @@
                 android:padding="4dp"
                 android:layout_gravity="center_vertical"
                 android:background="?selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_baseline_keyboard_arrow_down_24"
+                android:src="@drawable/ic_chevron_down"
                 android:tint="?colorAccent"
                 tools:ignore="UseAppTint" />
 

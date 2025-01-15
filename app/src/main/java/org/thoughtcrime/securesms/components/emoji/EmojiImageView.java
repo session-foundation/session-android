@@ -37,7 +37,7 @@ public class EmojiImageView extends AppCompatImageView {
       Drawable emojiDrawable = EmojiProvider.getEmojiDrawable(getContext(), emoji);
       if (emojiDrawable == null) {
         // fallback
-        setImageResource(R.drawable.ic_outline_disabled_by_default_24);
+        setImageResource(R.drawable.ic_square_x);
       } else {
         setImageDrawable(emojiDrawable);
       }

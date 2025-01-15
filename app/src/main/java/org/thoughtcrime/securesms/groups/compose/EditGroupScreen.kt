@@ -390,7 +390,7 @@ private fun MemberActionSheet(
             if (BuildConfig.DEBUG && member.canPromote) {
                 this += ActionSheetItemData(
                     title = context.getString(R.string.adminPromoteToAdmin),
-                    iconRes = R.drawable.ic_profile_default,
+                    iconRes = R.drawable.ic_user_filled_custom,
                     onClick = onPromote
                 )
             }

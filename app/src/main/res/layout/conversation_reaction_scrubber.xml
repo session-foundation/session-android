@@ -68,7 +68,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <org.thoughtcrime.securesms.components.emoji.EmojiImageView
             android:id="@+id/reaction_2"
@@ -83,7 +83,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <org.thoughtcrime.securesms.components.emoji.EmojiImageView
             android:id="@+id/reaction_3"
@@ -98,7 +98,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <org.thoughtcrime.securesms.components.emoji.EmojiImageView
             android:id="@+id/reaction_4"
@@ -113,7 +113,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <org.thoughtcrime.securesms.components.emoji.EmojiImageView
             android:id="@+id/reaction_5"
@@ -128,7 +128,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <org.thoughtcrime.securesms.components.emoji.EmojiImageView
             android:id="@+id/reaction_6"
@@ -143,7 +143,7 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:alpha="1"
             tools:translationY="0dp"
-            tools:src="@drawable/ic_outline_disabled_by_default_24" />
+            tools:src="@drawable/ic_square_x" />
 
         <View
             android:id="@+id/reaction_7_background"
