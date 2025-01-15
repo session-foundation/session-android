@@ -1,10 +1,7 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +9,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -30,7 +26,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -38,13 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.invisibleToUser
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -65,6 +57,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.LoadingOverlay
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -286,24 +279,7 @@ fun EditGroup(
             }
 
             if (showLoading) {
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {}
-                    )
-                    .padding(paddingValues)
-                    .semantics { invisibleToUser() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    AndroidView(
-                        factory = {
-                            LayoutInflater.from(it).inflate(R.layout.view_spin_kit_loader, null)
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                LoadingOverlay(modifier = Modifier.padding(paddingValues))
             }
         }
     }
