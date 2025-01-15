@@ -54,10 +54,10 @@ import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.LoadingOverlay
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
@@ -277,10 +277,6 @@ fun EditGroup(
                     }
                 }
             }
-
-            if (showLoading) {
-                LoadingOverlay(modifier = Modifier.padding(paddingValues))
-            }
         }
     }
 
@@ -316,6 +312,10 @@ fun EditGroup(
             member = showingConfirmRemovingMember,
             groupName = groupName,
         )
+    }
+
+    if (showLoading) {
+        LoadingDialog()
     }
 
     val context = LocalContext.current
