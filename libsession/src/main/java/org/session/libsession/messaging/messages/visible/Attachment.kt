@@ -61,9 +61,10 @@ class Attachment {
                     .setDigest(ByteString.copyFrom(attachment.digest.get()))
                     .setSize(attachment.size.get())
                     .setUrl(attachment.url)
-            if (attachment.fileName.isPresent) {
-                builder.fileName = attachment.fileName.get()
-            }
+
+            //if (attachment.filename.isPresent) { ACL FIXME
+                builder.fileName = attachment.filename.get()
+            //}
             if (attachment.preview.isPresent) {
                 builder.thumbnail = ByteString.copyFrom(attachment.preview.get())
             }

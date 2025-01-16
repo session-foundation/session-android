@@ -45,21 +45,17 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
 
     val body: Optional<String>
         get() {
-            if (MediaUtil.isAudio(attachment)) {
-                // A missing file name is the legacy way to determine if an audio attachment is
-                // a voice note vs. other arbitrary audio attachments.
-                if (attachment.isVoiceNote) {                   // || attachment.filename.isEmpty()) { -------All files must not have filenames
-                     val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
-                        .put(EMOJI_KEY, "🎙")
-                        .format().toString()
-
-                    return Optional.fromNullable(voiceTxt)
-                }
+            return if (MediaUtil.isAudio(attachment) && attachment.isVoiceNote) {
+                 val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
+                    .put(EMOJI_KEY, "🎙")
+                    .format().toString()
+                Optional.fromNullable(voiceTxt)
+            } else {
+                val txt = Phrase.from(context, R.string.attachmentsNotification)
+                    .put(EMOJI_KEY, emojiForMimeType())
+                    .format().toString()
+                Optional.fromNullable(txt)
             }
-            val txt = Phrase.from(context, R.string.attachmentsNotification)
-                .put(EMOJI_KEY, emojiForMimeType())
-                .format().toString()
-            return Optional.fromNullable(txt)
         }
 
     private fun emojiForMimeType(): String {

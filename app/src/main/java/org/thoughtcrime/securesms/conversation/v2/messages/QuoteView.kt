@@ -109,11 +109,9 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 attachments.audioSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
-                    // A missing file name is the legacy way to determine if an audio attachment is
-                    // a voice note vs. other arbitrary audio attachments.
+
                     val attachment = attachments.asAttachments().firstOrNull()
-                    val isVoiceNote = attachment?.isVoiceNote == true                // Sod this - no more files without filenames - if it's a filename it'll have `isVoiceNote` set! Nope ---> || (attachment != null && attachment.filename.isNullOrEmpty())
-                    binding.quoteViewBodyTextView.text = if (isVoiceNote) {
+                    binding.quoteViewBodyTextView.text = if (attachment?.isVoiceNote == true) {
                         resources.getString(R.string.messageVoice)
                     } else {
                         resources.getString(R.string.audio)
