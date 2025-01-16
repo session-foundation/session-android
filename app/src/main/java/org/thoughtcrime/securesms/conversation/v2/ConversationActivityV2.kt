@@ -199,8 +199,6 @@ import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import java.lang.ref.WeakReference
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.LinkedList
 import java.util.Locale
 import java.util.concurrent.ExecutionException
@@ -2117,7 +2115,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Generate a filename from the current time such as: "VoiceMessage_2025-01-08-152733.aac"
-        val voiceMessageFilename = FilenameUtils.constructVoiceMessageFilename(applicationContext)
+        val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.

@@ -58,28 +58,28 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             }
         }
 
-    private fun emojiForMimeType(): String {
-        return when{
-            MediaUtil.isGif(attachment) -> "🎡"
-
+    private fun emojiForMimeType(): String =
+        when {
+            MediaUtil.isGif(attachment)   -> "🎡"
             MediaUtil.isImage(attachment) -> "📷"
-
             MediaUtil.isVideo(attachment) -> "🎥"
-
             MediaUtil.isAudio(attachment) -> "🎧"
-
-            MediaUtil.isFile(attachment) -> "📎"
-
-            // We don't provide emojis for other mime-types such as VCARD
-            else -> ""
+            MediaUtil.isFile(attachment)  -> "📎"
+            else -> "" // We don't provide emojis for other mime-types such as VCARD
         }
-    }
 
     val caption: Optional<String?>
         get() = Optional.fromNullable(attachment.caption)
 
-    val filename: String
-        get() = attachment.filename
+    open var filename: String = ""
+//        get() {
+//            if (attachment.filename == null) {
+//                val formattedDate = attachment.dataUri.
+//                "LegacyVoiceMessage-SavedAt-{"
+//            } else {
+//                return attachment.filename!!
+            //}
+//        }
 
     val fastPreflightId: String?
         get() = attachment.fastPreflightId

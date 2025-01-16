@@ -11,7 +11,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import java.io.File
 
 class Attachment {
-    var fileName: String? = null
+    var filename: String = ""
     var contentType: String? = null
     var key: ByteArray? = null
     var digest: ByteArray? = null
@@ -25,12 +25,12 @@ class Attachment {
 
         fun fromProto(proto: SignalServiceProtos.AttachmentPointer): Attachment {
             val result = Attachment()
-            result.fileName = proto.fileName
+            result.filename = proto.fileName
             fun inferContentType(): String {
-                val fileName = result.fileName ?: return "application/octet-stream" //TODO find equivalent to OWSMimeTypeApplicationOctetStream
+                val fileName = result.filename
                 val fileExtension = File(fileName).extension
                 val mimeTypeMap = MimeTypeMap.getSingleton()
-                return mimeTypeMap.getMimeTypeFromExtension(fileExtension) ?: "application/octet-stream" //TODO check that it's correct
+                return mimeTypeMap.getMimeTypeFromExtension(fileExtension) ?: "application/octet-stream"
             }
             result.contentType = proto.contentType ?: inferContentType()
             result.key = proto.key.toByteArray()
@@ -62,24 +62,15 @@ class Attachment {
                     .setSize(attachment.size.get())
                     .setUrl(attachment.url)
 
-            //if (attachment.filename.isPresent) { ACL FIXME
-                builder.fileName = attachment.filename.get()
-            //}
-            if (attachment.preview.isPresent) {
-                builder.thumbnail = ByteString.copyFrom(attachment.preview.get())
-            }
-            if (attachment.width > 0) {
-                builder.width = attachment.width
-            }
-            if (attachment.height > 0) {
-                builder.height = attachment.height
-            }
-            if (attachment.voiceNote) {
-                builder.flags = SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE
-            }
-            if (attachment.caption.isPresent) {
-                builder.caption = attachment.caption.get()
-            }
+            // Filenames are now mandatory
+            builder.fileName = attachment.filename
+
+            if (attachment.preview.isPresent) { builder.thumbnail = ByteString.copyFrom(attachment.preview.get())               }
+            if (attachment.width > 0)         { builder.width = attachment.width                                                }
+            if (attachment.height > 0)        { builder.height = attachment.height                                              }
+            if (attachment.voiceNote)         { builder.flags = SignalServiceProtos.AttachmentPointer.Flags.VOICE_MESSAGE_VALUE }
+            if (attachment.caption.isPresent) { builder.caption = attachment.caption.get()                                      }
+
             return builder.build()
         }
     }
@@ -106,7 +97,7 @@ class Attachment {
     fun toSignalPointer(): SignalServiceAttachmentPointer? {
         if (!isValid()) return null
         return SignalServiceAttachmentPointer(0, contentType, key, Optional.fromNullable(sizeInBytes), null,
-                size?.width ?: 0, size?.height ?: 0, Optional.fromNullable(digest), Optional.fromNullable(fileName),
+                size?.width ?: 0, size?.height ?: 0, Optional.fromNullable(digest), filename,
                 kind == Kind.VOICE_MESSAGE, Optional.fromNullable(caption), url)
     }
 

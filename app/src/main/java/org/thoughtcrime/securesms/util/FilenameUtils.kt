@@ -4,23 +4,54 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import java.text.SimpleDateFormat
-import network.loki.messenger.R
-import org.session.libsignal.utilities.Log
 import java.util.Locale
+import network.loki.messenger.R
+import org.session.libsession.messaging.sending_receiving.attachments.Attachment
+import org.session.libsignal.utilities.Log
 
 object FilenameUtils {
     private const val TAG = "FilenameUtils"
 
-    private fun getFormattedDate(): String {
+    private fun getFormattedDate(timestamp: Long? = null): String {
         val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss", Locale.getDefault())
-        return dateFormatter.format(System.currentTimeMillis())
+        return dateFormatter.format( timestamp ?: System.currentTimeMillis() )
     }
 
     @JvmStatic
     fun constructPhotoFilename(context: Context): String = "${context.getString(R.string.app_name)}-Photo-${getFormattedDate()}.jpg"
 
     @JvmStatic
-    fun constructVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
+    fun constructNewVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
+
+    @JvmStatic
+    fun constructVoiceMessageFilenameFromAttachment(context: Context, attachment: Attachment): String {
+        var constructedFilename = ""
+        val appNameString = context.getString(R.string.app_name)
+        val voiceMessageString = context.getString(R.string.messageVoice).replace(" ", "")
+
+        // We SHOULD always have a uri path - but it's not guaranteed
+        val uriPath = attachment.dataUri?.path
+        if (uriPath != null) {
+            // The Uri path contains a timestamp for when the attachment was written, typically in the form "/part/1736914338425/4",
+            // where the middle element ("1736914338425" in this case) equates to: Wednesday, 15 January 2025 15:12:18.425 (in the GST+11 timezone).
+            // The final "/4" is likely the part number.
+            attachment.dataUri!!.pathSegments.let { segments ->
+                // If we can extract a timestamp from the Uri path then we'll use that in our voice message filename synthesis
+                if (segments.size >= 2 && segments[1].toLongOrNull() != null) {
+                    val extractedTimestamp = segments[1].toLong()
+                    constructedFilename = appNameString + "-" + voiceMessageString + "_${getFormattedDate(extractedTimestamp)}" + ".aac"
+                }
+            }
+        }
+
+        return if (constructedFilename.isEmpty()) {
+            // If we didn't have a Uri path or couldn't extract the timestamp then we'll call the voice message "Session-VoiceMessage.aac"..
+            context.getString(R.string.app_name) + "-" + context.getString(R.string.messageVoice).replace(" ", "") + ".aac"
+        } else {
+            // ..otherwise we'll return a more accurate filename such as "Session-VoiceMessage_2025-01-15-151218.aac".
+            constructedFilename
+        }
+    }
 
     // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
     @JvmStatic

@@ -14,7 +14,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.lang.ref.WeakReference
-import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
