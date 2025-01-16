@@ -85,6 +85,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.util.AttachmentUtil;
 import org.thoughtcrime.securesms.util.DateUtils;
+import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Attachment;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 
@@ -400,7 +401,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     if (mediaItem != null) {
       Intent composeIntent = new Intent(this, ShareActivity.class);
       composeIntent.putExtra(Intent.EXTRA_STREAM, mediaItem.uri);
-      composeIntent.setType(mediaItem.type);
+      composeIntent.setType(mediaItem.mimeType);
       startActivity(composeIntent);
     }
   }
@@ -409,7 +410,21 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   @SuppressLint("InlinedApi")
   private void saveToDisk() {
     MediaItem mediaItem = getCurrentMediaItem();
-    if (mediaItem == null) return;
+    if (mediaItem == null) {
+      Log.w(TAG, "Cannot save a null MediaItem to disk - bailing.");
+      return;
+    }
+
+    // If we have an attachment then we can take the filename from it, otherwise we have to take the
+    // more expensive route of looking up or synthesizing a filename from the MediaItem's Uri.
+    String mediaFilename = "";
+    if (mediaItem.attachment != null) {
+      mediaFilename = mediaItem.attachment.getFilename();
+    } else {
+      mediaFilename = FilenameUtils.getFilenameFromUri(MediaPreviewActivity.this, mediaItem.uri, mediaItem.mimeType);
+    }
+    final String outputFilename = mediaFilename; // We need a `final` value for the saveTask, below
+    Log.i(TAG, "About to save media as: " + outputFilename);
 
     SaveAttachmentTask.showOneTimeWarningDialogOrSave(this, 1, () -> {
       Permissions.with(this)
@@ -422,12 +437,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
               .onAllGranted(() -> {
                 SaveAttachmentTask saveTask = new SaveAttachmentTask(MediaPreviewActivity.this);
                 long saveDate = (mediaItem.date > 0) ? mediaItem.date : SnodeAPI.getNowWithOffset();
-                saveTask.executeOnExecutor(
-                        AsyncTask.THREAD_POOL_EXECUTOR,
-                        new Attachment(mediaItem.uri, mediaItem.type, saveDate, null));
-                if (!mediaItem.outgoing) {
-                  sendMediaSavedNotificationIfNeeded();
-                }
+                saveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, new Attachment(mediaItem.uri, mediaItem.mimeType, saveDate, outputFilename));
+                if (!mediaItem.outgoing) { sendMediaSavedNotificationIfNeeded(); }
               })
               .execute();
       return Unit.INSTANCE;
@@ -765,21 +776,21 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     private final @Nullable Recipient          recipient;
     private final @Nullable DatabaseAttachment attachment;
     private final @NonNull  Uri                uri;
-    private final @NonNull  String             type;
+    private final @NonNull  String             mimeType;
     private final           long               date;
     private final           boolean            outgoing;
 
     private MediaItem(@Nullable Recipient recipient,
                       @Nullable DatabaseAttachment attachment,
                       @NonNull Uri uri,
-                      @NonNull String type,
+                      @NonNull String mimeType,
                       long date,
                       boolean outgoing)
     {
       this.recipient  = recipient;
       this.attachment = attachment;
       this.uri        = uri;
-      this.type       = type;
+      this.mimeType   = mimeType;
       this.date       = date;
       this.outgoing   = outgoing;
     }

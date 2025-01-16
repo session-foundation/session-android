@@ -550,7 +550,7 @@ public class AttachmentDatabase extends Database {
                                   mediaStream.getMimeType(),
                                   databaseAttachment.getTransferState(),
                                   dataInfo.length,
-                                  databaseAttachment.getFileName(),
+                                  databaseAttachment.getFilename(),
                                   databaseAttachment.getLocation(),
                                   databaseAttachment.getKey(),
                                   databaseAttachment.getRelay(),
@@ -774,7 +774,7 @@ public class AttachmentDatabase extends Database {
     contentValues.put(DIGEST, attachment.getDigest());
     contentValues.put(CONTENT_DISPOSITION, attachment.getKey());
     contentValues.put(NAME, attachment.getRelay());
-    contentValues.put(FILE_NAME, ExternalStorageUtil.getCleanFileName(attachment.getFileName()));
+    contentValues.put(FILE_NAME, ExternalStorageUtil.getCleanFileName(attachment.getFilename()));
     contentValues.put(SIZE, attachment.getSize());
     contentValues.put(FAST_PREFLIGHT_ID, attachment.getFastPreflightId());
     contentValues.put(VOICE_NOTE, attachment.isVoiceNote() ? 1 : 0);

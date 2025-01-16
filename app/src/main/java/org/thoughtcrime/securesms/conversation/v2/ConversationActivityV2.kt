@@ -2287,7 +2287,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun saveAttachments(message: MmsMessageRecord) {
         val attachments: List<SaveAttachmentTask.Attachment?> = Stream.of(message.slideDeck.slides)
             .filter { s: Slide -> s.uri != null && (s.hasImage() || s.hasVideo() || s.hasAudio() || s.hasDocument()) }
-            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.fileName.orNull()) }
+            .map { s: Slide -> SaveAttachmentTask.Attachment(s.uri!!, s.contentType, message.dateReceived, s.filename) }
             .toList()
         if (attachments.isNotEmpty()) {
             val saveTask = SaveAttachmentTask(this)

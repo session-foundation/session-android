@@ -16,9 +16,9 @@ import kotlin.math.round
 /**
  * Represents a local SignalServiceAttachment to be sent.
  */
-class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType: String?, val length: Long, val fileName: Optional<String?>?, val voiceNote: Boolean, val preview: Optional<ByteArray?>, val width: Int, val height: Int, val caption: Optional<String?>, val listener: SAttachment.ProgressListener?) : SessionServiceAttachment(contentType) {
+class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType: String?, val length: Long, val filename: String, val voiceNote: Boolean, val preview: Optional<ByteArray?>, val width: Int, val height: Int, val caption: Optional<String?>, val listener: SAttachment.ProgressListener?) : SessionServiceAttachment(contentType) {
 
-    constructor(inputStream: InputStream?, contentType: String?, length: Long, fileName: Optional<String?>?, voiceNote: Boolean, listener: SAttachment.ProgressListener?) : this(inputStream, contentType, length, fileName, voiceNote, Optional.absent<ByteArray?>(), 0, 0, Optional.absent<String?>(), listener) {}
+    constructor(inputStream: InputStream?, contentType: String?, length: Long, filename: String, voiceNote: Boolean, listener: SAttachment.ProgressListener?) : this(inputStream, contentType, length, filename, voiceNote, Optional.absent<ByteArray?>(), 0, 0, Optional.absent<String?>(), listener) {}
 
     // Though now required, `digest` may be null for pre-existing records or from
     // messages received from other clients
@@ -38,10 +38,8 @@ class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType:
     fun toProto(): SignalServiceProtos.AttachmentPointer? {
         val builder = SignalServiceProtos.AttachmentPointer.newBuilder()
         builder.contentType = this.contentType
+        builder.fileName = this.filename
 
-        if (!this.fileName?.get().isNullOrEmpty()) {
-            builder.fileName = this.fileName?.get()
-        }
         if (!this.caption.get().isNullOrEmpty()) {
             builder.caption = this.caption.get()
         }

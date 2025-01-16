@@ -6,42 +6,24 @@ import androidx.annotation.Nullable;
 
 public abstract class Attachment {
 
-  @NonNull
-  private final String  contentType;
-  private final int     transferState;
-  private final long    size;
+  @NonNull private final String contentType;
+  private final int transferState;
+  private final long size;
+  private final String filename;
 
-  @Nullable
-  private final String fileName;
-
-  @Nullable
-  private final String  location;
-
-  @Nullable
-  private final String  key;
-
-  @Nullable
-  private final String relay;
-
-  @Nullable
-  private final byte[] digest;
-
-  @Nullable
-  private final String fastPreflightId;
-
+  @Nullable private final String location;
+  @Nullable private final String key;
+  @Nullable private final String relay;
+  @Nullable private final byte[] digest;
+  @Nullable private final String fastPreflightId;
   private final boolean voiceNote;
   private final int width;
   private final int height;
-
   private final boolean quote;
-
-  @Nullable
-  private final String caption;
-
-  // Loki
+  @Nullable private final String caption;
   private final String url;
 
-  public Attachment(@NonNull String contentType, int transferState, long size, @Nullable String fileName,
+  public Attachment(@NonNull String contentType, int transferState, long size, String filename,
                     @Nullable String location, @Nullable String key, @Nullable String relay,
                     @Nullable byte[] digest, @Nullable String fastPreflightId, boolean voiceNote,
                     int width, int height, boolean quote, @Nullable String caption, String url)
@@ -49,7 +31,7 @@ public abstract class Attachment {
     this.contentType     = contentType;
     this.transferState   = transferState;
     this.size            = size;
-    this.fileName        = fileName;
+    this.filename        = filename;
     this.location        = location;
     this.key             = key;
     this.relay           = relay;
@@ -79,8 +61,7 @@ public abstract class Attachment {
 
   public long getSize() { return size; }
 
-  @Nullable
-  public String getFileName() { return fileName; }
+  public String getFilename() { return filename; }
 
   @NonNull
   public String getContentType() { return contentType; }

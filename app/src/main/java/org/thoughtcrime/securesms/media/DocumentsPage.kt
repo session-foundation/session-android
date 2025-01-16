@@ -81,7 +81,7 @@ fun DocumentsPage(
 
                             Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
                                 Text(
-                                    text = file.fileName.orEmpty(),
+                                    text = file.filename,
                                     style = LocalType.current.large,
                                     color = LocalColors.current.text
                                 )

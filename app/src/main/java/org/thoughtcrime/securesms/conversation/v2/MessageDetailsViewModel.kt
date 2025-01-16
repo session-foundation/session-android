@@ -90,7 +90,7 @@ class MessageDetailsViewModel @Inject constructor(
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
-            fileName.orNull()?.let { TitledText(R.string.attachmentsFileId, it) },
+            TitledText(R.string.attachmentsFileId, filename),
             TitledText(R.string.attachmentsFileType, asAttachment().contentType),
             TitledText(R.string.attachmentsFileSize, Util.getPrettyFileSize(fileSize)),
             takeIf { it is ImageSlide }
@@ -113,7 +113,7 @@ class MessageDetailsViewModel @Inject constructor(
                 )
             }
 
-    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.fileName.orNull(), slide.uri, slide is ImageSlide)
+    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.filename, slide.uri, hasImage = (slide is ImageSlide))
 
     fun onClickImage(index: Int) {
         val state = state.value

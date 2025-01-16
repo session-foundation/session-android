@@ -5,19 +5,15 @@
  */
 
 package org.session.libsignal.messages;
-
 import org.session.libsignal.utilities.guava.Optional;
-
 import java.io.InputStream;
 
-/**
- * Represents a local SignalServiceAttachment to be sent.
- */
+// Represents a local SignalServiceAttachment to be sent
 public class SignalServiceAttachmentStream extends SignalServiceAttachment {
 
   private final InputStream      inputStream;
   private final long             length;
-  private final Optional<String> fileName;
+  private final String           filename;
   private final ProgressListener listener;
   private final Optional<byte[]> preview;
   private final boolean          voiceNote;
@@ -25,11 +21,11 @@ public class SignalServiceAttachmentStream extends SignalServiceAttachment {
   private final int              height;
   private final Optional<String> caption;
 
-  public SignalServiceAttachmentStream(InputStream inputStream, String contentType, long length, Optional<String> fileName, boolean voiceNote, Optional<byte[]> preview, int width, int height, Optional<String> caption, ProgressListener listener) {
+  public SignalServiceAttachmentStream(InputStream inputStream, String contentType, long length, String filename, boolean voiceNote, Optional<byte[]> preview, int width, int height, Optional<String> caption, ProgressListener listener) {
     super(contentType);
     this.inputStream = inputStream;
     this.length      = length;
-    this.fileName    = fileName;
+    this.filename    = filename;
     this.listener    = listener;
     this.voiceNote   = voiceNote;
     this.preview     = preview;
@@ -39,48 +35,18 @@ public class SignalServiceAttachmentStream extends SignalServiceAttachment {
   }
 
   @Override
-  public boolean isStream() {
-    return true;
-  }
+  public boolean isStream() { return true; }
 
   @Override
-  public boolean isPointer() {
-    return false;
-  }
+  public boolean isPointer() { return false; }
 
-  public InputStream getInputStream() {
-    return inputStream;
-  }
-
-  public long getLength() {
-    return length;
-  }
-
-  public Optional<String> getFileName() {
-    return fileName;
-  }
-
-  public ProgressListener getListener() {
-    return listener;
-  }
-
-  public Optional<byte[]> getPreview() {
-    return preview;
-  }
-
-  public boolean getVoiceNote() {
-    return voiceNote;
-  }
-
-  public int getWidth() {
-    return width;
-  }
-
-  public int getHeight() {
-    return height;
-  }
-
-  public Optional<String> getCaption() {
-    return caption;
-  }
+  public InputStream getInputStream()   { return inputStream; }
+  public long getLength()               { return length;      }
+  public String getFilename()           { return filename;    }
+  public ProgressListener getListener() { return listener;    }
+  public Optional<byte[]> getPreview()  { return preview;     }
+  public boolean getVoiceNote()         { return voiceNote;   }
+  public int getWidth()                 { return width;       }
+  public int getHeight()                { return height;      }
+  public Optional<String> getCaption()  { return caption;     }
 }

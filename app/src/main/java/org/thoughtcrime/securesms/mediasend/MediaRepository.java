@@ -151,9 +151,9 @@ class MediaRepository {
         String[] projection;
 
         if (hasOrientation) {
-            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
+            projection = new String[] { Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME };
         } else {
-            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE};
+            projection = new String[] { Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME };
         }
 
         if (Media.ALL_MEDIA_BUCKET_ID.equals(bucketId)) {
@@ -170,7 +170,7 @@ class MediaRepository {
                 int    width       = cursor.getInt(cursor.getColumnIndexOrThrow(getWidthColumn(orientation)));
                 int    height      = cursor.getInt(cursor.getColumnIndexOrThrow(getHeightColumn(orientation)));
                 long   size        = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.SIZE));
-                String filename    = FilenameUtils.getFilenameFromUri(context, uri);
+                String filename    = cursor.getString(cursor.getColumnIndexOrThrow(Images.Media.DISPLAY_NAME));
 
                 media.add(new Media(uri, filename, mimetype, dateTaken, width, height, size, Optional.of(bucketId), Optional.absent()));
             }
@@ -232,14 +232,7 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        // CAREFUL: Use `getFilenameFromUri` here rather than `media.filename` - this is because when
-        // performing from within Session the
-        // media filename is populated, but when external sharing it is NOT. The `getFilenameFromUri`
-        // method attempts both techniques in sequence - if the result is null then the calling code
-        // will have to the Me ACL
-        String filename = FilenameUtils.getFilenameFromUri(context, media.getUri());
-
-        return new Media(media.getUri(), filename, media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
+        return new Media(media.getUri(), media.getFilename(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
 
     private Media getContentResolverPopulatedMedia(@NonNull Context context, @NonNull Media media) throws IOException {
@@ -265,9 +258,7 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        String filename = FilenameUtils.getFilenameFromUri(context, media.getUri());
-
-        return new Media(media.getUri(), filename, media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
+        return new Media(media.getUri(), media.getFilename(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
 
     private static class FolderResult {

@@ -63,7 +63,7 @@ public class PartAuthority {
     case PART_ROW:
       Attachment attachment = DatabaseComponent.get(context).attachmentDatabase().getAttachment(new PartUriParser(uri).getPartId());
 
-      if (attachment != null) return attachment.getFileName();
+      if (attachment != null) return attachment.getFilename();
       else                    return null;
     case BLOB_ROW:
       return BlobProvider.getFileName(uri);

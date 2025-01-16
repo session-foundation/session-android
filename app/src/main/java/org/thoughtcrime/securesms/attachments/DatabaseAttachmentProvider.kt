@@ -160,7 +160,7 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
             attachmentStream.preview,
             attachmentStream.width, attachmentStream.height,
             Optional.fromNullable(uploadResult.digest),
-            attachmentStream.fileName,
+            attachmentStream.filename,
             attachmentStream.voiceNote,
             attachmentStream.caption,
             uploadResult.url);
@@ -340,7 +340,7 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
                     .withStream(`is`)
                     .withContentType(attachment.contentType)
                     .withLength(attachment.size)
-                    .withFileName(attachment.fileName)
+                    .withFileName(attachment.filename)
                     .withVoiceNote(attachment.isVoiceNote)
                     .withWidth(attachment.width)
                     .withHeight(attachment.height)
@@ -356,18 +356,18 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
 }
 
 fun DatabaseAttachment.toAttachmentPointer(): SessionServiceAttachmentPointer {
-    return SessionServiceAttachmentPointer(attachmentId.rowId, contentType, key?.toByteArray(), Optional.fromNullable(size.toInt()), Optional.absent(), width, height, Optional.fromNullable(digest), Optional.fromNullable(fileName), isVoiceNote, Optional.fromNullable(caption), url)
+    return SessionServiceAttachmentPointer(attachmentId.rowId, contentType, key?.toByteArray(), Optional.fromNullable(size.toInt()), Optional.absent(), width, height, Optional.fromNullable(digest), filename, isVoiceNote, Optional.fromNullable(caption), url)
 }
 
 fun SessionServiceAttachmentPointer.toSignalPointer(): SignalServiceAttachmentPointer {
-    return SignalServiceAttachmentPointer(id,contentType,key?.toByteArray() ?: byteArrayOf(), size, preview, width, height, digest, fileName, voiceNote, caption, url)
+    return SignalServiceAttachmentPointer(id,contentType,key?.toByteArray() ?: byteArrayOf(), size, preview, width, height, digest, filename, voiceNote, caption, url)
 }
 
 fun DatabaseAttachment.toAttachmentStream(context: Context): SessionServiceAttachmentStream {
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
     val listener = SignalServiceAttachment.ProgressListener { total: Long, progress: Long -> EventBus.getDefault().postSticky(PartProgressEvent(this, total, progress))}
 
-    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, Optional.fromNullable(this.fileName), this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
+    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
     attachmentStream.attachmentId = this.attachmentId.rowId
     attachmentStream.isAudio = MediaUtil.isAudio(this)
     attachmentStream.isGif = MediaUtil.isGif(this)
@@ -397,7 +397,7 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
             width,
             height,
             Optional.fromNullable(digest),
-            Optional.fromNullable(fileName),
+            filename,
             isVoiceNote,
             Optional.fromNullable(caption),
             url
@@ -411,7 +411,7 @@ fun DatabaseAttachment.toSignalAttachmentStream(context: Context): SignalService
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
     val listener = SignalServiceAttachment.ProgressListener { total: Long, progress: Long -> EventBus.getDefault().postSticky(PartProgressEvent(this, total, progress))}
 
-    return SignalServiceAttachmentStream(stream, this.contentType, this.size, Optional.fromNullable(this.fileName), this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
+    return SignalServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
 }
 
 fun DatabaseAttachment.shouldHaveImageSize(): Boolean {

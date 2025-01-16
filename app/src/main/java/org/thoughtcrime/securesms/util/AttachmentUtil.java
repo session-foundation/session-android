@@ -39,7 +39,7 @@ public class AttachmentUtil {
     String      contentType  = attachment.getContentType();
 
     if (attachment.isVoiceNote()                                                       ||
-        (MediaUtil.isAudio(attachment) && TextUtils.isEmpty(attachment.getFileName())) ||
+        (MediaUtil.isAudio(attachment) && TextUtils.isEmpty(attachment.getFilename())) ||
         MediaUtil.isLongTextType(attachment.getContentType()))
     {
       return true;

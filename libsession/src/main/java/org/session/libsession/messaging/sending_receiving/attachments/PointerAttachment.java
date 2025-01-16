@@ -102,7 +102,7 @@ public class PointerAttachment extends Attachment {
     return Optional.of(new PointerAttachment(pointer.get().getContentType(),
                                       AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
                                       pointer.get().asPointer().getSize().or(0),
-                                      pointer.get().asPointer().getFileName().orNull(),
+                                      pointer.get().asPointer().getFilename(),
                                       String.valueOf(pointer.get().asPointer().getId()),
                                       encodedKey, null,
                                       pointer.get().asPointer().getDigest().orNull(),

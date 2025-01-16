@@ -21,7 +21,7 @@ class DocumentView : LinearLayout {
     // region Updating
     fun bind(message: MmsMessageRecord, @ColorInt textColor: Int) {
         val document = message.slideDeck.documentSlide!!
-        binding.documentTitleTextView.text = document.fileName.or("Untitled File")
+        binding.documentTitleTextView.text = document.filename
         binding.documentTitleTextView.setTextColor(textColor)
         binding.documentViewIconImageView.imageTintList = ColorStateList.valueOf(textColor)
 
