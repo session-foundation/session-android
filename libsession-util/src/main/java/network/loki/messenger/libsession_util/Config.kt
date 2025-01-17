@@ -383,12 +383,26 @@ class GroupInfoConfig private constructor(pointer: Long): ConfigBase(pointer), M
 
 interface ReadableGroupMembersConfig: ReadableConfig {
     fun all(): List<GroupMember>
+
+    /**
+     * Returns the [GroupMember] for the given [pubKeyHex] or null if it doesn't exist.
+     * Note: exception will be thrown if the [pubKeyHex] is invalid. You can opt to use [getOrNull] instead
+     */
     fun get(pubKeyHex: String): GroupMember?
     fun status(groupMember: GroupMember): GroupMember.Status
 }
 
 fun ReadableGroupMembersConfig.allWithStatus(): Sequence<Pair<GroupMember, GroupMember.Status>> {
     return all().asSequence().map { it to status(it) }
+}
+
+/**
+ * Returns the [GroupMember] for the given [pubKeyHex] or null if it doesn't exist or is invalid
+ */
+fun ReadableGroupMembersConfig.getOrNull(pubKeyHex: String): GroupMember? {
+    return runCatching {
+        get(pubKeyHex)
+    }.getOrNull()
 }
 
 interface MutableGroupMembersConfig : ReadableGroupMembersConfig, MutableConfig {
