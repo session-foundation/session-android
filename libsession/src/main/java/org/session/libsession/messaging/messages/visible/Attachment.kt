@@ -40,7 +40,7 @@ class Attachment {
             // Normalise the mime type & determine the file extension based on the MIME type
             val lowerMime = mimeType.lowercase()
             val extension = when (lowerMime) {
-                // Images
+                // IMAGES
                 "image/jpeg", "image/pjpeg" -> ".jpg"
                 "image/png" -> ".png"
                 "image/gif" -> ".gif"
@@ -51,7 +51,7 @@ class Attachment {
                 "image/svg+xml" -> ".svg"
                 "image/heif", "image/heic" -> ".heic"
 
-                // Audio
+                // AUDIO
                 "audio/mpeg" -> ".mp3"
                 "audio/mp4" -> ".m4a"
                 "audio/ogg" -> ".ogg"
@@ -62,7 +62,7 @@ class Attachment {
                 "audio/x-wavpack" -> ".wv"
                 "audio/x-ms-wma" -> ".wma"
 
-                // Video
+                // VIDEO
                 "video/mp4" -> ".mp4"
                 "video/3gpp" -> ".3gp"
                 "video/quicktime" -> ".mov"
@@ -73,7 +73,7 @@ class Attachment {
                 "video/mpeg" -> ".mpeg"
                 "video/x-flv" -> ".flv"
 
-                // Documents
+                // DOCUMENTS
                 "application/pdf" -> ".pdf"
                 "text/plain" -> ".txt"
                 "application/rtf" -> ".rtf"
@@ -83,7 +83,7 @@ class Attachment {
                 "application/vnd.oasis.opendocument.presentation" -> ".odp"
                 "application/vnd.oasis.opendocument.graphics" -> ".odg"
 
-                // Office docs
+                // OFFICE DOCS
                 "application/msword" -> ".doc"
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> ".docx"
                 "application/vnd.ms-excel" -> ".xls"
@@ -91,10 +91,10 @@ class Attachment {
                 "application/vnd.ms-powerpoint" -> ".ppt"
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation" -> ".pptx"
 
-                // Archives
+                // ARCHIVES
                 "application/zip", "application/x-zip-compressed" -> ".zip"
                 "application/x-7z-compressed" -> ".7z"
-                "application/x-rar-compressed" -> ".rar"
+                "application/x-rar-compressed", "application/vnd.rar" -> ".rar"
                 "application/x-tar" -> ".tar"
                 "application/gzip", "application/x-gzip" -> ".gz"
                 "application/x-bzip2" -> ".bz2"
@@ -105,10 +105,9 @@ class Attachment {
                 "application/x-tar+gzip" -> ".tar.gz"
                 "application/x-tar+bzip2" -> ".tar.bz2"
                 "application/x-tar+xz" -> ".tar.xz"
-                "application/vnd.rar" -> ".rar" // Alternative RAR MIME type
                 "application/x-cpio" -> ".cpio"
 
-                // Programming Files
+                // PROGRAMMING FILES
                 "application/javascript" -> ".js"
                 "application/json" -> ".json"
                 "application/xml" -> ".xml"
@@ -139,7 +138,23 @@ class Attachment {
                 "text/x-vbscript" -> ".vbs"
                 "application/x-assembly" -> ".asm"
 
-                // Misc
+                // E-BOOKS
+                "application/epub+zip" -> ".epub"
+                "application/x-mobipocket-ebook" -> ".mobi"
+                "application/vnd.amazon.ebook" -> ".azw"
+
+                // CSV / TSV
+                "text/csv" -> ".csv"
+                "text/tab-separated-values" -> ".tsv"
+
+                // STREAMING PLAYLISTS
+                "application/vnd.apple.mpegurl", "application/x-mpegurl", "audio/x-mpegurl" -> ".m3u8"
+
+                // LINUX PACKAGES
+                "application/x-debian-package" -> ".deb"
+                "application/x-rpm" -> ".rpm"
+
+                // MISC
                 "application/x-shockwave-flash" -> ".swf"
                 "application/x-msdownload" -> ".exe"
                 "application/java-archive" -> ".jar"
@@ -154,21 +169,21 @@ class Attachment {
                 lowerMime.startsWith("audio/") -> "Audio"
                 lowerMime.startsWith("video/") -> "Video"
                 lowerMime == "application/pdf" -> "PDF"
-                lowerMime.startsWith("application/vnd.ms-powerpoint") ||
-                        lowerMime.startsWith("application/vnd.openxmlformats-officedocument.presentationml") -> "Presentation"
-                lowerMime.startsWith("application/vnd.ms-excel") ||
-                        lowerMime.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml") -> "Spreadsheet"
-                lowerMime.startsWith("application/msword") ||
-                        lowerMime.startsWith("application/vnd.openxmlformats-officedocument.wordprocessingml") -> "Document"
+                lowerMime.startsWith("application/vnd.ms-powerpoint") || lowerMime.startsWith("application/vnd.openxmlformats-officedocument.presentationml") ->
+                    "Presentation"
+                lowerMime.startsWith("application/vnd.ms-excel") || lowerMime.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml") ->
+                    "Spreadsheet"
+                lowerMime.startsWith("application/msword") || lowerMime.startsWith("application/vnd.openxmlformats-officedocument.wordprocessingml") ->
+                    "Document"
                 lowerMime.startsWith("application/") -> "File"
                 lowerMime.startsWith("text/") -> "Text"
                 else -> "File" // Generic catch-all
             }
 
-            // Example filename:  Session-Image-2025-01-17-154207.jpg
-            // If you'd like a different format, tweak this return string accordingly.
+            // Example filename: Session-Image-2025-01-17-154207.jpg
             return "Session-$category-$fileReceivedDate$extension"
         }
+
 
         fun fromProto(proto: SignalServiceProtos.AttachmentPointer): Attachment {
             val result = Attachment()
