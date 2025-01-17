@@ -260,7 +260,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
                          mms_hash_table.$serverHash, 
                          mms.${MmsSmsColumns.ID},
                          mms.${MmsSmsColumns.ADDRESS},
-                         mms.${MmsDatabase.MESSAGE_TYPE},
+                         mms.${MmsDatabase.MESSAGE_BOX},
                          false
                     FROM $mmsHashTable mms_hash_table
                     LEFT OUTER JOIN ${MmsDatabase.TABLE_NAME} mms ON mms_hash_table.${messageID} = mms.${MmsSmsColumns.ID}
