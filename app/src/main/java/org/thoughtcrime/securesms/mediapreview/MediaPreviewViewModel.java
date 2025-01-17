@@ -109,10 +109,11 @@ public class MediaPreviewViewModel extends ViewModel {
             return null;
         }
 
-        String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri);
+        String filename = mediaRecord.getAttachment().getFilename();
+        if (filename == null || filename.isEmpty()) { filename = FilenameUtils.getFilenameFromUri(context, uri); }
 
         return new Media(uri,
-                extractedFilename,
+                filename,
                 mediaRecord.getContentType(),
                 mediaRecord.getDate(),
                 mediaRecord.getAttachment().getWidth(),
