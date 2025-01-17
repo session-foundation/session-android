@@ -31,6 +31,7 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 
 abstract class Slide(@JvmField protected val context: Context, protected val attachment: Attachment) {
@@ -71,15 +72,11 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
     val caption: Optional<String?>
         get() = Optional.fromNullable(attachment.caption)
 
-    open var filename: String = ""
-//        get() {
-//            if (attachment.filename == null) {
-//                val formattedDate = attachment.dataUri.
-//                "LegacyVoiceMessage-SavedAt-{"
-//            } else {
-//                return attachment.filename!!
-            //}
-//        }
+    var filename: String = attachment.filename ?: generateSuitableFilenameFromUri(context, attachment.dataUri)
+
+    // Note: All slide types EXCEPT AudioSlide use this technique to synthesize a filename from a Uri - however AudioSlide has
+    // its own custom version to handle legacy voice messages which lack filenames altogether.
+    open fun generateSuitableFilenameFromUri(context: Context, uri: Uri?) = FilenameUtils.getFilenameFromUri(context, attachment.dataUri)
 
     val fastPreflightId: String?
         get() = attachment.fastPreflightId

@@ -23,6 +23,7 @@ object FilenameUtils {
     @JvmStatic
     fun constructNewVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
 
+    // Method to synthesize a suitable filename for a legacy voice message that has no filename whatsoever
     @JvmStatic
     fun constructVoiceMessageFilenameFromAttachment(context: Context, attachment: Attachment): String {
         var constructedFilename = ""
@@ -46,7 +47,7 @@ object FilenameUtils {
 
         return if (constructedFilename.isEmpty()) {
             // If we didn't have a Uri path or couldn't extract the timestamp then we'll call the voice message "Session-VoiceMessage.aac"..
-            context.getString(R.string.app_name) + "-" + context.getString(R.string.messageVoice).replace(" ", "") + ".aac"
+            "$appNameString-$voiceMessageString.aac"
         } else {
             // ..otherwise we'll return a more accurate filename such as "Session-VoiceMessage_2025-01-15-151218.aac".
             constructedFilename
@@ -76,39 +77,42 @@ object FilenameUtils {
     // null from this method means that the calling code must construct a suitable placeholder filename.
     @JvmStatic
     @JvmOverloads // Force creation of two versions of this method - one with and one without the mimeType param
-    fun getFilenameFromUri(context: Context, uri: Uri, mimeType: String? = null): String {
+    fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null): String {
         var extractedFilename: String? = null
-        val scheme = uri.scheme
-        if ("content".equals(scheme, ignoreCase = true)) {
-            val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
-            val contentRes = context.contentResolver
-            if (contentRes != null) {
-                val cursor = contentRes.query(uri, projection, null, null, null)
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        val nameIndex = it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
-                        extractedFilename = it.getString(nameIndex)
+
+        if (uri != null) {
+            val scheme = uri.scheme
+            if ("content".equals(scheme, ignoreCase = true)) {
+                val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
+                val contentRes = context.contentResolver
+                if (contentRes != null) {
+                    val cursor = contentRes.query(uri, projection, null, null, null)
+                    cursor?.use {
+                        if (it.moveToFirst()) {
+                            val nameIndex = it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME)
+                            extractedFilename = it.getString(nameIndex)
+                        }
                     }
                 }
             }
-        }
 
-        // If the uri did not contain sufficient details to get the filename directly from the content resolver
-        // then we'll attempt to extract it from the uri path. For example, it's possible we could end up with
-        // a uri path such as:
-        //
-        //      uri path: /blob/multi-session-disk/image/jpeg/cat.jpeg/3050/3a507d6a-f2f9-41d1-97a0-319de47e3a8d
-        //
-        // from which we'd want to extract the filename "cat.jpeg".
-        if (extractedFilename == null && uri.path != null) {
-            extractedFilename = attemptUriPathExtraction(uri.path!!)
+            // If the uri did not contain sufficient details to get the filename directly from the content resolver
+            // then we'll attempt to extract it from the uri path. For example, it's possible we could end up with
+            // a uri path such as:
+            //
+            //      uri path: /blob/multi-session-disk/image/jpeg/cat.jpeg/3050/3a507d6a-f2f9-41d1-97a0-319de47e3a8d
+            //
+            // from which we'd want to extract the filename "cat.jpeg".
+            if (extractedFilename.isNullOrEmpty() && uri.path != null) {
+                extractedFilename = attemptUriPathExtraction(uri.path!!)
+            }
         }
 
         // Uri filename extraction failed - synthesize a filename from the media's MIME type.
         // Note: Giphy picked GIFs will use this to get a filename like "Session-GIF-<Date>" - but pre-saved GIFs
         // chosen via the file-picker or similar will use the existing saved filename as they will be caught in
         // the filename extraction code above.
-        if (extractedFilename == null) {
+        if (extractedFilename.isNullOrEmpty()) {
             extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType)
         }
 

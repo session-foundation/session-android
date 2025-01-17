@@ -66,10 +66,6 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             }
         }
 
-        // NOTE: This method to save an attachment seems to ONLY be used when we save an image from
-        // the full-screen preview of it (i.e., click on the image then save via the down arrow in
-        // the top right). If we instead long-press on an image to save it then it goes through a
-        // different save mechanism.
         fun saveAttachment(context: Context, attachment: Attachment): String? {
             val contentType = checkNotNull(MediaUtil.getJpegCorrectedMimeTypeIfRequired(attachment.contentType))
             var filename = attachment.filename
@@ -102,6 +98,7 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             if (updateValues.size() > 0) {
                 context.contentResolver.update(mediaUri!!, updateValues, null, null)
             }
+
             return outputUri.lastPathSegment
         }
 

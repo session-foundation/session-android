@@ -1485,7 +1485,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // Method to add an emoji to a queue and remove it a short while later - this is used as a
     // rate-limiting mechanism and is called from the `sendEmojiReaction` method, below.
-
     fun canPerformEmojiReaction(timestamp: Long): Boolean {
         // If the emoji reaction queue is full..
         if (emojiRateLimiterQueue.size >= EMOJI_REACTIONS_ALLOWED_PER_MINUTE) {

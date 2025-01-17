@@ -11,7 +11,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import java.io.File
 
 class Attachment {
-    var filename: String = ""
+    var filename: String? = null
     var contentType: String? = null
     var key: ByteArray? = null
     var digest: ByteArray? = null
@@ -25,7 +25,7 @@ class Attachment {
 
         fun fromProto(proto: SignalServiceProtos.AttachmentPointer): Attachment {
             val result = Attachment()
-            result.filename = proto.fileName
+            result.filename = if (proto.hasFileName()) proto.fileName else "SessionAttachment"
             fun inferContentType(): String {
                 val fileName = result.filename
                 val fileExtension = File(fileName).extension

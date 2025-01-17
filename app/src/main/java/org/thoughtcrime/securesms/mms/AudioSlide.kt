@@ -19,7 +19,6 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import android.util.Log
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -43,23 +42,11 @@ class AudioSlide : Slide {
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 
     override fun hasPlaceholder() = true
-    override fun hasImage() = true
-    override fun hasAudio() = true
+    override fun hasImage()       = true
+    override fun hasAudio()       = true
 
-    override var filename: String = ""
-        get() {
-            Log.w("ACL", "Hit AudioSlide filename getter")
-            Log.w("ACL", "Attachment path: " + attachment.dataUri?.path)
-            // Note: Attachments used to have optional filenames, and voice messages in particular did NOT have
-            // filenames at all. As such, when saving a legacy voice message without a filename we must query
-            // the database for the timestamp it got written and use that to synthesize a filename. Modern
-            // voice messages always have filenames so we don't have to perform those additional steps for them.
-            return if (super.filename.isEmpty()) {
-                FilenameUtils.constructVoiceMessageFilenameFromAttachment(context, attachment)
-            } else {
-                filename
-            }
-    }
+    // Legacy voice messages don't have filenames at all - so should we come across one we must synthesize a filename using the delivery date obtained from the attachment
+    override fun generateSuitableFilenameFromUri(context: Context, uri: Uri?) = FilenameUtils.constructVoiceMessageFilenameFromAttachment(context, attachment)
 
     @DrawableRes
     override fun getPlaceholderRes(theme: Resources.Theme?) = R.drawable.ic_volume_2
