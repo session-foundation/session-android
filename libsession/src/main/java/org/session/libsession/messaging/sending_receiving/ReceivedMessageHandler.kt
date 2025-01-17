@@ -462,8 +462,10 @@ fun MessageReceiver.handleVisibleMessage(
     }
     // Parse attachments if needed
     val attachments = proto.dataMessage.attachmentsList.map(Attachment::fromProto).filter { it.isValid() }
+
     // Cancel any typing indicators if needed
     cancelTypingIndicatorsIfNeeded(message.sender!!)
+
     // Parse reaction if needed
     val threadIsGroup = threadRecipient?.isGroupOrCommunityRecipient == true
     message.reaction?.let { reaction ->

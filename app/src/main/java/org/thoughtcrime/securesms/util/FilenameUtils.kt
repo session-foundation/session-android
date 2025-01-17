@@ -9,6 +9,23 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsignal.utilities.Log
 
+/*
+  ***********************************************************************************************
+  *  CAUTION: FILENAMES ARE ALSO HANDLED ELSEWHERE!
+  *
+  *  Although FilenameUtils is the main class for generating or synthesising filenames, please
+  *  note that there is one further method in Attachment.kt called:
+  *
+  *     generateFilenameFromReceivedTypeForLegacyClients()
+  *
+  *  which handles synthesising filenames in cases where we receive a null filename through the
+  *  SignalServerProtos.AttachmentPointer.
+  *
+  *  Please be sure to check or update that method as well if you're modifying filename logic that
+  *  might impact legacy clients.
+  ***********************************************************************************************
+*/
+
 object FilenameUtils {
     private const val TAG = "FilenameUtils"
 
@@ -21,7 +38,7 @@ object FilenameUtils {
     fun constructPhotoFilename(context: Context): String = "${context.getString(R.string.app_name)}-Photo-${getFormattedDate()}.jpg"
 
     @JvmStatic
-    fun constructNewVoiceMessageFilename(context: Context): String =  context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
+    fun constructNewVoiceMessageFilename(context: Context): String = context.getString(R.string.app_name) + "-" + context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
 
     // Method to synthesize a suitable filename for a legacy voice message that has no filename whatsoever
     @JvmStatic
@@ -47,6 +64,8 @@ object FilenameUtils {
 
         return if (constructedFilename.isEmpty()) {
             // If we didn't have a Uri path or couldn't extract the timestamp then we'll call the voice message "Session-VoiceMessage.aac"..
+            // Note: On save, should a file with this name already exist it will have an incremental number appended, e.g.,
+            // Session-VoiceMessage-1.aac, Session-VoiceMessage-2.aac etc.
             "$appNameString-$voiceMessageString.aac"
         } else {
             // ..otherwise we'll return a more accurate filename such as "Session-VoiceMessage_2025-01-15-151218.aac".
@@ -58,14 +77,14 @@ object FilenameUtils {
     @JvmStatic
     fun constructFallbackMediaFilenameFromMimeType(context: Context, mimeType: String?): String {
         return if (MediaUtil.isVideoType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}-${getFormattedDate()}" // Session-Video-<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}_${getFormattedDate()}" // Session-Video_<Date>
         } else if (MediaUtil.isGif(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}-${getFormattedDate()}"   // Session-GIF-<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}_${getFormattedDate()}"   // Session-GIF_<Date>
         } else if (MediaUtil.isImageType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}-${getFormattedDate()}" // Session-Image-<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}_${getFormattedDate()}" // Session-Image_<Date>
         } else {
             Log.d(TAG, "Asked to construct a filename for an unsupported media type: $mimeType.")
-            "${context.getString(R.string.app_name)}-${getFormattedDate()}" // Session-<Date> - best we can do
+            "${context.getString(R.string.app_name)}_${getFormattedDate()}" // Session-<Date> - best we can do
         }
     }
 
