@@ -554,7 +554,7 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
 
 private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol, threadDb: ThreadDatabase) {
     threadDb.approvedConversationList.use { cursor ->
-        val reader = threadDb.readerFor(cursor)
+        val reader = threadDb.readerFor(cursor, false)
         var current = reader.next
         while (current != null) {
             val recipient = current.recipient

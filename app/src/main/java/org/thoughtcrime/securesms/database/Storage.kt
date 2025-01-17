@@ -1489,8 +1489,10 @@ open class Storage @Inject constructor(
             // this deletes all *from* thread, not deleting the actual thread
             smsDatabase.deleteMessagesFrom(threadID, fromUser.serialize())
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.serialize())
-            threadDb.update(threadID, false)
         }
+
+        threadDb.update(threadID, false)
+
         return true
     }
 

@@ -5,6 +5,7 @@ import com.goterl.lazysodium.utils.KeyPair
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock

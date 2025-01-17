@@ -644,9 +644,7 @@ object SnodeAPI {
                             getBatchResponse(
                                 snode = snode,
                                 publicKey = batch.first().publicKey,
-                                requests = batch.mapNotNull { info ->
-                                    info.request.takeIf { !info.callback.isClosedForSend }
-                                },
+                                requests = batch.map { it.request },
                                 sequence = false
                             )
                         } catch (e: Exception) {
@@ -691,9 +689,15 @@ object SnodeAPI {
         request: SnodeBatchRequestInfo,
         responseType: Class<T>,
     ): T {
-        val callback = Channel<Result<T>>()
+        val callback = Channel<Result<T>>(capacity = 1)
         @Suppress("UNCHECKED_CAST")
-        batchedRequestsSender.send(RequestInfo(snode, publicKey, request, responseType, callback as SendChannel<Any>))
+        batchedRequestsSender.send(RequestInfo(
+            snode = snode,
+            publicKey = publicKey,
+            request = request,
+            responseType = responseType,
+            callback = callback as SendChannel<Any>
+        ))
         try {
             return callback.receive().getOrThrow()
         } catch (e: CancellationException) {

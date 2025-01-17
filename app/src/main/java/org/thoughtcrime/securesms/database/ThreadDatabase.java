@@ -62,6 +62,7 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -861,15 +862,28 @@ public class ThreadDatabase extends Database {
   }
 
   public Reader readerFor(Cursor cursor) {
-    return new Reader(cursor);
+    return readerFor(cursor, true);
+  }
+
+  /**
+   * Create a reader to conveniently access the thread cursor
+   *
+   * @param retrieveGroupStatus Whether group status should be calculated based on the config data.
+   *                            Normally you always want it, but if you don't want the reader
+   *                            to access the config system, this is the flag to turn it off.
+   */
+  public Reader readerFor(Cursor cursor, boolean retrieveGroupStatus) {
+    return new Reader(cursor, retrieveGroupStatus);
   }
 
   public class Reader implements Closeable {
 
     private final Cursor cursor;
+    private final boolean retrieveGroupStatus;
 
-    public Reader(Cursor cursor) {
+    public Reader(Cursor cursor, boolean retrieveGroupStatus) {
       this.cursor = cursor;
+      this.retrieveGroupStatus = retrieveGroupStatus;
     }
 
     public int getCount() {
@@ -931,7 +945,7 @@ public class ThreadDatabase extends Database {
       }
 
       final GroupThreadStatus groupThreadStatus;
-      if (recipient.isGroupV2Recipient()) {
+      if (recipient.isGroupV2Recipient() && retrieveGroupStatus) {
         GroupInfo.ClosedGroupInfo group = ConfigFactoryProtocolKt.getGroup(
                 MessagingModuleConfiguration.getShared().getConfigFactory(),
                 new AccountId(recipient.getAddress().serialize())

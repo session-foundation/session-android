@@ -5,15 +5,14 @@ import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.Conversation
@@ -25,6 +24,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.jobs.InviteContactsJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.Destination
@@ -83,6 +83,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val lokiAPIDatabase: LokiAPIDatabase,
+    private val scope: GroupScope,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -206,7 +207,7 @@ class GroupManagerV2Impl @Inject constructor(
         group: AccountId,
         newMembers: List<AccountId>,
         shareHistory: Boolean
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(group, "Invite members") {
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
 
@@ -376,7 +377,7 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun removeMemberMessages(
         groupAccountId: AccountId,
         members: List<AccountId>
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupAccountId, "Remove member messages") {
         val messagesToDelete = mutableListOf<String>()
 
         val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
@@ -394,18 +395,18 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         if (messagesToDelete.isEmpty()) {
-            return@withContext
+            return@launchAndWait
         }
 
         val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.let {
             OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
-        } ?: return@withContext
+        } ?: return@launchAndWait
 
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
-    override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) {
-        val closedGroup = configFactory.getGroup(group) ?: return
+    override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
+        val closedGroup = configFactory.getGroup(group) ?: return@launchAndWait
         val groupAdminKey = closedGroup.adminKey
 
         if (groupAdminKey != null) {
@@ -418,155 +419,159 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun leaveGroup(groupId: AccountId) = withContext(dispatcher + SupervisorJob()) {
-        val group = configFactory.getGroup(groupId)
+    override suspend fun leaveGroup(groupId: AccountId) {
+        scope.launchAndWait(groupId, "Leave group") {
+            withContext(SupervisorJob()) {
+                val group = configFactory.getGroup(groupId)
 
-        if (group?.destroyed != true) {
-            // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-            val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
-                val allMembers = config.groupMembers.all()
-                allMembers.count { it.admin } == 1 &&
-                        allMembers.first { it.admin }
-                            .accountIdString() == storage.getUserPublicKey()
-            }
+                if (group?.destroyed != true) {
+                    // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
+                    val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
+                        val allMembers = config.groupMembers.all()
+                        allMembers.count { it.admin } == 1 &&
+                                allMembers.first { it.admin }
+                                    .accountIdString() == storage.getUserPublicKey()
+                    }
 
-            if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
-                val destination = Destination.ClosedGroup(groupId.hexString)
-                val sendMessageTasks = mutableListOf<Deferred<*>>()
+                    if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
+                        val destination = Destination.ClosedGroup(groupId.hexString)
+                        val sendMessageTasks = mutableListOf<Deferred<*>>()
 
-                // Always send a "XXX left" message to the group if we can
-                sendMessageTasks += async {
-                    MessageSender.send(
-                        GroupUpdated(
-                            GroupUpdateMessage.newBuilder()
-                                .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                                .build()
-                        ),
-                        destination,
-                        isSyncMessage = false
-                    ).await()
+                        // Always send a "XXX left" message to the group if we can
+                        sendMessageTasks += async {
+                            MessageSender.send(
+                                GroupUpdated(
+                                    GroupUpdateMessage.newBuilder()
+                                        .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
+                                        .build()
+                                ),
+                                destination,
+                                isSyncMessage = false
+                            ).await()
+                        }
+
+
+                        // If we are not the only admin, send a left message for other admin to handle the member removal
+                        sendMessageTasks += async {
+                            MessageSender.send(
+                                GroupUpdated(
+                                    GroupUpdateMessage.newBuilder()
+                                        .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
+                                        .build()
+                                ),
+                                destination,
+                                isSyncMessage = false
+                            ).await()
+                        }
+
+                        sendMessageTasks.awaitAll()
+                    }
+
+                    // If we are the only admin, leaving this group will destroy the group
+                    if (weAreTheOnlyAdmin) {
+                        configFactory.withMutableGroupConfigs(groupId) { configs ->
+                            configs.groupInfo.destroyGroup()
+                        }
+
+                        // Must wait until the config is pushed, otherwise if we go through the rest
+                        // of the code it will destroy the conversation, destroying the necessary configs
+                        // along the way, we won't be able to push the "destroyed" state anymore.
+                        configFactory.waitUntilGroupConfigsPushed(groupId)
+                    }
                 }
 
+                pollerFactory.pollerFor(groupId)?.stop()
 
-                // If we are not the only admin, send a left message for other admin to handle the member removal
-                sendMessageTasks += async {
-                    MessageSender.send(
-                        GroupUpdated(
-                            GroupUpdateMessage.newBuilder()
-                                .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                                .build()
-                        ),
-                        destination,
-                        isSyncMessage = false
-                    ).await()
-                }
-
-                sendMessageTasks.awaitAll()
+                // Delete conversation and group configs
+                storage.getThreadId(Address.fromSerialized(groupId.hexString))
+                    ?.let(storage::deleteConversation)
+                configFactory.removeGroup(groupId)
+                lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
+                lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
             }
-
-            // If we are the only admin, leaving this group will destroy the group
-            if (weAreTheOnlyAdmin) {
-                configFactory.withMutableGroupConfigs(groupId) { configs ->
-                    configs.groupInfo.destroyGroup()
-                }
-
-                // Must wait until the config is pushed, otherwise if we go through the rest
-                // of the code it will destroy the conversation, destroying the necessary configs
-                // along the way, we won't be able to push the "destroyed" state anymore.
-                configFactory.waitUntilGroupConfigsPushed(groupId)
-            }
-        }
-
-        pollerFactory.pollerFor(groupId)?.stop()
-
-        // Delete conversation and group configs
-        storage.getThreadId(Address.fromSerialized(groupId.hexString))
-            ?.let(storage::deleteConversation)
-        configFactory.removeGroup(groupId)
-        lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-        lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
-    }
+        }    }
 
     override suspend fun promoteMember(
         group: AccountId,
         members: List<AccountId>
-    ): Unit = withContext(dispatcher + SupervisorJob()) {
-        val adminKey = requireAdminAccess(group)
-        val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
-            // Update the group member's promotion status
-            members.asSequence()
-                .mapNotNull { configs.groupMembers.get(it.hexString) }
-                .onEach(GroupMember::setPromoted)
-                .forEach(configs.groupMembers::set)
+    ): Unit = scope.launchAndWait(group, "Promote member") {
+        withContext(SupervisorJob()) {
+            val adminKey = requireAdminAccess(group)
+            val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
+                // Update the group member's promotion status
+                members.asSequence()
+                    .mapNotNull { configs.groupMembers.get(it.hexString) }
+                    .onEach(GroupMember::setPromoted)
+                    .forEach(configs.groupMembers::set)
 
-            configs.groupInfo.getName()
-        }
-
-        // Send out the promote message to the members concurrently
-        val promoteMessage = GroupUpdated(
-            GroupUpdateMessage.newBuilder()
-                .setPromoteMessage(
-                    DataMessage.GroupUpdatePromoteMessage.newBuilder()
-                        .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
-                        .setName(groupName)
-                )
-                .build()
-        )
-
-        val promotionDeferred = members.associateWith { member ->
-            async {
-                MessageSender.sendNonDurably(
-                    message = promoteMessage,
-                    address = Address.fromSerialized(member.hexString),
-                    isSyncMessage = false
-                ).await()
-            }
-        }
-
-        // Wait and gather all the promote message sending result into a result map
-        val promotedByMemberIDs = promotionDeferred
-            .mapValues {
-                runCatching { it.value.await() }.isSuccess
+                configs.groupInfo.getName()
             }
 
-        // Update each member's status
-        configFactory.withMutableGroupConfigs(group) { configs ->
-            promotedByMemberIDs.asSequence()
-                .mapNotNull { (member, success) ->
-                    configs.groupMembers.get(member.hexString)?.apply {
-                        if (success) {
-                            setPromotionSent()
-                        } else {
-                            setPromotionFailed()
+            // Send out the promote message to the members concurrently
+            val promoteMessage = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setPromoteMessage(
+                        DataMessage.GroupUpdatePromoteMessage.newBuilder()
+                            .setGroupIdentitySeed(ByteString.copyFrom(adminKey).substring(0, 32))
+                            .setName(groupName)
+                    )
+                    .build()
+            )
+
+            val promotionDeferred = members.associateWith { member ->
+                async {
+                    MessageSender.sendNonDurably(
+                        message = promoteMessage,
+                        address = Address.fromSerialized(member.hexString),
+                        isSyncMessage = false
+                    ).await()
+                }
+            }
+
+            // Wait and gather all the promote message sending result into a result map
+            val promotedByMemberIDs = promotionDeferred
+                .mapValues {
+                    runCatching { it.value.await() }.isSuccess
+                }
+
+            // Update each member's status
+            configFactory.withMutableGroupConfigs(group) { configs ->
+                promotedByMemberIDs.asSequence()
+                    .mapNotNull { (member, success) ->
+                        configs.groupMembers.get(member.hexString)?.apply {
+                            if (success) {
+                                setPromotionSent()
+                            } else {
+                                setPromotionFailed()
+                            }
                         }
                     }
-                }
-                .forEach(configs.groupMembers::set)
-        }
+                    .forEach(configs.groupMembers::set)
+            }
 
-        // Send a group update message to the group telling members someone has been promoted
-        val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-            adminKey
-        )
-        val message = GroupUpdated(
-            GroupUpdateMessage.newBuilder()
-                .setMemberChangeMessage(
-                    GroupUpdateMemberChangeMessage.newBuilder()
-                        .addAllMemberSessionIds(members.map { it.hexString })
-                        .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
-                        .setAdminSignature(ByteString.copyFrom(signature))
-                )
-                .build()
-        ).apply {
-            sentTimestamp = timestamp
-        }
+            // Send a group update message to the group telling members someone has been promoted
+            val timestamp = clock.currentTimeMills()
+            val signature = SodiumUtilities.sign(
+                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                adminKey
+            )
+            val message = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setMemberChangeMessage(
+                        GroupUpdateMemberChangeMessage.newBuilder()
+                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
+                            .setAdminSignature(ByteString.copyFrom(signature))
+                    )
+                    .build()
+            ).apply {
+                sentTimestamp = timestamp
+            }
 
-        MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
-        storage.insertGroupInfoChange(message, group)
+            MessageSender.send(message, Destination.ClosedGroup(group.hexString), false).await()
+            storage.insertGroupInfoChange(message, group)
+        }
     }
-
     /**
      * Mark this member as "removed" in the group config.
      *
@@ -591,7 +596,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun respondToInvitation(groupId: AccountId, approved: Boolean) =
-        withContext(dispatcher) {
+        scope.launchAndWait(groupId, "Respond to invitation") {
             val group = requireNotNull(
                 configFactory.withUserConfigs { it.userGroups.getClosedGroup(groupId.hexString) }
             ) { "User groups config is not available" }
@@ -633,6 +638,17 @@ class GroupManagerV2Impl @Inject constructor(
             "Our account ID is not available"
         }
 
+        val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
+        poller.start()
+
+        // We need to wait until we have the first data polled from the poller, otherwise
+        // we won't have the necessary configs to send invite response/or do anything else.
+        // We can't hang on here forever if things don't work out, bail out if it's the camse
+        withTimeout(20_000L) {
+            poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
+                .filter { it.hadAtLeastOneSuccessfulPoll }
+                .first()
+        }
         // Clear the invited flag of the group in the config
         configFactory.withMutableUserConfigs { configs ->
             configs.userGroups.set(group.copy(
@@ -640,15 +656,6 @@ class GroupManagerV2Impl @Inject constructor(
                 joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
             ))
         }
-
-        val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
-        poller.start()
-
-        // We need to wait until we have the first data polled from the poller, otherwise
-        // we won't have the necessary configs to send invite response/or do anything else
-        poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
-            .filter { it.hadAtLeastOneSuccessfulPoll }
-            .first()
 
         if (group.adminKey == null) {
             // Send an invite response to the group if we are invited as a regular member
@@ -695,7 +702,7 @@ class GroupManagerV2Impl @Inject constructor(
         inviterName: String?,
         inviteMessageHash: String,
         inviteMessageTimestamp: Long,
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupId, "Handle invitation") {
         handleInvitation(
             groupId = groupId,
             groupName = groupName,
@@ -716,7 +723,7 @@ class GroupManagerV2Impl @Inject constructor(
         promoterName: String?,
         promoteMessageHash: String,
         promoteMessageTimestamp: Long,
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupId, "Handle promotion") {
         val userAuth = requireNotNull(storage.userAuth) { "No current user available" }
         val group = configFactory.getGroup(groupId)
 
@@ -834,15 +841,15 @@ class GroupManagerV2Impl @Inject constructor(
         groupId: AccountId,
         sender: AccountId,
         approved: Boolean
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupId, "Handle invite response") {
         if (!approved) {
             // We should only see approved coming through
-            return@withContext
+            return@launchAndWait
         }
 
         val adminKey = configFactory.getGroup(groupId)?.adminKey
         if (adminKey == null || adminKey.isEmpty()) {
-            return@withContext // We don't have the admin key, we can't process the invite response
+            return@launchAndWait // We don't have the admin key, we can't process the invite response
         }
 
         configFactory.withMutableGroupConfigs(groupId) { configs ->
@@ -857,14 +864,14 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
-    override suspend fun handleKicked(groupId: AccountId): Unit = withContext(dispatcher) {
+    override suspend fun handleKicked(groupId: AccountId): Unit = scope.launchAndWait(groupId, "Handle kicked") {
         Log.d(TAG, "We were kicked from the group, delete and stop polling")
 
         // Stop polling the group immediately
         pollerFactory.pollerFor(groupId)?.stop()
 
         val userId = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
-        val group = configFactory.getGroup(groupId) ?: return@withContext
+        val group = configFactory.getGroup(groupId) ?: return@launchAndWait
 
         // Retrieve the group name one last time from the group info,
         // as we are going to clear the keys, we won't have the chance to
@@ -897,7 +904,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun setName(groupId: AccountId, newName: String): Unit =
-        withContext(dispatcher) {
+        scope.launchAndWait(groupId, "Set group name") {
             val adminKey = requireAdminAccess(groupId)
 
             val nameChanged = configFactory.withMutableGroupConfigs(groupId) { configs ->
@@ -910,7 +917,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             if (!nameChanged) {
-                return@withContext
+                return@launchAndWait
             }
 
             val timestamp = clock.currentTimeMills()
@@ -940,7 +947,7 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun requestMessageDeletion(
         groupId: AccountId,
         messageHashes: Set<String>
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupId, "Request message deletion") {
         // To delete messages from a group, there are a few considerations:
         // 1. Messages are stored on every member's device, we need a way to ask them to delete their stored messages
         // 2. Messages are also stored on the group swarm, only the group admin can delete them
@@ -1014,7 +1021,7 @@ class GroupManagerV2Impl @Inject constructor(
         timestamp: Long,
         sender: AccountId,
         senderIsVerifiedAdmin: Boolean,
-    ): Unit = withContext(dispatcher) {
+    ): Unit = scope.launchAndWait(groupId, "Handle delete member content") {
         val threadId =
             requireNotNull(storage.getThreadId(Address.fromSerialized(groupId.hexString))) {
                 "No thread ID found for the group"
@@ -1091,7 +1098,7 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override fun onBlocked(groupAccountId: AccountId) {
-        GlobalScope.launch(dispatcher) {
+        scope.launch(groupAccountId, "On blocked") {
             respondToInvitation(groupAccountId, false)
 
             // Remove this group from config regardless

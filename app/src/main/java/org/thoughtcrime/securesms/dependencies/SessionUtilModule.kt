@@ -14,6 +14,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
@@ -59,4 +60,8 @@ object SessionUtilModule {
     @Provides
     @Singleton
     fun provideSnodeClock() = SnodeClock()
+
+    @Provides
+    @Singleton
+    fun provideGroupScope() = GroupScope()
 }
