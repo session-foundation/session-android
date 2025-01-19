@@ -74,11 +74,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
         get() = Optional.fromNullable(attachment.caption)
 
     val filename: String by lazy {
-        Log.d("", "*** in Slide, getting file name: ${attachment.filename}")
-        val temp = if(attachment.filename.isNullOrEmpty()) generateSuitableFilenameFromUri(context, attachment.dataUri) else attachment.filename
-        Log.d("", "*** post rectification: ${attachment.filename}")
-        temp
-
+        if(attachment.filename.isNullOrEmpty()) generateSuitableFilenameFromUri(context, attachment.dataUri) else attachment.filename
     }
 
     // Note: All slide types EXCEPT AudioSlide use this technique to synthesize a filename from a Uri - however AudioSlide has
