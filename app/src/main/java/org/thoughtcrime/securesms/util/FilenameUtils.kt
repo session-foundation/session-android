@@ -9,22 +9,6 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsignal.utilities.Log
 
-/*
-  ***********************************************************************************************
-  *  CAUTION: FILENAMES ARE ALSO HANDLED ELSEWHERE!
-  *
-  *  Although FilenameUtils is the main class for generating or synthesising filenames, please
-  *  note that there is one further method in Attachment.kt called:
-  *
-  *     generateFilenameFromReceivedTypeForLegacyClients()
-  *
-  *  which handles synthesising filenames in cases where we receive a null filename through the
-  *  SignalServerProtos.AttachmentPointer.
-  *
-  *  Please be sure to check or update that method as well if you're modifying filename logic that
-  *  might impact legacy clients.
-  ***********************************************************************************************
-*/
 
 object FilenameUtils {
     private const val TAG = "FilenameUtils"
@@ -75,16 +59,22 @@ object FilenameUtils {
 
     // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
     @JvmStatic
-    fun constructFallbackMediaFilenameFromMimeType(context: Context, mimeType: String?): String {
+    fun constructFallbackMediaFilenameFromMimeType(
+        context: Context,
+        mimeType: String?,
+        ignoreDate: Boolean
+    ): String {
+        val timestamp = if (ignoreDate) "" else "_${getFormattedDate()}"
+
         return if (MediaUtil.isVideoType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}_${getFormattedDate()}" // Session-Video_<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}$timestamp" // Session-Video[_<Date>]
         } else if (MediaUtil.isGif(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}_${getFormattedDate()}"   // Session-GIF_<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}$timestamp"   // Session-GIF[_<Date>]
         } else if (MediaUtil.isImageType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}_${getFormattedDate()}" // Session-Image_<Date>
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}$timestamp" // Session-Image[_<Date>]
         } else {
             Log.d(TAG, "Asked to construct a filename for an unsupported media type: $mimeType.")
-            "${context.getString(R.string.app_name)}_${getFormattedDate()}" // Session-<Date> - best we can do
+            "${context.getString(R.string.app_name)}$timestamp" // Session[_<Date>] - best we can do
         }
     }
 
@@ -96,7 +86,7 @@ object FilenameUtils {
     // null from this method means that the calling code must construct a suitable placeholder filename.
     @JvmStatic
     @JvmOverloads // Force creation of two versions of this method - one with and one without the mimeType param
-    fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null): String {
+    fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null, ignoreDate: Boolean = false): String {
         var extractedFilename: String? = null
 
         if (uri != null) {
@@ -132,7 +122,7 @@ object FilenameUtils {
         // chosen via the file-picker or similar will use the existing saved filename as they will be caught in
         // the filename extraction code above.
         if (extractedFilename.isNullOrEmpty()) {
-            extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType)
+            extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, ignoreDate)
         }
 
         return extractedFilename!!

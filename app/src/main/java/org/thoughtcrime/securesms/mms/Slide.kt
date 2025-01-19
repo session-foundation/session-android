@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
+import android.util.Log
 import androidx.annotation.DrawableRes
 import com.squareup.phrase.Phrase
 import kotlin.String
@@ -72,11 +73,17 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
     val caption: Optional<String?>
         get() = Optional.fromNullable(attachment.caption)
 
-    var filename: String = attachment.filename ?: generateSuitableFilenameFromUri(context, attachment.dataUri)
+    val filename: String by lazy {
+        Log.d("", "*** in Slide, getting file name: ${attachment.filename}")
+        val temp = if(attachment.filename.isNullOrEmpty()) generateSuitableFilenameFromUri(context, attachment.dataUri) else attachment.filename
+        Log.d("", "*** post rectification: ${attachment.filename}")
+        temp
+
+    }
 
     // Note: All slide types EXCEPT AudioSlide use this technique to synthesize a filename from a Uri - however AudioSlide has
     // its own custom version to handle legacy voice messages which lack filenames altogether.
-    open fun generateSuitableFilenameFromUri(context: Context, uri: Uri?) = FilenameUtils.getFilenameFromUri(context, attachment.dataUri)
+    open fun generateSuitableFilenameFromUri(context: Context, uri: Uri?) = FilenameUtils.getFilenameFromUri(context, attachment.dataUri, attachment.contentType, ignoreDate = true) //ignore date else it'll change every time we open a file
 
     val fastPreflightId: String?
         get() = attachment.fastPreflightId

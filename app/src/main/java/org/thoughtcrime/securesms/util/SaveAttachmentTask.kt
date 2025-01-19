@@ -74,10 +74,6 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             val outputUri: Uri = getMediaStoreContentUriForType(contentType)
             val mediaUri = createOutputUri(context, outputUri, contentType, filename)
 
-            if (filename.isEmpty()) {
-                filename = FilenameUtils.getFilenameFromUri(context, mediaUri, contentType)
-            }
-
             val updateValues = ContentValues()
             PartAuthority.getAttachmentStream(context, attachment.uri).use { inputStream ->
                 if (inputStream == null) {
