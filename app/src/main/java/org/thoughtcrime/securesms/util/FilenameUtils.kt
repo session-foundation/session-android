@@ -62,19 +62,19 @@ object FilenameUtils {
     fun constructFallbackMediaFilenameFromMimeType(
         context: Context,
         mimeType: String?,
-        ignoreDate: Boolean
+        fileTimestamp: Long?
     ): String {
-        val timestamp = if (ignoreDate) "" else "_${getFormattedDate()}"
+        val timestamp = "_${getFormattedDate(fileTimestamp)}"
 
         return if (MediaUtil.isVideoType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}$timestamp" // Session-Video[_<Date>]
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.video)}$timestamp" // Session-Video_<Date>
         } else if (MediaUtil.isGif(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}$timestamp"   // Session-GIF[_<Date>]
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.gif)}$timestamp"   // Session-GIF_<Date>
         } else if (MediaUtil.isImageType(mimeType)) {
-            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}$timestamp" // Session-Image[_<Date>]
+            "${context.getString(R.string.app_name)}-${context.getString(R.string.image)}$timestamp" // Session-Image_<Date>
         } else {
             Log.d(TAG, "Asked to construct a filename for an unsupported media type: $mimeType.")
-            "${context.getString(R.string.app_name)}$timestamp" // Session[_<Date>] - best we can do
+            "${context.getString(R.string.app_name)}$timestamp" // Session_<Date> - best we can do
         }
     }
 
@@ -86,7 +86,7 @@ object FilenameUtils {
     // null from this method means that the calling code must construct a suitable placeholder filename.
     @JvmStatic
     @JvmOverloads // Force creation of two versions of this method - one with and one without the mimeType param
-    fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null, ignoreDate: Boolean = false): String {
+    fun getFilenameFromUri(context: Context, uri: Uri?, mimeType: String? = null): String {
         var extractedFilename: String? = null
 
         if (uri != null) {
@@ -122,7 +122,7 @@ object FilenameUtils {
         // chosen via the file-picker or similar will use the existing saved filename as they will be caught in
         // the filename extraction code above.
         if (extractedFilename.isNullOrEmpty()) {
-            extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, ignoreDate)
+            extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, getTimestampFromUri(uri?.path))
         }
 
         return extractedFilename!!
@@ -135,5 +135,15 @@ object FilenameUtils {
 
         // If found, return the identified filename, otherwise we'll be returning null
         return extractedFilename
+    }
+
+    private fun getTimestampFromUri(uriPath: String?): Long?{
+        val segments = uriPath?.split("/")
+        // we assume that at this stage we have a format that looks like /part/1111111111/123 with 1111111111 being the creation date timestamp
+        return try {
+            segments?.getOrNull(2)?.toLong()
+        } catch (e: Exception){
+            null
+        }
     }
 }
