@@ -638,6 +638,14 @@ class GroupManagerV2Impl @Inject constructor(
             "Our account ID is not available"
         }
 
+        // Clear the invited flag of the group in the config
+        configFactory.withMutableUserConfigs { configs ->
+            configs.userGroups.set(group.copy(
+                invited = false,
+                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
+            ))
+        }
+
         val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
         poller.start()
 
@@ -648,13 +656,6 @@ class GroupManagerV2Impl @Inject constructor(
             poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
-        }
-        // Clear the invited flag of the group in the config
-        configFactory.withMutableUserConfigs { configs ->
-            configs.userGroups.set(group.copy(
-                invited = false,
-                joinedAtSecs = TimeUnit.MILLISECONDS.toSeconds(clock.currentTimeMills())
-            ))
         }
 
         if (group.adminKey == null) {
