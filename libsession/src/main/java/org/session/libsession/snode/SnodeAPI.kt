@@ -1021,16 +1021,16 @@ object SnodeAPI {
                 val hash = messageHashGetter(message)
                 if (hash == null) {
                     Log.d("Loki", "Missing hash value for message: ${message?.prettifiedDescription()}.")
-                    return@filter false
+                    return@filter true
                 }
 
-                val isDuplicate = hashValues.add(hash)
+                val isNew = hashValues.add(hash)
 
-                if (isDuplicate) {
+                if (!isNew) {
                     Log.d("Loki", "Duplicate message hash: $hash.")
                 }
 
-                isDuplicate
+                isNew
             }
             .also {
                 if (updateStoredHashes && it.isNotEmpty()) {
