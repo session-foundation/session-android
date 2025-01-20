@@ -429,9 +429,13 @@ open class Storage @Inject constructor(
             Log.w("ACL", "Incoming message text is: " + message.text)
 
             // sanitise attachments with missing names
-            for(attachment in attachments.filter { it.filename.isNullOrEmpty() }) {
-                attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, attachment)
+            for (attachment in attachments.filter { it.filename.isNullOrEmpty() }) {
+                // We have multiple Attachment classes, but only `SignalAttachment` has the `isVoiceNote` property which we can use to differentiate
+                // between an audio-file with no filename and a voice-message with no file-name, so we convert to that and pass it through.
+                val signalAttachment = attachment.toSignalAttachment()
+                attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, signalAttachment)
             }
+
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })
             val insertResult = if (isUserSender || isUserBlindedSender) {
