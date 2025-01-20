@@ -1021,7 +1021,7 @@ object SnodeAPI {
                 val hash = messageHashGetter(message)
                 if (hash == null) {
                     Log.d("Loki", "Missing hash value for message: ${message?.prettifiedDescription()}.")
-                    return@filter true
+                    return@filter false
                 }
 
                 val isNew = hashValues.add(hash)
