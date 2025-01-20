@@ -4,13 +4,18 @@ import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.security.MessageDigest
+import javax.inject.Inject
+import javax.inject.Singleton
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
@@ -89,11 +94,6 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
-import java.security.MessageDigest
-import javax.inject.Inject
-import javax.inject.Singleton
-import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
-import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
 private const val TAG = "Storage"
 
@@ -220,17 +220,11 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun getUserPublicKey(): String? {
-        return preferences.getLocalNumber()
-    }
+    override fun getUserPublicKey(): String? { return preferences.getLocalNumber() }
 
-    override fun getUserX25519KeyPair(): ECKeyPair {
-        return lokiAPIDatabase.getUserX25519KeyPair()
-    }
+    override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
 
-    override fun getUserED25519KeyPair(): KeyPair? {
-        return KeyPairUtilities.getUserED25519KeyPair(context)
-    }
+    override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
 
     override fun getUserProfile(): Profile {
         val displayName = TextSecurePreferences.getProfileName(context)
@@ -296,11 +290,7 @@ open class Storage @Inject constructor(
 
         val info = lokiMessageDatabase.getSendersForHashes(threadId, hashes)
 
-        if (senderIsMe) {
-            return info.all { it.isOutgoing }
-        } else {
-            return info.all { it.sender == sender }
-        }
+        return if (senderIsMe) info.all { it.isOutgoing } else info.all { it.sender == sender }
     }
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
@@ -426,12 +416,12 @@ open class Storage @Inject constructor(
 
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
 
-            Log.w("ACL", "Incoming message text is: " + message.text)
-
-            // sanitise attachments with missing names
+            // Sanitise attachments with missing names
             for (attachment in attachments.filter { it.filename.isNullOrEmpty() }) {
-                // We have multiple Attachment classes, but only `SignalAttachment` has the `isVoiceNote` property which we can use to differentiate
-                // between an audio-file with no filename and a voice-message with no file-name, so we convert to that and pass it through.
+
+                // Unfortunately we have multiple Attachment classes, but only `SignalAttachment` has the `isVoiceNote` property which we can
+                // use to differentiate between an audio-file with no filename and a voice-message with no file-name, so we convert to that
+                // and pass it through.
                 val signalAttachment = attachment.toSignalAttachment()
                 attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, signalAttachment)
             }

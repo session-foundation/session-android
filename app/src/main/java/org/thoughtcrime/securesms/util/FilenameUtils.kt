@@ -9,7 +9,6 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsignal.utilities.Log
 
-
 object FilenameUtils {
     private const val TAG = "FilenameUtils"
 
@@ -30,48 +29,19 @@ object FilenameUtils {
     // Note: If we have a file as an attachment then it has a `isVoiceNote` property which
     @JvmStatic
     fun constructAudioMessageFilenameFromAttachment(context: Context, attachment: Attachment): String {
-        val appNameString = context.getString(R.string.app_name)
-
-
         // Try and get the file extension, e.g., from "audio/aac" extract the "aac" part etc.
         val fileExtensionSegments = attachment.contentType.split("/")
         val fileExtension = if (fileExtensionSegments.size == 2) fileExtensionSegments[1] else ""
 
         // We SHOULD always have a uri path - but it's not guaranteed
         val uriPath = attachment.dataUri?.path
-        Log.w("ACL", "Extracted uri path: $uriPath")
 
         val timestamp = if (uriPath.isNullOrEmpty()) System.currentTimeMillis() else getTimestampFromUri(uriPath)
-        Log.i("ACL", "Going with timestamp: $timestamp")
 
         // Return the filename using either the "VoiceMessage" or "Audio" string depending on the attachment type
+        val appNameString = context.getString(R.string.app_name)
         val audioTypeString = if (attachment.isVoiceNote) context.getString(R.string.messageVoice).replace(" ", "") else context.getString(R.string.audio)
         return "$appNameString-${audioTypeString}_${getFormattedDate(timestamp)}.$fileExtension"
-
-//        if (!uriPath.isNullOrEmpty()) {
-//            // The Uri path contains a timestamp for when the attachment was written, typically in the form "/part/1736914338425/4",
-//            // where the middle element ("1736914338425" in this case) equates to: Wednesday, 15 January 2025 15:12:18.425 (in the GST+11 timezone).
-//            // The final "/4" is likely the part number.
-//
-//            // CLOSE TO OG
-////            val databaseWriteTimestamp = getTimestampFromUri(uriPath)
-////            Log.i("ACL", "Extracted timestamp: $databaseWriteTimestamp")
-////
-////            if (databaseWriteTimestamp != null) {
-////                return appNameString + "-" + audioTypeString + "_${getFormattedDate(databaseWriteTimestamp)}" + ".aac"
-////            }
-//
-//            val timestamp = getTimestampFromUri(uriPath) ?: System.currentTimeMillis()
-//            Log.i("ACL", "Extracted timestamp999: $timestamp")
-//
-//            return "$appNameString-${audioTypeString}_${getFormattedDate(timestamp)}.$fileExtension"
-        //}
-
-        // If we didn't have a Uri path or couldn't extract the timestamp then we'll call the voice message "Session-VoiceMessage.aac"..
-        // Note: On save, should a file with this name already exist it will have an incremental number appended, e.g.,
-        // Session-VoiceMessage-1.aac, Session-VoiceMessage-2.aac etc.
-        //Log.w("ACL", "Couldn't find timestamp in uri path: $uriPath")
-        //return "$appNameString-$audioTypeString.aac"
     }
 
     // As all picked media now has a mandatory filename this method should never get called - but it's here as a last line of defence
@@ -85,7 +55,7 @@ object FilenameUtils {
         // Note: Once a file is created with this timestamp it is maintained with that timestamp so
         // we do not have issues such as saving the file multiple times resulting in multiple filenames
         // where each file uses the "now" timestamp it was saved at (although multiple files will
-        // have -1, -2, -3 etc. suffixes to prevent overwriting any file.
+        // have -1, -2, -3 etc. suffixes to prevent overwriting any file).
         val guaranteedTimestamp = timestamp ?: System.currentTimeMillis()
         val formattedDate = "_${getFormattedDate(guaranteedTimestamp)}"
         val fileExtension = mimeType?.split("/")?.get(1) ?: ""
@@ -119,7 +89,6 @@ object FilenameUtils {
         var extractedFilename: String? = null
 
         if (uri != null) {
-            Log.w("ACL", "Trying 1..")
             val scheme = uri.scheme
             if ("content".equals(scheme, ignoreCase = true)) {
                 val projection = arrayOf(OpenableColumns.DISPLAY_NAME)
@@ -142,54 +111,39 @@ object FilenameUtils {
             //      uri path: /blob/multi-session-disk/image/jpeg/cat.jpeg/3050/3a507d6a-f2f9-41d1-97a0-319de47e3a8d
             //
             // from which we'd want to extract the filename "cat.jpeg".
-            if (extractedFilename.isNullOrEmpty() && uri.path != null) {
-                Log.w("ACL", "Trying 2..")
-                extractedFilename = attemptUriPathExtraction(uri.path!!)
+            if (extractedFilename.isNullOrEmpty() && uri.path != null && uri.path!!.contains("/blob/")) {
+                // Split the path by "/" then traverse the segments in reverse order looking for the first one containing a dot
+                val segments = uri.path?.split("/")
+
+                // If the uri path was not in the blob format extractedFilename will still be null and we'll continue on to our next
+                // filename synthesis technique.
+                extractedFilename = segments?.asReversed()?.firstOrNull { it.contains('.') }
             }
         }
 
-        // Uri filename extraction failed - synthesize a filename from the media's MIME type.
-        // Note: Giphy picked GIFs will use this to get a filename like "Session-GIF-<Date>" - but pre-saved GIFs
-        // chosen via the file-picker or similar will use the existing saved filename as they will be caught in
-        // the filename extraction code above.
+        // Uri filename extraction failed - synthesize a filename from the media's MIME type
         if (extractedFilename.isNullOrEmpty()) {
-            Log.w("ACL", "Trying 3.. uriPath is: " + uri?.path)
-
-            val haveFileIdFormattedPath = uri?.path?.contains("/file/") == true
-
 
             if (attachment == null) {
-                Log.w("ACL", "The attachment is null!")
                 val timestamp = if (uri?.path.isNullOrEmpty()) null else getTimestampFromUri(uri.path!!)
                 extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, timestamp)
             } else {
-
-                Log.w("ACL", "We HAVE an attachment - the mime type is: " + mimeType)
-
-                if (mimeType?.contains("audio") == true) {
-                    extractedFilename = constructAudioMessageFilenameFromAttachment(context, attachment)
+                // If the mimetype is audio then we generate a filename which contain "VoiceMessage" or "Audio"
+                // based on the attachment's `isVoiceNote` flag..
+                extractedFilename = if (mimeType?.contains("audio") == true) {
+                    constructAudioMessageFilenameFromAttachment(context, attachment)
                 } else {
-                    Log.w("ACL", "Nah - gotta give it NOW as the timestamp")
-                    extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, null)
+                    // ..otherwise we just do the best we can from the mime type (if any).
+                    constructFallbackMediaFilenameFromMimeType(context, mimeType, null)
                 }
             }
-
         }
 
-        Log.w("ACL", "Returning with: " + extractedFilename)
         return extractedFilename!!
     }
 
-    private fun attemptUriPathExtraction(uriPath: String): String? {
-        // Split the path by "/" then traverse the segments in reverse order looking for the first one containing a dot
-        val segments = uriPath.split("/")
-        val extractedFilename = segments.asReversed().firstOrNull { it.contains('.') }
-
-        // If found, return the identified filename, otherwise we'll be returning null
-        return extractedFilename
-    }
-
-    // Uri paths comes in a variety of formats - if we have the right format we can extract the incoming file timestamp from it
+    // Uri paths comes in a variety of formats - if we have the right format, such as "/part/1736914338425/4", then we can
+    // extract the incoming file timestamp from it.
     private fun getTimestampFromUri(uriPath: String): Long? {
         val segments = uriPath.split("/")
 
@@ -197,12 +151,12 @@ object FilenameUtils {
         val uriPathStartsWithFile = uriPath.startsWith("/file/") == true
         if (uriPathStartsWithFile) return null
 
-        // If we have a uri path in a format like "/part/1736914338425/4" then we CAN extract that timestamp (the middle value)
+        // But if we have a uri path in a format like "/part/1736914338425/4" then we CAN extract that timestamp (the middle value)
         val uriPathStartsWithPart = uriPath.startsWith("/part/") == true
         if (!uriPathStartsWithPart) return null
         return try {
             segments.getOrNull(2)?.toLong()
-        } catch (e: Exception){
+        } catch (e: Exception) {
             null
         }
     }

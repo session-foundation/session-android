@@ -78,9 +78,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
     }
 
     // Note: All slide types EXCEPT AudioSlide use this technique to synthesize a filename from a Uri - however AudioSlide has
-    // its own custom version to handle legacy voice messages which lack filenames altogether.
+    // its own custom version to handle legacy voice messages which lack filenames.
     open fun generateSuitableFilenameFromUri(context: Context, uri: Uri?): String {
-        Log.w("ACL", "Running generic slide generate suitable filename method")
         return FilenameUtils.getFilenameFromUri(context, attachment.dataUri, attachment.contentType)
     }
 

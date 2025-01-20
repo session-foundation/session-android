@@ -48,7 +48,6 @@ class AudioSlide : Slide {
 
     // Legacy voice messages don't have filenames at all - so should we come across one we must synthesize a filename using the delivery date obtained from the attachment
     override fun generateSuitableFilenameFromUri(context: Context, uri: Uri?): String {
-        Log.w("ACL", "Running audio-specific generate suitable filename method")
         return FilenameUtils.constructAudioMessageFilenameFromAttachment(context, attachment)
     }
 
