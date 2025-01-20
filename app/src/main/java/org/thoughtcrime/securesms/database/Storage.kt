@@ -422,10 +422,15 @@ open class Storage @Inject constructor(
         val expiryMode = message.expiryMode
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) message.sentTimestamp!! else 0
+
+
         if (message.isMediaMessage() || attachments.isNotEmpty()) {
+
+            Log.w("ACL", "Incoming message text is: " + message.text)
+
             // sanitise attachments with missing names
             for(attachment in attachments.filter { it.filename.isNullOrEmpty() }) {
-                attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType)
+                attachment.filename = FilenameUtils.getFilenameFromUri(context, Uri.parse(attachment.url), attachment.contentType, attachment)
             }
             val quote: Optional<QuoteModel> = if (quotes != null) Optional.of(quotes) else Optional.absent()
             val linkPreviews: Optional<List<LinkPreview>> = if (linkPreview.isEmpty()) Optional.absent() else Optional.of(linkPreview.mapNotNull { it!! })

@@ -144,6 +144,8 @@ public class AttachmentManager {
 
             @Override
             protected @Nullable Slide doInBackground(Void... params) {
+                Log.w("ACL", "Hit setMedia.doInBackground");
+
                 try {
                     if (PartAuthority.isLocalUri(uri)) {
                         return getManuallyCalculatedSlideInfo(uri, width, height);
@@ -391,9 +393,24 @@ public class AttachmentManager {
             // Try to extract a filename from the Uri if we weren't provided one
             String extractedFilename = FilenameUtils.getFilenameFromUri(context, uri, mimeType);
 
+            //slide.get().getBody()
+
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
-                case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false);
+                case AUDIO:    {
+                    AudioSlide tempAudioSlide = new AudioSlide(context, uri, extractedFilename, dataSize, false);
+                    String bodyString = tempAudioSlide.getBody().toString();
+                    Log.w("ACL", "Body string: " + bodyString);
+                    String bodyStringGet = tempAudioSlide.getBody().get();
+                    Log.w("ACL", "Body string get: " + bodyStringGet);
+
+                    boolean containsTheWordAttachment = tempAudioSlide.getBody().get().contains(context.getString(R.string.attachment));
+                    Log.w("ACL", "Contains the word attachment? " + containsTheWordAttachment);
+                    boolean isVoiceMessage = !containsTheWordAttachment;
+                    Log.w("ACL", "is voice message " + isVoiceMessage);
+
+                    return new AudioSlide(context, uri, extractedFilename, dataSize, isVoiceMessage);
+                }
                 case VIDEO:    return new VideoSlide(context, uri, extractedFilename, dataSize);
                 case VCARD:
                 case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);

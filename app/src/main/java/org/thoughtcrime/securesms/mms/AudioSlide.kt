@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
+import android.util.Log
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -46,7 +47,10 @@ class AudioSlide : Slide {
     override fun hasAudio()       = true
 
     // Legacy voice messages don't have filenames at all - so should we come across one we must synthesize a filename using the delivery date obtained from the attachment
-    override fun generateSuitableFilenameFromUri(context: Context, uri: Uri?) = FilenameUtils.constructVoiceMessageFilenameFromAttachment(context, attachment)
+    override fun generateSuitableFilenameFromUri(context: Context, uri: Uri?): String {
+        Log.w("ACL", "Running audio-specific generate suitable filename method")
+        return FilenameUtils.constructAudioMessageFilenameFromAttachment(context, attachment)
+    }
 
     @DrawableRes
     override fun getPlaceholderRes(theme: Resources.Theme?) = R.drawable.ic_volume_2
