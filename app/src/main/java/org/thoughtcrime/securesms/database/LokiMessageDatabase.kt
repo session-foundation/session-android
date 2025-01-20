@@ -288,10 +288,11 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         return result
     }
 
-    fun getMessageServerHash(messageID: Long, mms: Boolean): String? = getMessageTables(mms).firstNotNullOfOrNull {
-        databaseHelper.readableDatabase.get(it, "${Companion.messageID} = ?", arrayOf(messageID.toString())) { cursor ->
-            cursor.getString(serverHash)
-        }
+    fun getMessageServerHash(messageID: Long, mms: Boolean): String? {
+        return databaseHelper.readableDatabase.get(
+            getMessageTable(mms),
+            "${Companion.messageID} = ?",
+            arrayOf(messageID.toString())) { cursor -> cursor.getString(serverHash) }
     }
 
     fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
@@ -306,9 +307,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
     }
 
     fun deleteMessageServerHash(messageID: Long, mms: Boolean) {
-        getMessageTables(mms).firstOrNull {
-            databaseHelper.writableDatabase.delete(it, "${Companion.messageID} = ?", arrayOf(messageID.toString())) > 0
-        }
+        databaseHelper.writableDatabase.delete(getMessageTable(mms), "${Companion.messageID} = ?", arrayOf(messageID.toString()))
     }
 
     fun deleteMessageServerHashes(messageIDs: List<Long>, mms: Boolean) {
@@ -347,10 +346,6 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
             groupInviteTable, "$threadID = ?", arrayOf(groupThreadId.toString())
         )
     }
-    private fun getMessageTables(mms: Boolean) = sequenceOf(
-        getMessageTable(mms),
-        messageHashTable
-    )
 
     private fun getMessageTable(mms: Boolean) = if (mms) mmsHashTable else smsHashTable
 }

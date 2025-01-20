@@ -467,7 +467,11 @@ open class Storage @Inject constructor(
         }
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                lokiMessageDatabase.setMessageServerHash(id, message.isMediaMessage(), serverHash)
+                // When a message with attachment is received, we don't immediately have
+                // attachments attached in the messages, but it's a mms from the db's perspective
+                // nonetheless.
+                val isMms = message.isMediaMessage() || attachments.isNotEmpty()
+                lokiMessageDatabase.setMessageServerHash(id, isMms, serverHash)
             }
         }
         return messageID
