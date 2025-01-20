@@ -154,7 +154,14 @@ class Poller(
         val namespace = forConfig.namespace
         val processed = if (!messages.isNullOrEmpty()) {
             SnodeAPI.updateLastMessageHashValueIfPossible(snode, userPublicKey, messages, namespace)
-            SnodeAPI.removeDuplicates(userPublicKey, messages, namespace, true).mapNotNull { rawMessageAsJSON ->
+            SnodeAPI.removeDuplicates(
+                publicKey = userPublicKey,
+                messages = messages,
+                messageHashGetter = { (it as? Map<*, *>)?.get("hash") as? String },
+                namespace = namespace,
+                updateStoredHashes = true
+            ).mapNotNull { rawMessageAsJSON ->
+                rawMessageAsJSON as Map<*, *> // removeDuplicates should have ensured this is always a map
                 val hashValue = rawMessageAsJSON["hash"] as? String ?: return@mapNotNull null
                 val b64EncodedBody = rawMessageAsJSON["data"] as? String ?: return@mapNotNull null
                 val timestamp = rawMessageAsJSON["t"] as? Long ?: SnodeAPI.nowWithOffset
