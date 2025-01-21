@@ -213,13 +213,6 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         }
     }
 
-    fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
-        databaseHelper.writableDatabase.execSQL(
-            "DELETE FROM $TABLE_NAME WHERE $ADDRESS = ? AND json_extract($BODY, '\$.kind.@type') = ?",
-            arrayOf(groupId.hexString, kind.simpleName)
-        )
-    }
-
     fun updateSentTimestamp(messageId: Long, newTimestamp: Long, threadId: Long) {
         val db = databaseHelper.writableDatabase
         db.execSQL(
