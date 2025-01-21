@@ -75,9 +75,12 @@ class Attachment {
                     .setDigest(ByteString.copyFrom(attachment.digest.get()))
                     .setSize(attachment.size.get())
                     .setUrl(attachment.url)
-
-            // Filenames are now mandatory
-            builder.fileName = attachment.filename
+            
+            // Filenames are now mandatory for picked/shared files, Giphy GIFs, and captured photos.
+            // The images associated with LinkPreviews don't have a "given name" so we'll use the
+            // attachment ID as the filename. It's not possible to save these preview images or see
+            // the filename, so what the filename IS isn't important, only that a filename exists.
+            builder.fileName = attachment.filename ?: attachment.id.toString()
 
             if (attachment.preview.isPresent) { builder.thumbnail = ByteString.copyFrom(attachment.preview.get())               }
             if (attachment.width > 0)         { builder.width = attachment.width                                                }
