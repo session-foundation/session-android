@@ -35,6 +35,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
+import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.UNKNOWN
@@ -47,6 +48,7 @@ import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -209,6 +211,13 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
                 update(threadId, true)
             }
         }
+    }
+
+    fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
+        databaseHelper.writableDatabase.execSQL(
+            "DELETE FROM $TABLE_NAME WHERE $ADDRESS = ? AND json_extract($BODY, '\$.kind.@type') = ?",
+            arrayOf(groupId.hexString, kind.simpleName)
+        )
     }
 
     fun updateSentTimestamp(messageId: Long, newTimestamp: Long, threadId: Long) {

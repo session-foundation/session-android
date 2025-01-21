@@ -177,6 +177,7 @@ interface StorageProtocol {
         groupName: String
     ): Long?
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
+    fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>)
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>

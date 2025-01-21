@@ -36,6 +36,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildDel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
 import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -1097,6 +1098,15 @@ class GroupManagerV2Impl @Inject constructor(
         }
     }
 
+    override fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId) {
+        if (message.inner.hasInfoChangeMessage() && message.inner.infoChangeMessage.hasUpdatedExpiration()) {
+            // If we receive a disappearing message update, we need to remove the existing timer control message
+            storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
+        }
+
+        storage.insertGroupInfoChange(message, groupId)
+    }
+
     override fun onBlocked(groupAccountId: AccountId) {
         scope.launch(groupAccountId, "On blocked") {
             respondToInvitation(groupAccountId, false)
@@ -1135,6 +1145,8 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false)
+
+        storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
         storage.insertGroupInfoChange(message, groupId)
     }
 

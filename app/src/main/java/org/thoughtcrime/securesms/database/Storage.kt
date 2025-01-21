@@ -1062,6 +1062,10 @@ open class Storage @Inject constructor(
         mmsDB.updateInfoMessage(messageId, newMessage.toJSON())
     }
 
+    override fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
+        mmsSmsDatabase.deleteGroupInfoMessage(groupId, kind)
+    }
+
     override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, senderName: String?, closedGroup: AccountId, groupName: String): Long? {
         val updateData = UpdateMessageData(UpdateMessageData.Kind.GroupInvitation(
             groupAccountId = closedGroup.hexString,

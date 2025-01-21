@@ -705,7 +705,6 @@ private fun handleMemberLeftNotification(message: GroupUpdated, closedGroup: Acc
 }
 
 private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
-    val storage = MessagingModuleConfiguration.shared.storage
     val inner = message.inner
     val infoChanged = inner.infoChangeMessage ?: return
     if (!infoChanged.hasAdminSignature()) return Log.e("GroupUpdated", "Info changed message doesn't contain admin signature")
@@ -714,7 +713,7 @@ private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
     val timestamp = message.sentTimestamp!!
     verifyAdminSignature(closedGroup, adminSignature.toByteArray(), buildInfoChangeSignature(type, timestamp))
 
-    storage.insertGroupInfoChange(message, closedGroup)
+    MessagingModuleConfiguration.shared.groupManagerV2.handleGroupInfoChange(message, closedGroup)
 }
 
 private fun handlePromotionMessage(message: GroupUpdated) {

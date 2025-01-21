@@ -1,8 +1,10 @@
 package org.session.libsession.messaging.groups
 
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 
 /**
@@ -99,6 +101,8 @@ interface GroupManagerV2 {
     )
 
     fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
+
+    fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId)
 
     /**
      * Should be called whenever a group invite is blocked

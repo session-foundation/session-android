@@ -31,8 +31,10 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 
 import org.jetbrains.annotations.NotNull;
+import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
+import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -378,6 +380,24 @@ public class MmsSmsDatabase extends Database {
       return cursor != null ? cursor.getCount() : 0;
     } finally {
       if (cursor != null) cursor.close();
+    }
+  }
+
+  public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
+    long threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(groupId.getHexString());
+    if (threadId == -1) {
+      Log.d(TAG, "No thread found for group info message deletion");
+      return;
+    }
+
+    Object[] bindArgs = { threadId, kind.getSimpleName() };
+
+    for (String table : new String[]{ MmsDatabase.TABLE_NAME, SmsDatabase.TABLE_NAME }) {
+      // Delete messages with body that is a valid JSON object and .kind.@type == kind
+      getWritableDatabase().execSQL(
+              "DELETE FROM " + table + " WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND json_valid(" + MmsSmsColumns.BODY + ") AND json_extract(" + MmsSmsColumns.BODY + ", '$.kind.@type') = ?",
+              bindArgs
+      );
     }
   }
 
