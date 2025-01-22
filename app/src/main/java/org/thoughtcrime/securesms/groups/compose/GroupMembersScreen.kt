@@ -62,7 +62,7 @@ fun GroupMembers(
                     MemberItem(
                         accountId = member.accountId,
                         title = member.name,
-                        subtitle = member.status?.getLabel(LocalContext.current),
+                        subtitle = member.getLabel(LocalContext.current),
                         subtitleColor = if (member.highlightStatus) {
                             LocalColors.current.danger
                         } else {

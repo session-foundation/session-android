@@ -28,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -122,7 +121,7 @@ fun EditGroupScreen(
 @Serializable
 private object RouteEditGroup
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditGroup(
     onBack: () -> Unit,
@@ -440,7 +439,7 @@ fun EditMemberItem(
     MemberItem(
         accountId = member.accountId,
         title = member.name,
-        subtitle = member.status?.getLabel(LocalContext.current),
+        subtitle = member.getLabel(LocalContext.current),
         subtitleColor = if (member.highlightStatus) {
             LocalColors.current.danger
         } else {
