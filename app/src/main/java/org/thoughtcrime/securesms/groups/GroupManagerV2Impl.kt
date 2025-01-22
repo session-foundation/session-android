@@ -19,6 +19,7 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.GroupMember
+import network.loki.messenger.libsession_util.util.Sodium
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -720,7 +721,7 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun handlePromotion(
         groupId: AccountId,
         groupName: String,
-        adminKey: ByteArray,
+        adminKeySeed: ByteArray,
         promoter: AccountId,
         promoterName: String?,
         promoteMessageHash: String,
@@ -736,7 +737,7 @@ class GroupManagerV2Impl @Inject constructor(
             handleInvitation(
                 groupId = groupId,
                 groupName = groupName,
-                authDataOrAdminSeed = adminKey,
+                authDataOrAdminSeed = adminKeySeed,
                 fromPromotion = true,
                 inviter = promoter,
                 inviterName = promoterName,
@@ -745,6 +746,8 @@ class GroupManagerV2Impl @Inject constructor(
             )
         } else {
             // If we have the group in the config, we can just update the admin key
+            val adminKey = GroupInfo.ClosedGroupInfo.adminKeyFromSeed(adminKeySeed)
+
             configFactory.withMutableUserConfigs {
                 it.userGroups.set(group.copy(adminKey = adminKey))
             }

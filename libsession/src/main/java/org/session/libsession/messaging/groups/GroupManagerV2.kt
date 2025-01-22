@@ -61,7 +61,7 @@ interface GroupManagerV2 {
     suspend fun handlePromotion(
         groupId: AccountId,
         groupName: String,
-        adminKey: ByteArray,
+        adminKeySeed: ByteArray,
         promoter: AccountId,
         promoterName: String?,
         promoteMessageHash: String,

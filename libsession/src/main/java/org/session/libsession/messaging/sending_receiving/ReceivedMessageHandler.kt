@@ -719,16 +719,15 @@ private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
 private fun handlePromotionMessage(message: GroupUpdated) {
     val promotion = message.inner.promoteMessage
     val seed = promotion.groupIdentitySeed.toByteArray()
-    val keyPair = Sodium.ed25519KeyPair(seed)
     val sender = message.sender!!
     val adminId = AccountId(sender)
     GlobalScope.launch {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
                 .handlePromotion(
-                    groupId = AccountId(IdPrefix.GROUP, keyPair.pubKey),
+                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey),
                     groupName = promotion.name,
-                    adminKey = keyPair.secretKey,
+                    adminKeySeed = seed,
                     promoter = adminId,
                     promoterName = message.profile?.displayName,
                     promoteMessageHash = message.serverHash!!,
