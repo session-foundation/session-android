@@ -57,7 +57,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -77,7 +76,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient.isBlocked
 }
 
-fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, closedGroup: AccountId?) {
+fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
@@ -85,11 +84,19 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
         is ClosedGroupControlMessage -> handleClosedGroupControlMessage(message)
-        is GroupUpdated -> handleGroupUpdated(message, closedGroup)
-        is ExpirationTimerUpdate -> handleExpirationTimerUpdate(message)
+        is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
+        is ExpirationTimerUpdate -> {
+            if (groupv2Id != null) {
+                Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
+            } else {
+                handleExpirationTimerUpdate(message)
+            }
+        }
         is DataExtractionNotification -> handleDataExtractionNotification(message)
         is ConfigurationMessage -> handleConfigurationMessage(message)
-        is UnsendRequest -> handleUnsendRequest(message)
+        is UnsendRequest -> {
+            handleUnsendRequest(message)
+        }
         is MessageRequestResponse -> handleMessageRequestResponse(message)
         is VisibleMessage -> handleVisibleMessage(
             message, proto, openGroupID, threadId,
