@@ -86,6 +86,8 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is ClosedGroupControlMessage -> handleClosedGroupControlMessage(message)
         is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
         is ExpirationTimerUpdate -> {
+            // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
+            // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
             if (groupv2Id != null) {
                 Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
             } else {
@@ -94,9 +96,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         }
         is DataExtractionNotification -> handleDataExtractionNotification(message)
         is ConfigurationMessage -> handleConfigurationMessage(message)
-        is UnsendRequest -> {
-            handleUnsendRequest(message)
-        }
+        is UnsendRequest -> handleUnsendRequest(message)
         is MessageRequestResponse -> handleMessageRequestResponse(message)
         is VisibleMessage -> handleVisibleMessage(
             message, proto, openGroupID, threadId,
