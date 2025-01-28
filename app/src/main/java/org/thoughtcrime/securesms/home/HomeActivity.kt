@@ -582,7 +582,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
         val recipient = thread.recipient
 
         if (recipient.isGroupV2Recipient) {
-            val statusChannel = ConversationMenuHelper.leaveGroup(
+            ConversationMenuHelper.leaveGroup(
                 context = this,
                 thread = recipient,
                 threadID = threadID,
@@ -590,25 +590,6 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 storage = storage,
                 groupManager = groupManagerV2,
             )
-
-            if (statusChannel != null) {
-                lifecycleScope.launch {
-                    statusChannel.consumeEach { status ->
-                        when (status) {
-                            ConversationMenuHelper.GroupLeavingStatus.Leaving -> {
-                                homeViewModel.onLeavingGroupStarted(threadID)
-                            }
-
-                            ConversationMenuHelper.GroupLeavingStatus.Left -> {
-                                homeViewModel.onLeavingGroupFinished(threadID, isError = false)
-                            }
-                            ConversationMenuHelper.GroupLeavingStatus.Error -> {
-                                homeViewModel.onLeavingGroupFinished(threadID, isError = true)
-                            }
-                        }
-                    }
-                }
-            }
 
             return
         }

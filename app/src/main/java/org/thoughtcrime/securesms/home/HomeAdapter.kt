@@ -2,18 +2,14 @@ package org.thoughtcrime.securesms.home
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_ID
 import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
-import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
 class HomeAdapter(
@@ -80,18 +76,7 @@ class HomeAdapter(
             is ConversationViewHolder -> {
                 val item = data.items[position] as HomeViewModel.Item.Thread
 
-                val overrideText = item.overriddenSnippet?.let { msg ->
-                    SpannableStringBuilder(msg.text).apply {
-                        setSpan(
-                            ForegroundColorSpan(holder.view.context.getColorFromAttr(msg.colorAttr)),
-                            0,
-                            msg.text.length,
-                            SpannableStringBuilder.SPAN_INCLUSIVE_EXCLUSIVE
-                        )
-                    }
-                }
-
-                holder.view.bind(item.thread, item.isTyping, overrideText)
+                holder.view.bind(item.thread, item.isTyping)
             }
         }
     }
