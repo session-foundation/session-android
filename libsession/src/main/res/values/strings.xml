@@ -162,7 +162,7 @@
     <string name="callsSettings">Calls (Beta)</string>
     <string name="callsVoiceAndVideo">Voice and Video Calls</string>
     <string name="callsVoiceAndVideoBeta">Voice and Video Calls (Beta)</string>
-    <string name="callsVoiceAndVideoModalDescription">Your IP is visible to your call partner and an Oxen Foundation server while using beta calls.</string>
+    <string name="callsVoiceAndVideoModalDescription">Your IP is visible to your call partner and a Session Technology Foundation server while using beta calls.</string>
     <string name="callsVoiceAndVideoToggleDescription">Enables voice and video calls to and from other users.</string>
     <string name="callsYouCalled">You called {name}</string>
     <string name="callsYouMissedCallPermissions">You missed a call from <b>{name}</b> because you haven\'t enabled <b>Voice and Video Calls</b> in Privacy Settings.</string>
@@ -470,6 +470,7 @@
     <string name="groupNameUpdated">Group name updated.</string>
     <string name="groupNameVisible">Group name is visible to all group members.</string>
     <string name="groupNoMessages">You have no messages from <b>{group_name}</b>. Send a message to start the conversation!</string>
+    <string name="groupNotUpdatedWarning">Group has not been updated in over 30 days. You may experience issues sending messages or viewing Group information.</string>
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupPendingRemoval">Pending removal</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
@@ -514,6 +515,14 @@
     <string name="incognitoKeyboardDescription">Request incognito mode if available. Depending on the keyboard you are using, your keyboard may ignore this request.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Invalid shortcut</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invite Failed</item>
+        <item quantity="other">Invites Failed</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">The invite could not be sent. Would you like to try again?</item>
+        <item quantity="other">The invites could not be sent. Would you like to try again?</item>
+    </plurals>
     <string name="join">Join</string>
     <string name="later">Later</string>
     <string name="learnMore">Learn More</string>
@@ -744,6 +753,14 @@
     <string name="profileDisplayPictureSizeError">Please pick a smaller file.</string>
     <string name="profileErrorUpdate">Failed to update profile.</string>
     <string name="promote">Promote</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promotion Failed</item>
+        <item quantity="other">Promotions Failed</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">The promotion could not be applied. Would you like to try again?</item>
+        <item quantity="other">The promotions could not be applied. Would you like to try again?</item>
+    </plurals>
     <string name="qrCode">QR Code</string>
     <string name="qrNotAccountId">This QR code does not contain an Account ID</string>
     <string name="qrNotRecoveryPassword">This QR code does not contain a Recovery Password</string>

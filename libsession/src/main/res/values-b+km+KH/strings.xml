@@ -615,8 +615,7 @@
     <string name="onboardingAccountExists">ខ្ញុំមានគណនីមួយ</string>
     <string name="onboardingBackAccountCreation">អ្នកមិនអាចថយក្រោយបន្ថែមទៀតបានទេ។ ដើម្បីបោះបង់ការបង្កើតគណនី {app_name} ត្រូវទាំងបញ្ចប់ផ្នែកនេះ។</string>
     <string name="onboardingBackLoadAccount">អ្នកមិនអាចថយក្រោយបន្ថែមទៀតបានទេ។ ដើម្បីបញ្ឈប់ការរុករកគណនីរបស់អ្នក {app_name} ត្រូវបញ្ចប់។</string>
-    <string name="onboardingBubbleCreatingAnAccountIsEasy">ការបង្កើតគណនីគឺមានភ្លាមៗ, 
-oofសាន្ត និងមិនបង្ហាញអត្តសញ្ញាណ {emoji}</string>
+    <string name="onboardingBubbleCreatingAnAccountIsEasy">ការបង្កើតគណនីគឺភ្លាមៗ ឥតគិតថ្លៃ និងអនាមិក {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">អ្នកមិនចាំបាច់ចូលប្រព័ន្ធទៅតាមលេខលេខទូរស័ព្ទទេ.</string>
     <string name="onboardingBubblePrivacyInYourPocket">ឯកជនភាពនៅក្នុងហោប៉ៅរបស់អ្នក។</string>
     <string name="onboardingBubbleSessionIsEngineered">{app_name} ត្រូវបានបង្កើតឡើងដើម្បីការពារភាពឯកជនរបស់អ្នក។</string>

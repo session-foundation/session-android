@@ -451,6 +451,7 @@
     <string name="groupNameUpdated">Groepsnaam bijgewerkt.</string>
     <string name="groupNoMessages">U heeft geen berichten van <b>{group_name}</b>. Stuur een bericht om het gesprek te starten!</string>
     <string name="groupOnlyAdmin">U bent de enige beheerder in <b>{group_name}</b>.\n\nGroepsleden en instellingen kunnen niet worden gewijzigd zonder een beheerder.</string>
+    <string name="groupPendingRemoval">In afwachting van verwijdering</string>
     <string name="groupPromotedYou"><b>U</b> bent gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>U</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouTwo"><b>U</b> en <b>{name}</b> zijn gepromoveerd tot Admin.</string>

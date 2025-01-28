@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about">Info</string>
-    <string name="accept">Přijmou</string>
+    <string name="accept">Přijmout</string>
     <string name="accountIDCopy">Kopírovat ID účtu</string>
     <string name="accountIdCopied">ID účtu zkopírováno</string>
     <string name="accountIdCopyDescription">Zkopírujte své ID účtu a pak ho sdílejte s přáteli, aby vám mohli poslat zprávu.</string>
@@ -486,6 +486,7 @@
     <string name="groupNameVisible">Název skupiny je viditelný pro všechny členy skupiny.</string>
     <string name="groupNoMessages">Nemáte žádné zprávy od <b>{group_name}</b>. Pošlete zprávu pro zahájení konverzace!</string>
     <string name="groupOnlyAdmin">Jste jediný správce ve skupině <b>{group_name}</b>.\n\nČlenové skupiny a nastavení nelze změnit bez správce.</string>
+    <string name="groupPendingRemoval">Čeká na odebrání</string>
     <string name="groupPromotedYou"><b>Byli jste povýšeni na správce.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vy</b> a <b>{count} dalších</b> jste byli povýšeni na správce.</string>
     <string name="groupPromotedYouTwo"><b>Vy</b> a <b>{name}</b> jste byli povýšeni na správce.</string>
@@ -645,7 +646,6 @@
     <string name="messages">Zprávy</string>
     <string name="minimize">Minimalizovat</string>
     <string name="next">Další</string>
-    <string name="nicknameDescription">Vyberte přezdívku pro <b>{name}</b>. Tato přezdívka se vám zobrazí ve vašich 1-1 a skupinových konverzacích.</string>
     <string name="nicknameEnter">Zadejte přezdívku</string>
     <string name="nicknameErrorShorter">Zadejte prosím kratší přezdívku</string>
     <string name="nicknameRemove">Odstranit přezdívku</string>

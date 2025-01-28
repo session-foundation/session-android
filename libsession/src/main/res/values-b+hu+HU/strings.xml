@@ -172,8 +172,8 @@
     <string name="clearDataAllDescription">Ezáltal az összes üzeneted és kontaktod törölve lesz. Csak erről az eszközről, vagy a hálózatról is törölni kívánod az adataidat?</string>
     <string name="clearDataError">Adatok nem lettek törölve</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">%1$d szolgáltatási csomópoint nem törölte az adatokat. A csomópont azonosítója: %2$s.</item>
-        <item quantity="other">%1$d szolgáltatási csomópoint nem törölte az adatokat. A csomópontok azonosítói: %2$s.</item>
+        <item quantity="one">Az adatok nem lettek törölve %1$d kiszolgálócsomópont által. Kiszolgálócsomópont azonosító: %2$s.</item>
+        <item quantity="other">Az adatok nem lettek törölve %1$d kiszolgálócsomópont által. Kiszolgálócsomópontok azonosítói: %2$s.</item>
     </plurals>
     <string name="clearDataErrorDescriptionGeneric">Ismeretlen hiba történt, és az adataid nem lettek törölve. Szeretnéd törölni az adatokat csak erről az eszközről?</string>
     <string name="clearDevice">Eszköz törlése</string>
