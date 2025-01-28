@@ -46,6 +46,7 @@ import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity;
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity;
 import org.thoughtcrime.securesms.mms.AudioSlide;
@@ -393,7 +394,10 @@ public class AttachmentManager {
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
-                case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false);
+
+                // Note: If we come through this path we will not yet have an AudioSlide duration so we set an interim placeholder value.
+                case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false, "--:--");
+
                 case VIDEO:    return new VideoSlide(context, uri, extractedFilename, dataSize);
                 case VCARD:
                 case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);

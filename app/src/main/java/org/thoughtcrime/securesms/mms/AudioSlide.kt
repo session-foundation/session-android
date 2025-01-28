@@ -19,7 +19,6 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import android.util.Log
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
@@ -36,9 +35,39 @@ class AudioSlide : Slide {
     override val thumbnailUri: Uri?
         get() = null
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean) : super(context, constructAttachmentFromUri(context, uri, MediaTypes.AUDIO_UNSPECIFIED, dataSize, 0, 0, false, filename, null, voiceNote, false))
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean, duration: String)
+        // Note: The `caption` field of `constructAttachmentFromUri` is repurposed to store the interim
+        : super(context,
+                constructAttachmentFromUri(
+                    context,
+                    uri,
+                    MediaTypes.AUDIO_UNSPECIFIED,
+                    dataSize,
+                    0,         // width
+                    0,         // height
+                    false,     // hasThumbnail
+                    filename,
+                    duration,  // AudioSlides do not have captions, so we are re-purposing this field (in AudioSlides only) to store the interim audio duration displayed during upload.
+                    voiceNote,
+                    false)     // quote
+                )
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean) : super(context, UriAttachment(uri, null, contentType, AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED, dataSize, 0, 0, filename, null, voiceNote, false, null))
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean, duration: String = "--:--")
+        : super(context,
+                UriAttachment(
+                    uri,
+                    null,        // thumbnailUri
+                    contentType,
+                    AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+                    dataSize,
+                    0,           // width
+                    0,           // height
+                    filename,
+                    null,        // fastPreflightId
+                    voiceNote,
+                    false,       // quote
+                    duration)    // AudioSlides do not have captions, so we are re-purposing this field (in AudioSlides only) to store the interim audio duration displayed during upload.
+                )
 
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 

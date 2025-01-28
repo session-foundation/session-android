@@ -2143,7 +2143,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             override fun onSuccess(result: Pair<Uri, Long>) {
                 val uri = result.first
                 val dataSizeBytes = result.second
-                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true)
+                val audioDuration = getLastRecordedVoiceMessageDurationString()
+                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, audioDuration)
 
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
@@ -2157,13 +2158,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // During the interim phase while we upload a voice message we use the duration from the recording view
-    fun getLastRecordedVoiceMessageDurationString() = binding.inputBarRecordingView.recordingViewDurationTextView.text
+    fun getLastRecordedVoiceMessageDurationString() = binding.inputBarRecordingView.recordingViewDurationTextView.text.toString()
 
     // Because VoiceMessageViews are shared between any uploaded audio and voice messages, we need to reset the last recorded
     // audio duration so that in the case of uploading an audio file (for which we will NOT know the duration until processing
-    // is complete) then we show a placeholder duration rather than the duration of the last recorded voice message, wwhich
-    // would be incorrect for the uploaded audio. This is the absolute best we can do until processing of the audio file
-    // is complete, at which point the duration is set to the actual determined value.
+    // is complete) then we show a placeholder duration rather than the duration of the last recorded voice message, which
+    // would be incorrect for the uploaded audio. This is the best we can do until processing of the audio file is complete,
+    // at which point the duration is set to the actual determined value.
     fun resetLastRecordedVoiceMessageDurationString() {
         binding.inputBarRecordingView.recordingViewDurationTextView.text = "--:--"
     }
