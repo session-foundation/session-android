@@ -125,8 +125,6 @@ class ClosedGroupPoller(
     }
 
     private suspend fun poll(snode: Snode): Unit = supervisorScope {
-        Log.d(TAG, "Polling $closedGroupSessionId from ${snode.publicKeySet}")
-
         val groupAuth =
             configFactoryProtocol.getGroupAuth(closedGroupSessionId) ?: return@supervisorScope
         val configHashesToExtends = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
