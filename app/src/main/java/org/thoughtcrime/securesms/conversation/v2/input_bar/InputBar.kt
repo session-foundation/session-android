@@ -111,24 +111,12 @@ class InputBar @JvmOverloads constructor(
                     MotionEvent.ACTION_DOWN -> {
                         // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
                         if (voiceRecorderState == VoiceRecorderState.Idle) {
-                            // Take note of when we start recording so we can figure out how long the record button was held for
-                            //voiceMessageStartMS = System.currentTimeMillis() // HERE
-
-                            // Start recording, which moves us in to the `SettingUpToRecordState` followed by the `Recording` state
                             startRecordingVoiceMessage()
                         }
                     }
                     MotionEvent.ACTION_UP -> {
-                        // Note: We cannot work out the voice message duration here because the release may have been
-                        // over the lock button rather than just a hold-and-release voice message. As such, we update
-                        // the duration in ConversationActivityV2.sendVoiceMessage.
-
-                        // Regardless of our current recording state we'll always call the onMicrophoneButtonUp method
-                        // and let the logic in that take the appropriate action as we cannot guarantee that letting
-                        // go of the record button should always stop recording audio because the user may have moved
-                        // the button into the 'locked' state so they don't have to keep it held down to record a voice
-                        // message.
-                        // Also: We need to tear down the voice recorder if it has been recording and is now stopping.
+                        // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
+                        // on, or finishing recording if just hold-to-record.
                         delegate?.onMicrophoneButtonUp(event)
                     }
                 }
