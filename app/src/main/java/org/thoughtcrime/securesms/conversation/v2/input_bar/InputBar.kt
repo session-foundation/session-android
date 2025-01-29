@@ -77,10 +77,6 @@ class InputBar @JvmOverloads constructor(
         get() = binding.inputBarEditText.text?.toString() ?: ""
         set(value) { binding.inputBarEditText.setText(value) }
 
-    // Keep track of when the user pressed the record voice message button, the duration that
-    // they held record, and the current audio recording mechanism state.
-    private var voiceMessageStartMS = 0L
-    var voiceMessageDurationMS = 0L
     var voiceRecorderState = VoiceRecorderState.Idle
 
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply { contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)}
@@ -116,7 +112,7 @@ class InputBar @JvmOverloads constructor(
                         // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
                         if (voiceRecorderState == VoiceRecorderState.Idle) {
                             // Take note of when we start recording so we can figure out how long the record button was held for
-                            voiceMessageStartMS = System.currentTimeMillis()
+                            //voiceMessageStartMS = System.currentTimeMillis() // HERE
 
                             // Start recording, which moves us in to the `SettingUpToRecordState` followed by the `Recording` state
                             startRecordingVoiceMessage()
@@ -273,10 +269,6 @@ class InputBar @JvmOverloads constructor(
 
     fun setInputBarEditableFactory(factory: Editable.Factory) {
         binding.inputBarEditText.setEditableFactory(factory)
-    }
-
-    fun updateVoiceMessageDurationFromCurrentTime() {
-        voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartMS
     }
 }
 
