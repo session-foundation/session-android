@@ -2048,12 +2048,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
-        // Prevent the user from rapidly spamming the record voice message button which can put voice recording into a broken state
-        if (binding.inputBar.voiceRecorderState != VoiceRecorderState.Idle) {
-            Log.i(TAG, "Voice message recorder must be idle to start recording. Current state is: ${binding.inputBar.voiceRecorderState}")
-            return
-        }
-
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
             showVoiceMessageUI()
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -2112,26 +2106,27 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // How long was the voice message?
+        // How long was the voice message? Because the pointer up event could have been a regular
+        // hold-and-release or a release over the lock icon followed by a final tap to send we
+        // update the voice message duration based on the current time here.
         val inputBar = binding.inputBar
+        inputBar.updateVoiceMessageDurationFromCurrentTime()
         val voiceMessageDurationMS = inputBar.voiceMessageDurationMS
 
-        val future = audioRecorder.stopRecording(voiceMessageDurationMS)
+        val voiceMessageDurationValid = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        val future = audioRecorder.stopRecording(voiceMessageDurationValid)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-
-        // Now tear-down is complete we can move back into the idle state ready to record another voice message.
-        // CAREFUL: This state must be set BEFORE we show any warning toast about short messages because it early
-        // exits before transmitting the audio!
-        inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
         val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
-        if (voiceMessageDurationMS != 0L && voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
+        val voiceMessageBelowMinimumDuration = !MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        if (voiceMessageDurationMS != 0L && voiceMessageBelowMinimumDuration) {
             Toast.makeText(this@ConversationActivityV2, R.string.messageVoiceErrorShort, Toast.LENGTH_SHORT).show()
             inputBar.voiceMessageDurationMS = 0L
+            inputBar.voiceRecorderState = VoiceRecorderState.Idle
             return
         }
 
@@ -2147,27 +2142,35 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             override fun onSuccess(result: Pair<Uri, Long>) {
                 val uri = result.first
                 val dataSizeBytes = result.second
-                val formattedAudioDuration = binding.inputBar.getFormattedVoiceMessageDuration()
-                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
 
-                val slideDeck = SlideDeck()
-                slideDeck.addSlide(audioSlide)
-                sendAttachments(slideDeck.asAttachments(), body = null)
+                // Only proceed with sending the voice message if it's long enough
+                if (!voiceMessageBelowMinimumDuration) {
+                    val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
+                    val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
+                    val slideDeck = SlideDeck()
+                    slideDeck.addSlide(audioSlide)
+                    sendAttachments(slideDeck.asAttachments(), body = null)
+                }
+                inputBar.voiceRecorderState = VoiceRecorderState.Idle
             }
 
             override fun onFailure(e: ExecutionException) {
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
+                inputBar.voiceRecorderState = VoiceRecorderState.Idle
             }
         })
     }
 
+    // Cancel voice message is called when the user is press-and-hold recording a voice message and then
+    // slides the microphone icon left, or when they lock voice recording on but then later click Cancel.
     override fun cancelVoiceMessage() {
         val inputBar = binding.inputBar
         val voiceMessageDuration = inputBar.voiceMessageDurationMS
 
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        audioRecorder.stopRecording(voiceMessageDuration)
+        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDuration)
+        audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity

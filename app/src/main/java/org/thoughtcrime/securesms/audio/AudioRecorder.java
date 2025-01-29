@@ -66,7 +66,7 @@ public class AudioRecorder {
     });
   }
 
-  public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording(long voiceMessageDurationMS) {
+  public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording(boolean voiceMessageMeetsMinimumDuration) {
     Log.i(TAG, "stopRecording()");
 
     final SettableFuture<Pair<Uri, Long>> future = new SettableFuture<>();
@@ -79,17 +79,18 @@ public class AudioRecorder {
 
       audioCodec.stop();
 
-      // Only attempt to send the voice message if it was at least our minimum allowed duration.
-      // This prevents unnecessary setup and tear-down which can leave the app in a broken state
-      // unable to record further voice messages if the user rapidly spams the record button.
-      if (voiceMessageDurationMS >= MINIMUM_VOICE_MESSAGE_DURATION_MS) {
-        try {
-          long size = MediaUtil.getMediaSize(context, captureUri);
-          sendToFuture(future, new Pair<>(captureUri, size));
-        } catch (IOException ioe) {
-          Log.w(TAG, ioe);
-          sendToFuture(future, ioe);
+      try {
+        long size = 0L;
+        // Only obtain the media size if the voice message was at least our minimum allowed
+        // duration (bypassing this work prevents the audio recording mechanism from getting into
+        // a broken state should the user rapidly spam the record button for several seconds).
+        if (voiceMessageMeetsMinimumDuration) {
+          size = MediaUtil.getMediaSize(context, captureUri);
         }
+        sendToFuture(future, new Pair<>(captureUri, size));
+      } catch (IOException ioe) {
+        Log.w(TAG, ioe);
+        sendToFuture(future, ioe);
       }
 
       audioCodec = null;

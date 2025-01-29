@@ -12,11 +12,10 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.components.CornerMask
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.MessageBubbleUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import java.util.concurrent.TimeUnit
+import org.thoughtcrime.securesms.util.MediaUtil
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -81,7 +80,7 @@ class VoiceMessageView @JvmOverloads constructor(
                 // it will update the placeholder to the actual audio duration now that we know it.
                 if (audioExtras.durationMs > 0) {
                     durationMS = audioExtras.durationMs
-                    val formattedVoiceMessageDuration = String.format("%01d:%02d", TimeUnit.MILLISECONDS.toMinutes(durationMS), TimeUnit.MILLISECONDS.toSeconds(durationMS) % 60)
+                    val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
                     binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
                 } else {
                     Log.w(TAG, "For some reason audioExtras.durationMs was NOT greater than zero!")
@@ -108,9 +107,11 @@ class VoiceMessageView @JvmOverloads constructor(
 
     private fun handleProgressChanged(progress: Double) {
         this.progress = progress
-        binding.voiceMessageViewDurationTextView.text = String.format("%01d:%02d",
-            TimeUnit.MILLISECONDS.toMinutes(durationMS - (progress * durationMS.toDouble()).roundToLong()),
-            TimeUnit.MILLISECONDS.toSeconds(durationMS - (progress * durationMS.toDouble()).roundToLong()) % 60)
+
+        // As playback progress increases the remaining duration of the audio decreases
+        val remainingDurationMS = durationMS - (progress * durationMS.toDouble()).roundToLong()
+        binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remainingDurationMS)
+
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
         layoutParams.width = (width.toFloat() * progress.toFloat()).roundToInt()
         binding.progressView.layoutParams = layoutParams

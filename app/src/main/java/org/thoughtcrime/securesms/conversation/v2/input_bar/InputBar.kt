@@ -85,16 +85,6 @@ class InputBar @JvmOverloads constructor(
     var voiceMessageDurationMS = 0L
     var voiceRecorderState = VoiceRecorderState.Idle
 
-    // Method to return the formatted voice message duration in minutes and seconds, e.g. 4321ms -> 4:32
-    fun getFormattedVoiceMessageDuration(): String {
-        val durationInSeconds = voiceMessageDurationMS / 1000L
-        return String.format(
-            Locale.getDefault(),
-            "%d:%02d",
-            durationInSeconds / 60, // Minutes
-            durationInSeconds % 60) // Seconds
-    }
-
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply { contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)}
     val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply { contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)}
     private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, true).apply { contentDescription = context.getString(R.string.AccessibilityId_send)}
@@ -135,8 +125,9 @@ class InputBar @JvmOverloads constructor(
                         }
                     }
                     MotionEvent.ACTION_UP -> {
-                        // Work out how long the record audio button was held for
-                        voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartMS;
+                        // Note: We cannot work out the voice message duration here because the release may have been
+                        // over the lock button rather than just a hold-and-release voice message. As such, we update
+                        // the duration in ConversationActivityV2.sendVoiceMessage.
 
                         // Regardless of our current recording state we'll always call the onMicrophoneButtonUp method
                         // and let the logic in that take the appropriate action as we cannot guarantee that letting
@@ -167,10 +158,8 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setOnEditorActionListener(this)
         if (TextSecurePreferences.isEnterSendsEnabled(context)) {
             binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_SEND
-            binding.inputBarEditText.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         } else {
             binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
-            binding.inputBarEditText.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
@@ -286,6 +275,10 @@ class InputBar @JvmOverloads constructor(
 
     fun setInputBarEditableFactory(factory: Editable.Factory) {
         binding.inputBarEditText.setEditableFactory(factory)
+    }
+
+    fun updateVoiceMessageDurationFromCurrentTime() {
+        voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartMS
     }
 }
 

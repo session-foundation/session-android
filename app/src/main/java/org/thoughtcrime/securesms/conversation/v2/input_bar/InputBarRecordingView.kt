@@ -12,6 +12,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
+import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,11 +20,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarRecordingBinding
+import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.animateSizeChange
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toPx
-import java.util.Date
-import java.util.Locale
 
 // Constants for animation durations in milliseconds
 object VoiceRecorderConstants {
@@ -107,14 +107,8 @@ class InputBarRecordingView : RelativeLayout {
                 // Format the duration as minutes:seconds, using only the amount of digits for minutes as required
                 // (e.g., "3:21" rather than "03:21". Voice messages have a 5 minute maximum length so we never need
                 // more than a single digit to represent minutes.
-                val durationInSeconds = (Date().time - startTimestamp) / 1000L
-                val formattedDuration = String.format(
-                    Locale.getDefault(),
-                    "%d:%02d",
-                    durationInSeconds / 60, // Minutes
-                    durationInSeconds % 60  // Seconds
-                )
-                binding.recordingViewDurationTextView.text = formattedDuration
+                val durationMS = (Date().time - startTimestamp)
+                binding.recordingViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
 
                 delay(500)
             }

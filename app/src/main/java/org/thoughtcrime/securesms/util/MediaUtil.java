@@ -17,10 +17,12 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsignal.utilities.Log;
+import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.mms.AudioSlide;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader.DecryptableUri;
 import org.thoughtcrime.securesms.mms.DocumentSlide;
@@ -259,6 +261,20 @@ public class MediaUtil {
         return sections.length > 1 ? sections[0] : null;
     }
 
+    // Method to return a formatted voice message duration, e.g., 12345ms -> 00:12
+    public static String getFormattedVoiceMessageDuration(long durationMS) {
+        long durationInSeconds = durationMS / 1000L;
+        return String.format(
+                Locale.getDefault(),
+                "%d:%02d",
+                durationInSeconds / 60, // Minutes
+                durationInSeconds % 60);      // Seconds
+    }
+
+    public static boolean voiceMessageMeetsMinimumDuration(long durationMS) {
+        return durationMS >= ConversationActivityV2.MINIMUM_VOICE_MESSAGE_DURATION_MS;
+    }
+
     public static class ThumbnailData {
         Bitmap bitmap;
         float aspectRatio;
@@ -268,16 +284,8 @@ public class MediaUtil {
             this.aspectRatio = (float) bitmap.getWidth() / (float) bitmap.getHeight();
         }
 
-        public Bitmap getBitmap() {
-            return bitmap;
-        }
-
-        public float getAspectRatio() {
-            return aspectRatio;
-        }
-
-        public InputStream toDataStream() {
-            return BitmapUtil.toCompressedJpeg(bitmap);
-        }
+        public Bitmap getBitmap()         { return bitmap;                              }
+        public float getAspectRatio()     { return aspectRatio;                         }
+        public InputStream toDataStream() { return BitmapUtil.toCompressedJpeg(bitmap); }
     }
 }
