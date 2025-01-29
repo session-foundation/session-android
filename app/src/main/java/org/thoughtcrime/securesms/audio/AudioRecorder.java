@@ -1,7 +1,5 @@
 package org.thoughtcrime.securesms.audio;
 
-import static org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.MINIMUM_VOICE_MESSAGE_DURATION_MS;
-
 import android.content.Context;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;

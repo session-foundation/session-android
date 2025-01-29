@@ -5,7 +5,6 @@ import android.content.Context
 import android.graphics.PointF
 import android.net.Uri
 import android.text.Editable
-import android.text.InputType
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -30,7 +29,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
-import java.util.Locale
 
 // Enums to keep track of the state of our voice recording mechanism as the user can
 // manipulate the UI faster than we can setup & teardown.
