@@ -400,8 +400,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
 
-
-
     // region Settings
     companion object {
         // Extras
@@ -417,9 +415,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
         const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
-
-        // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
-        const val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
     }
     // endregion
 
@@ -2162,7 +2157,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
-        if (voiceMessageDurationMS != 0L && voiceMessageDurationMS < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
+        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
             Toast.makeText(applicationContext, applicationContext.getString(R.string.messageVoiceErrorShort), Toast.LENGTH_SHORT).show()
         }
     }

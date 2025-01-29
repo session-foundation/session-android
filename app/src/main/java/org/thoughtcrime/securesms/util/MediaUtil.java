@@ -271,8 +271,9 @@ public class MediaUtil {
                 durationInSeconds % 60);      // Seconds
     }
 
+    // Voice messages must have a duration of at least 1 second or we don't send them
     public static boolean voiceMessageMeetsMinimumDuration(long durationMS) {
-        return durationMS >= ConversationActivityV2.MINIMUM_VOICE_MESSAGE_DURATION_MS;
+        return durationMS >= 1000L;
     }
 
     public static class ThumbnailData {
