@@ -399,8 +399,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
 
-    // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
-    private val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
+
 
     // region Settings
     companion object {
@@ -417,6 +416,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val PICK_FROM_LIBRARY = 12
         const val INVITE_CONTACTS = 124
         const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
+
+        // Lower limit for the length of voice messages - any lower and we inform the user rather than sending
+        const val MINIMUM_VOICE_MESSAGE_DURATION_MS = 1000L
     }
     // endregion
 
@@ -1963,11 +1965,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onActivityResult(requestCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
 
-        // If we are sending a media file then we'll reset the voice message duration string
-        // to an intermediate value for use during transmission because we will not have the
-        // final audio duration until the file has been entirely processed.
-        resetLastRecordedVoiceMessageDurationString()
-
         val mediaPreppedListener = object : ListenableFuture.Listener<Boolean> {
 
             override fun onSuccess(result: Boolean?) {
@@ -2051,6 +2048,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
+        // Prevent the user from rapidly spamming the record voice message button which can put voice recording into a broken state
+        if (binding.inputBar.voiceRecorderState != VoiceRecorderState.Idle) {
+            Log.i(TAG, "Voice message recorder must be idle to start recording. Current state is: ${binding.inputBar.voiceRecorderState}")
+            return
+        }
+
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
             showVoiceMessageUI()
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -2066,6 +2069,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.inputBar.voiceRecorderState = VoiceRecorderState.Recording
                 }
             }
+
+            binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
             audioRecorder.startRecording(callback)
 
             // Limit voice messages to 5 minute each
@@ -2081,7 +2086,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun informUserIfNetworkOrSessionNodePathIsInvalid() {
-
         // Check that we have a valid network network connection & inform the user if not
         val connectedToInternet = NetworkUtils.haveValidNetworkConnection(applicationContext)
         if (!connectedToInternet)
@@ -2104,16 +2108,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun sendVoiceMessage() {
         // When the record voice message button is released we always need to reset the UI and cancel
-        // any further recording operation..
+        // any further recording operation.
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val future = audioRecorder.stopRecording()
-        stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
 
-        // ..but we'll bail without sending the voice message & inform the user that they need to press and HOLD
-        // the record voice message button if their message was less than 1 second long.
+        // How long was the voice message?
         val inputBar = binding.inputBar
         val voiceMessageDurationMS = inputBar.voiceMessageDurationMS
+
+        val future = audioRecorder.stopRecording(voiceMessageDurationMS)
+        stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
 
         // Now tear-down is complete we can move back into the idle state ready to record another voice message.
         // CAREFUL: This state must be set BEFORE we show any warning toast about short messages because it early
@@ -2143,8 +2147,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             override fun onSuccess(result: Pair<Uri, Long>) {
                 val uri = result.first
                 val dataSizeBytes = result.second
-                val audioDuration = getLastRecordedVoiceMessageDurationString()
-                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, audioDuration)
+                val formattedAudioDuration = binding.inputBar.getFormattedVoiceMessageDuration()
+                val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
 
                 val slideDeck = SlideDeck()
                 slideDeck.addSlide(audioSlide)
@@ -2157,28 +2161,16 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         })
     }
 
-    // During the interim phase while we upload a voice message we use the duration from the recording view
-    fun getLastRecordedVoiceMessageDurationString() = binding.inputBarRecordingView.recordingViewDurationTextView.text.toString()
-
-    // Because VoiceMessageViews are shared between any uploaded audio and voice messages, we need to reset the last recorded
-    // audio duration so that in the case of uploading an audio file (for which we will NOT know the duration until processing
-    // is complete) then we show a placeholder duration rather than the duration of the last recorded voice message, which
-    // would be incorrect for the uploaded audio. This is the best we can do until processing of the audio file is complete,
-    // at which point the duration is set to the actual determined value.
-    fun resetLastRecordedVoiceMessageDurationString() {
-        binding.inputBarRecordingView.recordingViewDurationTextView.text = "--:--"
-    }
-
     override fun cancelVoiceMessage() {
         val inputBar = binding.inputBar
+        val voiceMessageDuration = inputBar.voiceMessageDurationMS
 
         hideVoiceMessageUI()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        audioRecorder.stopRecording()
+        audioRecorder.stopRecording(voiceMessageDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
-        val voiceMessageDuration = inputBar.voiceMessageDurationMS
         if (voiceMessageDuration != 0L && voiceMessageDuration < MINIMUM_VOICE_MESSAGE_DURATION_MS) {
             Toast.makeText(applicationContext, applicationContext.getString(R.string.messageVoiceErrorShort), Toast.LENGTH_SHORT).show()
             inputBar.voiceMessageDurationMS = 0L

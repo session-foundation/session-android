@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
+import java.util.Locale
 
 // Enums to keep track of the state of our voice recording mechanism as the user can
 // manipulate the UI faster than we can setup & teardown.
@@ -84,6 +85,16 @@ class InputBar @JvmOverloads constructor(
     var voiceMessageDurationMS = 0L
     var voiceRecorderState = VoiceRecorderState.Idle
 
+    // Method to return the formatted voice message duration in minutes and seconds, e.g. 4321ms -> 4:32
+    fun getFormattedVoiceMessageDuration(): String {
+        val durationInSeconds = voiceMessageDurationMS / 1000L
+        return String.format(
+            Locale.getDefault(),
+            "%d:%02d",
+            durationInSeconds / 60, // Minutes
+            durationInSeconds % 60) // Seconds
+    }
+
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply { contentDescription = context.getString(R.string.AccessibilityId_attachmentsButton)}
     val microphoneButton = InputBarButton(context, R.drawable.ic_mic).apply { contentDescription = context.getString(R.string.AccessibilityId_voiceMessageNew)}
     private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, true).apply { contentDescription = context.getString(R.string.AccessibilityId_send)}
@@ -119,9 +130,7 @@ class InputBar @JvmOverloads constructor(
                             // Take note of when we start recording so we can figure out how long the record button was held for
                             voiceMessageStartMS = System.currentTimeMillis()
 
-                            // We are now setting up to record, and when we actually start recording then
-                            // AudioRecorder.startRecording will move us into the Recording state.
-                            voiceRecorderState = VoiceRecorderState.SettingUpToRecord
+                            // Start recording, which moves us in to the `SettingUpToRecordState` followed by the `Recording` state
                             startRecordingVoiceMessage()
                         }
                     }
@@ -161,9 +170,7 @@ class InputBar @JvmOverloads constructor(
             binding.inputBarEditText.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         } else {
             binding.inputBarEditText.imeOptions = EditorInfo.IME_ACTION_NONE
-            binding.inputBarEditText.inputType =
-                binding.inputBarEditText.inputType
-                        InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            binding.inputBarEditText.inputType = InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
         }
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled

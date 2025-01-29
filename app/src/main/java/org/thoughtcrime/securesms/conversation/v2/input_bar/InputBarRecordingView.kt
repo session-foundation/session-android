@@ -23,6 +23,7 @@ import org.thoughtcrime.securesms.util.animateSizeChange
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toPx
 import java.util.Date
+import java.util.Locale
 
 // Constants for animation durations in milliseconds
 object VoiceRecorderConstants {
@@ -39,7 +40,6 @@ class InputBarRecordingView : RelativeLayout {
     private var pulseAnimation: ValueAnimator? = null
     var delegate: InputBarRecordingViewDelegate? = null
     private var timerJob: Job? = null
-    private var voiceMessageDurationMS: Long = 0L
 
     val lockView: LinearLayout
         get() = binding.lockView
@@ -53,9 +53,6 @@ class InputBarRecordingView : RelativeLayout {
     val recordButtonOverlay: RelativeLayout
         get() = binding.recordButtonOverlay
 
-    val recordingViewDurationTextView: TextView
-        get() = binding.recordingViewDurationTextView
-
     constructor(context: Context) : super(context) { initialize() }
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) { initialize() }
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr) { initialize() }
@@ -64,7 +61,6 @@ class InputBarRecordingView : RelativeLayout {
         binding = ViewInputBarRecordingBinding.inflate(LayoutInflater.from(context), this, true)
         binding.inputBarMiddleContentContainer.disableClipping()
         binding.inputBarCancelButton.setOnClickListener { hide() }
-
     }
 
     fun show(scope: CoroutineScope) {
@@ -108,13 +104,12 @@ class InputBarRecordingView : RelativeLayout {
         timerJob?.cancel()
         timerJob = scope.launch {
             while (isActive) {
-                voiceMessageDurationMS = (Date().time - startTimestamp)
-                val durationInSeconds = voiceMessageDurationMS / 1000L
-
                 // Format the duration as minutes:seconds, using only the amount of digits for minutes as required
                 // (e.g., "3:21" rather than "03:21". Voice messages have a 5 minute maximum length so we never need
                 // more than a single digit to represent minutes.
+                val durationInSeconds = (Date().time - startTimestamp) / 1000L
                 val formattedDuration = String.format(
+                    Locale.getDefault(),
                     "%d:%02d",
                     durationInSeconds / 60, // Minutes
                     durationInSeconds % 60  // Seconds
@@ -197,7 +192,6 @@ class InputBarRecordingView : RelativeLayout {
 }
 
 interface InputBarRecordingViewDelegate {
-
     fun handleVoiceMessageUIHidden()
     fun sendVoiceMessage()
     fun cancelVoiceMessage()
