@@ -30,6 +30,9 @@ import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 
+// TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
+// TODO: and here - it would likely be best to move this into the CA's ViewModel.
+
 // Enums to keep track of the state of our voice recording mechanism as the user can
 // manipulate the UI faster than we can setup & teardown.
 enum class VoiceRecorderState {
