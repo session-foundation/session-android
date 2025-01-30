@@ -501,6 +501,8 @@ class GroupManagerV2Impl @Inject constructor(
                 } catch (e: Exception) {
                     storage.insertGroupInfoErrorQuit(groupId)
                     throw e
+                } finally {
+                    storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
                 }
             }
         }
