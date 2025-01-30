@@ -2,6 +2,13 @@ package org.session.libsession.snode
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
@@ -40,37 +47,33 @@ object OnionRequestAPI {
     private var buildPathsPromise: Promise<List<Path>, Exception>? = null
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
-    private val broadcaster: Broadcaster
-        get() = SnodeModule.shared.broadcaster
     private val pathFailureCount = mutableMapOf<Path, Int>()
     private val snodeFailureCount = mutableMapOf<Snode, Int>()
 
     var guardSnodes = setOf<Snode>()
-    var _paths: AtomicReference<List<Path>?> = AtomicReference(null)
-    var paths: List<Path> // Not a Set to ensure we consistently show the same path to the user
-        @Synchronized
-        get() {
-            val paths = _paths.get()
 
-            if (paths != null) { return paths }
+    private val mutablePaths = MutableStateFlow(database.getOnionRequestPaths())
 
-            // Storing this in an atomic variable as it was causing a number of background
-            // ANRs when this value was accessed via the main thread after tapping on
-            // a notification)
-            val result = database.getOnionRequestPaths()
-            _paths.set(result)
-            return result
-        }
-        @Synchronized
-        set(newValue) {
-            if (newValue.isEmpty()) {
-                database.clearOnionRequestPaths()
-                _paths.set(null)
-            } else {
-                database.setOnionRequestPaths(newValue)
-                _paths.set(newValue)
+    val paths: StateFlow<List<Path>> get() = mutablePaths
+    val hasPath: StateFlow<Boolean> = mutablePaths
+        .drop(1)
+        .map { it.isNotEmpty() }
+        .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
+
+    init {
+        // Listen for the changes in paths and persist it to the db
+        GlobalScope.launch {
+            mutablePaths
+                .drop(1) // Drop the first result where it just comes from the db
+                .collectLatest {
+                if (it.isEmpty()) {
+                    database.clearOnionRequestPaths()
+                } else {
+                    database.setOnionRequestPaths(it)
+                }
             }
         }
+    }
 
     // region Settings
     /**
@@ -172,7 +175,6 @@ object OnionRequestAPI {
         val existingBuildPathsPromise = buildPathsPromise
         if (existingBuildPathsPromise != null) { return existingBuildPathsPromise }
         Log.d("Loki", "Building onion request paths.")
-        broadcaster.broadcast("buildingPaths")
         val promise = SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
             val reusableGuardSnodes = reusablePaths.map { it[0] }
             getGuardSnodes(reusableGuardSnodes).map { guardSnodes ->
@@ -193,8 +195,7 @@ object OnionRequestAPI {
                     result
                 }
             }.map { paths ->
-                OnionRequestAPI.paths = paths + reusablePaths
-                broadcaster.broadcast("pathsBuilt")
+                mutablePaths.value = paths + reusablePaths
                 paths
             }
         }
@@ -209,7 +210,7 @@ object OnionRequestAPI {
      */
     private fun getPath(snodeToExclude: Snode?): Promise<Path, Exception> {
         if (pathSize < 1) { throw Exception("Can't build path of size zero.") }
-        val paths = this.paths
+        val paths = this.paths.value
         val guardSnodes = mutableSetOf<Snode>()
         if (paths.isNotEmpty()) {
             guardSnodes.add(paths[0][0])
@@ -256,7 +257,7 @@ object OnionRequestAPI {
         // path we leave the re-building up to getPath() because re-building the path in that case
         // is async.
         snodeFailureCount[snode] = 0
-        val oldPaths = paths.toMutableList()
+        val oldPaths = mutablePaths.value.toMutableList()
         val pathIndex = oldPaths.indexOfFirst { it.contains(snode) }
         if (pathIndex == -1) { return }
         val path = oldPaths[pathIndex].toMutableList()
@@ -269,16 +270,16 @@ object OnionRequestAPI {
         // Don't test the new snode as this would reveal the user's IP
         oldPaths.removeAt(pathIndex)
         val newPaths = oldPaths + listOf( path )
-        paths = newPaths
+        mutablePaths.value = newPaths
     }
 
     private fun dropPath(path: Path) {
         pathFailureCount[path] = 0
-        val paths = OnionRequestAPI.paths.toMutableList()
+        val paths = mutablePaths.value.toMutableList()
         val pathIndex = paths.indexOf(path)
         if (pathIndex == -1) { return }
         paths.removeAt(pathIndex)
-        OnionRequestAPI.paths = paths
+        mutablePaths.value = paths
     }
 
     /**
@@ -369,7 +370,7 @@ object OnionRequestAPI {
                 val checkedGuardSnode = guardSnode
                 val path =
                     if (checkedGuardSnode == null) null
-                    else paths.firstOrNull { it.contains(checkedGuardSnode) }
+                    else paths.value.firstOrNull { it.contains(checkedGuardSnode) }
 
                 fun handleUnspecificError() {
                     if (path == null) { return }

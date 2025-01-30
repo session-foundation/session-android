@@ -103,7 +103,6 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.push
 import java.io.File
@@ -429,7 +428,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            val hasPaths by hasPaths().collectAsState(initial = false)
+            val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
             Cell {
                 Column {
@@ -618,21 +617,5 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
                 removeAvatar = {}
             )
         }
-    }
-}
-
-private fun Context.hasPaths(): Flow<Boolean> = LocalBroadcastManager.getInstance(this).hasPaths()
-private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
-    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) { trySend(Unit) }
-    }
-
-    registerReceiver(receiver, IntentFilter("buildingPaths"))
-    registerReceiver(receiver, IntentFilter("pathsBuilt"))
-
-    awaitClose { unregisterReceiver(receiver) }
-}.onStart { emit(Unit) }.map {
-    withContext(Dispatchers.Default) {
-        OnionRequestAPI.paths.isNotEmpty()
     }
 }
