@@ -1,19 +1,28 @@
 package org.thoughtcrime.securesms.configs
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -32,6 +41,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import javax.inject.Inject
 
 private const val TAG = "ConfigUploader"
@@ -51,43 +61,70 @@ class ConfigUploader @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
+    private val internetConnectivity: InternetConnectivity,
 ) {
     private var job: Job? = null
 
-    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun pathBecomesAvailable(): Flow<*> = internetConnectivity.networkAvailable
+        .flatMapLatest { hasNetwork ->
+            if (hasNetwork) {
+                OnionRequestAPI.hasPath.filter { it }
+            } else {
+                emptyFlow()
+            }
+        }
+
+
+    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun start() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
             supervisorScope {
                 val job1 = launch {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
-                        .debounce(1000L)
-                        .collect {
-                            try {
-                                retryWithUniformInterval {
-                                    pushUserConfigChangesIfNeeded()
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to push user configs", e)
+                    merge(
+                        pathBecomesAvailable(),
+                        configFactory.configUpdateNotifications
+                            .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                            .debounce(1000L)
+                    ).collect {
+                        try {
+                            retryWithUniformInterval {
+                                pushUserConfigChangesIfNeeded()
                             }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to push user configs", e)
                         }
+                    }
                 }
 
                 val job2 = launch {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                        .debounce(1000L)
-                        .collect { changes ->
-                            try {
-                                retryWithUniformInterval {
-                                    pushGroupConfigsChangesIfNeeded(changes.groupId)
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to push group configs", e)
+                    merge(
+                        // When the onion request path changes, we need to examine all the groups
+                        // and push the pending configs for them
+                        pathBecomesAvailable().flatMapLatest {
+                            configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
+                                .asSequence()
+                                .filter { !it.destroyed && !it.kicked }
+                                .map { it.groupAccountId }
+                                .asFlow()
+                        },
+
+                        // Or, when a group config is updated, we need to push the changes for that group
+                        configFactory.configUpdateNotifications
+                            .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                            .map { it.groupId }
+                            .debounce(1000L)
+                    ).collect { groupId ->
+                        try {
+                            retryWithUniformInterval {
+                                pushGroupConfigsChangesIfNeeded(groupId)
                             }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to push group configs", e)
                         }
+                    }
                 }
 
                 job1.join()

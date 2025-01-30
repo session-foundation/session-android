@@ -962,8 +962,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false)
-                .await()
+            MessageSender.send(message, Address.fromSerialized(groupId.hexString))
             storage.insertGroupInfoChange(message, groupId)
         }
 
