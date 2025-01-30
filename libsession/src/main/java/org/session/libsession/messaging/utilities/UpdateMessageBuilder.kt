@@ -255,11 +255,10 @@ object UpdateMessageBuilder {
                         }
                     }
                     UpdateMessageData.MemberUpdateType.REMOVED -> {
+
                         when {
                             number == 1 && containsUser -> Phrase.from(context,
-                                R.string.groupRemovedYou)
-                                .put(GROUP_NAME_KEY, updateData.groupName)
-                                .format()
+                                R.string.groupRemovedYouGeneral).format()
                             number == 1 -> Phrase.from(context,
                                 R.string.groupRemoved)
                                 .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
