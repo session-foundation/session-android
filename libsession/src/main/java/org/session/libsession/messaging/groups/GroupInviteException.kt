@@ -10,6 +10,14 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.truncateIdForDisplay
 
+/**
+ * Exception that occurs during a group invite.
+ *
+ * @param isPromotion Whether the invite was a promotion.
+ * @param inviteeAccountIds The account IDs of the invitees that failed.
+ * @param groupName The name of the group.
+ * @param underlying The underlying exception.
+ */
 class GroupInviteException(
     val isPromotion: Boolean,
     val inviteeAccountIds: List<String>,
