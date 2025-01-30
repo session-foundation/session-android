@@ -11,14 +11,11 @@ import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
-import org.session.libsession.utilities.Address
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.getExpirationTypeDisplayValue
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
@@ -311,7 +308,9 @@ object UpdateMessageBuilder {
                 }
             }
             is UpdateMessageData.Kind.GroupErrorQuit -> {
-                return context.getString(R.string.groupLeaveErrorFailed)
+                return Phrase.from(context, R.string.groupLeaveErrorFailed)
+                    .put(GROUP_NAME_KEY, updateData.groupName)
+                    .format()
             }
         }
     }

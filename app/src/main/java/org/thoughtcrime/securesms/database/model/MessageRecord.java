@@ -19,6 +19,7 @@ package org.thoughtcrime.securesms.database.model;
 import android.content.Context;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import androidx.annotation.NonNull;
@@ -33,8 +34,11 @@ import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
+import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+
+import network.loki.messenger.R;
 
 /**
  * The base class for message record models that are displayed in
@@ -137,7 +141,7 @@ public abstract class MessageRecord extends DisplayRecord {
         return "";
       }
 
-      return new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
+      SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
@@ -145,6 +149,14 @@ public abstract class MessageRecord extends DisplayRecord {
               getTimestamp(),
               getExpireStarted())
       );
+
+      if (updateMessageData.isGroupErrorQuitKind()) {
+        text.setSpan(new ForegroundColorSpan(ThemeUtil.getThemedColor(context, R.attr.danger)), 0, text.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+      } else if (updateMessageData.isGroupLeavingKind()) {
+        text.setSpan(new ForegroundColorSpan(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)), 0, text.length(), Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+      }
+
+      return text;
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
       boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();

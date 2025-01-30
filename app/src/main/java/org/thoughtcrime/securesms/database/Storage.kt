@@ -1056,6 +1056,16 @@ open class Storage @Inject constructor(
         return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
+    override fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long? {
+        val sentTimestamp = clock.currentTimeMills()
+        val senderPublicKey = getUserPublicKey() ?: return null
+        val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
+            ?: configFactory.getGroup(closedGroup)?.name
+        val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupErrorQuit(groupName.orEmpty()))
+
+        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+    }
+
     override fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind) {
         val mmsDB = mmsDatabase
         val newMessage = UpdateMessageData.buildGroupLeaveUpdate(newType)
