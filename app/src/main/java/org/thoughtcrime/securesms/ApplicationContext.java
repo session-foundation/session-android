@@ -230,7 +230,12 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         for (Map.Entry<String,String> entry : parameters.entrySet()) {
             builder.put(entry.getKey(), entry.getValue());
         }
-        Toast.makeText(getApplicationContext(), builder.format(), toastLength).show();
+        Toast.makeText(this, builder.format(), toastLength).show();
+    }
+
+    @Override
+    public void toast(@NonNull CharSequence message, int toastLength) {
+        Toast.makeText(this, message, toastLength).show();
     }
 
     @Override

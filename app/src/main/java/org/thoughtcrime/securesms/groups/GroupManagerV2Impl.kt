@@ -23,6 +23,7 @@ import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.jobs.InviteContactsJob
@@ -278,17 +279,24 @@ class GroupManagerV2Impl @Inject constructor(
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
         } catch (e: Exception) {
-            // Update every member's status to "invite failed"
-            configFactory.withMutableGroupConfigs(group) { configs ->
+            // Update every member's status to "invite failed" and return group name
+            val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
                 for (newMember in newMembers) {
                     configs.groupMembers.get(newMember.hexString)?.apply {
                         setInviteFailed()
                         configs.groupMembers.set(this)
                     }
                 }
+
+                configs.groupInfo.getName().orEmpty()
             }
 
-            throw e
+            throw GroupInviteException(
+                isPromotion = false,
+                inviteeAccountIds = newMembers.map { it.hexString },
+                groupName = groupName,
+                underlying = e
+            )
         }
 
         // Send the invitation message to the new members
@@ -1148,7 +1156,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.send(message, Destination.ClosedGroup(groupId.hexString), false)
+        MessageSender.send(message, Address.fromSerialized(groupId.hexString))
 
         storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupExpirationUpdated::class.java)
         storage.insertGroupInfoChange(message, groupId)
