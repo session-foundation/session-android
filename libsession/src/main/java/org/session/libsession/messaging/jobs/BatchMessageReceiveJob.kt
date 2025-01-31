@@ -1,15 +1,16 @@
 package org.session.libsession.messaging.jobs
 
 import com.google.protobuf.ByteString
-import kotlinx.coroutines.CoroutineScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import javax.inject.Inject
+import kotlin.math.max
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import network.loki.messenger.libsession_util.ConfigBase
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -35,12 +36,12 @@ import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import kotlin.math.max
 
 data class MessageReceiveParameters(
     val data: ByteArray,
@@ -50,15 +51,17 @@ data class MessageReceiveParameters(
     val closedGroup: Destination.ClosedGroup? = null
 )
 
-class BatchMessageReceiveJob(
-    val messages: List<MessageReceiveParameters>,
-    val openGroupID: String? = null
+class BatchMessageReceiveJob @AssistedInject constructor(
+    @Assisted val messages: List<MessageReceiveParameters>,
+    @Assisted val openGroupID: String? = null,
+    private val textSecurePreferences: TextSecurePreferences, // Injected
 ) : Job {
 
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
     override val maxFailureCount: Int = 1 // handled in JobQueue onJobFailed
+
     // Failure Exceptions must be retryable if they're a  MessageReceiver.Error
     val failures = mutableListOf<MessageReceiveParameters>()
 
@@ -233,7 +236,8 @@ class BatchMessageReceiveJob(
                             proto = proto,
                             threadId = threadId,
                             openGroupID = openGroupID,
-                            closedGroup = parameters.closedGroup?.publicKey?.let(::AccountId)
+                            closedGroup = parameters.closedGroup?.publicKey?.let(::AccountId),
+                            textSecurePreferences = textSecurePreferences
                         )
                     }
                 } catch (e: Exception) {
@@ -311,7 +315,17 @@ class BatchMessageReceiveJob(
 
     override fun getFactoryKey(): String = KEY
 
-    class Factory : Job.Factory<BatchMessageReceiveJob> {
+    @AssistedFactory
+    interface BatchMessageReceiveJobAssistedFactory {
+        fun create(
+            parameters: List<MessageReceiveParameters>,
+            openGroupID: String?
+        ): BatchMessageReceiveJob
+    }
+
+    class Factory @Inject constructor(
+        private val assistedFactory: BatchMessageReceiveJobAssistedFactory
+    ) : Job.Factory<BatchMessageReceiveJob> {
         override fun create(data: Data): BatchMessageReceiveJob {
             val numMessages = data.getInt(NUM_MESSAGES_KEY)
             val dataArrays = data.getByteArray(DATA_KEY)
@@ -339,8 +353,7 @@ class BatchMessageReceiveJob(
                 )
             }
 
-            return BatchMessageReceiveJob(parameters, openGroupID)
+            return assistedFactory.create(parameters, openGroupID)
         }
     }
-
 }

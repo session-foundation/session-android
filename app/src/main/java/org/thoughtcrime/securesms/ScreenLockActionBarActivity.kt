@@ -11,13 +11,16 @@ import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Exception
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
@@ -78,10 +81,34 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.i(TAG, "ScreenLockActionBarActivity.onCreate(" + savedInstanceState + ")")
 
+        // OLD:
         val locked = KeyCachingService.isLocked(this) && isScreenLockEnabled(this) && getLocalNumber(this) != null
         routeApplicationState(locked)
 
         super.onCreate(savedInstanceState)
+
+        // NEW:
+        //super.onCreate(savedInstanceState) // Ensure the activity lifecycle starts properly
+
+//        lifecycleScope.launch {
+//            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+//                val locked = withContext(Dispatchers.IO) {
+//                    KeyCachingService.isLocked(this@ScreenLockActionBarActivity) &&
+//                            isScreenLockEnabled(this@ScreenLockActionBarActivity) &&
+//                            getLocalNumber(this@ScreenLockActionBarActivity) != null
+//                }
+//                routeApplicationState(locked) // Call this only after the value is computed
+//            }
+//        }
+
+//        val locked = runBlocking(Dispatchers.IO) { // Run on IO but block until done
+//            KeyCachingService.isLocked(this@ScreenLockActionBarActivity) &&
+//                    isScreenLockEnabled(this@ScreenLockActionBarActivity) &&
+//                    getLocalNumber(this@ScreenLockActionBarActivity) != null
+//        }
+//        routeApplicationState(locked)
+//
+//        super.onCreate(savedInstanceState)
 
         if (!isFinishing) {
             initializeClearKeyReceiver()

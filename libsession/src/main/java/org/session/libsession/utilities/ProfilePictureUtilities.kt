@@ -10,37 +10,33 @@ import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getProfileKey
-import org.session.libsession.utilities.TextSecurePreferences.Companion.setLastProfilePictureUpload
 import org.session.libsignal.streams.DigestingRequestBody
 import org.session.libsignal.streams.ProfileCipherOutputStream
 import org.session.libsignal.streams.ProfileCipherOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ProfileAvatarData
-import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.retryIfNeeded
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.*
+import java.util.Date
+
+//import java.util.*
 
 object ProfilePictureUtilities {
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun resubmitProfilePictureIfNeeded(context: Context) {
+    fun resubmitProfilePictureIfNeeded(context: Context, textSecurePreferences: TextSecurePreferences) {
         GlobalScope.launch(Dispatchers.IO) {
             // Files expire on the file server after a while, so we simply re-upload the user's profile picture
             // at a certain interval to ensure it's always available.
-            val userPublicKey = getLocalNumber(context) ?: return@launch
+            val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@launch
             val now = Date().time
-            val lastProfilePictureUpload = getLastProfilePictureUpload(context)
+            val lastProfilePictureUpload = textSecurePreferences.getLastProfilePictureUpload()
             if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return@launch
 
             // Don't generate a new profile key here; we do that when the user changes their profile picture
             Log.d("Loki-Avatar", "Uploading Avatar Started")
-            val encodedProfileKey =
-                getProfileKey(context)
+            val encodedProfileKey = textSecurePreferences.getProfileKey()
             try {
                 // Read the file into a byte array
                 val inputStream = AvatarHelper.getInputStreamFor(
@@ -65,10 +61,7 @@ object ProfilePictureUtilities {
                 )
 
                 // Update the last profile picture upload date
-                setLastProfilePictureUpload(
-                    context,
-                    Date().time
-                )
+                textSecurePreferences.setLastProfilePictureUpload(Date().time)
 
                 Log.d("Loki-Avatar", "Uploading Avatar Finished")
             } catch (e: Exception) {
@@ -77,7 +70,7 @@ object ProfilePictureUtilities {
         }
     }
 
-    suspend fun upload(profilePicture: ByteArray, encodedProfileKey: String, context: Context) {
+    suspend fun upload(profilePicture: ByteArray, encodedProfileKey: String, context: Context, textSecurePreferences: TextSecurePreferences) {
         val inputStream = ByteArrayInputStream(profilePicture)
         val outputStream =
             ProfileCipherOutputStream.getCiphertextLength(profilePicture.size.toLong())
@@ -105,8 +98,8 @@ object ProfilePictureUtilities {
             FileServerApi.upload(data)
         }.await()
 
-        TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
+        textSecurePreferences.setLastProfilePictureUpload(Date().time)
         val url = "${FileServerApi.server}/file/$id"
-        TextSecurePreferences.setProfilePictureURL(context, url)
+        textSecurePreferences.setProfilePictureURL(url)
     }
 }

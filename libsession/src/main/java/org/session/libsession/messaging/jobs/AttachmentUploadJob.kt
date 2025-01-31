@@ -3,10 +3,14 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import nl.komponents.kovenant.Promise
 import okio.Buffer
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.messaging.jobs.MessageSendJob.MessageSendJobAssistedFactory
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -25,8 +29,23 @@ import org.session.libsignal.streams.PlaintextOutputStreamFactory
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PushAttachmentData
 import org.session.libsignal.utilities.Util
+import javax.inject.Inject
 
-class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val message: Message, val messageSendJobID: String) : Job {
+// Keys used for database storage
+private const val ATTACHMENT_ID_KEY       = "attachment_id"
+private const val THREAD_ID_KEY           = "thread_id"
+private const val MESSAGE_KEY             = "message"
+private const val MESSAGE_SEND_JOB_ID_KEY = "message_send_job_id"
+
+
+class AttachmentUploadJob @AssistedInject constructor(
+    @Assisted(ATTACHMENT_ID_KEY) val attachmentID: Long,
+    @Assisted(THREAD_ID_KEY) val threadID: String,
+    @Assisted(MESSAGE_KEY) val message: Message,
+    @Assisted(MESSAGE_SEND_JOB_ID_KEY) val messageSendJobID: String,
+    private val messageSendJobAssistedFactory: MessageSendJobAssistedFactory // Injected
+) : Job {
+
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -43,11 +62,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         val TAG = AttachmentUploadJob::class.simpleName
         val KEY: String = "AttachmentUploadJob"
 
-        // Keys used for database storage
-        private val ATTACHMENT_ID_KEY = "attachment_id"
-        private val THREAD_ID_KEY = "thread_id"
-        private val MESSAGE_KEY = "message"
-        private val MESSAGE_SEND_JOB_ID_KEY = "message_send_job_id"
+
     }
 
     override suspend fun execute(dispatcherName: String) {
@@ -131,7 +146,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         val storage = MessagingModuleConfiguration.shared.storage
         storage.getMessageSendJob(messageSendJobID)?.let {
             val destination = it.destination as? Destination.OpenGroup ?: return@let
-            val updatedJob = MessageSendJob(
+            val updatedJob = messageSendJobAssistedFactory.create(
                 message = it.message,
                 destination = Destination.OpenGroup(
                     destination.roomToken,
@@ -192,7 +207,21 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         return KEY
     }
 
-    class Factory: Job.Factory<AttachmentUploadJob> {
+    @AssistedFactory
+    interface AttachmentUploadJobAssistedFactory {
+        // Note: We need the identifiers on the "@Assisted" processors because there are multiple
+        // arguments with the same type (we have to do the same on the actual constructor as well).
+        fun create(
+            @Assisted(ATTACHMENT_ID_KEY) attachmentID: Long,
+            @Assisted(THREAD_ID_KEY) threadID: String,
+            @Assisted(MESSAGE_KEY) message: Message,
+            @Assisted(MESSAGE_SEND_JOB_ID_KEY) messageSendJobID: String
+        ) : AttachmentUploadJob
+    }
+
+    class Factory @Inject constructor(
+        private val assistedFactory: AttachmentUploadJobAssistedFactory
+    ): Job.Factory<AttachmentUploadJob> {
 
         override fun create(data: Data): AttachmentUploadJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -207,7 +236,8 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 return null
             }
             input.close()
-            return AttachmentUploadJob(
+
+            return assistedFactory.create(
                     data.getLong(ATTACHMENT_ID_KEY),
                     data.getString(THREAD_ID_KEY)!!,
                     message,

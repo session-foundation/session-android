@@ -1,6 +1,10 @@
 package org.session.libsession.messaging.sending_receiving
 
 import android.text.TextUtils
+import java.security.MessageDigest
+import java.security.SignatureException
+import java.util.LinkedList
+import kotlin.math.min
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -50,14 +54,13 @@ import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -66,10 +69,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
-import java.security.MessageDigest
-import java.security.SignatureException
-import java.util.LinkedList
-import kotlin.math.min
 
 internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     val context = MessagingModuleConfiguration.shared.context
@@ -77,7 +76,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient.isBlocked
 }
 
-fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, closedGroup: AccountId?) {
+fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, closedGroup: AccountId?, textSecurePreferences: TextSecurePreferences) {
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
@@ -102,7 +101,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
 
 fun MessageReceiver.messageIsOutdated(message: Message, threadId: Long, openGroupID: String?): Boolean {
     when (message) {
-        is ReadReceipt -> return false // No visible artifact created so better to keep for more reliable read states
+        is ReadReceipt   -> return false // No visible artifact created so better to keep for more reliable read states
         is UnsendRequest -> return false // We should always process the removal of messages just in case
     }
 
@@ -204,20 +203,21 @@ private fun MessageReceiver.handleDataExtractionNotification(message: DataExtrac
     storage.insertDataExtractionNotificationMessage(senderPublicKey, notification, message.sentTimestamp!!)
 }
 
-private fun handleConfigurationMessage(message: ConfigurationMessage) {
+private fun handleConfigurationMessage(message: ConfigurationMessage, textSecurePreferences: TextSecurePreferences, jobQueue: JobQueue) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
-    if (TextSecurePreferences.getConfigurationMessageSynced(context)
-        && !TextSecurePreferences.shouldUpdateProfile(context, message.sentTimestamp!!)) return
+
+    if (textSecurePreferences.getConfigurationMessageSynced() && !textSecurePreferences.shouldUpdateProfile(message.sentTimestamp!!)) return
+
     val userPublicKey = storage.getUserPublicKey()
     if (userPublicKey == null || message.sender != storage.getUserPublicKey()) return
 
-    val firstTimeSync = !TextSecurePreferences.getConfigurationMessageSynced(context)
+    val firstTimeSync = !textSecurePreferences.getConfigurationMessageSynced()
 
-    TextSecurePreferences.setConfigurationMessageSynced(context, true)
-    TextSecurePreferences.setLastProfileUpdateTime(context, message.sentTimestamp!!)
+    textSecurePreferences.setConfigurationMessageSynced(true)
+    textSecurePreferences.setLastProfileUpdateTime(message.sentTimestamp!!)
 
-    TextSecurePreferences.setHasLegacyConfig(context, true)
+    textSecurePreferences.setHasLegacyConfig(true)
     if (!firstTimeSync) return
 
     val allClosedGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
@@ -240,17 +240,19 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
         Log.d("OpenGroup", "All open groups doesn't contain open group")
         if (!storage.hasBackgroundGroupAddJob(openGroup)) {
             Log.d("OpenGroup", "Doesn't contain background job for open group, adding")
-            JobQueue.shared.add(BackgroundGroupAddJob(openGroup))
+            jobQueue.add(BackgroundGroupAddJob(openGroup))
         }
     }
     val profileManager = SSKEnvironment.shared.profileManager
     val recipient = Recipient.from(context, Address.fromSerialized(userPublicKey), false)
     if (message.displayName.isNotEmpty()) {
-        TextSecurePreferences.setProfileName(context, message.displayName)
+        textSecurePreferences.setProfileName(message.displayName)
         profileManager.setName(context, recipient, message.displayName)
     }
-    if (message.profileKey.isNotEmpty() && !message.profilePicture.isNullOrEmpty()
-        && TextSecurePreferences.getProfilePictureURL(context) != message.profilePicture) {
+    if (message.profileKey.isNotEmpty()         &&
+        !message.profilePicture.isNullOrEmpty() &&
+        textSecurePreferences.getProfilePictureURL() != message.profilePicture)
+    {
         val profileKey = Base64.encodeBytes(message.profileKey)
         ProfileKeyUtil.setEncodedProfileKey(context, profileKey)
         profileManager.setProfilePicture(context, recipient, message.profilePicture, message.profileKey)
@@ -302,7 +304,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
 
     // the message is marked as deleted locally
     // except for 'note to self' where the message is completely deleted
-    if(messageType == MessageType.NOTE_TO_SELF){
+    if (messageType == MessageType.NOTE_TO_SELF) {
         messageDataProvider.deleteMessage(messageIdToDelete, !mms)
     } else {
         messageDataProvider.markMessageAsDeleted(

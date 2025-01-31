@@ -34,7 +34,8 @@ object PushRegistryV1 {
 
     fun register(
         device: Device,
-        isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
+        textSecurePreferences: TextSecurePreferences,
+        isPushEnabled: Boolean = textSecurePreferences.isPushEnabled(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
         legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
     ): Promise<*, Exception> = scope.asyncPromise {

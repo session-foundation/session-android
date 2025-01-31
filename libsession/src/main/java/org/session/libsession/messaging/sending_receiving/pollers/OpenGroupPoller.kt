@@ -1,6 +1,12 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import com.google.protobuf.ByteString
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import java.util.UUID
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.messaging.BlindedIdMapping
@@ -28,15 +34,20 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.successBackground
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import java.util.UUID
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.seconds
 
-class OpenGroupPoller(private val server: String, private val executorService: ScheduledExecutorService?) {
+class OpenGroupPoller @AssistedInject constructor(
+    @Assisted private val server: String,
+    @Assisted private val executorService: ScheduledExecutorService?,
+    private val textSecurePreferences: TextSecurePreferences, // Injected
+    private val jobQueue: JobQueue                            // Injected
+) {
+
     var hasStarted = false
     var isCaughtUp = false
     var secondToLastJob: MessageReceiveJob? = null
@@ -44,8 +55,8 @@ class OpenGroupPoller(private val server: String, private val executorService: S
     @Volatile private var runId: UUID = UUID.randomUUID()
 
     companion object {
-        private const val pollInterval: Long = 4000L
-        const val maxInactivityPeriod = 14 * 24 * 60 * 60 * 1000
+        private val pollIntervalMS = 4.seconds.inWholeMilliseconds
+        val maxInactivityPeriodMS  = 14.days.inWholeMilliseconds
 
         public fun handleRoomPollInfo(
             server: String,
@@ -120,7 +131,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                         storage.getGroupAvatarDownloadJob(openGroup.server, openGroup.room, existingOpenGroup.imageId) == null
                     )
             ) {
-                JobQueue.shared.add(GroupAvatarDownloadJob(server, roomToken, openGroup.imageId))
+                JobQueue.add(GroupAvatarDownloadJob(server, roomToken, openGroup.imageId))
             }
             else if (
                 pollInfo.details != null &&
@@ -179,7 +190,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
 
             // Only poll again if it's the same poller run
             if (currentRunId == runId) {
-                future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+                future = executorService?.schedule(this@OpenGroupPoller::poll, pollIntervalMS, TimeUnit.MILLISECONDS)
             }
         }.fail {
             updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, currentRunId, it)
@@ -195,11 +206,11 @@ class OpenGroupPoller(private val server: String, private val executorService: S
 
                 // Only poll again if it's the same poller run
                 if (currentRunId == runId) {
-                    future = executorService?.schedule({ poll(isPostCapabilitiesRetry = true) }, pollInterval, TimeUnit.MILLISECONDS)
+                    future = executorService?.schedule({ poll(isPostCapabilitiesRetry = true) }, pollIntervalMS, TimeUnit.MILLISECONDS)
                 }
             }
         } else if (currentRunId == runId) {
-            future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+            future = executorService?.schedule(this@OpenGroupPoller::poll, pollIntervalMS, TimeUnit.MILLISECONDS)
         }
     }
 
@@ -281,7 +292,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                     mappingCache[it.recipient] = mapping
                 }
                 val threadId = Message.getThreadId(message, null, MessagingModuleConfiguration.shared.storage, false)
-                MessageReceiver.handle(message, proto, threadId ?: -1, null, null)
+                MessageReceiver.handle(message, proto, threadId ?: -1, null, null, textSecurePreferences)
             } catch (e: Exception) {
                 Log.e("Loki", "Couldn't handle direct message", e)
             }

@@ -3,10 +3,13 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -23,7 +26,11 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 
-class MessageSendJob(val message: Message, val destination: Destination) : Job {
+class MessageSendJob @AssistedInject constructor(
+    @Assisted val message: Message,
+    @Assisted val destination: Destination,
+    private val jobQueue: JobQueue // Injected
+) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
 
@@ -73,7 +80,7 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
                     // Wait for it to finish
                 } else {
                     val job = AttachmentUploadJob(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
-                    JobQueue.shared.add(job)
+                    jobQueue.add(job)
                 }
             }
             if (attachmentsToUpload.isNotEmpty()) {
@@ -159,11 +166,16 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
             .build()
     }
 
-    override fun getFactoryKey(): String {
-        return KEY
+    override fun getFactoryKey(): String = KEY
+
+    @AssistedFactory
+    interface MessageSendJobAssistedFactory {
+        fun create(message: Message, destination: Destination): MessageSendJob
     }
 
-    class Factory : Job.Factory<MessageSendJob> {
+    class Factory @Inject constructor(
+        private val assistedFactory: MessageSendJobAssistedFactory
+    ): Job.Factory<MessageSendJob> {
 
         override fun create(data: Data): MessageSendJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -190,8 +202,8 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
                 return null
             }
             destinationInput.close()
-            // Return
-            return MessageSendJob(message, destination)
+
+            return assistedFactory.create(message, destination)
         }
     }
 }

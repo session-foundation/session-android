@@ -27,6 +27,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PowerManager;
+import android.os.StrictMode;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -170,6 +171,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject Lazy<MessageNotifier> messageNotifierLazy;
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
+    @Inject public TextSecurePreferences textSecurePreferences;
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -187,10 +189,10 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         return (ApplicationContext) context.getApplicationContext();
     }
 
-    @Deprecated(message = "Use proper DI to inject this component")
-    public TextSecurePreferences getPrefs() {
-        return EntryPoints.get(getApplicationContext(), AppComponent.class).getPrefs();
-    }
+//    @Deprecated(message = "Use proper DI to inject this component")
+//    public TextSecurePreferences getPrefs() {
+//        return EntryPoints.get(getApplicationContext(), AppComponent.class).getPrefs();
+//    }
 
     @Deprecated(message = "Use proper DI to inject this component")
     public DatabaseComponent getDatabaseComponent() {
@@ -298,6 +300,29 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                     .build();
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut);
+        }
+
+        // Enable strict mode on debug builds
+        if (BuildConfig.DEBUG) {
+
+            // Thread-level settings
+            StrictMode.setThreadPolicy(
+                new StrictMode.ThreadPolicy.Builder()
+                    .detectAll()     // Detect everything that could block the main thread
+                    .penaltyLog()    // Log detected violations to Logcat..
+                    //.penaltyDialog() // ..and also show a quick pop-up dialog about the violation.
+                    .build()
+            );
+
+            // VM-level settings (i.e., memory leaks, incorrect object handling etc.)
+            StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectLeakedSqlLiteObjects()
+                        .detectLeakedClosableObjects()
+                        .detectLeakedRegistrationObjects()
+                        .penaltyLog()
+                        .build()
+            );
         }
     }
 

@@ -1,5 +1,9 @@
 package org.session.libsession.messaging.jobs
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import javax.inject.Inject
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -8,28 +12,34 @@ import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 
-class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val openGroupMessageServerID: Long? = null, val openGroupID: String? = null) : Job {
+// Keys used for database storage
+private const val DATA_KEY = "data"
+private const val SERVER_HASH_KEY = "serverHash"
+private const val OPEN_GROUP_MESSAGE_SERVER_ID_KEY = "openGroupMessageServerID"
+private const val OPEN_GROUP_ID_KEY = "open_group_id"
+
+class MessageReceiveJob @AssistedInject constructor(
+    @Assisted(DATA_KEY)                         val data: ByteArray,
+    @Assisted(SERVER_HASH_KEY)                  val serverHash: String? = null,
+    @Assisted(OPEN_GROUP_MESSAGE_SERVER_ID_KEY) val openGroupMessageServerID: Long? = null,
+    @Assisted(OPEN_GROUP_ID_KEY)                val openGroupID: String? = null,
+                                                val textSecurePreferences: TextSecurePreferences // Injected
+) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
 
     override val maxFailureCount: Int = 10
+
     companion object {
         val TAG = MessageReceiveJob::class.simpleName
         val KEY: String = "MessageReceiveJob"
-
-        // Keys used for database storage
-        private val DATA_KEY = "data"
-        private val SERVER_HASH_KEY = "serverHash"
-        private val OPEN_GROUP_MESSAGE_SERVER_ID_KEY = "openGroupMessageServerID"
-        private val OPEN_GROUP_ID_KEY = "open_group_id"
     }
 
-    override suspend fun execute(dispatcherName: String) {
-        executeAsync(dispatcherName).await()
-    }
+    override suspend fun execute(dispatcherName: String) = executeAsync(dispatcherName).await()
 
     fun executeAsync(dispatcherName: String): Promise<Unit, Exception> {
         val deferred = deferred<Unit, Exception>()
@@ -42,7 +52,7 @@ class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val
             val (message, proto) = MessageReceiver.parse(this.data, this.openGroupMessageServerID, openGroupPublicKey = serverPublicKey, currentClosedGroups = currentClosedGroups)
             val threadId = Message.getThreadId(message, this.openGroupID, storage, false)
             message.serverHash = serverHash
-            MessageReceiver.handle(message, proto, threadId ?: -1, this.openGroupID, null)
+            MessageReceiver.handle(message, proto, threadId ?: -1, this.openGroupID, null, textSecurePreferences)
             this.handleSuccess(dispatcherName)
             deferred.resolve(Unit)
         } catch (e: Exception) {
@@ -79,18 +89,30 @@ class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val
         return builder.build();
     }
 
-    override fun getFactoryKey(): String {
-        return KEY
+    override fun getFactoryKey(): String = KEY
+
+    @AssistedFactory
+    interface MessageReceiveJobAssistedFactory {
+        // Note: We need the identifiers on the "@Assisted" processors because there are multiple
+        // arguments with the same type (we have to do the same on the actual constructor as well).
+        fun create(
+            @Assisted(DATA_KEY)   data: ByteArray,
+            @Assisted(SERVER_HASH_KEY)serverHash: String? = null,
+            @Assisted(OPEN_GROUP_MESSAGE_SERVER_ID_KEY) openGroupMessageServerID: Long? = null,
+            @Assisted(OPEN_GROUP_ID_KEY) openGroupID: String? = null
+        ): MessageReceiveJob
     }
 
-    class Factory: Job.Factory<MessageReceiveJob> {
-
+    class Factory @Inject constructor(
+        private val assistedFactory: MessageReceiveJobAssistedFactory
+    ): Job.Factory<MessageReceiveJob> {
         override fun create(data: Data): MessageReceiveJob {
             val dataArray = data.getByteArray(DATA_KEY)
             val serverHash = data.getStringOrDefault(SERVER_HASH_KEY, null)
             val openGroupMessageServerID = data.getLongOrDefault(OPEN_GROUP_MESSAGE_SERVER_ID_KEY, -1).let { if (it == -1L) null else it }
             val openGroupID = data.getStringOrDefault(OPEN_GROUP_ID_KEY, null)
-            return MessageReceiveJob(
+
+            return assistedFactory.create(
                 dataArray,
                 serverHash,
                 openGroupMessageServerID,

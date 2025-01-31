@@ -1,8 +1,15 @@
 package org.session.libsession.messaging.jobs
 
-import kotlinx.coroutines.CoroutineDispatcher
+import java.util.Timer
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.concurrent.schedule
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.roundToLong
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
@@ -10,17 +17,16 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.jobs.BatchMessageReceiveJob.BatchMessageReceiveJobAssistedFactory
 import org.session.libsignal.utilities.Log
-import java.util.Timer
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.schedule
-import kotlin.math.min
-import kotlin.math.pow
-import kotlin.math.roundToLong
 
+// Note: There is only ever precisely one JobQueue - no more, no less. All static companion object
+// (`shared`) usages have been refactored to inject the singleton where needed.
+@Singleton
 @OptIn(ExperimentalCoroutinesApi::class)
-class JobQueue : JobDelegate {
+class JobQueue @Inject constructor(
+    private val batchMessageReceiveJobAssistedFactory: BatchMessageReceiveJobAssistedFactory // Injected
+): JobDelegate {
     private var hasResumedPendingJobs = false // Just for debugging
     private val jobTimestampMap = ConcurrentHashMap<Long, AtomicInteger>()
 
@@ -155,10 +161,11 @@ class JobQueue : JobDelegate {
         }
     }
 
-    companion object {
-        @JvmStatic
-        val shared: JobQueue by lazy { JobQueue() }
-    }
+// NOPE! Doing injection all the way!
+//    companion object {
+//        @JvmStatic
+//        val shared: JobQueue by lazy { JobQueue() }
+//    }
 
     fun add(job: Job) {
         addWithoutExecuting(job)
@@ -253,7 +260,7 @@ class JobQueue : JobDelegate {
         if (job is BatchMessageReceiveJob && job.failureCount <= 0) {
             val replacementParameters = job.failures.toList()
             if (replacementParameters.isNotEmpty()) {
-                val newJob = BatchMessageReceiveJob(replacementParameters, job.openGroupID)
+                val newJob = batchMessageReceiveJobAssistedFactory.create(replacementParameters, job.openGroupID)
                 newJob.failureCount = job.failureCount + 1
                 add(newJob)
             }
