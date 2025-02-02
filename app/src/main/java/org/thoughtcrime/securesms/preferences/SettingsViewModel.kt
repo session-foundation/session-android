@@ -36,7 +36,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
-import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -45,7 +45,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val connectivity: InternetConnectivity,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -156,7 +157,7 @@ class SettingsViewModel @Inject constructor(
         val tempAvatar = (avatarDialogState.value as? TempAvatar)?.data
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
+        val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
             Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
@@ -173,7 +174,7 @@ class SettingsViewModel @Inject constructor(
 
 
     fun removeAvatar() {
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
+        val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot remove profile picture - no network connection.")
             Toast.makeText(context, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()

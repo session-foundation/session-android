@@ -19,6 +19,9 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
@@ -40,11 +43,11 @@ import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_IN
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_INCOMING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.TYPE_OUTGOING_RINGING
 import org.thoughtcrime.securesms.util.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import org.thoughtcrime.securesms.webrtc.AudioManagerCommand
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.CallViewModel
 import org.thoughtcrime.securesms.webrtc.IncomingPstnCallReceiver
-import org.thoughtcrime.securesms.webrtc.NetworkChangeReceiver
 import org.thoughtcrime.securesms.webrtc.PeerConnectionException
 import org.thoughtcrime.securesms.webrtc.PowerButtonReceiver
 import org.thoughtcrime.securesms.webrtc.ProximityLockRelease
@@ -215,6 +218,9 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
     @Inject
     lateinit var callManager: CallManager
 
+    @Inject
+    lateinit var internetConnectivity: InternetConnectivity
+
     private var wantsToAnswer = false
     private var currentTimeouts = 0
     private var isNetworkAvailable = true
@@ -229,7 +235,6 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         ContextCompat.startForegroundService(this, hangupIntent(this))
     }
 
-    private var networkChangedReceiver: NetworkChangeReceiver? = null
     private var callReceiver: IncomingPstnCallReceiver? = null
     private var wantsToAnswerReceiver: BroadcastReceiver? = null
     private var wiredHeadsetStateReceiver: WiredHeadsetStateReceiver? = null
@@ -328,8 +333,10 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             telephonyHandler.register(getSystemService(TelephonyManager::class.java))
         }
         registerUncaughtExceptionHandler()
-        networkChangedReceiver = NetworkChangeReceiver(::networkChange)
-        networkChangedReceiver!!.register(this)
+
+        GlobalScope.launch {
+            internetConnectivity.networkAvailable.collectLatest(::networkChange)
+        }
     }
 
     private fun registerUncaughtExceptionHandler() {
@@ -813,14 +820,12 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
         }
         wiredHeadsetStateReceiver?.let(::unregisterReceiver)
         powerButtonReceiver?.let(::unregisterReceiver)
-        networkChangedReceiver?.unregister(this)
         wantsToAnswerReceiver?.let { receiver ->
             LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver)
         }
         callManager.shutDownAudioManager()
         powerButtonReceiver = null
         wiredHeadsetStateReceiver = null
-        networkChangedReceiver = null
         callReceiver = null
         uncaughtExceptionHandlerManager?.unregister()
         wantsToAnswer = false
