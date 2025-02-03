@@ -266,8 +266,8 @@ class GroupManagerV2Impl @Inject constructor(
             subAccountTokens = subAccountTokens
         )
 
-        // Before we send the invitation, we need to make sure the configs are pushed
-        configFactory.waitUntilGroupConfigsPushed(group)
+        // Send a group update message to the group telling members someone has been invited
+        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
 
         // Call the API
         try {
@@ -304,9 +304,6 @@ class GroupManagerV2Impl @Inject constructor(
                 newMembers.map { it.hexString }.toTypedArray()
             )
         )
-
-        // Send a group update message to the group telling members someone has been invited
-        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
     }
 
     /**
@@ -525,11 +522,10 @@ class GroupManagerV2Impl @Inject constructor(
 
             val promotionDeferred = members.associateWith { member ->
                 async {
-                    MessageSender.sendNonDurably(
+                    MessageSender.sendAndAwait(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
-                        isSyncMessage = false
-                    ).await()
+                    )
                 }
             }
 
@@ -573,7 +569,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.send(message, Address.fromSerialized(group.hexString))
+            MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
             storage.insertGroupInfoChange(message, group)
         }
     }
@@ -950,7 +946,7 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.send(message, Address.fromSerialized(groupId.hexString))
+            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
             storage.insertGroupInfoChange(message, groupId)
         }
 
@@ -1022,7 +1018,7 @@ class GroupManagerV2Impl @Inject constructor(
             sentTimestamp = timestamp
         }
 
-        MessageSender.sendNonDuraly(message, Destination.ClosedGroup(groupId.hexString), false).await()
+        MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
     }
 
     override suspend fun handleDeleteMemberContent(

@@ -101,8 +101,36 @@ abstract class BaseGroupMembersViewModel (
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
-            clickable = !isMyself
+            clickable = !isMyself,
+            statusLabel = getMemberLabel(status, context, amIAdmin),
         )
+    }
+
+    private fun getMemberLabel(status: GroupMember.Status, context: Context, amIAdmin: Boolean): String {
+        return when (status) {
+            GroupMember.Status.INVITE_FAILED -> context.getString(R.string.groupInviteFailed)
+            GroupMember.Status.INVITE_SENDING -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
+            GroupMember.Status.INVITE_SENT -> context.getString(R.string.groupInviteSent)
+            GroupMember.Status.PROMOTION_FAILED -> context.getString(R.string.adminPromotionFailed)
+            GroupMember.Status.PROMOTION_SENDING -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
+            GroupMember.Status.PROMOTION_SENT -> context.getString(R.string.adminPromotionSent)
+            GroupMember.Status.REMOVED,
+            GroupMember.Status.REMOVED_UNKNOWN,
+            GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> {
+                if (amIAdmin) {
+                    context.getString(R.string.groupPendingRemoval)
+                } else {
+                    ""
+                }
+            }
+
+            GroupMember.Status.INVITE_UNKNOWN,
+            GroupMember.Status.INVITE_ACCEPTED,
+            GroupMember.Status.INVITE_NOT_SENT,
+            GroupMember.Status.PROMOTION_NOT_SENT,
+            GroupMember.Status.PROMOTION_UNKNOWN,
+            GroupMember.Status.PROMOTION_ACCEPTED -> ""
+        }
     }
 
     // Refer to notion doc for the sorting logic
@@ -150,37 +178,8 @@ data class GroupMemberState(
     val canResendPromotion: Boolean,
     val canRemove: Boolean,
     val canPromote: Boolean,
-    val clickable: Boolean
+    val clickable: Boolean,
+    val statusLabel: String,
 ) {
     val canEdit: Boolean get() = canRemove || canPromote || canResendInvite || canResendPromotion
-}
-
-// Function to get the label dynamically using the context
-fun GroupMemberState.getLabel(context: Context): String {
-    return when (this.status) {
-        GroupMember.Status.INVITE_FAILED -> context.getString(R.string.groupInviteFailed)
-        GroupMember.Status.INVITE_SENDING -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
-        GroupMember.Status.INVITE_SENT -> context.getString(R.string.groupInviteSent)
-        GroupMember.Status.PROMOTION_FAILED -> context.getString(R.string.adminPromotionFailed)
-        GroupMember.Status.PROMOTION_SENDING -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
-        GroupMember.Status.PROMOTION_SENT -> context.getString(R.string.adminPromotionSent)
-        GroupMember.Status.REMOVED,
-        GroupMember.Status.REMOVED_UNKNOWN,
-        GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> {
-            if (this.showAsAdmin) {
-                context.getString(R.string.groupPendingRemoval)
-            } else {
-                ""
-            }
-        }
-
-        GroupMember.Status.INVITE_UNKNOWN,
-        GroupMember.Status.INVITE_ACCEPTED,
-        GroupMember.Status.INVITE_NOT_SENT,
-        GroupMember.Status.PROMOTION_NOT_SENT,
-        GroupMember.Status.PROMOTION_UNKNOWN,
-        GroupMember.Status.PROMOTION_ACCEPTED -> ""
-
-        null -> ""
-    }
 }

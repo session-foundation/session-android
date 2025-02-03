@@ -545,6 +545,7 @@ object MessageSender {
     }
 
     @JvmStatic
+    @JvmOverloads
     fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         threadID?.let(message::applyExpiryMode)
@@ -562,10 +563,10 @@ object MessageSender {
         }
     }
 
-    suspend fun sendAndAwait(message: Message, address: Address): Result<Unit> {
+    suspend fun sendAndAwait(message: Message, address: Address) {
         val resultChannel = Channel<Result<Unit>>()
         send(message, address, resultChannel)
-        return resultChannel.receive()
+        resultChannel.receive().getOrThrow()
     }
 
     fun sendNonDurably(message: VisibleMessage, attachments: List<SignalAttachment>, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {

@@ -139,7 +139,8 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                     destination.whisperTo,
                     destination.whisperMods,
                     destination.fileIds + uploadResult.id.toString()
-                )
+                ),
+                statusCallback = it.statusCallback
             )
             updatedJob.id = it.id
             updatedJob.delegate = it.delegate
