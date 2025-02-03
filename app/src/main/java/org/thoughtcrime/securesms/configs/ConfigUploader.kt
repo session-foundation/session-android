@@ -65,6 +65,13 @@ class ConfigUploader @Inject constructor(
 ) {
     private var job: Job? = null
 
+    /**
+     * A flow that only emits when
+     * 1. There's internet connection AND,
+     * 2. The onion path is available
+     *
+     * The value pushed doesn't matter as nothing is emitted when the conditions are not met.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun pathBecomesAvailable(): Flow<*> = internetConnectivity.networkAvailable
         .flatMapLatest { hasNetwork ->
@@ -82,6 +89,9 @@ class ConfigUploader @Inject constructor(
 
         job = GlobalScope.launch {
             supervisorScope {
+                // For any of these events, we need to push the user configs:
+                // - The onion path has just become available to use
+                // - The user configs have been modified
                 val job1 = launch {
                     merge(
                         pathBecomesAvailable(),

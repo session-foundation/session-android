@@ -157,8 +157,7 @@ class SettingsViewModel @Inject constructor(
         val tempAvatar = (avatarDialogState.value as? TempAvatar)?.data
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
-        val haveNetworkConnection = connectivity.networkAvailable.value
-        if (!haveNetworkConnection) {
+        if (!hasNetworkConnection()) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
             Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
             return
@@ -257,6 +256,8 @@ class SettingsViewModel @Inject constructor(
         prefs.setHidePassword(true)
         _recoveryHidden.update { true }
     }
+
+    fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()

@@ -115,9 +115,6 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
-    @Inject
-    lateinit var internetConnectivity: InternetConnectivity
-
     private val viewModel: SettingsViewModel by viewModels()
 
     private lateinit var binding: ActivitySettingsBinding
@@ -310,7 +307,7 @@ class SettingsActivity : PassphraseRequiredActionBarActivity() {
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
-        val haveNetworkConnection = internetConnectivity.networkAvailable.value
+        val haveNetworkConnection = viewModel.hasNetworkConnection()
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update display name - no network connection.")
         } else {
