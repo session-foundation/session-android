@@ -7,7 +7,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.messages.Destination
@@ -18,11 +17,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildGro
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
@@ -81,7 +76,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             sentTimestamp = timestamp
                         }
 
-                        MessageSender.send(update, Destination.Contact(memberSessionId), false)
+                        MessageSender.sendNonDuraly(update, Destination.Contact(memberSessionId), false)
                             .await()
                     }
                 }

@@ -2,9 +2,10 @@ package org.session.libsession.messaging.sending_receiving
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
@@ -30,24 +31,20 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.snode.RawResponsePromise
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
-import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
@@ -80,7 +77,7 @@ object MessageSender {
     }
 
     // Convenience
-    fun send(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    fun sendNonDuraly(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
         if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, message.sentTimestamp!!)
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
@@ -548,12 +545,12 @@ object MessageSender {
     }
 
     @JvmStatic
-    fun send(message: Message, address: Address) {
+    fun send(message: Message, address: Address, statusCallback: SendChannel<Result<Unit>>? = null) {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         threadID?.let(message::applyExpiryMode)
         message.threadID = threadID
         val destination = Destination.from(address)
-        val job = MessageSendJob(message, destination)
+        val job = MessageSendJob(message, destination, statusCallback)
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
@@ -563,6 +560,12 @@ object MessageSender {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
             }
         }
+    }
+
+    suspend fun sendAndAwait(message: Message, address: Address): Result<Unit> {
+        val resultChannel = Channel<Result<Unit>>()
+        send(message, address, resultChannel)
+        return resultChannel.receive()
     }
 
     fun sendNonDurably(message: VisibleMessage, attachments: List<SignalAttachment>, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {
@@ -575,7 +578,7 @@ object MessageSender {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        return send(message, destination, isSyncMessage)
+        return sendNonDuraly(message, destination, isSyncMessage)
     }
 
     // Closed groups
