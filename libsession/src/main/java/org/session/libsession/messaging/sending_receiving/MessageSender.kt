@@ -77,7 +77,7 @@ object MessageSender {
     }
 
     // Convenience
-    fun sendNonDuraly(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
+    fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
         if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, message.sentTimestamp!!)
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
@@ -579,7 +579,7 @@ object MessageSender {
         val threadID = MessagingModuleConfiguration.shared.storage.getThreadId(address)
         message.threadID = threadID
         val destination = Destination.from(address)
-        return sendNonDuraly(message, destination, isSyncMessage)
+        return sendNonDurably(message, destination, isSyncMessage)
     }
 
     // Closed groups

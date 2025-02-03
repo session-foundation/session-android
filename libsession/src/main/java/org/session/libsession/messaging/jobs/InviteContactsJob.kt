@@ -76,7 +76,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             sentTimestamp = timestamp
                         }
 
-                        MessageSender.sendNonDuraly(update, Destination.Contact(memberSessionId), false)
+                        MessageSender.sendNonDurably(update, Destination.Contact(memberSessionId), false)
                             .await()
                     }
                 }

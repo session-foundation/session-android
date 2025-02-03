@@ -91,7 +91,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
 
-                MessageSender.sendNonDuraly(this@MessageSendJob.message, destination, isSync).await()
+                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync).await()
             }
 
             this.handleSuccess(dispatcherName)

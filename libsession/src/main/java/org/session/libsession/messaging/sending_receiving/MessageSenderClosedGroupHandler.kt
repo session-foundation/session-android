@@ -6,11 +6,9 @@ import com.google.protobuf.ByteString
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.GroupLeavingJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
@@ -22,14 +20,12 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.Curve
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
@@ -85,7 +81,8 @@ fun MessageSender.create(
             val closedGroupControlMessage = ClosedGroupControlMessage(closedGroupUpdateKind, groupID)
             closedGroupControlMessage.sentTimestamp = sentTime
             try {
-                sendNonDurably(closedGroupControlMessage, Address.fromSerialized(member), member == ourPubKey).await()
+                sendNonDurably(closedGroupControlMessage, fromSerialized(member), member == ourPubKey)
+                    .await()
             } catch (e: Exception) {
                 // We failed to properly create the group so delete it's associated data (in the past
                 // we didn't create this data until the messages successfully sent but this resulted

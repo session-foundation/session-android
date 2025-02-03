@@ -667,7 +667,7 @@ class GroupManagerV2Impl @Inject constructor(
                 .setInviteResponse(inviteResponse)
             val responseMessage = GroupUpdated(responseData.build(), profile = storage.getUserProfile())
             // this will fail the first couple of times :)
-            MessageSender.sendNonDuraly(
+            MessageSender.sendNonDurably(
                 responseMessage,
                 Destination.ClosedGroup(group.groupAccountId.hexString),
                 isSyncMessage = false
