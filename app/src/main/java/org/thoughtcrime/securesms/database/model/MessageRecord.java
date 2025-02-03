@@ -36,6 +36,7 @@ import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.ThemeUtil;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.utilities.AccountId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import network.loki.messenger.R;
@@ -137,12 +138,15 @@ public abstract class MessageRecord extends DisplayRecord {
   public CharSequence getDisplayBody(@NonNull Context context) {
     if (isGroupUpdateMessage()) {
       UpdateMessageData updateMessageData = getGroupUpdateMessage();
-      if (updateMessageData == null) {
+      Recipient groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+
+      if (updateMessageData == null || groupRecipient == null || !groupRecipient.isGroupV2Recipient()) {
         return "";
       }
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
+              new AccountId(groupRecipient.getAddress().serialize()),
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),

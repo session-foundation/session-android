@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -25,6 +26,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -33,7 +35,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
-import dagger.hilt.android.qualifiers.ApplicationContext as ApplicationContextQualifier
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -116,9 +117,10 @@ class HomeViewModel @Inject constructor(
         .flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class)
-    private fun reloadTriggersAndContentChanges() = merge(
+    private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
         manualReloadTrigger,
-        contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI)
+        contentResolver.observeChanges(DatabaseContentProviders.ConversationList.CONTENT_URI),
+        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
     )
         .debounce(CHANGE_NOTIFICATION_DEBOUNCE_MILLS)
         .onStart { emit(Unit) }
