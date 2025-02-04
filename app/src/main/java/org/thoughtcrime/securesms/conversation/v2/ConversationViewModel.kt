@@ -212,7 +212,7 @@ class ConversationViewModel(
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
                         .toLocalDate()
-                        .format(DateUtils.getLocalisedShortDateFormatter())
+                        .format(DateUtils.getShortDateFormatter())
                 )
                 .format()
         }

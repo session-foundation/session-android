@@ -16,18 +16,10 @@
  */
 package org.thoughtcrime.securesms.util
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
 import android.text.format.DateFormat
-import androidx.compose.ui.text.capitalize
-import org.session.libsignal.utilities.Log
-import java.text.DateFormat.SHORT
-import java.text.DateFormat.getTimeInstance
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -116,12 +108,8 @@ object DateUtils : android.text.format.DateUtils() {
         return SimpleDateFormat(dateFormatPattern, locale)
     }
 
-    /**
-     * Returns a short style date formatter that is locale-aware. e.g. "1/12/2022" in the AU, or
-     * "12/1/2022" in the US, etc.
-     */
-    fun getLocalisedShortDateFormatter(): DateTimeFormatter {
-        return DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(Locale.getDefault())
+    fun getShortDateFormatter(): DateTimeFormatter {
+        return DateTimeFormatter.ofPattern("d MMM yyyy")
     }
 
     // Method to get the String for a relative day in a locale-aware fashion, including using the
