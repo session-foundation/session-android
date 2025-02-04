@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
 import android.content.Context
-import android.widget.Toast
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -15,7 +14,6 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.Toaster
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier

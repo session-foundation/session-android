@@ -871,7 +871,7 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
         storage.insertIncomingInfoMessage(context, sender, groupID, SignalServiceGroup.Type.CREATION, name, members, admins, sentTimestamp)
     }
     // Start polling
-    LegacyClosedGroupPollerV2.shared.startPolling(groupPublicKey)
+    MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.startPolling(groupPublicKey)
 }
 
 private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: ClosedGroupControlMessage) {
@@ -1177,7 +1177,7 @@ fun MessageReceiver.disableLocalGroupAndUnsubscribe(groupPublicKey: String, grou
     // Notify the PN server
     PushRegistryV1.unsubscribeGroup(groupPublicKey, publicKey = userPublicKey)
     // Stop polling
-    LegacyClosedGroupPollerV2.shared.stopPolling(groupPublicKey)
+    MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.stopPolling(groupPublicKey)
 
     if (delete) {
         storage.getThreadId(Address.fromSerialized(groupID))?.let { threadId ->

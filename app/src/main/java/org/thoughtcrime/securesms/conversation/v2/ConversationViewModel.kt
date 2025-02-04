@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.goterl.lazysodium.utils.KeyPair
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,16 +17,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,7 +38,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
@@ -60,9 +58,12 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.DateUtils
+import java.time.ZoneId
 import java.util.UUID
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,6 +81,7 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
+    private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -195,6 +197,28 @@ class ConversationViewModel(
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
 
+    val legacyGroupBanner: StateFlow<CharSequence?> = combine(
+        legacyGroupDeprecationManager.deprecationState,
+        legacyGroupDeprecationManager.deprecationTime,
+        isAdmin
+    ) { state, time, admin ->
+        when {
+            recipient?.isLegacyGroupRecipient != true -> null
+            state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
+                Phrase.from(application, if (admin) R.string.groupLegacyBannerDeprecatedAdmin else R.string.groupLegacyBannerDeprecatedNonAdmin)
+                    .format()
+            }
+            else -> Phrase.from(application, if (admin) R.string.groupLegacyBannerAdmin else R.string.groupLegacyBannerNonAdmin)
+                .put(DATE_KEY,
+                    time.withZoneSameInstant(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(DateUtils.getLocalisedShortDateFormatter())
+                )
+                .format()
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
         messageDataProvider = messageDataProvider,
@@ -206,17 +230,18 @@ class ConversationViewModel(
             combine(
                 repository.recipientUpdateFlow(threadId),
                 _openGroup,
-            ) { a, b -> a to b }
-                .collect { (recipient, community) ->
-                    _uiState.update {
-                        it.copy(
-                            shouldExit = recipient == null,
-                            showInput = shouldShowInput(recipient, community),
-                            enableInputMediaControls = shouldEnableInputMediaControls(recipient),
-                            messageRequestState = buildMessageRequestState(recipient),
-                        )
-                    }
+                legacyGroupDeprecationManager.deprecationState,
+                ::Triple
+            ).collect { (recipient, community, deprecationState) ->
+                _uiState.update {
+                    it.copy(
+                        shouldExit = recipient == null,
+                        showInput = shouldShowInput(recipient, community, deprecationState),
+                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        messageRequestState = buildMessageRequestState(recipient),
+                    )
                 }
+            }
         }
 
         // Listen for changes in the open group's write access
@@ -260,13 +285,18 @@ class ConversationViewModel(
      * For these situations we hide the input bar:
      *  1. The user has been kicked from a group(v2), OR
      *  2. The legacy group is inactive, OR
-     *  3. The community chat is read only
+     *  3. The legacy group is deprecated, OR
+     *  4. The community chat is read only
      */
-    private fun shouldShowInput(recipient: Recipient?, community: OpenGroup?): Boolean {
+    private fun shouldShowInput(recipient: Recipient?,
+                                community: OpenGroup?,
+                                deprecationState: LegacyGroupDeprecationManager.DeprecationState
+    ): Boolean {
         return when {
             recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
             recipient?.isLegacyGroupRecipient == true -> {
-                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true
+                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
+                        deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
             community != null -> community.canWrite
             else -> true
@@ -1000,6 +1030,7 @@ class ConversationViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
+        private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1017,6 +1048,7 @@ class ConversationViewModel(
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
+                legacyGroupDeprecationManager = legacyGroupDeprecationManager,
             ) as T
         }
     }

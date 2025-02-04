@@ -99,7 +99,7 @@ fun MessageSender.create(
         // Notify the PN server
         PushRegistryV1.register(device = device, publicKey = userPublicKey)
         // Start polling
-        LegacyClosedGroupPollerV2.shared.startPolling(groupPublicKey)
+        MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.startPolling(groupPublicKey)
         groupID
     }
 }

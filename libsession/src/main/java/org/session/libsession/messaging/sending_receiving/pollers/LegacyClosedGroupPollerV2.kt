@@ -4,8 +4,8 @@ import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
-import nl.komponents.kovenant.task
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -25,7 +25,10 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-class LegacyClosedGroupPollerV2 {
+class LegacyClosedGroupPollerV2(
+    private val storage: StorageProtocol,
+    val deprecationManager: LegacyGroupDeprecationManager,
+) {
     private val executorService = Executors.newScheduledThreadPool(1)
     private var isPolling = mutableMapOf<String, Boolean>()
     private var futures = mutableMapOf<String, ScheduledFuture<*>>()
@@ -34,19 +37,17 @@ class LegacyClosedGroupPollerV2 {
         return isPolling[groupPublicKey] ?: false
     }
 
+    private fun canPoll(): Boolean = deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATING
+
     companion object {
         private val minPollInterval = 4 * 1000
         private val maxPollInterval = 4 * 60 * 1000
-
-        @JvmStatic
-        val shared = LegacyClosedGroupPollerV2()
     }
 
     class InsufficientSnodesException() : Exception("No snodes left to poll.")
     class PollingCanceledException() : Exception("Polling canceled.")
 
     fun start() {
-        val storage = MessagingModuleConfiguration.shared.storage
         val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
         allGroupPublicKeys.iterator().forEach { startPolling(it) }
     }
@@ -77,10 +78,9 @@ class LegacyClosedGroupPollerV2 {
     }
 
     private fun pollRecursively(groupPublicKey: String) {
-        if (!isPolling(groupPublicKey)) { return }
+        if (!isPolling(groupPublicKey) || !canPoll()) { return }
         // Get the received date of the last message in the thread. If we don't have any messages yet, pick some
         // reasonable fake time interval to use instead.
-        val storage = MessagingModuleConfiguration.shared.storage
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
         val threadID = storage.getThreadId(groupID)
         if (threadID == null) {
@@ -105,7 +105,7 @@ class LegacyClosedGroupPollerV2 {
     }
 
     fun poll(groupPublicKey: String): Promise<Unit, Exception> {
-        if (!isPolling(groupPublicKey)) { return Promise.of(Unit) }
+        if (!isPolling(groupPublicKey) || !canPoll()) { return Promise.of(Unit) }
         val promise = SnodeAPI.getSwarm(groupPublicKey).bind { swarm ->
             val snode = swarm.secureRandomOrNull() ?: throw InsufficientSnodesException() // Should be cryptographically secure
             if (!isPolling(groupPublicKey)) { throw PollingCanceledException() }

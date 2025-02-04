@@ -128,7 +128,10 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
 
             // Closed groups
             if (requestTargets.contains(Targets.CLOSED_GROUPS)) {
-                val closedGroupPoller = LegacyClosedGroupPollerV2() // Intentionally don't use shared
+                val closedGroupPoller = LegacyClosedGroupPollerV2(
+                    MessagingModuleConfiguration.shared.storage,
+                    MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.deprecationManager
+                ) // Intentionally don't use shared
                 val storage = MessagingModuleConfiguration.shared.storage
                 val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
                 allGroupPublicKeys.iterator().forEach { closedGroupPoller.poll(it) }

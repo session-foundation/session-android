@@ -15,8 +15,11 @@ import kotlinx.coroutines.GlobalScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.GroupScope
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -64,4 +67,19 @@ object SessionUtilModule {
     @Provides
     @Singleton
     fun provideGroupScope() = GroupScope()
+
+    @Provides
+    @Singleton
+    fun provideLegacyGroupPoller(
+        storage: StorageProtocol,
+        deprecationManager: LegacyGroupDeprecationManager
+    ): LegacyClosedGroupPollerV2 {
+        return LegacyClosedGroupPollerV2(storage, deprecationManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLegacyGroupDeprecationManager(prefs: TextSecurePreferences): LegacyGroupDeprecationManager {
+        return LegacyGroupDeprecationManager(prefs)
+    }
 }

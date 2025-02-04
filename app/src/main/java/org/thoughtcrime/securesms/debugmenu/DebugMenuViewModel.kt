@@ -15,13 +15,16 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
     private val application: Application,
     private val textSecurePreferences: TextSecurePreferences,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val deprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -33,7 +36,10 @@ class DebugMenuViewModel @Inject constructor(
             showEnvironmentWarningDialog = false,
             showEnvironmentLoadingDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
-            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf()
+            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
+            forceDeprecationState = deprecationManager.deprecationStateOverride.value,
+            availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
+            forceDeprecatedTime = deprecationManager.deprecationTime.value
         )
     )
     val uiState: StateFlow<UIState>
@@ -62,6 +68,16 @@ class DebugMenuViewModel @Inject constructor(
                     it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
                 }
                 _uiState.value = _uiState.value.copy(hideNoteToSelf = command.hide)
+            }
+
+            is Commands.OverrideDeprecationState -> {
+                deprecationManager.overrideDeprecationState(command.state)
+                _uiState.value = _uiState.value.copy(forceDeprecationState = command.state)
+            }
+
+            is Commands.OverrideDeprecatedTime -> {
+                deprecationManager.overrideDeprecatedTime(command.time)
+                _uiState.value = _uiState.value.copy(forceDeprecatedTime = command.time)
             }
         }
     }
@@ -112,7 +128,10 @@ class DebugMenuViewModel @Inject constructor(
         val showEnvironmentWarningDialog: Boolean,
         val showEnvironmentLoadingDialog: Boolean,
         val hideMessageRequests: Boolean,
-        val hideNoteToSelf: Boolean
+        val hideNoteToSelf: Boolean,
+        val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
+        val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
+        val forceDeprecatedTime: ZonedDateTime
     )
 
     sealed class Commands {
@@ -121,5 +140,7 @@ class DebugMenuViewModel @Inject constructor(
         object HideEnvironmentWarningDialog : Commands()
         data class HideMessageRequest(val hide: Boolean) : Commands()
         data class HideNoteToSelf(val hide: Boolean) : Commands()
+        data class OverrideDeprecationState(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
+        data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands()
     }
 }

@@ -36,6 +36,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CA
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
 import org.session.libsignal.utilities.Log
 import java.io.IOException
+import java.time.ZonedDateTime
 import java.util.Arrays
 import java.util.Date
 import javax.inject.Inject
@@ -195,6 +196,9 @@ interface TextSecurePreferences {
     fun setLastVersionCheck()
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
+
+    var deprecationStateOverride: String?
+    var deprecatedTimeOverride: ZonedDateTime?
 
     var migratedToGroupV2Config: Boolean
 
@@ -1691,5 +1695,30 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHidePassword(value: Boolean) {
         setBooleanPreference(HIDE_PASSWORD, value)
+    }
+
+    override var deprecationStateOverride: String?
+        get() = getStringPreference(DEPRECATED_STATE_OVERRIDE, null)
+        set(value) {
+            if (value == null) {
+                removePreference(DEPRECATED_STATE_OVERRIDE)
+            } else {
+                setStringPreference(DEPRECATED_STATE_OVERRIDE, value)
+            }
+        }
+
+    override var deprecatedTimeOverride: ZonedDateTime?
+        get() = getStringPreference(DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(DEPRECATED_TIME_OVERRIDE)
+            } else {
+                setStringPreference(DEPRECATED_TIME_OVERRIDE, value.toString())
+            }
+        }
+
+    companion object {
+        private const val DEPRECATED_STATE_OVERRIDE = "deprecation_state_override"
+        private const val DEPRECATED_TIME_OVERRIDE = "deprecated_time_override"
     }
 }

@@ -20,7 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.text.Spannable
-import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.style.ImageSpan
 import android.util.Pair
@@ -86,7 +86,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
@@ -94,11 +93,8 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.concurrent.SimpleTask
@@ -833,41 +829,36 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun setUpLegacyGroupBanner() {
-        val shouldDisplayBanner = viewModel.recipient?.isLegacyGroupRecipient ?: return
+        lifecycleScope.launch {
+            viewModel.legacyGroupBanner
+                .collectLatest { banner ->
+                    if (banner == null) {
+                        binding.outdatedGroupBanner.isVisible = false
+                        binding.outdatedGroupBanner.text = null
+                    } else {
+                        binding.outdatedGroupBanner.isVisible = true
+                        binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
+                            .apply {
+                                // we need to add the inline icon
+                                val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)!!
+                                val imageSize = toPx(10, resources)
+                                val imagePaddingTop = toPx(4, resources)
+                                drawable.setBounds(0, 0, imageSize, imageSize)
+                                drawable.setTint(getColorFromAttr(R.attr.message_sent_text_color))
 
-        binding.outdatedGroupBanner.isVisible = shouldDisplayBanner
-        if (!shouldDisplayBanner) return
+                                setSpan(
+                                    PaddedImageSpan(drawable, ImageSpan.ALIGN_BASELINE, imagePaddingTop),
+                                    length - 1,
+                                    length,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            }
 
-        val url = "https://getsession.org/blog/session-groups-v2"
-
-        with(binding) {
-            // Create a SpannableString with text
-            val text = SpannableString(
-                Phrase.from(this@ConversationActivityV2, R.string.groupLegacyBanner)
-                //TODO groupsv2, date
-                .put(DATE_KEY, "")
-                .format()
-            )
-
-            // we need to add the inline icon
-            val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)
-            val imageSize = toPx(10, resources)
-            val imagePaddingTop = toPx(4, resources)
-            drawable?.setBounds(0, 0, imageSize, imageSize)
-            drawable?.setTint(getColorFromAttr(R.attr.message_sent_text_color))
-
-            // Create an ImageSpan with the drawable
-            val imageSpan = PaddedImageSpan(drawable!!, ImageSpan.ALIGN_BASELINE, imagePaddingTop)
-
-            // Append the image to the text
-            val spannable = SpannableString(text)
-            spannable.setSpan(imageSpan, text.length - 1, text.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-
-            outdatedGroupBanner.text = spannable
-
-            outdatedGroupBanner.setOnClickListener {
-                showOpenUrlDialog(url)
-            }
+                        binding.outdatedGroupBanner.setOnClickListener {
+                            showOpenUrlDialog("https://getsession.org/blog/session-groups-v2")
+                        }
+                    }
+                }
         }
     }
 

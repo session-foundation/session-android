@@ -71,6 +71,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
+    private val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
 ) {
     init {
         if (!preferences.migratedToGroupV2Config) {
@@ -369,7 +370,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
                 // Don't create config group here, it's from a config update
                 // Start polling
-                LegacyClosedGroupPollerV2.shared.startPolling(group.accountId)
+                legacyClosedGroupPollerV2.startPolling(group.accountId)
             }
 
             if (messageTimestamp != null) {
