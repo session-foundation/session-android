@@ -445,8 +445,9 @@
     <string name="groupInviteYouHistory"><b>You</b> were invited to join the group. Chat history was shared.</string>
     <string name="groupLeave">Leave Group</string>
     <string name="groupLeaveDescription">Are you sure you want to leave <b>{group_name}</b>?</string>
-    <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave <b>{group_name}</b>?\n\nThis will remove all members and delete all group content. </string>
+    <string name="groupLeaveDescriptionAdmin">Are you sure you want to leave <b>{group_name}</b>?\n\nThis will remove all members and delete all group content.</string>
     <string name="groupLeaveErrorFailed">Failed to leave {group_name}</string>
+    <string name="groupLegacyBanner">Groups have been upgraded, create a new group to upgrade. Old group functionality will be degraded from {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> left the group.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> and <b>{count} others</b> left the group.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> and <b>{other_name}</b> left the group.</string>
