@@ -205,10 +205,10 @@ class ConversationViewModel(
         when {
             recipient?.isLegacyGroupRecipient != true -> null
             state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
-                Phrase.from(application, if (admin) R.string.groupLegacyBannerDeprecatedAdmin else R.string.groupLegacyBannerDeprecatedNonAdmin)
+                Phrase.from(application, if (admin) R.string.legacyGroupAfterDeprecationAdmin else R.string.legacyGroupAfterDeprecationMember)
                     .format()
             }
-            else -> Phrase.from(application, if (admin) R.string.groupLegacyBannerAdmin else R.string.groupLegacyBannerNonAdmin)
+            else -> Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
                         .toLocalDate()
