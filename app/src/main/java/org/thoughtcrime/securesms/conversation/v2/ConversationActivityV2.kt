@@ -509,7 +509,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
-                setUpLegacyGroupBanner()
+                setUpLegacyGroupUI()
 
                 if (author != null && messageTimestamp >= 0 && targetPosition >= 0) {
                     binding.conversationRecyclerView.scrollToPosition(targetPosition)
@@ -829,7 +829,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
     }
 
-    private fun setUpLegacyGroupBanner() {
+    private fun setUpLegacyGroupUI() {
         lifecycleScope.launch {
             viewModel.legacyGroupBanner
                 .collectLatest { banner ->
@@ -860,6 +860,17 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                         }
                     }
                 }
+        }
+
+        lifecycleScope.launch {
+            viewModel.showRecreateGroupButton
+                .collectLatest { show ->
+                    binding.recreateGroupButtonContainer.isVisible = show
+                }
+        }
+
+        binding.recreateGroupButton.setOnClickListener {
+            viewModel.onCommand(ConversationViewModel.Commands.RecreateGroup)
         }
     }
 

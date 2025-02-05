@@ -66,7 +66,6 @@ import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZoneId
 import java.util.UUID
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
@@ -218,6 +217,10 @@ class ConversationViewModel(
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
+    val showRecreateGroupButton: StateFlow<Boolean> = isAdmin
+        .map { admin ->
+            admin && recipient?.isLegacyGroupRecipient == true
+        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -949,6 +952,10 @@ class ConversationViewModel(
             is Commands.ClearEmoji -> {
                 clearEmoji(command.emoji, command.messageId)
             }
+
+            Commands.RecreateGroup -> {
+
+            }
         }
     }
 
@@ -1073,16 +1080,18 @@ class ConversationViewModel(
         val messageId: MessageId
     )
 
-    sealed class Commands {
-        data class ShowOpenUrlDialog(val url: String?) : Commands()
+    sealed interface Commands {
+        data class ShowOpenUrlDialog(val url: String?) : Commands
 
-        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands()
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
 
-        data object HideDeleteEveryoneDialog : Commands()
-        data object HideClearEmoji : Commands()
+        data object HideDeleteEveryoneDialog : Commands
+        data object HideClearEmoji : Commands
 
-        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands()
-        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands()
+        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
+        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
+
+        data object RecreateGroup : Commands
     }
 }
 

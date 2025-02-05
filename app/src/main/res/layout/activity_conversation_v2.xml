@@ -60,7 +60,7 @@
         android:layout_height="wrap_content"
         tools:layout_height="60dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
+        app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         />
 
@@ -306,7 +306,7 @@
         android:id="@+id/messageRequestBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintBottom_toTopOf="@+id/recreateGroupButtonContainer"
         app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
         android:layout_marginBottom="@dimen/large_spacing"
         android:orientation="vertical"
@@ -365,6 +365,26 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/recreateGroupButtonContainer"
+        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
+        android:padding="@dimen/medium_spacing"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/recreateGroupButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Session.Button.Common.ProminentOutline"
+            android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
+            android:text="@string/recreateGroup" />
+
+    </FrameLayout>
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/dialog_open_url"
