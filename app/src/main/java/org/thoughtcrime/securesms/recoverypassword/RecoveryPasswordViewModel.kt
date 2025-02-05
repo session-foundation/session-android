@@ -42,8 +42,12 @@ class RecoveryPasswordViewModel @Inject constructor(
         prefs.setHasViewedSeed(true)
 
         // Ensure that our mnemonic words are separated by single spaces only without any excessive
-        // whitespace or control characters. Note: `\s` matches the whitespace chars [ \t\n\x0B\f\r].
-        val normalisedMnemonic = mnemonic.value.replace(Regex("\\s+"), " ")
+        // whitespace or control characters via:
+        //   - Replacing all control chars (\p{Cc}) or Unicode separators (\p{Z}) with a single space, then
+        //   - Trimming all leading & trailing spaces.
+        val normalisedMnemonic = mnemonic.value
+            .replace(Regex("[\\p{Cc}\\p{Z}]+"), " ")
+            .trim()
 
         ClipData.newPlainText("Seed", normalisedMnemonic)
             .let(application.clipboard::setPrimaryClip)
