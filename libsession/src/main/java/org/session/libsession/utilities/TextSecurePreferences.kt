@@ -315,6 +315,9 @@ interface TextSecurePreferences {
 
         const val ALLOW_MESSAGE_REQUESTS = "libsession.ALLOW_MESSAGE_REQUESTS"
 
+        const val DEPRECATED_STATE_OVERRIDE = "deprecation_state_override"
+        const val DEPRECATED_TIME_OVERRIDE = "deprecated_time_override"
+
         // Key name for if we've warned the user that saving attachments will allow other apps to access them.
         // Note: We only ever display this once - and when the user has accepted the warning we never show it again
         // for the lifetime of the Session installation.
@@ -1698,27 +1701,22 @@ class AppTextSecurePreferences @Inject constructor(
     }
 
     override var deprecationStateOverride: String?
-        get() = getStringPreference(DEPRECATED_STATE_OVERRIDE, null)
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)
         set(value) {
             if (value == null) {
-                removePreference(DEPRECATED_STATE_OVERRIDE)
+                removePreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE)
             } else {
-                setStringPreference(DEPRECATED_STATE_OVERRIDE, value)
+                setStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, value)
             }
         }
 
     override var deprecatedTimeOverride: ZonedDateTime?
-        get() = getStringPreference(DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        get() = getStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
         set(value) {
             if (value == null) {
-                removePreference(DEPRECATED_TIME_OVERRIDE)
+                removePreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE)
             } else {
-                setStringPreference(DEPRECATED_TIME_OVERRIDE, value.toString())
+                setStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, value.toString())
             }
         }
-
-    companion object {
-        private const val DEPRECATED_STATE_OVERRIDE = "deprecation_state_override"
-        private const val DEPRECATED_TIME_OVERRIDE = "deprecated_time_override"
-    }
 }

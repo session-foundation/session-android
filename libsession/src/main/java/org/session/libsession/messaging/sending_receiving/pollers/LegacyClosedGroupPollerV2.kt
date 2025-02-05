@@ -78,7 +78,15 @@ class LegacyClosedGroupPollerV2(
     }
 
     private fun pollRecursively(groupPublicKey: String) {
-        if (!isPolling(groupPublicKey) || !canPoll()) { return }
+        if (!isPolling(groupPublicKey)) {
+            return
+        }
+
+        if (!canPoll()) {
+            Log.d("Loki", "Unable to start polling due to being deprecated")
+            return
+        }
+
         // Get the received date of the last message in the thread. If we don't have any messages yet, pick some
         // reasonable fake time interval to use instead.
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
@@ -105,7 +113,13 @@ class LegacyClosedGroupPollerV2(
     }
 
     fun poll(groupPublicKey: String): Promise<Unit, Exception> {
-        if (!isPolling(groupPublicKey) || !canPoll()) { return Promise.of(Unit) }
+        if (!isPolling(groupPublicKey)) { return Promise.of(Unit) }
+
+        if (!canPoll()) {
+            Log.d("Loki", "Unable to start polling due to being deprecated")
+            return Promise.of(Unit)
+        }
+
         val promise = SnodeAPI.getSwarm(groupPublicKey).bind { swarm ->
             val snode = swarm.secureRandomOrNull() ?: throw InsufficientSnodesException() // Should be cryptographically secure
             if (!isPolling(groupPublicKey)) { throw PollingCanceledException() }
