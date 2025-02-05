@@ -57,7 +57,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.LokiProfile
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -77,7 +76,7 @@ internal fun MessageReceiver.isBlocked(publicKey: String): Boolean {
     return recipient.isBlocked
 }
 
-fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, closedGroup: AccountId?) {
+fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
     // Do nothing if the message was outdated
     if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return }
 
@@ -85,8 +84,16 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
         is ClosedGroupControlMessage -> handleClosedGroupControlMessage(message)
-        is GroupUpdated -> handleGroupUpdated(message, closedGroup)
-        is ExpirationTimerUpdate -> handleExpirationTimerUpdate(message)
+        is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
+        is ExpirationTimerUpdate -> {
+            // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
+            // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
+            if (groupv2Id != null) {
+                Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
+            } else {
+                handleExpirationTimerUpdate(message)
+            }
+        }
         is DataExtractionNotification -> handleDataExtractionNotification(message)
         is ConfigurationMessage -> handleConfigurationMessage(message)
         is UnsendRequest -> handleUnsendRequest(message)
@@ -707,7 +714,6 @@ private fun handleMemberLeftNotification(message: GroupUpdated, closedGroup: Acc
 }
 
 private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId) {
-    val storage = MessagingModuleConfiguration.shared.storage
     val inner = message.inner
     val infoChanged = inner.infoChangeMessage ?: return
     if (!infoChanged.hasAdminSignature()) return Log.e("GroupUpdated", "Info changed message doesn't contain admin signature")
@@ -716,22 +722,21 @@ private fun handleGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
     val timestamp = message.sentTimestamp!!
     verifyAdminSignature(closedGroup, adminSignature.toByteArray(), buildInfoChangeSignature(type, timestamp))
 
-    storage.insertGroupInfoChange(message, closedGroup)
+    MessagingModuleConfiguration.shared.groupManagerV2.handleGroupInfoChange(message, closedGroup)
 }
 
 private fun handlePromotionMessage(message: GroupUpdated) {
     val promotion = message.inner.promoteMessage
     val seed = promotion.groupIdentitySeed.toByteArray()
-    val keyPair = Sodium.ed25519KeyPair(seed)
     val sender = message.sender!!
     val adminId = AccountId(sender)
     GlobalScope.launch {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
                 .handlePromotion(
-                    groupId = AccountId(IdPrefix.GROUP, keyPair.pubKey),
+                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey),
                     groupName = promotion.name,
-                    adminKey = keyPair.secretKey,
+                    adminKeySeed = seed,
                     promoter = adminId,
                     promoterName = message.profile?.displayName,
                     promoteMessageHash = message.serverHash!!,

@@ -1,5 +1,7 @@
 #include "group_members.h"
 
+#include "jni_utils.h"
+
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMembersConfig_00024Companion_newInstance(
@@ -52,16 +54,18 @@ extern "C"
 JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_GroupMembersConfig_get(JNIEnv *env, jobject thiz,
                                                                     jstring pub_key_hex) {
-    std::lock_guard lock{util::util_mutex_};
-    auto config = ptrToMembers(env, thiz);
-    auto pub_key_bytes = env->GetStringUTFChars(pub_key_hex, nullptr);
-    auto member = config->get(pub_key_bytes);
-    if (!member) {
-        return nullptr;
-    }
-    auto serialized = util::serialize_group_member(env, *member);
-    env->ReleaseStringUTFChars(pub_key_hex, pub_key_bytes);
-    return serialized;
+    return jni_utils::run_catching_cxx_exception_or_throws<jobject>(env, [=]() -> jobject {
+        std::lock_guard lock{util::util_mutex_};
+        auto config = ptrToMembers(env, thiz);
+        auto pub_key_bytes = env->GetStringUTFChars(pub_key_hex, nullptr);
+        auto member = config->get(pub_key_bytes);
+        if (!member) {
+            return nullptr;
+        }
+        auto serialized = util::serialize_group_member(env, *member);
+        env->ReleaseStringUTFChars(pub_key_hex, pub_key_bytes);
+        return serialized;
+    });
 }
 
 extern "C"

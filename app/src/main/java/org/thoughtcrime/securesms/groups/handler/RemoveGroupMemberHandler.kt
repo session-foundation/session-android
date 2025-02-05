@@ -1,14 +1,14 @@
 package org.thoughtcrime.securesms.groups.handler
 
 import android.content.Context
-import android.os.SystemClock
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
@@ -17,7 +17,6 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -30,18 +29,20 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.waitUntilGroupConfigsPushed
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
+import org.session.libsession.messaging.groups.GroupScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "RemoveGroupMemberHandler"
-private const val MIN_PROCESS_INTERVAL_MILLS = 1_000L
 
 /**
  * This handler is responsible for processing pending group member removals.
@@ -56,55 +57,41 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val clock: SnodeClock,
     private val messageDataProvider: MessageDataProvider,
     private val storage: StorageProtocol,
+    private val groupScope: GroupScope,
 ) {
     private var job: Job? = null
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun start() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
-            while (true) {
-                // Make sure we have a local number before we start processing
-                textSecurePreferences.watchLocalNumber().first { it != null }
+            textSecurePreferences
+                .watchLocalNumber()
+                .flatMapLatest { localNumber ->
+                    if (localNumber == null) {
+                        return@flatMapLatest emptyFlow()
+                    }
 
-                val processStartedAt = SystemClock.uptimeMillis()
-
-                try {
-                    processPendingMemberRemoval()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error processing pending member removal", e)
+                    configFactory.configUpdateNotifications
                 }
-
-                configFactory.configUpdateNotifications.firstOrNull()
-
-                // Make sure we don't process too often. As some of the config changes don't apply
-                // to us, but we have no way to tell if it does or not. The safest way is to process
-                // everytime any config changes, with a minimum interval.
-                val delayMills =
-                    MIN_PROCESS_INTERVAL_MILLS - (SystemClock.uptimeMillis() - processStartedAt)
-
-                if (delayMills > 0) {
-                    delay(delayMills)
+                .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                .collect { update ->
+                    val adminKey = configFactory.getGroup(update.groupId)?.adminKey
+                    if (adminKey != null) {
+                        groupScope.launch(update.groupId, "Handle possible group removals") {
+                            processPendingRemovalsForGroup(update.groupId, adminKey)
+                        }
+                    }
                 }
-            }
         }
     }
 
-    private suspend fun processPendingMemberRemoval() {
-        configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-            .asSequence()
-            .filter { it.hasAdminKey() }
-            .forEach { group ->
-                processPendingRemovalsForGroup(group.groupAccountId, group.adminKey!!)
-            }
-    }
 
     private suspend fun processPendingRemovalsForGroup(
         groupAccountId: AccountId,
         adminKey: ByteArray
     ) {
-        val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
-
         val (pendingRemovals, batchCalls) = configFactory.withGroupConfigs(groupAccountId) { configs ->
             val pendingRemovals = configs.groupMembers.allWithStatus()
                 .filter { (member, status) -> member.isRemoved(status) }
@@ -123,6 +110,8 @@ class RemoveGroupMemberHandler @Inject constructor(
             // 3. Conditionally, send a `GroupUpdateDeleteMemberContent` to the group so the message deletion
             //    can be performed by everyone in the group.
             val calls = ArrayList<SnodeAPI.SnodeBatchRequestInfo>(3)
+
+            val groupAuth = OwnedSwarmAuth.ofClosedGroup(groupAccountId, adminKey)
 
             // Call No 1. Revoke sub-key. This call is crucial and must not fail for the rest of the operation to be successful.
             calls += checkNotNull(
@@ -171,7 +160,12 @@ class RemoveGroupMemberHandler @Inject constructor(
 
         val node = SnodeAPI.getSingleTargetSnode(groupAccountId.hexString).await()
         val response =
-            SnodeAPI.getBatchResponse(node, groupAccountId.hexString, batchCalls, sequence = true)
+            SnodeAPI.getBatchResponse(
+                node,
+                groupAccountId.hexString,
+                batchCalls,
+                sequence = true
+            )
 
         val firstError = response.results.firstOrNull { !it.isSuccessful }
         check(firstError == null) {
@@ -195,7 +189,8 @@ class RemoveGroupMemberHandler @Inject constructor(
 
         // Try to delete members' message. It's ok to fail as they will be re-tried in different
         // cases (a.k.a the GroupUpdateDeleteMemberContent message handling) and could be by different admins.
-        val deletingMessagesForMembers = pendingRemovals.filter { (member, status) -> member.shouldRemoveMessages(status) }
+        val deletingMessagesForMembers =
+            pendingRemovals.filter { (member, status) -> member.shouldRemoveMessages(status) }
         if (deletingMessagesForMembers.isNotEmpty()) {
             val threadId = storage.getThreadId(Address.fromSerialized(groupAccountId.hexString))
             if (threadId != null) {

@@ -259,7 +259,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
                          mms_hash_table.$serverHash, 
                          mms.${MmsSmsColumns.ID},
                          mms.${MmsSmsColumns.ADDRESS},
-                         mms.${MmsDatabase.MESSAGE_TYPE},
+                         mms.${MmsDatabase.MESSAGE_BOX},
                          false
                     FROM $mmsHashTable mms_hash_table
                     LEFT OUTER JOIN ${MmsDatabase.TABLE_NAME} mms ON mms_hash_table.${messageID} = mms.${MmsSmsColumns.ID}
@@ -287,10 +287,11 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
         return result
     }
 
-    fun getMessageServerHash(messageID: Long, mms: Boolean): String? = getMessageTables(mms).firstNotNullOfOrNull {
-        databaseHelper.readableDatabase.get(it, "${Companion.messageID} = ?", arrayOf(messageID.toString())) { cursor ->
-            cursor.getString(serverHash)
-        }
+    fun getMessageServerHash(messageID: Long, mms: Boolean): String? {
+        return databaseHelper.readableDatabase.get(
+            getMessageTable(mms),
+            "${Companion.messageID} = ?",
+            arrayOf(messageID.toString())) { cursor -> cursor.getString(serverHash) }
     }
 
     fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
@@ -305,9 +306,7 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
     }
 
     fun deleteMessageServerHash(messageID: Long, mms: Boolean) {
-        getMessageTables(mms).firstOrNull {
-            databaseHelper.writableDatabase.delete(it, "${Companion.messageID} = ?", arrayOf(messageID.toString())) > 0
-        }
+        databaseHelper.writableDatabase.delete(getMessageTable(mms), "${Companion.messageID} = ?", arrayOf(messageID.toString()))
     }
 
     fun deleteMessageServerHashes(messageIDs: List<Long>, mms: Boolean) {
@@ -346,10 +345,6 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
             groupInviteTable, "$threadID = ?", arrayOf(groupThreadId.toString())
         )
     }
-    private fun getMessageTables(mms: Boolean) = sequenceOf(
-        getMessageTable(mms),
-        messageHashTable
-    )
 
     private fun getMessageTable(mms: Boolean) = if (mms) mmsHashTable else smsHashTable
 }

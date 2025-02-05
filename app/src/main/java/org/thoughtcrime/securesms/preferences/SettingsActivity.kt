@@ -104,7 +104,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
-import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -308,7 +308,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(this@SettingsActivity);
+        val haveNetworkConnection = viewModel.hasNetworkConnection()
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot update display name - no network connection.")
         } else {
@@ -429,7 +429,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
 
-            val hasPaths by hasPaths().collectAsState(initial = false)
+            val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
             Cell {
                 Column {
@@ -619,21 +619,5 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 removeAvatar = {}
             )
         }
-    }
-}
-
-private fun Context.hasPaths(): Flow<Boolean> = LocalBroadcastManager.getInstance(this).hasPaths()
-private fun LocalBroadcastManager.hasPaths(): Flow<Boolean> = callbackFlow {
-    val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) { trySend(Unit) }
-    }
-
-    registerReceiver(receiver, IntentFilter("buildingPaths"))
-    registerReceiver(receiver, IntentFilter("pathsBuilt"))
-
-    awaitClose { unregisterReceiver(receiver) }
-}.onStart { emit(Unit) }.map {
-    withContext(Dispatchers.Default) {
-        OnionRequestAPI.paths.isNotEmpty()
     }
 }

@@ -1,19 +1,29 @@
 package org.thoughtcrime.securesms.configs
 
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.util.ConfigPush
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
+import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -24,6 +34,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
@@ -32,7 +43,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import javax.inject.Inject
+import kotlin.math.log
 
 private const val TAG = "ConfigUploader"
 
@@ -51,19 +64,58 @@ class ConfigUploader @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storageProtocol: StorageProtocol,
     private val clock: SnodeClock,
+    private val internetConnectivity: InternetConnectivity,
+    private val textSecurePreferences: TextSecurePreferences,
 ) {
     private var job: Job? = null
 
-    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class)
+    /**
+     * A flow that only emits when
+     * 1. There's internet connection AND,
+     * 2. The onion path is available
+     *
+     * The value pushed doesn't matter as nothing is emitted when the conditions are not met.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun pathBecomesAvailable(): Flow<*> = internetConnectivity.networkAvailable
+        .flatMapLatest { hasNetwork ->
+            if (hasNetwork) {
+                OnionRequestAPI.hasPath.filter { it }
+            } else {
+                emptyFlow()
+            }
+        }
+
+    // A flow that emits true when there's a logged in user
+    private fun hasLoggedInUser(): Flow<Boolean> = textSecurePreferences.watchLocalNumber()
+        .map { it != null }
+        .distinctUntilChanged()
+
+
+    @OptIn(DelicateCoroutinesApi::class, FlowPreview::class, ExperimentalCoroutinesApi::class)
     fun start() {
         require(job == null) { "Already started" }
 
         job = GlobalScope.launch {
             supervisorScope {
+                // For any of these events, we need to push the user configs:
+                // - The onion path has just become available to use
+                // - The user configs have been modified
+                // Also, these events are only relevant when there's a logged in user
                 val job1 = launch {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
-                        .debounce(1000L)
+                    hasLoggedInUser()
+                        .flatMapLatest { loggedIn ->
+                            if (loggedIn) {
+                                merge(
+                                    pathBecomesAvailable(),
+                                    configFactory.configUpdateNotifications
+                                        .filterIsInstance<ConfigUpdateNotification.UserConfigsModified>()
+                                        .debounce(1000L)
+                                )
+                            } else {
+                                emptyFlow()
+                            }
+                        }
                         .collect {
                             try {
                                 retryWithUniformInterval {
@@ -76,18 +128,39 @@ class ConfigUploader @Inject constructor(
                 }
 
                 val job2 = launch {
-                    configFactory.configUpdateNotifications
-                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                        .debounce(1000L)
-                        .collect { changes ->
-                            try {
-                                retryWithUniformInterval {
-                                    pushGroupConfigsChangesIfNeeded(changes.groupId)
-                                }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to push group configs", e)
+                    hasLoggedInUser()
+                        .flatMapLatest { loggedIn ->
+                            if (loggedIn) {
+                                merge(
+                                    // When the onion request path changes, we need to examine all the groups
+                                    // and push the pending configs for them
+                                    pathBecomesAvailable().flatMapLatest {
+                                        configFactory.withUserConfigs { configs -> configs.userGroups.allClosedGroupInfo() }
+                                            .asSequence()
+                                            .filter { !it.destroyed && !it.kicked }
+                                            .map { it.groupAccountId }
+                                            .asFlow()
+                                    },
+
+                                    // Or, when a group config is updated, we need to push the changes for that group
+                                    configFactory.configUpdateNotifications
+                                        .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                                        .map { it.groupId }
+                                        .debounce(1000L)
+                                )
+                            } else {
+                                emptyFlow()
                             }
                         }
+                        .collect { groupId ->
+                        try {
+                            retryWithUniformInterval {
+                                pushGroupConfigsChangesIfNeeded(groupId)
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to push group configs", e)
+                        }
+                    }
                 }
 
                 job1.join()

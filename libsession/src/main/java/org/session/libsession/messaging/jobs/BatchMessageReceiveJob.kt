@@ -1,15 +1,11 @@
 package org.session.libsession.messaging.jobs
 
 import com.google.protobuf.ByteString
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import network.loki.messenger.libsession_util.ConfigBase
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.task
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -233,7 +229,7 @@ class BatchMessageReceiveJob(
                             proto = proto,
                             threadId = threadId,
                             openGroupID = openGroupID,
-                            closedGroup = parameters.closedGroup?.publicKey?.let(::AccountId)
+                            groupv2Id = parameters.closedGroup?.publicKey?.let(::AccountId)
                         )
                     }
                 } catch (e: Exception) {

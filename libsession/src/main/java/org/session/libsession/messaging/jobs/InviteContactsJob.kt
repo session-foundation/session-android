@@ -7,8 +7,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.session.libsession.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
@@ -17,11 +17,7 @@ import org.session.libsession.messaging.utilities.MessageAuthentication.buildGro
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
@@ -80,7 +76,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                             sentTimestamp = timestamp
                         }
 
-                        MessageSender.send(update, Destination.Contact(memberSessionId), false)
+                        MessageSender.sendNonDurably(update, Destination.Contact(memberSessionId), false)
                             .await()
                     }
                 }
@@ -111,51 +107,15 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                 // show the failure toast
                 val storage = MessagingModuleConfiguration.shared.storage
                 val toaster = MessagingModuleConfiguration.shared.toaster
-                when (failures.size) {
-                    1 -> {
-                        val (memberId, _) = failures.first()
-                        val firstString = storage.getContactWithAccountID(memberId)?.name
-                            ?: truncateIdForDisplay(memberId)
-                        withContext(Dispatchers.Main) {
-                            toaster.toast(R.string.groupInviteFailedUser, Toast.LENGTH_LONG,
-                                mapOf(
-                                    NAME_KEY to firstString,
-                                    GROUP_NAME_KEY to groupName.orEmpty()
-                                )
-                            )
-                        }
-                    }
-                    2 -> {
-                        val (first, second) = failures
-                        val firstString = first.first.let { storage.getContactWithAccountID(it) }?.name
-                            ?: truncateIdForDisplay(first.first)
-                        val secondString = second.first.let { storage.getContactWithAccountID(it) }?.name
-                            ?: truncateIdForDisplay(second.first)
 
-                        withContext(Dispatchers.Main) {
-                            toaster.toast(R.string.groupInviteFailedTwo, Toast.LENGTH_LONG,
-                                mapOf(
-                                    NAME_KEY to firstString,
-                                    OTHER_NAME_KEY to secondString,
-                                    GROUP_NAME_KEY to groupName.orEmpty()
-                                )
-                            )
-                        }
-                    }
-                    else -> {
-                        val first = failures.first()
-                        val firstString = first.first.let { storage.getContactWithAccountID(it) }?.name
-                            ?: truncateIdForDisplay(first.first)
-                        val remaining = failures.size - 1
-                        withContext(Dispatchers.Main) {
-                            toaster.toast(R.string.groupInviteFailedMultiple, Toast.LENGTH_LONG,
-                                mapOf(
-                                    NAME_KEY to firstString,
-                                    OTHER_NAME_KEY to remaining.toString(),
-                                    GROUP_NAME_KEY to groupName.orEmpty()
-                                )
-                            )
-                        }
+                GroupInviteException(
+                    isPromotion = false,
+                    inviteeAccountIds = failures.map { it.first },
+                    groupName = groupName.orEmpty(),
+                    underlying = failures.first().second.exceptionOrNull()!!,
+                ).format(MessagingModuleConfiguration.shared.context, storage).let {
+                    withContext(Dispatchers.Main) {
+                        toaster.toast(it, Toast.LENGTH_LONG)
                     }
                 }
             }

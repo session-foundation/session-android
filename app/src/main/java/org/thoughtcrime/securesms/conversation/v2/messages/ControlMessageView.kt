@@ -240,12 +240,6 @@ class ControlMessageView : LinearLayout {
                     }
                 }
             }
-            message.isGroupUpdateMessage -> {
-                val updateMessageData: UpdateMessageData? = UpdateMessageData.fromJSON(message.body)
-                if (updateMessageData?.isGroupErrorQuitKind() == true) {
-                    binding.textView.setTextColor(context.getColorFromAttr(R.attr.danger))
-                }
-            }
         }
 
         binding.textView.isGone = message.isCallLog

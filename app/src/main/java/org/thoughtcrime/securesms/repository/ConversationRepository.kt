@@ -416,7 +416,7 @@ class DefaultConversationRepository @Inject constructor(
                 )
             } else {
                 val message = MessageRequestResponse(true)
-                MessageSender.send(
+                MessageSender.sendNonDurably(
                     message = message,
                     destination = Destination.from(recipient.address),
                     isSyncMessage = recipient.isLocalNumber

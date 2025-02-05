@@ -8,9 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -103,20 +101,59 @@ abstract class BaseGroupMembersViewModel (
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
-            clickable = !isMyself
+            clickable = !isMyself,
+            statusLabel = getMemberLabel(status, context, amIAdmin),
         )
     }
 
+    private fun getMemberLabel(status: GroupMember.Status, context: Context, amIAdmin: Boolean): String {
+        return when (status) {
+            GroupMember.Status.INVITE_FAILED -> context.getString(R.string.groupInviteFailed)
+            GroupMember.Status.INVITE_SENDING -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
+            GroupMember.Status.INVITE_SENT -> context.getString(R.string.groupInviteSent)
+            GroupMember.Status.PROMOTION_FAILED -> context.getString(R.string.adminPromotionFailed)
+            GroupMember.Status.PROMOTION_SENDING -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
+            GroupMember.Status.PROMOTION_SENT -> context.getString(R.string.adminPromotionSent)
+            GroupMember.Status.REMOVED,
+            GroupMember.Status.REMOVED_UNKNOWN,
+            GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> {
+                if (amIAdmin) {
+                    context.getString(R.string.groupPendingRemoval)
+                } else {
+                    ""
+                }
+            }
+
+            GroupMember.Status.INVITE_UNKNOWN,
+            GroupMember.Status.INVITE_ACCEPTED,
+            GroupMember.Status.INVITE_NOT_SENT,
+            GroupMember.Status.PROMOTION_NOT_SENT,
+            GroupMember.Status.PROMOTION_UNKNOWN,
+            GroupMember.Status.PROMOTION_ACCEPTED -> ""
+        }
+    }
+
+    // Refer to notion doc for the sorting logic
     private fun sortMembers(members: List<GroupMemberState>, currentUserId: AccountId) =
         members.sortedWith(
             compareBy<GroupMemberState>{
                 when (it.status) {
-                    GroupMember.Status.INVITE_FAILED -> 0 // Failed invite comes first
-                    GroupMember.Status.INVITE_NOT_SENT -> 1 // then "Sending invite"
-                    GroupMember.Status.INVITE_SENT -> 2 // then "Invite sent"
-                    GroupMember.Status.PROMOTION_NOT_SENT -> 3 // then "Sending promotion"
-                    GroupMember.Status.PROMOTION_SENT -> 4 // then "Promotion sent"
-                    else -> 5
+                    GroupMember.Status.INVITE_FAILED -> 0
+                    GroupMember.Status.INVITE_NOT_SENT -> 1
+                    GroupMember.Status.INVITE_SENDING -> 2
+                    GroupMember.Status.INVITE_SENT -> 3
+                    GroupMember.Status.INVITE_UNKNOWN -> 4
+                    GroupMember.Status.REMOVED,
+                    GroupMember.Status.REMOVED_UNKNOWN,
+                    GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> 5
+                    GroupMember.Status.PROMOTION_FAILED -> 6
+                    GroupMember.Status.PROMOTION_NOT_SENT -> 7
+                    GroupMember.Status.PROMOTION_SENDING -> 8
+                    GroupMember.Status.PROMOTION_SENT -> 9
+                    GroupMember.Status.PROMOTION_UNKNOWN -> 10
+                    null,
+                    GroupMember.Status.INVITE_ACCEPTED,
+                    GroupMember.Status.PROMOTION_ACCEPTED -> 11
                 }
             }
                 .thenBy { !it.showAsAdmin } // Admins come first
@@ -141,29 +178,8 @@ data class GroupMemberState(
     val canResendPromotion: Boolean,
     val canRemove: Boolean,
     val canPromote: Boolean,
-    val clickable: Boolean
+    val clickable: Boolean,
+    val statusLabel: String,
 ) {
     val canEdit: Boolean get() = canRemove || canPromote || canResendInvite || canResendPromotion
-}
-
-// Function to get the label dynamically using the context
-fun GroupMember.Status.getLabel(context: Context): String {
-    return when (this) {
-        GroupMember.Status.INVITE_FAILED -> context.getString(R.string.groupInviteFailed)
-        GroupMember.Status.INVENT_SENDING -> context.resources.getQuantityString(R.plurals.groupInviteSending, 1)
-        GroupMember.Status.INVITE_SENT -> context.getString(R.string.groupInviteSent)
-        GroupMember.Status.PROMOTION_FAILED -> context.getString(R.string.adminPromotionFailed)
-        GroupMember.Status.PROMOTION_SENDING -> context.resources.getQuantityString(R.plurals.adminSendingPromotion, 1)
-        GroupMember.Status.PROMOTION_SENT -> context.getString(R.string.adminPromotionSent)
-        GroupMember.Status.REMOVED,
-        GroupMember.Status.REMOVED_UNKNOWN,
-        GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> context.getString(R.string.groupPendingRemoval)
-
-        GroupMember.Status.INVITE_UNKNOWN,
-        GroupMember.Status.INVITE_ACCEPTED,
-        GroupMember.Status.INVITE_NOT_SENT,
-        GroupMember.Status.PROMOTION_NOT_SENT,
-        GroupMember.Status.PROMOTION_UNKNOWN,
-        GroupMember.Status.PROMOTION_ACCEPTED -> ""
-    }
 }

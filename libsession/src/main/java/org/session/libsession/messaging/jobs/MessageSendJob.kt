@@ -3,10 +3,10 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -23,7 +23,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 
-class MessageSendJob(val message: Message, val destination: Destination) : Job {
+class MessageSendJob(val message: Message, val destination: Destination, val statusCallback: SendChannel<Result<Unit>>?) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
 
@@ -91,18 +91,25 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
 
-                MessageSender.send(this@MessageSendJob.message, destination, isSync).await()
+                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync).await()
             }
 
             this.handleSuccess(dispatcherName)
+            statusCallback?.trySend(Result.success(Unit))
         } catch (e: HTTP.HTTPRequestFailedException) {
             if (e.statusCode == 429) { this.handlePermanentFailure(dispatcherName, e) }
             else { this.handleFailure(dispatcherName, e) }
+
+            statusCallback?.trySend(Result.failure(e))
         } catch (e: MessageSender.Error) {
             if (!e.isRetryable) { this.handlePermanentFailure(dispatcherName, e) }
             else { this.handleFailure(dispatcherName, e) }
+
+            statusCallback?.trySend(Result.failure(e))
         } catch (e: Exception) {
             this.handleFailure(dispatcherName, e)
+
+            statusCallback?.trySend(Result.failure(e))
         }
     }
 
@@ -191,7 +198,7 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
             }
             destinationInput.close()
             // Return
-            return MessageSendJob(message, destination)
+            return MessageSendJob(message, destination, statusCallback = null)
         }
     }
 }

@@ -189,7 +189,6 @@ import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.NetworkUtils
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
@@ -2065,26 +2064,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun informUserIfNetworkOrSessionNodePathIsInvalid() {
-        // Check that we have a valid network network connection & inform the user if not
-        val connectedToInternet = NetworkUtils.haveValidNetworkConnection(applicationContext)
-        if (!connectedToInternet)
-        {
-            // TODO: Adjust to display error to user with official localised string when SES-2319 is addressed
-            Log.e(TAG, "Cannot sent voice message - no network connection.")
-        }
-
-        // Check that we have a suite of Session Nodes to route through.
-        // Note: We can have the entry node plus the 2 Session Nodes and the data _still_ might not
-        // send due to any node flakiness - but without doing some manner of test-ping through
-        // there's no way to test our client -> destination connectivity (unless we abuse the typing
-        // indicators?)
-        val paths = OnionRequestAPI.paths
-        if (paths.isNullOrEmpty() || paths.count() != 2) {
-            // TODO: Adjust to display error to user with official localised string when SES-2319 is addressed
-            Log.e(TAG, "Cannot send voice message - bad Session Node path.")
-        }
-    }
 
     override fun sendVoiceMessage() {
         Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
@@ -2115,7 +2094,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        informUserIfNetworkOrSessionNodePathIsInvalid()
         // Note: We could return here if there was a network or node path issue, but instead we'll try
         // our best to send the voice message even if it might fail - because in that case it'll get put
         // into the draft database and can be retried when we regain network connectivity and a working

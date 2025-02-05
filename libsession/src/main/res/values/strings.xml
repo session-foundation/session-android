@@ -528,6 +528,11 @@
     <string name="learnMore">Learn More</string>
     <string name="leave">Leave</string>
     <string name="leaving">Leaving...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">This group is now read-only. Recreate this group to keep chatting.</string>
+    <string name="legacyGroupAfterDeprecationMember">This group is now read-only. Ask the group admin to recreate this group to keep chatting.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Groups have been upgraded! Recreate this group for improved reliability. This group will become read-only on {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Groups have been upgraded! Ask the group admin to recreate this group for improved reliability. This group will become read-only on {date}.</string>
+    <string name="legacyGroupChatHistory">Chat history will not be transferred to the new group. You can still view all chat history in your old group.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> joined the group.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> and <b>{count} others</b> joined the group.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>You</b> and <b>{count} others</b> joined the group.</string>
@@ -792,6 +797,7 @@
     <string name="recoveryPasswordRestoreDescription">Enter your recovery password to load your account. If you haven\'t saved it, you can find it in your app settings.</string>
     <string name="recoveryPasswordView">View Password</string>
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
+    <string name="recreateGroup">Recreate Group</string>
     <string name="redo">Redo</string>
     <string name="remove">Remove</string>
     <string name="removePasswordFail">Failed to remove password</string>
@@ -844,6 +850,7 @@
     <string name="shareAccountIdDescription">Invite your friend to chat with you on {app_name} by sharing your Account ID with them.</string>
     <string name="shareAccountIdDescriptionCopied">Share with your friends wherever you usually speak with them — then move the conversation here.</string>
     <string name="shareExtensionDatabaseError">There is an issue opening the database. Please restart the app and try again.</string>
+    <string name="shareExtensionNoAccountError">Oops! Looks like you don\'t have a {app_name} account yet.\n\nYou\'ll need to create one in the {app_name} app before you can share.</string>
     <string name="shareToSession">Share to {app_name}</string>
     <string name="show">Show</string>
     <string name="showAll">Show All</string>

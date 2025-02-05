@@ -6,14 +6,12 @@ import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -26,10 +24,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -45,7 +40,6 @@ class HomeViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
-    @ApplicationContextQualifier private val context: Context,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory
 ) : ViewModel() {
@@ -54,8 +48,6 @@ class HomeViewModel @Inject constructor(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
-
-    private val overrideMessageSnippets = MutableStateFlow(emptyMap<Long, MessageSnippetOverride>())
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -66,10 +58,9 @@ class HomeViewModel @Inject constructor(
     val data: StateFlow<Data?> = combine(
         observeConversationList(),
         observeTypingStatus(),
-        overrideMessageSnippets,
         messageRequests(),
         hasHiddenNoteToSelf()
-    ) { threads, typingStatus, overrideMessageSnippets, messageRequests, hideNoteToSelf ->
+    ) { threads, typingStatus, messageRequests, hideNoteToSelf ->
         Data(
             items = buildList {
                 messageRequests?.let { add(it) }
@@ -83,7 +74,6 @@ class HomeViewModel @Inject constructor(
                     Item.Thread(
                         thread = thread,
                         isTyping = typingStatus.contains(thread.threadId),
-                        overriddenSnippet = overrideMessageSnippets[thread.threadId]
                     )
                 }
             }
@@ -148,7 +138,6 @@ class HomeViewModel @Inject constructor(
         data class Thread(
             val thread: ThreadRecord,
             val isTyping: Boolean,
-            val overriddenSnippet: MessageSnippetOverride?
         ) : Item
 
         data class MessageRequests(val count: Int) : Item
@@ -159,36 +148,6 @@ class HomeViewModel @Inject constructor(
         hidden: Boolean,
     ) = if (count > 0 && !hidden) Item.MessageRequests(count) else null
 
-    fun onLeavingGroupStarted(threadId: Long) {
-        val message = MessageSnippetOverride(
-            text = context.getString(R.string.leaving),
-            colorAttr = android.R.attr.textColorTertiary
-        )
-
-        overrideMessageSnippets.update { it + (threadId to message) }
-    }
-
-    fun onLeavingGroupFinished(threadId: Long, isError: Boolean) {
-        if (isError) {
-            val errorMessage = MessageSnippetOverride(
-                text = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                    .put(GROUP_NAME_KEY,
-                        data.value?.items
-                            ?.asSequence()
-                            ?.filterIsInstance<Item.Thread>()
-                            ?.find { it.thread.threadId == threadId }
-                            ?.thread?.recipient?.name
-                            ?: context.getString(R.string.unknown)
-                    )
-                    .format(),
-                colorAttr = R.attr.danger
-            )
-
-            overrideMessageSnippets.update { it + (threadId to errorMessage) }
-        } else {
-            overrideMessageSnippets.update { it - threadId }
-        }
-    }
 
     fun hideNoteToSelf() {
         prefs.setHasHiddenNoteToSelf(true)

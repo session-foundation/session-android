@@ -386,11 +386,11 @@ object ConversationMenuHelper {
                             "Invalid group public key"
                         }
                         try {
-                            channel.send(GroupLeavingStatus.Leaving)
+                            channel.trySend(GroupLeavingStatus.Leaving)
                             MessageSender.leave(groupPublicKey)
-                            channel.send(GroupLeavingStatus.Left)
+                            channel.trySend(GroupLeavingStatus.Left)
                         } catch (e: Exception) {
-                            channel.send(GroupLeavingStatus.Error)
+                            channel.trySend(GroupLeavingStatus.Error)
                             throw e
                         }
                     }
@@ -413,11 +413,11 @@ object ConversationMenuHelper {
                     storage = storage,
                     doLeave = {
                         try {
-                            channel.send(GroupLeavingStatus.Leaving)
+                            channel.trySend(GroupLeavingStatus.Leaving)
                             groupManager.leaveGroup(accountId)
-                            channel.send(GroupLeavingStatus.Left)
+                            channel.trySend(GroupLeavingStatus.Left)
                         } catch (e: Exception) {
-                            channel.send(GroupLeavingStatus.Error)
+                            channel.trySend(GroupLeavingStatus.Error)
                             throw e
                         }
                     }

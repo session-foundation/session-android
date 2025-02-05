@@ -7,6 +7,8 @@ import android.content.IntentFilter
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.opencsv.CSVReader
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsignal.utilities.Log
@@ -72,17 +74,14 @@ class IP2Country internal constructor(
             if (isInitialized) { return; }
             shared = IP2Country(context.applicationContext)
 
-            val pathsBuiltEventReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    shared.populateCacheIfNeeded()
-                }
+            GlobalScope.launch {
+                OnionRequestAPI.paths
+                    .filter { it.isNotEmpty() }
+                    .collectLatest {
+                        shared.populateCacheIfNeeded()
+                    }
             }
-            LocalBroadcastManager.getInstance(context).registerReceiver(pathsBuiltEventReceiver, IntentFilter("pathsBuilt"))
         }
-    }
-
-    init {
-        populateCacheIfNeeded()
     }
 
     // TODO: Deinit?
@@ -105,16 +104,14 @@ class IP2Country internal constructor(
     }
 
     private fun populateCacheIfNeeded() {
-        GlobalScope.launch {
-            val start = System.currentTimeMillis()
-            OnionRequestAPI.paths.iterator().forEach { path ->
-                path.iterator().forEach { snode ->
-                    cacheCountryForIP(snode.ip) // Preload if needed
-                }
+        val start = System.currentTimeMillis()
+        OnionRequestAPI.paths.value.iterator().forEach { path ->
+            path.iterator().forEach { snode ->
+                cacheCountryForIP(snode.ip) // Preload if needed
             }
-            Log.d("Loki","Cache populated in ${System.currentTimeMillis() - start}ms")
-            Broadcaster(context).broadcast("onionRequestPathCountriesLoaded")
         }
+        Log.d("Loki","IP2Country cache populated in ${System.currentTimeMillis() - start}ms")
+        Broadcaster(context).broadcast("onionRequestPathCountriesLoaded")
     }
     // endregion
 }

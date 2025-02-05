@@ -61,10 +61,7 @@ abstract class AppBindings {
 class ToasterModule {
     @Provides
     @Singleton
-    fun provideToaster(@ApplicationContext context: Context) = Toaster { stringRes, toastLength, parameters ->
-        val string = context.getString(stringRes, parameters)
-        Toast.makeText(context, string, toastLength).show()
-    }
+    fun provideToaster(@ApplicationContext context: Context) = (context as org.thoughtcrime.securesms.ApplicationContext)
 }
 
 @EntryPoint

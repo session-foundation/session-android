@@ -28,7 +28,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -51,7 +50,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
-import org.thoughtcrime.securesms.groups.getLabel
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
@@ -125,7 +123,7 @@ fun EditGroupScreen(
 @Serializable
 private object RouteEditGroup
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditGroup(
     onBack: () -> Unit,
@@ -443,7 +441,7 @@ fun EditMemberItem(
     MemberItem(
         accountId = member.accountId,
         title = member.name,
-        subtitle = member.status?.getLabel(LocalContext.current),
+        subtitle = member.statusLabel,
         subtitleColor = if (member.highlightStatus) {
             LocalColors.current.danger
         } else {
@@ -477,7 +475,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -489,7 +488,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -501,7 +501,8 @@ private fun EditGroupPreview3() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -552,7 +553,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -564,7 +566,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -576,7 +579,8 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
@@ -629,7 +633,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = "Invited"
         )
         val twoMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
@@ -641,7 +646,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
-            clickable = true
+            clickable = true,
+            statusLabel = "Promotion failed"
         )
         val threeMember = GroupMemberState(
             accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
@@ -653,7 +659,8 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
-            clickable = true
+            clickable = true,
+            statusLabel = ""
         )
 
         EditGroup(

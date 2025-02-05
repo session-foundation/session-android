@@ -125,7 +125,16 @@ public class ThreadRecord extends DisplayRecord {
             return "";
         }
         else if (isGroupUpdateMessage()) {
-            return lastMessage.getDisplayBody(context).toString();
+            CharSequence body = lastMessage.getDisplayBody(context);
+            UpdateMessageData updatedMessage = lastMessage.getGroupUpdateMessage();
+
+            // For group leaving and error quit messages, we will leave the message as formatted
+            if (updatedMessage != null && (updatedMessage.isGroupLeavingKind() || updatedMessage.isGroupErrorQuitKind())) {
+                return body;
+            }
+
+            // Otherwise we'll need to remove all the formatting and just display the text
+            return body.toString();
         } else if (isOpenGroupInvitation()) {
             return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {

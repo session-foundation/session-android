@@ -473,7 +473,11 @@ open class Storage @Inject constructor(
         }
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                lokiMessageDatabase.setMessageServerHash(id, message.isMediaMessage(), serverHash)
+                // When a message with attachment is received, we don't immediately have
+                // attachments attached in the messages, but it's a mms from the db's perspective
+                // nonetheless.
+                val isMms = message.isMediaMessage() || attachments.isNotEmpty()
+                lokiMessageDatabase.setMessageServerHash(id, isMms, serverHash)
             }
         }
         return messageID
@@ -1058,10 +1062,24 @@ open class Storage @Inject constructor(
         return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
     }
 
+    override fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long? {
+        val sentTimestamp = clock.currentTimeMills()
+        val senderPublicKey = getUserPublicKey() ?: return null
+        val groupName = configFactory.withGroupConfigs(closedGroup) { it.groupInfo.getName() }
+            ?: configFactory.getGroup(closedGroup)?.name
+        val updateData = UpdateMessageData.buildGroupLeaveUpdate(UpdateMessageData.Kind.GroupErrorQuit(groupName.orEmpty()))
+
+        return insertUpdateControlMessage(updateData, sentTimestamp, senderPublicKey, closedGroup)
+    }
+
     override fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind) {
         val mmsDB = mmsDatabase
         val newMessage = UpdateMessageData.buildGroupLeaveUpdate(newType)
         mmsDB.updateInfoMessage(messageId, newMessage.toJSON())
+    }
+
+    override fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>) {
+        mmsSmsDatabase.deleteGroupInfoMessage(groupId, kind)
     }
 
     override fun insertGroupInviteControlMessage(sentTimestamp: Long, senderPublicKey: String, senderName: String?, closedGroup: AccountId, groupName: String): Long? {
@@ -1497,6 +1515,9 @@ open class Storage @Inject constructor(
             mmsDatabase.deleteMessagesFrom(threadID, fromUser.serialize())
             threadDb.update(threadID, false)
         }
+
+        threadDb.setRead(threadID, true)
+
         return true
     }
 

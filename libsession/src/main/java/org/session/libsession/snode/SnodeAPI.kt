@@ -12,14 +12,11 @@ import com.goterl.lazysodium.utils.Key
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
-import com.goterl.lazysodium.utils.KeyPair
-import kotlinx.coroutines.coroutineScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -644,9 +641,7 @@ object SnodeAPI {
                             getBatchResponse(
                                 snode = snode,
                                 publicKey = batch.first().publicKey,
-                                requests = batch.mapNotNull { info ->
-                                    info.request.takeIf { !info.callback.isClosedForSend }
-                                },
+                                requests = batch.map { it.request },
                                 sequence = false
                             )
                         } catch (e: Exception) {
@@ -691,9 +686,15 @@ object SnodeAPI {
         request: SnodeBatchRequestInfo,
         responseType: Class<T>,
     ): T {
-        val callback = Channel<Result<T>>()
+        val callback = Channel<Result<T>>(capacity = 1)
         @Suppress("UNCHECKED_CAST")
-        batchedRequestsSender.send(RequestInfo(snode, publicKey, request, responseType, callback as SendChannel<Any>))
+        batchedRequestsSender.send(RequestInfo(
+            snode = snode,
+            publicKey = publicKey,
+            request = request,
+            responseType = responseType,
+            callback = callback as SendChannel<Any>
+        ))
         try {
             return callback.receive().getOrThrow()
         } catch (e: CancellationException) {
@@ -982,7 +983,13 @@ object SnodeAPI {
     fun parseRawMessagesResponse(rawResponse: RawResponse, snode: Snode, publicKey: String, namespace: Int = 0, updateLatestHash: Boolean = true, updateStoredHashes: Boolean = true, decrypt: ((ByteArray) -> Pair<ByteArray, AccountId>?)? = null): List<Pair<SignalServiceProtos.Envelope, String?>> =
         (rawResponse["messages"] as? List<*>)?.let { messages ->
             if (updateLatestHash) updateLastMessageHashValueIfPossible(snode, publicKey, messages, namespace)
-            parseEnvelopes(removeDuplicates(publicKey, messages, namespace, updateStoredHashes), decrypt)
+            removeDuplicates(
+                publicKey = publicKey,
+                messages = parseEnvelopes(messages, decrypt),
+                messageHashGetter = { it.second },
+                namespace = namespace,
+                updateStoredHashes = updateStoredHashes
+            )
         } ?: listOf()
 
     fun updateLastMessageHashValueIfPossible(snode: Snode, publicKey: String, rawMessages: List<*>, namespace: Int) {
@@ -1001,17 +1008,35 @@ object SnodeAPI {
      * database#setReceivedMessageHashValues is only called here.
      */
     @Synchronized
-    fun removeDuplicates(publicKey: String, rawMessages: List<*>, namespace: Int, updateStoredHashes: Boolean): List<Map<*, *>> {
+    fun <M> removeDuplicates(
+        publicKey: String,
+        messages: List<M>,
+        messageHashGetter: (M) -> String?,
+        namespace: Int,
+        updateStoredHashes: Boolean
+    ): List<M> {
         val hashValues = database.getReceivedMessageHashValues(publicKey, namespace)?.toMutableSet() ?: mutableSetOf()
-        return rawMessages.filterIsInstance<Map<*, *>>().filter { rawMessage ->
-            val hash = rawMessage["hash"] as? String
-            hash ?: Log.d("Loki", "Missing hash value for message: ${rawMessage.prettifiedDescription()}.")
-            hash?.let(hashValues::add) == true
-        }.also {
-            if (updateStoredHashes && it.isNotEmpty()) {
-                database.setReceivedMessageHashValues(publicKey, hashValues, namespace)
+        return messages
+            .filter { message ->
+                val hash = messageHashGetter(message)
+                if (hash == null) {
+                    Log.d("Loki", "Missing hash value for message: ${message?.prettifiedDescription()}.")
+                    return@filter false
+                }
+
+                val isNew = hashValues.add(hash)
+
+                if (!isNew) {
+                    Log.d("Loki", "Duplicate message hash: $hash.")
+                }
+
+                isNew
             }
-        }
+            .also {
+                if (updateStoredHashes && it.isNotEmpty()) {
+                    database.setReceivedMessageHashValues(publicKey, hashValues, namespace)
+                }
+            }
     }
 
     private fun parseEnvelopes(rawMessages: List<*>, decrypt: ((ByteArray)->Pair<ByteArray, AccountId>?)?): List<Pair<SignalServiceProtos.Envelope, String?>> {

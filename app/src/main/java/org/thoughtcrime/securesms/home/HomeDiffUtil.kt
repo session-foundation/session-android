@@ -62,11 +62,6 @@ class HomeDiffUtil(
         // once when the initial recipient data is loaded
         if (isSameItem) { isSameItem = (oldItem.initialRecipientHash == newItem.initialRecipientHash) }
 
-        // Check if we would have different "overridden" message summary
-        if (isSameItem) {
-            isSameItem = (old.overriddenSnippet == new.overriddenSnippet)
-        }
-
         // Note: Two instances of 'SpannableString' may not equate even though their content matches
         if (isSameItem) { isSameItem = (oldItem.getDisplayBody(context).toString() == newItem.getDisplayBody(context).toString()) }
 

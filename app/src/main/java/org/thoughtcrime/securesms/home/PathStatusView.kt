@@ -1,27 +1,23 @@
 package org.thoughtcrime.securesms.home
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.coroutineScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.snode.OnionRequestAPI
-import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.util.toPx
 
 class PathStatusView : View {
-    private val broadcastReceivers = mutableListOf<BroadcastReceiver>()
     @ColorInt var mainColor: Int = 0
         set(newValue) { field = newValue; paint.color = newValue }
     @ColorInt var sessionShadowColor: Int = 0
@@ -53,63 +49,34 @@ class PathStatusView : View {
     }
 
     private fun initialize() {
-        if (!isInEditMode) {
-            update()
-        }
         setWillNotDraw(false)
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        registerObservers()
+
+        updateJob = GlobalScope.launch(Dispatchers.Main) {
+            OnionRequestAPI.hasPath
+                .collectLatest { pathsBuilt ->
+                    if (pathsBuilt) {
+                        setBackgroundResource(R.drawable.accent_dot)
+                        val hasPathsColor = context.getColor(R.color.accent_green)
+                        mainColor = hasPathsColor
+                        sessionShadowColor = hasPathsColor
+                    } else {
+                        setBackgroundResource(R.drawable.paths_building_dot)
+                        val pathsBuildingColor = ContextCompat.getColor(context, R.color.paths_building)
+                        mainColor = pathsBuildingColor
+                        sessionShadowColor = pathsBuildingColor
+                    }
+                }
+        }
     }
 
-    private fun registerObservers() {
-        val buildingPathsReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                handleBuildingPathsEvent()
-            }
-        }
-        broadcastReceivers.add(buildingPathsReceiver)
-        LocalBroadcastManager.getInstance(context).registerReceiver(buildingPathsReceiver, IntentFilter("buildingPaths"))
-        val pathsBuiltReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                handlePathsBuiltEvent()
-            }
-        }
-        broadcastReceivers.add(pathsBuiltReceiver)
-        LocalBroadcastManager.getInstance(context).registerReceiver(pathsBuiltReceiver, IntentFilter("pathsBuilt"))
-    }
 
     override fun onDetachedFromWindow() {
-        for (receiver in broadcastReceivers) {
-            LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver)
-        }
+        updateJob?.cancel()
         super.onDetachedFromWindow()
-    }
-
-    private fun handleBuildingPathsEvent() { update() }
-    private fun handlePathsBuiltEvent() { update() }
-
-    private fun update() {
-        if (updateJob?.isActive != true) { // false or null
-            updateJob = ViewUtil.getActivityLifecycle(this)?.coroutineScope?.launchWhenStarted {
-                val paths = withContext(Dispatchers.IO) { OnionRequestAPI.paths }
-                if (paths.isNotEmpty()) {
-                    setBackgroundResource(R.drawable.accent_dot)
-                    val hasPathsColor = context.getColor(R.color.accent_green)
-                    mainColor = hasPathsColor
-                    sessionShadowColor = hasPathsColor
-                } else {
-                    setBackgroundResource(R.drawable.paths_building_dot)
-                    val pathsBuildingColor = ContextCompat.getColor(context, R.color.paths_building)
-                    mainColor = pathsBuildingColor
-                    sessionShadowColor = pathsBuildingColor
-                }
-            }
-        }
     }
 
     override fun onDraw(c: Canvas) {

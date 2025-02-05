@@ -63,7 +63,9 @@ class UpdateMessageData () {
             constructor(): this("", "")
         }
         data object GroupLeaving: Kind()
-        data object GroupErrorQuit: Kind()
+        data class GroupErrorQuit(val groupName: String): Kind() {
+            constructor(): this("")
+        }
         class GroupInvitation(
             val groupAccountId: String,
             val invitingAdminId: String,
@@ -101,7 +103,7 @@ class UpdateMessageData () {
                 SignalServiceGroup.Type.MEMBER_REMOVED -> UpdateMessageData(Kind.GroupMemberRemoved(members, name))
                 SignalServiceGroup.Type.QUIT -> UpdateMessageData(Kind.GroupMemberLeft(members, name))
                 SignalServiceGroup.Type.LEAVING -> UpdateMessageData(Kind.GroupLeaving)
-                SignalServiceGroup.Type.ERROR_QUIT -> UpdateMessageData(Kind.GroupErrorQuit)
+                SignalServiceGroup.Type.ERROR_QUIT -> UpdateMessageData(Kind.GroupErrorQuit(groupName = name))
                 SignalServiceGroup.Type.UNKNOWN,
                 SignalServiceGroup.Type.UPDATE,
                 SignalServiceGroup.Type.DELIVER,

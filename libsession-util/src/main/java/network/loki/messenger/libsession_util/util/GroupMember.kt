@@ -76,7 +76,7 @@ class GroupMember private constructor(
     enum class Status(val nativeValue: Int) {
         INVITE_UNKNOWN(0),
         INVITE_NOT_SENT(1),
-        INVENT_SENDING(2),
+        INVITE_SENDING(2),
         INVITE_FAILED(3),
         INVITE_SENT(4),
         INVITE_ACCEPTED(5),

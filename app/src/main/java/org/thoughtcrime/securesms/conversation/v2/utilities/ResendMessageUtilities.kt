@@ -56,7 +56,7 @@ object ResendMessageUtilities {
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
                 MessagingModuleConfiguration.shared.storage.markAsResyncing(sentTimestamp, sender)
-                MessageSender.send(message, Destination.from(recipient.address), isSyncMessage = true)
+                MessageSender.sendNonDurably(message, Destination.from(recipient.address), isSyncMessage = true)
             } else {
                 MessagingModuleConfiguration.shared.storage.markAsSending(sentTimestamp, sender)
                 MessageSender.send(message, recipient.address)

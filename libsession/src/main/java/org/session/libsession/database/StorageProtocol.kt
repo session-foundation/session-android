@@ -169,6 +169,7 @@ interface StorageProtocol {
     fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo?
     fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long?
     fun insertGroupInfoLeaving(closedGroup: AccountId): Long?
+    fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long?
     fun insertGroupInviteControlMessage(
         sentTimestamp: Long,
         senderPublicKey: String,
@@ -177,6 +178,7 @@ interface StorageProtocol {
         groupName: String
     ): Long?
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
+    fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>)
 
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>

@@ -49,7 +49,7 @@ class ConversationView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(thread: ThreadRecord, isTyping: Boolean, overriddenSnippet: CharSequence?) {
+    fun bind(thread: ThreadRecord, isTyping: Boolean) {
         this.thread = thread
         if (thread.isPinned) {
             binding.iconPinned.isVisible = true
@@ -98,18 +98,14 @@ class ConversationView : LinearLayout {
         }
         binding.muteIndicatorImageView.setImageResource(drawableRes)
 
-        if (overriddenSnippet != null) {
-            binding.snippetTextView.text = overriddenSnippet
-        } else {
-            binding.snippetTextView.text = highlightMentions(
-                text = thread.getDisplayBody(context),
-                formatOnly = true, // no styling here, only text formatting
-                threadID = thread.threadId,
-                context = context
-            )
-        }
+        binding.snippetTextView.text = highlightMentions(
+            text = thread.getDisplayBody(context),
+            formatOnly = true, // no styling here, only text formatting
+            threadID = thread.threadId,
+            context = context
+        )
 
-        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead && overriddenSnippet == null) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+        binding.snippetTextView.typeface = if (unreadCount > 0 && !thread.isRead) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         binding.snippetTextView.visibility = if (isTyping) View.GONE else View.VISIBLE
         if (isTyping) {
             binding.typingIndicatorView.root.startAnimation()
