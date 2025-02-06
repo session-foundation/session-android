@@ -26,4 +26,6 @@ data class Dimensions(
     val badgeSize: Dp = 20.dp,
     val iconMedium: Dp = 24.dp,
     val iconLarge: Dp = 46.dp,
+    val iconXLarge: Dp = 60.dp,
+    val iconXXLarge: Dp = 80.dp,
 )

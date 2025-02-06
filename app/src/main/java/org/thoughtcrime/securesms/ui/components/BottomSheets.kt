@@ -4,14 +4,17 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -24,6 +27,32 @@ import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+
+
+/**
+ * The base bottom sheet with our app's styling
+ */
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun BaseBottomSheet(
+    sheetState: SheetState,
+    onDismissRequest: () -> Unit,
+    dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
+    content: @Composable ColumnScope.() -> Unit
+){
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(
+            topStart = LocalDimensions.current.xsSpacing,
+            topEnd = LocalDimensions.current.xsSpacing
+        ),
+        dragHandle = dragHandle,
+        containerColor = LocalColors.current.backgroundSecondary,
+        content = content
+    )
+}
+
 
 /**
  * A bottom sheet dialog that displays a list of options.
@@ -46,16 +75,10 @@ fun <T> ActionSheet(
 ) {
     val sheetState = rememberModalBottomSheetState()
 
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
+    BaseBottomSheet(
         sheetState = sheetState,
-        shape = RoundedCornerShape(
-            topStart = LocalDimensions.current.xsSpacing,
-            topEnd = LocalDimensions.current.xsSpacing
-        ),
-        dragHandle = {},
-        containerColor = LocalColors.current.backgroundSecondary,
-    ) {
+        onDismissRequest = onDismissRequest
+    ){
         for (option in options) {
             ActionSheetItem(
                 text = optionTitle(option),
