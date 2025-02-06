@@ -56,10 +56,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -70,6 +74,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
@@ -102,6 +107,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -123,32 +129,33 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         viewModel.onAvatarPicked(result)
     }
 
-/*    private val onPickImage = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ){ result ->
-        if (result.resultCode != RESULT_OK) return@registerForActivityResult
-
-        val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-        val inputFile: Uri? = result.data?.data ?: viewModel.getTempFile()?.let(Uri::fromFile)
-        cropImage(inputFile, outputFile)
-    }*/
-
      private val pickPhotoLauncher: ActivityResultLauncher<PickVisualMediaRequest> =
          registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
              uri?.let {
+                 showAvatarPickerOptions = false // close the bottom sheet
+
                  // Handle the selected image URI
                  val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
                  cropImage(it, outputFile)
 
-             } ?: run {
-                 // Handle cancellation or failure
-                 Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
              }
          }
 
+     // Launcher for capturing a photo using the camera.
+     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
+         if (success) {
+             showAvatarPickerOptions = false // close the bottom sheet
+
+             val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+             cropImage(viewModel.getTempFile()?.let(Uri::fromFile), outputFile)
+         } else {
+             Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+         }
+     }
+
     private val hideRecoveryLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+     ) { result ->
         if (result.resultCode != RESULT_OK) return@registerForActivityResult
 
         if(result.data?.getBooleanExtra(RecoveryPasswordActivity.RESULT_RECOVERY_HIDDEN, false) == true){
@@ -156,11 +163,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
-    //private val avatarSelection = AvatarSelection(this, onAvatarCropped, onPickImage)
-
     private var showAvatarDialog: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
+
+     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
+     private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
+     private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
+     private val activityTitle by lazy { getString(R.string.image) }
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -186,11 +196,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 showCamera = showAvatarPickerOptionCamera,
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
-                    showAvatarPickerOptions = false // close the bottom sheet
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
                 onCameraPicked = {
-                    showAvatarPickerOptions = false // close the bottom sheet
+                    viewModel.createTempFile()?.let{
+                        takePhotoLauncher.launch(FileProviderUtil.getUriFor(this, it))
+                    }
                 }
             )
         }
@@ -386,10 +397,30 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     }
 
     private fun cropImage(inputFile: Uri?, outputFile: Uri?){
-      /*  avatarSelection.circularCropImage(
-            inputFile = inputFile,
-            outputFile = outputFile,
-        )*/
+        onAvatarCropped.launch(
+            CropImageContractOptions(
+                uri = inputFile,
+                cropImageOptions = CropImageOptions(
+                    guidelines = CropImageView.Guidelines.ON,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
+                    fixAspectRatio = true,
+                    cropShape = CropImageView.CropShape.OVAL,
+                    customOutputUri = outputFile,
+                    allowRotation = true,
+                    allowFlipping = true,
+                    backgroundColor = imageScrim,
+                    toolbarColor = bgColor,
+                    activityBackgroundColor = bgColor,
+                    toolbarTintColor = txtColor,
+                    toolbarBackButtonColor = txtColor,
+                    toolbarTitleColor = txtColor,
+                    activityMenuIconColor = txtColor,
+                    activityMenuTextColor = txtColor,
+                    activityTitle = activityTitle
+                )
+            )
+        )
     }
     // endregion
 
@@ -575,18 +606,19 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         ){
             Row(
                 modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = LocalDimensions.current.spacing),
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .padding(bottom = LocalDimensions.current.spacing),
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
             ) {
                 AvatarOption(
-                    title = "Gallery", //todo PICKER get translated string
+                    title = stringResource(R.string.image),
                     iconRes = R.drawable.ic_image,
                     onClick = onGalleryPicked
                 )
 
                 if(showCamera) {
                     AvatarOption(
-                        title = "Camera", //todo PICKER get translated string
+                        title = stringResource(R.string.contentDescriptionCamera),
                         iconRes = R.drawable.ic_camera,
                         onClick = onCameraPicked
                     )
