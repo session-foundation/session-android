@@ -3,6 +3,9 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -15,17 +18,21 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
 
-@HiltViewModel
-class CreateGroupViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = CreateGroupViewModel.Factory::class)
+class CreateGroupViewModel @AssistedInject constructor(
     configFactory: ConfigFactory,
     @ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
+    groupDatabase: GroupDatabase,
+    @Assisted createFromLegacyGroupId: String?,
 ): ViewModel() {
     // Child view model to handle contact selection logic
     val selectContactsViewModel = SelectContactsViewModel(
@@ -50,6 +57,29 @@ class CreateGroupViewModel @Inject constructor(
     // Events
     private val mutableEvents = MutableSharedFlow<CreateGroupEvent>()
     val events: SharedFlow<CreateGroupEvent> get() = mutableEvents
+
+    init {
+        createFromLegacyGroupId?.let { id ->
+            mutableIsLoading.value = true
+            viewModelScope.launch {
+                try {
+                    groupDatabase.getGroup(id).orNull()?.let { group ->
+                        mutableGroupName.value = group.title
+                        val myPublicKey = storage.getUserPublicKey()
+
+                        selectContactsViewModel.selectAccountIDs(
+                            group.members
+                                .asSequence()
+                                .filter { it.serialize() != myPublicKey }
+                                .mapTo(mutableSetOf()) { AccountId(it.serialize()) }
+                        )
+                    }
+                } finally {
+                    mutableIsLoading.value = false
+                }
+            }
+        }
+    }
 
     fun onCreateClicked() {
         viewModelScope.launch {
@@ -103,6 +133,11 @@ class CreateGroupViewModel @Inject constructor(
         mutableGroupName.value = name
 
         mutableGroupNameError.value = ""
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(createFromLegacyGroupId: String?): CreateGroupViewModel
     }
 }
 

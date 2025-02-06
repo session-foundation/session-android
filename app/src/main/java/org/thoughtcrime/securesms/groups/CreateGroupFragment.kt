@@ -33,7 +33,8 @@ class CreateGroupFragment : Fragment() {
                             )
                         },
                         onBack = delegate::onDialogBackPressed,
-                        onClose = delegate::onDialogClosePressed
+                        onClose = delegate::onDialogClosePressed,
+                        fromLegacyGroupId = null,
                     )
                 }
             }

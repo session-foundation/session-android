@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -14,10 +15,11 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -31,6 +33,7 @@ import network.loki.messenger.R
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -58,7 +61,6 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -88,6 +90,9 @@ class ConversationViewModel(
 
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> get() = _uiState
+
+    private val _uiEvents = MutableSharedFlow<ConversationUiEvent>(extraBufferCapacity = 1)
+    val uiEvents: SharedFlow<ConversationUiEvent> get() = _uiEvents
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
@@ -954,7 +959,34 @@ class ConversationViewModel(
             }
 
             Commands.RecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = true)
+                }
+            }
 
+            Commands.HideRecreateGroupConfirm -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = false)
+                }
+            }
+
+            Commands.ConfirmRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(
+                        recreateGroupConfirm = false,
+                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                    )
+                }
+            }
+
+            Commands.HideRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupData = null)
+                }
+            }
+
+            is Commands.NavigateToConversation -> {
+                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
             }
         }
     }
@@ -1063,7 +1095,13 @@ class ConversationViewModel(
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
-        val deleteEveryone: DeleteForEveryoneDialogData? = null
+        val deleteEveryone: DeleteForEveryoneDialogData? = null,
+        val recreateGroupConfirm: Boolean = false,
+        val recreateGroupData: RecreateGroupDialogData? = null,
+    )
+
+    data class RecreateGroupDialogData(
+        val legacyGroupId: String,
     )
 
     data class DeleteForEveryoneDialogData(
@@ -1092,6 +1130,10 @@ class ConversationViewModel(
         data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
 
         data object RecreateGroup : Commands
+        data object ConfirmRecreateGroup : Commands
+        data object HideRecreateGroupConfirm : Commands
+        data object HideRecreateGroup : Commands
+        data class NavigateToConversation(val threadId: Long) : Commands
     }
 }
 
@@ -1105,6 +1147,10 @@ data class ConversationUiState(
     val enableInputMediaControls: Boolean = true,
     val showLoader: Boolean = false,
 )
+
+sealed interface ConversationUiEvent {
+    data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
+}
 
 sealed interface MessageRequestUiState {
     data object Invisible : MessageRequestUiState

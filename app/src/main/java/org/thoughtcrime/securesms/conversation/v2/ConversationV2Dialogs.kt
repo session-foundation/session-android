@@ -2,7 +2,10 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,11 +19,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.DeleteForEveryoneDialogData
-import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideRecreateGroupConfirm
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
+import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
@@ -33,6 +41,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
@@ -161,6 +170,54 @@ fun ConversationV2Dialogs(
                     )
                 )
             )
+        }
+
+        if (dialogsState.recreateGroupConfirm) {
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideRecreateGroupConfirm)
+                },
+                title = stringResource(R.string.recreateGroup),
+                text = stringResource(R.string.legacyGroupChatHistory),
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(stringResource(id = R.string.theContinue)),
+                        color = LocalColors.current.danger,
+                        onClick = {
+                            sendCommand(ConfirmRecreateGroup)
+                        }
+                    ),
+                    DialogButtonModel(
+                        GetString(stringResource(R.string.cancel))
+                    )
+                )
+            )
+        }
+
+        if (dialogsState.recreateGroupData != null) {
+            val state = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+            ModalBottomSheet(
+                onDismissRequest = {
+                    sendCommand(ConversationViewModel.Commands.HideRecreateGroup)
+                },
+                sheetState = state,
+                dragHandle = null
+            ) {
+                CreateGroupScreen(
+                    fromLegacyGroupId = dialogsState.recreateGroupData.legacyGroupId,
+                    onNavigateToConversationScreen = { threadId ->
+                        sendCommand(ConversationViewModel.Commands.NavigateToConversation(threadId))
+                    },
+                    onBack = {
+                        sendCommand(ConversationViewModel.Commands.HideRecreateGroup)
+                    },
+                    onClose = {
+                        sendCommand(ConversationViewModel.Commands.HideRecreateGroup)
+                    },
+                )
+            }
         }
     }
 }

@@ -50,11 +50,15 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 @Composable
 fun CreateGroupScreen(
+    fromLegacyGroupId: String?,
     onNavigateToConversationScreen: (threadID: Long) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
 ) {
-    val viewModel: CreateGroupViewModel = hiltViewModel()
+    val viewModel = hiltViewModel<CreateGroupViewModel, CreateGroupViewModel.Factory> { factory ->
+        factory.create(fromLegacyGroupId)
+    }
+
     val context = LocalContext.current
 
     LaunchedEffect(viewModel) {

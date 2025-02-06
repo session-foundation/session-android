@@ -35,7 +35,7 @@ class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
-    @Assisted private val scope: CoroutineScope
+    @Assisted private val scope: CoroutineScope,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -112,6 +112,10 @@ class SelectContactsViewModel @AssistedInject constructor(
             newSet.add(accountID)
         }
         mutableSelectedContactAccountIDs.value = newSet
+    }
+
+    fun selectAccountIDs(accountIDs: Set<AccountId>) {
+        mutableSelectedContactAccountIDs.value += accountIDs
     }
 
     @AssistedFactory

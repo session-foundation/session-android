@@ -543,6 +543,22 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
 
         setupMentionView()
+        setupUiEventsObserver()
+    }
+
+    private fun setupUiEventsObserver() {
+        lifecycleScope.launch {
+            viewModel.uiEvents.collect { event ->
+                when (event) {
+                    is ConversationUiEvent.NavigateToConversation -> {
+                        finish()
+                        startActivity(Intent(this@ConversationActivityV2, ConversationActivityV2::class.java)
+                            .putExtra(THREAD_ID, event.threadId)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     private fun setupMentionView() {
