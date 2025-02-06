@@ -27,15 +27,6 @@ class RecoveryPasswordViewModel @Inject constructor(
 ): AndroidViewModel(application) {
     val prefs = AppTextSecurePreferences(application)
 
-    // Regex to remove any spurious characters from our recovery password mnemonic.
-    // The regex matches are:
-    //   - "\r"      - carriage return,
-    //   - "\n"      - newline,
-    //   - "\u2028"  - unicode line separator,
-    //   - "\u2029"  - unicode paragraph separator,
-    //   - "|\s{2,}" - two or more consecutive spaces.
-    val linebreakRemovalRegex = Regex("""[\r\n\u2028\u2029]+|\s{2,}""")
-
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()
         .map {
@@ -50,8 +41,13 @@ class RecoveryPasswordViewModel @Inject constructor(
     fun copyMnemonic() {
         prefs.setHasViewedSeed(true)
 
-        // Ensure that our mnemonic words are separated by single spaces only without any control characters
-        val normalisedMnemonic = mnemonic.value.replace(linebreakRemovalRegex, " ")
+        // Ensure that our mnemonic words are separated by single spaces only without any excessive
+        // whitespace or control characters via:
+        //   - Replacing all control chars (\p{Cc}) or Unicode separators (\p{Z}) with a single space, then
+        //   - Trimming all leading & trailing spaces.
+        val normalisedMnemonic = mnemonic.value
+            .replace(Regex("[\\p{Cc}\\p{Z}]+"), " ")
+            .trim()
 
         ClipData.newPlainText("Seed", normalisedMnemonic)
             .let(application.clipboard::setPrimaryClip)
