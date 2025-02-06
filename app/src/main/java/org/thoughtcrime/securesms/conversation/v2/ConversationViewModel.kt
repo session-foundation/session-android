@@ -82,7 +82,7 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
-    private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean

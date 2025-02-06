@@ -990,6 +990,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 thread = recipient,
                 context = this,
                 configFactory = configFactory,
+                deprecationManager = viewModel.legacyGroupDeprecationManager
             )
         }
         maybeUpdateToolbar(recipient)
