@@ -271,11 +271,11 @@ class ConversationReactionOverlay : FrameLayout {
             (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
         }
 
-        val isLegacyGroupAndDeprecated =
+        val isDeprecatedLegacyGroup =
             recipient?.isLegacyGroupRecipient == true &&
                 deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
-        foregroundView.isVisible = !isLegacyGroupAndDeprecated
-        backgroundView.isVisible = !isLegacyGroupAndDeprecated
+        foregroundView.isVisible = !isDeprecatedLegacyGroup
+        backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
         backgroundView.x = scrubberX
