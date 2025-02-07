@@ -83,25 +83,26 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.detailsTextView.visibility = View.GONE
         }
 
-        val isLegacyGroupDeprecated = deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         binding.copyConversationId.isVisible = !recipient.isGroupOrCommunityRecipient
                 && !recipient.isLocalNumber
-                && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+                && !isDeprecatedLegacyGroup
 
         binding.copyConversationId.setOnClickListener(this)
         binding.copyCommunityUrl.isVisible = recipient.isCommunityRecipient
         binding.copyCommunityUrl.setOnClickListener(this)
 
         binding.unMuteNotificationsTextView.isVisible = recipient.isMuted && !recipient.isLocalNumber
-                && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+                && !isDeprecatedLegacyGroup
         binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
-                && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+                && !isDeprecatedLegacyGroup
 
         binding.unMuteNotificationsTextView.setOnClickListener(this)
         binding.muteNotificationsTextView.setOnClickListener(this)
         binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
-                && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+                && !isDeprecatedLegacyGroup
 
         binding.notificationsTextView.setOnClickListener(this)
 
@@ -148,10 +149,10 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         binding.markAllAsReadTextView.isVisible = (thread.unreadCount > 0 ||
                 configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-                && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+                && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
-        binding.pinTextView.isVisible = !thread.isPinned && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
-        binding.unpinTextView.isVisible = thread.isPinned && !(recipient.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+        binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
+        binding.unpinTextView.isVisible = thread.isPinned && !isDeprecatedLegacyGroup
         binding.pinTextView.setOnClickListener(this)
         binding.unpinTextView.setOnClickListener(this)
     }

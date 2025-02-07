@@ -59,9 +59,10 @@ class CreateGroupViewModel @AssistedInject constructor(
     val events: SharedFlow<CreateGroupEvent> get() = mutableEvents
 
     init {
+        // When a legacy group ID is given, fetch the group details and pre-fill the name and members
         createFromLegacyGroupId?.let { id ->
             mutableIsLoading.value = true
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.Default) {
                 try {
                     groupDatabase.getGroup(id).orNull()?.let { group ->
                         mutableGroupName.value = group.title
