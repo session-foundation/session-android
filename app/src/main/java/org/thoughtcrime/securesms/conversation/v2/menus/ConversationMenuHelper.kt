@@ -50,8 +50,8 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.EditGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity
-import org.thoughtcrime.securesms.groups.EditLegacyGroupActivity.Companion.groupIDKey
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
+import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions

@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups
+package org.thoughtcrime.securesms.groups.legacy
 
 import android.content.Context
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -11,12 +11,12 @@ class EditLegacyClosedGroupLoader(context: Context, val groupID: String) : Async
         val members = groupDatabase.getGroupMembers(groupID, true)
         val zombieMembers = groupDatabase.getGroupZombieMembers(groupID)
         return EditLegacyGroupActivity.GroupMembers(
-                members.map {
-                    it.address.toString()
-                },
-                zombieMembers.map {
-                    it.address.toString()
-                }
+            members.map {
+                it.address.toString()
+            },
+            zombieMembers.map {
+                it.address.toString()
+            }
         )
     }
 }

@@ -68,6 +68,7 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
     }
 
     enum class DeprecationState {
+        NOT_DEPRECATING,
         DEPRECATING,
         DEPRECATED
     }

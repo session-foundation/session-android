@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups
+package org.thoughtcrime.securesms.groups.legacy
 
 import android.content.Context
 import androidx.recyclerview.widget.RecyclerView

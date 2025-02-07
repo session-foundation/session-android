@@ -206,25 +206,37 @@ class ConversationViewModel(
         legacyGroupDeprecationManager.deprecationTime,
         isAdmin
     ) { state, time, admin ->
+        val formattedTime by lazy {
+            time.withZoneSameInstant(ZoneId.systemDefault())
+                .toLocalDate()
+                .format(DateUtils.getShortDateFormatter())
+        }
+
         when {
             recipient?.isLegacyGroupRecipient != true -> null
             state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
                 Phrase.from(application, if (admin) R.string.legacyGroupAfterDeprecationAdmin else R.string.legacyGroupAfterDeprecationMember)
                     .format()
             }
-            else -> Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
+            state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATING ->
+                Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
-                    time.withZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(DateUtils.getShortDateFormatter())
+                    formattedTime
+                )
+                .format()
+
+            else -> Phrase.from(application, R.string.groupLegacyBanner)
+                .put(DATE_KEY,
+                    formattedTime
                 )
                 .format()
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-    val showRecreateGroupButton: StateFlow<Boolean> = isAdmin
-        .map { admin ->
+    val showRecreateGroupButton: StateFlow<Boolean> =
+        combine(isAdmin, legacyGroupDeprecationManager.deprecationState) { admin, state ->
             admin && recipient?.isLegacyGroupRecipient == true
+                    && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
         }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(

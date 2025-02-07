@@ -163,7 +163,7 @@
             android:label="@string/conversationsBlockedContacts"
             />
         <activity
-            android:name="org.thoughtcrime.securesms.groups.EditLegacyGroupActivity"
+            android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
             android:label="@string/groupEdit"
             android:screenOrientation="portrait" />
 

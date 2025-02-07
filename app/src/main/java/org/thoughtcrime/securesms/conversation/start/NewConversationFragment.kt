@@ -15,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.modifyLayoutParams
 import org.thoughtcrime.securesms.conversation.start.home.StartConversationHomeFragment
@@ -23,6 +24,8 @@ import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragme
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.groups.CreateGroupFragment
 import org.thoughtcrime.securesms.groups.JoinCommunityFragment
+import org.thoughtcrime.securesms.groups.legacy.CreateLegacyGroupFragment
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class StartConversationFragment : BottomSheetDialogFragment(), StartConversationDelegate {
@@ -32,6 +35,9 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     private val defaultPeekHeight: Int by lazy { (Resources.getSystem().displayMetrics.heightPixels * PEEK_RATIO).toInt() }
+
+    @Inject
+    lateinit var deprecationManager: LegacyGroupDeprecationManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,7 +72,13 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onCreateGroupSelected() {
-        replaceFragment(CreateGroupFragment())
+        val fragment = if (deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING) {
+            CreateLegacyGroupFragment()
+        } else {
+            CreateGroupFragment()
+        }
+
+        replaceFragment(fragment)
     }
 
     override fun onJoinCommunitySelected() {
