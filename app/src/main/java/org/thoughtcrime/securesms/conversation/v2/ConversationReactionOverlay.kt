@@ -375,6 +375,12 @@ class ConversationReactionOverlay : FrameLayout {
         updateBoundsOnLayoutChanged()
     }
 
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+
+        hide()
+    }
+
     private fun updateBoundsOnLayoutChanged() {
         backgroundView.getGlobalVisibleRect(emojiStripViewBounds)
         emojiViews[0].getGlobalVisibleRect(emojiViewGlobalRect)
