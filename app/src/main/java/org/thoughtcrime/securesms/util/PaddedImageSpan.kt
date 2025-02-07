@@ -8,7 +8,8 @@ import android.text.style.ImageSpan
 class PaddedImageSpan(
     drawable: Drawable,
     verticalAlignment: Int,
-    private val paddingTop: Int
+    private val paddingTop: Int,
+    private val paddingStart: Int
 ) : ImageSpan(drawable, verticalAlignment) {
 
     override fun draw(
@@ -25,10 +26,11 @@ class PaddedImageSpan(
         val drawable = drawable
         canvas.save()
 
-        // Adjust the image's vertical position by adding the top padding
+        // Adjust the image's top and start with padding
+        val transX = x + paddingStart
         val transY = top + paddingTop
 
-        canvas.translate(x, transY.toFloat())
+        canvas.translate(transX, transY.toFloat())
         drawable.draw(canvas)
         canvas.restore()
     }
