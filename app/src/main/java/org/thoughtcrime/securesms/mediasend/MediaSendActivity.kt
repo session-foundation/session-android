@@ -16,7 +16,6 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.ViewModelProvider
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
@@ -106,7 +105,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         initializeErrorObserver()
 
         cameraButton?.setOnClickListener { v: View? ->
-            val maxSelection = MediaSendViewModel.MAX_SELECTION
+            val maxSelection = MediaSendViewModel.MAX_SELECTED_FILES
             if (viewModel.getSelectedMedia().value != null && viewModel.getSelectedMedia().value!!.size >= maxSelection) {
                 Toast.makeText(this, getString(R.string.attachmentsErrorNumber), Toast.LENGTH_SHORT)
                     .show()
@@ -146,7 +145,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         val fragment = MediaPickerItemFragment.newInstance(
             folder.bucketId,
             folder.title,
-            MediaSendViewModel.MAX_SELECTION
+            MediaSendViewModel.MAX_SELECTED_FILES
         )
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -170,7 +169,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             recipient!!
         )
         val itemFragment =
-            MediaPickerItemFragment.newInstance(bucketId, "", MediaSendViewModel.MAX_SELECTION)
+            MediaPickerItemFragment.newInstance(bucketId, "", MediaSendViewModel.MAX_SELECTED_FILES)
 
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(

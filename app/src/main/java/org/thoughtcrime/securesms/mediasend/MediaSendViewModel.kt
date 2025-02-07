@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.annimon.stream.Stream
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.session.libsession.utilities.Util.equals
@@ -75,8 +74,8 @@ internal class MediaSendViewModel @Inject constructor(
                             getFilteredMedia(context, populatedMedia, mediaConstraints)
                         if (filteredMedia.size != newMedia.size) {
                             error.setValue(Error.ITEM_TOO_LARGE)
-                        } else if (filteredMedia.size > MAX_SELECTION) {
-                            filteredMedia = filteredMedia.subList(0, MAX_SELECTION)
+                        } else if (filteredMedia.size > MAX_SELECTED_FILES) {
+                            filteredMedia = filteredMedia.subList(0, MAX_SELECTED_FILES)
                             error.setValue(Error.TOO_MANY_ITEMS)
                         }
 
@@ -181,8 +180,7 @@ internal class MediaSendViewModel @Inject constructor(
 
     fun onPageChanged(position: Int) {
         if (position < 0 || position >= selectedMediaOrDefault.size) {
-            Log.w(
-                TAG,
+            Log.w(TAG,
                 "Tried to move to an out-of-bounds item. Size: " + selectedMediaOrDefault.size + ", position: " + position
             )
             return
@@ -217,7 +215,7 @@ internal class MediaSendViewModel @Inject constructor(
             selected = LinkedList()
         }
 
-        if (selected.size >= MAX_SELECTION) {
+        if (selected.size >= MAX_SELECTED_FILES) {
             error.setValue(Error.TOO_MANY_ITEMS)
             return
         }
@@ -363,6 +361,7 @@ internal class MediaSendViewModel @Inject constructor(
     companion object {
         private val TAG: String = MediaSendViewModel::class.java.simpleName
 
-        const val MAX_SELECTION: Int = 32
+        // the maximum amount of files that can be selected to send as attachment
+        const val MAX_SELECTED_FILES: Int = 32
     }
 }
