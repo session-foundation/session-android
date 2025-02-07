@@ -271,11 +271,11 @@ class ConversationReactionOverlay : FrameLayout {
             (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
         }
 
-        val isLegacyGroupAndDeprecated =
+        val isDeprecatedLegacyGroup =
             recipient?.isLegacyGroupRecipient == true &&
                 deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
-        foregroundView.isVisible = !isLegacyGroupAndDeprecated
-        backgroundView.isVisible = !isLegacyGroupAndDeprecated
+        foregroundView.isVisible = !isDeprecatedLegacyGroup
+        backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
         backgroundView.x = scrubberX
@@ -560,13 +560,13 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
 
-        val isLegacyGroup = recipient.isLegacyGroupRecipient
-        val isLegacyGroupDeprecated = deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         // Reply
         val canWrite = openGroup == null || openGroup.canWrite
         if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
-            && !(isLegacyGroup && isLegacyGroupDeprecated)) {
+            && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
         }
         // Copy message text
@@ -578,7 +578,7 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
         // Delete message
-        if (!(isLegacyGroup && isLegacyGroupDeprecated)) {
+        if (!isDeprecatedLegacyGroup) {
             items += ActionItem(
                 R.attr.menu_trash_icon,
                 R.string.delete,
@@ -590,11 +590,11 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
         // Ban user
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !(isLegacyGroup && isLegacyGroupDeprecated)) {
+        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_block_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
         }
         // Ban and delete all
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !(isLegacyGroup && isLegacyGroupDeprecated)) {
+        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
         }
         // Message detail
@@ -605,11 +605,11 @@ class ConversationReactionOverlay : FrameLayout {
                 { handleActionItemClicked(Action.VIEW_INFO) })
         }
         // Resend
-        if (message.isFailed && !(isLegacyGroup && isLegacyGroupDeprecated)) {
+        if (message.isFailed && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
         }
         // Resync
-        if (message.isSyncFailed && !(isLegacyGroup && isLegacyGroupDeprecated)) {
+        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
         }
         // Save media..

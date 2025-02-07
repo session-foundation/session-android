@@ -73,18 +73,19 @@ object ConversationMenuHelper {
         configFactory: ConfigFactory,
         deprecationManager: LegacyGroupDeprecationManager,
     ) {
-        val isLegacyGroupDeprecated = deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+        val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
 
         // Prepare
         menu.clear()
         val isCommunity = thread.isCommunityRecipient
         // Base menu (options that should always be present)
         inflater.inflate(R.menu.menu_conversation, menu)
-        menu.findItem(R.id.menu_add_shortcut).isVisible = !(thread.isLegacyGroupRecipient && isLegacyGroupDeprecated)
+        menu.findItem(R.id.menu_add_shortcut).isVisible = !isDeprecatedLegacyGroup
 
         // Expiring messages
         if (!isCommunity && (thread.hasApprovedMe() || thread.isLegacyGroupRecipient || thread.isLocalNumber)
-            && !(thread.isLegacyGroupRecipient && isLegacyGroupDeprecated)) {
+            && !isDeprecatedLegacyGroup) {
             inflater.inflate(R.menu.menu_conversation_expiration, menu)
         }
         // One-on-one chat menu allows copying the account id
@@ -103,7 +104,7 @@ object ConversationMenuHelper {
         if (thread.isLegacyGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
 
-            menu.findItem(R.id.menu_edit_group).isVisible = !isLegacyGroupDeprecated
+            menu.findItem(R.id.menu_edit_group).isVisible = !isDeprecatedLegacyGroup
         }
 
         // Groups v2 menu
@@ -127,7 +128,7 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_open_group, menu)
         }
         // Muting
-        if (!thread.isLegacyGroupRecipient || !isLegacyGroupDeprecated) {
+        if (!isDeprecatedLegacyGroup) {
             if (thread.isMuted) {
                 inflater.inflate(R.menu.menu_conversation_muted, menu)
             } else {
@@ -135,8 +136,7 @@ object ConversationMenuHelper {
             }
         }
 
-        if (thread.isGroupOrCommunityRecipient && !thread.isMuted &&
-            !(thread.isLegacyGroupRecipient && isLegacyGroupDeprecated)) {
+        if (thread.isGroupOrCommunityRecipient && !thread.isMuted && !isDeprecatedLegacyGroup) {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 
