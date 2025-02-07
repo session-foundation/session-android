@@ -34,6 +34,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
 import org.session.libsignal.utilities.Log;
 import com.bumptech.glide.Glide;
@@ -43,6 +44,7 @@ import org.session.libsession.utilities.TextSecurePreferences;
 
 import java.io.ByteArrayOutputStream;
 
+@AndroidEntryPoint
 public class Camera1Fragment extends Fragment implements TextureView.SurfaceTextureListener,
                                                          Camera1Controller.EventListener
 {
@@ -80,7 +82,7 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     controller    = (Controller) getActivity();
     camera        = new Camera1Controller(TextSecurePreferences.getDirectCaptureCameraId(getContext()), displaySize.x, displaySize.y, this);
     orderEnforcer = new OrderEnforcer<>(Stage.SURFACE_AVAILABLE, Stage.CAMERA_PROPERTIES_AVAILABLE);
-    viewModel     = new ViewModelProvider(requireActivity(), new MediaSendViewModel.Factory(requireActivity().getApplication(), new MediaRepository())).get(MediaSendViewModel.class);
+    viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
   }
 
   @Nullable

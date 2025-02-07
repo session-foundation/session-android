@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.TextSecurePreferences;
@@ -59,6 +61,7 @@ import org.thoughtcrime.securesms.util.Stopwatch;
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
  */
+@AndroidEntryPoint
 public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGlobalLayoutListener,
                                                            MediaRailAdapter.RailItemListener,
                                                            InputAwareLayout.OnKeyboardShownListener,
@@ -108,6 +111,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
     }
 
     controller = (Controller) requireActivity();
+    viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
   }
 
   @Override
@@ -264,8 +268,6 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
   }
 
   private void initViewModel() {
-    viewModel = new ViewModelProvider(requireActivity(), new MediaSendViewModel.Factory(requireActivity().getApplication(), new MediaRepository())).get(MediaSendViewModel.class);
-
     viewModel.getSelectedMedia().observe(this, media -> {
       if (Util.isEmpty(media)) {
         controller.onNoMediaAvailable();
