@@ -13,10 +13,11 @@ import android.view.animation.OvershootInterpolator
 import android.view.animation.ScaleAnimation
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.ViewModelProvider
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
@@ -41,12 +42,13 @@ import java.io.IOException
  * This activity is intended to be launched via [.startActivityForResult].
  * It will return the [Media] that the user decided to send.
  */
+@AndroidEntryPoint
 class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragment.Controller,
     MediaPickerItemFragment.Controller, MediaSendFragment.Controller,
     ImageEditorFragment.Controller,
     Camera1Fragment.Controller {
     private var recipient: Recipient? = null
-    private var viewModel: MediaSendViewModel? = null
+    private val viewModel: MediaSendViewModel by viewModels()
 
     private var countButton: View? = null
     private var countButtonText: TextView? = null
@@ -66,20 +68,13 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         countButtonText = findViewById(R.id.mediasend_count_button_text)
         cameraButton = findViewById(R.id.mediasend_camera_button)
 
-        viewModel = ViewModelProvider(
-            this, MediaSendViewModel.Factory(
-                application, MediaRepository()
-            )
-        ).get(
-            MediaSendViewModel::class.java
-        )
         recipient = Recipient.from(
             this, fromSerialized(
                 intent.getStringExtra(KEY_ADDRESS)!!
             ), true
         )
 
-        viewModel!!.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
+        viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
 
         val media: List<Media?>? = intent.getParcelableArrayListExtra(KEY_MEDIA)
         val isCamera = intent.getBooleanExtra(KEY_IS_CAMERA, false)
@@ -90,7 +85,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                 .replace(R.id.mediasend_fragment_container, fragment, TAG_CAMERA)
                 .commit()
         } else if (!isEmpty(media)) {
-            viewModel!!.onSelectedMediaChanged(this, media!!)
+            viewModel.onSelectedMediaChanged(this, media!!)
 
             val fragment: Fragment = MediaSendFragment.newInstance(recipient!!)
             supportFragmentManager.beginTransaction()
@@ -110,8 +105,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         initializeErrorObserver()
 
         cameraButton?.setOnClickListener { v: View? ->
-            val maxSelection = viewModel!!.maxSelection
-            if (viewModel!!.selectedMedia.value != null && viewModel!!.selectedMedia.value!!.size >= maxSelection) {
+            val maxSelection = MediaSendViewModel.MAX_SELECTED_FILES
+            if (viewModel.getSelectedMedia().value != null && viewModel.getSelectedMedia().value!!.size >= maxSelection) {
                 Toast.makeText(this, getString(R.string.attachmentsErrorNumber), Toast.LENGTH_SHORT)
                     .show()
             } else {
@@ -130,7 +125,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                     false
                 ) && supportFragmentManager.backStackEntryCount == 0
             ) {
-                viewModel!!.onImageCaptureUndo(this)
+                viewModel.onImageCaptureUndo(this)
             }
         }
     }
@@ -145,16 +140,12 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onFolderSelected(folder: MediaFolder) {
-        if (viewModel == null) {
-            return
-        }
-
-        viewModel!!.onFolderSelected(folder.bucketId)
+        viewModel.onFolderSelected(folder.bucketId)
 
         val fragment = MediaPickerItemFragment.newInstance(
             folder.bucketId,
             folder.title,
-            viewModel!!.maxSelection
+            MediaSendViewModel.MAX_SELECTED_FILES
         )
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -169,7 +160,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onMediaSelected(media: Media) {
-        viewModel!!.onSingleMediaSelected(this, media)
+        viewModel.onSingleMediaSelected(this, media)
         navigateToMediaSend(recipient!!)
     }
 
@@ -178,7 +169,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             recipient!!
         )
         val itemFragment =
-            MediaPickerItemFragment.newInstance(bucketId, "", viewModel!!.maxSelection)
+            MediaPickerItemFragment.newInstance(bucketId, "", MediaSendViewModel.MAX_SELECTED_FILES)
 
         supportFragmentManager.beginTransaction()
             .setCustomAnimations(
@@ -204,7 +195,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onSendClicked(media: List<Media>, message: String) {
-        viewModel!!.onSendClicked()
+        viewModel.onSendClicked()
 
         val mediaList = ArrayList(media)
         val intent = Intent()
@@ -271,7 +262,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             }
             Log.i(TAG, "Camera capture stored: " + media.uri.toString())
 
-            viewModel!!.onImageCaptured(media)
+            viewModel.onImageCaptured(media)
             navigateToMediaSend(recipient!!)
         })
     }
@@ -281,7 +272,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     private fun initializeCountButtonObserver() {
-        viewModel!!.countButtonState.observe(
+        viewModel.getCountButtonState().observe(
             this
         ) { buttonState: CountButtonState? ->
             if (buttonState == null) return@observe
@@ -308,7 +299,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     private fun initializeCameraButtonObserver() {
-        viewModel!!.cameraButtonVisibility.observe(
+        viewModel.getCameraButtonVisibility().observe(
             this
         ) { visible: Boolean? ->
             if (visible == null) return@observe
@@ -321,7 +312,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     private fun initializeErrorObserver() {
-        viewModel!!.error.observe(
+        viewModel.getError().observe(
             this
         ) { error: MediaSendViewModel.Error? ->
             if (error == null) return@observe
