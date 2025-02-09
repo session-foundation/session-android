@@ -31,10 +31,10 @@ class SnodeClock() {
             while (true) {
                 try {
                     val node = SnodeAPI.getRandomSnode().await()
-                    val requestStarted = SystemClock.uptimeMillis()
+                    val requestStarted = SystemClock.elapsedRealtime()
 
                     var networkTime = SnodeAPI.getNetworkTime(node).await().second
-                    val requestEnded = SystemClock.uptimeMillis()
+                    val requestEnded = SystemClock.elapsedRealtime()
 
                     // Adjust the network time to account for the time it took to make the request
                     // so that the network time equals to the time when the request was started
@@ -81,7 +81,7 @@ class SnodeClock() {
         val networkTime: Long,
     ) {
         fun now(): Long {
-            val elapsed = SystemClock.uptimeMillis() - systemUptime
+            val elapsed = SystemClock.elapsedRealtime() - systemUptime
             return networkTime + elapsed
         }
     }

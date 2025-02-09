@@ -596,7 +596,7 @@ object SnodeAPI {
         val request: SnodeBatchRequestInfo,
         val responseType: Class<*>,
         val callback: SendChannel<Result<Any>>,
-        val requestTime: Long = SystemClock.uptimeMillis(),
+        val requestTime: Long = SystemClock.elapsedRealtime(),
     )
 
     private val batchedRequestsSender: SendChannel<RequestInfo>
@@ -627,7 +627,7 @@ object SnodeAPI {
                         val earliestBatch = batches.minBy { it.value.first().requestTime }
                         val deadline = earliestBatch.value.first().requestTime + batchWindowMills
                         onTimeout(
-                            timeMillis = (deadline - SystemClock.uptimeMillis()).coerceAtLeast(0)
+                            timeMillis = (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(0)
                         ) {
                             batches.remove(earliestBatch.key)
                         }
