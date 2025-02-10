@@ -82,6 +82,7 @@ import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
+import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler;
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
@@ -173,6 +174,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject EmojiSearchDatabase emojiSearchDb;
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
+    @Inject CleanupInvitationHandler cleanupInvitationHandler;
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -293,6 +295,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         removeGroupMemberHandler.start();
         destroyedGroupSync.start();
         adminStateSync.start();
+        cleanupInvitationHandler.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
