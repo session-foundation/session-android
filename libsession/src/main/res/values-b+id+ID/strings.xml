@@ -36,6 +36,9 @@
     <string name="adminRemovedUser"><b>{name}</b> dihapus sebagai Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> dan <b>{count} lainnya</b> telah dihapus sebagai Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> dan <b>{other_name}</b> telah dihapus sebagai Admin.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="other">Mengirim promosi admin</item>
+    </plurals>
     <string name="adminSettings">Pengaturan Admin</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> dan <b>{other_name}</b> dipromosikan menjadi Admin.</string>
     <string name="andMore">+{count}</string>
@@ -142,11 +145,13 @@
     <string name="callsInProgress">Panggilan sedang berlangsung</string>
     <string name="callsIncoming">Panggilan masuk dari {name}</string>
     <string name="callsIncomingUnknown">Panggilan masuk</string>
+    <string name="callsMicrophonePermissionsRequired">Anda melewatkan panggilan dari <b>{name}</b> karena Anda belum memberikan <b>akses mikrofon</b>.</string>
     <string name="callsMissed">Panggilan Tak Terjawab</string>
     <string name="callsMissedCallFrom">Panggilan tak terjawab dari {name}</string>
     <string name="callsNotificationsRequired">Panggilan Suara dan Video memerlukan notifikasi untuk diaktifkan di pengaturan sistem perangkat Anda.</string>
     <string name="callsPermissionsRequired">Izin Panggilan Diperlukan</string>
     <string name="callsPermissionsRequiredDescription">Anda dapat mengaktifkan izin \"Panggilan Suara dan Video\" di Pengaturan Privasi.</string>
+    <string name="callsPermissionsRequiredDescription1">Anda dapat mengaktifkan izin \"Panggilan Suara dan Video\" di Pengaturan Izin.</string>
     <string name="callsReconnecting">Menghubungkan kembali…</string>
     <string name="callsRinging">Berdering...</string>
     <string name="callsSessionCall">Panggilan {app_name}</string>
@@ -254,7 +259,7 @@
     <string name="create">Buat</string>
     <string name="cut">Potong</string>
     <string name="databaseErrorGeneric">Terjadi kesalahan database.\n\nEkspor log aplikasi Anda untuk dibagikan sebagai solusi pemecahan masalah. Jika tidak berhasil, instal ulang {app_name} dan pulihkan akun Anda.\n\nPeringatan: Hal ini akan mengakibatkan hilangnya semua pesan, lampiran, dan data akun yang lebih lama dari dua minggu.</string>
-    <string name="databaseErrorTimeout">Kami menyadari {app_name} membutuhkan waktu lama untuk memulai.\n\nAnda dapat terus menunggu, mengekspor log perangkat Anda untuk dibagikan dalam pemecahan masalah, atau mencoba memulai ulang Session.</string>
+    <string name="databaseErrorTimeout">Kami menyadari {app_name} membutuhkan waktu lama untuk memulai.\n\nAnda dapat terus menunggu, mengekspor log perangkat Anda untuk dibagikan dalam pemecahan masalah, atau mencoba memulai ulang {app_name}.</string>
     <string name="databaseErrorUpdate">Database aplikasi Anda tidak kompatibel dengan versi {app_name} ini. Instal ulang aplikasi dan pulihkan akun Anda untuk menghasilkan database baru dan terus menggunakan {app_name}.\n\nPeringatan: Ini akan menyebabkan hilangnya semua pesan dan lampiran yang lebih dari dua minggu.</string>
     <string name="databaseOptimizing">Mengoptimalkan Database</string>
     <string name="debugLog">Catatan Awakutu</string>
@@ -278,17 +283,29 @@
     <plurals name="deleteMessage">
         <item quantity="other">Hapus Pesan</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="other">Apakah Anda yakin ingin menghapus pesan ini?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="other">Pesan dihapus</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Pesan ini telah dihapus</string>
     <string name="deleteMessageDeletedLocally">Pesan ini dihapus pada perangkat ini</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="other">Apakah Anda yakin ingin menghapus pesan ini hanya dari perangkat ini?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Apakah Anda yakin ingin menghapus pesan ini untuk semua orang?</string>
     <string name="deleteMessageDeviceOnly">Hapus hanya di perangkat ini</string>
     <string name="deleteMessageDevicesAll">Hapus di semua perangkat saya</string>
     <string name="deleteMessageEveryone">Hapus untuk semua orang</string>
     <plurals name="deleteMessageFailed">
         <item quantity="other">Gagal menghapus pesan</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">Beberapa pesan yang Anda pilih tidak dapat dihapus dari semua perangkat Anda</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">Beberapa pesan yang Anda pilih tidak dapat dihapus untuk semua orang</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Anda yakin ingin menghapus pesan-pesan ini untuk semua orang?</string>
     <string name="deleting">Menghapus</string>
@@ -336,6 +353,7 @@
     <string name="displayNameNew">Pilih nama tampilan baru</string>
     <string name="displayNamePick">Pilih nama tampilan anda</string>
     <string name="displayNameSet">Atur Nama Tampilan</string>
+    <string name="displayNameVisible">Nama Tampilan Anda dapat dilihat oleh pengguna, grup, dan komunitas yang berinteraksi dengan Anda.</string>
     <string name="document">Dokumen</string>
     <string name="done">Selesai</string>
     <string name="download">Unduh</string>
@@ -383,6 +401,7 @@
     <string name="groupCreateErrorNoMembers">Pilih setidaknya satu anggota grup lainnya.</string>
     <string name="groupDelete">Hapus Grup</string>
     <string name="groupDeleteDescription">Apakah Anda yakin ingin menghapus <b>{group_name}?</b> Ini akan menghapus semua anggota dan menghapus semua konten grup.</string>
+    <string name="groupDeletedMemberDescription">{group_name} telah dihapus oleh admin grup. Anda tidak akan dapat mengirim pesan lagi.</string>
     <string name="groupDescriptionEnter">Masukkan deskripsi grup</string>
     <string name="groupDisplayPictureUpdated">Gambar tampilan grup diperbarui.</string>
     <string name="groupEdit">Ubah Grup</string>
@@ -395,12 +414,18 @@
     <string name="groupInviteFailedMultiple">Gagal mengundang {name} dan {count} lainnya ke {group_name}</string>
     <string name="groupInviteFailedTwo">Gagal mengundang {name} dan {other_name} ke {group_name}</string>
     <string name="groupInviteFailedUser">Gagal mengundang {name} ke {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> mengundang Anda untuk gabung kembali ke <b>{group_name}</b>, tempat Anda menjadi Admin.</string>
+    <string name="groupInviteReinviteYou">Anda diundang untuk bergabung kembali ke <b>{group_name}</b>, tempat Anda menjadi Admin.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="other">Mengirim undangan</item>
+    </plurals>
     <string name="groupInviteSent">Undangan terkirim</string>
     <string name="groupInviteSuccessful">Undangan grup berhasil</string>
     <string name="groupInviteVersion">Pengguna harus memiliki rilis terbaru untuk menerima undangan</string>
     <string name="groupInviteYou"><b>Anda</b> diundang untuk bergabung dengan grup.</string>
     <string name="groupInviteYouAndMoreNew"><b>Anda</b> dan <b>{count} lainnya</b> telah diundang untuk bergabung ke grup.</string>
     <string name="groupInviteYouAndOtherNew"><b>Anda</b> dan <b>{other_name}</b> telah diundang untuk bergabung dengan grup.</string>
+    <string name="groupInviteYouHistory"><b>Anda</b> diundang untuk bergabung dengan grup. Riwayat obrolan dibagikan.</string>
     <string name="groupLeave">Keluar grup</string>
     <string name="groupLeaveDescription">Apakah Anda yakin ingin meninggalkan <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Apakah Anda yakin ingin keluar dari <b>{group_name}</b>?\n\nIni akan menghapus semua anggota dan menghapus semua konten grup.</string>
@@ -425,6 +450,7 @@
     <string name="groupNameEnterShorter">Masukkan nama grup yang lebih pendek.</string>
     <string name="groupNameNew">Nama grup sekarang \'{group_name}\'.</string>
     <string name="groupNameUpdated">Nama grup diperbarui.</string>
+    <string name="groupNameVisible">Nama grup dapat dilihat oleh semua anggota grup.</string>
     <string name="groupNoMessages">Tidak ada pesan dari <b>{group_name}</b>. Kirim pesan untuk memulai percakapan!</string>
     <string name="groupOnlyAdmin">Anda adalah satu-satunya admin di <b>{group_name}</b>.\n\nAnggota grup dan pengaturan tidak dapat diubah tanpa admin.</string>
     <string name="groupPromotedYou"><b>Anda</b> dipromosikan menjadi Admin.</string>
@@ -443,6 +469,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> dan <b>{count} lainnya</b> dikeluarkan dari grup.</string>
     <string name="groupRemovedTwo"><b>{name}</b> dan <b>{other_name}</b> dikeluarkan dari grup.</string>
     <string name="groupRemovedYou">Anda dikeluarkan dari <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Anda telah dikeluarkan dari grup.</string>
     <string name="groupRemovedYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> telah dikeluarkan dari grup.</string>
     <string name="groupRemovedYouTwo"><b>Anda</b> dan <b>{other_name}</b> telah dikeluarkan dari grup.</string>
     <string name="groupSetDisplayPicture">Atur Tampilan Gambar Grup</string>
@@ -566,6 +593,7 @@
     <string name="next">Selanjutnya</string>
     <string name="nicknameDescription">Pilih nama panggilan untuk <b>{name}</b>. Ini akan muncul untuk Anda dalam percakapan satu-satu dan grup Anda.</string>
     <string name="nicknameEnter">Masukkan nama panggilan</string>
+    <string name="nicknameErrorShorter">Harap masukkan nama pendek</string>
     <string name="nicknameRemove">hapus nama panggilan</string>
     <string name="nicknameSet">Atur Nama Panggilan</string>
     <string name="no">Tidak</string>

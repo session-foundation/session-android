@@ -36,6 +36,12 @@
     <string name="adminRemovedUser">\"Usunięto z roli administratora: <b>{name}</b></string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> nie są już administratorami.</string>
     <string name="adminRemovedUserOther">Użytkownicy <b>{name}</b> i <b>{other_name}</b> nie są już administratorami.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Wysyłanie promocji administratora</item>
+        <item quantity="few">Wysyłanie promocji administratora</item>
+        <item quantity="many">Wysyłanie promocji administratora</item>
+        <item quantity="other">Wysyłanie promocji administratora</item>
+    </plurals>
     <string name="adminSettings">Ustawienia administratora</string>
     <string name="adminTwoPromotedToAdmin">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali administratorami.</string>
     <string name="andMore">+{count}</string>
@@ -142,11 +148,13 @@
     <string name="callsInProgress">Trwa połączenie</string>
     <string name="callsIncoming">Połączenie przychodzące od {name}</string>
     <string name="callsIncomingUnknown">Połączenie przychodzące</string>
+    <string name="callsMicrophonePermissionsRequired">Nie odebrałeś połączenia od <b>{name}</b> ponieważ nie przyznano <b>dostępu do mikrofonu</b>.</string>
     <string name="callsMissed">Nieodebrane połączenie</string>
     <string name="callsMissedCallFrom">Nieodebrane połączenie od {name}</string>
     <string name="callsNotificationsRequired">Połączenia głosowe i wideo wymagają włączenia powiadomień w ustawieniach systemowych urządzenia.</string>
     <string name="callsPermissionsRequired">Wymagane uprawnienia do połączeń</string>
     <string name="callsPermissionsRequiredDescription">Uprawnienie „Połączenia głosowe i wideo” można włączyć w ustawieniach prywatności.</string>
+    <string name="callsPermissionsRequiredDescription1">Uprawnienie „Połączenia głosowe i wideo” można włączyć w Ustawieniach uprawnień.</string>
     <string name="callsReconnecting">Ponowne łączenie…</string>
     <string name="callsRinging">Dzwonienie...</string>
     <string name="callsSessionCall">Połączenie z aplikacji {app_name}</string>
@@ -284,6 +292,12 @@
         <item quantity="many">Usuń wiadomości</item>
         <item quantity="other">Usuń wiadomości</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Czy na pewno chcesz usunąć tę wiadomość?</item>
+        <item quantity="few">Czy na pewno chcesz usunąć te wiadomości?</item>
+        <item quantity="many">Czy na pewno chcesz usunąć te wiadomości?</item>
+        <item quantity="other">Czy na pewno chcesz usunąć te wiadomości?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Wiadomość usunięta</item>
         <item quantity="few">Usunięto wiadomości</item>
@@ -292,6 +306,12 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Wiadomość została usunięta</string>
     <string name="deleteMessageDeletedLocally">Wiadomość została usunięta na tym urządzeniu</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Czy na pewno chcesz usunąć tę wiadomość tylko z tego urządzenia?</item>
+        <item quantity="few">Czy na pewno chcesz usunąć te wiadomości tylko z tego urządzenia?</item>
+        <item quantity="many">Czy na pewno chcesz usunąć te wiadomości tylko z tego urządzenia?</item>
+        <item quantity="other">Czy na pewno chcesz usunąć te wiadomości tylko z tego urządzenia?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Czy na pewno chcesz usunąć tę wiadomość u wszystkich?</string>
     <string name="deleteMessageDeviceOnly">Usuń tylko na tym urządzeniu</string>
     <string name="deleteMessageDevicesAll">Usuń na wszystkich moich urządzeniach</string>
@@ -301,6 +321,18 @@
         <item quantity="few">Nie udało się usunąć wiadomości</item>
         <item quantity="many">Nie udało się usunąć wiadomości</item>
         <item quantity="other">Nie udało się usunąć wiadomości</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Tej wiadomości nie można usunąć ze wszystkich urządzeń</item>
+        <item quantity="few">Niektórych wybranych wiadomości nie można usunąć ze wszystkich urządzeń</item>
+        <item quantity="many">Niektórych wybranych wiadomości nie można usunąć ze wszystkich urządzeń</item>
+        <item quantity="other">Niektórych wybranych wiadomości nie można usunąć ze wszystkich urządzeń</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Ta wiadomość nie może zostać usunięta dla wszystkich</item>
+        <item quantity="few">Niektóre z wybranych wiadomości nie mogą zostać usunięte dla wszystkich osób</item>
+        <item quantity="many">Niektóre z wybranych wiadomości nie mogą zostać usunięte dla wszystkich osób</item>
+        <item quantity="other">Niektóre z wybranych wiadomości nie mogą zostać usunięte dla wszystkich osób</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Czy na pewno chcesz usunąć te wiadomości u wszystkich?</string>
     <string name="deleting">Usuwanie</string>
@@ -348,6 +380,7 @@
     <string name="displayNameNew">Wybierz nową nazwę wyświetlaną</string>
     <string name="displayNamePick">Wybierz nazwę wyświetlaną</string>
     <string name="displayNameSet">Ustaw nazwę wyświetlaną</string>
+    <string name="displayNameVisible">Wyświetlana nazwa użytkownika jest widoczna dla użytkowników, grup i społeczności, z którymi użytkownik wchodzi w interakcje.</string>
     <string name="document">Dokument</string>
     <string name="done">Gotowe</string>
     <string name="download">Pobierz</string>
@@ -398,6 +431,7 @@
     <string name="groupCreateErrorNoMembers">Wybierz co najmniej jednego innego członka grupy.</string>
     <string name="groupDelete">Usuń grupę</string>
     <string name="groupDeleteDescription">Czy na pewno chcesz usunąć grupę <b>{group_name}</b>? Spowoduje to usunięcie wszystkich członków i całej zawartości grupy.</string>
+    <string name="groupDeletedMemberDescription">{group_name} została usunięta przez administratora grupy. Nie będzie można wysyłać więcej wiadomości.</string>
     <string name="groupDescriptionEnter">Wprowadź opis grupy</string>
     <string name="groupDisplayPictureUpdated">Zaktualizowano zdjęcie profilowe grupy.</string>
     <string name="groupEdit">Edytuj grupę</string>
@@ -410,12 +444,21 @@
     <string name="groupInviteFailedMultiple">Nie udało się zaprosić użytkownika {name} i {count} innych użytkowników do grupy {group_name}</string>
     <string name="groupInviteFailedTwo">Nie udało się zaprosić użytkowników {name} i {other_name} do grupy {group_name}</string>
     <string name="groupInviteFailedUser">Nie udało się zaprosić użytkownika {name} do grupy {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> zaprosił Cię do ponownego dołączenia do <b>{group_name}</b>, gdzie jesteś administratorem.</string>
+    <string name="groupInviteReinviteYou">Zostałeś zaproszony do ponownego dołączenia do <b>{group_name}</b>, gdzie jesteś administratorem.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Wysyłanie zaproszenia</item>
+        <item quantity="few">Wysyłanie zaproszeń</item>
+        <item quantity="many">Wysyłanie zaproszeń</item>
+        <item quantity="other">Wysyłanie zaproszeń</item>
+    </plurals>
     <string name="groupInviteSent">Zaproszenie zostało wysłane</string>
     <string name="groupInviteSuccessful">Zaproszenie do grupy zakończone sukcesem</string>
     <string name="groupInviteVersion">Aby otrzymywać zaproszenia, użytkownicy muszą mieć najnowszą wersję</string>
     <string name="groupInviteYou"><b>Zaproszono</b> Cię do grupy.</string>
     <string name="groupInviteYouAndMoreNew"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście zaproszeni do grupy.</string>
     <string name="groupInviteYouAndOtherNew"><b>Ty</b> oraz użytkownik <b>{other_name}</b> zostaliście zaproszeni do grupy.</string>
+    <string name="groupInviteYouHistory"><b>Zostałeś zaproszony</b> do dołączenia do grupy. Udostępniono historię czatu.</string>
     <string name="groupLeave">Opuść grupę</string>
     <string name="groupLeaveDescription">Czy na pewno chcesz opuścić grupę <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Czy na pewno chcesz opuścić grupę <b>{group_name}</b>?\n\nUsunie to wszystkich jej członków i całą zawartość grupy.</string>
@@ -440,6 +483,7 @@
     <string name="groupNameEnterShorter">Wprowadź krótszą nazwę grupy.</string>
     <string name="groupNameNew">Nazwa grupy to od teraz {group_name}</string>
     <string name="groupNameUpdated">Zaktualizowano nazwę grupy.</string>
+    <string name="groupNameVisible">Nazwa grupy jest widoczna dla wszystkich jej członków.</string>
     <string name="groupNoMessages">Brak wiadomości w grupie <b>{group_name}</b>. Wyślij wiadomość, aby rozpocząć rozmowę!</string>
     <string name="groupOnlyAdmin">Jesteś jedynym administratorem grupy <b>{group_name}</b>.\n\nBez administratora nie można zmieniać członków grupy ani ustawień.</string>
     <string name="groupPromotedYou"><b>Zostajesz</b> administratorem.</string>
@@ -464,6 +508,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> zostali usunięci z grupy.</string>
     <string name="groupRemovedTwo">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali usunięci z grupy.</string>
     <string name="groupRemovedYou">Usunięto Cię z grupy <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Zostałeś usunięty z grupy.</string>
     <string name="groupRemovedYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście usunięci z grupy.</string>
     <string name="groupRemovedYouTwo"><b>Ty</b> oraz <b>użytkownik {other_name}</b> zostaliście usunięci z grupy.</string>
     <string name="groupSetDisplayPicture">Ustaw zdjęcie profilowe grupy</string>
@@ -602,6 +647,7 @@
     <string name="next">Następne</string>
     <string name="nicknameDescription">Wybierz pseudonim dla użytkownika <b>{name}</b>. Będzie on widoczny dla Ciebie w rozmowach prywatnych i grupowych.</string>
     <string name="nicknameEnter">Wprowadź pseudonim</string>
+    <string name="nicknameErrorShorter">Wprowadź krótszy pseudonim</string>
     <string name="nicknameRemove">Usuń pseudonim</string>
     <string name="nicknameSet">Ustaw pseudonim</string>
     <string name="no">Nie</string>

@@ -256,7 +256,7 @@
     <string name="create">Skapa</string>
     <string name="cut">Klipp ut</string>
     <string name="databaseErrorGeneric">Ett databasfel uppstod.\n\nExportera dina programloggar för att dela för felsökning. Om detta misslyckas, installera om {app_name} och återställ ditt konto.\n\nVarning: Detta kommer att resultera i förlust av alla meddelanden, bifogningar och kontodata äldre än två veckor.</string>
-    <string name="databaseErrorTimeout">Vi har märkt att {app_name} tar lång tid att starta.\n\nDu kan fortsätta vänta, exportera dina felsökningsloggar för att dela för felsökning, eller försöka starta om Session.</string>
+    <string name="databaseErrorTimeout">Vi har märkt att {app_name} tar lång tid att starta.\n\nDu kan fortsätta vänta, exportera dina felsökningsloggar för att dela för felsökning, eller försöka starta om {app_name}.</string>
     <string name="databaseErrorUpdate">Din appdatabas är inkompatibel med den här versionen av {app_name}. Installera om appen och återställ ditt konto för att skapa en ny databas och fortsätta använda {app_name}.\n\nVarning: Detta resulterar i förlust av alla meddelanden och bilagor äldre än två veckor.</string>
     <string name="databaseOptimizing">Optimerar databas</string>
     <string name="debugLog">Felsökningslogg</string>

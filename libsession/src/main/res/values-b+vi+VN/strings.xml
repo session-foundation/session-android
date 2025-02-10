@@ -36,6 +36,9 @@
     <string name="adminRemovedUser"><b>{name}</b> đã bị loại khỏi Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> và <b>{count} người khác</b> đã bị xoá khỏi vai trò Quản trị viên.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> và <b>{other_name}</b> đã bị xoá khỏi vai trò Quản trị viên.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="other">Đang gửi khuyến mại quản trị viên</item>
+    </plurals>
     <string name="adminSettings">Cài đặt quản trị viên</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> và <b>{other_name} </b> được thăng lên làm Admin.</string>
     <string name="andMore">+{count}</string>
@@ -148,6 +151,7 @@
     <string name="callsNotificationsRequired">Các cuộc gọi giọng nói và video yêu cầu phải bật thông báo trong cài đặt hệ thống thiết bị của bạn.</string>
     <string name="callsPermissionsRequired">Yêu cầu Quyền Gọi</string>
     <string name="callsPermissionsRequiredDescription">Bạn có thể bật quyền \"Gọi giọng nói và video\" trong cài đặt Quyền riêng tư.</string>
+    <string name="callsPermissionsRequiredDescription1">Bạn có thể bật quyền \"Gọi giọng nói và video\" trong cài đặt quyền.</string>
     <string name="callsReconnecting">Đang kết nối lại…</string>
     <string name="callsRinging">Đang đổ chuông...</string>
     <string name="callsSessionCall">Cuộc gọi {app_name}</string>
@@ -255,7 +259,7 @@
     <string name="create">Tạo</string>
     <string name="cut">Cắt</string>
     <string name="databaseErrorGeneric">Một lỗi cơ sở dữ liệu đã xảy ra.\n\nXuất nhật ký ứng dụng của bạn để chia sẻ nhằm xử lý sự cố. Nếu không thành công, hãy cài đặt lại {app_name} và khôi phục tài khoản của bạn.\n\nCảnh báo: Điều này sẽ dẫn đến mất tất cả tin nhắn, tệp đính kèm và dữ liệu tài khoản cũ hơn hai tuần.</string>
-    <string name="databaseErrorTimeout">Chúng tôi nhận thấy {app_name} mất nhiều thời gian để khởi động.\n\nBạn có thể tiếp tục chờ, xuất nhật ký thiết bị để chia sẻ hỗ trợ khắc phục sự cố, hoặc thử khởi động lại Session.</string>
+    <string name="databaseErrorTimeout">Chúng tôi nhận thấy {app_name} mất nhiều thời gian để khởi động.\n\nBạn có thể tiếp tục chờ, xuất nhật ký thiết bị để chia sẻ hỗ trợ khắc phục sự cố, hoặc thử khởi động lại {app_name}.</string>
     <string name="databaseErrorUpdate">Cơ sở dữ liệu ứng dụng của bạn không tương thích với phiên bản {app_name} này. Cài đặt lại ứng dụng và khôi phục tài khoản của bạn để tạo một cơ sở dữ liệu mới và tiếp tục sử dụng {app_name}.\n\nCảnh báo: Điều này sẽ dẫn đến việc mất tất cả tin nhắn và tệp đính kèm cũ hơn hai tuần.</string>
     <string name="databaseOptimizing">Đang tối ưu hóa cơ sở dữ liệu</string>
     <string name="debugLog">Nhật ký sửa lỗi</string>
@@ -279,17 +283,29 @@
     <plurals name="deleteMessage">
         <item quantity="other">Xóa tin nhắn</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="other">Bạn có chắc chắn rằng bạn muốn xoá các tin nhắn này không?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="other">Các tin nhắn đã bị xoá</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Tin nhắn này đã bị xóa</string>
     <string name="deleteMessageDeletedLocally">Tin nhắn sẽ chỉ được xoá trên thiết bị này</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="other">Bạn có chắc rằng bạn muốn xoá những tin nhắn này chỉ từ thiết bị này?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Bạn có chắc chắn rằng bạn muốn xoá tin nhắn này cho mọi người không?</string>
     <string name="deleteMessageDeviceOnly">Chỉ xóa trên thiết bị này</string>
     <string name="deleteMessageDevicesAll">Xóa trên tất cả thiết bị của tôi</string>
     <string name="deleteMessageEveryone">Xoá cho mọi người</string>
     <plurals name="deleteMessageFailed">
         <item quantity="other">Không thể xóa tin nhắn</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">Một số tin nhắn bạn đã chọn không thể bị xóa khỏi tất cả các thiết bị của bạn</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">Một số tin nhắn bạn đã chọn không thể bị xóa cho mọi người</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Bạn có chắc rằng bạn muốn xoá những tin nhắn này cho tất cả mọi người?</string>
     <string name="deleting">Đang xóa</string>
@@ -337,6 +353,7 @@
     <string name="displayNameNew">Chọn một tên hiển thị mới</string>
     <string name="displayNamePick">Chọn tên hiển thị của bạn</string>
     <string name="displayNameSet">Thiết Lập Hiển thị Tên</string>
+    <string name="displayNameVisible">Tên hiển thị của bạn có thể nhìn thấy bởi người dùng, nhóm và cộng đồng mà bạn tương tác.</string>
     <string name="document">Tài liệu</string>
     <string name="done">Xong</string>
     <string name="download">Tải xuống</string>
@@ -384,6 +401,8 @@
     <string name="groupCreateErrorNoMembers">Vui lòng chọn ít nhất một thành viên khác.</string>
     <string name="groupDelete">Xoá nhóm</string>
     <string name="groupDeleteDescription">Bạn có chắc chắn rằng bạn muốn xóa <b>{group_name}</b>? Điều này sẽ loại bỏ tất cả các thành viên và xóa tất cả nội dung nhóm.</string>
+    <string name="groupDeleteDescriptionMember">Bạn có chắc chắn rằng bạn muốn xóa <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} đã bị xóa bởi quản trị viên nhóm. Bạn sẽ không thể gửi thêm tin nhắn nào nữa.</string>
     <string name="groupDescriptionEnter">Nhập mô tả nhóm</string>
     <string name="groupDisplayPictureUpdated">Đã cập nhật ảnh nhóm.</string>
     <string name="groupEdit">Sửa nhóm</string>
@@ -396,12 +415,18 @@
     <string name="groupInviteFailedMultiple">Mời {name} và {count} người khác vào nhóm {group_name} thất bại</string>
     <string name="groupInviteFailedTwo">Mời {name} và {other_name} vào nhóm {group_name} thất bại</string>
     <string name="groupInviteFailedUser">Mời {name} vào nhóm {group_name} thất bại</string>
+    <string name="groupInviteReinvite"><b>{name}</b> đã mời bạn tham gia lại <b>{group_name}</b>, nơi bạn là Quản trị viên.</string>
+    <string name="groupInviteReinviteYou">Bạn đã được mời tham gia lại <b>{group_name}</b>, nơi bạn là Quản trị viên.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="other">Đang gửi lời mời</item>
+    </plurals>
     <string name="groupInviteSent">Đã gửi lời mời</string>
     <string name="groupInviteSuccessful">Mời tham gia nhóm thành công</string>
     <string name="groupInviteVersion">Người dùng phải có phiên bản mới nhất để nhận được lời mời</string>
     <string name="groupInviteYou"><b>Bạn</b> đã được mời tham gia nhóm.</string>
     <string name="groupInviteYouAndMoreNew"><b>Bạn</b> và <b>{count} người khác</b> đã được mời tham gia nhóm.</string>
     <string name="groupInviteYouAndOtherNew"><b>Bạn</b> và <b>{other_name}</b> đã được mời tham gia nhóm.</string>
+    <string name="groupInviteYouHistory"><b>Bạn</b> đã được mời tham gia nhóm. Lịch sử trò chuyện đã được chia sẻ.</string>
     <string name="groupLeave">Rời nhóm</string>
     <string name="groupLeaveDescription">Bạn có chắc chắn rằng bạn muốn rời <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Bạn có chắc chắn rằng bạn muốn rời khỏi <b>{group_name}</b>?\n\nĐiều này sẽ loại bỏ tất cả các thành viên và xóa tất cả nội dung nhóm.</string>
@@ -417,6 +442,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> và <b>{count} người khác</b> đã được mời tham gia nhóm.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> và <b>{other_name}</b> đã được mời tham gia nhóm.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được mời tham gia nhóm. Lịch sử trò chuyện đã được chia sẻ.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Bạn</b> và <b>{other_name}</b> đã được mời tham gia nhóm. Lịch sử trò chuyện đã được chia sẻ.</string>
     <string name="groupMemberYouLeft"><b>Bạn</b> đã rời nhóm.</string>
     <string name="groupMembers">Thành viên nhóm</string>
     <string name="groupMembersNone">Không có thành viên nào khác trong nhóm này.</string>
@@ -426,8 +452,10 @@
     <string name="groupNameEnterShorter">Vui lòng nhập một tên nhóm ngắn hơn.</string>
     <string name="groupNameNew">Tên nhóm hiện giờ là {group_name}.</string>
     <string name="groupNameUpdated">Đã cập nhật tên nhóm.</string>
+    <string name="groupNameVisible">Tên nhóm có thể nhìn thấy bởi tất cả các thành viên trong nhóm.</string>
     <string name="groupNoMessages">Bạn không có tin nhắn nào từ <b>{group_name}.</b> Gửi một tin nhắn để bắt đầu cuộc trò chuyện!</string>
     <string name="groupOnlyAdmin">Bạn là quản trị viên duy nhất trong <b>{group_name}</b>.\n\nCác thành viên và cài đặt nhóm không thể được thay đổi nếu không có quản trị viên.</string>
+    <string name="groupPendingRemoval">Đang chờ loại bỏ</string>
     <string name="groupPromotedYou"><b>Bạn</b> được thăng lên làm Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được thăng lên làm Admin.</string>
     <string name="groupPromotedYouTwo"><b>Bạn</b> và <b>{name}</b> đã được thăng lên làm Admin.</string>
@@ -444,6 +472,7 @@
     <string name="groupRemovedMultiple"><b>{name} </b> và <b>{count} người khác </b> đã bị xoá khỏi nhóm.</string>
     <string name="groupRemovedTwo"><b>{name}</b> và <b>{other_name} </b> đã bị xoá khỏi nhóm.</string>
     <string name="groupRemovedYou">Bạn đã bị xoá khỏi <b>{group_name}.</b></string>
+    <string name="groupRemovedYouGeneral">Bạn đã bị xóa khỏi nhóm.</string>
     <string name="groupRemovedYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã bị xoá khỏi nhóm.</string>
     <string name="groupRemovedYouTwo"><b>Bạn</b> và <b>{other_name}</b> đã bị xoá khỏi nhóm.</string>
     <string name="groupSetDisplayPicture">Thiết Lập Hình ảnh Đại diện Nhóm</string>
@@ -567,6 +596,7 @@
     <string name="next">Tiếp</string>
     <string name="nicknameDescription">Chọn một biệt danh cho <b>{name}</b>. Điều này sẽ xuất hiện với bạn trong các cuộc trò chuyện một-một và nhóm.</string>
     <string name="nicknameEnter">Nhập biệt danh</string>
+    <string name="nicknameErrorShorter">Vui lòng nhập một biệt danh ngắn hơn</string>
     <string name="nicknameRemove">Xóa biệt danh</string>
     <string name="nicknameSet">Thiết Lập Biệt Danh</string>
     <string name="no">Không</string>

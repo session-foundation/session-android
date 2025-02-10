@@ -36,6 +36,12 @@
     <string name="adminRemovedUser"><b>{name}</b> було вилучено із групи.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> та ще <b>{count} інших</b> було вилучено з переліку адміністраторів.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> та <b>{other_name}</b> було вилучено з переліку адміністраторів.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Надсилання прав адміністратора</item>
+        <item quantity="few">Надсилання прав адміністратора</item>
+        <item quantity="many">Надсилання прав адміністраторів</item>
+        <item quantity="other">Надсилання прав адміністраторів</item>
+    </plurals>
     <string name="adminSettings">Адміністраторські налаштування</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> та <b>{other_name}</b> було підвищено до адміністраторів.</string>
     <string name="andMore">+{count}</string>

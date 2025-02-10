@@ -260,7 +260,7 @@
     <string name="create">Creu</string>
     <string name="cut">Torri</string>
     <string name="databaseErrorGeneric">Mae gwall cronfa ddata wedi digwydd.\n\nAllforiwch gofnodion eich cais i\'w rhannu ar gyfer datrys problemau. Os yw hyn yn aflwyddiannus, ailosodwch {app_name} a adfer eich cyfrif.\n\nRhybudd: Bydd hyn yn arwain at golled o\'r holl negeseuon, atodiadau, a data cyfrif sydd ymhellach i ffwrdd na phythefnos.</string>
-    <string name="databaseErrorTimeout">Rydym wedi sylwi bod {app_name} yn cymryd llawer o amser i ddechrau.\n\nGallwch barhau i aros, allforio logiau eich dyfais i\'w rhannu ar gyfer datrys problemau, neu geisio ailgychwyn Session.</string>
+    <string name="databaseErrorTimeout">Rydym wedi sylwi bod {app_name} yn cymryd llawer o amser i ddechrau.\n\nGallwch barhau i aros, allforio logiau eich dyfais i\'w rhannu ar gyfer datrys problemau, neu geisio ailgychwyn {app_name}.</string>
     <string name="databaseErrorUpdate">Mae eich cronfa ddata ap yn anghydnaws â\'r fersiwn hon o {app_name}. Ailosodwch yr ap a darganfod eich cyfrif i greu cronfa ddata newydd a pharhau i ddefnyddio {app_name}.\n\nRhybudd: Bydd hyn yn arwain at golli’r holl negeseuon a’r atodiadau sy’n hŷn na phythefnos.</string>
     <string name="databaseOptimizing">Optimeiddio Cronfa Ddata</string>
     <string name="debugLog">Cofnod Dadfygio</string>

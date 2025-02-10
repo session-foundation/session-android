@@ -255,7 +255,7 @@
     <string name="create">Krijo</string>
     <string name="cut">Prije</string>
     <string name="databaseErrorGeneric">Ndodhi një gabim në bazën e të dhënave.\n\nEksportoni regjistrat e aplikacionit tuaj për ndarjen e problemeve. Nëse kjo nuk ka sukses, ripaketoni {app_name} dhe riktheni llogarinë tuaj.\n\nParalajmërim: Kjo do të rezultojë në humbjen e të gjitha mesazheve, bashkangjitjeve dhe të dhënave të tjera të llogarisë më të vjetra se dy javë.</string>
-    <string name="databaseErrorTimeout">Ne kemi vërejtur që {app_name} po merr shumë kohë për tu nisur.\n\nJu mund të prisni, eksportoni regjistrat e pajisjes suaj për ndihmë në zgjidhjen e problemeve, ose provoni të rinisni Session.</string>
+    <string name="databaseErrorTimeout">Ne kemi vërejtur që {app_name} po merr shumë kohë për tu nisur.\n\nJu mund të prisni, eksportoni regjistrat e pajisjes suaj për ndihmë në zgjidhjen e problemeve, ose provoni të rinisni {app_name}.</string>
     <string name="databaseErrorUpdate">Baza e të dhënave të aplikacionit tuaj është e papajtueshme me këtë version të {app_name}. Rinstaloni aplikacionin dhe riktheni llogarinë tuaj për të gjeneruar një bazë të re të të dhënave dhe për të vazhduar përdorimin e {app_name}.\n\nParalajmërim: Kjo do të rezultojë në humbjen e të gjitha mesazheve dhe bashkëngjitjeve më të vjetra se dy javë.</string>
     <string name="databaseOptimizing">Optimizimi i Bazës së të Dhënave</string>
     <string name="debugLog">Regjistër Diagnostikimesh</string>

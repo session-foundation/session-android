@@ -255,7 +255,7 @@
     <string name="create">Kilira</string>
     <string name="cut">temula</string>
     <string name="databaseErrorGeneric">Waliwo ensobi mu database.\n\nWeereza ebizito by\'ebifaananyi by\'ekiranga okusobola okuetongereza. Bw\'eba ekino ki sembral, ndamu {app_name} otandiseewo n\'okubizuuliza ku akooti yo.\n\nObulabe: Kino kijja kuba kwesitukira mu kufuuka kwa messages zonna, ebifaananyi, n\'amatabi ga accounts ey\'emyaka ebiri p...</string>
-    <string name="databaseErrorTimeout">Tukuboolabye {app_name} enetwala ebweru okuggwa.\n\nMuliisa kulinda, kusitumidde ebirukanya ebyekusibiza okugabana oludde, oba kwemuddira Session.</string>
+    <string name="databaseErrorTimeout">Tukuboolabye {app_name} enetwala ebweru okuggwa.\n\nMuliisa kulinda, kusitumidde ebirukanya ebyekusibiza okugabana oludde, oba kwemuddira {app_name}.</string>
     <string name="databaseErrorUpdate">Database y’app yo si yagwanira ne verison ya {app_name}. Tegyamu app ne kuba okwongera ku Account yo okwongera okukozesa {app_name}.\n\nWarning: Kino kyakuleeteka okufiirwa kwa bubaka bwona n’empapula ezisazeewo ezinyuuse emywaka ebiri ebalagala.</string>
     <string name="databaseOptimizing">Okuza Database</string>
     <string name="debugLog">Log ya Debug</string>

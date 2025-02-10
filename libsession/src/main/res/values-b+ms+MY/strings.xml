@@ -255,7 +255,7 @@
     <string name="create">Buat</string>
     <string name="cut">Potong</string>
     <string name="databaseErrorGeneric">Ralat pangkalan data berlaku.\n\nEksport log aplikasi anda untuk bahagian penyelesaian masalah. Jika ini tidak berjaya, pasang semula {app_name} dan kembalikan akaun anda.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej, lampiran, dan data akaun lebih lama daripada dua minggu.</string>
-    <string name="databaseErrorTimeout">Kami perasan {app_name} mengambil masa yang lama untuk bermula.\n\nAnda boleh terus menunggu, eksport log peranti anda untuk perkongsian penyelesaian masalah atau cuba mulakan semula Session.</string>
+    <string name="databaseErrorTimeout">Kami perasan {app_name} mengambil masa yang lama untuk bermula.\n\nAnda boleh terus menunggu, eksport log peranti anda untuk perkongsian penyelesaian masalah atau cuba mulakan semula {app_name}.</string>
     <string name="databaseErrorUpdate">Pangkalan data aplikasi anda tidak serasi dengan versi {app_name} ini. Pasang semula aplikasi ini dan pulihkan akaun anda untuk menjana pangkalan data baru dan terus menggunakan {app_name}.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej dan lampiran yang lebih lama daripada dua minggu.</string>
     <string name="databaseOptimizing">Mengoptimumkan Pangkalan Data</string>
     <string name="debugLog">Log Nyahpepijat</string>

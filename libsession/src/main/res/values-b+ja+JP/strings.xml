@@ -255,7 +255,7 @@
     <string name="create">作成する</string>
     <string name="cut">切り取り</string>
     <string name="databaseErrorGeneric">データベース エラーが発生しました。\n\nトラブルシューティングのために共有するためにアプリケーション ログをエクスポートします。これが失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。\n\n警告: これにより、2 週間以上前のすべてのメッセージ、添付ファイル、アカウント データが失われます。</string>
-    <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、Sessionを再起動してみてください。</string>
+    <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、{app_name}を再起動してみてください。</string>
     <string name="databaseErrorUpdate">お使いのアプリデータベースはこのバージョンの {app_name} と互換性がありません。アプリを再インストールしてアカウントを復元し、新しいデータベースを生成して {app_name} を使用し続けてください。\n\n警告: これにより、2週間以上前のすべてのメッセージと添付ファイルが失われます。</string>
     <string name="databaseOptimizing">データベースを更新中</string>
     <string name="debugLog">デバッグログ</string>

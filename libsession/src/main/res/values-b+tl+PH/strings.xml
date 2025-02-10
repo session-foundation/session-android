@@ -256,7 +256,7 @@
     <string name="create">Lumikha</string>
     <string name="cut">Putulin</string>
     <string name="databaseErrorGeneric">Nagkaroon ng error sa database.\n\nI-export ang mga log ng iyong application upang ibahagi para sa troubleshooting. Kung hindi ito magtagumpay, i-reinstall ang {app_name} at i-restore ang iyong account.\n\nBabala: Magreresulta ito sa pagkawala ng lahat ng mensahe, attachment, at data ng account na mas luma sa dalawang linggo.</string>
-    <string name="databaseErrorTimeout">Napansin namin na matagal magbukas ang {app_name}.\n\nMaaari kang maghintay, i-export ang logs ng iyong device para sa troubleshooting, o subukang i-restart ang Session.</string>
+    <string name="databaseErrorTimeout">Napansin namin na matagal magbukas ang {app_name}.\n\nMaaari kang maghintay, i-export ang logs ng iyong device para sa troubleshooting, o subukang i-restart ang {app_name}.</string>
     <string name="databaseErrorUpdate">Ang database ng iyong app ay hindi tugma sa bersyong ito ng {app_name}. I-reinstall ang app at ibalik ang iyong account upang makabuo ng bagong database at ipagpatuloy ang paggamit ng {app_name}.\n\nBabala: Magdudulot ito ng pagkawala ng lahat ng mensahe at attachment na mas matanda sa dalawang linggo.</string>
     <string name="databaseOptimizing">Ina-optimize ang Database</string>
     <string name="debugLog">I-debug ang Log</string>

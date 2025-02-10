@@ -256,7 +256,7 @@
     <string name="create">Kreiraj</string>
     <string name="cut">Iseci</string>
     <string name="databaseErrorGeneric">Došlo je do greške u bazi podataka.\n\nIzvezite logove aplikacije kako biste ih podelili za rešavanje problema. Ako to ne uspe, ponovo instalirajte {app_name} i povratite svoj nalog.\n\nUpozorenje: Ovo će rezultirati gubitkom svih poruka, priloga i podataka naloga starijih od dve nedelje.</string>
-    <string name="databaseErrorTimeout">Primetili smo da aplikaciji {app_name} treba dugo vremena da se pokrene.\n\nMožete da nastavite da čekate, izvezete logove uređaja za deljenje radi rešavanja problema ili pokušate ponovo da pokrenete Session.</string>
+    <string name="databaseErrorTimeout">Primetili smo da aplikaciji {app_name} treba dugo vremena da se pokrene.\n\nMožete da nastavite da čekate, izvezete logove uređaja za deljenje radi rešavanja problema ili pokušate ponovo da pokrenete {app_name}.</string>
     <string name="databaseErrorUpdate">Baza podataka vaše aplikacije nije kompatibilna sa ovom verzijom {app_name}. Ponovo instalirajte aplikaciju i vratite vaš nalog kako biste generisali novu bazu podataka i nastavili sa korišćenjem {app_name}.\n\nUpozorenje: Ovo će rezultirati gubitkom wszystkich poruka i privitaka starijih od dve nedelje.</string>
     <string name="databaseOptimizing">Optimizacija baze podataka</string>
     <string name="debugLog">Izveštaj o greškama</string>

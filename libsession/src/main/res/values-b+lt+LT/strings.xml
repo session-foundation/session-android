@@ -257,7 +257,7 @@
     <string name="create">Sukurti</string>
     <string name="cut">Iškirpti</string>
     <string name="databaseErrorGeneric">Įvyko duomenų bazės klaida.\n\nEksportuokite savo programos žurnalus, kad galėtumėte juos pasidalinti sprendžiant problemas. Jei tai bus nesėkminga, perinstaliuokite {app_name} ir atkurkite savo paskyrą.\n\nĮspėjimas: Tai sukels visų pranešimų, priedų ir paskyros duomenų senesnių nei dviejų savaičių praradimą.</string>
-    <string name="databaseErrorTimeout">Pastebėjome, kad {app_name} užtrunka ilgai paleisti.\n\nGalite toliau laukti, eksportuoti savo įrenginio žurnalus, kad galėtumėte juos pasidalinti dėl trikčių šalinimo, arba bandykite iš naujo paleisti Session.</string>
+    <string name="databaseErrorTimeout">Pastebėjome, kad {app_name} užtrunka ilgai paleisti.\n\nGalite toliau laukti, eksportuoti savo įrenginio žurnalus, kad galėtumėte juos pasidalinti dėl trikčių šalinimo, arba bandykite iš naujo paleisti {app_name}.</string>
     <string name="databaseErrorUpdate">Jūsų programos duomenų bazė nesuderinama su šia {app_name} versija. Iš naujo įdiekite programą ir atkurkite savo paskyrą, kad sugeneruotumėte naują duomenų bazę ir toliau naudotumėte {app_name}.\n\nĮspėjimas: Dėl to visos pranešimų ir priedų, senesnių nei dvi savaitės, bus prarastos.</string>
     <string name="databaseOptimizing">Optimizuojama duomenų bazė</string>
     <string name="debugLog">Derinimo žurnalas</string>

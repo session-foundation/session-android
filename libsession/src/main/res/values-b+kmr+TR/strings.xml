@@ -256,7 +256,7 @@
     <string name="create">Çêke</string>
     <string name="cut">Biqusîne</string>
     <string name="databaseErrorGeneric">Çewtiya danegehê derket.\n\nLogên sepana xwe eksport bike ji bo parvekirina xebîtina girtinê. Heke ev bi ser neket, {app_name} naxwe heta tu hesabê xwe nûkirinê.\n\nHişyarî: Ev sêbabiê lêçûnê hemû peyam û adewlîyên zêdeyan êdî yên dua hefteyan.</string>
-    <string name="databaseErrorTimeout">Em teswîr kirin {app_name} bimînte ye.\n\nHûn dikarin perê nîşan bibinine rewşa sernîşana hûn perê logoya ten do dike bibirûje, an berbijîhengê sessionê dîsa baş.herşe cereyan bike.</string>
+    <string name="databaseErrorTimeout">Em teswîr kirin {app_name} bimînte ye.\n\nHûn dikarin perê nîşan bibinine rewşa sernîşana hûn perê logoya ten do dike bibirûje, an berbijîhengê {app_name} dîsa baş.herşe cereyan bike.</string>
     <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی {app_name}. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی {app_name}.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
     <string name="databaseOptimizing">باشکردنی بنکەدراوە</string>
     <string name="debugLog">Loga pînekirina çewtiyan</string>

@@ -255,7 +255,7 @@
     <string name="create">Opprett</string>
     <string name="cut">Klipp ut</string>
     <string name="databaseErrorGeneric">En databasefeil oppstod.\n\nEksporter loggene dine for å dele for feilsøking. Hvis dette mislykkes, installer {app_name} på nytt og gjenopprett kontoen din.\n\nAdvarsel: Dette vil medføre tap av alle meldinger, vedlegg og kontodata eldre enn to uker.</string>
-    <string name="databaseErrorTimeout">Vi har lagt merke til at {app_name} tar lang tid å starte.\n\nDu kan fortsette å vente, eksportere enhetsloggene for å dele for feilsøking, eller prøve å starte Session på nytt.</string>
+    <string name="databaseErrorTimeout">Vi har lagt merke til at {app_name} tar lang tid å starte.\n\nDu kan fortsette å vente, eksportere enhetsloggene for å dele for feilsøking, eller prøve å starte {app_name} på nytt.</string>
     <string name="databaseErrorUpdate">Database til appen din er inkompatibel med denne versjonen av {app_name}. Installer appen på nytt og gjenopprett kontoen din for å generere en ny database og fortsette å bruke {app_name}.\n\nAdvarsel: Dette vil resultere i tap av alle meldinger og vedlegg eldre enn to uker.</string>
     <string name="databaseOptimizing">Optimaliserer databasen</string>
     <string name="debugLog">Feilsøkingslogg</string>

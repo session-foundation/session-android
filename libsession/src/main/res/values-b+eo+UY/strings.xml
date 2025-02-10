@@ -255,7 +255,7 @@
     <string name="create">Krei</string>
     <string name="cut">Eltondi</string>
     <string name="databaseErrorGeneric">Okazis datumbaza eraro.\n\nEksportu viajn uzaddosierojn por kunhavigi por sensiligi. Se ĉi tio malsukcesas, re-instalu {app_name} kaj restaŭru vian konton.\n\nAverto: Ĉi tio rezultos en perdo de ĉiuj mesaĝoj, enmetaĵoj, kaj kontaj datumoj pli malnovaj ol du semajnoj.</string>
-    <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi Session.</string>
+    <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi {app_name}.</string>
     <string name="databaseErrorUpdate">Via aplikaĵa datumbazo ne kongruas kun ĉi tiu versio de {app_name}. Reinstalu la aplikaĵon kaj restarigu vian konton por generi novan datumbazon kaj daŭrigi la uzadon de {app_name}.\n\nAverto: Ĉi tio rezultos en la perdo de ĉiuj mesaĝoj kaj aldonaĵoj pli aĝaj ol du semajnoj.</string>
     <string name="databaseOptimizing">Optimumigante Datumbazon</string>
     <string name="debugLog">Sencimiga protokolo</string>

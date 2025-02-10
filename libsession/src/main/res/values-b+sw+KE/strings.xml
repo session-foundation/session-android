@@ -256,7 +256,7 @@
     <string name="create">Unda</string>
     <string name="cut">Kata</string>
     <string name="databaseErrorGeneric">Kosa la database limetokea.\n\nToa logi za programu zako kushirikisha kwa utatuzi. Ikiwa hili halitafanikiwa, sakinisha tena {app_name} na urejeshe akaunti yako.\n\n Onyo: Hii itasababisha kupotea kwa ujumbe wote, viambatisho, na data ya akaunti iliyo zaidi ya wiki mbili.</string>
-    <string name="databaseErrorTimeout">Tumeona {app_name} inachukua muda mrefu kuanza.\n\nUnaweza kuendelea kusubiri, kuhamisha kumbukumbu za kifaa chako kushiriki kwa kutatua shida, au jaribu kuanzisha Session upya.</string>
+    <string name="databaseErrorTimeout">Tumeona {app_name} inachukua muda mrefu kuanza.\n\nUnaweza kuendelea kusubiri, kuhamisha kumbukumbu za kifaa chako kushiriki kwa kutatua shida, au jaribu kuanzisha {app_name} upya.</string>
     <string name="databaseErrorUpdate">Hifadhidata ya programu yako hailingani na toleo hili la {app_name}. Sakinusha programu na urejeshe akaunti yako ili kuunda hifadhidata mpya na uendelee kutumia {app_name}.\n\nOnyo: Hii itasababisha kupoteza ujumbe na viambatanisho vyote vilivyo zaidi ya wiki mbili.</string>
     <string name="databaseOptimizing">Kuhamisha Hifadhidata</string>
     <string name="debugLog">Logi ya Kurekebisha</string>

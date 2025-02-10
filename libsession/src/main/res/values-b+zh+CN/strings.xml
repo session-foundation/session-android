@@ -36,6 +36,9 @@
     <string name="adminRemovedUser"><b>{name}</b>被移除了管理员身份。</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b>和其他<b>{count}人</b>的管理身份被移除。</string>
     <string name="adminRemovedUserOther"><b>{name}</b>和<b>{other_name}</b>的管理身份被移除。</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="other">发送管理员推广信息</item>
+    </plurals>
     <string name="adminSettings">管理员设置</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b>和<b>{other_name}</b>被设置为管理员。</string>
     <string name="andMore">+{count}</string>
@@ -148,6 +151,7 @@
     <string name="callsNotificationsRequired">语音和视频通话需要在您的设备系统设置中启用通知。</string>
     <string name="callsPermissionsRequired">请授予通话权限</string>
     <string name="callsPermissionsRequiredDescription">您可以在隐私设置中启用 \"语音和视频通话\" 权限。</string>
+    <string name="callsPermissionsRequiredDescription1">您可以在权限设置中启用 “语音和视频通话 ”权限。</string>
     <string name="callsReconnecting">重连中...</string>
     <string name="callsRinging">呼叫中...</string>
     <string name="callsSessionCall">{app_name}通话</string>
@@ -279,11 +283,17 @@
     <plurals name="deleteMessage">
         <item quantity="other">删除消息</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="other">您确定要删除这些信息吗？</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="other">消息已删除</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">此消息已被删除</string>
     <string name="deleteMessageDeletedLocally">此消息在此设备上已被删除</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="other">您确定只从该设备删除这些信息吗？</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">您确定要为所有人删除此消息吗？</string>
     <string name="deleteMessageDeviceOnly">仅从此设备上删除</string>
     <string name="deleteMessageDevicesAll">从我的所有设备删除</string>
@@ -384,6 +394,7 @@
     <string name="groupCreateErrorNoMembers">请至少选择一名群组成员。</string>
     <string name="groupDelete">删除群组</string>
     <string name="groupDeleteDescription">您确定要删除<b>{group_name}</b>吗？该操作将移除所有成员并删除所有群组内容。</string>
+    <string name="groupDeletedMemberDescription">{group_name} 已被群组管理员删除。您将无法再发送任何信息。</string>
     <string name="groupDescriptionEnter">输入群组描述</string>
     <string name="groupDisplayPictureUpdated">群组头像已更新。</string>
     <string name="groupEdit">编辑群组</string>
@@ -396,6 +407,9 @@
     <string name="groupInviteFailedMultiple">邀请{name}和其他{count}位成员加入{group_name}失败</string>
     <string name="groupInviteFailedTwo">邀请{name}和{other_name}加入{group_name}失败</string>
     <string name="groupInviteFailedUser">邀请{name}加入{group_name}失败</string>
+    <plurals name="groupInviteSending">
+        <item quantity="other">正在发送邀请</item>
+    </plurals>
     <string name="groupInviteSent">邀请已发送</string>
     <string name="groupInviteSuccessful">群组邀请成功</string>
     <string name="groupInviteVersion">用户必须使用最新版本才能接受邀请</string>
@@ -417,6 +431,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b>和<b>{count}名其他成员</b>被邀请加入群组。</string>
     <string name="groupMemberNewTwo"><b>{name}</b>和<b>{other_name}</b>被邀请加入了群组。</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>您</b>和其他<b>{count}人</b>被邀请加入群组。聊天记录已共享。</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>您</b>和<b>{other_name}</b>被邀请加入了群组。 聊天记录已共享。</string>
     <string name="groupMemberYouLeft"><b>您</b>离开了群组。</string>
     <string name="groupMembers">群成员</string>
     <string name="groupMembersNone">此群组没有其他成员。</string>
@@ -428,6 +443,7 @@
     <string name="groupNameUpdated">群组名称已更新。</string>
     <string name="groupNoMessages">您没有来自<b>{group_name}</b>的消息。发送一条消息开始会话！</string>
     <string name="groupOnlyAdmin">您是<b>{group_name}</b>中唯一的管理员。\n\n没有管理员，群组成员和设置将无法被更改。</string>
+    <string name="groupPendingRemoval">待移除</string>
     <string name="groupPromotedYou"><b>您</b>被设置为管理员。</string>
     <string name="groupPromotedYouMultiple"><b>您</b>和其他<b>{count}人</b>被授权为管理员。</string>
     <string name="groupPromotedYouTwo"><b>您</b>和<b>{name}</b>被授权为管理员。</string>

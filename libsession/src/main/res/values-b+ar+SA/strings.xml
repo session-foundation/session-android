@@ -2,9 +2,9 @@
 <resources>
     <string name="about">حول</string>
     <string name="accept">قبول</string>
-    <string name="accountIDCopy">نسخ معرف الحساب</string>
+    <string name="accountIDCopy">نسخ مُعرف الحساب</string>
     <string name="accountIdCopied">تم نسخ معرف الحساب</string>
-    <string name="accountIdCopyDescription">انسخ معرف حسابك ثم شاركه مع أصدقائك حتى يتمكنوا من مراسلتك.</string>
+    <string name="accountIdCopyDescription">نسخ مُعرف حسابك ثم شاركه مع أصدقائك حتى يتمكنوا من مراسلتك.</string>
     <string name="accountIdEnter">أدخل معرف الحساب</string>
     <string name="accountIdErrorInvalid">معرف الحساب هذا غير صالح. يرجى التحقق والمحاولة مرة أخرى.</string>
     <string name="accountIdOrOnsEnter">أدخل معرف الحساب أو ONS</string>
@@ -17,10 +17,10 @@
     <string name="adminCannotBeRemoved">لا يمكن إزاله المشرف.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> و <b>{count} آخرين</b> تمت ترقيتهم إلى مشرف.</string>
     <string name="adminPromote">ترقية المشرفين</string>
-    <string name="adminPromoteDescription">هل أنت متأكد من أنك تريد ترقية <b>{name}</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
-    <string name="adminPromoteMoreDescription">هل أنت متأكد من أنك تريد ترقية <b>{name}</b> و <b>{count} آخرين</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
+    <string name="adminPromoteDescription">هل أنت متأكد من ترقية <b>{name}</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
+    <string name="adminPromoteMoreDescription">هل أنت متأكد من ترقية <b>{name}</b> و <b>{count} آخرين</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
     <string name="adminPromoteToAdmin">ترقية إلى مشرف</string>
-    <string name="adminPromoteTwoDescription">هل أنت متأكد من أنك تريد ترقية <b>{name}</b> و <b>{other_name}</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
+    <string name="adminPromoteTwoDescription">هل أنت متأكد من ترقية <b>{name}</b> و <b>{other_name}</b> إلى مشرف؟ لا يمكن إزالة المشرفين.</string>
     <string name="adminPromotedToAdmin"><b>{name}</b> تم ترقيته إلى مشرف.</string>
     <string name="adminPromotionFailed">فشل الترقيه كمشرف</string>
     <string name="adminPromotionFailedDescription">فشل في ترقية {name} في {group_name}</string>
@@ -36,11 +36,19 @@
     <string name="adminRemovedUser"><b>{name}</b> تم إزالته كمشرف.</string>
     <string name="adminRemovedUserMultiple">تمت إزالة <b>{name}</b> و<b>{count} آخرين</b> من منصبهم كمشرفين.</string>
     <string name="adminRemovedUserOther">تمت إزالة <b>{name}</b> و<b>{other_name}</b> من منصبي المشرف.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="zero">إرسال ترقيات المشرفين</item>
+        <item quantity="one">إرسال ترقية المشرف</item>
+        <item quantity="two">إرسال ترقيات المشرفين</item>
+        <item quantity="few">إرسال ترقيات المشرفين</item>
+        <item quantity="many">إرسال ترقيات المشرفين</item>
+        <item quantity="other">إرسال ترقيات المشرفين</item>
+    </plurals>
     <string name="adminSettings">إعدادات المشرف</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> و <b>{other_name}</b> تم ترقيتهم إلى مشرف.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">مجهول</string>
-    <string name="appearanceAutoDarkMode">الوضع المظلم تلقائياً</string>
+    <string name="appearanceAutoDarkMode">الوضع المظلم التلقائي</string>
     <string name="appearanceHideMenuBar">إخفاء شريط القائمة</string>
     <string name="appearanceLanguage">اللغة</string>
     <string name="appearanceLanguageDescription">اختر إعدادات اللغة الخاصة بك لتطبيق {app_name}. سيعيد {app_name} التشغيل عند تغيير إعدادات اللغة.</string>
@@ -72,7 +80,7 @@
     <string name="attachmentsDuration">المدة:</string>
     <string name="attachmentsErrorLoad">خطأ في إرفاق الملف</string>
     <string name="attachmentsErrorMediaSelection">فشل في تحديد المرفق</string>
-    <string name="attachmentsErrorNoApp">لم يتم العثور على أي تطبيق لاختيار الوسائط.</string>
+    <string name="attachmentsErrorNoApp">لم يتم العثور على تطبيق لاختيار الوسائط.</string>
     <string name="attachmentsErrorNotSupported">نوع الملف هذا غير مدعوم.</string>
     <string name="attachmentsErrorNumber">لا يمكن إرسال أكثر من 32 ملف صورة وفيديو دفعة واحدة.</string>
     <string name="attachmentsErrorOpen">تعذر فتح الملف.</string>
@@ -114,12 +122,12 @@
     <string name="authenticateNotAccessed">تعذر الوصول إلى المصادقة.</string>
     <string name="authenticateToOpen">قم بالمصادقة لفتح {app_name}.</string>
     <string name="back">رجوع</string>
-    <string name="banDeleteAll">حظر وحذف الكل</string>
+    <string name="banDeleteAll">منع وحذف الكل</string>
     <string name="banErrorFailed">فشل المنع</string>
     <string name="banUnbanErrorFailed">لقد فشل الغاء المنع</string>
     <string name="banUnbanUser">الغاء منع المستخدم</string>
     <string name="banUnbanUserUnbanned">تم رفع المنع عن المستخدم</string>
-    <string name="banUser">حظر المستخدم</string>
+    <string name="banUser">منع المستخدم</string>
     <string name="banUserBanned">تم منع المستخدم</string>
     <string name="block">حظر</string>
     <string name="blockBlockedDescription">إلغاء حظر جهة الإتصال لإرسال رسالة</string>
@@ -127,9 +135,9 @@
     <string name="blockBlockedUser">تم حظر {name}</string>
     <string name="blockDescription">هل أنت متأكد من حظر <b>{name}؟</b> المستخدمين المحظورين لا يمكنهم إرسال طلبات الرسائل، دعوات المجموعات أو الاتصال بك.</string>
     <string name="blockUnblock">إلغاء الحظر</string>
-    <string name="blockUnblockName">هل أنت متأكد أنك تريد إلغاء حظر <b>{name}</b>؟</string>
-    <string name="blockUnblockNameMultiple">هل أنت متأكد أنك تريد إلغاء حظر <b>{name}</b> و<b>{count} آخرين</b>؟</string>
-    <string name="blockUnblockNameTwo">هل أنت متأكد أنك تريد إلغاء حظر <b>{name}</b> وشخص آخر؟</string>
+    <string name="blockUnblockName">هل أنت متأكد من إلغاء حظر <b>{name}</b>؟</string>
+    <string name="blockUnblockNameMultiple">هل أنت متأكد من إلغاء حظر <b>{name}</b> و<b>{count} آخرين</b>؟</string>
+    <string name="blockUnblockNameTwo">هل أنت متأكد من إلغاء حظر <b>{name}</b> وشخص آخر؟</string>
     <string name="blockUnblockedUser">تم الغاء الحظر عن {name}</string>
     <string name="call">اتصال</string>
     <string name="callsCalledYou">{name} اتصل بك</string>
@@ -167,10 +175,10 @@
     <string name="cancel">إلغاء</string>
     <string name="changePasswordFail">فشل في تغيير كلمة المرور</string>
     <string name="clear">مسح</string>
-    <string name="clearAll">امسح الكل</string>
-    <string name="clearDataAll">اِمسح جميع البيانات</string>
+    <string name="clearAll">مسح الكل</string>
+    <string name="clearDataAll">مسح جميع البيانات</string>
     <string name="clearDataAllDescription">سيؤدي هذا إلى حذف رسائلك وجهات الاتصال بشكل دائم. هل ترغب في مسح هذا الجهاز فقط، أو حذف بياناتك من الشبكة أيضًا؟</string>
-    <string name="clearDataError">لم تحذف البيانات</string>
+    <string name="clearDataError">لم تُحذف البيانات</string>
     <plurals name="clearDataErrorDescription">
         <item quantity="zero">لم يتم حذف البيانات بواسطة %1$d من عقد الخدمة Service Nodes. معرفات عقد الخدمة Service Node IDs: %2$s.</item>
         <item quantity="one">لم يتم حذف البيانات بواسطة عقدة الخدمة (Service Node) %1$d . معرف عقدة الخدمة (Service Node ID): %2$s.</item>
@@ -185,16 +193,16 @@
     <string name="clearDeviceAndNetworkConfirm">هل متأكد من أنك تريد حذف بياناتك من الشبكة؟ إذا قمت بالمتابعة، فلن تتمكن من استعادة رسائلك أو جهات الاتصال.</string>
     <string name="clearDeviceDescription">هل متأكد من رغبتك بمسح جهازك؟</string>
     <string name="clearDeviceOnly">مسح الجهاز فقط</string>
-    <string name="clearMessages">امسح جميع الرسائل</string>
+    <string name="clearMessages">مسح جميع الرسائل</string>
     <string name="clearMessagesChatDescription">هل أنت متأكد من مسح جميع الرسائل من محادثتك مع <b>{name}</b> من جهازك؟</string>
     <string name="clearMessagesCommunity">هل أنت متأكد من حذف كافة الرسائل <b>{community_name}؟</b> من جهازك.</string>
-    <string name="clearMessagesForEveryone">اِحذف من عند الجميع</string>
-    <string name="clearMessagesForMe">امسح لي</string>
+    <string name="clearMessagesForEveryone">حذف للجميع</string>
+    <string name="clearMessagesForMe">حذف لي فقط</string>
     <string name="clearMessagesGroupAdminDescription">هل أنت متأكد من حذف كافة الرسائل <b>{group_name}؟</b></string>
     <string name="clearMessagesGroupDescription">هل أنت متأكد من حذف كافة الرسائل <b>{group_name}؟</b> من جهازك.</string>
     <string name="clearMessagesNoteToSelfDescription">هل أنت متأكد من مسح كافة رسائل \"ملاحظة لنفسي\" من جهازك؟</string>
-    <string name="close">اغلق</string>
-    <string name="closeWindow">أغلق النافذة</string>
+    <string name="close">غلق</string>
+    <string name="closeWindow">غلق النافذة</string>
     <string name="commitHashDesktop">إيداع التجزئة: {hash}</string>
     <string name="communityBanDeleteDescription">سيؤدي هذا إلى حظر المستخدم المحدد من هذه المجتمع وحذف جميع رسائلهم. هل أنت متأكد أنك تريد المتابعة؟</string>
     <string name="communityBanDescription">سيؤدي هذا إلى حظر المستخدم المحدد من هذه المجتمع. هل أنت متأكد أنك تريد المتابعة؟</string>
@@ -205,7 +213,7 @@
     <string name="communityErrorDescription">عفواً، حدث خطأ. الرجاء المحاولة مرة أخرى لاحقاً.</string>
     <string name="communityInvitation">دعوة المجتمع</string>
     <string name="communityJoin">انضم إلى المجتمع</string>
-    <string name="communityJoinDescription">هل أنت متأكد من أنك تريد الانضمام إلى {community_name}؟</string>
+    <string name="communityJoinDescription">هل أنت متأكد من الانضمام إلى {community_name}؟</string>
     <string name="communityJoinError">فشل في الانضمام إلى المجتمع</string>
     <string name="communityJoinOfficial">أو انضم إلى واحدة من...</string>
     <string name="communityJoined">انضم إلى المجتمع</string>
@@ -223,7 +231,7 @@
     <string name="contactSelect">تحديد جهات الاتصال</string>
     <string name="contactUserDetails">تفاصيل المستخدم</string>
     <string name="contentDescriptionCamera">كاميرا</string>
-    <string name="contentDescriptionChooseConversationType">اختر إجراءً لبدء المحادثة</string>
+    <string name="contentDescriptionChooseConversationType">اختر إجراء لبدء المحادثة</string>
     <string name="contentDescriptionMediaMessage">رسالة وسائط</string>
     <string name="contentDescriptionMessageComposition">تكوين الرسالة</string>
     <string name="contentDescriptionQuoteThumbnail">الصورة المصغرة للصورة من الرسالة المقتبسة</string>
@@ -263,8 +271,8 @@
     <string name="databaseErrorTimeout">لقد لاحظنا أن {app_name} يستغرق وقتًا طويلاً لبدء.\n\nيمكنك مواصلة الانتظار، تصدير سجلات الجهاز للمشاركة في استكشاف الأخطاء وإصلاحها، أو محاولة إعادة تشغيل {app_name}.</string>
     <string name="databaseErrorUpdate">قاعدة بيانات تطبيقك غير متوافقة مع هذا الإصدار من {app_name}. أعد تثبيت التطبيق واستعد حسابك لإنشاء قاعدة بيانات جديدة ومتابعة استخدام {app_name}.\n\nتحذير: سيؤدي هذا إلى فقدان جميع الرسائل والمرفقات التي يزيد عمرها عن أسبوعين.</string>
     <string name="databaseOptimizing">تحسين قاعدة البيانات</string>
-    <string name="debugLog">سجل تصحيح الأخطاء</string>
-    <string name="decline">أرفض</string>
+    <string name="debugLog">سِجل تصحيح الأخطاء</string>
+    <string name="decline">رفض</string>
     <string name="delete">حذف</string>
     <string name="deleteAfterGroupFirstReleaseConfigOutdated">بعض أجهزتك تستخدم إصدارات قديمة. قد تكون المزامنة غير موثوقة حتى يتم تحديثها.</string>
     <string name="deleteAfterGroupPR1BlockThisUser">حظر هذا المستخدم</string>
@@ -315,7 +323,7 @@
         <item quantity="many">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
         <item quantity="other">هل أنت متأكد من حذف الرسائل من هذا الجهاز فقط؟</item>
     </plurals>
-    <string name="deleteMessageDescriptionEveryone">هل أنت متأكد من أنك تريد حذف هذه الرسالة للجميع؟</string>
+    <string name="deleteMessageDescriptionEveryone">هل أنت متأكد من حذف الرسالة للجميع؟</string>
     <string name="deleteMessageDeviceOnly">حذف على هذا الجهاز فقط</string>
     <string name="deleteMessageDevicesAll">حذف على جميع أجهزتي</string>
     <string name="deleteMessageEveryone">حذف للجميع</string>
@@ -438,6 +446,14 @@
     <string name="groupInviteFailedMultiple">فشل دعوة {name} و {count} آخرين إلى {group_name}</string>
     <string name="groupInviteFailedTwo">فشل دعوة {name} و {other_name} إلى {group_name}</string>
     <string name="groupInviteFailedUser">فشل دعوة {name} إلى {group_name}</string>
+    <plurals name="groupInviteSending">
+        <item quantity="zero">إرسال دعوات</item>
+        <item quantity="one">إرسال دعوة</item>
+        <item quantity="two">إرسال دعوات</item>
+        <item quantity="few">إرسال دعوات</item>
+        <item quantity="many">إرسال دعوات</item>
+        <item quantity="other">إرسال دعوات</item>
+    </plurals>
     <string name="groupInviteSent">تم إرسال الدعوة</string>
     <string name="groupInviteSuccessful">تمت دعوة المجموعة بنجاح</string>
     <string name="groupInviteVersion">يجب أن يمتلك المستخدمون الإصدار الأحدث لتلقي الدعوات</string>
@@ -445,8 +461,8 @@
     <string name="groupInviteYouAndMoreNew"><b>أنت</b> و<b>{count} آخرين</b> انضموا للمجموعة.</string>
     <string name="groupInviteYouAndOtherNew"><b>أنت</b> و<b>{other_name}</b> انضموا للمجموعة.</string>
     <string name="groupLeave">مغادرة المجموعة</string>
-    <string name="groupLeaveDescription">هل أنت متأكد من أنك تريد مغادرة <b>{group_name}</b>؟</string>
-    <string name="groupLeaveDescriptionAdmin">هل أنت متأكد من أنك تريد مغادرة <b>{group_name}</b>?\n\nسيؤدي ذلك إلى إزالة جميع الأعضاء وحذف كافة محتويات المجموعة.</string>
+    <string name="groupLeaveDescription">هل أنت متأكد من مغادرة <b>{group_name}</b>؟</string>
+    <string name="groupLeaveDescriptionAdmin">هل أنت متأكد من مغادرة <b>{group_name}</b>?\n\nسيؤدي ذلك إلى إزالة جميع الأعضاء وحذف كافة محتويات المجموعة.</string>
     <string name="groupLeaveErrorFailed">فشل في مغادرة {group_name}</string>
     <string name="groupLegacyBanner">تمت ترقية المجموعات، أنشئ مجموعة جديدة للترقية. سوف تتدهور صلاحية عمل المجموعة القديمة بدءًا من {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> غادر المجموعة.</string>
@@ -625,7 +641,7 @@
     <string name="messageRequestsClearAllExplanation">هل أنت متأكد من مسح كافة طلبات الرسائل ودعوات المجموعات؟</string>
     <string name="messageRequestsCommunities">طلبات رسائل المجتمع</string>
     <string name="messageRequestsCommunitiesDescription">السماح بطلبات الرسائل من محادثات المجتمع.</string>
-    <string name="messageRequestsDelete">هل أنت متأكد من أنك تريد حذف طلب الرسالة هذا؟</string>
+    <string name="messageRequestsDelete">هل أنت متأكد من حذف طلب الرسالة؟</string>
     <string name="messageRequestsNew">لديك طلب مراسلة جديدة</string>
     <string name="messageRequestsNonePending">لا توجد طلبات مراسلة معلقة</string>
     <string name="messageRequestsTurnedOff">تم إيقاف طلبات الرسائل من محادثات المجتمع من طرف <b>{name}</b>، لذا لا يمكنك إرسال الرسالة إليه.</string>
@@ -719,7 +735,7 @@
     <string name="passwordChangeDescription">تغيير كلمة السر المطلوبة لفتح {app_name}.</string>
     <string name="passwordChangedDescription">تم تغيير كلمة المرور الخاصة بك. احفظها في مامن.</string>
     <string name="passwordConfirm">أَكِد كلمة المرور</string>
-    <string name="passwordCreate">إنشاء كلمة سرك</string>
+    <string name="passwordCreate">إنشاء كلمة سر</string>
     <string name="passwordCurrentIncorrect">كلمة المرور الحالية غير صحيحة.</string>
     <string name="passwordDescription">يتطلب كلمة السر لفتح {app_name}.</string>
     <string name="passwordEnter">أدخل كلمة السر</string>
@@ -794,7 +810,7 @@
     <string name="recoveryPasswordExplanation">لتحميل حسابك، أدخل عبارة الاسترداد الخاصة بك.</string>
     <string name="recoveryPasswordHidePermanently">إخفاء كلمة مرور الاسترداد بشكل دائم</string>
     <string name="recoveryPasswordHidePermanentlyDescription1">بدون كلمة المرور الاستردادية، لا يمكنك تحميل حسابك على الأجهزة الجديدة. \n\nنوصيك بشدة بحفظ كلمة المرور الاستردادية في مكان آمن قبل المتابعة.</string>
-    <string name="recoveryPasswordHidePermanentlyDescription2">هل أنت متأكد من أنك تريد إخفاء كلمة مرور الاسترداد الخاصة بك على هذا الجهاز نهائيًا؟ لا يمكن التراجع عن هذا.</string>
+    <string name="recoveryPasswordHidePermanentlyDescription2">هل أنت متأكد من إخفاء كلمة مرور الاسترداد الخاصة بك على هذا الجهاز نهائيًا؟ لا يمكن التراجع عن هذا.</string>
     <string name="recoveryPasswordHideRecoveryPassword">إخفاء كلمة مرور الاسترداد</string>
     <string name="recoveryPasswordHideRecoveryPasswordDescription">قم بإخفاء كلمة مرور الاسترداد بشكل دائم على هذا الجهاز.</string>
     <string name="recoveryPasswordRestoreDescription">أدخل كلمة مرور الاسترجاع لتحميل حسابك. إذا لم تقم بحفظها، يمكنك العثور عليها في إعدادات التطبيق.</string>
@@ -863,7 +879,7 @@
     <string name="stickers">الملصقات</string>
     <string name="supportGoTo">الذهاب لصفحة الدعم</string>
     <string name="systemInformationDesktop">معلومات النظام: {information}</string>
-    <string name="theContinue">التالي</string>
+    <string name="theContinue">استمرار</string>
     <string name="theDefault">افتراضي</string>
     <string name="theError">خطأ</string>
     <string name="tryAgain">حاول مجدداً</string>
@@ -882,10 +898,10 @@
     <string name="updateSession">تحديث {app_name}</string>
     <string name="updateVersion">النسخة {version}</string>
     <string name="uploading">جارٍ تحميل</string>
-    <string name="urlCopy">انسخ الرابط</string>
+    <string name="urlCopy">نسخ الرابط</string>
     <string name="urlOpen">فتح الرابط</string>
     <string name="urlOpenBrowser">سيتم فتح هذا في متصفحك.</string>
-    <string name="urlOpenDescription">هل أنت متأكد من أنك تريد فتح هذا الرابط في متصفحك؟\n\n<b>{url}</b></string>
+    <string name="urlOpenDescription">هل أنت متأكد من فتح هذا الرابط في متصفحك؟\n\n<b>{url}</b></string>
     <string name="useFastMode">استخدم الوضع السريع</string>
     <string name="video">فيديو</string>
     <string name="videoErrorPlay">تعذر تشغيل الفيديو</string>
