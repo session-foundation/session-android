@@ -69,7 +69,7 @@ public class SearchDatabase extends Database {
       "FROM " + SmsDatabase.TABLE_NAME + " " +
       "INNER JOIN " + SMS_FTS_TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + ID + " = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " " +
       "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
-      "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " " +
+      "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE + " " +
       "UNION ALL " +
       "SELECT " +
         ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
@@ -80,7 +80,7 @@ public class SearchDatabase extends Database {
       "FROM " + MmsDatabase.TABLE_NAME + " " +
       "INNER JOIN " + MMS_FTS_TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " " +
       "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
-      "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " " +
+      "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE + " " +
       "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
       "LIMIT ?";
 
@@ -94,7 +94,7 @@ public class SearchDatabase extends Database {
         "FROM " + SmsDatabase.TABLE_NAME + " " +
         "INNER JOIN " + SMS_FTS_TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + ID + " = " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " " +
         "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + SMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
-        "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? AND " + SmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " " +
+        "WHERE " + SMS_FTS_TABLE_NAME + " MATCH ? AND " + SmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE + " " +
         "UNION ALL " +
         "SELECT " +
           ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS + " AS " + CONVERSATION_ADDRESS + ", " +
@@ -105,7 +105,7 @@ public class SearchDatabase extends Database {
         "FROM " + MmsDatabase.TABLE_NAME + " " +
         "INNER JOIN " + MMS_FTS_TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + ID + " = " + MmsDatabase.TABLE_NAME + "." + MmsDatabase.ID + " " +
         "INNER JOIN " + ThreadDatabase.TABLE_NAME + " ON " + MMS_FTS_TABLE_NAME + "." + THREAD_ID + " = " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID + " " +
-        "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? AND " + MmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " " +
+        "WHERE " + MMS_FTS_TABLE_NAME + " MATCH ? AND " + MmsDatabase.TABLE_NAME + "." + MmsSmsColumns.THREAD_ID + " = ? " + " AND NOT " + MmsSmsColumns.IS_DELETED + " AND NOT " + MmsSmsColumns.IS_GROUP_UPDATE + " " +
         "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
         "LIMIT 500";
 

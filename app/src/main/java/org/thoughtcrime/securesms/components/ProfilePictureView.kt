@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.components
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -19,10 +20,18 @@ import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
+import org.session.libsession.database.StorageProtocol
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ProfilePictureView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
@@ -38,12 +47,19 @@ class ProfilePictureView @JvmOverloads constructor(
     var additionalDisplayName: String? = null
     var recipient: Recipient? = null
 
+    @Inject
+    lateinit var contactDatabase: SessionContactDatabase
+
+    @Inject
+    lateinit var groupDatabase: GroupDatabase
+
+    @Inject
+    lateinit var storage: StorageProtocol
+
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
-    private val unknownRecipientDrawable by lazy { ResourceContactPhoto(R.drawable.ic_profile_default)
-        .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
     private val unknownOpenGroupDrawable by lazy { ResourceContactPhoto(R.drawable.ic_notification)
         .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding) }
 
@@ -51,25 +67,42 @@ class ProfilePictureView @JvmOverloads constructor(
         update(sender)
     }
 
+    private fun createUnknownRecipientDrawable(): Drawable {
+        return ResourceContactPhoto(R.drawable.ic_profile_default)
+            .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
+    }
+
     fun update(recipient: Recipient) {
         this.recipient = recipient
-        recipient.run { update(address, isClosedGroupRecipient, isOpenGroupInboxRecipient) }
+        recipient.run {
+            update(
+                address = address,
+                isLegacyGroupRecipient = isLegacyGroupRecipient,
+                isCommunityInboxRecipient = isCommunityInboxRecipient,
+                isGroupsV2Recipient = isGroupV2Recipient
+            )
+        }
     }
 
     fun update(
         address: Address,
-        isClosedGroupRecipient: Boolean = false,
-        isOpenGroupInboxRecipient: Boolean = false
+        isLegacyGroupRecipient: Boolean = false,
+        isCommunityInboxRecipient: Boolean = false,
+        isGroupsV2Recipient: Boolean = false,
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)?.displayName(Contact.ContactContext.REGULAR)
+            ?: contactDatabase.getContactWithAccountID(publicKey)?.displayName(Contact.ContactContext.REGULAR)
             ?: publicKey
 
-        if (isClosedGroupRecipient) {
-            val members = DatabaseComponent.get(context).groupDatabase()
-                .getGroupMemberAddresses(address.toGroupString(), true)
-                .sorted()
-                .take(2)
+        if (isLegacyGroupRecipient || isGroupsV2Recipient) {
+            val members = if (isLegacyGroupRecipient) {
+                groupDatabase
+                    .getGroupMemberAddresses(address.toGroupString(), true)
+            } else {
+                storage.getMembers(address.serialize())
+                    .map { Address.fromSerialized(it.accountIdString()) }
+            }.sorted().take(2)
+
             if (members.size <= 1) {
                 publicKey = ""
                 displayName = ""
@@ -83,7 +116,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 additionalPublicKey = apk
                 additionalDisplayName = getUserDisplayName(apk)
             }
-        } else if(isOpenGroupInboxRecipient) {
+        } else if(isCommunityInboxRecipient) {
             val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.serialize())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
@@ -144,28 +177,28 @@ class ProfilePictureView @JvmOverloads constructor(
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 glide.load(signalProfilePicture)
-                    .placeholder(unknownRecipientDrawable)
+                    .placeholder(createUnknownRecipientDrawable())
                     .centerCrop()
                     .error(glide.load(placeholder))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .circleCrop()
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
-                glide.clear(imageView)
                 glide.load(unknownOpenGroupDrawable)
                     .centerCrop()
                     .circleCrop()
                     .into(imageView)
             } else {
                 glide.load(placeholder)
-                    .placeholder(unknownRecipientDrawable)
+                    .placeholder(createUnknownRecipientDrawable())
                     .centerCrop()
                     .circleCrop()
-                    .diskCacheStrategy(DiskCacheStrategy.NONE).circleCrop().into(imageView)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(imageView)
             }
         } else {
-            glide.load(unknownRecipientDrawable)
-                .centerCrop()
+            glide.load(createUnknownRecipientDrawable())
+                .fitCenter()
                 .into(imageView)
         }
     }

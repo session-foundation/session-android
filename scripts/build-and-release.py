@@ -143,10 +143,10 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
         shutil.copy(apk, dst)
 
     # Make sure there are only last three versions of APKs
-    all_apk_versions_and_ctime = [(re.search(r'session-(.+?)-', os.path.basename(name)).group(1), os.path.getctime(name))
+    all_apk_versions_and_ctime = [(re.search(r'session-(.+?)-', os.path.basename(name)).group(1), os.path.getmtime(name))
                             for name in glob.glob(os.path.join(fdroid_workspace, 'repo/session-*-arm64-v8a.apk'))]
     # Sort by ctime DESC
-    all_apk_versions_and_ctime.sort(key=lambda x: x[1], reverse=True)
+    all_apk_versions_and_ctime.sort(key=lambda x: x[0], reverse=True)
     # Remove all but the last three versions
     for version, _ in all_apk_versions_and_ctime[KEEP_FDROID_VERSIONS:]:
         for apk in glob.glob(os.path.join(fdroid_workspace, f'repo/session-{version}-*.apk')):

@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> සහ <b>{count} වෙනත් අය</b> කණ්ඩායමට සම්බන්ධ වන්නට ආරාධනා කරන ලදී.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> සහ <b>{other_name}</b> කණ්ඩායමට සම්බන්ධ වන්නට ආරාධනා කරන ලදී.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>ඔබ</b> සහ <b>{count} වෙනත් අය</b> කණ්ඩායමට සම්බන්ධ වන්නට ආරාධනා කරන ලදී. සංවාද ඉතිහාසය බෙදා ගන්නා ලදී.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>ඔබ</b> සහ <b>{name}</b> කණ්ඩායමට සම්බන්ධ වන්නට ආරාධනා කරන ලදී. සංවාද ඉතිහාසය බෙදා ගන්නා ලදී.</string>
     <string name="groupMemberYouLeft"><b>ඔබ</b> කණ්ඩායම හැර ගියේය.</string>
     <string name="groupMembers">සමූහ සාමාජිකයින්</string>
     <string name="groupMembersNone">මෙම සමූහයේ වෙනත් සාමාජිකයින් නැත.</string>

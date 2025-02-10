@@ -21,6 +21,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -163,10 +165,14 @@ fun AppBarText(title: String) {
 
 @Composable
 fun AppBarBackIcon(onBack: () -> Unit) {
-    IconButton(onClick = onBack) {
+    IconButton(
+        modifier = Modifier.contentDescription(stringResource(R.string.back))
+            .qaTag(stringResource(R.string.AccessibilityId_navigateBack)),
+        onClick = onBack
+    ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_arrow_left),
-            contentDescription = stringResource(R.string.back)
+            contentDescription = null
         )
     }
 }

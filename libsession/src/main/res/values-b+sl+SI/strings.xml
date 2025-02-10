@@ -431,7 +431,6 @@
     <string name="groupMemberNewMultiple"><b>{name} </b> in <b>{count} drugi </b> so bili povabljeni, da se pridružijo skupini.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> in <b>{other_name}</b> sta bila povabljena, da se pridružita skupini.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> in <b>{count} drugi</b> ste bili povabljeni, da se pridružite skupini. Zgodovina klepeta je bila deljena.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> in <b>{name}</b> sta bila povabljena, da se pridružita skupini. Zgodovina klepeta je bila deljena.</string>
     <string name="groupMemberYouLeft"><b>Vi </b> ste zapustili skupino.</string>
     <string name="groupMembers">Člani skupine</string>
     <string name="groupMembersNone">V tej skupini ni drugih članov.</string>

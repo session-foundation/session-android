@@ -21,7 +21,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
@@ -37,8 +36,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
-import org.thoughtcrime.securesms.util.NetworkUtils
+import org.thoughtcrime.securesms.util.InternetConnectivity
 import java.io.File
 import java.io.IOException
 import javax.inject.Inject
@@ -47,7 +45,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: TextSecurePreferences,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val connectivity: InternetConnectivity,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -114,8 +113,6 @@ class SettingsViewModel @Inject constructor(
 
     fun getTempFile() = tempFile
 
-    fun getUser() = configFactory.user
-
     fun onAvatarPicked(result: CropImageView.CropResult) {
         when {
             result.isSuccessful -> {
@@ -160,8 +157,7 @@ class SettingsViewModel @Inject constructor(
         val tempAvatar = (avatarDialogState.value as? TempAvatar)?.data
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
-        if (!haveNetworkConnection) {
+        if (!hasNetworkConnection()) {
             Log.w(TAG, "Cannot update profile picture - no network connection.")
             Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
             return
@@ -177,7 +173,7 @@ class SettingsViewModel @Inject constructor(
 
 
     fun removeAvatar() {
-        val haveNetworkConnection = NetworkUtils.haveValidNetworkConnection(context);
+        val haveNetworkConnection = connectivity.networkAvailable.value
         if (!haveNetworkConnection) {
             Log.w(TAG, "Cannot remove profile picture - no network connection.")
             Toast.makeText(context, R.string.profileDisplayPictureRemoveError, Toast.LENGTH_LONG).show()
@@ -204,7 +200,6 @@ class SettingsViewModel @Inject constructor(
                 ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
 
                 // If the online portion of the update succeeded then update the local state
-                val userConfig = configFactory.user
                 AvatarHelper.setAvatar(
                     context,
                     Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!),
@@ -227,18 +222,15 @@ class SettingsViewModel @Inject constructor(
 
                     // If we have a URL and a profile key then set the user's profile picture
                     if (!url.isNullOrEmpty() && profileKey.isNotEmpty()) {
-                        userConfig?.setPic(UserPic(url, profileKey))
+                        configFactory.withMutableUserConfigs {
+                            it.userProfile.setPic(UserPic(url, profileKey))
+                        }
                     }
 
                     // update dialog state
                     _avatarDialogState.value = AvatarDialogState.UserAvatar(userAddress)
                 }
 
-                if (userConfig != null && userConfig.needsDump()) {
-                    configFactory.persist(userConfig, SnodeAPI.nowWithOffset)
-                }
-
-                ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
             } catch (e: Exception){ // If the sync failed then inform the user
                 Log.d(TAG, "Error syncing avatar: $e")
                 withContext(Dispatchers.Main) {
@@ -253,11 +245,19 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updateName(displayName: String) {
+        configFactory.withMutableUserConfigs {
+            it.userProfile.setName(displayName)
+        }
+    }
+
     fun permanentlyHidePassword() {
         //todo we can simplify this once we expose all our sharedPrefs as flows
         prefs.setHidePassword(true)
         _recoveryHidden.update { true }
     }
+
+    fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()

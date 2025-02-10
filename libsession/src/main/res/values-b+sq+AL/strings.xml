@@ -420,7 +420,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dhe <b>{count} të tjerë</b> u ftuat të bashkoheni me grupin.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dhe <b>{other_name}</b> u ftuat të bashkoheni me grupin.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ju</b> dhe <b>{count} të tjerë</b> u ftuat të bashkoheni me grupin. Historia e bisedës u ndanë.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ju</b> dhe <b>{name}</b> u ftuat të bashkoheni me grupin. Historia e bisedës u ndanë.</string>
     <string name="groupMemberYouLeft"><b>Ju</b> braktisët grupin.</string>
     <string name="groupMembers">Anëtarë grupi</string>
     <string name="groupMembersNone">Nuk ka anëtarë të tjerë në këtë grup.</string>

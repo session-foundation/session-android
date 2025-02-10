@@ -17,9 +17,11 @@ interface LokiAPIDatabaseProtocol {
     fun setSwarm(publicKey: String, newValue: Set<Snode>)
     fun getLastMessageHashValue(snode: Snode, publicKey: String, namespace: Int): String?
     fun setLastMessageHashValue(snode: Snode, publicKey: String, newValue: String, namespace: Int)
+    fun clearLastMessageHashes(publicKey: String)
     fun clearAllLastMessageHashes()
     fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>?
     fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int)
+    fun clearReceivedMessageHashValues(publicKey: String)
     fun clearReceivedMessageHashValues()
     fun getAuthToken(server: String): String?
     fun setAuthToken(server: String, newValue: String?)

@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> بانگکران بۆ بەشداریکردن لە گروپەکە.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> و <b>{other_name}</b> بانگکران بۆ بەشداریکردن لە گروپەکە.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>تۆ</b> و <b>{count} کەس دیکە</b> بانگکران بۆ بەشداریکردن لە گروپەکە. مێژوو بگردەوەیی پەیامەکان سییبرەیە.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>تۆ</b> و <b>{name}</b> بانگکران بۆ بەشداریکردن لە گروپەکە. مێژوو بگردەوەیی پەیامەکان سییبرەیە.</string>
     <string name="groupMemberYouLeft"><b>تۆ</b> گروپەکەت بەجێهێشتووە.</string>
     <string name="groupMembers">ئەندامانی گروپ</string>
     <string name="groupMembersNone">هیچ ئەندامی تر لەم گروپەدا نیە.</string>

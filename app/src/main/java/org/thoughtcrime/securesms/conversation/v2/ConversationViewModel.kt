@@ -2,50 +2,70 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.view.MenuItem
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.goterl.lazysodium.utils.KeyPair
+import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.messaging.utilities.AccountId
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
+import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.ReactionDatabase
-import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.DateUtils
+import java.time.ZoneId
 import java.util.UUID
 
 class ConversationViewModel(
@@ -53,19 +73,26 @@ class ConversationViewModel(
     val edKeyPair: KeyPair?,
     private val application: Application,
     private val repository: ConversationRepository,
-    private val storage: Storage,
+    private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
+    private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
     private val lokiMessageDb: LokiMessageDatabase,
-    private val textSecurePreferences: TextSecurePreferences
+    private val textSecurePreferences: TextSecurePreferences,
+    private val configFactory: ConfigFactory,
+    private val groupManagerV2: GroupManagerV2,
+    val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
         get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
 
-    private val _uiState = MutableStateFlow(ConversationUiState(conversationExists = true))
-    val uiState: StateFlow<ConversationUiState> = _uiState
+    private val _uiState = MutableStateFlow(ConversationUiState())
+    val uiState: StateFlow<ConversationUiState> get() = _uiState
+
+    private val _uiEvents = MutableSharedFlow<ConversationUiEvent>(extraBufferCapacity = 1)
+    val uiEvents: SharedFlow<ConversationUiEvent> get() = _uiEvents
 
     private val _dialogsState = MutableStateFlow(DialogsState())
     val dialogsState: StateFlow<DialogsState> = _dialogsState
@@ -80,32 +107,32 @@ class ConversationViewModel(
         val conversationType = conversation?.getType()
         // Determining is the current user is an admin will depend on the kind of conversation we are in
         _isAdmin.value = when(conversationType) {
-        // for Groups V2
-        MessageType.GROUPS_V2 -> {
-            //todo GROUPS V2 add logic where code is commented to determine if user is an admin
-            false // FANCHAO - properly set up admin for groups v2 here
-        }
-
-        // for legacy groups, check if the user created the group
-        MessageType.LEGACY_GROUP -> {
-            // for legacy groups, we check if the current user is the one who created the group
-            run {
-                val localUserAddress =
-                    textSecurePreferences.getLocalNumber() ?: return@run false
-                val group = storage.getGroup(conversation.address.toGroupString())
-                group?.admins?.contains(fromSerialized(localUserAddress)) ?: false
+            // for Groups V2
+            MessageType.GROUPS_V2 -> {
+                configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
             }
+
+            // for legacy groups, check if the user created the group
+            MessageType.LEGACY_GROUP -> {
+                // for legacy groups, we check if the current user is the one who created the group
+                run {
+                    val localUserAddress =
+                        textSecurePreferences.getLocalNumber() ?: return@run false
+                    val group = storage.getGroup(conversation.address.toGroupString())
+                    group?.admins?.contains(fromSerialized(localUserAddress)) ?: false
+                }
+            }
+
+            // for communities the the `isUserModerator` field
+            MessageType.COMMUNITY -> isUserCommunityManager()
+
+            // false in other cases
+            else -> false
         }
-
-        // for communities the the `isUserModerator` field
-        MessageType.COMMUNITY -> isUserCommunityManager()
-
-        // false in other cases
-        else -> false
-    }
 
         conversation
     }
+
     val expirationConfiguration: ExpirationConfiguration?
         get() = storage.getExpirationConfiguration(threadId)
 
@@ -115,17 +142,43 @@ class ConversationViewModel(
     val blindedRecipient: Recipient?
         get() = _recipient.value?.let { recipient ->
             when {
-                recipient.isOpenGroupOutboxRecipient -> recipient
-                recipient.isOpenGroupInboxRecipient -> repository.maybeGetBlindedRecipient(recipient)
+                recipient.isCommunityOutboxRecipient -> recipient
+                recipient.isCommunityInboxRecipient -> repository.maybeGetBlindedRecipient(recipient)
                 else -> null
             }
         }
 
-    private var communityWriteAccessJob: Job? = null
+    /**
+     * The admin who invites us to this group(v2) conversation.
+     *
+     * null if this convo is not a group(v2) conversation, or error getting the info
+     */
+    val invitingAdmin: Recipient?
+        get() {
+            val recipient = recipient ?: return null
+            if (!recipient.isGroupV2Recipient) return null
 
-    private var _openGroup: RetrieveOnce<OpenGroup> = RetrieveOnce {
-        storage.getOpenGroup(threadId)
+            return repository.getInvitingAdmin(threadId)
+        }
+
+    val groupV2ThreadState: GroupThreadStatus
+        get() {
+            val recipient = recipient ?: return GroupThreadStatus.None
+            if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
+
+            return configFactory.getGroup(AccountId(recipient.address.serialize())).let { group ->
+                when {
+                    group?.destroyed == true -> GroupThreadStatus.Destroyed
+                    group?.kicked == true -> GroupThreadStatus.Kicked
+                    else -> GroupThreadStatus.None
+                }
+            }
+        }
+
+    private val _openGroup: MutableStateFlow<OpenGroup?> by lazy {
+        MutableStateFlow(storage.getOpenGroup(threadId))
     }
+
     val openGroup: OpenGroup?
         get() = _openGroup.value
 
@@ -141,12 +194,38 @@ class ConversationViewModel(
     val isMessageRequestThread : Boolean
         get() {
             val recipient = recipient ?: return false
-            return !recipient.isLocalNumber && !recipient.isGroupRecipient && !recipient.isApproved
+            return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
     val canReactToMessages: Boolean
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
+
+    val legacyGroupBanner: StateFlow<CharSequence?> = combine(
+        legacyGroupDeprecationManager.deprecationState,
+        legacyGroupDeprecationManager.deprecationTime,
+        isAdmin
+    ) { state, time, admin ->
+        when {
+            recipient?.isLegacyGroupRecipient != true -> null
+            state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
+                Phrase.from(application, if (admin) R.string.legacyGroupAfterDeprecationAdmin else R.string.legacyGroupAfterDeprecationMember)
+                    .format()
+            }
+            else -> Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
+                .put(DATE_KEY,
+                    time.withZoneSameInstant(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(DateUtils.getShortDateFormatter())
+                )
+                .format()
+        }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    val showRecreateGroupButton: StateFlow<Boolean> = isAdmin
+        .map { admin ->
+            admin && recipient?.isLegacyGroupRecipient == true
+        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -155,18 +234,26 @@ class ConversationViewModel(
     )
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.recipientUpdateFlow(threadId)
-                .collect { recipient ->
-                    if (recipient == null && _uiState.value.conversationExists) {
-                        _uiState.update { it.copy(conversationExists = false) }
-                    }
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(
+                repository.recipientUpdateFlow(threadId),
+                _openGroup,
+                legacyGroupDeprecationManager.deprecationState,
+                ::Triple
+            ).collect { (recipient, community, deprecationState) ->
+                _uiState.update {
+                    it.copy(
+                        shouldExit = recipient == null,
+                        showInput = shouldShowInput(recipient, community, deprecationState),
+                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        messageRequestState = buildMessageRequestState(recipient),
+                    )
                 }
+            }
         }
 
-        // listen to community write access updates from this point
-        communityWriteAccessJob?.cancel()
-        communityWriteAccessJob = viewModelScope.launch {
+        // Listen for changes in the open group's write access
+        viewModelScope.launch {
             OpenGroupManager.getCommunitiesWriteAccessFlow()
                 .map {
                     withContext(Dispatchers.Default) {
@@ -178,14 +265,91 @@ class ConversationViewModel(
                 .filterNotNull()
                 .collect{
                     // update our community object
-                    _openGroup.updateTo(openGroup?.copy(canWrite = it))
-                    // when we get an update on the write access of a community
-                    // we need to update the input text accordingly
-                    _uiState.update { state ->
-                        state.copy(hideInputBar = shouldHideInputBar())
-                    }
+                    _openGroup.value = openGroup?.copy(canWrite = it)
                 }
         }
+    }
+
+    /**
+     * Determines if the input media controls should be enabled.
+     *
+     * Normally we will show the input media controls, only in these situations we hide them:
+     *  1. First time we send message to a person.
+     *     Since we haven't been approved by them, we can't send them any media, only text
+     */
+    private fun shouldEnableInputMediaControls(recipient: Recipient?): Boolean {
+        if (recipient != null &&
+            (recipient.is1on1 && !recipient.isLocalNumber) &&
+            !recipient.hasApprovedMe()) {
+            return false
+        }
+
+        return true
+    }
+
+    /**
+     * Determines if the input bar should be shown.
+     *
+     * For these situations we hide the input bar:
+     *  1. The user has been kicked from a group(v2), OR
+     *  2. The legacy group is inactive, OR
+     *  3. The legacy group is deprecated, OR
+     *  4. The community chat is read only
+     */
+    private fun shouldShowInput(recipient: Recipient?,
+                                community: OpenGroup?,
+                                deprecationState: LegacyGroupDeprecationManager.DeprecationState
+    ): Boolean {
+        return when {
+            recipient?.isGroupV2Recipient == true -> !repository.isGroupReadOnly(recipient)
+            recipient?.isLegacyGroupRecipient == true -> {
+                groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
+                        deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+            }
+            community != null -> community.canWrite
+            else -> true
+        }
+    }
+
+    private fun buildMessageRequestState(recipient: Recipient?): MessageRequestUiState {
+        // The basic requirement of showing a message request is:
+        // 1. The other party has not been approved by us, AND
+        // 2. We haven't sent a message to them before (if we do, we would be the one requesting permission), AND
+        // 3. We have received message from them AND
+        // 4. The type of conversation supports message request (only 1to1 and groups v2)
+
+        if (
+            recipient != null &&
+
+            // Req 1: we haven't approved the other party
+            (!recipient.isApproved && !recipient.isLocalNumber) &&
+
+            // Req 4: the type of conversation supports message request
+            (recipient.is1on1 || recipient.isGroupV2Recipient) &&
+
+            // Req 2: we haven't sent a message to them before
+            !threadDb.getLastSeenAndHasSent(threadId).second() &&
+
+            // Req 3: we have received message from them
+            threadDb.getMessageCount(threadId) > 0
+        ) {
+
+            return MessageRequestUiState.Visible(
+                acceptButtonText = if (recipient.isGroupOrCommunityRecipient) {
+                    R.string.messageRequestGroupInviteDescription
+                } else {
+                    R.string.messageRequestsAcceptDescription
+                },
+                // You can block a 1to1 conversation, or a normal groups v2 conversation
+                blockButtonText = when {
+                    recipient.is1on1 ||
+                            recipient.isGroupV2Recipient -> application.getString(R.string.block)
+                    else -> null
+                }
+            )
+        }
+
+        return MessageRequestUiState.Invisible
     }
 
     override fun onCleared() {
@@ -216,16 +380,21 @@ class ConversationViewModel(
     }
 
     fun block() {
-        val recipient = recipient ?: return Log.w("Loki", "Recipient was null for block action")
-        if (recipient.isContactRecipient) {
-            repository.setBlocked(recipient, true)
+        // inviting admin will be non-null if this request is a closed group message request
+        val recipient = invitingAdmin ?: recipient ?: return Log.w("Loki", "Recipient was null for block action")
+        if (recipient.isContactRecipient || recipient.isGroupV2Recipient) {
+            repository.setBlocked(threadId, recipient, true)
+        }
+
+        if (this.recipient?.isGroupV2Recipient == true) {
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
         }
     }
 
     fun unblock() {
         val recipient = recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
         if (recipient.isContactRecipient) {
-            repository.setBlocked(recipient, false)
+            repository.setBlocked(threadId, recipient, false)
         }
     }
 
@@ -516,13 +685,12 @@ class ConversationViewModel(
     }
 
     private fun markAsDeletedForEveryoneGroupsV2(data: DeleteForEveryoneDialogData){
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             // show a loading indicator
             _uiState.update { it.copy(showLoader = true) }
 
-            //todo GROUPS V2 - uncomment below and use Fanchao's method to delete a group V2
             try {
-                //repository.callMethodFromFanchao(threadId, recipient, data.messages)
+                repository.deleteGroupV2MessagesRemotely(recipient!!, data.messages)
 
                 // the repo will handle the internal logic (calling `/delete` on the swarm
                 // and sending 'GroupUpdateDeleteMemberContentMessage'
@@ -544,7 +712,7 @@ class ConversationViewModel(
                     ).show()
                 }
             } catch (e: Exception) {
-                Log.w("Loki", "FAILED TO delete messages ${data.messages} ")
+                Log.e("Loki", "FAILED TO delete messages ${data.messages}", e)
                 // failed to delete - show a toast and get back on the modal
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
@@ -660,19 +828,36 @@ class ConversationViewModel(
 
     fun acceptMessageRequest() = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
+        val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
+            ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
+
+        _uiState.update {
+            it.copy(messageRequestState = MessageRequestUiState.Pending(currentState))
+        }
+
         repository.acceptMessageRequest(threadId, recipient)
             .onSuccess {
                 _uiState.update {
-                    it.copy(isMessageRequestAccepted = true)
+                    it.copy(messageRequestState = MessageRequestUiState.Invisible)
                 }
             }
             .onFailure {
-                Log.w("", "Failed to accept message request: $it")
+                Log.w("Loki", "Couldn't accept message request due to error", it)
+
+                _uiState.update { state ->
+                    state.copy(messageRequestState = currentState)
+                }
             }
     }
 
-    fun declineMessageRequest() {
-        repository.declineMessageRequest(threadId)
+    fun declineMessageRequest() = viewModelScope.launch {
+        repository.declineMessageRequest(threadId, recipient!!)
+            .onSuccess {
+                _uiState.update { it.copy(shouldExit = true) }
+            }
+            .onFailure {
+                Log.w("Loki", "Couldn't decline message request due to error", it)
+            }
     }
 
     private fun showMessage(message: String) {
@@ -717,6 +902,25 @@ class ConversationViewModel(
         attachmentDownloadHandler.onAttachmentDownloadRequest(attachment)
     }
 
+    fun beforeSendingTextOnlyMessage() {
+        implicitlyApproveRecipient()
+    }
+
+    fun beforeSendingAttachments() {
+        implicitlyApproveRecipient()
+    }
+
+    private fun implicitlyApproveRecipient() {
+        val recipient = recipient
+
+        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
+            acceptMessageRequest()
+        } else if (recipient?.isApproved == false) {
+            // edge case for new outgoing thread on new recipient without sending approval messages
+            repository.setApproved(recipient, true)
+        }
+    }
+
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.ShowOpenUrlDialog -> {
@@ -753,6 +957,37 @@ class ConversationViewModel(
             is Commands.ClearEmoji -> {
                 clearEmoji(command.emoji, command.messageId)
             }
+
+            Commands.RecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = true)
+                }
+            }
+
+            Commands.HideRecreateGroupConfirm -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupConfirm = false)
+                }
+            }
+
+            Commands.ConfirmRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(
+                        recreateGroupConfirm = false,
+                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                    )
+                }
+            }
+
+            Commands.HideRecreateGroup -> {
+                _dialogsState.update {
+                    it.copy(recreateGroupData = null)
+                }
+            }
+
+            is Commands.NavigateToConversation -> {
+                _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
+            }
         }
     }
 
@@ -780,6 +1015,38 @@ class ConversationViewModel(
         }
     }
 
+    fun onOptionItemSelected(
+        // This must be the context of the activity as requirement from ConversationMenuHelper
+        context: Context,
+        item: MenuItem
+    ): Boolean {
+        val recipient = recipient ?: return false
+
+        val inProgress = ConversationMenuHelper.onOptionItemSelected(
+            context = context,
+            item = item,
+            thread = recipient,
+            threadID = threadId,
+            factory = configFactory,
+            storage = storage,
+            groupManager = groupManagerV2,
+        )
+
+        if (inProgress != null) {
+            viewModelScope.launch {
+                inProgress.consumeEach { status ->
+                    when (status) {
+                        ConversationMenuHelper.GroupLeavingStatus.Left,
+                        ConversationMenuHelper.GroupLeavingStatus.Error -> _uiState.update { it.copy(showLoader = false) }
+                        else -> _uiState.update { it.copy(showLoader = true) }
+                    }
+                }
+            }
+        }
+
+        return true
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -791,12 +1058,18 @@ class ConversationViewModel(
         @Assisted private val edKeyPair: KeyPair?,
         private val application: Application,
         private val repository: ConversationRepository,
-        private val storage: Storage,
+        private val storage: StorageProtocol,
         private val messageDataProvider: MessageDataProvider,
+        private val groupDb: GroupDatabase,
         private val threadDb: ThreadDatabase,
         private val reactionDb: ReactionDatabase,
+        @ApplicationContext
+        private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
-        private val textSecurePreferences: TextSecurePreferences
+        private val textSecurePreferences: TextSecurePreferences,
+        private val configFactory: ConfigFactory,
+        private val groupManagerV2: GroupManagerV2,
+        private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -807,10 +1080,14 @@ class ConversationViewModel(
                 repository = repository,
                 storage = storage,
                 messageDataProvider = messageDataProvider,
+                groupDb = groupDb,
                 threadDb = threadDb,
                 reactionDb = reactionDb,
                 lokiMessageDb = lokiMessageDb,
-                textSecurePreferences = textSecurePreferences
+                textSecurePreferences = textSecurePreferences,
+                configFactory = configFactory,
+                groupManagerV2 = groupManagerV2,
+                legacyGroupDeprecationManager = legacyGroupDeprecationManager,
             ) as T
         }
     }
@@ -818,7 +1095,13 @@ class ConversationViewModel(
     data class DialogsState(
         val openLinkDialogUrl: String? = null,
         val clearAllEmoji: ClearAllEmoji? = null,
-        val deleteEveryone: DeleteForEveryoneDialogData? = null
+        val deleteEveryone: DeleteForEveryoneDialogData? = null,
+        val recreateGroupConfirm: Boolean = false,
+        val recreateGroupData: RecreateGroupDialogData? = null,
+    )
+
+    data class RecreateGroupDialogData(
+        val legacyGroupId: String,
     )
 
     data class DeleteForEveryoneDialogData(
@@ -835,16 +1118,22 @@ class ConversationViewModel(
         val messageId: MessageId
     )
 
-    sealed class Commands {
-        data class ShowOpenUrlDialog(val url: String?) : Commands()
+    sealed interface Commands {
+        data class ShowOpenUrlDialog(val url: String?) : Commands
 
-        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands()
+        data class ClearEmoji(val emoji:String, val messageId: MessageId) : Commands
 
-        data object HideDeleteEveryoneDialog : Commands()
-        data object HideClearEmoji : Commands()
+        data object HideDeleteEveryoneDialog : Commands
+        data object HideClearEmoji : Commands
 
-        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands()
-        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands()
+        data class MarkAsDeletedLocally(val messages: Set<MessageRecord>): Commands
+        data class MarkAsDeletedForEveryone(val data: DeleteForEveryoneDialogData): Commands
+
+        data object RecreateGroup : Commands
+        data object ConfirmRecreateGroup : Commands
+        data object HideRecreateGroupConfirm : Commands
+        data object HideRecreateGroup : Commands
+        data class NavigateToConversation(val threadId: Long) : Commands
     }
 }
 
@@ -852,11 +1141,28 @@ data class UiMessage(val id: Long, val message: String)
 
 data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
-    val isMessageRequestAccepted: Boolean? = null,
-    val conversationExists: Boolean,
-    val hideInputBar: Boolean = false,
-    val showLoader: Boolean = false
+    val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
+    val shouldExit: Boolean = false,
+    val showInput: Boolean = true,
+    val enableInputMediaControls: Boolean = true,
+    val showLoader: Boolean = false,
 )
+
+sealed interface ConversationUiEvent {
+    data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
+}
+
+sealed interface MessageRequestUiState {
+    data object Invisible : MessageRequestUiState
+
+    data class Pending(val prevState: Visible) : MessageRequestUiState
+
+    data class Visible(
+        @StringRes val acceptButtonText: Int,
+        // If null, the block button shall not be shown
+        val blockButtonText: String? = null
+    ) : MessageRequestUiState
+}
 
 data class RetrieveOnce<T>(val retrieval: () -> T?) {
     private var triedToRetrieve: Boolean = false

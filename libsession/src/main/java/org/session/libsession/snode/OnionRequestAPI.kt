@@ -1,5 +1,15 @@
 package org.session.libsession.snode
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
@@ -8,6 +18,7 @@ import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
 import okhttp3.Request
 import org.session.libsession.messaging.file_server.FileServerApi
+import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
 import org.session.libsession.utilities.getBodyForOnionRequest
@@ -22,7 +33,6 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
-import org.session.libsignal.utilities.ThreadUtils
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
 import java.util.concurrent.atomic.AtomicReference
@@ -37,37 +47,33 @@ object OnionRequestAPI {
     private var buildPathsPromise: Promise<List<Path>, Exception>? = null
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
-    private val broadcaster: Broadcaster
-        get() = SnodeModule.shared.broadcaster
     private val pathFailureCount = mutableMapOf<Path, Int>()
     private val snodeFailureCount = mutableMapOf<Snode, Int>()
 
     var guardSnodes = setOf<Snode>()
-    var _paths: AtomicReference<List<Path>?> = AtomicReference(null)
-    var paths: List<Path> // Not a Set to ensure we consistently show the same path to the user
-        @Synchronized
-        get() {
-            val paths = _paths.get()
 
-            if (paths != null) { return paths }
+    private val mutablePaths = MutableStateFlow(database.getOnionRequestPaths())
 
-            // Storing this in an atomic variable as it was causing a number of background
-            // ANRs when this value was accessed via the main thread after tapping on
-            // a notification)
-            val result = database.getOnionRequestPaths()
-            _paths.set(result)
-            return result
-        }
-        @Synchronized
-        set(newValue) {
-            if (newValue.isEmpty()) {
-                database.clearOnionRequestPaths()
-                _paths.set(null)
-            } else {
-                database.setOnionRequestPaths(newValue)
-                _paths.set(newValue)
+    val paths: StateFlow<List<Path>> get() = mutablePaths
+    val hasPath: StateFlow<Boolean> = mutablePaths
+        .drop(1)
+        .map { it.isNotEmpty() }
+        .stateIn(GlobalScope, SharingStarted.Eagerly, paths.value.isNotEmpty())
+
+    init {
+        // Listen for the changes in paths and persist it to the db
+        GlobalScope.launch {
+            mutablePaths
+                .drop(1) // Drop the first result where it just comes from the db
+                .collectLatest {
+                if (it.isEmpty()) {
+                    database.clearOnionRequestPaths()
+                } else {
+                    database.setOnionRequestPaths(it)
+                }
             }
         }
+    }
 
     // region Settings
     /**
@@ -114,26 +120,14 @@ object OnionRequestAPI {
      * Tests the given snode. The returned promise errors out if the snode is faulty; the promise is fulfilled otherwise.
      */
     private fun testSnode(snode: Snode): Promise<Unit, Exception> {
-        val deferred = deferred<Unit, Exception>()
-        ThreadUtils.queue { // No need to block the shared context for this
+        return GlobalScope.asyncPromise { // No need to block the shared context for this
             val url = "${snode.address}:${snode.port}/get_stats/v1"
-            try {
-                val response = HTTP.execute(HTTP.Verb.GET, url, 3).decodeToString()
-                val json = JsonUtil.fromJson(response, Map::class.java)
-                val version = json["version"] as? String
-                if (version == null) { deferred.reject(Exception("Missing snode version.")); return@queue }
-                if (version >= "2.0.7") {
-                    deferred.resolve(Unit)
-                } else {
-                    val message = "Unsupported snode version: $version."
-                    Log.d("Loki", message)
-                    deferred.reject(Exception(message))
-                }
-            } catch (exception: Exception) {
-                deferred.reject(exception)
-            }
+            val response = HTTP.execute(HTTP.Verb.GET, url, 3).decodeToString()
+            val json = JsonUtil.fromJson(response, Map::class.java)
+            val version = json["version"] as? String
+            require(version != null) { "Missing snode version." }
+            require(version >= "2.0.7") { "Unsupported snode version: $version." }
         }
-        return deferred.promise
     }
 
     /**
@@ -181,7 +175,6 @@ object OnionRequestAPI {
         val existingBuildPathsPromise = buildPathsPromise
         if (existingBuildPathsPromise != null) { return existingBuildPathsPromise }
         Log.d("Loki", "Building onion request paths.")
-        broadcaster.broadcast("buildingPaths")
         val promise = SnodeAPI.getRandomSnode().bind { // Just used to populate the snode pool
             val reusableGuardSnodes = reusablePaths.map { it[0] }
             getGuardSnodes(reusableGuardSnodes).map { guardSnodes ->
@@ -202,8 +195,7 @@ object OnionRequestAPI {
                     result
                 }
             }.map { paths ->
-                OnionRequestAPI.paths = paths + reusablePaths
-                broadcaster.broadcast("pathsBuilt")
+                mutablePaths.value = paths + reusablePaths
                 paths
             }
         }
@@ -218,7 +210,7 @@ object OnionRequestAPI {
      */
     private fun getPath(snodeToExclude: Snode?): Promise<Path, Exception> {
         if (pathSize < 1) { throw Exception("Can't build path of size zero.") }
-        val paths = this.paths
+        val paths = this.paths.value
         val guardSnodes = mutableSetOf<Snode>()
         if (paths.isNotEmpty()) {
             guardSnodes.add(paths[0][0])
@@ -265,7 +257,7 @@ object OnionRequestAPI {
         // path we leave the re-building up to getPath() because re-building the path in that case
         // is async.
         snodeFailureCount[snode] = 0
-        val oldPaths = paths.toMutableList()
+        val oldPaths = mutablePaths.value.toMutableList()
         val pathIndex = oldPaths.indexOfFirst { it.contains(snode) }
         if (pathIndex == -1) { return }
         val path = oldPaths[pathIndex].toMutableList()
@@ -278,16 +270,16 @@ object OnionRequestAPI {
         // Don't test the new snode as this would reveal the user's IP
         oldPaths.removeAt(pathIndex)
         val newPaths = oldPaths + listOf( path )
-        paths = newPaths
+        mutablePaths.value = newPaths
     }
 
     private fun dropPath(path: Path) {
         pathFailureCount[path] = 0
-        val paths = OnionRequestAPI.paths.toMutableList()
+        val paths = mutablePaths.value.toMutableList()
         val pathIndex = paths.indexOf(path)
         if (pathIndex == -1) { return }
         paths.removeAt(pathIndex)
-        OnionRequestAPI.paths = paths
+        mutablePaths.value = paths
     }
 
     /**
@@ -305,22 +297,22 @@ object OnionRequestAPI {
             is Destination.Snode -> destination.snode
             is Destination.Server -> null
         }
-        return getPath(snodeToExclude).bind { path ->
+        return getPath(snodeToExclude).map { path ->
             guardSnode = path.first()
             // Encrypt in reverse order, i.e. the destination first
-            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version).bind { r ->
+            OnionRequestEncryption.encryptPayloadForDestination(payload, destination, version).let { r ->
                 destinationSymmetricKey = r.symmetricKey
                 // Recursively encrypt the layers of the onion (again in reverse order)
                 encryptionResult = r
                 @Suppress("NAME_SHADOWING") var path = path
                 var rhs = destination
-                fun addLayer(): Promise<EncryptionResult, Exception> {
+                fun addLayer(): EncryptionResult {
                     return if (path.isEmpty()) {
-                        Promise.of(encryptionResult)
+                        encryptionResult
                     } else {
                         val lhs = Destination.Snode(path.last())
                         path = path.dropLast(1)
-                        OnionRequestEncryption.encryptHop(lhs, rhs, encryptionResult).bind { r ->
+                        OnionRequestEncryption.encryptHop(lhs, rhs, encryptionResult).let { r ->
                             encryptionResult = r
                             rhs = lhs
                             addLayer()
@@ -361,7 +353,7 @@ object OnionRequestAPI {
                 return@success deferred.reject(exception)
             }
             val destinationSymmetricKey = result.destinationSymmetricKey
-            ThreadUtils.queue {
+            GlobalScope.launch {
                 try {
                     val response = HTTP.execute(HTTP.Verb.POST, url, body)
                     handleResponse(response, destinationSymmetricKey, destination, version, deferred)
@@ -378,7 +370,7 @@ object OnionRequestAPI {
                 val checkedGuardSnode = guardSnode
                 val path =
                     if (checkedGuardSnode == null) null
-                    else paths.firstOrNull { it.contains(checkedGuardSnode) }
+                    else paths.value.firstOrNull { it.contains(checkedGuardSnode) }
 
                 fun handleUnspecificError() {
                     if (path == null) { return }
@@ -612,11 +604,7 @@ object OnionRequestAPI {
                                 val bodyAsString = json["body"] as String
                                 JsonUtil.fromJson(bodyAsString, Map::class.java)
                             }
-                            if (body["t"] != null) {
-                                val timestamp = body["t"] as Long
-                                val offset = timestamp - System.currentTimeMillis()
-                                SnodeAPI.clockOffset = offset
-                            }
+
                             if (body.containsKey("hf")) {
                                 @Suppress("UNCHECKED_CAST")
                                 val currentHf = body["hf"] as List<Int>

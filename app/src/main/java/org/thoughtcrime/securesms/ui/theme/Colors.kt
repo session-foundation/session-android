@@ -44,6 +44,8 @@ val primaryRed = Color(0xFFFF9C8E)
 val primaryOrange = Color(0xFFFCB159)
 val primaryYellow = Color(0xFFFAD657)
 
+val rust = Color(0xFFA64B00)
+
 val dangerDark = Color(0xFFFF3A3A)
 val dangerLight = Color(0xFFE12D19)
 val disabledDark = Color(0xFFA1A2A1)

@@ -427,7 +427,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> și <b> alți {count}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> și <b>{other_name}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Tu</b> și <b>{name}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
     <string name="groupMemberYouLeft"><b>Tu</b> ai părăsit grupul.</string>
     <string name="groupMembers">Membrii grupului</string>
     <string name="groupMembersNone">Nu există alți membri în acest grup.</string>

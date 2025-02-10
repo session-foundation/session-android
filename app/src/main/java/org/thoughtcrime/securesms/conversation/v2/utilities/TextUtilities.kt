@@ -57,4 +57,6 @@ object TextUtilities {
         }
     }
 
+    fun String.textSizeInBytes(): Int = this.toByteArray(Charsets.UTF_8).size
+
 }

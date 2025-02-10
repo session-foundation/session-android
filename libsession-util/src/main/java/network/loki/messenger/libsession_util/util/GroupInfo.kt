@@ -1,8 +1,45 @@
 package network.loki.messenger.libsession_util.util
 
+import org.session.libsignal.utilities.AccountId
+
 sealed class GroupInfo {
 
-    data class CommunityGroupInfo(val community: BaseCommunityInfo, val priority: Int) : GroupInfo()
+    data class CommunityGroupInfo(val community: BaseCommunityInfo, val priority: Long) : GroupInfo()
+
+    data class ClosedGroupInfo(
+        val groupAccountId: AccountId,
+        val adminKey: ByteArray?,
+        val authData: ByteArray?,
+        val priority: Long,
+        val invited: Boolean,
+        val name: String,
+        val kicked: Boolean,
+        val destroyed: Boolean,
+        val joinedAtSecs: Long
+    ): GroupInfo() {
+        init {
+            require(adminKey == null || adminKey.isNotEmpty()) {
+                "Admin key must be non-empty if present"
+            }
+
+            require(authData == null || authData.isNotEmpty()) {
+                "Auth data must be non-empty if present"
+            }
+        }
+
+        fun hasAdminKey() = adminKey != null
+
+        companion object {
+            /**
+             * Generate the group's admin key(64 bytes) from seed (32 bytes, normally used
+             * in group promotions).
+             *
+             * Use of JvmStatic makes the JNI signature less esoteric.
+             */
+            @JvmStatic
+            external fun adminKeyFromSeed(seed: ByteArray): ByteArray
+        }
+    }
 
     data class LegacyGroupInfo(
         val accountId: String,
@@ -10,9 +47,9 @@ sealed class GroupInfo {
         val members: Map<String, Boolean>,
         val encPubKey: ByteArray,
         val encSecKey: ByteArray,
-        val priority: Int,
+        val priority: Long,
         val disappearingTimer: Long,
-        val joinedAt: Long
+        val joinedAtSecs: Long
     ): GroupInfo() {
         companion object {
             @Suppress("FunctionName")
@@ -32,7 +69,7 @@ sealed class GroupInfo {
             if (!encSecKey.contentEquals(other.encSecKey)) return false
             if (priority != other.priority) return false
             if (disappearingTimer != other.disappearingTimer) return false
-            if (joinedAt != other.joinedAt) return false
+            if (joinedAtSecs != other.joinedAtSecs) return false
 
             return true
         }
@@ -43,11 +80,12 @@ sealed class GroupInfo {
             result = 31 * result + members.hashCode()
             result = 31 * result + encPubKey.contentHashCode()
             result = 31 * result + encSecKey.contentHashCode()
-            result = 31 * result + priority
+            result = 31 * result + priority.hashCode()
             result = 31 * result + disappearingTimer.hashCode()
-            result = 31 * result + joinedAt.hashCode()
+            result = 31 * result + joinedAtSecs.hashCode()
             return result
         }
+
     }
 
 }

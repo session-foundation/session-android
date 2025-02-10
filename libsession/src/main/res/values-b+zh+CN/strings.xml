@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b>和<b>{count}名其他成员</b>被邀请加入群组。</string>
     <string name="groupMemberNewTwo"><b>{name}</b>和<b>{other_name}</b>被邀请加入了群组。</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>您</b>和其他<b>{count}人</b>被邀请加入群组。聊天记录已共享。</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>您</b>和<b>{name}</b>被邀请加入了群组。 聊天记录已共享。</string>
     <string name="groupMemberYouLeft"><b>您</b>离开了群组。</string>
     <string name="groupMembers">群成员</string>
     <string name="groupMembersNone">此群组没有其他成员。</string>

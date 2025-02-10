@@ -3,6 +3,12 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.withTimeout
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
 import org.session.libsession.messaging.messages.Destination
@@ -10,10 +16,14 @@ import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
+import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 
-class MessageSendJob(val message: Message, val destination: Destination) : Job {
+class MessageSendJob(val message: Message, val destination: Destination, val statusCallback: SendChannel<Result<Unit>>?) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
 
@@ -72,34 +82,46 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
             } // Wait for all attachments to upload before continuing
         }
         val isSync = destination is Destination.Contact && destination.publicKey == sender
-        val promise = MessageSender.send(this.message, this.destination, isSync).success {
-            this.handleSuccess(dispatcherName)
-        }.fail { exception ->
-            var logStacktrace = true
 
-            when (exception) {
-                // No need for the stack trace for HTTP errors
-                is HTTP.HTTPRequestFailedException -> {
-                    logStacktrace = false
+        try {
+            withTimeout(20_000L) {
+                // Shouldn't send message to group when the group has no keys available
+                if (destination is Destination.ClosedGroup) {
+                    MessagingModuleConfiguration.shared.configFactory
+                        .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
+                }
 
-                    if (exception.statusCode == 429) { this.handlePermanentFailure(dispatcherName, exception) }
-                    else { this.handleFailure(dispatcherName, exception) }
-                }
-                is MessageSender.Error -> {
-                    if (!exception.isRetryable) { this.handlePermanentFailure(dispatcherName, exception) }
-                    else { this.handleFailure(dispatcherName, exception) }
-                }
-                else -> this.handleFailure(dispatcherName, exception)
+                MessageSender.sendNonDurably(this@MessageSendJob.message, destination, isSync).await()
             }
 
-            if (logStacktrace) { Log.e(TAG, "Couldn't send message due to error", exception) }
-            else { Log.e(TAG, "Couldn't send message due to error: ${exception.message}") }
-        }
-        try {
-            promise.get()
+            this.handleSuccess(dispatcherName)
+            statusCallback?.trySend(Result.success(Unit))
+        } catch (e: HTTP.HTTPRequestFailedException) {
+            if (e.statusCode == 429) { this.handlePermanentFailure(dispatcherName, e) }
+            else { this.handleFailure(dispatcherName, e) }
+
+            statusCallback?.trySend(Result.failure(e))
+        } catch (e: MessageSender.Error) {
+            if (!e.isRetryable) { this.handlePermanentFailure(dispatcherName, e) }
+            else { this.handleFailure(dispatcherName, e) }
+
+            statusCallback?.trySend(Result.failure(e))
         } catch (e: Exception) {
-            Log.d(TAG, "Promise failed to resolve successfully", e)
+            this.handleFailure(dispatcherName, e)
+
+            statusCallback?.trySend(Result.failure(e))
         }
+    }
+
+    private suspend fun ConfigFactoryProtocol.waitForGroupEncryptionKeys(groupId: AccountId) {
+        (configUpdateNotifications
+            .filter { it is ConfigUpdateNotification.GroupConfigsUpdated && it.groupId == groupId }
+            as Flow<*>
+        ).onStart { emit(Unit) }
+            .filter {
+                withGroupConfigs(groupId) { configs -> configs.groupKeys.keys().isNotEmpty() }
+            }
+            .first()
     }
 
     private fun handleSuccess(dispatcherName: String) {
@@ -111,7 +133,7 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
     }
 
     private fun handleFailure(dispatcherName: String, error: Exception) {
-        Log.w(TAG, "Failed to send $message::class.simpleName.")
+        Log.w(TAG, "Failed to send $message::class.simpleName.", error)
         val message = message as? VisibleMessage
         if (message != null) {
             if (
@@ -176,7 +198,7 @@ class MessageSendJob(val message: Message, val destination: Destination) : Job {
             }
             destinationInput.close()
             // Return
-            return MessageSendJob(message, destination)
+            return MessageSendJob(message, destination, statusCallback = null)
         }
     }
 }

@@ -431,7 +431,6 @@
     <string name="groupMemberNewMultiple"><b>{name}‏</b> ו<b>{count} אחרים‏</b> הוזמנו להצטרף לקבוצה.</string>
     <string name="groupMemberNewTwo"><b>{name}‏</b> ו<b>{other_name}‏</b> הוזמנו להצטרף לקבוצה.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>את/ה</b> ו<b>{count} אחרים‏</b> הוזמנתם להצטרף לקבוצה. היסטוריית הצ\'אט שותפה.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>את/ה</b> ו<b>{name}‏</b> הוזמנתם להצטרף לקבוצה. היסטוריית הצ\'אט שותפה.</string>
     <string name="groupMemberYouLeft"><b>את/ה</b> עזבת את הקבוצה.</string>
     <string name="groupMembers">חברי קבוצה</string>
     <string name="groupMembersNone">אין חברים אחרים בקבוצה זו.</string>

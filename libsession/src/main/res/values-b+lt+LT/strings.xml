@@ -431,7 +431,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ir <b>{count} kiti</b> buvote pakviesti prisijungti prie grupės.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ir <b>{other_name}</b> buvote pakviesti prisijungti prie grupės.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Jūs</b> ir <b>dar {count}</b> buvo pakviesti prisijungti prie grupės. Pokalbio istorija buvo pasidalinta.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Jūs</b> ir <b>{name}</b> buvo pakviesti prisijungti prie grupės. Pokalbio istorija buvo pasidalinta.</string>
     <string name="groupMemberYouLeft"><b>Jūs</b> išėjote iš grupės.</string>
     <string name="groupMembers">Grupės dalyviai</string>
     <string name="groupMembersNone">Šioje grupėje nėra kitų narių.</string>

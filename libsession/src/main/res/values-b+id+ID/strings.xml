@@ -416,7 +416,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dan <b>{count} lainnya</b> telah diundang untuk bergabung dengan grup.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dan <b>{other_name}</b> telah diundang untuk bergabung dengan grup.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Anda</b> dan <b>{count} lainnya</b> telah diundang untuk bergabung dengan grup. Riwayat obrolan dibagikan.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Anda</b> dan <b>{name}</b> telah diundang untuk bergabung dengan grup. Riwayat obrolan dibagikan.</string>
     <string name="groupMemberYouLeft"><b>Anda</b> keluar dari grup.</string>
     <string name="groupMembers">Anggota grup</string>
     <string name="groupMembersNone">Tidak ada anggota lain di dalam grup ini.</string>

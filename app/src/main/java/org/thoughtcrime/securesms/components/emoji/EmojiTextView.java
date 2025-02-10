@@ -45,7 +45,7 @@ public class EmojiTextView extends AppCompatTextView {
 
     scaleEmojis = true;
     maxLength   = 1000;
-    originalFontSize = getResources().getDimension(R.dimen.small_font_size);
+    originalFontSize = getResources().getDimension(R.dimen.medium_font_size);
   }
 
   @Override public void setText(@Nullable CharSequence text, BufferType type) {

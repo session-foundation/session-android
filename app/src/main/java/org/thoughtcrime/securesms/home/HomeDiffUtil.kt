@@ -12,16 +12,42 @@ class HomeDiffUtil(
         private val configFactory: ConfigFactory
 ): DiffUtil.Callback() {
 
-    override fun getOldListSize(): Int = old.threads.size
+    override fun getOldListSize(): Int = old.items.size
 
-    override fun getNewListSize(): Int = new.threads.size
+    override fun getNewListSize(): Int = new.items.size
 
-    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-        old.threads[oldItemPosition].threadId == new.threads[newItemPosition].threadId
+    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+        val oldItem = old.items[oldItemPosition]
+        val newItem = new.items[newItemPosition]
+
+        if (oldItem is HomeViewModel.Item.MessageRequests && newItem is HomeViewModel.Item.MessageRequests) {
+            return true
+        }
+
+        if (oldItem is HomeViewModel.Item.Thread && newItem is HomeViewModel.Item.Thread) {
+            return oldItem.thread.threadId == newItem.thread.threadId
+        }
+
+        return false
+    }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        val oldItem = old.threads[oldItemPosition]
-        val newItem = new.threads[newItemPosition]
+        val old = old.items[oldItemPosition]
+        val new = new.items[newItemPosition]
+
+        // If both are message requests, we can compare them directly
+        if (old is HomeViewModel.Item.MessageRequests && new is HomeViewModel.Item.MessageRequests) {
+            return old.count == new.count
+        }
+
+        // If one of the items is not a thread, we can't compare them, it's always false
+        if (old !is HomeViewModel.Item.Thread || new !is HomeViewModel.Item.Thread) {
+            return false
+        }
+
+        // When we reach this point, we know that both items are threads
+        val oldItem = old.thread
+        val newItem = new.thread
 
         // return early to save getDisplayBody or expensive calls
         var isSameItem = true
@@ -46,8 +72,8 @@ class HomeDiffUtil(
                 oldItem.isSent == newItem.isSent &&
                 oldItem.isPending == newItem.isPending &&
                 oldItem.lastSeen == newItem.lastSeen &&
-                configFactory.convoVolatile?.getConversationUnread(newItem) != true &&
-                old.typingThreadIDs.contains(oldItem.threadId) == new.typingThreadIDs.contains(newItem.threadId)
+                !configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(newItem) } &&
+                old.isTyping == new.isTyping
             )
         }
 

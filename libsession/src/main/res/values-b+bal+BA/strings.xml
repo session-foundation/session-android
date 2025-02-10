@@ -255,7 +255,7 @@
     <string name="create">بناؤ</string>
     <string name="cut">کٹ</string>
     <string name="databaseErrorGeneric">Database error wajaht bravestā.\n\nApē application logs export ke troubleshooting bare. Agar u naęt, {app_name} reinstall ke a hare account still bāz ke.\n\nWarning: Ē war result hōk wando messages attachment a all account data pur z du hafte purān gōh.</string>
-    <string name="databaseErrorTimeout">ما پٹِن گی اتہ {app_name} سرا کتن وقت گشتنت۔\n\nباقی انتظار بکنت، سپاڈی بروک کردیا گزارش بکنت بیت ائی٬ گپچہ رفتارشت بار بکودنت بیت اتہ بھال دکنت۔</string>
+    <string name="databaseErrorTimeout">ما دیستگ کہ {app_name} ءِ بندات کنگ ءَ بازیں وھدے لگ اِیت۔\n\nشما دیم ءَ اوشتات کن اِت، وتی ڈیوائس ءِ لاگاں پہ جیڑہ ءِ گیش ءُ گیوار ءَ شیئر کنگ ءِ ھاترا برآمد کن اِت یا {app_name} ءَ پدا بندات کنگ ءِ جُھد ءَ کن اِت۔</string>
     <string name="databaseErrorUpdate">{app_name} کس ای ورژنئے نکہ ایپ دیټابیس ناہم آهن. اِیپ نوک بزا من اَکاونٹ بازگری کن تا پن نوک دیټابیس پیدا بکن تا {app_name} دابی مرت استفاده بکن.\n\nچیتپا: ماہیت زامبلاونکین دو ہفتہ ناہند، تمام پیامانءِ و اٹیچمنٹاں گم بیت.</string>
     <string name="databaseOptimizing">ڈیٹابیس شخصکورانی</string>
     <string name="debugLog">ڈیبگ لگ</string>
@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> a <b>{count} drīg</b> šumār zant group ke.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> a <b>{other_name}</b> šumār zant group ke.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Šumār</b> a <b>{count} drīg</b> šumār zant group ke. Chat history was shared.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Šumār</b> a <b>{name}</b> šumār zant group ke. Chat history was shared.</string>
     <string name="groupMemberYouLeft"><b>Šumār</b> jāmš.</string>
     <string name="groupMembers">گروپءِ اراکنان</string>
     <string name="groupMembersNone">اس گروپ میں دوسرے کوئی رکن نہیں.</string>

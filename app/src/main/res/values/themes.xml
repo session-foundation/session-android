@@ -46,13 +46,13 @@
        <item name="menu_select_icon">@drawable/ic_baseline_check_circle_outline_24</item>
        <item name="menu_selectall_icon">@drawable/ic_baseline_select_all_24</item>
        <item name="menu_split_icon">@drawable/ic_baseline_call_split_24</item>
-       <item name="menu_popup_expand">@drawable/ic_baseline_launch_24</item>
        <item name="menu_info_icon">@drawable/ic_info_outline_white_24dp</item>
        <item name="menu_pin_icon">@drawable/ic_outline_pin_24</item>
        <item name="menu_unpin_icon">@drawable/ic_outline_pin_off_24</item>
        <item name="menu_mark_all_as_read">@drawable/ic_outline_mark_chat_read_24</item>
        <item name="emoji_show_less_icon">@drawable/ic_chevron_up_light</item>
        <item name="accentColor">?colorAccent</item>
+       <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
        <item name="prominentButtonColor">?colorAccent</item>
        <item name="attachment_document_icon_small">@drawable/ic_document_small_dark</item>
        <item name="attachment_document_icon_large">@drawable/ic_document_large_dark</item>
@@ -179,7 +179,6 @@
         <item name="conversation_attach_image">@drawable/ic_image_dark</item>
         <item name="conversation_attach_video">@drawable/ic_movie_creation_dark</item>
         <item name="conversation_attach_sound">@drawable/ic_volume_up_dark</item>
-        <item name="conversation_attach">@drawable/ic_attach_white_24dp</item>
         <item name="conversation_number_picker_text_color_normal">@color/gray13</item>
         <item name="conversation_number_picker_text_color_selected">@color/white</item>
         <item name="conversation_sticker_footer_text_color">@color/core_grey_25</item>
@@ -314,6 +313,7 @@
         <item name="backgroundSecondary">@color/classic_dark_1</item>
         <item name="colorControlNormal">?android:textColorPrimary</item>
         <item name="colorControlActivated">?colorAccent</item>
+        <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
         <item name="android:textColorPrimary">@color/classic_dark_6</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
@@ -335,6 +335,7 @@
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
         <item name="accentColor">?colorAccent</item>
+        <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
 
@@ -396,6 +397,7 @@
         <item name="colorPrimaryDark">@color/classic_light_6</item>
         <item name="colorControlNormal">?android:textColorPrimary</item>
         <item name="colorControlActivated">?colorAccent</item>
+        <item name="warning">@color/rust</item>
         <item name="danger">@color/danger_light</item>
         <item name="android:textColorPrimary">@color/classic_light_0</item>
         <item name="android:textColorSecondary">@color/classic_light_1</item>
@@ -417,6 +419,7 @@
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
         <item name="accentColor">?colorAccent</item>
+        <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/classic_light_3</item>
 
@@ -486,6 +489,7 @@
         <item name="backgroundSecondary">@color/ocean_dark_1</item>
         <item name="colorControlNormal">@color/ocean_dark_7</item>
         <item name="colorControlActivated">?colorAccent</item>
+        <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
         <item name="android:textColorPrimary">@color/ocean_dark_7</item>
         <item name="android:textColorSecondary">@color/ocean_dark_5</item>
@@ -507,6 +511,7 @@
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.Dark.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
         <item name="accentColor">?colorAccent</item>
+        <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/ocean_dark_4</item>
 
@@ -571,6 +576,7 @@
         <item name="backgroundSecondary">@color/ocean_light_6</item>
         <item name="colorControlNormal">@color/ocean_light_1</item>
         <item name="colorControlActivated">?colorAccent</item>
+        <item name="warning">@color/rust</item>
         <item name="danger">@color/danger_light</item>
         <item name="android:textColorPrimary">@color/ocean_light_1</item>
         <item name="android:textColorSecondary">@color/ocean_light_2</item>
@@ -592,6 +598,7 @@
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
         <item name="accentColor">?colorAccent</item>
+        <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
         <item name="elementBorderColor">@color/ocean_light_3</item>
 
@@ -656,6 +663,7 @@
         <item name="dividerVertical">?android:textColorTertiary</item>
         <item name="dividerHorizontal">?dividerVertical</item>
         <item name="colorAccent">@color/classic_accent</item>
+        <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
 
         <item name="sessionLogoTint">@color/classic_dark_6</item>
         <item name="colorPrimary">@color/classic_dark_0</item>
@@ -682,6 +690,7 @@
         <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
         <item name="prominentButtonColor">?colorAccent</item>
         <item name="elementBorderColor">@color/classic_dark_3</item>
+        <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
         <item name="textColorAlert">@color/classic_dark_6</item>
 

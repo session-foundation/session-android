@@ -59,4 +59,6 @@
     <color name="accent_orange">#ffFCB159</color>
     <color name="accent_yellow">#ffFAD657</color>
 
+    <color name="rust">#A64B00</color>
+
 </resources>

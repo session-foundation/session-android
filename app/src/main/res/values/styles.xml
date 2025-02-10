@@ -18,6 +18,54 @@
         <item name="android:homeAsUpIndicator">@drawable/ic_arrow_left</item>
     </style>
 
+    <style name="TextAppearance.Session.ConversationSettings" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">?android:textColorPrimary</item>
+    </style>
+
+    <style name="TextAppearance.Session.ConversationSettings.Title">
+        <item name="android:gravity">center</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textSize">26sp</item>
+        <item name="fontWeight">700</item>
+        <item name="fontFamily">@font/roboto_medium</item>
+    </style>
+
+    <style name="TextAppearance.Session.ConversationSettings.Subtitle">
+        <item name="android:gravity">center</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">?android:textColorSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Session.ConversationSettings.Option">
+        <item name="android:drawableTint">?android:textColorPrimary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">@dimen/very_large_spacing</item>
+        <item name="android:paddingStart">@dimen/very_large_spacing</item>
+        <item name="android:paddingEnd">@dimen/very_large_spacing</item>
+    </style>
+
+    <style name="TextAppearance.Session.ConversationSettings.Option.Destructive">
+        <item name="android:drawableTint">@null</item>
+        <item name="android:textColor">?attr/danger</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">@dimen/very_large_spacing</item>
+        <item name="android:paddingStart">@dimen/very_large_spacing</item>
+        <item name="android:paddingEnd">@dimen/very_large_spacing</item>
+    </style>
+
+    <style name="TextAppearance.Session.ConversationSettings.OptionSummary">
+        <item name="android:drawableTint">?android:textColorPrimary</item>
+        <item name="android:textColor">?android:textColorSecondary</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:drawablePadding">@dimen/very_large_spacing</item>
+        <item name="android:paddingStart">@dimen/very_large_spacing</item>
+        <item name="android:paddingEnd">@dimen/very_large_spacing</item>
+    </style>
+
     <style name="TextAppearance.Session.DarkActionBar.TitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textSize">@dimen/very_large_font_size</item>
@@ -25,7 +73,7 @@
 
     <style name="MenuTextAppearance" parent="TextAppearance.AppCompat.Widget.ActionBar.Menu">
         <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">@dimen/small2_font_size</item>
+        <item name="android:textSize">@dimen/small_font_size</item>
         <item name="android:textStyle">bold</item>
     </style>
 
@@ -35,7 +83,7 @@
     </style>
 
     <style name="TextAppearance.Session.Dialog.Message" parent="TextAppearance.AppCompat.Body1">
-        <item name="android:textSize">@dimen/small2_font_size</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="ThemeOverlay.Session.AlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
@@ -114,19 +162,21 @@
     <style name="Widget.Session.Button.Dialog" parent="">
         <item name="android:gravity">center</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:textSize">@dimen/small_font_size</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
         <item name="android:textColor">?android:textColorPrimary</item>
     </style>
 
     <style name="Widget.Session.Button.Dialog.UnimportantText">
         <item name="android:background">@drawable/unimportant_dialog_text_button_background</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="Widget.Session.Button.Dialog.DangerText">
         <item name="android:background">@drawable/danger_dialog_text_button_background</item>
         <item name="android:textColor">?danger</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/medium_font_size</item>
     </style>
 
     <style name="Widget.Session.EditText.Compose" parent="@style/Signal.Text.Body">

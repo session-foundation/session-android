@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> และ <b>{count} อื่นๆ</b> ถูกเชิญเข้าร่วมกลุ่ม</string>
     <string name="groupMemberNewTwo"><b>{name}</b> และ <b>{other_name}</b> ถูกเชิญเข้าร่วมกลุ่ม</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>คุณ</b> และ <b>{count} อื่นๆ</b> ถูกเชิญเข้าร่วมกลุ่ม ประวัติการแชทถูกแชร์</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>คุณ</b> และ <b>{name}</b> ถูกเชิญเข้าร่วมกลุ่ม ประวัติการแชทถูกแชร์</string>
     <string name="groupMemberYouLeft"><b>คุณ</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMembers">สมาชิกกลุ่ม</string>
     <string name="groupMembersNone">ไม่มีสมาชิกคนอื่นในกลุ่มนี้</string>

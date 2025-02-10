@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,14 +16,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.Callbacks
 import org.thoughtcrime.securesms.ui.NoOpCallbacks
 import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.fadingEdges
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -38,15 +36,12 @@ fun DisappearingMessages(
     modifier: Modifier = Modifier,
     callbacks: ExpiryCallbacks = NoOpCallbacks
 ) {
-    val scrollState = rememberScrollState()
-
     Column(modifier = modifier.padding(horizontal = LocalDimensions.current.spacing)) {
-        Box(modifier = Modifier.weight(1f)) {
+        BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
             Column(
                 modifier = Modifier
-                    .padding(vertical = LocalDimensions.current.spacing)
-                    .verticalScroll(scrollState)
-                    .fadingEdges(scrollState),
+                    .verticalScroll(rememberScrollState())
+                    .padding(vertical = LocalDimensions.current.spacing),
             ) {
                 state.cards.forEachIndexed { index, option ->
                     OptionsCard(option, callbacks)
@@ -69,10 +64,12 @@ fun DisappearingMessages(
                         .fillMaxWidth()
                         .padding(top = LocalDimensions.current.xsSpacing)
                 )
+
+                Spacer(modifier = Modifier.height(bottomContentPadding))
             }
         }
 
-        if (state.showSetButton){
+        if (state.showSetButton) {
             PrimaryOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier

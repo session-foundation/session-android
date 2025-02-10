@@ -152,6 +152,7 @@
     <string name="callsNotificationsRequired">Spraak- en video-oproepen vereisen dat meldingen zijn ingeschakeld in de systeeminstellingen van uw apparaat.</string>
     <string name="callsPermissionsRequired">Oproepmachtigingen vereist</string>
     <string name="callsPermissionsRequiredDescription">U kunt de machtiging \"Spraak- en video-oproepen\" inschakelen in de privacy-instellingen.</string>
+    <string name="callsPermissionsRequiredDescription1">U kunt de machtiging voor \"Spraak- en video-oproepen\" inschakelen in de privacy-instellingen.</string>
     <string name="callsReconnecting">Herverbinden…</string>
     <string name="callsRinging">Gaat over...</string>
     <string name="callsSessionCall">{app_name} Gesprek</string>
@@ -401,6 +402,7 @@
     <string name="groupCreateErrorNoMembers">Kies ten minste één ander groepslid.</string>
     <string name="groupDelete">Verwijder groep</string>
     <string name="groupDeleteDescription">Weet je zeker dat je <b>{group_name}</b> wilt verwijderen? Dit zal alle leden verwijderen en alle groepsinhoud wissen.</string>
+    <string name="groupDeletedMemberDescription">{group_name} is verwijderd door een groepsbeheerder. U kunt geen berichten meer versturen.</string>
     <string name="groupDescriptionEnter">Voer een groepsbeschrijving in</string>
     <string name="groupDisplayPictureUpdated">Groepsafbeelding bijgewerkt.</string>
     <string name="groupEdit">Groep bewerken</string>
@@ -438,7 +440,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> en <b>{other_name}</b> zijn uitgenodigd om lid te worden van de groep.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>U</b> en <b>{count} anderen</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>U</b> en <b>{name}</b> zijn uitgenodigd om lid te worden van de groep. Geschiedenis van het gesprek is gedeeld.</string>
     <string name="groupMemberYouLeft"><b>U</b> heeft de groep verlaten.</string>
     <string name="groupMembers">Groepsleden</string>
     <string name="groupMembersNone">Er zijn geen andere leden in deze groep.</string>
@@ -450,6 +451,7 @@
     <string name="groupNameUpdated">Groepsnaam bijgewerkt.</string>
     <string name="groupNoMessages">U heeft geen berichten van <b>{group_name}</b>. Stuur een bericht om het gesprek te starten!</string>
     <string name="groupOnlyAdmin">U bent de enige beheerder in <b>{group_name}</b>.\n\nGroepsleden en instellingen kunnen niet worden gewijzigd zonder een beheerder.</string>
+    <string name="groupPendingRemoval">In afwachting van verwijdering</string>
     <string name="groupPromotedYou"><b>U</b> bent gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>U</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouTwo"><b>U</b> en <b>{name}</b> zijn gepromoveerd tot Admin.</string>

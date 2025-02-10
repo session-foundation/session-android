@@ -35,16 +35,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.widget.Toolbar;
 
 import com.squareup.phrase.Phrase;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import network.loki.messenger.R;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.DistributionTypes;
@@ -60,11 +52,19 @@ import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import network.loki.messenger.R;
+
 /**
  * An activity to quickly share content with contacts
  *
  * @author Jake McGinty
  */
+@AndroidEntryPoint
 public class ShareActivity extends PassphraseRequiredActionBarActivity
         implements ContactSelectionListFragment.OnContactSelectedListener {
     private static final String TAG = ShareActivity.class.getSimpleName();

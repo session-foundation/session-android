@@ -287,6 +287,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Diese Nachricht wurde gelöscht</string>
     <string name="deleteMessageDeletedLocally">Diese Nachricht wurde auf diesem Gerät gelöscht</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Bist du sicher, du möchtest diese Nachrichten nur von diesem Gerät löschen?</item>
+        <item quantity="other">Möchtest du diese Nachrichten wirklich nur von diesem Gerät löschen?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Möchtest du diese Nachricht wirklich für alle löschen?</string>
     <string name="deleteMessageDeviceOnly">Nur auf diesem Gerät löschen</string>
     <string name="deleteMessageDevicesAll">Von allen meinen Geräten löschen</string>
@@ -422,7 +426,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> und <b>{count} andere</b> wurden eingeladen, der Gruppe beizutreten.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> und <b>{other_name}</b> wurden eingeladen, der Gruppe beizutreten.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> und <b>{count} andere</b> wurden eingeladen, der Gruppe beizutreten. Der Chatverlauf wurde freigegeben.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Du</b> und <b>{name}</b> wurden eingeladen, der Gruppe beizutreten. Der Chatverlauf wurde freigegeben.</string>
     <string name="groupMemberYouLeft"><b>Du</b> hast die Gruppe verlassen.</string>
     <string name="groupMembers">Gruppenmitglieder</string>
     <string name="groupMembersNone">Es gibt keine anderen Mitglieder in dieser Gruppe.</string>

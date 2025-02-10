@@ -255,7 +255,7 @@
     <string name="create">Lumikha</string>
     <string name="cut">I-cut</string>
     <string name="databaseErrorGeneric">Nagkaroon ng error sa database.\n\n I-export ang mga log ng iyong application para i-share para sa pag-troubleshoot. Kung hindi ito matagumpay, muling i-install ang {app_name} at ibalik ang iyong account.\n\nBabala: Magreresulta ito sa pagkawala ng lahat ng mga mensahe, attachment, at data ng account na mas matanda kaysa dalawang linggo.</string>
-    <string name="databaseErrorTimeout">Napansin naming matagal bago mag-start ang {app_name}.\n\nPuwede kang maghintay nalang, i-export ang iyong device logs para i-share para sa troubleshooting, o subukan i-restart ang Session.</string>
+    <string name="databaseErrorTimeout">Napansin naming matagal bago mag-start ang {app_name}.\n\nPuwede kang maghintay nalang, i-export ang iyong device logs para i-share para sa troubleshooting, o subukan i-restart ang {app_name}.</string>
     <string name="databaseErrorUpdate">Ang iyong app database ay hindi compatible sa bersyon na ito ng {app_name}. I-reinstall ang app at i-restore ang iyong account upang makabuo ng bagong database at ipagpatuloy ang paggamit ng {app_name}.\n\nBabala: Ito ay magreresulta sa pagkawala ng lahat ng mensahe at attachments na higit sa dalawang linggo.</string>
     <string name="databaseOptimizing">Ina-optimize ang Database</string>
     <string name="debugLog">I-debug ang Log</string>
@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> at <b>{count} iba pa</b> ay naimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> at <b>{other_name}</b> ay naimbitahan na sumali sa grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> ay naimbitahan na sumali sa grupo. Ibinahagi ang kasaysayan ng chat.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Ikaw</b> at <b>{name}</b> ay naimbitahan na sumali sa grupo. Ibinahagi ang kasaysayan ng chat.</string>
     <string name="groupMemberYouLeft"><b>Ikaw</b> ay umalis sa grupo.</string>
     <string name="groupMembers">Mga Miyembro ng Grupo</string>
     <string name="groupMembersNone">Walang ibang miyembro sa grupong ito.</string>

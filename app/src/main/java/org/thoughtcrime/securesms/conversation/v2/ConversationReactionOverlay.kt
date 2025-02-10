@@ -33,19 +33,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
@@ -95,6 +99,11 @@ class ConversationReactionOverlay : FrameLayout {
 
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var repository: ConversationRepository
+    @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
+    @Inject lateinit var threadDatabase: ThreadDatabase
+    @Inject lateinit var textSecurePreferences: TextSecurePreferences
+    @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
+
     private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
 
@@ -163,7 +172,8 @@ class ConversationReactionOverlay : FrameLayout {
     private fun showAfterLayout(messageRecord: MessageRecord,
                                 lastSeenDownPoint: PointF,
                                 isMessageOnLeft: Boolean) {
-        val contextMenu = ConversationContextMenu(dropdownAnchor, getMenuActionItems(messageRecord))
+        val recipient = threadDatabase.getRecipientForThreadId(messageRecord.threadId)
+        val contextMenu = ConversationContextMenu(dropdownAnchor, recipient?.let { getMenuActionItems(messageRecord, it) }.orEmpty())
         this.contextMenu = contextMenu
         var endX = if (isMessageOnLeft) scrubberHorizontalMargin.toFloat() else selectedConversationModel.bubbleX - conversationItem.width + selectedConversationModel.bubbleWidth
         var endY = selectedConversationModel.bubbleY - statusBarHeight
@@ -260,6 +270,12 @@ class ConversationReactionOverlay : FrameLayout {
         } else {
             (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
         }
+
+        val isDeprecatedLegacyGroup =
+            recipient?.isLegacyGroupRecipient == true &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+        foregroundView.isVisible = !isDeprecatedLegacyGroup
+        backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
         backgroundView.x = scrubberX
@@ -357,6 +373,12 @@ class ConversationReactionOverlay : FrameLayout {
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
         updateBoundsOnLayoutChanged()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+
+        hide()
     }
 
     private fun updateBoundsOnLayoutChanged() {
@@ -521,16 +543,14 @@ class ConversationReactionOverlay : FrameLayout {
             .firstOrNull()
             ?.let(ReactionRecord::emoji)
 
-    private fun getMenuActionItems(message: MessageRecord): List<ActionItem> {
+    private fun getMenuActionItems(message: MessageRecord, recipient: Recipient): List<ActionItem> {
         val items: MutableList<ActionItem> = ArrayList()
 
         // Prepare
         val containsControlMessage = message.isUpdate
         val hasText = !message.body.isEmpty()
-        val openGroup = get(context).lokiThreadDatabase().getOpenGroupChat(message.threadId)
-        val recipient = get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-                ?: return emptyList()
-        val userPublicKey = getLocalNumber(context)!!
+        val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
+        val userPublicKey = textSecurePreferences.getLocalNumber()!!
 
         // control messages and "marked as deleted" messages can only delete
         val isDeleteOnly = message.isDeleted || message.isControlMessage
@@ -544,9 +564,15 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.AccessibilityId_select
             )
         }
+
+
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+
         // Reply
         val canWrite = openGroup == null || openGroup.canWrite
-        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly) {
+        if (canWrite && !message.isPending && !message.isFailed && !message.isOpenGroupInvitation && !isDeleteOnly
+            && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.reply, { handleActionItemClicked(Action.REPLY) }, R.string.AccessibilityId_reply)
         }
         // Copy message text
@@ -558,14 +584,23 @@ class ConversationReactionOverlay : FrameLayout {
             items += ActionItem(R.attr.menu_copy_icon, R.string.accountIDCopy, { handleActionItemClicked(Action.COPY_ACCOUNT_ID) })
         }
         // Delete message
-        items += ActionItem(R.attr.menu_trash_icon, R.string.delete, { handleActionItemClicked(Action.DELETE) },
-            R.string.AccessibilityId_deleteMessage, message.subtitle, ThemeUtil.getThemedColor(context, R.attr.danger))
+        if (!isDeprecatedLegacyGroup) {
+            items += ActionItem(
+                R.attr.menu_trash_icon,
+                R.string.delete,
+                { handleActionItemClicked(Action.DELETE) },
+                R.string.AccessibilityId_deleteMessage,
+                message.subtitle,
+                ThemeUtil.getThemedColor(context, R.attr.danger)
+            )
+        }
+
         // Ban user
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly) {
+        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_block_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
         }
         // Ban and delete all
-        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly) {
+        if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_trash_icon, R.string.banDeleteAll, { handleActionItemClicked(Action.BAN_AND_DELETE_ALL) })
         }
         // Message detail
@@ -576,11 +611,11 @@ class ConversationReactionOverlay : FrameLayout {
                 { handleActionItemClicked(Action.VIEW_INFO) })
         }
         // Resend
-        if (message.isFailed) {
+        if (message.isFailed && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.resend, { handleActionItemClicked(Action.RESEND) })
         }
         // Resync
-        if (message.isSyncFailed) {
+        if (message.isSyncFailed && !isDeprecatedLegacyGroup) {
             items += ActionItem(R.attr.menu_reply_icon, R.string.resync, { handleActionItemClicked(Action.RESYNC) })
         }
         // Save media..

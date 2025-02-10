@@ -19,21 +19,22 @@ package org.thoughtcrime.securesms.database.model;
 
 import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.AUTHOR_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY;
+import static org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.MESSAGE_SNIPPET_KEY;
 import static org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY;
-import static org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY;
 
 import android.content.Context;
 import android.net.Uri;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.StyleSpan;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
+import org.session.libsession.messaging.utilities.UpdateMessageData;
 import com.squareup.phrase.Phrase;
-import org.session.libsession.utilities.ExpirationUtil;
+
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
@@ -52,39 +53,46 @@ import network.loki.messenger.R;
  */
 public class ThreadRecord extends DisplayRecord {
 
-    private @Nullable final Uri     snippetUri;
-    public @Nullable  final MessageRecord lastMessage;
-    private           final long    count;
-    private           final int     unreadCount;
-    private           final int     unreadMentionCount;
-    private           final int     distributionType;
-    private           final boolean archived;
-    private           final long    expiresIn;
-    private           final long    lastSeen;
-    private           final boolean pinned;
-    private           final int     initialRecipientHash;
-    private           final long    dateSent;
+  private @Nullable final Uri     snippetUri;
+  public @Nullable  final MessageRecord lastMessage;
+  private           final long    count;
+  private           final int     unreadCount;
+  private           final int     unreadMentionCount;
+  private           final int     distributionType;
+  private           final boolean archived;
+  private           final long    expiresIn;
+  private           final long    lastSeen;
+  private           final boolean pinned;
+  private           final int initialRecipientHash;
+  private           final String invitingAdminId;
+  private           final long    dateSent;
 
-    public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
-                        @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
-                        int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                        long snippetType,  int distributionType, boolean archived, long expiresIn,
-                        long lastSeen, int readReceiptCount, boolean pinned)
-    {
-        super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
-        this.snippetUri           = snippetUri;
-        this.lastMessage          = lastMessage;
-        this.count                = count;
-        this.unreadCount          = unreadCount;
-        this.unreadMentionCount   = unreadMentionCount;
-        this.distributionType     = distributionType;
-        this.archived             = archived;
-        this.expiresIn            = expiresIn;
-        this.lastSeen             = lastSeen;
-        this.pinned               = pinned;
-        this.initialRecipientHash = recipient.hashCode();
-        this.dateSent             = date;
-    }
+  @NonNull
+  private           final GroupThreadStatus groupThreadStatus;
+
+  public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
+                      @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
+                      int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
+                      long snippetType,  int distributionType, boolean archived, long expiresIn,
+                      long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
+                      @NonNull GroupThreadStatus groupThreadStatus)
+  {
+    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
+    this.snippetUri         = snippetUri;
+    this.lastMessage        = lastMessage;
+    this.count              = count;
+    this.unreadCount        = unreadCount;
+    this.unreadMentionCount = unreadMentionCount;
+    this.distributionType   = distributionType;
+    this.archived           = archived;
+    this.expiresIn          = expiresIn;
+    this.lastSeen           = lastSeen;
+    this.pinned             = pinned;
+    this.initialRecipientHash = recipient.hashCode();
+    this.invitingAdminId    = invitingAdminId;
+    this.dateSent           = date;
+    this.groupThreadStatus  = groupThreadStatus;
+  }
 
     public @Nullable Uri getSnippetUri() {
         return snippetUri;
@@ -102,12 +110,31 @@ public class ThreadRecord extends DisplayRecord {
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
-        // no need to display anything if there are no messages
-        if (lastMessage == null){
+        if (groupThreadStatus == GroupThreadStatus.Kicked) {
+            return Phrase.from(context, R.string.groupRemovedYou)
+                    .put(GROUP_NAME_KEY, getName())
+                    .format()
+                    .toString();
+        } else if (groupThreadStatus == GroupThreadStatus.Destroyed) {
+            return Phrase.from(context, R.string.groupDeletedMemberDescription)
+                    .put(GROUP_NAME_KEY, getName())
+                    .format()
+                    .toString();
+        } else if (lastMessage == null){
+            // no need to display anything if there are no messages
             return "";
         }
         else if (isGroupUpdateMessage()) {
-            return context.getString(R.string.groupUpdated);
+            CharSequence body = lastMessage.getDisplayBody(context);
+            UpdateMessageData updatedMessage = lastMessage.getGroupUpdateMessage();
+
+            // For group leaving and error quit messages, we will leave the message as formatted
+            if (updatedMessage != null && (updatedMessage.isGroupLeavingKind() || updatedMessage.isGroupErrorQuitKind())) {
+                return body;
+            }
+
+            // Otherwise we'll need to remove all the formatting and just display the text
+            return body.toString();
         } else if (isOpenGroupInvitation()) {
             return context.getString(R.string.communityInvitation);
         } else if (MmsSmsColumns.Types.isLegacyType(type)) {
@@ -206,6 +233,11 @@ public class ThreadRecord extends DisplayRecord {
         }
     }
 
+    @Override
+    public boolean isGroupUpdateMessage() {
+        return lastMessage != null && lastMessage.isGroupUpdateMessage();
+    }
+
     public long getCount()               { return count; }
 
     public int getUnreadCount()          { return unreadCount; }
@@ -225,4 +257,8 @@ public class ThreadRecord extends DisplayRecord {
     public boolean isPinned()            { return pinned; }
 
     public int getInitialRecipientHash() { return initialRecipientHash; }
+
+    public String getInvitingAdminId() {
+        return invitingAdminId;
+    }
 }

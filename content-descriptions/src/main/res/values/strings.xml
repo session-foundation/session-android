@@ -5,6 +5,7 @@
 
     <!-- Onboarding related -->
     <string name="AccessibilityId_accountIdOrOnsEnter">Account id input box</string>
+    <string name="AccessibilityId_sessionIdInput">Session id input box</string>
     <string name="AccessibilityId_recoveryPasswordHidePermanentlyConfirm">Confirm button</string>
     <string name="AccessibilityId_accountIdCopy">Copy Account ID</string>
     <string name="AccessibilityId_copy">Copy button</string>
@@ -67,6 +68,8 @@
     <string name="AccessibilityId_blockConfirm">Confirm block</string>
     <string name="AccessibilityId_unblockConfirm">Confirm unblock</string>
     <string name="AccessibilityId_delete">Delete</string>
+    <string name="AccessibilityId_deleteButton">Delete button</string>
+    <string name="AccessibilityId_blockButton">Block button</string>
     <string name="AccessibilityId_leave">Leave</string>
     <string name="AccessibilityId_clear">Clear</string>
     <string name="AccessibilityId_disappearingMessages">Disappearing messages</string>
@@ -76,21 +79,24 @@
     <string name="AccessibilityId_search">Search</string>
     <!--  Conversation options for closed group-->
     <string name="AccessibilityId_groupNameNew">Accept name change</string>
-    <string name="AccessibilityId_membersInvite">Invite Contacts</string>
+    <string name="AccessibilityId_membersInvite">Invite button</string>
     <string name="AccessibilityId_set">Apply changes</string>
     <string name="AccessibilityId_groupNameChangeCancel">Cancel name change</string>
     <string name="AccessibilityId_contactMentions">Contact mentions</string>
     <string name="AccessibilityId_done">Done</string>
     <string name="AccessibilityId_groupEdit">Edit group</string>
+    <string name="AccessibilityId_groupMembers">Group Members</string>
     <string name="AccessibilityId_groupName">Group name</string>
     <string name="AccessibilityId_groupLeave">Leave group</string>
     <string name="AccessibilityId_mentions_list">Mentions list</string>
+    <string name="AccessibilityId_outdated_group_banner">Legacy group banner</string>
+    <string name="AccessibilityId_empty_conversation">Empty list</string>
     <!--  Conversation icons -->
     <string name="AccessibilityId_messageRequestsAccept">Accept message request</string>
     <string name="AccessibilityId_messageRequestsBlock">Block message request</string>
     <string name="AccessibilityId_call">Call button</string>
     <string name="AccessibilityId_confirm">Confirm</string>
-    <string name="AccessibilityId_decline">Decline message request</string>
+    <string name="AccessibilityId_deleteRequest">Delete message request</string>
     <string name="AccessibilityId_sessionSettings">Settings</string>
     <!-- Configuration messages -->
     <string name="AccessibilityId_blockedBanner">Blocked banner</string>
@@ -101,8 +107,14 @@
     <string name="AccessibilityId_next">Next</string>
     <!--  New group -->
     <string name="AccessibilityId_contact">Contact</string>
+    <string name="AccessibilityId_contactStatus">Contact status</string>
     <string name="AccessibilityId_groupNameEnter">Group name input</string>
+    <string name="AccessibilityId_groupNameSearch">Search contacts field</string>
     <string name="AccessibilityId_selectContact">Select contact</string>
+    <string name="AccessibilityId_removeContact">Remove contact button</string>
+    <string name="AccessibilityId_resendInvite">Resend invite button</string>
+    <string name="AccessibilityId_versionWarning">Version warning banner</string>
+    <string name="AccessibilityId_selectContactConfirm">Confirm invite button</string>
     <!--Conversation screen -->
     <string name="AccessibilityId_attachmentsButton">Attachments button</string>
     <string name="AccessibilityId_files">Documents folder</string>
@@ -157,7 +169,7 @@
     <string name="AccessibilityId_displayName">Display name</string>
 
     <!-- Misc. -->
-    <string name="AccessibilityId_navigateBack">Navigate Back</string>
+    <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
     <string name="AccessibilityId_expand">Expand</string>
     <string name="AccessibilityId_mediaMessage">Media message</string>

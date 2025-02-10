@@ -128,7 +128,8 @@ fun AlertDialog(
                                 text = it,
                                 textAlign = TextAlign.Center,
                                 style = LocalType.current.h7,
-                                modifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
+                                modifier = Modifier
+                                    .padding(bottom = LocalDimensions.current.xxsSpacing)
                                     .qaTag(stringResource(R.string.AccessibilityId_modalTitle))
                             )
                         }
@@ -281,22 +282,33 @@ fun LoadingDialog(
         modifier = modifier,
         onDismissRequest = {},
         content = {
-            DialogBg {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(LocalDimensions.current.spacing)
-                ) {
+            if (title.isNullOrBlank()) {
+                Box {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.Center),
+                        //TODO: Leave this as hardcoded color for now as the dialog background (scrim)
+                        // always seems to be dark. Can can revisit later when we have more control over
+                        // the scrim color.
+                        color = Color.White
                     )
-
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-
-                    title?.let {
-                        Text(
-                            it,
+                }
+            } else {
+                DialogBg {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(LocalDimensions.current.spacing)
+                    ) {
+                        CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+                        Text(
+                            title,
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
                                 .qaTag(stringResource(R.string.AccessibilityId_modalTitle)),
                             style = LocalType.current.large
                         )

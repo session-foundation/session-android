@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.mention
 
+import android.app.Application
 import android.content.ContentResolver
 import android.graphics.Typeface
 import android.text.Editable
@@ -26,7 +27,13 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
+import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.utilities.SodiumUtilities
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -34,6 +41,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 
 /**
@@ -44,6 +52,7 @@ import org.thoughtcrime.securesms.util.observeChanges
  * 2. Set the EditText's editable factory to [editableFactory], via [android.widget.EditText.setEditableFactory]
  */
 class MentionViewModel(
+    application: Application,
     threadID: Long,
     contentResolver: ContentResolver,
     threadDatabase: ThreadDatabase,
@@ -52,6 +61,7 @@ class MentionViewModel(
     contactDatabase: SessionContactDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
+    configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
     private val editable = MentionEditable()
@@ -85,9 +95,12 @@ class MentionViewModel(
                 }
 
                 val memberIDs = when {
-                    recipient.isClosedGroupRecipient -> {
+                    recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
                             .map { it.serialize() }
+                    }
+                    recipient.isGroupV2Recipient -> {
+                        storage.getMembers(recipient.address.serialize()).map { it.accountIdString() }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
@@ -95,8 +108,14 @@ class MentionViewModel(
                     else -> listOf()
                 }
 
+                val openGroup = if (recipient.isCommunityRecipient) {
+                    storage.getOpenGroup(threadID)
+                } else {
+                    null
+                }
+
                 val moderatorIDs = if (recipient.isCommunityRecipient) {
-                    val groupId = storage.getOpenGroup(threadID)?.id
+                    val groupId = openGroup?.id
                     if (groupId.isNullOrBlank()) {
                         emptySet()
                     } else {
@@ -104,6 +123,12 @@ class MentionViewModel(
                             .mapNotNullTo(hashSetOf()) { (memberId, roles) ->
                                 memberId.takeIf { roles.any { it.isModerator } }
                             }
+                    }
+                } else if (recipient.isGroupV2Recipient) {
+                    configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
+                        it.groupMembers.allWithStatus()
+                            .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
+                            .mapTo(hashSetOf()) { (member, _) -> member.accountId.toString() }
                     }
                 } else {
                     emptySet()
@@ -115,13 +140,34 @@ class MentionViewModel(
                     Contact.ContactContext.REGULAR
                 }
 
-                contactDatabase.getContacts(memberIDs).map { contact ->
-                    Member(
-                        publicKey = contact.accountID,
-                        name = contact.displayName(contactContext).orEmpty(),
-                        isModerator = contact.accountID in moderatorIDs,
-                    )
+                val myId = if (openGroup != null) {
+                    AccountId(IdPrefix.BLINDED,
+                        SodiumUtilities.blindedKeyPair(openGroup.publicKey,
+                            requireNotNull(storage.getUserED25519KeyPair()))!!.publicKey.asBytes)
+                        .hexString
+                } else {
+                    requireNotNull(storage.getUserPublicKey())
                 }
+
+                (sequenceOf(
+                    Member(
+                        publicKey = myId,
+                        name = application.getString(R.string.you),
+                        isModerator = myId in moderatorIDs,
+                        isMe = true
+                    )
+                ) + contactDatabase.getContacts(memberIDs)
+                    .asSequence()
+                    .filter { it.accountID != myId }
+                    .map { contact ->
+                        Member(
+                            publicKey = contact.accountID,
+                            name = contact.displayName(contactContext).orEmpty(),
+                            isModerator = contact.accountID in moderatorIDs,
+                            isMe = false
+                        )
+                    })
+                    .toList()
             }
             .flowOn(dispatcher)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(10_000L), null)
@@ -224,6 +270,7 @@ class MentionViewModel(
         val publicKey: String,
         val name: String,
         val isModerator: Boolean,
+        val isMe: Boolean,
     )
 
     data class Candidate(
@@ -234,7 +281,8 @@ class MentionViewModel(
         val matchScore: Int,
     ) {
         companion object {
-            val MENTION_LIST_COMPARATOR = compareBy<Candidate> { it.matchScore }
+            val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
+                .thenBy { it.matchScore }
                 .then(compareBy { it.member.name })
         }
     }
@@ -260,6 +308,8 @@ class MentionViewModel(
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,
+        private val configFactory: ConfigFactoryProtocol,
+        private val application: Application,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -272,6 +322,8 @@ class MentionViewModel(
                 contactDatabase = contactDatabase,
                 memberDatabase = memberDatabase,
                 storage = storage,
+                configFactory = configFactory,
+                application = application,
             ) as T
         }
     }

@@ -16,11 +16,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,25 +70,21 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
         registerObservers()
 
         IP2Country.configureIfNeeded(this)
+
+        lifecycleScope.launch {
+            // Check if the
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                OnionRequestAPI.paths
+                    .map { it.isEmpty() }
+                    .distinctUntilChanged()
+                    .collectLatest {
+                        update(true)
+                    }
+            }
+        }
     }
 
     private fun registerObservers() {
-        val buildingPathsReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                handleBuildingPathsEvent()
-            }
-        }
-        broadcastReceivers.add(buildingPathsReceiver)
-        LocalBroadcastManager.getInstance(this).registerReceiver(buildingPathsReceiver, IntentFilter("buildingPaths"))
-        val pathsBuiltReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                handlePathsBuiltEvent()
-            }
-        }
-        broadcastReceivers.add(pathsBuiltReceiver)
-        LocalBroadcastManager.getInstance(this).registerReceiver(pathsBuiltReceiver, IntentFilter("pathsBuilt"))
         val onionRequestPathCountriesLoadedReceiver: BroadcastReceiver = object : BroadcastReceiver() {
 
             override fun onReceive(context: Context, intent: Intent) {
@@ -102,15 +104,15 @@ class PathActivity : PassphraseRequiredActionBarActivity() {
     // endregion
 
     // region Updating
-    private fun handleBuildingPathsEvent() { update(false) }
-    private fun handlePathsBuiltEvent() { update(false) }
+
     private fun handleOnionRequestPathCountriesLoaded() { update(false) }
 
     private fun update(isAnimated: Boolean) {
         binding.pathRowsContainer.removeAllViews()
 
-        if (OnionRequestAPI.paths.isNotEmpty()) {
-            val path = OnionRequestAPI.paths.firstOrNull() ?: return finish()
+        val paths = OnionRequestAPI.paths.value
+        if (paths.isNotEmpty()) {
+            val path = paths.firstOrNull() ?: return finish()
             val dotAnimationRepeatInterval = path.count().toLong() * 1000 + 1000
             val pathRows = path.mapIndexed { index, snode ->
                 val isGuardSnode = (OnionRequestAPI.guardSnodes.contains(snode))

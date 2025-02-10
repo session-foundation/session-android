@@ -417,7 +417,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> và <b>{count} người khác</b> đã được mời tham gia nhóm.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> và <b>{other_name}</b> đã được mời tham gia nhóm.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được mời tham gia nhóm. Lịch sử trò chuyện đã được chia sẻ.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Bạn</b> và <b>{name}</b> đã được mời tham gia nhóm. Lịch sử trò chuyện đã được chia sẻ.</string>
     <string name="groupMemberYouLeft"><b>Bạn</b> đã rời nhóm.</string>
     <string name="groupMembers">Thành viên nhóm</string>
     <string name="groupMembersNone">Không có thành viên nào khác trong nhóm này.</string>

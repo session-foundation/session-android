@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
@@ -12,16 +11,17 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewControlMessageBinding
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
@@ -67,6 +67,7 @@ class ControlMessageView : LinearLayout {
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true
         var messageBody: CharSequence = message.getDisplayBody(context)
+
         binding.root.contentDescription = null
         binding.textView.text = messageBody
         when {
@@ -76,7 +77,7 @@ class ControlMessageView : LinearLayout {
 
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
 
-                    if (threadRecipient?.isClosedGroupRecipient == true) {
+                    if (threadRecipient?.isGroupRecipient == true) {
                         expirationTimerView.setTimerIcon()
                     } else {
                         expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
@@ -85,7 +86,7 @@ class ControlMessageView : LinearLayout {
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                         && !message.isOutgoing
                         && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && threadRecipient?.isGroupRecipient != true
+                        && threadRecipient?.isGroupOrCommunityRecipient != true
 
                     if (followSetting.isVisible) {
                         binding.controlContentView.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
@@ -94,6 +95,14 @@ class ControlMessageView : LinearLayout {
                     }
                 }
             }
+
+            message.isGroupExpirationTimerUpdate -> {
+                binding.expirationTimerView.apply {
+                    isVisible = true
+                    setTimerIcon()
+                }
+            }
+
             message.isMediaSavedNotification -> {
                 binding.iconImageView.apply {
                     setImageDrawable(
@@ -160,8 +169,10 @@ class ControlMessageView : LinearLayout {
                                     text(bodyTxt)
 
                                     button(R.string.sessionSettings) {
-                                        Intent(context, PrivacySettingsActivity::class.java)
-                                            .let(context::startActivity)
+                                        val intent = Intent(context, PrivacySettingsActivity::class.java)
+                                        // allow the screen to auto scroll to the appropriate toggle
+                                        intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                                        context.startActivity(intent)
                                     }
                                     cancelButton()
                                 }

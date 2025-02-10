@@ -31,8 +31,10 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteQueryBuilder;
 
 import org.jetbrains.annotations.NotNull;
+import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Util;
+import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
@@ -40,7 +42,9 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import kotlin.Pair;
@@ -272,6 +276,23 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
+  public List<MessageRecord> getUserMessages(long threadId, String sender) {
+
+    List<MessageRecord> idList = new ArrayList<>();
+
+    try (Cursor cursor = getConversation(threadId, false)) {
+      Reader reader = readerFor(cursor);
+      while (reader.getNext() != null) {
+        MessageRecord record = reader.getCurrent();
+        if (record.getIndividualRecipient().getAddress().serialize().equals(sender)) {
+          idList.add(record);
+        }
+      }
+    }
+
+    return idList;
+  }
+
   // Builds up and returns a list of all all the messages sent by this user in the given thread.
   // Used to do a pass through our local database to remove records when a user has "Ban & Delete"
   // called on them in a Community.
@@ -291,19 +312,16 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  // Version of the above `getAllMessageRecordsFromSenderInThread` method that returns the message
-  // Ids rather than the set of MessageRecords - currently unused by potentially useful in the future.
-  public Set<Long> getAllMessageIdsFromSenderInThread(long threadId, String serializedAuthor) {
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.ADDRESS + " = \"" + serializedAuthor + "\"";
-
-    Set<Long> identifiedMessages = new HashSet<Long>();
+  public Set<MessageRecord> getAllMessageRecordsBefore(long threadId, long timestampMills) {
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + MmsSmsColumns.NORMALIZED_DATE_SENT + " < " + timestampMills;
+    Set<MessageRecord> identifiedMessages = new HashSet<>();
 
     // Try everything with resources so that they auto-close on end of scope
     try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
-          identifiedMessages.add(messageRecord.id);
+          identifiedMessages.add(messageRecord);
         }
       }
     }
@@ -362,6 +380,24 @@ public class MmsSmsDatabase extends Database {
       return cursor != null ? cursor.getCount() : 0;
     } finally {
       if (cursor != null) cursor.close();
+    }
+  }
+
+  public void deleteGroupInfoMessage(AccountId groupId, Class<? extends UpdateMessageData.Kind> kind) {
+    long threadId = DatabaseComponent.get(context).threadDatabase().getThreadIdIfExistsFor(groupId.getHexString());
+    if (threadId == -1) {
+      Log.d(TAG, "No thread found for group info message deletion");
+      return;
+    }
+
+    Object[] bindArgs = { threadId, kind.getSimpleName() };
+
+    for (String table : new String[]{ MmsDatabase.TABLE_NAME, SmsDatabase.TABLE_NAME }) {
+      // Delete messages with body that is a valid JSON object and .kind.@type == kind
+      getWritableDatabase().execSQL(
+              "DELETE FROM " + table + " WHERE " + MmsSmsColumns.THREAD_ID + " = ? AND json_valid(" + MmsSmsColumns.BODY + ") AND json_extract(" + MmsSmsColumns.BODY + ", '$.kind.@type') = ?",
+              bindArgs
+      );
     }
   }
 

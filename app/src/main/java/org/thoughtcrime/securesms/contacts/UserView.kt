@@ -56,7 +56,7 @@ class UserView : LinearLayout {
         val address = user.address.serialize()
         binding.profilePictureView.update(user)
         binding.actionIndicatorImageView.setImageResource(R.drawable.ic_baseline_edit_24)
-        binding.nameTextView.text = if (user.isGroupRecipient) user.name else getUserDisplayName(address)
+        binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.name else getUserDisplayName(address)
         when (actionIndicator) {
             ActionIndicator.None -> {
                 binding.actionIndicatorImageView.visibility = View.GONE
@@ -83,6 +83,10 @@ class UserView : LinearLayout {
         } else {
             binding.actionIndicatorImageView.setImageDrawable(null)
         }
+    }
+
+    fun handleAdminStatus(isAdmin: Boolean){
+        binding.adminIcon.visibility = if (isAdmin) View.VISIBLE else View.GONE
     }
 
     fun unbind() { binding.profilePictureView.recycle() }

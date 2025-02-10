@@ -16,7 +16,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -61,8 +60,13 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
-import org.session.libsignal.utilities.Log
+import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
@@ -75,11 +79,13 @@ class VisibleMessageView : FrameLayout {
     private var replyDisabled: Boolean = false
     @Inject lateinit var threadDb: ThreadDatabase
     @Inject lateinit var lokiThreadDb: LokiThreadDatabase
+    @Inject lateinit var groupDb: GroupDatabase // for legacy groups only
     @Inject lateinit var lokiApiDb: LokiAPIDatabase
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
+    @Inject lateinit var configFactory: ConfigFactoryProtocol
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -155,14 +161,14 @@ class VisibleMessageView : FrameLayout {
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
         val thread = threadDb.getRecipientForThreadId(threadID) ?: return
-        val isGroupThread = thread.isGroupRecipient
+        val isGroupThread = thread.isGroupOrCommunityRecipient
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
         // Show profile picture and sender name if this is a group thread AND the message is incoming
         binding.moderatorIconImageView.isVisible = false
         binding.profilePictureView.visibility = when {
-            thread.isGroupRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
-            thread.isGroupRecipient -> View.INVISIBLE
+            thread.isGroupOrCommunityRecipient && !message.isOutgoing && isEndOfMessageCluster -> View.VISIBLE
+            thread.isGroupOrCommunityRecipient -> View.INVISIBLE
             else -> View.GONE
         }
 
@@ -207,7 +213,20 @@ class VisibleMessageView : FrameLayout {
                         standardPublicKey = senderAccountID
                     }
                     val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
-                    binding.moderatorIconImageView.isVisible = !message.isOutgoing && isModerator
+                    binding.moderatorIconImageView.isVisible = isModerator
+                }
+                else if (thread.isLegacyGroupRecipient) { // legacy groups
+                    val groupRecord = groupDb.getGroup(thread.address.toGroupString()).orNull()
+                    val isAdmin: Boolean = groupRecord?.admins?.contains(fromSerialized(senderAccountID)) ?: false
+
+                    binding.moderatorIconImageView.isVisible = isAdmin
+                }
+                else if (thread.isGroupV2Recipient) { // groups v2
+                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
+                        it.groupMembers.getOrNull(senderAccountID)?.admin == true
+                    }
+
+                    binding.moderatorIconImageView.isVisible = isAdmin
                 }
             }
         }
@@ -261,7 +280,6 @@ class VisibleMessageView : FrameLayout {
             glide,
             thread,
             searchQuery,
-            message.isOutgoing || isGroupThread || (contact?.isTrusted ?: false),
             onAttachmentNeedsDownload
         )
         binding.messageContentView.root.delegate = delegate
@@ -390,7 +408,7 @@ class VisibleMessageView : FrameLayout {
         message.isSyncFailed ->
             MessageStatusInfo(
                 R.drawable.ic_delivery_status_failed,
-                context.getColor(R.color.accent_orange),
+                context.getColorFromAttr(R.attr.warning),
                 R.string.messageStatusFailedToSync
             )
         message.isPending -> {

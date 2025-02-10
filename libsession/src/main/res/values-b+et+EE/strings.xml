@@ -255,7 +255,7 @@
     <string name="create">Loo</string>
     <string name="cut">Lõika</string>
     <string name="databaseErrorGeneric">Andmebaasi viga.\n\nEkspordi oma rakenduslogid, et jagada tõrkeotsinguteks. Kui see ei õnnestu, installige {app_name} uuesti ja taastage oma konto.\n\nHoiatus: Selle tulemusel kaotate kõik kaks nädalat vanemad sõnumid, manused ja kontoandmed.</string>
-    <string name="databaseErrorTimeout">Oleme märganud, et {app_name} käivitamine võtab kaua aega.\n\nVõite jätkata ootamist, eksportida oma seadme logisid tõrkeotsingu eesmärgil jagamiseks või proovida Session\'i taaskäivitamist.</string>
+    <string name="databaseErrorTimeout">Oleme märganud, et {app_name} käivitamine võtab kaua aega.\n\nVõite jätkata ootamist, eksportida oma seadme logisid tõrkeotsingu eesmärgil jagamiseks või proovida {app_name}\'i taaskäivitamist.</string>
     <string name="databaseErrorUpdate">Teie rakenduse andmebaas ei ühildu selle {app_name} versiooniga. Installige rakendus uuesti ja taastage oma konto, et luua uus andmebaas ja jätkata {app_name} kasutamist.\n\nHoiatus: See kaotab kõik vanemad kui kaks nädalat sõnumid ja manused.</string>
     <string name="databaseOptimizing">Andmebaasi optimeerimine</string>
     <string name="debugLog">Silumislogi</string>
@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ja <b>{count} teist </b> kutsuti grupiga liituma.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ja <b>{other_name}</b> kutsuti grupiga liituma.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Sind</b> ja <b>{count} teist</b> kutsuti grupiga liituma. Vestluse ajalugu jagati nendega.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Sind</b> ja <b>{name}</b> kutsuti grupiga liituma. Vestluse ajalugu jagati nendega.</string>
     <string name="groupMemberYouLeft"><b>Sina</b> lahkusid grupist.</string>
     <string name="groupMembers">Grupi liikmed</string>
     <string name="groupMembersNone">Selles grupis pole teisi liikmeid.</string>

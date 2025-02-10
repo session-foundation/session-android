@@ -14,10 +14,10 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 
 object OpenGroupManager {
     private val executorService = Executors.newScheduledThreadPool(4)
@@ -75,7 +75,7 @@ object OpenGroupManager {
     fun getCommunitiesWriteAccessFlow() = _communityWriteAccess.asStateFlow()
 
     @WorkerThread
-    fun add(server: String, room: String, publicKey: String, context: Context): Pair<Long,OpenGroupApi.RoomInfo?> {
+    suspend fun add(server: String, room: String, publicKey: String, context: Context): Pair<Long,OpenGroupApi.RoomInfo?> {
         val openGroupID = "$server.$room"
         val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
         val storage = MessagingModuleConfiguration.shared.storage
@@ -91,7 +91,7 @@ object OpenGroupManager {
         // Store the public key
         storage.setOpenGroupPublicKey(server, publicKey)
         // Get capabilities & room info
-        val (capabilities, info) = OpenGroupApi.getCapabilitiesAndRoomInfo(room, server).get()
+        val (capabilities, info) = OpenGroupApi.getCapabilitiesAndRoomInfo(room, server).await()
         storage.setServerCapabilities(server, capabilities.capabilities)
         // Create the group locally if not available already
         if (threadID < 0) {
@@ -139,8 +139,10 @@ object OpenGroupManager {
                     pollers.remove(server)
                 }
             }
-            configFactory.userGroups?.eraseCommunity(server, room)
-            configFactory.convoVolatile?.eraseCommunity(server, room)
+            configFactory.withMutableUserConfigs {
+                it.userGroups.eraseCommunity(server, room)
+                it.convoInfoVolatile.eraseCommunity(server, room)
+            }
             // Delete
             storage.removeLastDeletionServerID(room, server)
             storage.removeLastMessageServerID(room, server)
@@ -150,7 +152,6 @@ object OpenGroupManager {
             lokiThreadDB.removeOpenGroupChat(threadID)
             storage.deleteConversation(threadID)       // Must be invoked on a background thread
             GroupManager.deleteGroup(groupID, context) // Must be invoked on a background thread
-            ConfigurationMessageUtilities.forceSyncConfigurationNowIfNeeded(context)
         }
         catch (e: Exception) {
             Log.e("Loki", "Failed to leave (delete) community", e)
@@ -161,7 +162,7 @@ object OpenGroupManager {
     }
 
     @WorkerThread
-    fun addOpenGroup(urlAsString: String, context: Context): OpenGroupApi.RoomInfo? {
+    suspend fun addOpenGroup(urlAsString: String, context: Context): OpenGroupApi.RoomInfo? {
         val url = urlAsString.toHttpUrlOrNull() ?: return null
         val server = OpenGroup.getServer(urlAsString)
         val room = url.pathSegments.firstOrNull() ?: return null

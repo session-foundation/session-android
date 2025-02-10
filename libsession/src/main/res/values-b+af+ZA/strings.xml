@@ -255,7 +255,7 @@
     <string name="create">Skep</string>
     <string name="cut">Sny</string>
     <string name="databaseErrorGeneric">’n Databasisfout het voorgekom.\n\nVoer jou toepassingslogboeke uit om te deel vir foutsporing. Indien dit onsuksesvol is, herinstalleer {app_name} en herstel jou rekening.\n\nWaarskuwing: Dit sal lei tot die verlies van alle boodskappe, aanhegsels, en rekeningdata ouer as twee weke.</string>
-    <string name="databaseErrorTimeout">Ons het opgemerk {app_name} neem lank om te begin.\n\nJy kan aanhou wag, jou toestel logs uitvoer om te deel vir foutsporing, of probeer om Session te herbegin.</string>
+    <string name="databaseErrorTimeout">Ons het opgemerk {app_name} neem lank om te begin.\n\nJy kan aanhou wag, jou toestel logs uitvoer om te deel vir foutsporing, of probeer om {app_name} te herbegin.</string>
     <string name="databaseErrorUpdate">Jou app databasis is onversoenbaar met hierdie weergawe van {app_name}. Herinstalleer die app en herstel jou rekening om \'n nuwe databasis te genereer en voort te gaan met die gebruik van {app_name}.\n\nWaarskuwing: Dit sal lei tot die verlies van alle boodskappe en aanhegsels ouer as twee weke.</string>
     <string name="databaseOptimizing">Optimalisering databasis</string>
     <string name="debugLog">Ontfout Log</string>
@@ -421,7 +421,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> en <b>{count} ander</b> is genooi om by die groep aan te sluit.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> en <b>{other_name}</b> is genooi om by die groep aan te sluit.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Jy</b> en <b>{count} ander</b> is genooi om by die groep aan te sluit. Kletsgeskiedenis is gedeel.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Jy</b> en <b>{name}</b> is genooi om by die groep aan te sluit. Kletsgeskiedenis is gedeel.</string>
     <string name="groupMemberYouLeft"><b>You</b> het die groep verlaat</string>
     <string name="groupMembers">Groep Lede</string>
     <string name="groupMembersNone">Daar is geen ander lede in hierdie groep nie.</string>

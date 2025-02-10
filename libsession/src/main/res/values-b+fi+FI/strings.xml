@@ -256,7 +256,7 @@
     <string name="create">Luo</string>
     <string name="cut">Leikkaa</string>
     <string name="databaseErrorGeneric">Tapahtui tietokantavirhe.\n\nVie sovelluslokisi vianselvitystä varten. Jollei tämä onnistu, asenna {app_name} uudelleen ja palauta tilisi.\n\nVaroitus: Tämän seurauksena kaikki kahta viikkoa vanhemmat viestit, liitteet ja tilitiedot menetetään.</string>
-    <string name="databaseErrorTimeout">Huomasimme, että {app_name} käynnistyy hitaasti.\n\nVoit jatkaa odottamista, viedä laitteesi lokit jaettavaksi vianmäärityksessä tai yrittää käynnistää Sessionin uudelleen.</string>
+    <string name="databaseErrorTimeout">Huomasimme, että {app_name} käynnistyy hitaasti.\n\nVoit jatkaa odottamista, viedä laitteesi lokit jaettavaksi vianmäärityksessä tai yrittää käynnistää {app_name} uudelleen.</string>
     <string name="databaseErrorUpdate">Sovellustietokanta ei ole yhteensopiva tämän {app_name} version kanssa. Asenna sovellus uudelleen ja palauta tilisi, jotta voit luoda uuden tietokannan ja jatkaa {app_name} käyttöä.\n\nVaroitus: Tämä johtaa yli kaksi viikkoa vanhojen viestien ja liitteiden menetykseen.</string>
     <string name="databaseOptimizing">Optimoidaan tietokanta</string>
     <string name="debugLog">Virheenkorjausloki</string>
@@ -422,7 +422,6 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ja <b>{count} muuta</b> kutsuttiin ryhmään.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ja <b>{other_name}</b> kutsuttiin ryhmään.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Sinä</b> ja <b>{count} muuta</b> kutsuttiin ryhmään. Keskusteluhistoria jaetaan.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>Sinä</b> ja <b>{name}</b> kutsuttiin ryhmään. Keskusteluhistoria jaetaan.</string>
     <string name="groupMemberYouLeft"><b>Sinä</b> poistuit ryhmästä.</string>
     <string name="groupMembers">Ryhmän jäsenet</string>
     <string name="groupMembersNone">Ryhmässä ei ole muita jäseniä.</string>
