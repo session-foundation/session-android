@@ -10,6 +10,7 @@ import org.session.libsession.R
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -588,6 +589,12 @@ fun MessageReceiver.handleOpenGroupReactions(
 
 // region Closed Groups
 private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroupControlMessage) {
+    if (MessagingModuleConfiguration.shared.deprecationManager.deprecationState.value ==
+        LegacyGroupDeprecationManager.DeprecationState.DEPRECATED) {
+        Log.d("ClosedGroupControlMessage", "Ignoring closed group control message post deprecation")
+        return
+    }
+
     when (message.kind!!) {
         is ClosedGroupControlMessage.Kind.New -> handleNewClosedGroup(message)
         is ClosedGroupControlMessage.Kind.EncryptionKeyPair -> handleClosedGroupEncryptionKeyPair(message)
