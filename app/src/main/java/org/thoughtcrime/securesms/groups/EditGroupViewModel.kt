@@ -79,13 +79,16 @@ class EditGroupViewModel @AssistedInject constructor(
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
 
     fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation(errorMessage = { err ->
-            if (err is GroupInviteException) {
-                err.format(context, storage).toString()
-            } else {
-                null
+        performGroupOperation(
+            showLoading = false,
+            errorMessage = { err ->
+                if (err is GroupInviteException) {
+                    err.format(context, storage).toString()
+                } else {
+                    null
+                }
             }
-        }) {
+        ) {
             groupManager.inviteMembers(
                 groupId,
                 contacts.toList(),

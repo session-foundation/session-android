@@ -239,7 +239,7 @@ class ConfigFactory @Inject constructor(
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         if (recreateConfigInstances) {
             synchronized(groupConfigs) {
-                groupConfigs.remove(groupId)
+                groupConfigs.remove(groupId)?.second?.dumpIfNeeded(clock)
             }
         }
 
