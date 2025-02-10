@@ -3,7 +3,7 @@ package org.session.libsession.messaging.sending_receiving
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -144,7 +144,7 @@ object MessageReceiver {
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
-            ClosedGroupControlMessage.fromProto(proto) ?:
+            LegacyGroupControlMessage.fromProto(proto) ?:
             DataExtractionNotification.fromProto(proto) ?:
             ExpirationTimerUpdate.fromProto(proto, closedGroupSessionId != null) ?:
             ConfigurationMessage.fromProto(proto) ?:
@@ -189,7 +189,7 @@ object MessageReceiver {
         if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && groupPublicKey?.startsWith(IdPrefix.GROUP.value) != true) {
             throw Error.NoGroupThread
         }
-        if ((message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) || message is SharedConfigurationMessage) {
+        if ((message is LegacyGroupControlMessage && message.kind is LegacyGroupControlMessage.Kind.New) || message is SharedConfigurationMessage) {
             // Allow duplicates in this case to avoid the following situation:
             // • The app performed a background poll or received a push notification
             // • This method was invoked and the received message timestamps table was updated

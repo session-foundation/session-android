@@ -2,7 +2,7 @@ package org.session.libsession.messaging.jobs
 
 import kotlinx.coroutines.channels.SendChannel
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.disableLocalGroupAndUnsubscribe
@@ -45,7 +45,7 @@ class GroupLeavingJob(
         val admins = group.admins.map { it.serialize() }
         val name = group.title
         // Send the update to the group
-        val closedGroupControlMessage = ClosedGroupControlMessage(ClosedGroupControlMessage.Kind.MemberLeft())
+        val closedGroupControlMessage = LegacyGroupControlMessage(LegacyGroupControlMessage.Kind.MemberLeft())
         val sentTime = SnodeAPI.nowWithOffset
         closedGroupControlMessage.sentTimestamp = sentTime
         storage.setActive(groupID, false)

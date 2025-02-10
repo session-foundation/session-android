@@ -16,7 +16,7 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -129,7 +129,7 @@ object MessageSender {
         // • a sync message
         // • a closed group control message of type `new`
         var isNewClosedGroupControlMessage = false
-        if (message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) isNewClosedGroupControlMessage =
+        if (message is LegacyGroupControlMessage && message.kind is LegacyGroupControlMessage.Kind.New) isNewClosedGroupControlMessage =
             true
         if (isSelfSend
             && message !is ConfigurationMessage
@@ -291,7 +291,7 @@ object MessageSender {
         isSyncMessage: Boolean
     ): Long? {
         // For ClosedGroupControlMessage or GroupUpdateMemberLeftMessage, the expiration timer doesn't apply
-        if (message is ClosedGroupControlMessage || (
+        if (message is LegacyGroupControlMessage || (
                     message is GroupUpdated && (
                             message.inner.hasMemberLeftMessage() ||
                             message.inner.hasInviteMessage() ||

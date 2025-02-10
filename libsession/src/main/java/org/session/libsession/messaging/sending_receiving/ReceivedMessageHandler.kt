@@ -18,7 +18,7 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
@@ -35,7 +35,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.PointerAtt
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
@@ -84,7 +83,7 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
     when (message) {
         is ReadReceipt -> handleReadReceipt(message)
         is TypingIndicator -> handleTypingIndicator(message)
-        is ClosedGroupControlMessage -> handleClosedGroupControlMessage(message)
+        is LegacyGroupControlMessage -> handleLegacyGroupControlMessage(message)
         is GroupUpdated -> handleGroupUpdated(message, groupv2Id)
         is ExpirationTimerUpdate -> {
             // For groupsv2, there are dedicated mechanisms for handling expiration timers, and
@@ -235,7 +234,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
             storage.addClosedGroupEncryptionKeyPair(closedGroup.encryptionKeyPair!!, closedGroup.publicKey, message.sentTimestamp!!)
         } else {
             // only handle new closed group if it's first time sync
-            handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, closedGroup.publicKey, closedGroup.name,
+            handleNewLegacyGroup(message.sender!!, message.sentTimestamp!!, closedGroup.publicKey, closedGroup.name,
                     closedGroup.encryptionKeyPair!!, closedGroup.members, closedGroup.admins, message.sentTimestamp!!, -1)
         }
     }
@@ -588,7 +587,7 @@ fun MessageReceiver.handleOpenGroupReactions(
 //endregion
 
 // region Closed Groups
-private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleLegacyGroupControlMessage(message: LegacyGroupControlMessage) {
     if (MessagingModuleConfiguration.shared.deprecationManager.deprecationState.value ==
         LegacyGroupDeprecationManager.DeprecationState.DEPRECATED) {
         Log.d("ClosedGroupControlMessage", "Ignoring closed group control message post deprecation")
@@ -596,15 +595,15 @@ private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroup
     }
 
     when (message.kind!!) {
-        is ClosedGroupControlMessage.Kind.New -> handleNewClosedGroup(message)
-        is ClosedGroupControlMessage.Kind.EncryptionKeyPair -> handleClosedGroupEncryptionKeyPair(message)
-        is ClosedGroupControlMessage.Kind.NameChange -> handleClosedGroupNameChanged(message)
-        is ClosedGroupControlMessage.Kind.MembersAdded -> handleClosedGroupMembersAdded(message)
-        is ClosedGroupControlMessage.Kind.MembersRemoved -> handleClosedGroupMembersRemoved(message)
-        is ClosedGroupControlMessage.Kind.MemberLeft -> handleClosedGroupMemberLeft(message)
+        is LegacyGroupControlMessage.Kind.New -> handleNewLegacyGroup(message)
+        is LegacyGroupControlMessage.Kind.EncryptionKeyPair -> handleClosedGroupEncryptionKeyPair(message)
+        is LegacyGroupControlMessage.Kind.NameChange -> handleClosedGroupNameChanged(message)
+        is LegacyGroupControlMessage.Kind.MembersAdded -> handleClosedGroupMembersAdded(message)
+        is LegacyGroupControlMessage.Kind.MembersRemoved -> handleClosedGroupMembersRemoved(message)
+        is LegacyGroupControlMessage.Kind.MemberLeft -> handleClosedGroupMemberLeft(message)
     }
     if (
-            message.kind !is ClosedGroupControlMessage.Kind.New &&
+            message.kind !is LegacyGroupControlMessage.Kind.New &&
             MessagingModuleConfiguration.shared.storage.canPerformConfigChange(
                     SharedConfigMessage.Kind.GROUPS.name,
                     MessagingModuleConfiguration.shared.storage.getUserPublicKey()!!,
@@ -618,13 +617,13 @@ private fun MessageReceiver.handleClosedGroupControlMessage(message: ClosedGroup
     }
 }
 
-private fun ClosedGroupControlMessage.getPublicKey(): String = kind!!.let { when (it) {
-    is ClosedGroupControlMessage.Kind.New -> it.publicKey.toByteArray().toHexString()
-    is ClosedGroupControlMessage.Kind.EncryptionKeyPair -> it.publicKey?.toByteArray()?.toHexString() ?: groupPublicKey!!
-    is ClosedGroupControlMessage.Kind.MemberLeft -> groupPublicKey!!
-    is ClosedGroupControlMessage.Kind.MembersAdded -> groupPublicKey!!
-    is ClosedGroupControlMessage.Kind.MembersRemoved -> groupPublicKey!!
-    is ClosedGroupControlMessage.Kind.NameChange -> groupPublicKey!!
+private fun LegacyGroupControlMessage.getPublicKey(): String = kind!!.let { when (it) {
+    is LegacyGroupControlMessage.Kind.New -> it.publicKey.toByteArray().toHexString()
+    is LegacyGroupControlMessage.Kind.EncryptionKeyPair -> it.publicKey?.toByteArray()?.toHexString() ?: groupPublicKey!!
+    is LegacyGroupControlMessage.Kind.MemberLeft -> groupPublicKey!!
+    is LegacyGroupControlMessage.Kind.MembersAdded -> groupPublicKey!!
+    is LegacyGroupControlMessage.Kind.MembersRemoved -> groupPublicKey!!
+    is LegacyGroupControlMessage.Kind.NameChange -> groupPublicKey!!
 }}
 
 private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGroup: AccountId?) {
@@ -813,9 +812,9 @@ private fun verifyAdminSignature(groupSessionId: AccountId, signatureData: ByteA
     }
 }
 
-private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleNewLegacyGroup(message: LegacyGroupControlMessage) {
     val storage = MessagingModuleConfiguration.shared.storage
-    val kind = message.kind!! as? ClosedGroupControlMessage.Kind.New ?: return
+    val kind = message.kind!! as? LegacyGroupControlMessage.Kind.New ?: return
     val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
     if (!recipient.isApproved && !recipient.isLocalNumber) return Log.e("Loki", "not accepting new closed group from unapproved recipient")
     val groupPublicKey = kind.publicKey.toByteArray().toHexString()
@@ -824,10 +823,10 @@ private fun MessageReceiver.handleNewClosedGroup(message: ClosedGroupControlMess
     val members = kind.members.map { it.toByteArray().toHexString() }
     val admins = kind.admins.map { it.toByteArray().toHexString() }
     val expirationTimer = kind.expirationTimer
-    handleNewClosedGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!, expirationTimer)
+    handleNewLegacyGroup(message.sender!!, message.sentTimestamp!!, groupPublicKey, kind.name, kind.encryptionKeyPair!!, members, admins, message.sentTimestamp!!, expirationTimer)
 }
 
-private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long, expirationTimer: Int) {
+private fun handleNewLegacyGroup(sender: String, sentTimestamp: Long, groupPublicKey: String, name: String, encryptionKeyPair: ECKeyPair, members: List<String>, admins: List<String>, formationTimestamp: Long, expirationTimer: Int) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val userPublicKey = storage.getUserPublicKey()!!
@@ -881,11 +880,11 @@ private fun handleNewClosedGroup(sender: String, sentTimestamp: Long, groupPubli
     MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.startPolling(groupPublicKey)
 }
 
-private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: LegacyGroupControlMessage) {
     // Prepare
     val storage = MessagingModuleConfiguration.shared.storage
     val senderPublicKey = message.sender ?: return
-    val kind = message.kind!! as? ClosedGroupControlMessage.Kind.EncryptionKeyPair ?: return
+    val kind = message.kind!! as? LegacyGroupControlMessage.Kind.EncryptionKeyPair ?: return
     var groupPublicKey = kind.publicKey?.toByteArray()?.toHexString()
     if (groupPublicKey.isNullOrEmpty()) groupPublicKey = message.groupPublicKey ?: return
     val userPublicKey = storage.getUserPublicKey()!!
@@ -921,12 +920,12 @@ private fun MessageReceiver.handleClosedGroupEncryptionKeyPair(message: ClosedGr
     Log.d("Loki", "Received a new closed group encryption key pair.")
 }
 
-private fun MessageReceiver.handleClosedGroupNameChanged(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleClosedGroupNameChanged(message: LegacyGroupControlMessage) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val userPublicKey = TextSecurePreferences.getLocalNumber(context)
     val senderPublicKey = message.sender ?: return
-    val kind = message.kind!! as? ClosedGroupControlMessage.Kind.NameChange ?: return
+    val kind = message.kind!! as? LegacyGroupControlMessage.Kind.NameChange ?: return
     val groupPublicKey = message.groupPublicKey ?: return
     // Check that the sender is a member of the group (before the update)
     val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
@@ -960,12 +959,12 @@ private fun MessageReceiver.handleClosedGroupNameChanged(message: ClosedGroupCon
     }
 }
 
-private fun MessageReceiver.handleClosedGroupMembersAdded(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleClosedGroupMembersAdded(message: LegacyGroupControlMessage) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val userPublicKey = storage.getUserPublicKey()!!
     val senderPublicKey = message.sender ?: return
-    val kind = message.kind!! as? ClosedGroupControlMessage.Kind.MembersAdded ?: return
+    val kind = message.kind!! as? LegacyGroupControlMessage.Kind.MembersAdded ?: return
     val groupPublicKey = message.groupPublicKey ?: return
     val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
     val group = storage.getGroup(groupID) ?: run {
@@ -1033,12 +1032,12 @@ private fun MessageReceiver.handleClosedGroupMembersAdded(message: ClosedGroupCo
 /// • the admin sent the message (only the admin can truly remove members).
 /// If we're among the users that were removed, delete all encryption key pairs and the group public key, unsubscribe
 /// from push notifications for this closed group, and remove the given members from the zombie list for this group.
-private fun MessageReceiver.handleClosedGroupMembersRemoved(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleClosedGroupMembersRemoved(message: LegacyGroupControlMessage) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val userPublicKey = storage.getUserPublicKey()!!
     val senderPublicKey = message.sender ?: return
-    val kind = message.kind!! as? ClosedGroupControlMessage.Kind.MembersRemoved ?: return
+    val kind = message.kind!! as? LegacyGroupControlMessage.Kind.MembersRemoved ?: return
     val groupPublicKey = message.groupPublicKey ?: return
     val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
     val group = storage.getGroup(groupID) ?: run {
@@ -1108,12 +1107,12 @@ private fun MessageReceiver.handleClosedGroupMembersRemoved(message: ClosedGroup
 /// • Mark them as a zombie (to be removed by the admin later).
 /// If the admin left:
 /// • Unsubscribe from PNs, delete the group public key, etc. as the group will be disbanded.
-private fun MessageReceiver.handleClosedGroupMemberLeft(message: ClosedGroupControlMessage) {
+private fun MessageReceiver.handleClosedGroupMemberLeft(message: LegacyGroupControlMessage) {
     val context = MessagingModuleConfiguration.shared.context
     val storage = MessagingModuleConfiguration.shared.storage
     val senderPublicKey = message.sender ?: return
     val userPublicKey = storage.getUserPublicKey()!!
-    if (message.kind!! !is ClosedGroupControlMessage.Kind.MemberLeft) return
+    if (message.kind!! !is LegacyGroupControlMessage.Kind.MemberLeft) return
     val groupPublicKey = message.groupPublicKey ?: return
     val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
     val group = storage.getGroup(groupID) ?: run {
