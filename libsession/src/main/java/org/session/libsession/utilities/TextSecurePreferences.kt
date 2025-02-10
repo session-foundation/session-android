@@ -199,6 +199,7 @@ interface TextSecurePreferences {
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
+    var deprecatingStartTimeOverride: ZonedDateTime?
 
     var migratedToGroupV2Config: Boolean
 
@@ -317,6 +318,7 @@ interface TextSecurePreferences {
 
         const val DEPRECATED_STATE_OVERRIDE = "deprecation_state_override"
         const val DEPRECATED_TIME_OVERRIDE = "deprecated_time_override"
+        const val DEPRECATING_START_TIME_OVERRIDE = "deprecating_start_time_override"
 
         // Key name for if we've warned the user that saving attachments will allow other apps to access them.
         // Note: We only ever display this once - and when the user has accepted the warning we never show it again
@@ -1717,6 +1719,16 @@ class AppTextSecurePreferences @Inject constructor(
                 removePreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE)
             } else {
                 setStringPreference(TextSecurePreferences.DEPRECATED_TIME_OVERRIDE, value.toString())
+            }
+        }
+
+    override var deprecatingStartTimeOverride: ZonedDateTime?
+        get() = getStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, null)?.let(ZonedDateTime::parse)
+        set(value) {
+            if (value == null) {
+                removePreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE)
+            } else {
+                setStringPreference(TextSecurePreferences.DEPRECATING_START_TIME_OVERRIDE, value.toString())
             }
         }
 }

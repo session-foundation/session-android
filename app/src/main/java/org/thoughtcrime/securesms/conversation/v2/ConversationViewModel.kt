@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.annotation.StringRes
@@ -203,7 +202,7 @@ class ConversationViewModel(
 
     val legacyGroupBanner: StateFlow<CharSequence?> = combine(
         legacyGroupDeprecationManager.deprecationState,
-        legacyGroupDeprecationManager.deprecationTime,
+        legacyGroupDeprecationManager.deprecatedTime,
         isAdmin
     ) { state, time, admin ->
         val formattedTime by lazy {
@@ -225,11 +224,7 @@ class ConversationViewModel(
                 )
                 .format()
 
-            else -> Phrase.from(application, R.string.groupLegacyBanner)
-                .put(DATE_KEY,
-                    formattedTime
-                )
-                .format()
+            else -> null
         }
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 

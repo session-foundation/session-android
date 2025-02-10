@@ -39,7 +39,8 @@ class DebugMenuViewModel @Inject constructor(
             hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
-            forceDeprecatedTime = deprecationManager.deprecationTime.value
+            deprecatedTime = deprecationManager.deprecatedTime.value,
+            deprecatingStartTime = deprecationManager.deprecatingStartTime.value,
         )
     )
     val uiState: StateFlow<UIState>
@@ -77,7 +78,12 @@ class DebugMenuViewModel @Inject constructor(
 
             is Commands.OverrideDeprecatedTime -> {
                 deprecationManager.overrideDeprecatedTime(command.time)
-                _uiState.value = _uiState.value.copy(forceDeprecatedTime = command.time)
+                _uiState.value = _uiState.value.copy(deprecatedTime = command.time)
+            }
+
+            is Commands.OverrideDeprecatingStartTime -> {
+                deprecationManager.overrideDeprecatingStartTime(command.time)
+                _uiState.value = _uiState.value.copy(deprecatingStartTime = command.time)
             }
         }
     }
@@ -131,7 +137,8 @@ class DebugMenuViewModel @Inject constructor(
         val hideNoteToSelf: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
-        val forceDeprecatedTime: ZonedDateTime
+        val deprecatedTime: ZonedDateTime,
+        val deprecatingStartTime: ZonedDateTime,
     )
 
     sealed class Commands {
@@ -142,5 +149,6 @@ class DebugMenuViewModel @Inject constructor(
         data class HideNoteToSelf(val hide: Boolean) : Commands()
         data class OverrideDeprecationState(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
         data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands()
+        data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
     }
 }
