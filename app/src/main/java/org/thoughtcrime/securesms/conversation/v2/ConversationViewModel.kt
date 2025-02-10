@@ -222,13 +222,13 @@ class ConversationViewModel(
 
             else -> null
         }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val showRecreateGroupButton: StateFlow<Boolean> =
         combine(isAdmin, legacyGroupDeprecationManager.deprecationState) { admin, state ->
             admin && recipient?.isLegacyGroupRecipient == true
                     && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
-        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,

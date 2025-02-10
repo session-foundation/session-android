@@ -42,8 +42,7 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
     val deprecatingStartTime: StateFlow<ZonedDateTime> get() = mutableDeprecatingStartTime
 
     @Suppress("OPT_IN_USAGE")
-    val deprecationState: StateFlow<DeprecationState>
-        get() = combine(mutableDeprecationStateOverride,
+    val deprecationState: StateFlow<DeprecationState> = combine(mutableDeprecationStateOverride,
             mutableDeprecatedTime,
             mutableDeprecatingStartTime,
             ::Triple
@@ -69,7 +68,7 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
             }
         }.stateIn(
             scope = GlobalScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = mutableDeprecationStateOverride.value ?: DeprecationState.NOT_DEPRECATING
         )
 
