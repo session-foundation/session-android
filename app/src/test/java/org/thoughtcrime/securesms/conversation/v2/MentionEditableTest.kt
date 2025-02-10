@@ -80,7 +80,7 @@ class MentionEditableTest {
     @Test
     fun `should move pass the whole span while moving cursor around mentioned block `() {
         mentionEditable.append("Mention @user here")
-        mentionEditable.addMention(MentionViewModel.Member("user", "User", false), 8..14)
+        mentionEditable.addMention(MentionViewModel.Member("user", "User", false, false), 8..14)
 
         // Put cursor right before @user, it should then select nothing
         Selection.setSelection(mentionEditable, 8)
@@ -98,7 +98,7 @@ class MentionEditableTest {
     @Test
     fun `should delete the whole mention block while deleting only part of it`() {
         mentionEditable.append("Mention @user here")
-        mentionEditable.addMention(MentionViewModel.Member("user", "User", false), 8..14)
+        mentionEditable.addMention(MentionViewModel.Member("user", "User", false, false), 8..14)
 
         mentionEditable.delete(8, 9)
         assertThat(mentionEditable.toString()).isEqualTo("Mention  here")

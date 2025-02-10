@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.text.Selection
+import androidx.test.platform.app.InstrumentationRegistry
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,7 +70,6 @@ class MentionViewModelTest {
     fun setUp() {
         @Suppress("UNCHECKED_CAST")
         mentionViewModel = MentionViewModel(
-            threadID,
             contentResolver = mock { },
             threadDatabase = mock {
                 on { getRecipientForThreadId(threadID) } doAnswer {
@@ -108,7 +108,9 @@ class MentionViewModelTest {
                 on { getOpenGroup(threadID) } doReturn openGroup
             },
             dispatcher = StandardTestDispatcher(),
-            configFactory = mock()
+            configFactory = mock(),
+            threadID = threadID,
+            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application
         )
     }
 
@@ -137,7 +139,7 @@ class MentionViewModelTest {
                         memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP).orEmpty()
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }),
+                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = false),
                         name,
                         0
                     )
