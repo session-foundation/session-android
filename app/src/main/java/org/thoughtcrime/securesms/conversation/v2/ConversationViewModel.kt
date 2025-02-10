@@ -205,12 +205,6 @@ class ConversationViewModel(
         legacyGroupDeprecationManager.deprecatedTime,
         isAdmin
     ) { state, time, admin ->
-        val formattedTime by lazy {
-            time.withZoneSameInstant(ZoneId.systemDefault())
-                .toLocalDate()
-                .format(DateUtils.getShortDateFormatter())
-        }
-
         when {
             recipient?.isLegacyGroupRecipient != true -> null
             state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED -> {
@@ -220,7 +214,9 @@ class ConversationViewModel(
             state == LegacyGroupDeprecationManager.DeprecationState.DEPRECATING ->
                 Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
-                    formattedTime
+                    time.withZoneSameInstant(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(DateUtils.getShortDateFormatter())
                 )
                 .format()
 
