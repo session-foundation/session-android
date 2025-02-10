@@ -6,6 +6,5 @@ object NonTranslatableStringConstants {
     const val SESSION_DOWNLOAD_URL = "https://getsession.org/download"
     const val GIF                  = "GIF"
     const val OXEN_FOUNDATION      = "Oxen Foundation"
-    const val GROUP_UPDATE_URL     = "https://getsession.org/blog/session-groups-v2"
 }
 

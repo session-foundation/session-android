@@ -91,7 +91,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
@@ -875,7 +874,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                             }
 
                         binding.outdatedGroupBanner.setOnClickListener {
-                            showOpenUrlDialog(NonTranslatableStringConstants.GROUP_UPDATE_URL)
+                            showOpenUrlDialog("https://getsession.org/blog/session-groups-v2")
                         }
                     }
                 }
