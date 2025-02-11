@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.mediasend;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Video;
 import android.provider.OpenableColumns;
@@ -74,22 +77,19 @@ class MediaRepository {
             }
         }
 
-        Comparator<MediaFolder> folderNameSorter = (Comparator<MediaFolder>) (first, second) -> {
-            if (first == null || first.getTitle() == null) return 1;
-            if (second == null || second.getTitle() == null) return -1;
-            return first.getTitle().toLowerCase().compareTo(second.getTitle().toLowerCase());
-        };
-
-        List<MediaFolder> mediaFolders = Stream.of(folders.values()).map(folder -> new MediaFolder(folder.getThumbnail(),
+        List<MediaFolder> mediaFolders   = Stream.of(folders.values()).map(folder -> new MediaFolder(folder.getThumbnail(),
                         folder.getTitle(),
                         folder.getCount(),
                         folder.getBucketId()))
-                .sorted(folderNameSorter)
+                .filter(folder -> folder.getTitle() != null)
+                .sorted((o1, o2) -> o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase()))
                 .toList();
 
         Uri allMediaThumbnail = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp() ? imageFolders.getThumbnail() : videoFolders.getThumbnail();
+
         if (allMediaThumbnail != null) {
             int allMediaCount = Stream.of(mediaFolders).reduce(0, (count, folder) -> count + folder.getItemCount());
+
             mediaFolders.add(0, new MediaFolder(allMediaThumbnail, context.getString(R.string.conversationsSettingsAllMedia), allMediaCount, Media.ALL_MEDIA_BUCKET_ID));
         }
 
@@ -98,29 +98,46 @@ class MediaRepository {
 
     @WorkerThread
     private @NonNull FolderResult getFolders(@NonNull Context context, @NonNull Uri contentUri) {
-        Uri                     globalThumbnail    = null;
-        long                    thumbnailTimestamp = 0;
-        Map<String, FolderData> folders            = new HashMap<>();
+        Uri globalThumbnail = null;
+        long thumbnailTimestamp = 0;
+        Map<String, FolderData> folders = new HashMap<>();
 
-        String[] projection = new String[] { Images.Media.DATA, Images.Media.BUCKET_ID, Images.Media.BUCKET_DISPLAY_NAME, Images.Media.DATE_TAKEN };
-        String   selection  = Images.Media.DATA + " NOT NULL";
-        String   sortBy     = Images.Media.BUCKET_DISPLAY_NAME + " COLLATE NOCASE ASC, " + Images.Media.DATE_TAKEN + " DESC";
+        String[] projection = new String[] {
+                Images.Media._ID,
+                Images.Media.BUCKET_ID,
+                Images.Media.BUCKET_DISPLAY_NAME,
+                Images.Media.DATE_MODIFIED
+        };
+
+        String selection = null;
+        String sortBy = Images.Media.BUCKET_DISPLAY_NAME + " COLLATE NOCASE ASC, " +
+                Images.Media.DATE_MODIFIED + " DESC";
 
         try (Cursor cursor = context.getContentResolver().query(contentUri, projection, selection, null, sortBy)) {
-            while (cursor != null && cursor.moveToNext()) {
-                String     path      = cursor.getString(cursor.getColumnIndexOrThrow(projection[0]));
-                Uri        thumbnail = Uri.fromFile(new File(path));
-                String     bucketId  = cursor.getString(cursor.getColumnIndexOrThrow(projection[1]));
-                String     title     = cursor.getString(cursor.getColumnIndexOrThrow(projection[2]));
-                long       timestamp = cursor.getLong(cursor.getColumnIndexOrThrow(projection[3]));
-                FolderData folder    = Util.getOrDefault(folders, bucketId, new FolderData(thumbnail, title, bucketId));
+            if (cursor != null) {
+                int idIndex = cursor.getColumnIndexOrThrow(Images.Media._ID);
+                int bucketIdIndex = cursor.getColumnIndexOrThrow(Images.Media.BUCKET_ID);
+                int bucketDisplayNameIndex = cursor.getColumnIndexOrThrow(Images.Media.BUCKET_DISPLAY_NAME);
+                int dateModifiedIndex = cursor.getColumnIndexOrThrow(Images.Media.DATE_MODIFIED);
 
-                folder.incrementCount();
-                folders.put(bucketId, folder);
+                while (cursor.moveToNext()) {
+                    long rowId = cursor.getLong(idIndex);
+                    Uri thumbnail = ContentUris.withAppendedId(contentUri, rowId);
+                    String bucketId = cursor.getString(bucketIdIndex);
+                    String title = cursor.getString(bucketDisplayNameIndex);
+                    long timestamp = cursor.getLong(dateModifiedIndex);
 
-                if (timestamp > thumbnailTimestamp) {
-                    globalThumbnail    = thumbnail;
-                    thumbnailTimestamp = timestamp;
+                    FolderData folder = folders.get(bucketId);
+                    if (folder == null) {
+                        folder = new FolderData(thumbnail, title, bucketId);
+                        folders.put(bucketId, folder);
+                    }
+                    folder.incrementCount();
+
+                    if (timestamp > thumbnailTimestamp) {
+                        globalThumbnail = thumbnail;
+                        thumbnailTimestamp = timestamp;
+                    }
                 }
             }
         }
@@ -142,37 +159,38 @@ class MediaRepository {
     }
 
     @WorkerThread
-    private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId, @NonNull Uri contentUri, boolean hasOrientation) {
+    private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId, @NonNull Uri contentUri, boolean isImage) {
         List<Media> media         = new LinkedList<>();
-        String      selection     = Images.Media.BUCKET_ID + " = ? AND " + Images.Media.DATA + " NOT NULL";
-        String[]    selectionArgs = new String[] { bucketId };
-        String      sortBy        = Images.Media.DATE_TAKEN + " DESC";
+        String      selection     = Images.Media.BUCKET_ID + " = ?";
+        String[]    selectionArgs = new String[] { bucketId};
+        String      sortBy        = Images.Media.DATE_MODIFIED + " DESC";
 
         String[] projection;
 
-        if (hasOrientation) {
-            projection = new String[] { Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME };
+        if (isImage) {
+            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_MODIFIED, Images.Media.ORIENTATION, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME};
         } else {
-            projection = new String[] { Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_TAKEN, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME };
+            projection = new String[]{Images.Media._ID, Images.Media.MIME_TYPE, Images.Media.DATE_MODIFIED, Images.Media.WIDTH, Images.Media.HEIGHT, Images.Media.SIZE, Images.Media.DISPLAY_NAME};
         }
 
         if (Media.ALL_MEDIA_BUCKET_ID.equals(bucketId)) {
-            selection     = Images.Media.DATA + " NOT NULL";
+            selection     = null;
             selectionArgs = null;
         }
 
         try (Cursor cursor = context.getContentResolver().query(contentUri, projection, selection, selectionArgs, sortBy)) {
             while (cursor != null && cursor.moveToNext()) {
-                Uri    uri         = Uri.withAppendedPath(contentUri, cursor.getString(cursor.getColumnIndexOrThrow(Images.Media._ID)));
+                long   rowId       = cursor.getLong(cursor.getColumnIndexOrThrow(projection[0]));
+                Uri    uri         = ContentUris.withAppendedId(contentUri, rowId);
                 String mimetype    = cursor.getString(cursor.getColumnIndexOrThrow(Images.Media.MIME_TYPE));
-                long   dateTaken   = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.DATE_TAKEN));
-                int    orientation = hasOrientation ? cursor.getInt(cursor.getColumnIndexOrThrow(Images.Media.ORIENTATION)) : 0;
+                long   date        = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.DATE_MODIFIED));
+                int    orientation = isImage ? cursor.getInt(cursor.getColumnIndexOrThrow(Images.Media.ORIENTATION)) : 0;
                 int    width       = cursor.getInt(cursor.getColumnIndexOrThrow(getWidthColumn(orientation)));
                 int    height      = cursor.getInt(cursor.getColumnIndexOrThrow(getHeightColumn(orientation)));
                 long   size        = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.SIZE));
                 String filename    = cursor.getString(cursor.getColumnIndexOrThrow(Images.Media.DISPLAY_NAME));
 
-                media.add(new Media(uri, filename, mimetype, dateTaken, width, height, size, Optional.of(bucketId), Optional.absent()));
+                media.add(new Media(uri, filename, mimetype, date, width, height, size, Optional.of(bucketId), Optional.absent()));
             }
         }
 
