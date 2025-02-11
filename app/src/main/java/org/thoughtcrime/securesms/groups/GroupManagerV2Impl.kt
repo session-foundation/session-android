@@ -277,10 +277,8 @@ class GroupManagerV2Impl @Inject constructor(
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
 
-            withTimeout(20_000L) {
-                // Wait for the group configs to be pushed
-                configFactory.waitUntilGroupConfigsPushed(group)
-            }
+            // Wait for the group configs to be pushed
+            configFactory.waitUntilGroupConfigsPushed(group)
         } catch (e: Exception) {
             // Update every member's status to "invite failed" and return group name
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
