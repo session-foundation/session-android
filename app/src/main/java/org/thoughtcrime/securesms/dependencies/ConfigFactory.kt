@@ -239,8 +239,8 @@ class ConfigFactory @Inject constructor(
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         if (recreateConfigInstances) {
             synchronized(groupConfigs) {
-                groupConfigs.remove(groupId)?.second?.dumpIfNeeded(clock)
-            }
+                groupConfigs.remove(groupId)
+            }?.second?.dumpIfNeeded(clock)
         }
 
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
