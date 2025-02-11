@@ -132,7 +132,7 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     if (restoredModel != null) {
       editorModel = restoredModel;
       restoredModel = null;
-    } 
+    }
 
     if (editorModel == null) {
       editorModel = new EditorModel();

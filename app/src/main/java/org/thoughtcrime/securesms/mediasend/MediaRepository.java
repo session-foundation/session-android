@@ -5,31 +5,30 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
-import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.provider.MediaStore.Video;
 import android.provider.OpenableColumns;
 import android.util.Pair;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
+
 import com.annimon.stream.Stream;
-import java.io.File;
+
+import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.mms.PartAuthority;
+import org.thoughtcrime.securesms.util.MediaUtil;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import network.loki.messenger.R;
-import org.session.libsession.utilities.Util;
-import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.mms.PartAuthority;
-import org.thoughtcrime.securesms.util.FilenameUtils;
-import org.thoughtcrime.securesms.util.MediaUtil;
 
 /**
  * Handles the retrieval of media present on the user's device.
@@ -80,30 +79,28 @@ class MediaRepository {
             }
         }
 
-        // Create a list from merged folder data.
+        // Create a list from merged folder data
         List<FolderData> folderDataList = new ArrayList<>(mergedFolders.values());
         // Sort folders by their latestTimestamp (most recent first)
         Collections.sort(folderDataList, (fd1, fd2) -> Long.compare(fd2.getLatestTimestamp(), fd1.getLatestTimestamp()));
 
         List<MediaFolder> mediaFolders = new ArrayList<>();
         for (FolderData fd : folderDataList) {
-            // Only include folders with a non-null title.
             if (fd.getTitle() != null) {
                 mediaFolders.add(new MediaFolder(fd.getThumbnail(), fd.getTitle(), fd.getCount(), fd.getBucketId()));
             }
         }
 
-        // Determine the global thumbnail from the most recent media across image and video queries.
+        // Determine the global thumbnail from the most recent media across image and video queries
         Uri allMediaThumbnail = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp()
                 ? imageFolders.getThumbnail() : videoFolders.getThumbnail();
 
         if (allMediaThumbnail != null) {
-            // Calculate the total media count.
             int allMediaCount = 0;
             for (MediaFolder folder : mediaFolders) {
                 allMediaCount += folder.getItemCount();
             }
-            // Prepend an "All Media" folder.
+            // Prepend an "All Media" folder
             mediaFolders.add(0, new MediaFolder(allMediaThumbnail, context.getString(R.string.conversationsSettingsAllMedia), allMediaCount, Media.ALL_MEDIA_BUCKET_ID));
         }
 
@@ -117,14 +114,13 @@ class MediaRepository {
         long thumbnailTimestamp = 0;
         Map<String, FolderData> folders = new HashMap<>();
 
-        // Using _ID so we can build a content URI (better for scoped storage)
         String[] projection = new String[] {
                 Images.Media._ID,
                 Images.Media.BUCKET_ID,
                 Images.Media.BUCKET_DISPLAY_NAME,
-                Images.Media.DATE_MODIFIED  // or DATE_TAKEN if preferred
+                Images.Media.DATE_MODIFIED
         };
-        // Here we can remove the extra filters if we want all items.
+        
         String selection = null;
         String sortBy = Images.Media.BUCKET_DISPLAY_NAME + " COLLATE NOCASE ASC, " +
                 Images.Media.DATE_MODIFIED + " DESC";
