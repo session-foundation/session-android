@@ -65,36 +65,51 @@ class MediaRepository {
 
     @WorkerThread
     private @NonNull List<MediaFolder> getFolders(@NonNull Context context) {
-        FolderResult imageFolders       = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI);
-        FolderResult videoFolders       = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI);
-        Map<String, FolderData> folders = new HashMap<>(imageFolders.getFolderData());
+        FolderResult imageFolders = getFolders(context, Images.Media.EXTERNAL_CONTENT_URI);
+        FolderResult videoFolders = getFolders(context, Video.Media.EXTERNAL_CONTENT_URI);
 
+        // Merge image and video folder data
+        Map<String, FolderData> mergedFolders = new HashMap<>(imageFolders.getFolderData());
         for (Map.Entry<String, FolderData> entry : videoFolders.getFolderData().entrySet()) {
-            if (folders.containsKey(entry.getKey())) {
-                folders.get(entry.getKey()).incrementCount(entry.getValue().getCount());
+            if (mergedFolders.containsKey(entry.getKey())) {
+                mergedFolders.get(entry.getKey()).incrementCount(entry.getValue().getCount());
+                // Also update timestamp if the video has a more recent timestamp.
+                mergedFolders.get(entry.getKey()).updateTimestamp(entry.getValue().getLatestTimestamp());
             } else {
-                folders.put(entry.getKey(), entry.getValue());
+                mergedFolders.put(entry.getKey(), entry.getValue());
             }
         }
 
-        List<MediaFolder> mediaFolders   = Stream.of(folders.values()).map(folder -> new MediaFolder(folder.getThumbnail(),
-                        folder.getTitle(),
-                        folder.getCount(),
-                        folder.getBucketId()))
-                .filter(folder -> folder.getTitle() != null)
-                .sorted((o1, o2) -> o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase()))
-                .toList();
+        // Create a list from merged folder data.
+        List<FolderData> folderDataList = new ArrayList<>(mergedFolders.values());
+        // Sort folders by their latestTimestamp (most recent first)
+        Collections.sort(folderDataList, (fd1, fd2) -> Long.compare(fd2.getLatestTimestamp(), fd1.getLatestTimestamp()));
 
-        Uri allMediaThumbnail = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp() ? imageFolders.getThumbnail() : videoFolders.getThumbnail();
+        List<MediaFolder> mediaFolders = new ArrayList<>();
+        for (FolderData fd : folderDataList) {
+            // Only include folders with a non-null title.
+            if (fd.getTitle() != null) {
+                mediaFolders.add(new MediaFolder(fd.getThumbnail(), fd.getTitle(), fd.getCount(), fd.getBucketId()));
+            }
+        }
+
+        // Determine the global thumbnail from the most recent media across image and video queries.
+        Uri allMediaThumbnail = imageFolders.getThumbnailTimestamp() > videoFolders.getThumbnailTimestamp()
+                ? imageFolders.getThumbnail() : videoFolders.getThumbnail();
 
         if (allMediaThumbnail != null) {
-            int allMediaCount = Stream.of(mediaFolders).reduce(0, (count, folder) -> count + folder.getItemCount());
-
+            // Calculate the total media count.
+            int allMediaCount = 0;
+            for (MediaFolder folder : mediaFolders) {
+                allMediaCount += folder.getItemCount();
+            }
+            // Prepend an "All Media" folder.
             mediaFolders.add(0, new MediaFolder(allMediaThumbnail, context.getString(R.string.conversationsSettingsAllMedia), allMediaCount, Media.ALL_MEDIA_BUCKET_ID));
         }
 
         return mediaFolders;
     }
+
 
     @WorkerThread
     private @NonNull FolderResult getFolders(@NonNull Context context, @NonNull Uri contentUri) {
@@ -102,13 +117,14 @@ class MediaRepository {
         long thumbnailTimestamp = 0;
         Map<String, FolderData> folders = new HashMap<>();
 
+        // Using _ID so we can build a content URI (better for scoped storage)
         String[] projection = new String[] {
                 Images.Media._ID,
                 Images.Media.BUCKET_ID,
                 Images.Media.BUCKET_DISPLAY_NAME,
-                Images.Media.DATE_MODIFIED
+                Images.Media.DATE_MODIFIED  // or DATE_TAKEN if preferred
         };
-
+        // Here we can remove the extra filters if we want all items.
         String selection = null;
         String sortBy = Images.Media.BUCKET_DISPLAY_NAME + " COLLATE NOCASE ASC, " +
                 Images.Media.DATE_MODIFIED + " DESC";
@@ -118,14 +134,14 @@ class MediaRepository {
                 int idIndex = cursor.getColumnIndexOrThrow(Images.Media._ID);
                 int bucketIdIndex = cursor.getColumnIndexOrThrow(Images.Media.BUCKET_ID);
                 int bucketDisplayNameIndex = cursor.getColumnIndexOrThrow(Images.Media.BUCKET_DISPLAY_NAME);
-                int dateModifiedIndex = cursor.getColumnIndexOrThrow(Images.Media.DATE_MODIFIED);
+                int dateIndex = cursor.getColumnIndexOrThrow(Images.Media.DATE_MODIFIED);
 
                 while (cursor.moveToNext()) {
                     long rowId = cursor.getLong(idIndex);
                     Uri thumbnail = ContentUris.withAppendedId(contentUri, rowId);
                     String bucketId = cursor.getString(bucketIdIndex);
                     String title = cursor.getString(bucketDisplayNameIndex);
-                    long timestamp = cursor.getLong(dateModifiedIndex);
+                    long timestamp = cursor.getLong(dateIndex);
 
                     FolderData folder = folders.get(bucketId);
                     if (folder == null) {
@@ -133,6 +149,7 @@ class MediaRepository {
                         folders.put(bucketId, folder);
                     }
                     folder.incrementCount();
+                    folder.updateTimestamp(timestamp);
 
                     if (timestamp > thumbnailTimestamp) {
                         globalThumbnail = thumbnail;
@@ -307,16 +324,18 @@ class MediaRepository {
     }
 
     private static class FolderData {
-        private final Uri    thumbnail;
+        private final Uri thumbnail;
         private final String title;
         private final String bucketId;
-
         private int count;
+        private long latestTimestamp; // New field
 
-        private FolderData(Uri thumbnail, String title, String bucketId) {
+        private FolderData(@NonNull Uri thumbnail, @NonNull String title, @NonNull String bucketId) {
             this.thumbnail = thumbnail;
-            this.title     = title;
-            this.bucketId  = bucketId;
+            this.title = title;
+            this.bucketId = bucketId;
+            this.count = 0;
+            this.latestTimestamp = 0;
         }
 
         Uri getThumbnail() {
@@ -342,7 +361,18 @@ class MediaRepository {
         void incrementCount(int amount) {
             count += amount;
         }
+
+        void updateTimestamp(long ts) {
+            if (ts > latestTimestamp) {
+                latestTimestamp = ts;
+            }
+        }
+
+        long getLatestTimestamp() {
+            return latestTimestamp;
+        }
     }
+
 
     interface Callback<E> {
         void onComplete(@NonNull E result);
