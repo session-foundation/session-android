@@ -208,16 +208,16 @@ object UpdateMessageBuilder {
                                 .format()
                             number == 1 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                     if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistoryTwo else R.string.groupMemberNewTwo)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewYouHistoryMultiple else R.string.groupInviteYouAndMoreNew)
@@ -225,7 +225,7 @@ object UpdateMessageBuilder {
                                 .format()
                             number > 0 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             else -> ""
@@ -239,16 +239,16 @@ object UpdateMessageBuilder {
                             )
                             number == 1 -> Phrase.from(context,
                                 R.string.adminPromotedToAdmin)
-                                .put(NAME_KEY,context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                 R.string.groupPromotedYouTwo)
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first{ it != userPublicKey }))
+                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first{ it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 R.string.adminTwoPromotedToAdmin)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
+                                .put(NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 R.string.groupPromotedYouMultiple)
@@ -256,7 +256,7 @@ object UpdateMessageBuilder {
                                 .format()
                             else -> Phrase.from(context,
                                 R.string.adminMorePromotedToAdmin)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                         }
@@ -268,16 +268,16 @@ object UpdateMessageBuilder {
                                 R.string.groupRemovedYouGeneral).format()
                             number == 1 -> Phrase.from(context,
                                 R.string.groupRemoved)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                 R.string.groupRemovedYouTwo)
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.first { it != userPublicKey }))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 R.string.groupRemovedTwo)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY, context.youOrSender(updateData.sessionIds.last()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 R.string.groupRemovedYouMultiple)
@@ -285,7 +285,7 @@ object UpdateMessageBuilder {
                                 .format()
                             else -> Phrase.from(context,
                                 R.string.groupRemovedMultiple)
-                                .put(NAME_KEY, context.youOrSender(updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                         }
