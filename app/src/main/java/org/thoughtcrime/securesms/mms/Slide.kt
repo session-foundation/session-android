@@ -48,7 +48,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             if (MediaUtil.isAudio(attachment)) {
                 // A missing file name is the legacy way to determine if an audio attachment is
                 // a voice note vs. other arbitrary audio attachments.
-                if (attachment.isVoiceNote || attachment.fileName.isNullOrEmpty()) {
+                if (attachment.isVoiceNote) {
                      val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
                         .put(EMOJI_KEY, "🎙")
                         .format().toString()

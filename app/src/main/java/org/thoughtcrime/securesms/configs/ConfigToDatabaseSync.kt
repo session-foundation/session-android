@@ -214,7 +214,7 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private val MmsMessageRecord.containsAttachment: Boolean
-        get() = this.slideDeck.slides.isNotEmpty() && this.slideDeck.audioSlide == null
+        get() = this.slideDeck.slides.isNotEmpty() && !this.slideDeck.isVoiceNote
 
     private data class UpdateContacts(val contacts: List<Contact>)
 

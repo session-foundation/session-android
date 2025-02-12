@@ -120,7 +120,9 @@ public abstract class Attachment {
   }
 
   public boolean isVoiceNote() {
-    return voiceNote;
+    // A missing file name is the legacy way to determine if an audio attachment is
+    // a voice note vs. other arbitrary audio attachments.
+    return voiceNote || getFileName() == null || getFileName().isEmpty();
   }
 
   public int getWidth() {
