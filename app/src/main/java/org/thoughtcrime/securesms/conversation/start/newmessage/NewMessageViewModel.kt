@@ -58,6 +58,7 @@ internal class NewMessageViewModel @Inject constructor(
                 IDN.toASCII(trimmed, IDN.ALLOW_UNASSIGNED)
             } catch (e: IllegalArgumentException) {
                 // if the above failed, resort to the original trimmed string
+                Log.w("", "IDN.toASCII failed. Returning: $trimmed")
                 trimmed
             }
         }
