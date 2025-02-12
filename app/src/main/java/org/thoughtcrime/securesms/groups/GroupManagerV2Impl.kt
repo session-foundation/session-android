@@ -509,6 +509,30 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupInfo.getName()
             }
 
+            // Build a group update message to the group telling members someone has been promoted
+            val timestamp = clock.currentTimeMills()
+            val signature = SodiumUtilities.sign(
+                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                adminKey
+            )
+
+            val message = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setMemberChangeMessage(
+                        GroupUpdateMemberChangeMessage.newBuilder()
+                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
+                            .setAdminSignature(ByteString.copyFrom(signature))
+                    )
+                    .build()
+            ).apply {
+                sentTimestamp = timestamp
+            }
+
+            // Insert the message locally immediately so we can see the incoming change
+            // The same message will be sent later to the group
+            storage.insertGroupInfoChange(message, group)
+
             // Send out the promote message to the members concurrently
             val promoteMessage = GroupUpdated(
                 GroupUpdateMessage.newBuilder()
@@ -550,27 +574,8 @@ class GroupManagerV2Impl @Inject constructor(
                     .forEach(configs.groupMembers::set)
             }
 
-            // Send a group update message to the group telling members someone has been promoted
-            val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-                adminKey
-            )
-            val message = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setMemberChangeMessage(
-                        GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.map { it.hexString })
-                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
-                            .setAdminSignature(ByteString.copyFrom(signature))
-                    )
-                    .build()
-            ).apply {
-                sentTimestamp = timestamp
-            }
 
             MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
-            storage.insertGroupInfoChange(message, group)
         }
     }
     /**
@@ -946,8 +951,8 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
             storage.insertGroupInfoChange(message, groupId)
+            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
         }
 
     override suspend fun requestMessageDeletion(
