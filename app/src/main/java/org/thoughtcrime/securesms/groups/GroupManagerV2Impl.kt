@@ -238,7 +238,6 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupMembers.set(toSet)
             }
 
-            // Depends on whether we want to share history, we may need to rekey or just adding rsupplement keys
             if (shareHistory) {
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
@@ -253,10 +252,9 @@ class GroupManagerV2Impl @Inject constructor(
                         auth = groupAuth,
                     )
                 )
-            } else {
-                configs.rekey()
             }
 
+            configs.rekey()
             newMembers.map { configs.groupKeys.getSubAccountToken(it) }
         }
 
