@@ -1396,7 +1396,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     private fun onDeselect(message: MessageRecord, position: Int, actionMode: ActionMode) {
         adapter.toggleSelection(message, position)
-        val actionModeCallback = ConversationActionModeCallback(adapter, viewModel.threadId, this)
+        val actionModeCallback = ConversationActionModeCallback(
+            adapter = adapter,
+            threadID = viewModel.threadId,
+            context = this,
+            deprecationManager = viewModel.legacyGroupDeprecationManager
+        )
         actionModeCallback.delegate = this
         actionModeCallback.updateActionModeMenu(actionMode.menu)
         if (adapter.selectedItems.isEmpty()) {
@@ -1415,7 +1420,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     // `position` is the adapter position; not the visual position
     private fun selectMessage(message: MessageRecord, position: Int) {
         val actionMode = this.actionMode
-        val actionModeCallback = ConversationActionModeCallback(adapter, viewModel.threadId, this)
+        val actionModeCallback = ConversationActionModeCallback(
+            adapter = adapter,
+            threadID = viewModel.threadId,
+            context = this,
+            deprecationManager = viewModel.legacyGroupDeprecationManager
+        )
         actionModeCallback.delegate = this
         searchViewItem?.collapseActionView()
         if (actionMode == null) { // Nothing should be selected if this is the case
