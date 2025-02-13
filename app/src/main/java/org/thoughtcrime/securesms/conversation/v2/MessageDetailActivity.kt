@@ -135,7 +135,7 @@ class MessageDetailActivity : PassphraseRequiredActionBarActivity() {
             onReply = if (state.canReply) { { setResultAndFinish(ON_REPLY) } } else null,
             onResend = state.error?.let { { setResultAndFinish(ON_RESEND) } },
             onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
-            onDelete = { setResultAndFinish(ON_DELETE) },
+            onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
             onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
@@ -158,7 +158,7 @@ fun MessageDetails(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit = {},
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
     onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
@@ -242,7 +242,7 @@ fun CellButtons(
     onReply: (() -> Unit)? = null,
     onResend: (() -> Unit)? = null,
     onSave: (() -> Unit)? = null,
-    onDelete: () -> Unit,
+    onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit
 ) {
     Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
@@ -281,12 +281,14 @@ fun CellButtons(
                 Divider()
             }
 
-            LargeItemButton(
-                R.string.delete,
-                R.drawable.ic_delete,
-                colors = dangerButtonColors(),
-                onClick = onDelete
-            )
+            onDelete?.let {
+                LargeItemButton(
+                    R.string.delete,
+                    R.drawable.ic_delete,
+                    colors = dangerButtonColors(),
+                    onClick = it
+                )
+            }
         }
     }
 }
