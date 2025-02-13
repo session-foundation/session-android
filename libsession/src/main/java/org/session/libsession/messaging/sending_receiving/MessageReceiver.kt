@@ -22,6 +22,8 @@ import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 object MessageReceiver {
 
@@ -141,6 +143,19 @@ object MessageReceiver {
         }
         // Parse the proto
         val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
+
+        if (proto.hasSigTimestamp()) {
+            if (openGroupServerID != null) {
+                check(abs(proto.sigTimestamp - envelope.timestamp) <= TimeUnit.HOURS.toMillis(6)) {
+                    "Signature timestamp doesn't match envelope timestamp on community message."
+                }
+            } else {
+                check(proto.sigTimestamp == envelope.timestamp) {
+                    "Signature timestamp doesn't match envelope timestamp."
+                }
+            }
+        }
+
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
