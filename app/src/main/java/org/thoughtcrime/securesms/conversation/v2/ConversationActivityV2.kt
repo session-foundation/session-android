@@ -1709,11 +1709,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onMicrophoneButtonUp(event: MotionEvent) {
         if(binding.inputBar.voiceRecorderState != VoiceRecorderState.Recording){
-            Log.i(TAG, "*** button UP CANCELLING!!!!!!!!!! --- ${binding.inputBar.voiceRecorderState}")
             cancelVoiceMessage()
             return
         }
-        Log.i(TAG, "*** button UP --- ${binding.inputBar.voiceRecorderState}")
+
         val x = event.rawX.roundToInt()
         val y = event.rawY.roundToInt()
 
@@ -2059,7 +2058,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
-        Log.i(TAG, "*** Starting voice message recording at: ${System.currentTimeMillis()} --- ${binding.inputBar.voiceRecorderState}")
         binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
@@ -2084,7 +2082,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // Limit voice messages to 5 minute each
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
         } else {
-            Log.d("", "*** START REC FAIL PERM")
             binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
             Permissions.with(this)
@@ -2165,7 +2162,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
         audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-        Log.d("", "*** CANCELLING")
+
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
