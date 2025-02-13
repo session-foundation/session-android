@@ -144,15 +144,14 @@ object MessageReceiver {
         // Parse the proto
         val proto = SignalServiceProtos.Content.parseFrom(PushTransportDetails.getStrippedPaddingMessageBody(plaintext))
 
+        // Verify the signature timestamp inside the content is the same as in envelope.
+        // If the message is from an open group, 6 hours of difference is allowed.
         if (proto.hasSigTimestamp()) {
-            if (openGroupServerID != null) {
-                check(abs(proto.sigTimestamp - envelope.timestamp) <= TimeUnit.HOURS.toMillis(6)) {
-                    "Signature timestamp doesn't match envelope timestamp on community message."
-                }
-            } else {
-                check(proto.sigTimestamp == envelope.timestamp) {
-                    "Signature timestamp doesn't match envelope timestamp."
-                }
+            if (
+                (openGroupServerID != null && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
+                (openGroupServerID == null && proto.sigTimestamp != envelope.timestamp)
+            ) {
+                throw Error.InvalidSignature
             }
         }
 
