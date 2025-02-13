@@ -370,7 +370,7 @@ object MessageSender {
             if (message is VisibleMessage) {
                 message.profile = storage.getUserProfile()
             }
-            val content = message.toProto()!!.newBuilderForType()
+            val content = message.toProto()!!.toBuilder()
                 .setSigTimestamp(message.sentTimestamp!!)
                 .build()
 
