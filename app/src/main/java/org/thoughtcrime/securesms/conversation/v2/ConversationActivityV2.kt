@@ -985,7 +985,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val recipient = viewModel.recipient ?: return false
-        if (!viewModel.isMessageRequestThread) {
+        if (viewModel.showOptionsMenu) {
             ConversationMenuHelper.onPrepareOptionsMenu(
                 menu = menu,
                 inflater = menuInflater,

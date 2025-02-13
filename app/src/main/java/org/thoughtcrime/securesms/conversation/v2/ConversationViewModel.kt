@@ -196,6 +196,17 @@ class ConversationViewModel(
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
+    val showOptionsMenu: Boolean
+        get() {
+            if (isMessageRequestThread) {
+                return false
+            }
+
+            val isDeprecatedLegacyGroup = recipient?.isLegacyGroupRecipient == true &&
+                    legacyGroupDeprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+            return !isDeprecatedLegacyGroup
+        }
+
     val canReactToMessages: Boolean
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
