@@ -855,6 +855,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                         binding.outdatedGroupBanner.isVisible = true
                         binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
                             .apply {
+                                // Append a space as a placeholder
+                                append(" ")
+                                
                                 // we need to add the inline icon
                                 val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_external)!!
                                 val imageSize = toPx(10, resources)
