@@ -20,8 +20,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
-import org.session.libsession.utilities.ThemeUtil;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.LifecycleDisposable;
@@ -37,6 +35,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   private static final String ARGS_IS_MMS     = "reactions.args.is.mms";
   private static final String ARGS_IS_MODERATOR = "reactions.args.is.moderator";
   private static final String ARGS_EMOJI = "reactions.args.emoji";
+  private static final String ARGS_CAN_REMOVE = "reactions.args.can.remove";
 
   private ViewPager2                recipientPagerView;
   private ReactionViewPagerAdapter  recipientsAdapter;
@@ -44,7 +43,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
 
   private final LifecycleDisposable disposables = new LifecycleDisposable();
 
-  public static DialogFragment create(MessageId messageId, boolean isUserModerator, @Nullable String emoji) {
+  public static DialogFragment create(MessageId messageId, boolean isUserModerator, @Nullable String emoji, boolean canRemove) {
     Bundle         args     = new Bundle();
     DialogFragment fragment = new ReactionsDialogFragment();
 
@@ -52,6 +51,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
     args.putBoolean(ARGS_IS_MMS, messageId.isMms());
     args.putBoolean(ARGS_IS_MODERATOR, isUserModerator);
     args.putString(ARGS_EMOJI, emoji);
+    args.putBoolean(ARGS_CAN_REMOVE, canRemove);
 
     fragment.setArguments(args);
 
@@ -138,7 +138,7 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   }
 
   private void setUpRecipientsRecyclerView() {
-    recipientsAdapter = new ReactionViewPagerAdapter(this);
+    recipientsAdapter = new ReactionViewPagerAdapter(this, requireArguments().getBoolean(ARGS_CAN_REMOVE));
     recipientPagerView.setAdapter(recipientsAdapter);
   }
 

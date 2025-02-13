@@ -1784,9 +1784,9 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         } else {
             smsDb.getMessageRecord(messageId.id)
         }
-        if (userWasSender) {
+        if (userWasSender && viewModel.canRemoveReaction) {
             sendEmojiRemoval(emoji, message)
-        } else {
+        } else if (!userWasSender && viewModel.canReactToMessages) {
             sendEmojiReaction(emoji, message)
         }
     }
@@ -1797,7 +1797,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
                 OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
             } ?: false
-            val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji)
+            val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)
         }
     }
