@@ -121,20 +121,9 @@ class InputBar @JvmOverloads constructor(
                     }
                     MotionEvent.ACTION_UP -> {
 
-                        // If the button is not in a "I-am-being-spammed" state then proceed to process the voice message
-                        if (microphoneButton.isEnabled) {
-
-                            // Prevent button spam by briefly disabling the record button
-                            microphoneButton.isEnabled = false
-                            microphoneButton.postDelayed(
-                                { microphoneButton.isEnabled = true },
-                                VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
-                            )
-
-                            // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
-                            // on, or finishing recording if just hold-to-record.
-                            delegate?.onMicrophoneButtonUp(event)
-                        }
+                        // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
+                        // on, or finishing recording if just hold-to-record.
+                        delegate?.onMicrophoneButtonUp(event)
                     }
                 }
 

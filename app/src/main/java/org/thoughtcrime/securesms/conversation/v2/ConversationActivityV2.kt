@@ -392,6 +392,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
 
+    private val voiceNoteTooShortToast: Toast by lazy {
+        Toast.makeText(
+            applicationContext,
+            applicationContext.getString(R.string.messageVoiceErrorShort),
+            Toast.LENGTH_SHORT
+        )
+    }
+
     // Properties for what message indices are visible previously & now, as well as the scroll state
     private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
@@ -1083,11 +1091,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun acceptMessageRequest() {
-        binding.messageRequestBar.isVisible = false
-        viewModel.acceptMessageRequest()
-    }
-
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text // TODO check if we should be referencing newContent here instead
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
@@ -1138,7 +1141,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         inputBar.animate()
             .alpha(0f)
             .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
-            .withEndAction { inputBar.alpha = 0f } // Ensure not visible at end (whether cancelled or not)
             .start()
     }
 
@@ -1187,7 +1189,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         inputBar.animate()
             .alpha(1.0f)
             .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
-            .withEndAction { inputBar.alpha = 1f } // Ensure fully visible at end (whether cancelled or not)
             .start()
     }
 
@@ -1707,17 +1708,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onMicrophoneButtonUp(event: MotionEvent) {
-
-        // If the record button is enabled then disable it briefly to prevent button spam
-        val recordButton = binding.inputBar.microphoneButton
-        if (recordButton.isEnabled) {
-            recordButton.isEnabled = false
-            recordButton.postDelayed(
-                { recordButton.isEnabled = true },
-                VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
-            )
+        if(binding.inputBar.voiceRecorderState != VoiceRecorderState.Recording){
+            Log.i(TAG, "*** button UP CANCELLING!!!!!!!!!! --- ${binding.inputBar.voiceRecorderState}")
+            cancelVoiceMessage()
+            return
         }
-
+        Log.i(TAG, "*** button UP --- ${binding.inputBar.voiceRecorderState}")
         val x = event.rawX.roundToInt()
         val y = event.rawY.roundToInt()
 
@@ -2063,7 +2059,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
-        Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()}")
+        Log.i(TAG, "*** Starting voice message recording at: ${System.currentTimeMillis()} --- ${binding.inputBar.voiceRecorderState}")
+        binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
             showVoiceMessageUI()
@@ -2081,13 +2078,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
 
-            binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
             voiceMessageStartTimestamp = System.currentTimeMillis()
             audioRecorder.startRecording(callback)
 
             // Limit voice messages to 5 minute each
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
         } else {
+            Log.d("", "*** START REC FAIL PERM")
+            binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
+
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsMicrophoneAccessRequired)
@@ -2111,9 +2110,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // update the voice message duration based on the current time here.
         val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
 
-        val voiceMessageDurationValid = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        val future = audioRecorder.stopRecording(voiceMessageDurationValid)
+        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        val future = audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+        Log.d("", "*** SEND VOICE")
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
@@ -2121,9 +2121,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
-        val voiceMessageBelowMinimumDuration = !MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        if (voiceMessageDurationMS != 0L && voiceMessageBelowMinimumDuration) {
-            Toast.makeText(this@ConversationActivityV2, R.string.messageVoiceErrorShort, Toast.LENGTH_SHORT).show()
+        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
+            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
+            voiceNoteTooShortToast.show()
             return
         }
 
@@ -2140,7 +2140,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val dataSizeBytes = result.second
 
                 // Only proceed with sending the voice message if it's long enough
-                if (!voiceMessageBelowMinimumDuration) {
+                if (voiceMessageMeetsMinimumDuration) {
                     val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
                     val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
                     val slideDeck = SlideDeck()
@@ -2150,10 +2150,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             override fun onFailure(e: ExecutionException) {
-                // Show a toast that we can't record if there was a genuine error, or that the user needs to press
-                // and hold the record button if they're spamming the button.
-                val textId = if (binding.inputBar.microphoneButton.isEnabled) R.string.audioUnableToRecord else R.string.messageVoiceErrorShort
-                Toast.makeText(this@ConversationActivityV2, textId, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
             }
         })
     }
@@ -2168,11 +2165,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
         audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+        Log.d("", "*** CANCELLING")
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
         if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
-            Toast.makeText(applicationContext, applicationContext.getString(R.string.messageVoiceErrorShort), Toast.LENGTH_SHORT).show()
+            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
+            voiceNoteTooShortToast.show()
         }
     }
 

@@ -109,9 +109,6 @@ class InputBarButton : RelativeLayout {
     fun getIconID() = iconID
 
     fun expand() {
-
-        Log.w("ACL", "Hit expand at: " + System.currentTimeMillis())
-
         val fromColor = context.getColorFromAttr(colorID)
         val toColor = context.getAccentColor()
         GlowViewUtilities.animateColorChange(imageViewContainer, fromColor, toColor)
@@ -151,10 +148,6 @@ class InputBarButton : RelativeLayout {
     }
 
     private fun onDown(event: MotionEvent) {
-        // Don't process voice message recording button presses while the button is disabled (we
-        // briefly disable it on release to prevent button spam from muddling the UI state).
-        if (!this.isEnabled) return
-
         expand()
         performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
 
