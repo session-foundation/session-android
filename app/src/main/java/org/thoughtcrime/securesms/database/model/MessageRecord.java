@@ -140,13 +140,13 @@ public abstract class MessageRecord extends DisplayRecord {
       UpdateMessageData updateMessageData = getGroupUpdateMessage();
       Recipient groupRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
 
-      if (updateMessageData == null || groupRecipient == null || !groupRecipient.isGroupV2Recipient()) {
+      if (updateMessageData == null || groupRecipient == null) {
         return "";
       }
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              new AccountId(groupRecipient.getAddress().serialize()),
+              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().serialize()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),

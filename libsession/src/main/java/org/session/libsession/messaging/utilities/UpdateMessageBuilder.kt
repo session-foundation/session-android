@@ -38,15 +38,15 @@ object UpdateMessageBuilder {
         ?.displayName(Contact.ContactContext.REGULAR)
         ?: truncateIdForDisplay(senderId)
 
-    private fun getGroupMemberName(groupId: AccountId, memberId: String) =
+    private fun getGroupMemberName(groupId: AccountId?, memberId: String) =
         storage.getContactWithAccountID(memberId)?.displayName(Contact.ContactContext.REGULAR)
-            ?: MessagingModuleConfiguration.shared.configFactory.withGroupConfigs(groupId) { it.groupMembers.getOrNull(memberId)?.name }
+            ?: groupId?.let{ MessagingModuleConfiguration.shared.configFactory.withGroupConfigs(it) { it.groupMembers.getOrNull(memberId)?.name } }
             ?: truncateIdForDisplay(memberId)
 
     @JvmStatic
     fun buildGroupUpdateMessage(
         context: Context,
-        groupId: AccountId,
+        groupV2Id: AccountId?, // null for legacy groups
         updateMessageData: UpdateMessageData,
         configFactory: ConfigFactoryProtocol,
         isOutgoing: Boolean,
@@ -86,19 +86,19 @@ object UpdateMessageBuilder {
                     }
                     1 -> {
                         Phrase.from(context, R.string.legacyGroupMemberNew)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                             .format()
                     }
                     2 -> {
                         Phrase.from(context, R.string.legacyGroupMemberTwoNew)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
-                            .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(1)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
+                            .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(1)))
                             .format()
                     }
                     else -> {
                         val newMemberCountMinusOne = newMemberCount - 1
                         Phrase.from(context, R.string.legacyGroupMemberNewMultiple)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                             .put(COUNT_KEY, newMemberCountMinusOne)
                             .format()
                     }
@@ -126,14 +126,14 @@ object UpdateMessageBuilder {
                                 "" // Return an empty string - we don't want to show the error in the conversation
                                 }
                             1 -> Phrase.from(context, R.string.groupRemoved)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                                 .format()
                             2 -> Phrase.from(context, R.string.groupRemovedTwo)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(1)))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(1)))
                                 .format()
                             else -> Phrase.from(context, R.string.groupRemovedMultiple)
-                                    .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                                    .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                                     .put(COUNT_KEY, updateData.updatedMembers.size - 1)
                                     .format()
                         }
@@ -150,14 +150,14 @@ object UpdateMessageBuilder {
                                 "" // Return an empty string - we don't want to show the error in the conversation
                             }
                             1 -> Phrase.from(context, R.string.groupRemoved)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                                 .format()
                             2 -> Phrase.from(context, R.string.groupRemovedTwo)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(1)))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(1)))
                                 .format()
                             else -> Phrase.from(context, R.string.groupRemovedMultiple)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                                 .put(COUNT_KEY, updateData.updatedMembers.size - 1)
                                 .format()
                         }
@@ -173,14 +173,14 @@ object UpdateMessageBuilder {
                             "" // Return an empty string - we don't want to show the error in the conversation
                         }
                         1 -> Phrase.from(context, R.string.groupMemberLeft)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                             .format()
                         2 -> Phrase.from(context, R.string.groupMemberLeftTwo)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
-                            .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(1)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
+                            .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(1)))
                             .format()
                         else -> Phrase.from(context, R.string.groupMemberLeftMultiple)
-                            .put(NAME_KEY, getGroupMemberName(groupId, updateData.updatedMembers.elementAt(0)))
+                            .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.updatedMembers.elementAt(0)))
                             .put(COUNT_KEY, updateData.updatedMembers.size - 1)
                             .format()
                     }
@@ -208,16 +208,16 @@ object UpdateMessageBuilder {
                                 .format()
                             number == 1 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistory else R.string.groupMemberNew)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                     if (historyShared) R.string.groupMemberNewYouHistoryTwo else R.string.groupInviteYouAndOtherNew)
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first { it != userPublicKey }))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistoryTwo else R.string.groupMemberNewTwo)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.last()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewYouHistoryMultiple else R.string.groupInviteYouAndMoreNew)
@@ -225,7 +225,7 @@ object UpdateMessageBuilder {
                                 .format()
                             number > 0 -> Phrase.from(context,
                                 if (historyShared) R.string.groupMemberNewHistoryMultiple else R.string.groupMemberNewMultiple)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                             else -> ""
@@ -239,16 +239,16 @@ object UpdateMessageBuilder {
                             )
                             number == 1 -> Phrase.from(context,
                                 R.string.adminPromotedToAdmin)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                 R.string.groupPromotedYouTwo)
-                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first{ it != userPublicKey }))
+                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupV2Id, updateData.sessionIds.first{ it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 R.string.adminTwoPromotedToAdmin)
-                                .put(NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.last()))
+                                .put(NAME_KEY,  getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY,  getGroupMemberName(groupV2Id, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 R.string.groupPromotedYouMultiple)
@@ -256,7 +256,7 @@ object UpdateMessageBuilder {
                                 .format()
                             else -> Phrase.from(context,
                                 R.string.adminMorePromotedToAdmin)
-                                .put(NAME_KEY,  getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY,  getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                         }
@@ -268,16 +268,16 @@ object UpdateMessageBuilder {
                                 R.string.groupRemovedYouGeneral).format()
                             number == 1 -> Phrase.from(context,
                                 R.string.groupRemoved)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                 R.string.groupRemovedYouTwo)
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first { it != userPublicKey }))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first { it != userPublicKey }))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 R.string.groupRemovedTwo)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
-                                .put(OTHER_NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.last()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
+                                .put(OTHER_NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.last()))
                                 .format()
                             containsUser -> Phrase.from(context,
                                 R.string.groupRemovedYouMultiple)
@@ -285,7 +285,7 @@ object UpdateMessageBuilder {
                                 .format()
                             else -> Phrase.from(context,
                                 R.string.groupRemovedMultiple)
-                                .put(NAME_KEY, getGroupMemberName(groupId, updateData.sessionIds.first()))
+                                .put(NAME_KEY, getGroupMemberName(groupV2Id, updateData.sessionIds.first()))
                                 .put(COUNT_KEY, updateData.sessionIds.size - 1)
                                 .format()
                         }
@@ -295,7 +295,7 @@ object UpdateMessageBuilder {
             }
             is UpdateMessageData.Kind.GroupInvitation -> {
                 val approved = configFactory.getGroup(AccountId(updateData.groupAccountId))?.invited == false
-                val inviterName = updateData.invitingAdminName?.takeIf { it.isNotEmpty() } ?: getGroupMemberName(groupId, updateData.invitingAdminId)
+                val inviterName = updateData.invitingAdminName?.takeIf { it.isNotEmpty() } ?: getGroupMemberName(groupV2Id, updateData.invitingAdminId)
                 return if (!approved) {
                     Phrase.from(context, R.string.messageRequestGroupInvite)
                         .put(NAME_KEY, inviterName)
@@ -321,7 +321,6 @@ object UpdateMessageBuilder {
         }
     }
 
-    private fun Context.youOrSender(sessionId: String) = if (storage.getUserPublicKey() == sessionId) getString(R.string.you) else getSenderName(sessionId)
 
     fun buildExpirationTimerMessage(
         context: Context,
