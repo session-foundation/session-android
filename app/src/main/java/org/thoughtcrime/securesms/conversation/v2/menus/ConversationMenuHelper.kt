@@ -192,6 +192,7 @@ object ConversationMenuHelper {
         factory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
+        deprecationManager: LegacyGroupDeprecationManager,
     ): ReceiveChannel<GroupLeavingStatus>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
@@ -205,7 +206,9 @@ object ConversationMenuHelper {
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
             R.id.menu_group_members -> { showGroupMembers(context, thread) }
-            R.id.menu_leave_group -> { return leaveGroup(context, thread, threadID, factory, storage, groupManager) }
+            R.id.menu_leave_group -> { return leaveGroup(
+                context, thread, threadID, factory, storage, groupManager, deprecationManager
+            ) }
             R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
             R.id.menu_unmute_notifications -> { unmute(context, thread) }
             R.id.menu_mute_notifications -> { mute(context, thread) }
@@ -374,20 +377,27 @@ object ConversationMenuHelper {
         configFactory: ConfigFactory,
         storage: StorageProtocol,
         groupManager: GroupManagerV2,
+        deprecationManager: LegacyGroupDeprecationManager,
     ): ReceiveChannel<GroupLeavingStatus>? {
         val channel = Channel<GroupLeavingStatus>()
 
         when {
             thread.isLegacyGroupRecipient -> {
                 val group = DatabaseComponent.get(context).groupDatabase().getGroup(thread.address.toGroupString()).orNull()
-                val admins = group.admins
-                val accountID = TextSecurePreferences.getLocalNumber(context)
-                val isCurrentUserAdmin = admins.any { it.toString() == accountID }
+
+                // we do not want admin related messaging once legacy groups are deprecated
+                val isGroupAdmin = if(deprecationManager.isDeprecated){
+                    false
+                } else { // prior to the deprecated state, calculate admin rights properly
+                    val admins = group.admins
+                    val accountID = TextSecurePreferences.getLocalNumber(context)
+                    admins.any { it.toString() == accountID }
+                }
 
                 confirmAndLeaveGroup(
                     context = context,
                     groupName = group.title,
-                    isAdmin = isCurrentUserAdmin,
+                    isAdmin = isGroupAdmin,
                     isKicked = configFactory.wasKickedFromGroupV2(thread),
                     threadID = threadID,
                     storage = storage,

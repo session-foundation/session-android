@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.debugmenu
 
-import android.widget.TimePicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,9 +43,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideEnvironmentWarningDialog
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
@@ -106,6 +103,25 @@ fun DebugMenu(
         }
 
         // Alert dialogs
+        if (uiState.showDeprecatedStateWarningDialog) {
+            AlertDialog(
+                onDismissRequest = { sendCommand(HideEnvironmentWarningDialog) },
+                title = "Are you sure you want to change the deprecation state?",
+                text = "This will restart the app...",
+                showCloseButton = false, // don't display the 'x' button
+                buttons = listOf(
+                    DialogButtonModel(
+                        text = GetString(R.string.cancel),
+                        onClick = { sendCommand(HideDeprecationChangeDialog) }
+                    ),
+                    DialogButtonModel(
+                        text = GetString(R.string.ok),
+                        onClick = { sendCommand(OverrideDeprecationState) }
+                    )
+                )
+            )
+        }
+
         if (uiState.showEnvironmentWarningDialog) {
             AlertDialog(
                 onDismissRequest = { sendCommand(HideEnvironmentWarningDialog) },
@@ -125,8 +141,8 @@ fun DebugMenu(
             )
         }
 
-        if (uiState.showEnvironmentLoadingDialog) {
-            LoadingDialog(title = "Changing Environment...")
+        if (uiState.showLoadingDialog) {
+            LoadingDialog(title = "Applying changes...")
         }
 
         Column(
@@ -204,7 +220,7 @@ fun DebugMenu(
                         val override = LegacyGroupDeprecationManager.DeprecationState.entries
                             .firstOrNull { it.displayName == selected }
 
-                        sendCommand(DebugMenuViewModel.Commands.OverrideDeprecationState(override))
+                        sendCommand(ShowDeprecationChangeDialog(override))
                     }
 
                     DebugRow(title = "Deprecating start date", modifier = Modifier.clickable {
@@ -414,7 +430,8 @@ fun PreviewDebugMenu() {
                 environments = listOf("Development", "Production"),
                 snackMessage = null,
                 showEnvironmentWarningDialog = false,
-                showEnvironmentLoadingDialog = false,
+                showLoadingDialog = false,
+                showDeprecatedStateWarningDialog = false,
                 hideMessageRequests = true,
                 hideNoteToSelf = false,
                 forceDeprecationState = null,

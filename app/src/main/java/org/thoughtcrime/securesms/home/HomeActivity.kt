@@ -35,6 +35,7 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
@@ -101,6 +102,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
+    @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var sessionJobDatabase: SessionJobDatabase
     @Inject lateinit var clock: SnodeClock
@@ -589,6 +591,7 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
                 configFactory = configFactory,
                 storage = storage,
                 groupManager = groupManagerV2,
+                deprecationManager = deprecationManager
             )
 
             return
@@ -636,7 +639,14 @@ class HomeActivity : PassphraseRequiredActionBarActivity(),
             positiveButtonId = R.string.leave
 
             // If you are an admin of this group you can delete it
-            if (group != null && group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())) {
+            // we do not want admin related messaging once legacy groups are deprecated
+            val isGroupAdmin = if(deprecationManager.isDeprecated){
+                false
+            } else { // prior to the deprecated state, calculate admin rights properly
+                group.admins.map { it.toString() }.contains(textSecurePreferences.getLocalNumber())
+            }
+
+            if (group != null && isGroupAdmin) {
                 title = getString(R.string.groupLeave)
                 message = Phrase.from(this, R.string.groupLeaveDescriptionAdmin)
                     .put(GROUP_NAME_KEY, group.title)

@@ -1049,6 +1049,7 @@ class ConversationViewModel(
             factory = configFactory,
             storage = storage,
             groupManager = groupManagerV2,
+            deprecationManager = legacyGroupDeprecationManager,
         )
 
         if (inProgress != null) {
