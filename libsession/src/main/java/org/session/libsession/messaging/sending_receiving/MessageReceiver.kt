@@ -147,9 +147,11 @@ object MessageReceiver {
         // Verify the signature timestamp inside the content is the same as in envelope.
         // If the message is from an open group, 6 hours of difference is allowed.
         if (proto.hasSigTimestamp()) {
+            val isCommunityOrCommunityInbox = openGroupServerID != null || otherBlindedPublicKey != null
+
             if (
-                (openGroupServerID != null && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
-                (openGroupServerID == null && proto.sigTimestamp != envelope.timestamp)
+                (isCommunityOrCommunityInbox && abs(proto.sigTimestamp - envelope.timestamp) > TimeUnit.HOURS.toMillis(6)) ||
+                (!isCommunityOrCommunityInbox && proto.sigTimestamp != envelope.timestamp)
             ) {
                 throw Error.InvalidSignature
             }
