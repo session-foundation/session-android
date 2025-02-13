@@ -78,7 +78,6 @@ object MessageSender {
 
     // Convenience
     fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
-        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, message.sentTimestamp!!)
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
@@ -421,7 +420,6 @@ object MessageSender {
 
     // Result Handling
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
-        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, openGroupSentTimestamp)
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
         val timestamp = message.sentTimestamp!!
@@ -476,8 +474,8 @@ object MessageSender {
             // pair of modified "markAsSentToCommunity" and "markUnidentifiedInCommunity" methods
             // to retrieve the local message by thread & message ID rather than timestamp when
             // handling community messages only so we can tick the delivery status over to 'Sent'.
-            // Fixed in: https://optf.atlassian.net/browse/SES-1567
-            if (messageIsAddressedToCommunity)
+            // Fixed in: SES-1567
+            if (messageIsAddressedToCommunity || destination is Destination.OpenGroupInbox)
             {
                 storage.markAsSentToCommunity(message.threadID!!, message.id!!)
                 storage.markUnidentifiedInCommunity(message.threadID!!, message.id!!)

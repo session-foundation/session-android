@@ -17,9 +17,6 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_TYPE_MASK;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -170,7 +167,7 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
+    try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
       try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
         MessageRecord messageRecord;
         while ((messageRecord = reader.getNext()) != null) {
@@ -266,13 +263,20 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
-  public long getLastMessageID(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+  public MessageRecord getLastSentMessageRecord(long threadId) {
+    // Order by normalized date sent in descending order so that the most recent is first.
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    // Select messages that belong to the given thread.
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
+    // Use try-with-resources to ensure the cursor (and later the reader) is closed automatically.
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      cursor.moveToFirst();
-      return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
+      // Create a reader for the cursor
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        // Get the first record from the reader (i.e. the most recent message) and return it as a
+        // MessageRecord. This will be null if there are no sent messages.
+        return reader.getNext();
+      }
     }
   }
 
@@ -328,33 +332,10 @@ public class MmsSmsDatabase extends Database {
     return identifiedMessages;
   }
 
-  public long getLastOutgoingTimestamp(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        long attempts = 0;
-        long maxAttempts = 20;
-        while ((messageRecord = reader.getNext()) != null) {
-          // Note: We rely on the message order to get us the most recent outgoing message - so we
-          // take the first outgoing message we find as the last outgoing message.
-          if (messageRecord.isOutgoing()) return messageRecord.getTimestamp();
-          if (attempts++ > maxAttempts) break;
-        }
-      }
-    }
-    Log.i(TAG, "Could not find last sent message from us - returning -1.");
-    return -1;
-  }
-
   public long getLastMessageTimestamp(long threadId) {
     String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
     // make sure the last message isn't marked as deleted
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " +
-            "NOT " + MmsSmsColumns.IS_DELETED;
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND " + "NOT " + MmsSmsColumns.IS_DELETED;
 
     try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
       if (cursor.moveToFirst()) {

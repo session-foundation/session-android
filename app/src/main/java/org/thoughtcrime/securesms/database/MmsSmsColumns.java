@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.database;
 
+import java.util.Arrays;
+
 @SuppressWarnings("UnnecessaryInterfaceModifier")
 public interface MmsSmsColumns {
 
@@ -67,6 +69,21 @@ public interface MmsSmsColumns {
                                                             BASE_DELETED_OUTGOING_TYPE,
                                                             OUTGOING_CALL_TYPE};
 
+
+    // Precompute the bitmask for outgoing types.
+    // Note: since BASE_TYPE_MASK is 0x1F, the base types are in the range 0-31.
+    private static final int OUTGOING_TYPE_BITMASK =
+        Arrays.stream(OUTGOING_MESSAGE_TYPES)
+            .mapToInt(type -> 1 << (int) type)
+            .reduce(0, (a, b) -> a | b);
+
+    // Determine is a message is an outgoing message without looping through all outgoing types
+    public static boolean isOutgoingMessageType(long type) {
+      // Extract the base type from the type value
+      int baseType = (int)(type & BASE_TYPE_MASK);
+      // Check if the bit corresponding to baseType is set in the precomputed bitmask
+      return (OUTGOING_TYPE_BITMASK & (1 << baseType)) != 0;
+    }
 
     // TODO: Clean unused keys
 
@@ -136,15 +153,6 @@ public interface MmsSmsColumns {
 
     public static boolean isFailedMessageType(long type) {
       return (type & BASE_TYPE_MASK) == BASE_SENT_FAILED_TYPE;
-    }
-
-    public static boolean isOutgoingMessageType(long type) {
-      for (long outgoingType : OUTGOING_MESSAGE_TYPES) {
-        if ((type & BASE_TYPE_MASK) == outgoingType)
-          return true;
-      }
-
-      return false;
     }
 
     public static long getOutgoingEncryptedMessageType() {

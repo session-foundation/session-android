@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Context
 import android.database.Cursor
+import android.util.Log
 import android.util.SparseArray
 import android.util.SparseBooleanArray
 import android.view.MotionEvent
@@ -26,6 +27,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.util.MessageUtils
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
@@ -53,7 +55,10 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
-    private var lastSentMessageId: Long = -1L
+
+    // The unique message ID differentiates between SMS and MMS message where IDs can be the same
+    private var lastSentMessageUniqueId: Long = -1L
+    fun setLastMessageUniqueId(uniqueId: Long) { lastSentMessageUniqueId = uniqueId }
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -84,7 +89,9 @@ class ConversationAdapter(
         }
     }
 
-    class VisibleMessageViewHolder(val view: VisibleMessageView) : ViewHolder(view)
+    class VisibleMessageViewHolder(val view: VisibleMessageView) : ViewHolder(view) {
+        var messageId: Long = -1L
+    }
     class ControlMessageViewHolder(val view: ControlMessageView) : ViewHolder(view)
 
     override fun getItemViewType(cursor: Cursor): Int {
@@ -104,6 +111,11 @@ class ConversationAdapter(
     }
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
+        // If we have never obtained the last sent message unique ID then do so now (one-time op. per opening of a message thread)
+        if (lastSentMessageUniqueId == -1L) {
+            lastSentMessageUniqueId = MessageUtils.generateUniqueId(getMessage(cursor)!!)
+        }
+
         val message = getMessage(cursor)!!
         val position = viewHolder.adapterPosition
         val messageBefore = getMessageBefore(position, cursor)
@@ -113,6 +125,10 @@ class ConversationAdapter(
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
+
+                // Assign message's unique ID in the ViewHolder (the unique ID differentiates between SMS and MMS messages)
+                viewHolder.messageId = MessageUtils.generateUniqueId(message)
+
                 val senderId = message.individualRecipient.address.serialize()
                 val senderIdHash = senderId.hashCode()
                 updateQueue.trySend(senderId)
@@ -138,7 +154,7 @@ class ConversationAdapter(
                     lastSeen.get(),
                     visibleMessageViewDelegate,
                     onAttachmentNeedsDownload,
-                    lastSentMessageId
+                    lastSentMessageUniqueId
                 )
 
                 if (!message.isDeleted) {
