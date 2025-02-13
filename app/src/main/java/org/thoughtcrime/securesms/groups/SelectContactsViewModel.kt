@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -43,6 +45,10 @@ class SelectContactsViewModel @AssistedInject constructor(
     // Input: The selected contact account IDs
     private val mutableSelectedContactAccountIDs = MutableStateFlow(emptySet<AccountId>())
 
+    // Input: The manually added items to select from. This will be combined (and deduped) with the contacts
+    // the user has. This is useful for selecting contacts that are not in the user's contacts list.
+    private val mutableManuallyAddedContacts = MutableStateFlow(emptySet<AccountId>())
+
     // Output: The search query
     val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
@@ -64,20 +70,30 @@ class SelectContactsViewModel @AssistedInject constructor(
         scope.cancel()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeContacts() = (configFactory.configUpdateNotifications as Flow<Any>)
         .debounce(100L)
         .onStart { emit(Unit) }
-        .map {
-            withContext(Dispatchers.Default) {
-                val allContacts = configFactory.withUserConfigs { configs ->
-                    configs.contacts.all().filter { it.approvedMe }
-                }
+        .flatMapLatest {
+            mutableManuallyAddedContacts.map { manuallyAdded ->
+                withContext(Dispatchers.Default) {
+                    val allContacts =
+                        (configFactory.withUserConfigs { configs -> configs.contacts.all() }
+                            .asSequence()
+                            .map { AccountId(it.id) } + manuallyAdded)
 
-                if (excludingAccountIDs.isEmpty()) {
-                    allContacts
-                } else {
-                    allContacts.filterNot { AccountId(it.id) in excludingAccountIDs }
-                }.map { Recipient.from(appContext, Address.fromSerialized(it.id), false) }
+                    if (excludingAccountIDs.isEmpty()) {
+                        allContacts.toSet()
+                    } else {
+                        allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
+                    }.map {
+                        Recipient.from(
+                            appContext,
+                            Address.fromSerialized(it.hexString),
+                            false
+                        )
+                    }
+                }
             }
         }
 
@@ -100,6 +116,10 @@ class SelectContactsViewModel @AssistedInject constructor(
             }
             .toList()
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+    }
+
+    fun setManuallyAddedContacts(accountIDs: Set<AccountId>) {
+        mutableManuallyAddedContacts.value = accountIDs
     }
 
     fun onSearchQueryChanged(query: String) {
