@@ -15,6 +15,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
@@ -26,8 +27,6 @@ import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteViewDelegate
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import com.bumptech.glide.RequestManager
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
 

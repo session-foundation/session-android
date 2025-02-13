@@ -50,8 +50,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
-import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
-import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -68,7 +66,6 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
 import java.time.ZoneId
 import java.util.UUID
-import kotlin.math.abs
 
 class ConversationViewModel(
     val threadId: Long,

@@ -2058,6 +2058,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
+        Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()} --- ${binding.inputBar.voiceRecorderState}")
         binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
@@ -2110,7 +2111,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
         val future = audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
-        Log.d("", "*** SEND VOICE")
+
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"

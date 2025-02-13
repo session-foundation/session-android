@@ -5,7 +5,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.PointF
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -17,7 +16,6 @@ import android.widget.RelativeLayout
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.utilities.getColorFromAttr
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.InputBarButtonImageViewContainer
 import org.thoughtcrime.securesms.util.animateSizeChange
