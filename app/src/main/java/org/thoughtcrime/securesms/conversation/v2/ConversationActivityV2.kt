@@ -93,7 +93,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
@@ -398,6 +397,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             applicationContext.getString(R.string.messageVoiceErrorShort),
             Toast.LENGTH_SHORT
         )
+    }
+
+    // Only show a toast related to voice messages if the toast is not already showing (used if to
+    // rate limit & prevent toast queueing when the user spams the microphone button).
+    private fun showVoiceMessageToastIfNotAlreadyVisible() {
+        if (!voiceNoteTooShortToast.view?.isShown!!) voiceNoteTooShortToast.show()
     }
 
     // Properties for what message indices are visible previously & now, as well as the scroll state
@@ -2121,7 +2126,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
         if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
             voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
-            voiceNoteTooShortToast.show()
+            showVoiceMessageToastIfNotAlreadyVisible()
             return
         }
 
@@ -2169,7 +2174,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
         if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
             voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
-            voiceNoteTooShortToast.show()
+            showVoiceMessageToastIfNotAlreadyVisible()
         }
     }
 
