@@ -12,11 +12,18 @@ import network.loki.messenger.databinding.ContactSelectionListFragmentBinding
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import com.bumptech.glide.Glide
+import dagger.hilt.android.AndroidEntryPoint
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<ContactSelectionListItem>>, ContactClickListener {
     private lateinit var binding: ContactSelectionListFragmentBinding
     private var cursorFilter: String? = null
     var onContactSelectedListener: OnContactSelectedListener? = null
+
+    @Inject
+    lateinit var deprecationManager: LegacyGroupDeprecationManager
 
     private val multiSelect: Boolean by lazy {
         requireActivity().intent.getBooleanExtra(MULTI_SELECT, false)
@@ -71,9 +78,12 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
-        return ContactSelectionListLoader(requireActivity(),
-            requireActivity().intent.getIntExtra(DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_ALL),
-            cursorFilter)
+        return ContactSelectionListLoader(
+            context = requireActivity(),
+            mode = requireActivity().intent.getIntExtra(DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_ALL),
+            filter = cursorFilter,
+            deprecationManager = deprecationManager
+        )
     }
 
     override fun onLoadFinished(loader: Loader<List<ContactSelectionListItem>>, items: List<ContactSelectionListItem>) {
