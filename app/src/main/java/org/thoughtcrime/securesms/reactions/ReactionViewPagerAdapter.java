@@ -28,9 +28,12 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
   private MessageId messageId = null;
   private boolean isUserModerator = false;
 
-  protected ReactionViewPagerAdapter(Listener callback) {
+  private final boolean canRemove;
+
+  protected ReactionViewPagerAdapter(Listener callback, boolean canRemove) {
     super(new AlwaysChangedDiffUtil<>());
     this.callback = callback;
+    this.canRemove = canRemove;
   }
 
   public void setIsUserModerator(boolean isUserModerator) {
@@ -59,7 +62,7 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
   @Override
   public @NonNull ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
     return new ViewHolder(callback,
-            LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler, parent, false));
+            LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler, parent, false), canRemove);
   }
 
   @Override
@@ -89,9 +92,9 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
     private final RecyclerView              recycler;
     private final ReactionRecipientsAdapter adapter;
 
-    public ViewHolder(Listener callback, @NonNull View itemView) {
+    public ViewHolder(Listener callback, @NonNull View itemView, boolean canRemove) {
       super(itemView);
-      adapter = new ReactionRecipientsAdapter(callback);
+      adapter = new ReactionRecipientsAdapter(callback, canRemove);
       recycler = itemView.findViewById(R.id.reactions_bottom_view_recipient_recycler);
 
       ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

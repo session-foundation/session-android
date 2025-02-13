@@ -74,7 +74,7 @@ object ConversationMenuHelper {
         deprecationManager: LegacyGroupDeprecationManager,
     ) {
         val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
 
         // Prepare
         menu.clear()
