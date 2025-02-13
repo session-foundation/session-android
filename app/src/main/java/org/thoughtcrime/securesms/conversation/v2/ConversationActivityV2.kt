@@ -874,7 +874,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                             }
 
                         binding.outdatedGroupBanner.setOnClickListener {
-                            showOpenUrlDialog("https://getsession.org/blog/session-groups-v2")
+                            showOpenUrlDialog("https://getsession.org/groups")
                         }
                     }
                 }
