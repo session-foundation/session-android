@@ -273,7 +273,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         val isDeprecatedLegacyGroup =
             recipient?.isLegacyGroupRecipient == true &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
         foregroundView.isVisible = !isDeprecatedLegacyGroup
         backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
@@ -567,7 +567,7 @@ class ConversationReactionOverlay : FrameLayout {
 
 
         val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
 
         // Reply
         val canWrite = openGroup == null || openGroup.canWrite

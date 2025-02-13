@@ -202,8 +202,7 @@ class ConversationViewModel(
                 return false
             }
 
-            val isDeprecatedLegacyGroup = recipient?.isLegacyGroupRecipient == true &&
-                    legacyGroupDeprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+            val isDeprecatedLegacyGroup = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
             return !isDeprecatedLegacyGroup
         }
 

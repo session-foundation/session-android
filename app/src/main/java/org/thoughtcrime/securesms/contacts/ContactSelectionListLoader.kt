@@ -59,7 +59,7 @@ class ContactSelectionListLoader(
     private fun getGroups(contacts: List<Recipient>): List<ContactSelectionListItem> {
         return getItems(contacts, context.getString(R.string.conversationsGroups)) {
             val isDeprecatedLegacyGroup = it.isLegacyGroupRecipient &&
-                    deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                    deprecationManager.isDeprecated
             it.address.isGroup && !isDeprecatedLegacyGroup
         }
     }

@@ -84,7 +84,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         }
 
         val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
 
         binding.copyConversationId.isVisible = !recipient.isGroupOrCommunityRecipient
                 && !recipient.isLocalNumber

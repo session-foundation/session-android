@@ -72,6 +72,8 @@ class LegacyGroupDeprecationManager(private val prefs: TextSecurePreferences)  {
             initialValue = mutableDeprecationStateOverride.value ?: DeprecationState.NOT_DEPRECATING
         )
 
+    val isDeprecated: Boolean get() = deprecationState.value == DeprecationState.DEPRECATED
+
     fun overrideDeprecationState(deprecationState: DeprecationState?) {
         mutableDeprecationStateOverride.value = deprecationState
         prefs.deprecationStateOverride = deprecationState?.name

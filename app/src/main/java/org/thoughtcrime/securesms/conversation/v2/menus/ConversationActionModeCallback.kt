@@ -47,7 +47,7 @@ class ConversationActionModeCallback(
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
 
         val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
-                deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                deprecationManager.isDeprecated
 
         // Embedded function
         fun userCanBanSelectedUsers(): Boolean {

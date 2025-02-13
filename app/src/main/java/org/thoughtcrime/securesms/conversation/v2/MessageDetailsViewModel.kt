@@ -79,7 +79,7 @@ class MessageDetailsViewModel @Inject constructor(
 
                 val recipient = threadDb.getRecipientForThreadId(threadId)!!
                 val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                        deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
+                        deprecationManager.isDeprecated
 
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
