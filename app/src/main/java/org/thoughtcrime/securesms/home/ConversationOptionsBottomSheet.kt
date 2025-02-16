@@ -152,7 +152,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
-        binding.unpinTextView.isVisible = thread.isPinned && !isDeprecatedLegacyGroup
+        binding.unpinTextView.isVisible = thread.isPinned
         binding.pinTextView.setOnClickListener(this)
         binding.unpinTextView.setOnClickListener(this)
     }
