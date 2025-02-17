@@ -552,11 +552,14 @@ class ConversationReactionOverlay : FrameLayout {
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
 
+        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                deprecationManager.isDeprecated
+
         // control messages and "marked as deleted" messages can only delete
         val isDeleteOnly = message.isDeleted || message.isControlMessage
 
         // Select message
-        if(!isDeleteOnly) {
+        if(!isDeleteOnly && !isDeprecatedLegacyGroup) {
             items += ActionItem(
                 R.attr.menu_select_icon,
                 R.string.select,
@@ -564,10 +567,6 @@ class ConversationReactionOverlay : FrameLayout {
                 R.string.AccessibilityId_select
             )
         }
-
-
-        val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                deprecationManager.isDeprecated
 
         // Reply
         val canWrite = openGroup == null || openGroup.canWrite

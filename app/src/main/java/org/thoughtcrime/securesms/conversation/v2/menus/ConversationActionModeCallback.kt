@@ -60,7 +60,6 @@ class ConversationActionModeCallback(
         }
 
 
-
         // Delete message
         menu.findItem(R.id.menu_context_delete_message).isVisible = !isDeprecatedLegacyGroup // can always delete since delete logic will be handled by the VM
         // Ban user
