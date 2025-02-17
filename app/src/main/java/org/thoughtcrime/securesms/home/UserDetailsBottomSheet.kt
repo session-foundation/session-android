@@ -84,7 +84,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
                     else -> return@setOnEditorActionListener false
                 }
             }
-            nameTextView.text = recipient.name ?: publicKey // Uses the Contact API internally
+            nameTextView.text = recipient.name
 
             nameEditIcon.isVisible = threadRecipient.isContactRecipient
                     && !threadRecipient.isCommunityInboxRecipient
@@ -140,7 +140,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
         contact.nickname = newNickName
         storage.setContact(contact)
-        nameTextView.text = recipient.name ?: publicKey // Uses the Contact API internally
+        nameTextView.text = recipient.name
     }
 
     @SuppressLint("ServiceCast")

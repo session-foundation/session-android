@@ -3,6 +3,7 @@ package org.session.libsession.messaging.contacts
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 
 @Parcelize
 class Contact(
@@ -38,12 +39,12 @@ class Contact(
     /**
      * The name to display in the UI. For local use only.
      */
-    fun displayName(context: ContactContext): String? = nickname ?: when (context) {
+    fun displayName(context: ContactContext = ContactContext.REGULAR): String = nickname ?: when (context) {
         ContactContext.REGULAR -> name
         // In open groups, where it's more likely that multiple users have the same name,
         // we display a bit of the Account ID after a user's display name for added context.
-        ContactContext.OPEN_GROUP -> name?.let { "$it (${accountID.take(4)}...${accountID.takeLast(4)})" }
-    }
+        ContactContext.OPEN_GROUP -> name?.let { "$it (${truncateIdForDisplay(accountID)})" }
+    } ?: truncateIdForDisplay(accountID)
 
     enum class ContactContext {
         REGULAR, OPEN_GROUP

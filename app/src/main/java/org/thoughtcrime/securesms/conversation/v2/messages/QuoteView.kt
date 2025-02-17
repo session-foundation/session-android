@@ -19,6 +19,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -76,7 +77,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
         val authorDisplayName =
             if (quoteIsLocalUser) context.getString(R.string.you)
-            else author?.displayName(Contact.contextForRecipient(thread)) ?: "${authorPublicKey.take(4)}...${authorPublicKey.takeLast(4)}"
+            else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
         binding.quoteViewAuthorTextView.text = authorDisplayName
         binding.quoteViewAuthorTextView.setTextColor(getTextColor(isOutgoingMessage))
         // Body

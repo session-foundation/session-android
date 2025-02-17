@@ -5,12 +5,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
 import org.webrtc.SurfaceViewRenderer
 import javax.inject.Inject
 
 @HiltViewModel
-class CallViewModel @Inject constructor(private val callManager: CallManager): ViewModel() {
+class CallViewModel @Inject constructor(
+    private val callManager: CallManager,
+    private val storage: StorageProtocol,
+): ViewModel() {
 
     enum class State {
         CALL_PENDING,
@@ -64,6 +68,8 @@ class CallViewModel @Inject constructor(private val callManager: CallManager): V
     val callState get() = callManager.callStateEvents
     val recipient get() = callManager.recipientEvents
     val callStartTime: Long get() = callManager.callStartTime
+
+    fun getUserName(accountID: String) = storage.getContactNameWithAccountID(accountID)
 
     fun swapVideos() {
        callManager.swapVideos()

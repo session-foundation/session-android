@@ -162,7 +162,7 @@ class MentionViewModel(
                     .map { contact ->
                         Member(
                             publicKey = contact.accountID,
-                            name = contact.displayName(contactContext).orEmpty(),
+                            name = contact.displayName(contactContext),
                             isModerator = contact.accountID in moderatorIDs,
                             isMe = false
                         )

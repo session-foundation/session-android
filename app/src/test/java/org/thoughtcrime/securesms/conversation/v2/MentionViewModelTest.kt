@@ -136,7 +136,7 @@ class MentionViewModelTest {
 
                 assertThat(result.members).isEqualTo(threadMembers.mapIndexed { index, m ->
                     val name =
-                        memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP).orEmpty()
+                        memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP)
 
                     MentionViewModel.Candidate(
                         MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = false),

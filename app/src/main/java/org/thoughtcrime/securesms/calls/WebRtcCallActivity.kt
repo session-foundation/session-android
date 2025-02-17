@@ -343,7 +343,7 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
 
                     if (latestRecipient.recipient != null) {
                         val contactPublicKey = latestRecipient.recipient.address.serialize()
-                        val contactDisplayName = getUserDisplayName(contactPublicKey)
+                        val contactDisplayName = viewModel.getUserName(contactPublicKey)
                         supportActionBar?.title = contactDisplayName
                         binding.remoteRecipientName.text = contactDisplayName
 
@@ -438,12 +438,6 @@ class WebRtcCallActivity : PassphraseRequiredActionBarActivity() {
     private fun hideAvatar() {
         binding.userAvatar.isVisible = false
         binding.contactAvatar.isVisible = false
-    }
-
-    private fun getUserDisplayName(publicKey: String): String {
-        val contact =
-            DatabaseComponent.get(this).sessionContactDatabase().getContactWithAccountID(publicKey)
-        return contact?.displayName(Contact.ContactContext.REGULAR) ?: publicKey
     }
 
     override fun onStop() {

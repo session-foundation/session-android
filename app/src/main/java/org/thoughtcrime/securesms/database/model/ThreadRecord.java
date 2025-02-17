@@ -94,17 +94,8 @@ public class ThreadRecord extends DisplayRecord {
     this.groupThreadStatus  = groupThreadStatus;
   }
 
-    public @Nullable Uri getSnippetUri() {
-        return snippetUri;
-    }
-
     private String getName() {
-        String name = getRecipient().getName();
-        if (name == null) {
-            Log.w("ThreadRecord", "Got a null name - using: Unknown");
-            name = "Unknown";
-        }
-        return name;
+        return getRecipient().getName();
     }
 
 
