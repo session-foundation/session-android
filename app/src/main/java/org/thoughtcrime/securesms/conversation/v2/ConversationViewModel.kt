@@ -231,8 +231,7 @@ class ConversationViewModel(
                 Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(DateUtils.getShortDateFormatter())
+                        .format(DateUtils.getMediumDateTimeFormatter())
                 )
                 .format()
 
