@@ -824,7 +824,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
         binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
         binding.blockedBanner.isVisible = recipient.isBlocked
-        binding.blockedBanner.setOnClickListener { viewModel.unblock() }
+        binding.blockedBanner.setOnClickListener { unblock() }
     }
 
     private fun setUpOutdatedClientBanner() {
