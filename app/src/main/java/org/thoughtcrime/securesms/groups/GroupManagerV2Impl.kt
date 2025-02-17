@@ -552,7 +552,7 @@ class GroupManagerV2Impl @Inject constructor(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
                         isSyncMessage = false,
-                    )
+                    ).await()
                 }
             }
 
