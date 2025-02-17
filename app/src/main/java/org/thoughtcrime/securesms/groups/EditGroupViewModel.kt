@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -92,18 +93,39 @@ class EditGroupViewModel @AssistedInject constructor(
             groupManager.inviteMembers(
                 groupId,
                 contacts.toList(),
-                shareHistory = false
+                shareHistory = false,
+                isReinvite = false,
             )
         }
     }
 
     fun onResendInviteClicked(contactSessionId: AccountId) {
-        onContactSelected(setOf(contactSessionId))
+        performGroupOperation(
+            showLoading = false,
+            errorMessage = { err ->
+                if (err is GroupInviteException) {
+                    err.format(context, storage).toString()
+                } else {
+                    null
+                }
+            }
+        ) {
+            val historyShared = configFactory.withGroupConfigs(groupId) {
+                it.groupMembers.getOrNull(contactSessionId.hexString)
+            }?.supplement == true
+
+            groupManager.inviteMembers(
+                groupId,
+                listOf(contactSessionId),
+                shareHistory = historyShared,
+                isReinvite = true,
+            )
+        }
     }
 
     fun onPromoteContact(memberSessionId: AccountId) {
         performGroupOperation(showLoading = false) {
-            groupManager.promoteMember(groupId, listOf(memberSessionId))
+            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = false)
         }
     }
 
@@ -118,7 +140,9 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onResendPromotionClicked(memberSessionId: AccountId) {
-        onPromoteContact(memberSessionId)
+        performGroupOperation(showLoading = false) {
+            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = true)
+        }
     }
 
     fun onEditNameClicked() {

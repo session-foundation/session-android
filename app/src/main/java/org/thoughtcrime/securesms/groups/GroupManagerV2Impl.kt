@@ -206,7 +206,8 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun inviteMembers(
         group: AccountId,
         newMembers: List<AccountId>,
-        shareHistory: Boolean
+        shareHistory: Boolean,
+        isReinvite: Boolean
     ): Unit = scope.launchAndWait(group, "Invite members") {
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
@@ -265,7 +266,9 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Send a group update message to the group telling members someone has been invited
-        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+        if (!isReinvite) {
+            sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+        }
 
         // Call the API
         try {
@@ -496,7 +499,8 @@ class GroupManagerV2Impl @Inject constructor(
 
     override suspend fun promoteMember(
         group: AccountId,
-        members: List<AccountId>
+        members: List<AccountId>,
+        isRepromote: Boolean
     ): Unit = scope.launchAndWait(group, "Promote member") {
         withContext(SupervisorJob()) {
             val adminKey = requireAdminAccess(group)
@@ -530,9 +534,11 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            // Insert the message locally immediately so we can see the incoming change
-            // The same message will be sent later to the group
-            storage.insertGroupInfoChange(message, group)
+            if (!isRepromote) {
+                // Insert the message locally immediately so we can see the incoming change
+                // The same message will be sent later to the group
+                storage.insertGroupInfoChange(message, group)
+            }
 
             // Send out the promote message to the members concurrently
             val promoteMessage = GroupUpdated(
@@ -578,7 +584,9 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
 
-            MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+            if (!isRepromote) {
+                MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+            }
         }
     }
     /**

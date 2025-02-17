@@ -4,7 +4,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
 
 /**
@@ -21,7 +20,8 @@ interface GroupManagerV2 {
     suspend fun inviteMembers(
         group: AccountId,
         newMembers: List<AccountId>,
-        shareHistory: Boolean
+        shareHistory: Boolean,
+        isReinvite: Boolean, // Whether this comes from a re-invite
     )
 
     suspend fun removeMembers(
@@ -46,7 +46,7 @@ interface GroupManagerV2 {
 
     suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId)
     suspend fun leaveGroup(groupId: AccountId)
-    suspend fun promoteMember(group: AccountId, members: List<AccountId>)
+    suspend fun promoteMember(group: AccountId, members: List<AccountId>, isRepromote: Boolean)
 
     suspend fun handleInvitation(
         groupId: AccountId,
