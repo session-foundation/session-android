@@ -191,6 +191,13 @@ class ConfigToDatabaseSync @Inject constructor(
         recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
 
+        // Also update the name in the user groups config
+        configFactory.withMutableUserConfigs { configs ->
+            configs.userGroups.getClosedGroup(groupInfoConfig.id.hexString)?.let { group ->
+                configs.userGroups.set(group.copy(name = groupInfoConfig.name.orEmpty()))
+            }
+        }
+
         if (groupInfoConfig.destroyed) {
             handleDestroyedGroup(threadId = threadId)
         } else {
