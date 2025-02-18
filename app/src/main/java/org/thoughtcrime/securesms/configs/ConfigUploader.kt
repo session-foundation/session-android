@@ -229,25 +229,25 @@ class ConfigUploader @Inject constructor(
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
         // Spawn the config pushing concurrently
-        val membersConfigHashTask = membersPush?.let {
+        val membersConfigHashTask = membersPush?.let { push ->
             async {
-                membersPush!! to pushConfig(
+                push to pushConfig(
                     auth,
                     snode,
-                    membersPush!!,
+                    push,
                     Namespace.CLOSED_GROUP_MEMBERS()
                 )
             }
         }
 
-        val infoConfigHashTask = infoPush?.let {
+        val infoConfigHashTask = infoPush?.let { push ->
             async {
-                infoPush!! to pushConfig(auth, snode, infoPush!!, Namespace.CLOSED_GROUP_INFO())
+                push to pushConfig(auth, snode, push, Namespace.CLOSED_GROUP_INFO())
             }
         }
 
         // Keys push is different: it doesn't have the delete call so we don't call pushConfig
-        val keysPushResult = keysPush?.let {
+        val keysPushResult = keysPush?.let { push ->
             SnodeAPI.sendBatchRequest(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
@@ -255,7 +255,7 @@ class ConfigUploader @Inject constructor(
                     Namespace.ENCRYPTION_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,
-                        Base64.encodeBytes(keysPush!!),
+                        Base64.encodeBytes(push),
                         SnodeMessage.CONFIG_TTL,
                         clock.currentTimeMills(),
                     ),
