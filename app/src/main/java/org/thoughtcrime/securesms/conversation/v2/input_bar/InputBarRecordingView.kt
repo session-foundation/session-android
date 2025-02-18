@@ -70,13 +70,14 @@ class InputBarRecordingView : RelativeLayout {
         binding.inputBarMiddleContentContainer.alpha = 1.0f
         binding.lockView.alpha = 1.0f
         isVisible = true
-        alpha = 0.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 0.0f, 1.0f)
-        animation.duration = 250L
-        animation.addUpdateListener { animator ->
-            alpha = animator.animatedValue as Float
-        }
-        animation.start()
+
+        animate().cancel()
+        animate()
+            .alpha(1f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction(null)
+            .start()
+
         animateDotView()
         pulse()
         animateLockViewUp()
@@ -84,18 +85,17 @@ class InputBarRecordingView : RelativeLayout {
     }
 
     fun hide() {
-        alpha = 1.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
-        animation.duration = VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
-        animation.addUpdateListener { animator ->
-            alpha = animator.animatedValue as Float
-            if (animator.animatedFraction == 1.0f) {
+        animate().cancel()
+        animate()
+            .alpha(0f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction {
                 isVisible = false
                 dotViewAnimation?.repeatCount = 0
                 pulseAnimation?.removeAllUpdateListeners()
             }
-        }
-        animation.start()
+            .start()
+
         delegate?.handleVoiceMessageUIHidden()
         stopTimer()
     }
@@ -110,7 +110,7 @@ class InputBarRecordingView : RelativeLayout {
                 val durationMS = (Date().time - startTimestamp)
                 binding.recordingViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
 
-                delay(500)
+                delay(500) // Update the voice message duration timer value every half a second
             }
         }
     }

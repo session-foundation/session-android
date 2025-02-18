@@ -101,8 +101,6 @@ class MediaRepository {
 
         return mediaFolders;
     }
-
-
     @WorkerThread
     private @NonNull FolderResult getFolders(@NonNull Context context, @NonNull Uri contentUri) {
         Uri globalThumbnail = null;
@@ -152,7 +150,6 @@ class MediaRepository {
 
         return new FolderResult(globalThumbnail, thumbnailTimestamp, folders);
     }
-
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId) {
         List<Media> images = getMediaInBucket(context, bucketId, Images.Media.EXTERNAL_CONTENT_URI, true);
@@ -165,7 +162,6 @@ class MediaRepository {
 
         return media;
     }
-
     @WorkerThread
     private @NonNull List<Media> getMediaInBucket(@NonNull Context context, @NonNull String bucketId, @NonNull Uri contentUri, boolean isImage) {
         List<Media> media         = new LinkedList<>();
@@ -204,7 +200,6 @@ class MediaRepository {
 
         return media;
     }
-
     @WorkerThread
     private List<Media> getPopulatedMedia(@NonNull Context context, @NonNull List<Media> media) {
         return Stream.of(media).map(m -> {
@@ -260,7 +255,6 @@ class MediaRepository {
 
         return new Media(media.getUri(), media.getFilename(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
-
     private Media getContentResolverPopulatedMedia(@NonNull Context context, @NonNull Media media) throws IOException {
         int  width  = media.getWidth();
         int  height = media.getHeight();
@@ -363,7 +357,6 @@ class MediaRepository {
             return latestTimestamp;
         }
     }
-
 
     interface Callback<E> {
         void onComplete(@NonNull E result);

@@ -93,7 +93,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
@@ -131,8 +130,7 @@ import org.thoughtcrime.securesms.conversation.v2.dialogs.LinkPreviewDialog
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarButton
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarDelegate
 import org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingViewDelegate
-import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS
-import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
+import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderConstants
 import org.thoughtcrime.securesms.conversation.v2.input_bar.VoiceRecorderState
 import org.thoughtcrime.securesms.conversation.v2.input_bar.mentions.MentionCandidateAdapter
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
@@ -391,6 +389,45 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private lateinit var reactionDelegate: ConversationReactionDelegate
     private val reactWithAnyEmojiStartPage = -1
+
+    private val voiceNoteTooShortToast: Toast by lazy {
+        Toast.makeText(
+            applicationContext,
+            applicationContext.getString(R.string.messageVoiceErrorShort),
+            Toast.LENGTH_SHORT
+        ).apply {
+            // On Android API 30 and above we can use callbacks to control our toast visible flag.
+            // Note: We have to do this hoop-jumping to prevent the possibility of a window layout
+            // crash when attempting to show a toast that is already visible should the user spam
+            // the microphone button, and because `someToast.view?.isShown` is deprecated.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                addCallback(object : Toast.Callback() {
+                    override fun onToastShown()  { isVoiceToastShowing = true  }
+                    override fun onToastHidden() { isVoiceToastShowing = false }
+                })
+            }
+        }
+    }
+
+    private var isVoiceToastShowing = false
+
+    // Only show a toast related to voice messages if the toast is not already showing (used if to
+    // rate limit & prevent toast queueing when the user spams the microphone button).
+    private fun showVoiceMessageToastIfNotAlreadyVisible() {
+        if (!isVoiceToastShowing) {
+            voiceNoteTooShortToast.show()
+
+            // Use a delayed callback to reset the toast visible flag after Toast.LENGTH_SHORT duration (~2000ms) ONLY on
+            // Android APIs < 30 which lack the onToastShown & onToastHidden callbacks.
+            // Note: While Toast.LENGTH_SHORT is roughly 2000ms, it is subject to change with varying Android versions or
+            // even between devices - we have no control over this.
+            // TODO: Remove the lines below and just use the callbacks when our minimum API is >= 30.
+            isVoiceToastShowing = true
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                Handler(Looper.getMainLooper()).postDelayed( { isVoiceToastShowing = false }, 2000)
+            }
+        }
+    }
 
     // Properties for what message indices are visible previously & now, as well as the scroll state
     private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
@@ -1086,11 +1123,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun acceptMessageRequest() {
-        binding.messageRequestBar.isVisible = false
-        viewModel.acceptMessageRequest()
-    }
-
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
         val inputBarText = binding.inputBar.text // TODO check if we should be referencing newContent here instead
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
@@ -1134,60 +1166,62 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun showVoiceMessageUI() {
         binding.inputBarRecordingView.show(lifecycleScope)
-        binding.inputBar.alpha = 0.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
-        animation.duration = SHOW_HIDE_VOICE_UI_DURATION_MS
-        animation.addUpdateListener { animator ->
-            binding.inputBar.alpha = animator.animatedValue as Float
-        }
-        animation.start()
+
+        // Cancel any previous input bar animations and fade out the bar
+        val inputBar = binding.inputBar
+        inputBar.animate().cancel()
+        inputBar.animate()
+            .alpha(0f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .start()
     }
 
     private fun expandVoiceMessageLockView() {
         val lockView = binding.inputBarRecordingView.lockView
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), lockView.scaleX, 1.10f)
-        animation.duration = ANIMATE_LOCK_DURATION_MS
-        animation.addUpdateListener { animator ->
-            lockView.scaleX = animator.animatedValue as Float
-            lockView.scaleY = animator.animatedValue as Float
-        }
-        animation.start()
+
+        lockView.animate().cancel()
+        lockView.animate()
+            .scaleX(1.10f)
+            .scaleY(1.10f)
+            .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
+            .start()
     }
 
     private fun collapseVoiceMessageLockView() {
         val lockView = binding.inputBarRecordingView.lockView
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), lockView.scaleX, 1.0f)
-        animation.duration = ANIMATE_LOCK_DURATION_MS
-        animation.addUpdateListener { animator ->
-            lockView.scaleX = animator.animatedValue as Float
-            lockView.scaleY = animator.animatedValue as Float
-        }
-        animation.start()
+
+        lockView.animate().cancel()
+        lockView.animate()
+            .scaleX(1.0f)
+            .scaleY(1.0f)
+            .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
+            .start()
     }
 
     private fun hideVoiceMessageUI() {
-        val chevronImageView = binding.inputBarRecordingView.chevronImageView
-        val slideToCancelTextView = binding.inputBarRecordingView.slideToCancelTextView
-        listOf( chevronImageView, slideToCancelTextView ).forEach { view ->
-            val animation = ValueAnimator.ofObject(FloatEvaluator(), view.translationX, 0.0f)
-            animation.duration = ANIMATE_LOCK_DURATION_MS
-            animation.addUpdateListener { animator ->
-                view.translationX = animator.animatedValue as Float
-            }
-            animation.start()
+        listOf(
+            binding.inputBarRecordingView.chevronImageView,
+            binding.inputBarRecordingView.slideToCancelTextView
+        ).forEach { view ->
+            view.animate().cancel()
+            view.animate()
+                .translationX(0.0f)
+                .setDuration(VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS)
+                .start()
         }
+
         binding.inputBarRecordingView.hide()
     }
 
     override fun handleVoiceMessageUIHidden() {
         val inputBar = binding.inputBar
-        inputBar.alpha = 1.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 0.0f, 1.0f)
-        animation.duration = SHOW_HIDE_VOICE_UI_DURATION_MS
-        animation.addUpdateListener { animator ->
-            inputBar.alpha = animator.animatedValue as Float
-        }
-        animation.start()
+
+        // Cancel any previous input bar animations and fade in the bar
+        inputBar.animate().cancel()
+        inputBar.animate()
+            .alpha(1.0f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .start()
     }
 
     private fun handleRecyclerViewScrolled() {
@@ -1716,6 +1750,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun onMicrophoneButtonUp(event: MotionEvent) {
+        if(binding.inputBar.voiceRecorderState != VoiceRecorderState.Recording){
+            cancelVoiceMessage()
+            return
+        }
+
         val x = event.rawX.roundToInt()
         val y = event.rawY.roundToInt()
 
@@ -1725,7 +1764,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // to recording audio on a quick tap as the lock area animates out from the record
         // audio message button and the pointer-up event catches it mid-animation.
         val currentVoiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
-        if (isValidLockViewLocation(x, y) && currentVoiceMessageDurationMS >= ANIMATE_LOCK_DURATION_MS) {
+        if (isValidLockViewLocation(x, y) && currentVoiceMessageDurationMS >= VoiceRecorderConstants.ANIMATE_LOCK_DURATION_MS) {
             binding.inputBarRecordingView.lock()
 
             // If the user put the record audio button into the lock state then we are still recording audio
@@ -1736,23 +1775,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // If the user didn't lock voice recording on then we're stopping voice recording
             binding.inputBar.voiceRecorderState = VoiceRecorderState.ShuttingDownAfterRecord
 
-            val rba = binding.inputBarRecordingView?.recordButtonOverlay
-            if (rba != null) {
-                val location = IntArray(2) { 0 }
-                rba.getLocationOnScreen(location)
-                val hitRect = Rect(location[0], location[1], location[0] + rba.width, location[1] + rba.height)
+            val recordButtonOverlay = binding.inputBarRecordingView.recordButtonOverlay
 
-                // If the up event occurred over the record button overlay we send the voice message..
-                if (hitRect.contains(x, y)) {
-                    sendVoiceMessage()
-                } else {
-                    // ..otherwise if they've released off the button we'll cancel sending.
-                    cancelVoiceMessage()
-                }
-            }
-            else
-            {
-                // Just to cover all our bases, if for whatever reason the record button overlay was null we'll also cancel recording
+            val location = IntArray(2) { 0 }
+            recordButtonOverlay.getLocationOnScreen(location)
+            val hitRect = Rect(location[0], location[1], location[0] + recordButtonOverlay.width, location[1] + recordButtonOverlay.height)
+
+            // If the up event occurred over the record button overlay we send the voice message..
+            if (hitRect.contains(x, y)) {
+                sendVoiceMessage()
+            } else {
+                // ..otherwise if they've released off the button we'll cancel sending.
                 cancelVoiceMessage()
             }
         }
@@ -2067,7 +2100,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun startRecordingVoiceMessage() {
-        Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()}")
+        Log.i(TAG, "Starting voice message recording at: ${System.currentTimeMillis()} --- ${binding.inputBar.voiceRecorderState}")
+        binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
 
         if (Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
             showVoiceMessageUI()
@@ -2085,13 +2119,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
 
-            binding.inputBar.voiceRecorderState = VoiceRecorderState.SettingUpToRecord
             voiceMessageStartTimestamp = System.currentTimeMillis()
             audioRecorder.startRecording(callback)
 
             // Limit voice messages to 5 minute each
             stopAudioHandler.postDelayed(stopVoiceMessageRecordingTask, 5.minutes.inWholeMilliseconds)
         } else {
+            binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
+
             Permissions.with(this)
                 .request(Manifest.permission.RECORD_AUDIO)
                 .withPermanentDenialDialog(Phrase.from(applicationContext, R.string.permissionsMicrophoneAccessRequired)
@@ -2115,9 +2150,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // update the voice message duration based on the current time here.
         val voiceMessageDurationMS = System.currentTimeMillis() - voiceMessageStartTimestamp
 
-        val voiceMessageDurationValid = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        val future = audioRecorder.stopRecording(voiceMessageDurationValid)
+        val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
+        val future = audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
@@ -2125,9 +2161,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         // Voice message too short? Warn with toast instead of sending.
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity.
-        val voiceMessageBelowMinimumDuration = !MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
-        if (voiceMessageDurationMS != 0L && voiceMessageBelowMinimumDuration) {
-            Toast.makeText(this@ConversationActivityV2, R.string.messageVoiceErrorShort, Toast.LENGTH_SHORT).show()
+        if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
+            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
+            showVoiceMessageToastIfNotAlreadyVisible()
             return
         }
 
@@ -2144,7 +2180,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val dataSizeBytes = result.second
 
                 // Only proceed with sending the voice message if it's long enough
-                if (!voiceMessageBelowMinimumDuration) {
+                if (voiceMessageMeetsMinimumDuration) {
                     val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
                     val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
                     val slideDeck = SlideDeck()
@@ -2169,11 +2205,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val voiceMessageMeetsMinimumDuration = MediaUtil.voiceMessageMeetsMinimumDuration(voiceMessageDurationMS)
         audioRecorder.stopRecording(voiceMessageMeetsMinimumDuration)
         stopAudioHandler.removeCallbacks(stopVoiceMessageRecordingTask)
+
         binding.inputBar.voiceRecorderState = VoiceRecorderState.Idle
 
         // Note: The 0L check prevents the warning toast being shown when leaving the conversation activity
         if (voiceMessageDurationMS != 0L && !voiceMessageMeetsMinimumDuration) {
-            Toast.makeText(applicationContext, applicationContext.getString(R.string.messageVoiceErrorShort), Toast.LENGTH_SHORT).show()
+            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
+            showVoiceMessageToastIfNotAlreadyVisible()
         }
     }
 

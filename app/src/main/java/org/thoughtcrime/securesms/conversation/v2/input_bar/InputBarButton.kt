@@ -5,7 +5,6 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.PointF
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -153,7 +152,7 @@ class InputBarButton : RelativeLayout {
         longPressCallback?.let { gestureHandler.removeCallbacks(it) }
         val newLongPressCallback = Runnable { onLongPress?.invoke() }
         this.longPressCallback = newLongPressCallback
-        gestureHandler.postDelayed(newLongPressCallback, InputBarButton.longPressDurationThreshold)
+        gestureHandler.postDelayed(newLongPressCallback, longPressDurationThreshold)
         onDownTimestamp = Date().time
     }
 
@@ -170,7 +169,7 @@ class InputBarButton : RelativeLayout {
     private fun onUp(event: MotionEvent) {
         onUp?.invoke(event)
         collapse()
-        if ((Date().time - onDownTimestamp) < InputBarButton.longPressDurationThreshold) {
+        if ((Date().time - onDownTimestamp) < longPressDurationThreshold) {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }
             onPress?.invoke()
         }
