@@ -274,6 +274,7 @@ interface ReadableUserGroupsConfig : ReadableConfig {
     fun allCommunityInfo(): List<GroupInfo.CommunityGroupInfo>
     fun allLegacyGroupInfo(): List<GroupInfo.LegacyGroupInfo>
     fun allClosedGroupInfo(): List<GroupInfo.ClosedGroupInfo>
+    fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
 interface MutableUserGroupsConfig : ReadableUserGroupsConfig, MutableConfig {
@@ -286,7 +287,6 @@ interface MutableUserGroupsConfig : ReadableUserGroupsConfig, MutableConfig {
     fun eraseCommunity(server: String, room: String): Boolean
     fun eraseLegacyGroup(accountId: String): Boolean
     fun eraseClosedGroup(accountId: String): Boolean
-    fun createGroup(): GroupInfo.ClosedGroupInfo
 }
 
 class UserGroupsConfig private constructor(pointer: Long): ConfigBase(pointer), MutableUserGroupsConfig {
@@ -462,9 +462,14 @@ interface ReadableGroupKeysConfig {
 
 interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
     fun makeSubAccount(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
+    fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean
 }
 
-class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), MutableGroupKeysConfig {
+class GroupKeysConfig private constructor(
+    pointer: Long,
+    private val info: GroupInfoConfig,
+    private val members: GroupMembersConfig
+): ConfigSig(pointer), MutableGroupKeysConfig {
     companion object {
         private external fun newInstance(
             userSecretKey: ByteArray,
@@ -491,7 +496,9 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
             initialDump,
             info.pointer,
             members.pointer
-        )
+        ),
+        info,
+        members
     )
 
     override fun namespace() = Namespace.ENCRYPTION_KEYS()
@@ -504,6 +511,11 @@ class GroupKeysConfig private constructor(pointer: Long): ConfigSig(pointer), Mu
                          timestampMs: Long,
                          infoPtr: Long,
                          membersPtr: Long): Boolean
+
+    override fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean {
+        return loadKey(message, hash, timestampMs, info.pointer, members.pointer)
+    }
+
     external override fun needsRekey(): Boolean
     external override fun pendingKey(): ByteArray?
     private external fun supplementFor(userSessionIds: Array<String>): ByteArray

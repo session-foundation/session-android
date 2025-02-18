@@ -233,6 +233,27 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    override fun createGroupConfigs(groupId: AccountId, adminKey: ByteArray): MutableGroupConfigs {
+        return GroupConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            groupAccountId = groupId,
+            groupAdminKey = adminKey,
+            configDatabase = configDatabase
+        )
+    }
+
+    override fun saveGroupConfigs(groupId: AccountId, groupConfigs: MutableGroupConfigs) {
+        check(groupConfigs is GroupConfigsImpl) {
+            "The group configs must be the same instance as the one created by createGroupConfigs"
+        }
+
+        groupConfigs.dumpIfNeeded(clock)
+
+        synchronized(groupConfigs) {
+            this.groupConfigs[groupId] = ReentrantReadWriteLock() to groupConfigs
+        }
+    }
+
     private fun <T> doWithMutableGroupConfigs(
         groupId: AccountId,
         recreateConfigInstances: Boolean,
