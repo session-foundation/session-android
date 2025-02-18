@@ -395,13 +395,38 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             applicationContext,
             applicationContext.getString(R.string.messageVoiceErrorShort),
             Toast.LENGTH_SHORT
-        )
+        ).apply {
+            // On Android API 30 and above we can use callbacks to control our toast visible flag.
+            // Note: We have to do this hoop-jumping to prevent the possibility of a window layout
+            // crash when attempting to show a toast that is already visible should the user spam
+            // the microphone button, and because `someToast.view?.isShown` is deprecated.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                addCallback(object : Toast.Callback() {
+                    override fun onToastShown()  { isVoiceToastShowing = true  }
+                    override fun onToastHidden() { isVoiceToastShowing = false }
+                })
+            }
+        }
     }
+
+    private var isVoiceToastShowing = false
 
     // Only show a toast related to voice messages if the toast is not already showing (used if to
     // rate limit & prevent toast queueing when the user spams the microphone button).
     private fun showVoiceMessageToastIfNotAlreadyVisible() {
-        if (!voiceNoteTooShortToast.view?.isShown!!) voiceNoteTooShortToast.show()
+        if (!isVoiceToastShowing) {
+            voiceNoteTooShortToast.show()
+
+            // Use a delayed callback to reset the toast visible flag after Toast.LENGTH_SHORT duration (~2000ms) ONLY on
+            // Android APIs < 30 which lack the onToastShown & onToastHidden callbacks.
+            // Note: While Toast.LENGTH_SHORT is roughly 2000ms, it is subject to change with varying Android versions or
+            // even between devices - we have no control over this.
+            // TODO: Remove the lines below and just use the callbacks when our minimum API is >= 30.
+            isVoiceToastShowing = true
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                Handler(Looper.getMainLooper()).postDelayed( { isVoiceToastShowing = false }, 2000)
+            }
+        }
     }
 
     // Properties for what message indices are visible previously & now, as well as the scroll state
