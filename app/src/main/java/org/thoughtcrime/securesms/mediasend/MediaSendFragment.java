@@ -177,7 +177,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
     Recipient recipient   = Recipient.from(requireContext(), getArguments().getParcelable(KEY_ADDRESS), false);
     String    displayName = Optional.fromNullable(recipient.getName())
                                     .or(Optional.fromNullable(recipient.getProfileName())
-                                                .or(recipient.getAddress().serialize()));
+                                                .or(recipient.getAddress().toString()));
     composeText.setHint(getString(R.string.message), null);
     composeText.setOnEditorActionListener((v, actionId, event) -> {
       boolean isSend = actionId == EditorInfo.IME_ACTION_SEND;

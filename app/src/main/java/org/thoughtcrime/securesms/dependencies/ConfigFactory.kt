@@ -532,13 +532,13 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
         .asSequence().filter { it.isLegacyGroup && it.isActive && it.members.size > 1 }
         .mapNotNull { group ->
             val groupAddress = Address.fromSerialized(group.encodedId)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.serialize()).toHexString()
+            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.toString()).toHexString()
             val recipient = storage.getRecipientSettings(groupAddress) ?: return@mapNotNull null
             val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: return@mapNotNull null
             val threadId = storage.getThreadId(group.encodedId)
             val isPinned = threadId?.let { storage.isPinned(threadId) } ?: false
-            val admins = group.admins.associate { it.serialize() to true }
-            val members = group.members.filterNot { it.serialize() !in admins.keys }.associate { it.serialize() to false }
+            val admins = group.admins.associate { it.toString() to true }
+            val members = group.members.filterNot { it.toString() !in admins.keys }.associate { it.toString() to false }
             GroupInfo.LegacyGroupInfo(
                 accountId = groupPublicKey,
                 name = group.title,
@@ -568,17 +568,17 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
                 recipient.isGroupV2Recipient -> {
                     // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
                     // but just in case...
-                    getOrConstructClosedGroup(recipient.address.serialize())
+                    getOrConstructClosedGroup(recipient.address.toString())
                 }
                 recipient.isLegacyGroupRecipient -> {
-                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
                     getOrConstructLegacyGroup(groupPublicKey)
                 }
                 recipient.isContactRecipient -> {
                     if (recipient.isLocalNumber) null // this is handled by the user profile NTS data
                     else if (recipient.isCommunityInboxRecipient) null // specifically exclude
-                    else if (!recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) null
-                    else getOrConstructOneToOne(recipient.address.serialize())
+                    else if (!recipient.address.toString().startsWith(IdPrefix.STANDARD.value)) null
+                    else getOrConstructOneToOne(recipient.address.toString())
                 }
                 else -> null
             }

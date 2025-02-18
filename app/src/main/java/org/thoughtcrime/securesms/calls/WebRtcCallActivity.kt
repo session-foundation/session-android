@@ -341,7 +341,7 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                     binding.contactAvatar.recycle()
 
                     if (latestRecipient.recipient != null) {
-                        val contactPublicKey = latestRecipient.recipient.address.serialize()
+                        val contactPublicKey = latestRecipient.recipient.address.toString()
                         val contactDisplayName = viewModel.getContactName(contactPublicKey)
                         supportActionBar?.title = contactDisplayName
                         binding.remoteRecipientName.text = contactDisplayName

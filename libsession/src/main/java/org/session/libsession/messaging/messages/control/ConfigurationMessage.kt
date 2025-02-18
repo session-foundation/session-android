@@ -129,8 +129,8 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
                         groupPublicKey,
                         group.title,
                         encryptionKeyPair,
-                        group.members.map { it.serialize() },
-                        group.admins.map { it.serialize() }
+                        group.members.map { it.toString() },
+                        group.admins.map { it.toString() }
                     )
                     closedGroups.add(closedGroup)
                 }

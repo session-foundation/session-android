@@ -95,7 +95,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 groupDatabase
                     .getGroupMemberAddresses(address.toGroupString(), true)
             } else {
-                storage.getMembers(address.serialize())
+                storage.getMembers(address.toString())
                     .map { Address.fromSerialized(it.accountIdString()) }
             }.sorted().take(2)
 
@@ -105,20 +105,20 @@ class ProfilePictureView @JvmOverloads constructor(
                 additionalPublicKey = ""
                 additionalDisplayName = ""
             } else {
-                val pk = members.getOrNull(0)?.serialize() ?: ""
+                val pk = members.getOrNull(0)?.toString() ?: ""
                 publicKey = pk
                 displayName = getUserDisplayName(pk)
-                val apk = members.getOrNull(1)?.serialize() ?: ""
+                val apk = members.getOrNull(1)?.toString() ?: ""
                 additionalPublicKey = apk
                 additionalDisplayName = getUserDisplayName(apk)
             }
         } else if(isCommunityInboxRecipient) {
-            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.serialize())
+            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
         } else {
-            val publicKey = address.serialize()
+            val publicKey = address.toString()
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
@@ -153,7 +153,7 @@ class ProfilePictureView @JvmOverloads constructor(
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
         if (publicKey.isNotEmpty()) {
             // if we already have a recipient that matches the current key, reuse it
-            val recipient = if(this.recipient != null && this.recipient?.address?.serialize() == publicKey){
+            val recipient = if(this.recipient != null && this.recipient?.address?.toString() == publicKey){
                 this.recipient!!
             }
             else {

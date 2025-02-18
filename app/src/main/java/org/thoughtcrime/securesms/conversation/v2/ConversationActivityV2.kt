@@ -258,9 +258,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         var threadId = intent.getLongExtra(THREAD_ID, -1L)
         if (threadId == -1L) {
             intent.getParcelableExtra<Address>(ADDRESS)?.let { it ->
-                threadId = threadDb.getThreadIdIfExistsFor(it.serialize())
+                threadId = threadDb.getThreadIdIfExistsFor(it.toString())
                 if (threadId == -1L) {
-                    val accountId = AccountId(it.serialize())
+                    val accountId = AccountId(it.toString())
                     val openGroup = lokiThreadDb.getOpenGroupChat(intent.getLongExtra(FROM_GROUP_THREAD_ID, -1))
                     val address = if (accountId.prefix == IdPrefix.BLINDED && openGroup != null) {
                         storage.getOrCreateBlindedIdMapping(accountId.hexString, openGroup.server, openGroup.publicKey).accountId?.let {
@@ -1583,7 +1583,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } else originalMessage.individualRecipient.address
 
             // Send it
-            reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.serialize(), emoji, true)
+            reactionMessage.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, true)
             if (recipient.isCommunityRecipient) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.id, !originalMessage.isMms) ?:
@@ -1619,7 +1619,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
             } else originalMessage.individualRecipient.address
 
-            message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.serialize(), emoji, false)
+            message.reaction = Reaction.from(originalMessage.timestamp, originalAuthor.toString(), emoji, false)
             if (recipient.isCommunityRecipient) {
 
                 val messageServerId = lokiMessageDb.getServerID(originalMessage.id, !originalMessage.isMms) ?:
@@ -1808,7 +1808,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
         if (recipient.isContactRecipient && recipient.isBlocked) {
-            BlockedDialog(recipient, viewModel.getUsername(recipient.address.serialize())).show(supportFragmentManager, "Blocked Dialog")
+            BlockedDialog(recipient, viewModel.getUsername(recipient.address.toString())).show(supportFragmentManager, "Blocked Dialog")
             return
         }
         val sentMessageInfo = if (binding.inputBar.linkPreview != null || binding.inputBar.quote != null) {

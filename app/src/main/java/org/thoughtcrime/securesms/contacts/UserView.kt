@@ -58,7 +58,7 @@ class UserView : LinearLayout {
             return usernameUtils.getContactNameWithAccountID(publicKey)
         }
 
-        val address = user.address.serialize()
+        val address = user.address.toString()
         binding.profilePictureView.update(user)
         binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.name else getUserDisplayName(address)

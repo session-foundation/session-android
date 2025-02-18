@@ -54,7 +54,7 @@ sealed class Destination {
                     } ?: throw Exception("Missing open group for thread with ID: $threadID.")
                 }
                 address.isCommunityInbox -> {
-                    val groupInboxId = GroupUtil.getDecodedGroupID(address.serialize()).split("!")
+                    val groupInboxId = GroupUtil.getDecodedGroupID(address.toString()).split("!")
                     OpenGroupInbox(
                         groupInboxId.dropLast(2).joinToString("!"),
                         groupInboxId.dropLast(1).last(),
@@ -62,7 +62,7 @@ sealed class Destination {
                     )
                 }
                 address.isGroupV2 -> {
-                    ClosedGroup(address.serialize())
+                    ClosedGroup(address.toString())
                 }
                 else -> {
                     throw Exception("TODO: Handle legacy closed groups.")

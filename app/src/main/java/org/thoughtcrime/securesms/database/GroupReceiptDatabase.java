@@ -48,7 +48,7 @@ public class GroupReceiptDatabase extends Database {
     for (Address address : addresses) {
       ContentValues values = new ContentValues(4);
       values.put(MMS_ID, mmsId);
-      values.put(ADDRESS, address.serialize());
+      values.put(ADDRESS, address.toString());
       values.put(STATUS, status);
       values.put(TIMESTAMP, timestamp);
 
@@ -63,7 +63,7 @@ public class GroupReceiptDatabase extends Database {
     values.put(TIMESTAMP, timestamp);
 
     db.update(TABLE_NAME, values, MMS_ID + " = ? AND " + ADDRESS + " = ? AND " + STATUS + " < ?",
-              new String[] {String.valueOf(mmsId), address.serialize(), String.valueOf(status)});
+              new String[] {String.valueOf(mmsId), address.toString(), String.valueOf(status)});
   }
 
   public void setUnidentified(Address address, long mmsId, boolean unidentified) {
@@ -72,7 +72,7 @@ public class GroupReceiptDatabase extends Database {
     values.put(UNIDENTIFIED, unidentified ? 1 : 0);
 
     db.update(TABLE_NAME, values, MMS_ID + " = ? AND " + ADDRESS + " = ?",
-              new String[] {String.valueOf(mmsId), address.serialize()});
+              new String[] {String.valueOf(mmsId), address.toString()});
 
   }
 

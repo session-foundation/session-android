@@ -139,7 +139,7 @@ class ConversationActionBarView @JvmOverloads constructor(
                 resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (recipient.isGroupV2Recipient) {
-                    storage.getMembers(recipient.address.serialize()).size
+                    storage.getMembers(recipient.address.toString()).size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
                 }

@@ -229,7 +229,7 @@ class VisibleMessageView : FrameLayout {
                     binding.moderatorIconImageView.isVisible = isAdmin
                 }
                 else if (thread.isGroupV2Recipient) { // groups v2
-                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.serialize())) {
+                    val isAdmin = configFactory.withGroupConfigs(AccountId(thread.address.toString())) {
                         it.groupMembers.getOrNull(senderAccountID)?.admin == true
                     }
 

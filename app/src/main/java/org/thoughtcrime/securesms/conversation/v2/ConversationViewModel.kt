@@ -110,7 +110,7 @@ class ConversationViewModel(
         _isAdmin.value = when(conversationType) {
             // for Groups V2
             MessageType.GROUPS_V2 -> {
-                configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
+                configFactory.getGroup(AccountId(conversation.address.toString()))?.hasAdminKey() == true
             }
 
             // for legacy groups, check if the user created the group
@@ -167,7 +167,7 @@ class ConversationViewModel(
             val recipient = recipient ?: return GroupThreadStatus.None
             if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
 
-            return configFactory.getGroup(AccountId(recipient.address.serialize())).let { group ->
+            return configFactory.getGroup(AccountId(recipient.address.toString())).let { group ->
                 when {
                     group?.destroyed == true -> GroupThreadStatus.Destroyed
                     group?.kicked == true -> GroupThreadStatus.Kicked
@@ -408,7 +408,7 @@ class ConversationViewModel(
         }
 
         if (this.recipient?.isGroupV2Recipient == true) {
-            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.toString()))
         }
     }
 
@@ -916,7 +916,7 @@ class ConversationViewModel(
             blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
-        storage.getLastLegacyRecipient(address.serialize())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
+        storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
     }
 
     fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
@@ -995,7 +995,7 @@ class ConversationViewModel(
                 _dialogsState.update {
                     it.copy(
                         recreateGroupConfirm = false,
-                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                        recreateGroupData = recipient?.address?.toString()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
                     )
                 }
             }

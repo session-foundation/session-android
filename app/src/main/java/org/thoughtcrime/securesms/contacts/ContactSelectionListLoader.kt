@@ -33,7 +33,7 @@ class ContactSelectionListLoader(
     override fun loadInBackground(): List<ContactSelectionListItem> {
         val contacts = ContactUtilities.getAllContacts(context).filter {
             if (filter.isNullOrEmpty()) return@filter true
-            it.name.contains(filter.trim(), true) || it.address.serialize().contains(filter.trim(), true)
+            it.name.contains(filter.trim(), true) || it.address.toString().contains(filter.trim(), true)
         }.sortedBy {
             it.name
         }

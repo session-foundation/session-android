@@ -89,8 +89,8 @@ public class NotificationChannels {
       return systemName;
     } else if (!TextUtils.isEmpty(profileName)) {
       return profileName;
-    } else if (!TextUtils.isEmpty(address.serialize())) {
-      return address.serialize();
+    } else if (!TextUtils.isEmpty(address.toString())) {
+      return address.toString();
     } else {
       return context.getString(R.string.unknown);
     }
@@ -233,7 +233,7 @@ public class NotificationChannels {
 
 
   private static @NonNull String generateChannelIdFor(@NonNull Address address) {
-    return CONTACT_PREFIX + address.serialize() + "_" + System.currentTimeMillis();
+    return CONTACT_PREFIX + address.toString() + "_" + System.currentTimeMillis();
   }
 
   private static @NonNull NotificationChannel copyChannel(@NonNull NotificationChannel original, @NonNull String id) {

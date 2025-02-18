@@ -471,7 +471,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
             callManager.startOutgoingRinger(OutgoingRinger.Type.RINGING)
             setCallInProgressNotification(TYPE_OUTGOING_RINGING, callManager.recipient)
             callManager.insertCallMessage(
-                recipient.address.serialize(),
+                recipient.address.toString(),
                 CallMessageType.CALL_OUTGOING
             )
             scheduledTimeout = timeoutExecutor.schedule(
@@ -800,7 +800,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 
     private fun insertMissedCall(recipient: Recipient, signal: Boolean) {
         callManager.insertCallMessage(
-            threadPublicKey = recipient.address.serialize(),
+            threadPublicKey = recipient.address.toString(),
             callMessageType = CallMessageType.CALL_MISSED,
             signal = signal
         )

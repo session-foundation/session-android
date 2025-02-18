@@ -10,10 +10,10 @@ fun ReadableConversationVolatileConfig.getConversationUnread(thread: ThreadRecor
     val recipient = thread.recipient
     if (recipient.isContactRecipient
         && recipient.isCommunityInboxRecipient
-        && recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) {
-        return getOneToOne(recipient.address.serialize())?.unread == true
+        && recipient.address.toString().startsWith(IdPrefix.STANDARD.value)) {
+        return getOneToOne(recipient.address.toString())?.unread == true
     } else if (recipient.isGroupV2Recipient) {
-        return getClosedGroup(recipient.address.serialize())?.unread == true
+        return getClosedGroup(recipient.address.toString())?.unread == true
     } else if (recipient.isLegacyGroupRecipient) {
         return getLegacyClosedGroup(GroupUtil.doubleDecodeGroupId(recipient.address.toGroupString()))?.unread == true
     } else if (recipient.isCommunityRecipient) {

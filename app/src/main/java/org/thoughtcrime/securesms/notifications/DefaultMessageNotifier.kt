@@ -528,7 +528,7 @@ class DefaultMessageNotifier : MessageNotifier {
                     if (record is MmsMessageRecord) {
                         val quote = (record as MmsMessageRecord).quote
                         val quoteAddress = quote?.author
-                        val serializedAddress = quoteAddress?.serialize()
+                        val serializedAddress = quoteAddress?.toString()
                         isQuoteMentioned = (serializedAddress != null && userPublicKey == serializedAddress) ||
                                 (blindedPublicKey != null && userPublicKey == blindedPublicKey)
                     }

@@ -24,7 +24,7 @@ public class ShortcutLauncherActivity extends AppCompatActivity {
   public static Intent createIntent(@NonNull Context context, @NonNull Address address) {
     Intent intent = new Intent(context, ShortcutLauncherActivity.class);
     intent.setAction(Intent.ACTION_MAIN);
-    intent.putExtra(KEY_SERIALIZED_ADDRESS, address.serialize());
+    intent.putExtra(KEY_SERIALIZED_ADDRESS, address.toString());
 
     return intent;
   }

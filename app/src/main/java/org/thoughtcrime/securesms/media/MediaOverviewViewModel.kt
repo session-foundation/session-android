@@ -313,7 +313,7 @@ class MediaOverviewViewModel(
                     }
                 }
 
-                threadDatabase.getThreadIdIfExistsFor(address.serialize())
+                threadDatabase.getThreadIdIfExistsFor(address.toString())
             }
 
             // Notify the content provider that the thread has been updated

@@ -108,7 +108,7 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
  * Shortcut to check if the current user was kicked from a given group V2 (as a Recipient)
  */
 fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
-    group.isGroupV2Recipient && getGroup(AccountId(group.address.serialize()))?.kicked == true
+    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.kicked == true
 
 /**
  * Wait until all user configs are pushed to the server.

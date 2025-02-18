@@ -39,7 +39,7 @@ public class QuoteId {
     try {
       JSONObject object = new JSONObject();
       object.put(ID, id);
-      object.put(AUTHOR, author.serialize());
+      object.put(AUTHOR, author.toString());
       return object.toString();
     } catch (JSONException e) {
       Log.e(TAG, "Failed to serialize to json", e);

@@ -41,8 +41,8 @@ class GroupLeavingJob(
         val userPublicKey = TextSecurePreferences.getLocalNumber(context)!!
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
         val group = storage.getGroup(groupID) ?: return handlePermanentFailure(dispatcherName, MessageSender.Error.NoThread)
-        val updatedMembers = group.members.map { it.serialize() }.toSet() - userPublicKey
-        val admins = group.admins.map { it.serialize() }
+        val updatedMembers = group.members.map { it.toString() }.toSet() - userPublicKey
+        val admins = group.admins.map { it.toString() }
         val name = group.title
         // Send the update to the group
         val closedGroupControlMessage = LegacyGroupControlMessage(LegacyGroupControlMessage.Kind.MemberLeft())

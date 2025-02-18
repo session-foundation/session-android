@@ -112,10 +112,10 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     override fun onContactSelected(contact: Recipient) {
-        onContactSelectedListener?.onContactSelected(contact.address.serialize())
+        onContactSelectedListener?.onContactSelected(contact.address.toString())
     }
 
     override fun onContactDeselected(contact: Recipient) {
-        onContactSelectedListener?.onContactDeselected(contact.address.serialize())
+        onContactSelectedListener?.onContactDeselected(contact.address.toString())
     }
 }

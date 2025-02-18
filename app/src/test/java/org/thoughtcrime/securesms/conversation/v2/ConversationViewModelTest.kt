@@ -49,6 +49,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             configFactory = mock(),
             groupManagerV2 = mock(),
             legacyGroupDeprecationManager = mock(),
+            usernameUtils = mock()
         )
     }
 

@@ -64,7 +64,7 @@ class RetrieveProfileAvatarJob(
         }
 
         if (profileAvatar.isNullOrEmpty()) {
-            Log.w(TAG, "Removing profile avatar for: " + recipient.address.serialize())
+            Log.w(TAG, "Removing profile avatar for: " + recipient.address.toString())
 
             if (recipient.isLocalNumber) {
                 setProfileAvatarId(context, SECURE_RANDOM.nextInt())
@@ -106,7 +106,7 @@ class RetrieveProfileAvatarJob(
     override fun serialize(): Data {
         val data = Data.Builder()
             .putString(PROFILE_AVATAR_KEY, profileAvatar)
-            .putString(RECEIPIENT_ADDRESS_KEY, recipientAddress.serialize())
+            .putString(RECEIPIENT_ADDRESS_KEY, recipientAddress.toString())
 
         if (profileKey != null) {
             data.putByteArray(PROFILE_KEY, profileKey)

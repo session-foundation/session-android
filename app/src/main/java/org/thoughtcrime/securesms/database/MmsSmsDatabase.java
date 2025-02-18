@@ -125,7 +125,7 @@ public class MmsSmsDatabase extends Database {
 
       while ((messageRecord = reader.getNext()) != null) {
         if ((isOwnNumber && messageRecord.isOutgoing()) ||
-                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().serialize().equals(serializedAuthor)))
+                (!isOwnNumber && messageRecord.getIndividualRecipient().getAddress().toString().equals(serializedAuthor)))
         {
           return messageRecord;
         }
@@ -183,7 +183,7 @@ public class MmsSmsDatabase extends Database {
   }
 
   public @Nullable MessageRecord getMessageFor(long timestamp, Address author) {
-    return getMessageFor(timestamp, author.serialize());
+    return getMessageFor(timestamp, author.toString());
   }
 
   public long getPreviousPage(long threadId, long fromTime, int limit) {
@@ -284,7 +284,7 @@ public class MmsSmsDatabase extends Database {
       Reader reader = readerFor(cursor);
       while (reader.getNext() != null) {
         MessageRecord record = reader.getCurrent();
-        if (record.getIndividualRecipient().getAddress().serialize().equals(sender)) {
+        if (record.getIndividualRecipient().getAddress().toString().equals(sender)) {
           idList.add(record);
         }
       }
@@ -423,8 +423,8 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, order, null)) {
-      String  serializedAddress = address.serialize();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.serialize());
+      String  serializedAddress = address.toString();
+      boolean isOwnNumber       = Util.isOwnNumber(context, address.toString());
 
       while (cursor != null && cursor.moveToNext()) {
         boolean quoteIdMatches = cursor.getLong(0) == quoteId;
@@ -443,8 +443,8 @@ public class MmsSmsDatabase extends Database {
     String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
 
     try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, order, null)) {
-      String  serializedAddress = address.serialize();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.serialize());
+      String  serializedAddress = address.toString();
+      boolean isOwnNumber       = Util.isOwnNumber(context, address.toString());
 
       while (cursor != null && cursor.moveToNext()) {
         boolean timestampMatches = cursor.getLong(0) == sentTimestamp;

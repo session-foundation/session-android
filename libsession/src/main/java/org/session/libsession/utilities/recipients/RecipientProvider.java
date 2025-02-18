@@ -87,7 +87,7 @@ class RecipientProvider {
     if (address.isGroupOrCommunity() && settings.isPresent() && groupRecord.isPresent()) {
       return Optional.of(getGroupRecipientDetails(context, address, groupRecord, settings, true));
     } else if (!address.isGroupOrCommunity() && settings.isPresent()) {
-      boolean isLocalNumber = address.serialize().equals(TextSecurePreferences.getLocalNumber(context));
+      boolean isLocalNumber = address.toString().equals(TextSecurePreferences.getLocalNumber(context));
       return Optional.of(new RecipientDetails(null, null, !TextUtils.isEmpty(settings.get().getSystemDisplayName()), isLocalNumber, settings.get(), null));
     }
 
@@ -114,7 +114,7 @@ class RecipientProvider {
     }
 
     boolean systemContact = settings.isPresent() && !TextUtils.isEmpty(settings.get().getSystemDisplayName());
-    boolean isLocalNumber = address.serialize().equals(TextSecurePreferences.getLocalNumber(context));
+    boolean isLocalNumber = address.toString().equals(TextSecurePreferences.getLocalNumber(context));
     return new RecipientDetails(null, null, systemContact, isLocalNumber, settings.orNull(), null);
   }
 

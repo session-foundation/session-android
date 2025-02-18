@@ -97,14 +97,14 @@ class MentionViewModel(
                 val memberIDs = when {
                     recipient.isLegacyGroupRecipient -> {
                         groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
-                            .map { it.serialize() }
+                            .map { it.toString() }
                     }
                     recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.serialize()).map { it.accountIdString() }
+                        storage.getMembers(recipient.address.toString()).map { it.accountIdString() }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
-                    recipient.isContactRecipient -> listOf(recipient.address.serialize())
+                    recipient.isContactRecipient -> listOf(recipient.address.toString())
                     else -> listOf()
                 }
 
@@ -125,7 +125,7 @@ class MentionViewModel(
                             }
                     }
                 } else if (recipient.isGroupV2Recipient) {
-                    configFactory.withGroupConfigs(AccountId(recipient.address.serialize())) {
+                    configFactory.withGroupConfigs(AccountId(recipient.address.toString())) {
                         it.groupMembers.allWithStatus()
                             .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
                             .mapTo(hashSetOf()) { (member, _) -> member.accountId.toString() }

@@ -58,7 +58,7 @@ class ConversationAdapter(
     private val lastSeen = AtomicLong(originalLastSeen)
 
     private val groupId = if(conversation?.isGroupV2Recipient == true)
-        AccountId(conversation.address.serialize())
+        AccountId(conversation.address.toString())
     else null
 
     init {
@@ -119,7 +119,7 @@ class ConversationAdapter(
                 val isSelected = selectedItems.contains(message)
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
-                val senderId = message.individualRecipient.address.serialize()
+                val senderId = message.individualRecipient.address.toString()
                 val senderIdHash = senderId.hashCode()
                 updateQueue.trySend(senderId)
                 if (contactCache[senderIdHash] == null && !contactLoadedCache.getOrDefault(

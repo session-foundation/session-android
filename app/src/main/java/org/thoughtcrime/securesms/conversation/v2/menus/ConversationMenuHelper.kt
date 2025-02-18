@@ -109,7 +109,7 @@ object ConversationMenuHelper {
 
         // Groups v2 menu
         if (thread.isGroupV2Recipient) {
-            val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.serialize())?.hasAdminKey() }
+            val hasAdminKey = configFactory.withUserConfigs { it.userGroups.getClosedGroup(thread.address.toString())?.hasAdminKey() }
             if (hasAdminKey == true) {
                 inflater.inflate(R.menu.menu_conversation_groups_v2_admin, menu)
             } else {
@@ -297,7 +297,7 @@ object ConversationMenuHelper {
                 val name = Optional.fromNullable<String>(thread.name)
                     .or(Optional.fromNullable<String>(thread.profileName))
                     .or(thread.name)
-                val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.serialize() + '-' + System.currentTimeMillis())
+                val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.toString() + '-' + System.currentTimeMillis())
                     .setShortLabel(name)
                     .setIcon(icon)
                     .setIntent(ShortcutLauncherActivity.createIntent(context, thread.address))
@@ -347,7 +347,7 @@ object ConversationMenuHelper {
     private fun editGroup(context: Context, thread: Recipient) {
         when {
             thread.isGroupV2Recipient -> {
-                context.startActivity(EditGroupActivity.createIntent(context, thread.address.serialize()))
+                context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
             }
 
             thread.isLegacyGroupRecipient -> {
@@ -361,7 +361,7 @@ object ConversationMenuHelper {
 
 
     private fun showGroupMembers(context: Context, thread: Recipient) {
-        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.serialize()))
+        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.toString()))
     }
 
     enum class GroupLeavingStatus {
@@ -420,7 +420,7 @@ object ConversationMenuHelper {
             }
 
             thread.isGroupV2Recipient -> {
-                val accountId = AccountId(thread.address.serialize())
+                val accountId = AccountId(thread.address.toString())
                 val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return null
                 val name = configFactory.withGroupConfigs(accountId) {
                     it.groupInfo.getName()

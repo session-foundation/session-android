@@ -117,7 +117,7 @@ class DefaultConversationRepository @Inject constructor(
         if (!recipient.isCommunityInboxRecipient) return null
         return Recipient.from(
             context,
-            Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.serialize())),
+            Address.fromSerialized(GroupUtil.getDecodedOpenGroupInboxAccountId(recipient.address.toString())),
             false
         )
     }
@@ -178,7 +178,7 @@ class DefaultConversationRepository @Inject constructor(
             return false
         }
 
-        val groupId = recipient.address.serialize()
+        val groupId = recipient.address.toString()
         return configFactory.withUserConfigs { configs ->
             configs.userGroups.getClosedGroup(groupId)?.let { it.kicked || it.destroyed } == true
         }
@@ -276,7 +276,7 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.serialize()
+        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -323,7 +323,7 @@ class DefaultConversationRepository @Inject constructor(
     ) {
         require(recipient.isGroupV2Recipient) { "Recipient is not a group v2 recipient" }
 
-        val groupId = AccountId(recipient.address.serialize())
+        val groupId = AccountId(recipient.address.toString())
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
             messageDataProvider.getServerHashForMessage(msg.id, msg.isMms)
         }
@@ -337,7 +337,7 @@ class DefaultConversationRepository @Inject constructor(
         messages: Set<MessageRecord>
     ) {
         // delete the messages remotely
-        val publicKey = recipient.address.serialize()
+        val publicKey = recipient.address.toString()
         val userAddress: Address? =  textSecurePreferences.getLocalNumber()?.let { Address.fromSerialized(it) }
         val userAuth = requireNotNull(storage.userAuth) {
             "User auth is required to delete messages remotely"
@@ -411,7 +411,7 @@ class DefaultConversationRepository @Inject constructor(
             storage.setRecipientApproved(recipient, true)
             if (recipient.isGroupV2Recipient) {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.address.serialize()),
+                    AccountId(recipient.address.toString()),
                     approved = true
                 )
             } else {
@@ -435,7 +435,7 @@ class DefaultConversationRepository @Inject constructor(
             sessionJobDb.cancelPendingMessageSendJobs(threadId)
             if (recipient.isGroupV2Recipient) {
                 groupManager.respondToInvitation(
-                    AccountId(recipient.address.serialize()),
+                    AccountId(recipient.address.toString()),
                     approved = false
                 )
             } else {

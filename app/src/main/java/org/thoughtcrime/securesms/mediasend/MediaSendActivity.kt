@@ -515,7 +515,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         @JvmStatic
         fun buildGalleryIntent(context: Context, recipient: Recipient, body: String): Intent {
             val intent = Intent(context, MediaSendActivity::class.java)
-            intent.putExtra(KEY_ADDRESS, recipient.address.serialize())
+            intent.putExtra(KEY_ADDRESS, recipient.address.toString())
             intent.putExtra(KEY_BODY, body)
             return intent
         }

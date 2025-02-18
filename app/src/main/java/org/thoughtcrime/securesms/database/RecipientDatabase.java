@@ -185,7 +185,7 @@ public class RecipientDatabase extends Database {
   public Optional<RecipientSettings> getRecipientSettings(@NonNull Address address) {
     SQLiteDatabase database = databaseHelper.getReadableDatabase();
 
-    try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.serialize()}, null, null, null)) {
+    try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
 
       if (cursor != null && cursor.moveToNext()) {
         return getRecipientSettings(cursor);
@@ -261,7 +261,7 @@ public class RecipientDatabase extends Database {
 
   public boolean isAutoDownloadFlagSet(Recipient recipient) {
     SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor = db.query(TABLE_NAME, new String[]{ AUTO_DOWNLOAD }, ADDRESS+" = ?", new String[]{ recipient.getAddress().serialize() }, null, null, null);
+    Cursor cursor = db.query(TABLE_NAME, new String[]{ AUTO_DOWNLOAD }, ADDRESS+" = ?", new String[]{ recipient.getAddress().toString() }, null, null, null);
     boolean flagUnset = false;
     try {
       if (cursor.moveToFirst()) {
@@ -301,7 +301,7 @@ public class RecipientDatabase extends Database {
 
   public boolean getApproved(@NonNull Address address) {
     SQLiteDatabase db = getReadableDatabase();
-    try (Cursor cursor = db.query(TABLE_NAME, new String[]{APPROVED}, ADDRESS + " = ?", new String[]{address.serialize()}, null, null, null)) {
+    try (Cursor cursor = db.query(TABLE_NAME, new String[]{APPROVED}, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
       if (cursor != null && cursor.moveToNext()) {
         return cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED)) == 1;
       }
@@ -340,7 +340,7 @@ public class RecipientDatabase extends Database {
       ContentValues values = new ContentValues();
       values.put(BLOCK, blocked ? 1 : 0);
       for (Recipient recipient : recipients) {
-        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.getAddress().serialize()});
+        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.getAddress().toString()});
         recipient.resolve().setBlocked(blocked);
       }
       db.setTransactionSuccessful();
@@ -356,7 +356,7 @@ public class RecipientDatabase extends Database {
     try {
       ContentValues values = new ContentValues();
       values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
-      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().serialize()});
+      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().toString()});
       recipient.resolve().setAutoDownloadAttachments(shouldAutoDownloadAttachments);
       db.setTransactionSuccessful();
     } finally {
@@ -458,10 +458,10 @@ public class RecipientDatabase extends Database {
     database.beginTransaction();
 
     int updated = database.update(TABLE_NAME, contentValues, ADDRESS + " = ?",
-                                  new String[] {address.serialize()});
+                                  new String[] {address.toString()});
 
     if (updated < 1) {
-      contentValues.put(ADDRESS, address.serialize());
+      contentValues.put(ADDRESS, address.toString());
       database.insert(TABLE_NAME, null, contentValues);
     }
 

@@ -69,8 +69,8 @@ class CreateGroupViewModel @AssistedInject constructor(
 
                         val accountIDs = group.members
                             .asSequence()
-                            .filter { it.serialize() != myPublicKey }
-                            .mapTo(mutableSetOf()) { AccountId(it.serialize()) }
+                            .filter { it.toString() != myPublicKey }
+                            .mapTo(mutableSetOf()) { AccountId(it.toString()) }
 
                         selectContactsViewModel.selectAccountIDs(accountIDs)
                         selectContactsViewModel.setManuallyAddedContacts(accountIDs)

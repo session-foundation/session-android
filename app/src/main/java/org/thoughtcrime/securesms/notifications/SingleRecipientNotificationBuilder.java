@@ -321,7 +321,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   private static Drawable getPlaceholderDrawable(Context context, Recipient recipient) {
-    String publicKey = recipient.getAddress().serialize();
+    String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getName();
     return AvatarPlaceholderGenerator.generate(context, ICON_SIZE, publicKey, displayName);
   }
@@ -332,7 +332,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
    */
   private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
     return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
-            recipient.getAddress().serialize(),
+            recipient.getAddress().toString(),
             null,
             openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR
         );

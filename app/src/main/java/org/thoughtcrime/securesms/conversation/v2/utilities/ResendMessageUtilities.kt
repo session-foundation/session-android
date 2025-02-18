@@ -37,7 +37,7 @@ object ResendMessageUtilities {
         if (recipient.isGroupOrCommunityRecipient) {
             message.groupPublicKey = recipient.address.toGroupString()
         } else {
-            message.recipient = messageRecord.recipient.address.serialize()
+            message.recipient = messageRecord.recipient.address.toString()
         }
         message.threadID = messageRecord.threadId
         if (messageRecord.isMms && messageRecord is MmsMessageRecord) {

@@ -124,7 +124,7 @@ class ControlMessageView : LinearLayout {
                 }
             }
             message.isMessageRequestResponse -> {
-                val msgRecipient = message.recipient.address.serialize()
+                val msgRecipient = message.recipient.address.toString()
                 val me = TextSecurePreferences.getLocalNumber(context)
                 binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)

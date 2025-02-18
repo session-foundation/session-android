@@ -11,7 +11,7 @@ public class NetworkFailure {
   private String address;
 
   public NetworkFailure(Address address) {
-    this.address = address.serialize();
+    this.address = address.toString();
   }
 
   public NetworkFailure() {}
