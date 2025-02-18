@@ -43,6 +43,7 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
@@ -71,7 +72,8 @@ class ConfigFactory @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
-    private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>
+    private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
+    private val usernameUtils: Lazy<UsernameUtils>
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -114,7 +116,9 @@ class ConfigFactory @Inject constructor(
                     threadDb = threadDb,
                     configDatabase = configDatabase,
                     storage = storage.get(),
-                    textSecurePreferences = textSecurePreferences
+                    textSecurePreferences = textSecurePreferences,
+                    usernameUtils = usernameUtils.get()
+
                 )
             }
         }
@@ -595,10 +599,11 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
 }
 
 private fun MutableUserProfile.initFrom(storage: StorageProtocol,
+                                        usernameUtils: UsernameUtils,
                                         textSecurePreferences: TextSecurePreferences
 ) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
-    val displayName = textSecurePreferences.getProfileName() ?: return // forced to user the textPrefs directly here as we can't depend on usernameUtils as it would create a dependency cycle with the config
+    val displayName = usernameUtils.getCurrentUsername() ?: return
     val profilePicture = textSecurePreferences.getProfilePictureURL()
     val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
     setName(config.displayName)
@@ -658,6 +663,7 @@ private class UserConfigsImpl(
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
     private val textSecurePreferences: TextSecurePreferences,
+    private val usernameUtils: UsernameUtils,
     storage: StorageProtocol,
     threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
@@ -705,7 +711,7 @@ private class UserConfigsImpl(
         }
 
         if (userProfileDump == null) {
-            userProfile.initFrom(storage, textSecurePreferences)
+            userProfile.initFrom(storage, usernameUtils, textSecurePreferences)
         }
 
         if (convoInfoDump == null) {

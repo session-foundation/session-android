@@ -297,6 +297,7 @@ object ConversationMenuHelper {
                 val name = Optional.fromNullable<String>(thread.name)
                     .or(Optional.fromNullable<String>(thread.profileName))
                     .or(thread.name)
+
                 val shortcutInfo = ShortcutInfoCompat.Builder(context, thread.address.toString() + '-' + System.currentTimeMillis())
                     .setShortLabel(name)
                     .setIcon(icon)
