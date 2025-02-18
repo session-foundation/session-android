@@ -44,6 +44,7 @@ import org.conscrypt.Conscrypt;
 import org.session.libsession.database.MessageDataProvider;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.groups.GroupManagerV2;
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.messaging.notifications.TokenFetcher;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2;
@@ -81,6 +82,7 @@ import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
+import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler;
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
@@ -171,6 +173,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LokiAPIDatabase apiDB;
     @Inject EmojiSearchDatabase emojiSearchDb;
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
+    @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
+    @Inject CleanupInvitationHandler cleanupInvitationHandler;
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -259,7 +263,8 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
                 groupManagerV2,
                 snodeClock,
                 textSecurePreferences,
-                legacyClosedGroupPollerV2
+                legacyClosedGroupPollerV2,
+                legacyGroupDeprecationManager
                 );
         callMessageProcessor = new CallMessageProcessor(this, textSecurePreferences, ProcessLifecycleOwner.get().getLifecycle(), storage);
         Log.i(TAG, "onCreate()");
@@ -290,6 +295,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         removeGroupMemberHandler.start();
         destroyedGroupSync.start();
         adminStateSync.start();
+        cleanupInvitationHandler.start();
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

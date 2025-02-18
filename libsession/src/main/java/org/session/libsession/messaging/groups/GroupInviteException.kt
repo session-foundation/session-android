@@ -32,7 +32,7 @@ class GroupInviteException(
 
     fun format(context: Context, storage: StorageProtocol): CharSequence {
         val getInviteeName = { accountId: String ->
-            storage.getContactWithAccountID(accountId)?.name ?: truncateIdForDisplay(accountId)
+            storage.getContactNameWithAccountID(accountId)
         }
 
         val first = inviteeAccountIds.first().let(getInviteeName)

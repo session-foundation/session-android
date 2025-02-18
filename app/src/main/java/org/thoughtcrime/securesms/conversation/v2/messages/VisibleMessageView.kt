@@ -27,22 +27,18 @@ import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Date
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.math.abs
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import network.loki.messenger.databinding.ViewVisibleMessageBinding
 import network.loki.messenger.databinding.ViewstubVisibleMessageMarkerContainerBinding
+import network.loki.messenger.libsession_util.getOrNull
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
 import org.session.libsession.utilities.ViewUtil
@@ -51,6 +47,7 @@ import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -59,16 +56,20 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
-import network.loki.messenger.libsession_util.getOrNull
-import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
 import org.thoughtcrime.securesms.util.toPx
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.math.abs
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 private const val TAG = "VisibleMessageView"
 
@@ -156,11 +157,11 @@ class VisibleMessageView : FrameLayout {
         glide: RequestManager = Glide.with(this),
         searchQuery: String? = null,
         contact: Contact? = null,
+        groupId: AccountId? = null,
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
-        lastSentMessageId: Long
+        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
     ) {
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
@@ -238,7 +239,12 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
             if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = contact?.displayName(contactContext) ?: senderAccountID
+        binding.senderNameTextView.text = MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(
+            contact = contact,
+            accountID = senderAccountID,
+            contactContext = contactContext,
+            groupId = groupId
+        )
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing

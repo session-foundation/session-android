@@ -34,7 +34,8 @@ class DebugMenuViewModel @Inject constructor(
             environments = Environment.entries.map { it.label },
             snackMessage = null,
             showEnvironmentWarningDialog = false,
-            showEnvironmentLoadingDialog = false,
+            showLoadingDialog = false,
+            showDeprecatedStateWarningDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
             hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
@@ -47,6 +48,8 @@ class DebugMenuViewModel @Inject constructor(
         get() = _uiState
 
     private var temporaryEnv: Environment? = null
+
+    private var temporaryDeprecatedState: LegacyGroupDeprecationManager.DeprecationState? = null
 
     fun onCommand(command: Commands) {
         when (command) {
@@ -72,8 +75,19 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.OverrideDeprecationState -> {
-                deprecationManager.overrideDeprecationState(command.state)
-                _uiState.value = _uiState.value.copy(forceDeprecationState = command.state)
+                if(temporaryDeprecatedState == null) return
+
+                _uiState.value = _uiState.value.copy(forceDeprecationState = temporaryDeprecatedState,
+                    showLoadingDialog = true)
+
+                deprecationManager.overrideDeprecationState(temporaryDeprecatedState)
+
+
+                // restart app
+                viewModelScope.launch {
+                    delay(500) // giving time to save data
+                    ApplicationContext.getInstance(application).restartApplication()
+                }
             }
 
             is Commands.OverrideDeprecatedTime -> {
@@ -85,6 +99,12 @@ class DebugMenuViewModel @Inject constructor(
                 deprecationManager.overrideDeprecatingStartTime(command.time)
                 _uiState.value = _uiState.value.copy(deprecatingStartTime = command.time)
             }
+
+            is Commands.HideDeprecationChangeDialog ->
+                _uiState.value = _uiState.value.copy(showDeprecatedStateWarningDialog = false)
+
+            is Commands.ShowDeprecationChangeDialog ->
+                showDeprecatedStateWarningDialog(command.state)
         }
     }
 
@@ -103,7 +123,7 @@ class DebugMenuViewModel @Inject constructor(
         // show a loading state
         _uiState.value = _uiState.value.copy(
             showEnvironmentWarningDialog = false,
-            showEnvironmentLoadingDialog = true
+            showLoadingDialog = true
         )
 
         // clear remote and local data, then restart the app
@@ -117,7 +137,7 @@ class DebugMenuViewModel @Inject constructor(
                 } else {
                     _uiState.value = _uiState.value.copy(
                         showEnvironmentWarningDialog = false,
-                        showEnvironmentLoadingDialog = false
+                        showLoadingDialog = false
                     )
                     Log.e(TAG, "Failed to force sync when deleting data")
                     _uiState.value = _uiState.value.copy(snackMessage = "Sorry, something went wrong...")
@@ -127,12 +147,21 @@ class DebugMenuViewModel @Inject constructor(
         }
     }
 
+    private fun showDeprecatedStateWarningDialog(state: LegacyGroupDeprecationManager.DeprecationState?) {
+        if(state == _uiState.value.forceDeprecationState) return
+
+        temporaryDeprecatedState = state
+
+        _uiState.value = _uiState.value.copy(showDeprecatedStateWarningDialog = true)
+    }
+
     data class UIState(
         val currentEnvironment: String,
         val environments: List<String>,
         val snackMessage: String?,
         val showEnvironmentWarningDialog: Boolean,
-        val showEnvironmentLoadingDialog: Boolean,
+        val showLoadingDialog: Boolean,
+        val showDeprecatedStateWarningDialog: Boolean,
         val hideMessageRequests: Boolean,
         val hideNoteToSelf: Boolean,
         val forceDeprecationState: LegacyGroupDeprecationManager.DeprecationState?,
@@ -147,7 +176,9 @@ class DebugMenuViewModel @Inject constructor(
         object HideEnvironmentWarningDialog : Commands()
         data class HideMessageRequest(val hide: Boolean) : Commands()
         data class HideNoteToSelf(val hide: Boolean) : Commands()
-        data class OverrideDeprecationState(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
+        data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
+        object HideDeprecationChangeDialog : Commands()
+        object OverrideDeprecationState : Commands()
         data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands()
         data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
     }

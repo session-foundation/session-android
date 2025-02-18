@@ -7,28 +7,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.RelativeLayout
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
 import org.session.libsession.avatars.ContactColors
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.avatars.ResourceContactPhoto
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
-import dagger.hilt.android.AndroidEntryPoint
-import org.session.libsession.database.StorageProtocol
-import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,9 +41,6 @@ class ProfilePictureView @JvmOverloads constructor(
     var additionalPublicKey: String? = null
     var additionalDisplayName: String? = null
     var recipient: Recipient? = null
-
-    @Inject
-    lateinit var contactDatabase: SessionContactDatabase
 
     @Inject
     lateinit var groupDatabase: GroupDatabase
@@ -91,8 +83,7 @@ class ProfilePictureView @JvmOverloads constructor(
         isGroupsV2Recipient: Boolean = false,
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: contactDatabase.getContactWithAccountID(publicKey)?.displayName(Contact.ContactContext.REGULAR)
-            ?: publicKey
+            ?: storage.getContactNameWithAccountID(publicKey)
 
         if (isLegacyGroupRecipient || isGroupsV2Recipient) {
             val members = if (isLegacyGroupRecipient) {

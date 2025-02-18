@@ -146,7 +146,7 @@ fun ContentView.bindModel(query: String?, model: Message) = binding.apply {
 }
 
 fun Recipient.getSearchName(): String =
-    name?.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
+    name.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
     ?: address.serialize().let(::truncateIdForDisplay)
 
 fun Contact.getSearchName(): String =

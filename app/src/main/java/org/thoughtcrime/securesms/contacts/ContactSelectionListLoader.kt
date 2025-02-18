@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
 import network.loki.messenger.R
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.util.ContactUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.AsyncLoader
@@ -11,7 +12,12 @@ sealed class ContactSelectionListItem {
     class Contact(val recipient: Recipient) : ContactSelectionListItem()
 }
 
-class ContactSelectionListLoader(context: Context, val mode: Int, val filter: String?) : AsyncLoader<List<ContactSelectionListItem>>(context) {
+class ContactSelectionListLoader(
+    context: Context,
+    val mode: Int,
+    val filter: String?,
+    private val deprecationManager: LegacyGroupDeprecationManager,
+) : AsyncLoader<List<ContactSelectionListItem>>(context) {
 
     object DisplayMode {
         const val FLAG_CONTACTS = 1
@@ -51,7 +57,11 @@ class ContactSelectionListLoader(context: Context, val mode: Int, val filter: St
     }
 
     private fun getGroups(contacts: List<Recipient>): List<ContactSelectionListItem> {
-        return getItems(contacts, context.getString(R.string.conversationsGroups)) { it.address.isGroup }
+        return getItems(contacts, context.getString(R.string.conversationsGroups)) {
+            val isDeprecatedLegacyGroup = it.isLegacyGroupRecipient &&
+                    deprecationManager.isDeprecated
+            it.address.isGroup && !isDeprecatedLegacyGroup
+        }
     }
 
     private fun getCommunities(contacts: List<Recipient>): List<ContactSelectionListItem> {

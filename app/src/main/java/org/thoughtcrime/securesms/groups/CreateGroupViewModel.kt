@@ -22,7 +22,6 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import javax.inject.Inject
 
 
 @HiltViewModel(assistedFactory = CreateGroupViewModel.Factory::class)
@@ -68,12 +67,13 @@ class CreateGroupViewModel @AssistedInject constructor(
                         mutableGroupName.value = group.title
                         val myPublicKey = storage.getUserPublicKey()
 
-                        selectContactsViewModel.selectAccountIDs(
-                            group.members
-                                .asSequence()
-                                .filter { it.serialize() != myPublicKey }
-                                .mapTo(mutableSetOf()) { AccountId(it.serialize()) }
-                        )
+                        val accountIDs = group.members
+                            .asSequence()
+                            .filter { it.serialize() != myPublicKey }
+                            .mapTo(mutableSetOf()) { AccountId(it.serialize()) }
+
+                        selectContactsViewModel.selectAccountIDs(accountIDs)
+                        selectContactsViewModel.setManuallyAddedContacts(accountIDs)
                     }
                 } finally {
                     mutableIsLoading.value = false

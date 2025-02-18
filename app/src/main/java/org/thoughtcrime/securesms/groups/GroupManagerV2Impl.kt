@@ -135,7 +135,7 @@ class GroupManagerV2Impl @Inject constructor(
                 for (member in memberAsRecipients) {
                     configs.groupMembers.set(
                         configs.groupMembers.getOrConstruct(member.address.serialize()).apply {
-                            setName(member.name.orEmpty())
+                            setName(member.name)
                             setProfilePic(member.profileAvatar?.let { url ->
                                 member.profileKey?.let { key -> UserPic(url, key) }
                             } ?: UserPic.DEFAULT)
@@ -206,7 +206,8 @@ class GroupManagerV2Impl @Inject constructor(
     override suspend fun inviteMembers(
         group: AccountId,
         newMembers: List<AccountId>,
-        shareHistory: Boolean
+        shareHistory: Boolean,
+        isReinvite: Boolean
     ): Unit = scope.launchAndWait(group, "Invite members") {
         val adminKey = requireAdminAccess(group)
         val groupAuth = OwnedSwarmAuth.ofClosedGroup(group, adminKey)
@@ -238,7 +239,6 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupMembers.set(toSet)
             }
 
-            // Depends on whether we want to share history, we may need to rekey or just adding rsupplement keys
             if (shareHistory) {
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
@@ -253,10 +253,9 @@ class GroupManagerV2Impl @Inject constructor(
                         auth = groupAuth,
                     )
                 )
-            } else {
-                configs.rekey()
             }
 
+            configs.rekey()
             newMembers.map { configs.groupKeys.getSubAccountToken(it) }
         }
 
@@ -267,7 +266,9 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         // Send a group update message to the group telling members someone has been invited
-        sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+        if (!isReinvite) {
+            sendGroupUpdateForAddingMembers(group, adminKey, newMembers)
+        }
 
         // Call the API
         try {
@@ -276,6 +277,9 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Make sure every request is successful
             response.requireAllRequestsSuccessful("Failed to invite members")
+
+            // Wait for the group configs to be pushed
+            configFactory.waitUntilGroupConfigsPushed(group)
         } catch (e: Exception) {
             // Update every member's status to "invite failed" and return group name
             val groupName = configFactory.withMutableGroupConfigs(group) { configs ->
@@ -495,7 +499,8 @@ class GroupManagerV2Impl @Inject constructor(
 
     override suspend fun promoteMember(
         group: AccountId,
-        members: List<AccountId>
+        members: List<AccountId>,
+        isRepromote: Boolean
     ): Unit = scope.launchAndWait(group, "Promote member") {
         withContext(SupervisorJob()) {
             val adminKey = requireAdminAccess(group)
@@ -507,6 +512,32 @@ class GroupManagerV2Impl @Inject constructor(
                     .forEach(configs.groupMembers::set)
 
                 configs.groupInfo.getName()
+            }
+
+            // Build a group update message to the group telling members someone has been promoted
+            val timestamp = clock.currentTimeMills()
+            val signature = SodiumUtilities.sign(
+                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                adminKey
+            )
+
+            val message = GroupUpdated(
+                GroupUpdateMessage.newBuilder()
+                    .setMemberChangeMessage(
+                        GroupUpdateMemberChangeMessage.newBuilder()
+                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
+                            .setAdminSignature(ByteString.copyFrom(signature))
+                    )
+                    .build()
+            ).apply {
+                sentTimestamp = timestamp
+            }
+
+            if (!isRepromote) {
+                // Insert the message locally immediately so we can see the incoming change
+                // The same message will be sent later to the group
+                storage.insertGroupInfoChange(message, group)
             }
 
             // Send out the promote message to the members concurrently
@@ -522,10 +553,12 @@ class GroupManagerV2Impl @Inject constructor(
 
             val promotionDeferred = members.associateWith { member ->
                 async {
-                    MessageSender.sendAndAwait(
+                    // The promotion message shouldn't be persisted to avoid being retried automatically
+                    MessageSender.sendNonDurably(
                         message = promoteMessage,
                         address = Address.fromSerialized(member.hexString),
-                    )
+                        isSyncMessage = false,
+                    ).await()
                 }
             }
 
@@ -550,27 +583,10 @@ class GroupManagerV2Impl @Inject constructor(
                     .forEach(configs.groupMembers::set)
             }
 
-            // Send a group update message to the group telling members someone has been promoted
-            val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-                adminKey
-            )
-            val message = GroupUpdated(
-                GroupUpdateMessage.newBuilder()
-                    .setMemberChangeMessage(
-                        GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.map { it.hexString })
-                            .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
-                            .setAdminSignature(ByteString.copyFrom(signature))
-                    )
-                    .build()
-            ).apply {
-                sentTimestamp = timestamp
-            }
 
-            MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
-            storage.insertGroupInfoChange(message, group)
+            if (!isRepromote) {
+                MessageSender.sendAndAwait(message, Address.fromSerialized(group.hexString))
+            }
         }
     }
     /**
@@ -946,8 +962,8 @@ class GroupManagerV2Impl @Inject constructor(
                 sentTimestamp = timestamp
             }
 
-            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
             storage.insertGroupInfoChange(message, groupId)
+            MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
         }
 
     override suspend fun requestMessageDeletion(

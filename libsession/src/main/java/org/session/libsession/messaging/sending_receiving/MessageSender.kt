@@ -16,7 +16,7 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.control.ClosedGroupControlMessage
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -129,7 +129,7 @@ object MessageSender {
         // • a sync message
         // • a closed group control message of type `new`
         var isNewClosedGroupControlMessage = false
-        if (message is ClosedGroupControlMessage && message.kind is ClosedGroupControlMessage.Kind.New) isNewClosedGroupControlMessage =
+        if (message is LegacyGroupControlMessage && message.kind is LegacyGroupControlMessage.Kind.New) isNewClosedGroupControlMessage =
             true
         if (isSelfSend
             && message !is ConfigurationMessage
@@ -154,6 +154,10 @@ object MessageSender {
                 proto.mergeDataMessage(message.profile.toProto())
             }
         }
+
+        // Set the timestamp on the content so it can be verified against envelope timestamp
+        proto.setSigTimestamp(message.sentTimestamp!!)
+
         // Serialize the protobuf
         val plaintext = PushTransportDetails.getPaddedMessageBody(proto.build().toByteArray())
 
@@ -291,7 +295,7 @@ object MessageSender {
         isSyncMessage: Boolean
     ): Long? {
         // For ClosedGroupControlMessage or GroupUpdateMemberLeftMessage, the expiration timer doesn't apply
-        if (message is ClosedGroupControlMessage || (
+        if (message is LegacyGroupControlMessage || (
                     message is GroupUpdated && (
                             message.inner.hasMemberLeftMessage() ||
                             message.inner.hasInviteMessage() ||
@@ -366,6 +370,10 @@ object MessageSender {
             if (message is VisibleMessage) {
                 message.profile = storage.getUserProfile()
             }
+            val content = message.toProto()!!.toBuilder()
+                .setSigTimestamp(message.sentTimestamp!!)
+                .build()
+
             when (destination) {
                 is Destination.OpenGroup -> {
                     val whisperMods = if (destination.whisperTo.isNullOrEmpty() && destination.whisperMods) "mods" else null
@@ -374,7 +382,7 @@ object MessageSender {
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = message.toProto()?.toByteArray()!!
+                    val messageBody = content.toByteArray()
                     val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
                     val openGroupMessage = OpenGroupMessage(
                         sender = message.sender,
@@ -395,7 +403,7 @@ object MessageSender {
                     if (message !is VisibleMessage || !message.isValid()) {
                         throw Error.InvalidMessage
                     }
-                    val messageBody = message.toProto()?.toByteArray()!!
+                    val messageBody = content.toByteArray()
                     val plaintext = PushTransportDetails.getPaddedMessageBody(messageBody)
                     val ciphertext = MessageEncrypter.encryptBlinded(
                         plaintext,

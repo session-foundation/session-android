@@ -36,9 +36,11 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
   private MessageId messageId;
   private boolean isUserModerator;
   private EmojiCount emojiData;
+  private final boolean canRemove;
 
-  public ReactionRecipientsAdapter(ReactionViewPagerAdapter.Listener callback) {
+  public ReactionRecipientsAdapter(ReactionViewPagerAdapter.Listener callback, boolean canRemove) {
     this.callback = callback;
+      this.canRemove = canRemove;
   }
 
   public void updateData(MessageId messageId, EmojiCount newData, boolean isUserModerator) {
@@ -70,7 +72,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
       case FOOTER_TYPE:
         return new FooterViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler_footer, parent, false));
       default:
-        return new RecipientViewHolder(callback, LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recipient_item, parent, false));
+        return new RecipientViewHolder(callback, LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recipient_item, parent, false), canRemove);
     }
   }
 
@@ -137,10 +139,12 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
     private final ProfilePictureView avatar;
     private final TextView recipient;
     private final ImageView remove;
+    private final boolean canRemove;
 
-    public RecipientViewHolder(ReactionViewPagerAdapter.Listener callback, @NonNull View itemView) {
+    public RecipientViewHolder(ReactionViewPagerAdapter.Listener callback, @NonNull View itemView, boolean canRemove) {
       super(itemView);
       this.callback = callback;
+        this.canRemove = canRemove;
       avatar = itemView.findViewById(R.id.reactions_bottom_view_avatar);
       recipient = itemView.findViewById(R.id.reactions_bottom_view_recipient_name);
       remove = itemView.findViewById(R.id.reactions_bottom_view_recipient_remove);
@@ -156,12 +160,9 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
 
       if (reaction.getSender().isLocalNumber()) {
         this.recipient.setText(R.string.you);
-        this.remove.setVisibility(View.VISIBLE);
+        this.remove.setVisibility(canRemove ? View.VISIBLE : View.GONE);
       } else {
         String name = reaction.getSender().getName();
-        if (name == null){
-          name = truncateIdForDisplay(reaction.getSender().getAddress().serialize());
-        }
         this.recipient.setText(name);
         this.remove.setVisibility(View.GONE);
       }

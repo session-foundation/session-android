@@ -343,6 +343,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val adapter = ConversationAdapter(
             this,
             cursor,
+            viewModel.recipient,
             storage.getLastSeen(viewModel.threadId),
             reverseMessageList,
             onItemPress = { message, position, view, event ->
@@ -352,9 +353,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 handleSwipeToReply(message)
             },
             onItemLongPress = { message, position, view ->
-                if (!viewModel.isMessageRequestThread &&
-                    viewModel.canReactToMessages
-                ) {
+                if (!viewModel.isMessageRequestThread) {
                     showConversationReaction(message, view)
                 } else {
                     selectMessage(message, position)
@@ -873,6 +872,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         binding.outdatedGroupBanner.isVisible = true
                         binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
                             .apply {
+                                // Append a space as a placeholder
+                                append(" ")
+                                
                                 // we need to add the inline icon
                                 val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_square_arrow_up_right)!!
                                 val imageSize = toPx(10, resources)
@@ -892,7 +894,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             }
 
                         binding.outdatedGroupBanner.setOnClickListener {
-                            showOpenUrlDialog("https://getsession.org/blog/session-groups-v2")
+                            showOpenUrlDialog("https://getsession.org/groups")
                         }
                     }
                 }
@@ -1003,7 +1005,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val recipient = viewModel.recipient ?: return false
-        if (!viewModel.isMessageRequestThread) {
+        if (viewModel.showOptionsMenu) {
             ConversationMenuHelper.onPrepareOptionsMenu(
                 menu = menu,
                 inflater = menuInflater,
@@ -1416,7 +1418,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun onDeselect(message: MessageRecord, position: Int, actionMode: ActionMode) {
         adapter.toggleSelection(message, position)
-        val actionModeCallback = ConversationActionModeCallback(adapter, viewModel.threadId, this)
+        val actionModeCallback = ConversationActionModeCallback(
+            adapter = adapter,
+            threadID = viewModel.threadId,
+            context = this,
+            deprecationManager = viewModel.legacyGroupDeprecationManager
+        )
         actionModeCallback.delegate = this
         actionModeCallback.updateActionModeMenu(actionMode.menu)
         if (adapter.selectedItems.isEmpty()) {
@@ -1435,7 +1442,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // `position` is the adapter position; not the visual position
     private fun selectMessage(message: MessageRecord, position: Int) {
         val actionMode = this.actionMode
-        val actionModeCallback = ConversationActionModeCallback(adapter, viewModel.threadId, this)
+        val actionModeCallback = ConversationActionModeCallback(
+            adapter = adapter,
+            threadID = viewModel.threadId,
+            context = this,
+            deprecationManager = viewModel.legacyGroupDeprecationManager
+        )
         actionModeCallback.delegate = this
         searchViewItem?.collapseActionView()
         if (actionMode == null) { // Nothing should be selected if this is the case
@@ -1775,9 +1787,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             smsDb.getMessageRecord(messageId.id)
         }
-        if (userWasSender) {
+        if (userWasSender && viewModel.canRemoveReaction) {
             sendEmojiRemoval(emoji, message)
-        } else {
+        } else if (!userWasSender && viewModel.canReactToMessages) {
             sendEmojiReaction(emoji, message)
         }
     }
@@ -1788,7 +1800,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
                 OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
             } ?: false
-            val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji)
+            val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)
         }
     }

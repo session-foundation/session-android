@@ -40,7 +40,7 @@ class CreateLegacyGroupViewModel @Inject constructor(
 
     fun filter(query: String): List<Recipient> {
         return _recipients.value?.filter {
-            it.address.serialize().contains(query, ignoreCase = true) || it.name?.contains(query, ignoreCase = true) == true
+            it.address.serialize().contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
         } ?: emptyList()
     }
 }

@@ -320,7 +320,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     if (notify) notifyListeners();
   }
 
-  public synchronized @Nullable String getName() {
+  public synchronized @NonNull String getName() {
     StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
     String accountID = this.address.toString();
     if (isGroupOrCommunityRecipient()) {
@@ -335,13 +335,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       }
     } else if (isCommunityInboxRecipient()){
       String inboxID = GroupUtil.getDecodedOpenGroupInboxAccountId(accountID);
-      Contact contact = storage.getContactWithAccountID(inboxID);
-      if (contact == null) return accountID;
-      return contact.displayName(Contact.ContactContext.REGULAR);
+      return storage.getContactNameWithAccountID(inboxID, null, Contact.ContactContext.OPEN_GROUP);
     } else {
-      Contact contact = storage.getContactWithAccountID(accountID);
-      if (contact == null) return null;
-      return contact.displayName(Contact.ContactContext.REGULAR);
+      return storage.getContactNameWithAccountID(accountID, null, Contact.ContactContext.REGULAR);
     }
   }
 
@@ -523,14 +519,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   }
 
   public synchronized String toShortString() {
-    String name = getName();
-    if (name != null) return name;
-    String accountId = address.serialize();
-    if (accountId.length() < 4) return accountId; // so substrings don't throw out of bounds exceptions
-    int takeAmount = 4;
-    String start = accountId.substring(0, takeAmount);
-    String end = accountId.substring(accountId.length()-takeAmount);
-    return start+"..."+end;
+    return getName();
   }
 
   public synchronized @NonNull Drawable getFallbackContactPhotoDrawable(Context context, boolean inverted) {

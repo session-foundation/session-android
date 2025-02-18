@@ -38,7 +38,6 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -64,7 +63,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
     private val recipientDatabase: RecipientDatabase,
-    private val mmsDatabase: MmsDatabase,
     private val pollerFactory: PollerFactory,
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
@@ -214,7 +212,7 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private val MmsMessageRecord.containsAttachment: Boolean
-        get() = this.slideDeck.slides.isNotEmpty() && this.slideDeck.audioSlide == null
+        get() = this.slideDeck.slides.isNotEmpty() && !this.slideDeck.isVoiceNote
 
     private data class UpdateContacts(val contacts: List<Contact>)
 

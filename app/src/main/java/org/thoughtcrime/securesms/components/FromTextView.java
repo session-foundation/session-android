@@ -56,7 +56,7 @@ public class FromTextView extends EmojiTextView {
 
     if (recipient.isLocalNumber()) {
       builder.append(getContext().getString(R.string.noteToSelf));
-    } else if (recipient.getName() == null && !TextUtils.isEmpty(recipient.getProfileName())) {
+    } else if (!TextUtils.isEmpty(recipient.getProfileName())) {
       SpannableString profileName = new SpannableString(" (~" + recipient.getProfileName() + ") ");
       profileName.setSpan(new CenterAlignedRelativeSizeSpan(0.75f), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
       profileName.setSpan(new TypefaceSpan("sans-serif-light"), 0, profileName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

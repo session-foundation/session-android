@@ -20,6 +20,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -32,6 +34,7 @@ import kotlin.math.min
 class ConversationAdapter(
     context: Context,
     cursor: Cursor,
+    conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
@@ -53,7 +56,10 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
-    private var lastSentMessageId: Long = -1L
+
+    private val groupId = if(conversation?.isGroupV2Recipient == true)
+        AccountId(conversation.address.serialize())
+    else null
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -134,11 +140,12 @@ class ConversationAdapter(
                     glide,
                     searchQuery,
                     contact,
+                    // we pass in the groupId for groupV2 to use for determining the name of the members
+                    groupId,
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload,
-                    lastSentMessageId
+                    onAttachmentNeedsDownload
                 )
 
                 if (!message.isDeleted) {

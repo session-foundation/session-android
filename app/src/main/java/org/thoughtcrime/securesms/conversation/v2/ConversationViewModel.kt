@@ -196,9 +196,25 @@ class ConversationViewModel(
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
+    val showOptionsMenu: Boolean
+        get() {
+            if (isMessageRequestThread) {
+                return false
+            }
+
+            return !isDeprecatedLegacyGroup
+        }
+
+    private val isDeprecatedLegacyGroup: Boolean
+        get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
+
     val canReactToMessages: Boolean
         // allow reactions if the open group is null (normal conversations) or the open group's capabilities include reactions
         get() = (openGroup == null || OpenGroupApi.Capability.REACTIONS.name.lowercase() in serverCapabilities)
+                && !isDeprecatedLegacyGroup
+
+    val canRemoveReaction: Boolean
+        get() = canReactToMessages
 
     val legacyGroupBanner: StateFlow<CharSequence?> = combine(
         legacyGroupDeprecationManager.deprecationState,
@@ -222,13 +238,13 @@ class ConversationViewModel(
 
             else -> null
         }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val showRecreateGroupButton: StateFlow<Boolean> =
         combine(isAdmin, legacyGroupDeprecationManager.deprecationState) { admin, state ->
             admin && recipient?.isLegacyGroupRecipient == true
                     && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
-        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -1033,6 +1049,7 @@ class ConversationViewModel(
             factory = configFactory,
             storage = storage,
             groupManager = groupManagerV2,
+            deprecationManager = legacyGroupDeprecationManager,
         )
 
         if (inProgress != null) {

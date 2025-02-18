@@ -20,7 +20,6 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
-import org.session.libsession.utilities.getMemberName
 import org.session.libsignal.utilities.AccountId
 import java.util.EnumSet
 
@@ -78,7 +77,7 @@ abstract class BaseGroupMembersViewModel (
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            member.getMemberName(configFactory)
+            storage.getContactNameWithAccountID(member.accountId.hexString, groupId)
         }
 
         val highlightStatus = status in EnumSet.of(

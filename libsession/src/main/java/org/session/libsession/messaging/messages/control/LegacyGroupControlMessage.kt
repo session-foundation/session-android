@@ -17,7 +17,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 
-class ClosedGroupControlMessage() : ControlMessage() {
+class LegacyGroupControlMessage() : ControlMessage() {
     var kind: Kind? = null
     var groupID: String? = null
 
@@ -85,7 +85,7 @@ class ClosedGroupControlMessage() : ControlMessage() {
     companion object {
         const val TAG = "ClosedGroupControlMessage"
 
-        fun fromProto(proto: SignalServiceProtos.Content): ClosedGroupControlMessage? =
+        fun fromProto(proto: SignalServiceProtos.Content): LegacyGroupControlMessage? =
             proto.takeIf { it.hasDataMessage() }?.dataMessage
                 ?.takeIf { it.hasClosedGroupControlMessage() }?.closedGroupControlMessage
                 ?.run {
@@ -102,7 +102,7 @@ class ClosedGroupControlMessage() : ControlMessage() {
                         MEMBERS_REMOVED -> Kind.MembersRemoved(membersList)
                         MEMBER_LEFT -> Kind.MemberLeft()
                         else -> null
-                    }?.let(::ClosedGroupControlMessage)
+                    }?.let(::LegacyGroupControlMessage)
              }
     }
 

@@ -6,6 +6,7 @@ import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.GroupScope
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -29,6 +30,7 @@ class MessagingModuleConfiguration(
     val clock: SnodeClock,
     val preferences: TextSecurePreferences,
     val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
+    val deprecationManager: LegacyGroupDeprecationManager,
 ) {
 
     companion object {

@@ -185,13 +185,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.name!!
+                                        NAME_KEY to message.individualRecipient.name
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsYouMissedCallPermissions,
-                                        NAME_KEY to message.individualRecipient.name!!
+                                        NAME_KEY to message.individualRecipient.name
                                     )
                                     text(bodyTxt)
 
@@ -214,13 +214,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.name!!
+                                        NAME_KEY to message.individualRecipient.name
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsMicrophonePermissionsRequired,
-                                        NAME_KEY to message.individualRecipient.name!!
+                                        NAME_KEY to message.individualRecipient.name
                                     )
                                     text(bodyTxt)
 

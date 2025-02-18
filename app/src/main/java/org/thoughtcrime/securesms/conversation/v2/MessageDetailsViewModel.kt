@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
@@ -41,7 +42,8 @@ class MessageDetailsViewModel @Inject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val repository: ConversationRepository
+    private val repository: ConversationRepository,
+    private val deprecationManager: LegacyGroupDeprecationManager,
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -75,15 +77,20 @@ class MessageDetailsViewModel @Inject constructor(
             state.value = record.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
+                val recipient = threadDb.getRecipientForThreadId(threadId)!!
+                val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
+                        deprecationManager.isDeprecated
+
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
                     record = record,
                     sent = dateSent.let(::Date).toString().let { TitledText(R.string.sent, it) },
                     received = dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) },
                     error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.theError, it) },
-                    senderInfo = individualRecipient.run { name?.let { TitledText(it, address.serialize()) } },
+                    senderInfo = individualRecipient.run { TitledText(name, address.serialize()) },
                     sender = individualRecipient,
-                    thread = threadDb.getRecipientForThreadId(threadId)!!,
+                    thread = recipient,
+                    readOnly = isDeprecatedLegacyGroup,
                 )
             }
         }
@@ -155,9 +162,11 @@ data class MessageDetailsState(
     val senderInfo: TitledText? = null,
     val sender: Recipient? = null,
     val thread: Recipient? = null,
+    val readOnly: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)
-    val canReply = record?.isOpenGroupInvitation != true
+    val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true
+    val canDelete: Boolean get() = !readOnly
 }
 
 data class Attachment(

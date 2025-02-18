@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -79,33 +80,57 @@ class EditGroupViewModel @AssistedInject constructor(
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId }.orEmpty()
 
     fun onContactSelected(contacts: Set<AccountId>) {
-        performGroupOperation(errorMessage = { err ->
-            if (err is GroupInviteException) {
-                err.format(context, storage).toString()
-            } else {
-                null
+        performGroupOperation(
+            showLoading = false,
+            errorMessage = { err ->
+                if (err is GroupInviteException) {
+                    err.format(context, storage).toString()
+                } else {
+                    null
+                }
             }
-        }) {
+        ) {
             groupManager.inviteMembers(
                 groupId,
                 contacts.toList(),
-                shareHistory = false
+                shareHistory = false,
+                isReinvite = false,
             )
         }
     }
 
     fun onResendInviteClicked(contactSessionId: AccountId) {
-        onContactSelected(setOf(contactSessionId))
+        performGroupOperation(
+            showLoading = false,
+            errorMessage = { err ->
+                if (err is GroupInviteException) {
+                    err.format(context, storage).toString()
+                } else {
+                    null
+                }
+            }
+        ) {
+            val historyShared = configFactory.withGroupConfigs(groupId) {
+                it.groupMembers.getOrNull(contactSessionId.hexString)
+            }?.supplement == true
+
+            groupManager.inviteMembers(
+                groupId,
+                listOf(contactSessionId),
+                shareHistory = historyShared,
+                isReinvite = true,
+            )
+        }
     }
 
     fun onPromoteContact(memberSessionId: AccountId) {
-        performGroupOperation {
-            groupManager.promoteMember(groupId, listOf(memberSessionId))
+        performGroupOperation(showLoading = false) {
+            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = false)
         }
     }
 
     fun onRemoveContact(contactSessionId: AccountId, removeMessages: Boolean) {
-        performGroupOperation {
+        performGroupOperation(showLoading = false) {
             groupManager.removeMembers(
                 groupAccountId = groupId,
                 removedMembers = listOf(contactSessionId),
@@ -115,7 +140,9 @@ class EditGroupViewModel @AssistedInject constructor(
     }
 
     fun onResendPromotionClicked(memberSessionId: AccountId) {
-        onPromoteContact(memberSessionId)
+        performGroupOperation(showLoading = false) {
+            groupManager.promoteMember(groupId, listOf(memberSessionId), isRepromote = true)
+        }
     }
 
     fun onEditNameClicked() {
@@ -170,10 +197,13 @@ class EditGroupViewModel @AssistedInject constructor(
      * This is a helper function that encapsulates the common error handling and progress tracking.
      */
     private fun performGroupOperation(
+        showLoading: Boolean = true,
         errorMessage: ((Throwable) -> String?)? = null,
         operation: suspend () -> Unit) {
         viewModelScope.launch {
-            mutableInProgress.value = true
+            if (showLoading) {
+                mutableInProgress.value = true
+            }
 
             // We need to use GlobalScope here because we don't want
             // any group operation to be cancelled when the view model is cleared.
@@ -188,7 +218,9 @@ class EditGroupViewModel @AssistedInject constructor(
                 mutableError.value = errorMessage?.invoke(e)
                     ?: context.getString(R.string.errorUnknown)
             } finally {
-                mutableInProgress.value = false
+                if (showLoading) {
+                    mutableInProgress.value = false
+                }
             }
         }
     }
