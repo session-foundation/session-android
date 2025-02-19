@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">நீங்கள் <b>{group_name}</b> இல் ஒரே நிர்வாகியாக உள்ளீர்கள்.\n\n குழு உறுப்பினர்களும் அமைப்புகளும் நிர்வாகியில்லாமல் மாற்ற முடியாது.</string>
     <string name="groupPromotedYou"><b>நீங்கள்</b> நிர்வாகியாக உயர்த்தப்பட்டீர்கள்.</string>
     <string name="groupPromotedYouMultiple"><b>நீங்கள்</b> மற்றும் <b>{count} பிறர்</b> நிர்வாகியாக உயர்த்தப்பட்டீர்கள்.</string>
-    <string name="groupPromotedYouTwo"><b>நீங்கள்</b> மற்றும் <b>{name}</b> நிர்வாகியாக உயர்த்தப்பட்டீர்கள்.</string>
     <string name="groupRemoveDescription">நீங்கள் <b>{name}</b> ஐ <b>{group_name}</b> இல் இருந்து அகற்ற விரும்புகிறீர்களா?</string>
     <string name="groupRemoveDescriptionMultiple">நீங்கள் <b>{name}</b> மற்றும் <b>{count} மற்றவர்களை</b> <b>{group_name}</b> இல் இருந்து அகற்ற விரும்புகிறீர்களா?</string>
     <string name="groupRemoveDescriptionTwo">நீங்கள் <b>{name}</b> மற்றும் <b>{other_name}</b> ஐ <b>{group_name}</b> இல் இருந்து அகற்ற விரும்புகிறீர்களா?</string>

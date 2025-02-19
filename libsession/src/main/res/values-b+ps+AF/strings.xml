@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">تاسو یوازې په <b>{group_name}</b> کې اډمین یاست.\n\nد ګروپ غړي او ترتیبات نشي بدلیدلی له اډمین پرته.</string>
     <string name="groupPromotedYou"><b>تاسو</b> د اډمین په توګه لوړ شوي.</string>
     <string name="groupPromotedYouMultiple"><b>تاسو</b> او <b>{count} نور</b> اډمین ته پورته شوی وو.</string>
-    <string name="groupPromotedYouTwo"><b>تاسو</b> او <b>{name}</b> اډمین ته پورته شوی.</string>
     <string name="groupRemoveDescription">ایا تاسو غواړئ <b>{name}</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>
     <string name="groupRemoveDescriptionMultiple">ایا تاسو غواړئ <b>{name}</b> او <b>{count} نور</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>
     <string name="groupRemoveDescriptionTwo">ایا تاسو غواړئ <b>{name}</b> او <b>{other_name}</b> له <b>{group_name}</b> څخه لرې کړئ؟</string>

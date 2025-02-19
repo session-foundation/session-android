@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Olet ainoa ylläpitäjä ryhmässä <b>{group_name}</b>.\n\nRyhmän jäseniä ja asetuksia ei voi muuttaa ilman ylläpitäjää.</string>
     <string name="groupPromotedYou"><b>Sinut</b> ylennettiin ylläpitäjäksi.</string>
     <string name="groupPromotedYouMultiple"><b>Sinä</b> ja <b>{count} muuta</b> ylennettiin ylläpitäjiksi.</string>
-    <string name="groupPromotedYouTwo"><b>Sinä</b> ja <b>{name}</b> ylennettiin ylläpitäjiksi.</string>
     <string name="groupRemoveDescription">Haluatko poistaa <b>{name}</b> ryhmästä <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Haluatko poistaa <b>{name}</b> ja <b>{count} muuta</b> ryhmästä <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Haluatko poistaa <b>{name}</b> ja <b>{other_name}</b> ryhmästä <b>{group_name}</b>?</string>

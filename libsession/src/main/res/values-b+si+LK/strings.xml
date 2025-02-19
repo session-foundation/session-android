@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">ඔබ <b>{group_name}</b> හි එකම පරිපාලකයෙක් වෙයි.\n\nසමූහ සාමාජිකයන් හා සැකසුම් පරිපාලකයකු නොමැතිව වෙනස් කළ නොහැක.</string>
     <string name="groupPromotedYou"><b>ඔබ</b> පරිපාලක උසස් කරන ලදී.</string>
     <string name="groupPromotedYouMultiple"><b>ඔබ</b> සහ <b>{count} වෙනත් අය</b> පරිපාලක (Admin) තනතුරට උසස් කරන ලදී.</string>
-    <string name="groupPromotedYouTwo"><b>ඔබ</b> සහ <b>{name}</b> පරිපාලක (Admin) තනතුරට උසස් කරන ලදී.</string>
     <string name="groupRemoveDescription">ඔබට <b>{group_name}</b> වෙතින් <b>{name}</b> ඉවත් කිරීමට අවශ්‍යද?</string>
     <string name="groupRemoveDescriptionMultiple">ඔබට <b>{group_name}</b> වෙතින් <b>{name}</b> සහ <b>{count} මිලේනියමු</b> ඉවත් කිරීමට අවශ්‍යද?</string>
     <string name="groupRemoveDescriptionTwo">ඔබට <b>{name}</b> සහ <b>{other_name}</b> සහ <b>{group_name}</b> ඉවත් කිරීමට අවශ්‍යද?</string>

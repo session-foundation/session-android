@@ -433,7 +433,6 @@
     <string name="groupOnlyAdmin">Ju jeni administratori i vetëm në <b>{group_name}</b>.\n\nAnëtarët e grupit dhe cilësimet nuk mund të ndryshohen pa një administrator.</string>
     <string name="groupPromotedYou"><b>Ju</b> u promovuat në Administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Ju</b> dhe <b>{count} të tjerë</b> u promovuan në Administratorë.</string>
-    <string name="groupPromotedYouTwo"><b>Ju</b> dhe <b>{name}</b> u promovuan në Administratorë.</string>
     <string name="groupRemoveDescription">A dëshironi të hiqni <b>{name}</b> nga <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">A dëshironi të hiqni <b>{name}</b> dhe <b>{count} të tjerë</b> nga <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">A dëshironi të hiqni <b>{name}</b> dhe <b>{other_name}</b> nga <b>{group_name}?</b></string>

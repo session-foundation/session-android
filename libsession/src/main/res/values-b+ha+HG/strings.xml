@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Kai ne kawai admin a cikin <b>{group_name}</b>.\n\nBa za a iya canza mambobin rukunin da saitin ba tare da admin ba.</string>
     <string name="groupPromotedYou"><b>Ku</b> an tayar ku zuwa Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ku</b> da <b>{count} wasu</b> an tayar ku zuwa Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ku</b> da <b>{name}</b> an tayar ku zuwa Admin.</string>
     <string name="groupRemoveDescription">Za ku so a cire <b>{name}</b> daga <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Za ku so a cire <b>{name}</b> da <b>{count} wasu</b> daga <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Za ku so a cire <b>{name}</b> da <b>{other_name}</b> daga <b>{group_name}</b>?</string>

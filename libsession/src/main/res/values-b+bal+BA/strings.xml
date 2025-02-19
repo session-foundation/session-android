@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">شما <b>{group_name}</b> کے واحد منتظم ہیں۔\n\nگروپ کے اراکین اور سیٹنگز ایک منتظم کے بغیر تبدیل نہیں کیے جا سکتے۔</string>
     <string name="groupPromotedYou"><b>Šumār</b> rīhīyā Admin šumār.</string>
     <string name="groupPromotedYouMultiple"><b>شما</b> اور <b>{count} دٖگر</b> رِہویاً ادمن شومار.</string>
-    <string name="groupPromotedYouTwo"><b>شما</b> اور <b>{name}</b> رِہویاً ادمن شومار.</string>
     <string name="groupRemoveDescription">تراچ بیت پاسکن <b>{name}</b> <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionMultiple">ترا چہ بیتھہ <b>{name}</b> و <b>{count} اسمیں</b> <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">تراچ بیتھہ <b>{name}</b> و <b>{other_name}</b> <b>{group_name}</b>؟</string>

@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Вие сте единственият администратор в <b>{group_name}</b>.\n\nЧленовете и настройките на групата не могат да бъдат променяни без администратор.</string>
     <string name="groupPromotedYou"><b>Вие</b> бяхте повишен в Администратор.</string>
     <string name="groupPromotedYouMultiple"><b>Вие</b> и <b>{count} други</b> бяхте повишени в Администратор.</string>
-    <string name="groupPromotedYouTwo"><b>Вие</b> и <b>{name}</b> бяхте повишени в Администратор.</string>
     <string name="groupRemoveDescription">Искате ли да отстраните <b>{name}</b> от <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Искате ли да отстраните <b>{name}</b> и <b>{count} други</b> от <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Искате ли да отстраните <b>{name}</b> и <b>{other_name}</b> от <b>{group_name}</b>?</string>

@@ -455,7 +455,6 @@
     <string name="groupOnlyAdmin">Anda adalah satu-satunya admin di <b>{group_name}</b>.\n\nAnggota grup dan pengaturan tidak dapat diubah tanpa admin.</string>
     <string name="groupPromotedYou"><b>Anda</b> dipromosikan menjadi Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> dipromosikan menjadi Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Anda</b> dan <b>{name}</b> dipromosikan menjadi Admin.</string>
     <string name="groupRemoveDescription">Apakah Anda ingin menghapus <b>{name}</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Apakah Anda ingin menghapus <b>{name}</b> dan <b>{count} lainnya</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Apakah Anda ingin menghapus <b>{name}</b> dan <b>{other_name}</b> dari <b>{group_name}</b>?</string>

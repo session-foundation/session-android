@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Du er den einaste administrator i <b>{group_name}</b>.\n\nGruppe medlemmer og innstillinger kan ikkje endrast utan ein administrator.</string>
     <string name="groupPromotedYou"><b>Du</b> vart promotert til admin.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> og <b>{count} andre</b> vart promoterte til admin.</string>
-    <string name="groupPromotedYouTwo"><b>Du</b> og <b>{name}</b> vart promoterte til admin.</string>
     <string name="groupRemoveDescription">Vil du fjerne <b>{name}</b> frå <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Vil du fjerne <b>{name}</b> og <b>{count} andre</b> frå <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Vil du fjerne <b>{name}</b> og <b>{other_name}</b> frå <b>{group_name}</b>?</string>

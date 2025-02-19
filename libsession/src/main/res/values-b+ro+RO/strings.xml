@@ -440,7 +440,6 @@
     <string name="groupOnlyAdmin">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator.</string>
     <string name="groupPromotedYou"><b>Tu</b> ai fost promovat/ă la nivel de administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost promovați la nivel de administrator.</string>
-    <string name="groupPromotedYouTwo"><b>Tu</b> și <b>{name}</b> ați fost promovați la nivel de administrator.</string>
     <string name="groupRemoveDescription">Doriți să eliminați pe <b>{name}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Doriți să eliminați pe <b>{name}</b> și <b>alți {count}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Doriți să eliminați pe <b>{name}</b> și <b>{other_name}</b> din <b>{group_name}</b>?</string>

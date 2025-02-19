@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Inu ndinu oyang\'anira payekha mu <b>{group_name}</b>.\n\nMabwenzi ndi zoikamo sizingasinthidwe popanda woyang\'anira.</string>
     <string name="groupPromotedYou"><b>Inu</b> mwakwezedwa kukhala Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Inu</b> ndi <b>{count} ena</b> mwakwezedwa kukhala Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Inu</b> ndi <b>{name}</b> mwakwezedwa kukhala Admin.</string>
     <string name="groupRemoveDescription">Kodi mukufuna kuchotsa <b>{name}</b> ku <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Kodi mukufuna kuchotsa <b>{name}</b> ndi <b>{count} ena</b> ku <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Kodi mukufuna kuchotsa <b>{name}</b> ndi <b>{other_name}</b> ku <b>{group_name}</b>?</string>

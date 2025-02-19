@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">आप <b>{group_name}</b> में अकेले व्यवस्थापक हैं।\n\nसमूह सदस्य और सेटिंग्स बिना व्यवस्थापक के बदले नहीं जा सकते।</string>
     <string name="groupPromotedYou"><b>आप</b> को Admin बनाया गया।</string>
     <string name="groupPromotedYouMultiple"><b>आप</b> और <b>{count} अन्य</b> को Admin बनाया गया।</string>
-    <string name="groupPromotedYouTwo"><b>आप</b> और <b>{name}</b> को Admin बनाया गया।</string>
     <string name="groupRemoveDescription">क्या आप <b>{name}</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
     <string name="groupRemoveDescriptionMultiple">क्या आप <b>{name}</b> और <b>{count} अन्य</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
     <string name="groupRemoveDescriptionTwo">क्या आप <b>{name}</b> और <b>{other_name}</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>

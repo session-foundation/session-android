@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Olete ainus administraator grupis <b>{group_name}</b>.\n\nGrupi liikmeid ja sätteid ei saa muuta ilma administraatorita.</string>
     <string name="groupPromotedYou"><b>Sina</b> määrati adminiks.</string>
     <string name="groupPromotedYouMultiple"><b>Sind</b> ja <b>{count} teist</b> määrati administraatoriks.</string>
-    <string name="groupPromotedYouTwo"><b>Sind</b> ja <b>{name}</b> määrati administraatoriks.</string>
     <string name="groupRemoveDescription">Kas soovite eemaldada <b>{name}</b> grupist <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Kas soovite eemaldada <b>{name}</b> ja <b>{count} teised</b> grupist <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Kas soovite eemaldada <b>{name}</b> ja <b>{other_name}</b> grupist <b>{group_name}</b>?</string>

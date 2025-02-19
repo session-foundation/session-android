@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Você é o único administrador em <b>{group_name}</b>.\n\nOs membros do grupo e as configurações não podem ser alterados sem um administrador.</string>
     <string name="groupPromotedYou"><b>Você</b> foi promovido a Administrador.</string>
     <string name="groupPromotedYouMultiple"><b>Você</b> e <b>{count} outros</b> foram promovidos a Administrador.</string>
-    <string name="groupPromotedYouTwo"><b>Você</b> e <b>{name}</b> foram promovidos a Administrador.</string>
     <string name="groupRemoveDescription">Gostaria de remover <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Gostaria de remover <b>{name}</b> e <b>{count} outros</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Gostaria de remover <b>{name}</b> e <b>{other_name}</b> de <b>{group_name}</b>?</string>

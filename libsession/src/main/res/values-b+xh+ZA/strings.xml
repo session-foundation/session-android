@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Unguye kuphela admin kwi <b>{group_name}</b>.\n\nAmalungu eqela kunye neesetingi azinakutshintshwa ngaphandle kwe-admin.</string>
     <string name="groupPromotedYou"><b>Mna </b> ndinyuselwe kubu-Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Mna </b> kunye <b>{count} abanye abantu </b> banyuselwe kubu-Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Mna</b> kunye ne <b>{name}</b> banyuselwe kubu-Admin.</string>
     <string name="groupRemoveDescription">Ungathanda ukususa <b>{name}</b> kwi-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ungathanda ukususa <b>{name}</b> kunye nabanye <b>{count}</b> kwi-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ungathanda ukususa <b>{name}</b> kunye no<b>{other_name}</b> kwi-<b>{group_name}</b>?</string>

@@ -439,7 +439,6 @@
     <string name="groupOnlyAdmin"><b>{group_name}</b> grubunda tek adminsiniz.\n\nAdmin olmadan grup üyeleri ve ayarları değiştirilemez.</string>
     <string name="groupPromotedYou"><b>Sen</b> yönetici olarak terfi ettin.</string>
     <string name="groupPromotedYouMultiple"><b>Sen</b> ve <b>{count} diğer</b> yönetici olarak terfi ettiniz.</string>
-    <string name="groupPromotedYouTwo"><b>Sen</b> ve <b>{name}</b> yönetici olarak terfi ettiniz.</string>
     <string name="groupRemoveDescription"><b>{group_name}</b> grubundan <b>{name}</b> kişisini kaldırmak ister misiniz?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b> grubundan <b>{name}</b> ve <b>{count} diğerlerini</b> kaldırmak ister misiniz?</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b> grubundan <b>{name}</b> ve <b>{other_name}</b> kişilerini kaldırmak ister misiniz?</string>

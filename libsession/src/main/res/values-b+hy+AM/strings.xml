@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Դուք այս խմբի միակ ադմինն եք <b>{group_name}</b>։\n\nԽմբի անդամներն ու կարգավորումները չեն կարող փոխվել առանց ադմին։</string>
     <string name="groupPromotedYou"><b>Դուք</b> բարձրացվել եք որպես ադմին:</string>
     <string name="groupPromotedYouMultiple"><b>Դուք</b> և <b>{count} ուրիշներ</b> բարձրացվել են որպես ադմին:</string>
-    <string name="groupPromotedYouTwo"><b>Դուք</b> և <b>{name}</b> բարձրացվել են որպես ադմին:</string>
     <string name="groupRemoveDescription">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին <b>{group_name}</b> խմբից։</string>
     <string name="groupRemoveDescriptionMultiple">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին և <b>{count} այլ անձանց</b> <b>{group_name}</b>-ից։</string>
     <string name="groupRemoveDescriptionTwo">Ցանկանո՞ւմ եք հեռացնել <b>{name}</b>-ին և <b>{other_name}</b>-ին <b>{group_name}</b> խմբից։</string>

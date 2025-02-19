@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">당신은 <b>{group_name}</b>의 유일한 관리자입니다.\n\n관리자가 없으면 그룹 구성원 및 설정을 변경할 수 없습니다.</string>
     <string name="groupPromotedYou"><b>당신</b>이 관리자(Admin)로 승격되었습니다.</string>
     <string name="groupPromotedYouMultiple"><b>당신</b>과 <b>{count}명</b>이 관리자(Admin)로 승격되었습니다.</string>
-    <string name="groupPromotedYouTwo"><b>당신</b>과 <b>{name}</b>님이 관리자(Admin)로 승격되었습니다.</string>
     <string name="groupRemoveDescription"><b>{group_name}</b>에서 <b>{name}</b>님을 제거하시겠습니까?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b>에서 <b>{name}</b>님과 <b>{count}명</b>을 제거하시겠습니까?</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b>에서 <b>{name}</b>님과 <b>{other_name}</b>님을 제거하시겠습니까?</string>

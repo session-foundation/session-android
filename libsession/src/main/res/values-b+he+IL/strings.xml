@@ -444,7 +444,6 @@
     <string name="groupOnlyAdmin">את/ה המנהל/ת היחיד/ה ב-<b>{group_name}</b>.\n\nחברי הקבוצה וההגדרות לא יכולים להשתנות ללא מנהל/ת.</string>
     <string name="groupPromotedYou"><b>את/ה</b> קודמת למנהל.</string>
     <string name="groupPromotedYouMultiple"><b>את/ה</b> ו<b>{count} אחרים</b> קודמתם למנהל.</string>
-    <string name="groupPromotedYouTwo"><b>את/ה</b> ו<b>{name}</b> קודמתם למנהל.</string>
     <string name="groupRemoveDescription">האם ברצונך להסיר את <b>{name}</b> מ-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">האם ברצונך להסיר את <b>{name}</b> ואת <b>{count} אחרים</b> מ-<b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">האם ברצונך להסיר את <b>{name}</b> ואת <b>{other_name}</b> מ-<b>{group_name}</b>?</string>

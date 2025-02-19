@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Zu zara <b>{group_name}</b>-ko administratzaile bakarra.\n\nTaldekideak eta ezarpenak ezin daitezke aldatu admin bat gabe.</string>
     <string name="groupPromotedYou"><b>Zuk</b> administratzaile izendatu zaituzte.</string>
     <string name="groupPromotedYouMultiple"><b>Zu</b> eta <b>{count} beste</b> administratzaile izendatu zaituztete.</string>
-    <string name="groupPromotedYouTwo"><b>Zu</b> eta <b>{name}</b> administratzaile izendatu zaituztete.</string>
     <string name="groupRemoveDescription"><b>{name}</b> <b>{group_name}</b>-tik kendu nahi duzu?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b> eta <b>{count} beste batzuk</b> <b>{group_name}</b>-tik kendu nahi dituzu?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b> eta <b>{other_name}</b> <b>{group_name}</b>-tik kendu nahi dituzu?</string>

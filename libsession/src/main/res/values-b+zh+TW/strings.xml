@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">您是 <b>{group_name}</b> 中唯一的管理員。\n\n沒有管理員，群組成員和設定將無法更改。</string>
     <string name="groupPromotedYou"><b>你</b> 被提拔為管理員。</string>
     <string name="groupPromotedYouMultiple"><b>您</b> 和 <b>{count} 位其他成員</b> 被設置為管理員。</string>
-    <string name="groupPromotedYouTwo"><b>您</b> 和 <b>{name}</b> 被設置為管理員。</string>
     <string name="groupRemoveDescription">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b>？</string>
     <string name="groupRemoveDescriptionMultiple">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b> 和 <b>{count} 名其他成員</b>？</string>
     <string name="groupRemoveDescriptionTwo">您是否想要從 <b>{group_name}</b> 中移除 <b>{name}</b> 和 <b>{other_name}</b>？</string>

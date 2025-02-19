@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Te vagy az egyetlen adminisztrátor a <b>{group_name}</b> csoportban.\n\nA csoporttagok és beállítások nem változtathatók adminisztrátor nélkül.</string>
     <string name="groupPromotedYou"><b>Te</b> adminisztrátorrá lettél előléptetve.</string>
     <string name="groupPromotedYouMultiple"><b>Te</b> és <b>{count} másik személy</b> adminisztrátorrá lettetek előléptetve.</string>
-    <string name="groupPromotedYouTwo"><b>Te</b> és <b>{name}</b> adminisztrátorrá lettetek előléptetve.</string>
     <string name="groupRemoveDescription">El szeretnéd távolítani <b>{name}</b>-t a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionMultiple">El szeretnéd távolítani <b>{name}</b>-t és <b>{count} másik személyt</b> a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionTwo">El szeretnéd távolítani <b>{name}</b>-t és <b>{other_name}</b>-t a <b>{group_name}</b> csoportból?</string>

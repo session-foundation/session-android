@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Jy is die enigste administrateur in <b>{group_name}</b>.\n\nGroepslede en instellings kan nie verander word sonder \'n administrateur nie.</string>
     <string name="groupPromotedYou"><b>Jy</b> is bevorder tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Jy</b> en <b>{count} ander</b> is bevorder tot Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Jy</b> en <b>{name}</b> is bevorder tot Admin.</string>
     <string name="groupRemoveDescription">Wil jy <b>{name}</b> verwyder uit <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Wil jy <b>{name}</b> en <b>{count} ander</b> verwyder uit <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Wil jy <b>{name}</b> en <b>{other_name}</b> verwyder uit <b>{group_name}?</b></string>

@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Wewe ndiye msimamizi pekee katika <b>{group_name}</b>.\n\nWanakundi na mipangilio hawawezi kubadilishwa bila msimamizi.</string>
     <string name="groupPromotedYou"><b>Wewe</b> umepandishwa cheo kuwa Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Wewe</b> na <b>{count} wengine</b> mmepandishwa cheo kuwa Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Wewe</b> na <b>{name}</b> mmepandishwa cheo kuwa Admin.</string>
     <string name="groupRemoveDescription">Ungependa kuondoa <b>{name}</b> kutoka <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ungependa kuondoa <b>{name}</b> na <b>{count} wengine</b> kutoka <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ungependa kuondoa <b>{name}</b> na <b>{other_name}</b> kutoka <b>{group_name}</b>?</string>

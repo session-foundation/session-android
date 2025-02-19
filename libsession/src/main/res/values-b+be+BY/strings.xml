@@ -444,7 +444,6 @@
     <string name="groupOnlyAdmin">Вы з\'яўляецеся адзіным адміністратарам у <b>{group_name}</b>.\n\nУдзельнікі групы і наладкі не могуць быць змененыя без адміністратара.</string>
     <string name="groupPromotedYou"><b>Вас</b> павысілі да адміністратара.</string>
     <string name="groupPromotedYouMultiple"><b>Вы</b> і <b>{count} іншых</b> былі павышаны да адміністратараў.</string>
-    <string name="groupPromotedYouTwo"><b>Вы</b> і <b>{name}</b> былі павышаны да адміністратараў.</string>
     <string name="groupRemoveDescription">Вы жадаеце выдаліць <b>{name}</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Вы жадаеце выдаліць <b>{name}</b> і <b>{count} іншых</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Вы жадаеце выдаліць <b>{name}</b> і <b>{other_name}</b> з <b>{group_name}</b>?</string>

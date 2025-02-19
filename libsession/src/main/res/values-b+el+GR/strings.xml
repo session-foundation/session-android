@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Είστε ο μόνος διαχειριστής στην <b>{group_name}</b>.\n\nΤα μέλη και οι ρυθμίσεις της ομάδας δεν μπορούν να αλλάξουν χωρίς διαχειριστή.</string>
     <string name="groupPromotedYou"><b>Εσείς</b> γίνατε Διαχειριστές.</string>
     <string name="groupPromotedYouMultiple"><b>Εσείς</b> και <b>{count} άλλοι</b> γίνατε Διαχειριστές.</string>
-    <string name="groupPromotedYouTwo"><b>Εσείς</b> και <b>{name}</b> γίνατε Διαχειριστές.</string>
     <string name="groupRemoveDescription">Θα θέλατε να αφαιρέσετε τον/την <b>{name}</b> από την <b>{group_name}</b>;</string>
     <string name="groupRemoveDescriptionMultiple">Θα θέλατε να αφαιρέσετε τον/την <b>{name}</b> και άλλους <b>{count}</b> από την <b>{group_name}</b>;</string>
     <string name="groupRemoveDescriptionTwo">Θα θέλατε να αφαιρέσετε τον/την <b>{name}</b> και τον/την <b>{other_name}</b> από την <b>{group_name}</b>;</string>

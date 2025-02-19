@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">تۆ تەنها بەڕێوەبەری <b>{group_name}</b> یت.\n\nئەم ئەندامانی گروپە و ڕێکخستنهکان نەکرێن بگۆڕدرێن بێ ئەگەری بەڕێوەبەرێک.</string>
     <string name="groupPromotedYou"><b>تۆ</b> بە بەڕێوەبەر هەڵبژێردرا.</string>
     <string name="groupPromotedYouMultiple"><b>تۆ</b> و <b>{count} کەس دیکە</b> بە بەڕێوەبەر هەڵبژێردران.</string>
-    <string name="groupPromotedYouTwo"><b>تۆ</b> و <b>{name}</b> بە بەڕێوەبەر هەڵبژێردران.</string>
     <string name="groupRemoveDescription">ئايا دەتەوێت <b>{name}</b> لە <b>{group_name}</b> بسڕیتەوە؟</string>
     <string name="groupRemoveDescriptionMultiple">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{count} یەک و چەندێکی تر</b> لە <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">ئایا دەتەوێت بڕبەیتەوە <b>{name}</b> و <b>{other_name}</b> لە <b>{group_name}</b>؟</string>

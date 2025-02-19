@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">तपाईं <b>{group_name}</b> मा मात्र प्रशासक हुनुहुन्छ।\n\nसमूह सदस्यहरू र सेटिङहरू प्रशासक बिना परिवर्तन गर्न सकिदैन।</string>
     <string name="groupPromotedYou"><b>तपाईं</b>लाई Admin मा बढुवा गरियो।</string>
     <string name="groupPromotedYouMultiple"><b>तपाईं</b> र <b>{count} अन्य</b>लाई Admin मा बढुवा गरियो।</string>
-    <string name="groupPromotedYouTwo"><b>तपाईं</b> र <b>{name}</b>लाई Admin मा बढुवा गरियो।</string>
     <string name="groupRemoveDescription">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> देखि <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> र <b>{count} अन्यहरू</b> देखि <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">तपाईं हटाउन चाहनुहुन्छ <b>{name}</b> र <b>{other_name}</b> देखि <b>{group_name}</b>?</string>

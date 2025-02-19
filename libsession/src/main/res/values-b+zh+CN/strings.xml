@@ -446,7 +446,6 @@
     <string name="groupPendingRemoval">待移除</string>
     <string name="groupPromotedYou"><b>您</b>被设置为管理员。</string>
     <string name="groupPromotedYouMultiple"><b>您</b>和其他<b>{count}人</b>被授权为管理员。</string>
-    <string name="groupPromotedYouTwo"><b>您</b>和<b>{name}</b>被授权为管理员。</string>
     <string name="groupRemoveDescription">你想将 <b>{name}</b> 从 <b>{group_name}</b> 中移除吗？</string>
     <string name="groupRemoveDescriptionMultiple">您希望将<b>{name}</b>和其他<b>{count}人</b>从<b>{group_name}</b>中移除吗？</string>
     <string name="groupRemoveDescriptionTwo">您希望将<b>{name}</b>和<b>{other_name}</b>从<b>{group_name}</b>中移除吗？</string>

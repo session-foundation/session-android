@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">თქვენ ხართ ერთადერთი ადმინისტრატორი <b>{group_name}</b>-ში.\n\nჯგუფის წევრების და პარამეტრების შეცვლა შეუძლებელია ადმინისტრატორის გარეშე.</string>
     <string name="groupPromotedYou"><b>თქვენ</b> მიენიჭა ადმინისტრატორის როლი.</string>
     <string name="groupPromotedYouMultiple"><b>თქვენ</b> და <b>{count} სხვები</b> მიენიჭათ ადმინისტრატორის როლი.</string>
-    <string name="groupPromotedYouTwo"><b>თქვენ</b> და <b>{name}</b> მიენიჭათ ადმინისტრატორის როლი.</string>
     <string name="groupRemoveDescription">გსურთ წაშალოთ <b>{name}</b> <b>{group_name}</b>-დან?</string>
     <string name="groupRemoveDescriptionMultiple">გსურთ წაშალოთ <b>{name}</b> და <b>{count} სხვები</b> <b>{group_name}</b>-დან?</string>
     <string name="groupRemoveDescriptionTwo">გსურთ წაშალოთ <b>{name}</b> და <b>{other_name}</b> <b>{group_name}</b>-დან?</string>

@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">ਤੁਸੀਂ <b>{group_name}</b> ਵਿੱਚ ਅਕੇਲੇ ਐਡਮਿਨ ਹੋ।\n\nਗਰੁੱਪ ਦੇ ਮੈਂਬਰ ਅਤੇ ਸੈਟਿੰਗਜ਼ ਬਗੈਰ ਐਡਮਿਨ ਦੇ ਬਦਲੇ ਨਹੀਂ ਜਾ ਸਕਦੇ।</string>
     <string name="groupPromotedYou"><b>ਤੁਸੀਂ</b>ਨੂੰ ਪ੍ਰਸ਼ਾਸਕ ਬਣਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।</string>
     <string name="groupPromotedYouMultiple"><b>ਤੁਸੀਂ</b> ਅਤੇ <b>{count} ਹੋਰਾਂ</b> ਨੂੰ ਪ੍ਰਸ਼ਾਸਕ ਬਣਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।</string>
-    <string name="groupPromotedYouTwo"><b>ਤੁਸੀਂ</b> ਅਤੇ <b>{name}</b> ਨੂੰ ਪ੍ਰਸ਼ਾਸਕ ਬਣਾ ਦਿੱਤਾ ਗਿਆ ਹੈ।</string>
     <string name="groupRemoveDescription">ਕੀ ਤੁਸੀਂ <b>{name}</b> ਨੂੰ <b>{group_name}</b> ਤੋਂ ਹਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?</string>
     <string name="groupRemoveDescriptionMultiple">ਕੀ ਤੁਸੀਂ <b>{name}</b> ਅਤੇ <b>{count} ਹੋਰ</b> ਨੂੰ <b>{group_name}</b> ਤੋਂ ਹਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?</string>
     <string name="groupRemoveDescriptionTwo">ਕੀ ਤੁਸੀਂ <b>{name}</b> ਅਤੇ <b>{other_name}</b> ਨੂੰ <b>{group_name}</b> ਤੋਂ ਹਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?</string>

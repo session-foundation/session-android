@@ -439,7 +439,6 @@
     <string name="groupOnlyAdmin">شما تنها مدیر در <b>{group_name}</b> هستید.\n\nبدون مدیر، اعضای گروه و تنظیمات نمی‌توانند تغییر کنند.</string>
     <string name="groupPromotedYou"><b>شما</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupPromotedYouMultiple"><b>شما</b> و <b>{count} سایرین</b> به مدیر ارتقاء یافتید.</string>
-    <string name="groupPromotedYouTwo"><b>شما</b> و <b>{name}</b> به مدیر ارتقاء یافتید.</string>
     <string name="groupRemoveDescription">آیا می‌خواهید <b>{name}</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionMultiple">آیا می‌خواهید <b>{name}</b> و <b>{count} نفر دیگر</b> را از <b>{group_name}</b> حذف کنید؟</string>
     <string name="groupRemoveDescriptionTwo">آیا می‌خواهید <b>{name}</b> و <b>{other_name}</b> را از <b>{group_name}</b> حذف کنید؟</string>

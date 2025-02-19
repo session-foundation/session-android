@@ -455,7 +455,6 @@
     <string name="groupPendingRemoval">In afwachting van verwijdering</string>
     <string name="groupPromotedYou"><b>U</b> bent gepromoveerd tot Admin.</string>
     <string name="groupPromotedYouMultiple"><b>U</b> en <b>{count} anderen</b> zijn gepromoveerd tot Admin.</string>
-    <string name="groupPromotedYouTwo"><b>U</b> en <b>{name}</b> zijn gepromoveerd tot Admin.</string>
     <string name="groupRemoveDescription">Wilt u <b>{name}</b> verwijderen uit <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Wilt u <b>{name}</b> en <b>{count} anderen</b> verwijderen uit <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Wilt u <b>{name}</b> en <b>{other_name}</b> verwijderen uit <b>{group_name}</b>?</string>

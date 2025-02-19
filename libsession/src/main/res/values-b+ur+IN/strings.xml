@@ -431,7 +431,6 @@
     <string name="groupOnlyAdmin">آپ <b>{group_name}</b> میں واحد منتظم ہیں۔\n\nگروپ اراکین اور سیٹنگز ایک منتظم کے بغیر تبدیل نہیں کی جا سکتیں۔</string>
     <string name="groupPromotedYou"><b>آپ</b> کو ایڈمن مقرر کیا گیا۔</string>
     <string name="groupPromotedYouMultiple"><b>آپ</b> اور <b>{count} دیگر</b> کو ایڈمن مقرر کیا گیا۔</string>
-    <string name="groupPromotedYouTwo"><b>آپ</b> اور <b>{name}</b> کو ایڈمن مقرر کیا گیا۔</string>
     <string name="groupRemoveDescription">کیا آپ <b>{group_name}</b> سے <b>{name}</b> کو ہٹانا چاہتے ہیں؟</string>
     <string name="groupRemoveDescriptionMultiple">کیا آپ<b>{group_name}</b>سے <b>{name}</b> اور <b>{count} دیگر</b> کو ہٹانا چاہتے ہیں؟</string>
     <string name="groupRemoveDescriptionTwo">کیا آپ <b>{group_name}</b> سے <b>{name}</b> اور <b>{other_name}</b> کو ہٹانا چاہتے ہیں؟</string>

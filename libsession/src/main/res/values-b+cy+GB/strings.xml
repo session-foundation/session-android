@@ -455,7 +455,6 @@
     <string name="groupOnlyAdmin">Chi yw\'r unig weinyddwr yn <b>{group_name}</b>.\n\nNi ellir newid aelodau a gosodiadau\'r grŵp heb weinyddwr.</string>
     <string name="groupPromotedYou">Penodwyd <b>chi</b> i admin.</string>
     <string name="groupPromotedYouMultiple"><b>Chi</b> a <b>{count} eraill</b> penodwyd i admin.</string>
-    <string name="groupPromotedYouTwo"><b>Chi</b> a <b>{name}</b> penodwyd i admin.</string>
     <string name="groupRemoveDescription">Hoffech chi dynnu <b>{name}</b> o <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Hoffech chi dynnu <b>{name}</b> a <b>{count} eraill</b> o <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Hoffech chi dynnu <b>{name}</b> a <b>{other_name}</b> o <b>{group_name}</b>?</string>

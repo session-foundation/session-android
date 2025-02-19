@@ -444,7 +444,6 @@
     <string name="groupOnlyAdmin">Vi ste edini skrbnik v skupini <b>{group_name}</b>.\n\nČlani skupine in nastavitve ne morejo biti spremenjeni brez skrbnika.</string>
     <string name="groupPromotedYou"><b>Vi </b> ste bili promovirani v administratorja.</string>
     <string name="groupPromotedYouMultiple"><b>Vi</b> in <b>{count} drugi</b> so bili promovirani v administratorja.</string>
-    <string name="groupPromotedYouTwo"><b>Vi</b> in <b>{name}</b> sta bila promovirana v administratorja.</string>
     <string name="groupRemoveDescription">Ali želite odstraniti <b>{name}</b> iz <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ali želite odstraniti <b>{name}</b> in <b>{count} drugih</b> iz skupine <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ali želite odstraniti <b>{name}</b> in <b>{other_name}</b> iz <b>{group_name}</b>?</string>

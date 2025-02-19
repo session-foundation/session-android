@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Ikaw lang ang admin sa <b>{group_name}</b>.\n\nHindi maaaring baguhin ang mga miyembro ng grupo at mga settings kung walang admin.</string>
     <string name="groupPromotedYou"><b>Ikaw</b> ay na-promote sa Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ikaw</b> at <b>{count} iba pa</b> na-promote sa Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ikaw</b> at si <b>{name}</b> na-promote sa Admin.</string>
     <string name="groupRemoveDescription">Gusto mo bang tanggalin si <b>{name}</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Gusto mo bang tanggalin si <b>{name}</b> at ang <b>{count} iba pa</b> mula sa <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Gusto mo bang tanggalin si <b>{name}</b> at si <b>{other_name}</b> mula sa <b>{group_name}</b>?</string>

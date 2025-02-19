@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">あなたは<b>{group_name}</b>で唯一の管理者です。\n\n管理者がいないと、グループメンバーと設定は変更できません。</string>
     <string name="groupPromotedYou"><b>You</b> はアドミンに昇格しました</string>
     <string name="groupPromotedYouMultiple"><b>あなた</b> と <b>{count}名</b> はAdminに昇格しました。</string>
-    <string name="groupPromotedYouTwo"><b>あなた</b> と <b>{name}</b> はAdminに昇格しました。</string>
     <string name="groupRemoveDescription"><b>{group_name}</b>から<b>{name}</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b>から<b>{name}</b>と<b>{count}人</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b>から<b>{name}</b>と<b>{other_name}</b>を削除しますか？</string>

@@ -439,7 +439,6 @@
     <string name="groupOnlyAdmin">Vi ste jedini admin u <b>{group_name}</b>.\n\nČlanovi grupe i postavke se ne mogu mijenjati bez admina.</string>
     <string name="groupPromotedYou"><b>Promovirani ste u Admina.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vi</b> i <b>{count} drugi</b> promovirani ste u administratora.</string>
-    <string name="groupPromotedYouTwo"><b>Vi</b> i <b>{name}</b> promovirani ste u administratora.</string>
     <string name="groupRemoveDescription">Želite li ukloniti <b>{name}</b> iz <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Želite li ukloniti <b>{name}</b> i <b>{count} drugih</b> iz <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Želite li ukloniti <b>{name}</b> i <b>{other_name}</b> iz <b>{group_name}?</b></string>

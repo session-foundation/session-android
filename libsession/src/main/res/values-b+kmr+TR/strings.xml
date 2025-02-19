@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Hûn yekin yaten bêhîvîdî ya ser <b>{group_name}</b>yê.\n\nEndamên komê û mîhengên nayên guherîn bêhîvîdî endamê divikare.</string>
     <string name="groupPromotedYou"><b>Te</b> wekî admîn hatin xwepêşandin.</string>
     <string name="groupPromotedYouMultiple"><b>Te</b> û <b>{count} yên din</b> wekî admîn hatin xwepêşandin.</string>
-    <string name="groupPromotedYouTwo"><b>Te</b> û <b>{name}</b> wekî admîn hatin xwepêşandin.</string>
     <string name="groupRemoveDescription">Hûn dixwazin <b>{name}</b> ji <b>{group_name}</b> jê bibin?</string>
     <string name="groupRemoveDescriptionMultiple">Hûn dixwazin <b>{name}</b> û <b> {count} yên din</b> li ser <b>{group_name}</b> jê bibin?</string>
     <string name="groupRemoveDescriptionTwo">Hûn dixwazin <b>{name}</b> û <b>{other_name}</b> li ser <b>{group_name}</b> jê bibin?</string>

@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">ನೀವು <b>{group_name}</b> ನಲ್ಲಿ ಮಾತ್ರ ಆಡ್ಮಿನ್ ಆಗಿದ್ದೀರಿ.\n\nಗುಂಪಿನ ಸದಸ್ಯರು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಆಡ್ಮಿನ್ ಇಲ್ಲದೆ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>
     <string name="groupPromotedYou"><b>ನೀವು</b> ನಿರ್ವಾಹಕರಾಗಿ ಬಡ್ತಿ ಪಡೆದಿದ್ದೀರಿ.</string>
     <string name="groupPromotedYouMultiple"><b>ನೀವು</b> ಮತ್ತು <b>{count} ಇತರರು</b> ನಿರ್ವಾಹಕರಾಗಿ ಬಡ್ತಿ ಪಡೆದಿದ್ದಾರೆ.</string>
-    <string name="groupPromotedYouTwo"><b>ನೀವು</b> ಮತ್ತು <b>{name}</b> ನಿರ್ವಾಹಕರಾಗಿ ಬಡ್ತಿ ಪಡೆದಿದ್ದಾರೆ.</string>
     <string name="groupRemoveDescription">ನೀವು <b>{name}</b> <b>{group_name}</b> ನಿಂದ ತೆಗೆದುಹಾಕಲು ಇಚ್ಛಿಸುತ್ತೀರಾ?</string>
     <string name="groupRemoveDescriptionMultiple">ನೀವು <b>{name}</b> ಮತ್ತು <b>{count} ಇತರರನ್ನು</b> <b>{group_name}</b> ನಿಂದ ತೆಗೆದುಹಾಕಲು ಇಚ್ಛಿಸುತ್ತೀರಾ?</string>
     <string name="groupRemoveDescriptionTwo">ನೀವು <b>{name}</b> ಮತ್ತು <b>{other_name}</b> <b>{group_name}</b> ನಿಂದ ತೆಗೆದುಹಾಕಲು ಇಚ್ಛಿಸುತ್ತೀರಾ?</string>

@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">మీరు <b>{group_name}</b>లో ఏకైక అడ్మిన్ .\n\nగుంపు సభ్యులు మరియు అమరికలు అడ్మిన్ లేకుండా మార్చబడవు.</string>
     <string name="groupPromotedYou"><b>మీరు</b> అడ్మిన్ గా ప్రమోట్ చేయబడ్డారు.</string>
     <string name="groupPromotedYouMultiple"><b>మీరు</b> మరియు <b>{count} ఇతరులు</b> అడ్మిన్ కీ ప్రమోట్ చేయబడ్డారు.</string>
-    <string name="groupPromotedYouTwo"><b>మీరు</b> మరియు <b>{name}</b> అడ్మిన్ కీ ప్రమోట్ చేయబడ్డారు.</string>
     <string name="groupRemoveDescription">మీరు <b>{name}</b>ను <b>{group_name}</b> నుండి తొలగించాలనుకుంటున్నారా?</string>
     <string name="groupRemoveDescriptionMultiple">మీరు <b>{name}</b> మరియు <b>{count} ఇతరులను</b> <b>{group_name}</b> నుండి తొలగించాలనుకుంటున్నారా?</string>
     <string name="groupRemoveDescriptionTwo">మీరు <b>{name}</b> మరియు <b>{other_name}</b>ను <b>{group_name}</b> నుండి తొలగించాలనుకుంటున్నారా?</string>

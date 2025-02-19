@@ -429,7 +429,6 @@
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}.</b>\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupPromotedYou"><b>သင်</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupPromotedYouMultiple"><b>သင်</b> နှင့် <b>{count} ဦး</b> အဖွဲ့ဝင်များကို အုပ်ချုပ်ရေးမှူးအဖြစ် တက်လာသည်။</string>
-    <string name="groupPromotedYouTwo"><b>သင်</b> နှင့် <b>{name}</b> ကို အုပ်ချုပ်ရေးမှူးအဖြစ် တိုးတက်လာသည်။</string>
     <string name="groupRemoveDescription">Would you like to remove <b>{name}</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Would you like to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Would you like to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}?</b></string>

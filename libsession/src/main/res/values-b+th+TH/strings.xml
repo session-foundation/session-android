@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">คุณเป็นผู้ดูแลคนเดียวใน <b>{group_name}</b>.\n\nสมาชิกกลุ่มและการตั้งค่าไม่สามารถเปลี่ยนแปลงได้หากไม่มีผู้ดูแล</string>
     <string name="groupPromotedYou"><b>คุณ</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
     <string name="groupPromotedYouMultiple"><b>คุณ</b> และ <b>{count} อื่นๆ</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
-    <string name="groupPromotedYouTwo"><b>คุณ</b> และ <b>{name}</b> ได้รับการเลื่อนตำแหน่งเป็นผู้ดูแลระบบ</string>
     <string name="groupRemoveDescription">คุณต้องการลบ <b>{name}</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>
     <string name="groupRemoveDescriptionMultiple">คุณต้องการลบ <b>{name}</b> และอีก <b>{count} คน</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>
     <string name="groupRemoveDescriptionTwo">คุณต้องการลบ <b>{name}</b> และ <b>{other_name}</b> ออกจาก <b>{group_name}</b> หรือไม่?</string>

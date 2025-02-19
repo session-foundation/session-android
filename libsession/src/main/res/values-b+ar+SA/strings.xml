@@ -489,7 +489,6 @@
 <b>{group_name}</b>.\n\nلا يمكن تغيير أعضاء المجموعة والإعدادات بدون المشرف.</string>
     <string name="groupPromotedYou"><b>أنت</b> تم ترقيتك إلى مشرف.</string>
     <string name="groupPromotedYouMultiple"><b>أنت</b> و <b>{count} آخرين</b> تمت ترقيتهم إلى مشرف.</string>
-    <string name="groupPromotedYouTwo"><b>أنت</b> و <b>{name}</b> تم ترقيتهم إلى مشرف.</string>
     <string name="groupRemoveDescription">هل تود إزالة <b>{name}</b> من <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionMultiple">هل تود إزالة <b>{name}</b> و<b>{count} آخرين</b> من <b>{group_name}</b>؟</string>
     <string name="groupRemoveDescriptionTwo">هل تود إزالة <b>{name}</b> و<b>{other_name}</b> من <b>{group_name}</b>؟</string>

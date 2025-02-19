@@ -475,7 +475,7 @@
     <string name="groupPendingRemoval">Pending removal</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>
     <string name="groupPromotedYouMultiple"><b>You</b> and <b>{count} others</b> were promoted to Admin.</string>
-    <string name="groupPromotedYouTwo"><b>You</b> and <b>{name}</b> were promoted to Admin.</string>
+    <string name="groupPromotedYouTwo"><b>You</b> and <b>{other_name}</b> were promoted to Admin.</string>
     <string name="groupRemoveDescription">Would you like to remove <b>{name}</b> from <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Would you like to remove <b>{name}</b> and <b>{count} others</b> from <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Would you like to remove <b>{name}</b> and <b>{other_name}</b> from <b>{group_name}</b>?</string>
@@ -530,8 +530,8 @@
     <string name="leaving">Leaving...</string>
     <string name="legacyGroupAfterDeprecationAdmin">This group is now read-only. Recreate this group to keep chatting.</string>
     <string name="legacyGroupAfterDeprecationMember">This group is now read-only. Ask the group admin to recreate this group to keep chatting.</string>
-    <string name="legacyGroupBeforeDeprecationAdmin">Groups have been upgraded! Recreate this group for improved reliability. This group will become read-only on {date}.</string>
-    <string name="legacyGroupBeforeDeprecationMember">Groups have been upgraded! Ask the group admin to recreate this group for improved reliability. This group will become read-only on {date}.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Groups have been upgraded! Recreate this group for improved reliability. This group will become read-only at {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Groups have been upgraded! Ask the group admin to recreate this group for improved reliability. This group will become read-only at {date}.</string>
     <string name="legacyGroupChatHistory">Chat history will not be transferred to the new group. You can still view all chat history in your old group.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> joined the group.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> and <b>{count} others</b> joined the group.</string>

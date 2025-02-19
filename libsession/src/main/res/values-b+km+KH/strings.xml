@@ -428,7 +428,6 @@
     <string name="groupOnlyAdmin">អ្នកគឺជាអ្នកគ្រប់គ្រងតែម្នាក់ប៉ុណ្ណោះនៅក្នុង <b>{group_name}</b>។\n\nសមាជិកក្រុមនិងការកំណត់មិនអាចផ្លាស់ប្តូរបានទេផុតពីអ្នកគ្រប់គ្រង។</string>
     <string name="groupPromotedYou"><b>អ្នក</b>ត្រូវបានបដិស្មីជា Admin។</string>
     <string name="groupPromotedYouMultiple"><b>អ្នក</b> និង <b>{count} នាក់ផ្សេងទៀត</b> ត្រូវបានតែងតាំងជា Admin។</string>
-    <string name="groupPromotedYouTwo"><b>អ្នក</b> និង <b>{name}</b> ត្រូវបានតែងតាំងជា Admin។</string>
     <string name="groupRemoveDescription">តើអ្នកចង់ដក <b>{name}</b> ពី <b>{group_name}</b> មែនទេ?</string>
     <string name="groupRemoveDescriptionMultiple">តើអ្នកចង់ដក <b>{name}</b> និង <b>{count} បន្ទាប់</b> ពី <b>{group_name}</b> មែនទេ?</string>
     <string name="groupRemoveDescriptionTwo">តើអ្នកចង់ដក <b>{name}</b> និង <b>{other_name}</b> ពី <b>{group_name}</b> មែនទេ?</string>

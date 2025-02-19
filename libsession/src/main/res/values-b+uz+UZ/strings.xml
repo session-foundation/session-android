@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b>da yagona administrator siz.\n\nAdministrator bo\'lmaganda guruh azolari va sozlamalarini o\'zgartirib bo\'lmaydi.</string>
     <string name="groupPromotedYou"><b>Siz</b> Administrator sifatida ko\'tarildingiz.</string>
     <string name="groupPromotedYouMultiple"><b>Siz</b> va <b>{count} boshqa</b> Administrator sifatida ko\'tarildi.</string>
-    <string name="groupPromotedYouTwo"><b>Siz</b> va <b>{name}</b> Administrator sifatida ko\'tarildi.</string>
     <string name="groupRemoveDescription"><b>{name}</b>ni <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b> va <b>{count} boshqalarni</b> <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b> va <b>{other_name}</b>ni <b>{group_name}</b>dan o\'chirmoqchimisiz?</string>

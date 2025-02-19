@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Ggwe yekka admin mu <b>{group_name}.</b>\n\nAbweeta by\'olukungguwa n\'ebisela ebiteredde - nga alimu admin.</string>
     <string name="groupPromotedYou"><b>Ggwe</b> wakyusibwa okufuuka Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Ggwe</b> ne <b>{count} abalala</b> baakyusibwa okufuuka Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Ggwe</b> ne <b>{name}</b> baakyusibwa okufuuka Admin.</string>
     <string name="groupRemoveDescription">Oyagala okulinyisa <b>{name}</b> okuva e <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionMultiple">Oyagala okulinyisa <b>{name}</b> n\'abalala <b>{count}</b> okuva e <b>{group_name}?</b></string>
     <string name="groupRemoveDescriptionTwo">Oyagala okulinyisa <b>{name}</b> ne <b>{other_name}</b> okuva e <b>{group_name}?</b></string>

@@ -434,7 +434,6 @@
     <string name="groupOnlyAdmin">Vós sou l\'únic administradór de <b>{group_name}</b>.\n\nEls membres del grup i les configuracions no poden ser canviats sense un administradór.</string>
     <string name="groupPromotedYou"><b>Tu</b> has estat ascendit a administrador.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> i <b>{count} altres</b> heu estat ascendits a administrador.</string>
-    <string name="groupPromotedYouTwo"><b>Tu</b> i <b>{name}</b> heu estat ascendits a administrador.</string>
     <string name="groupRemoveDescription">Voleu eliminar <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Voleu eliminar <b>{name}</b> i <b>{count} altres</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Voleu eliminar <b>{name}</b> i <b>{other_name}</b> de <b>{group_name}</b>?</string>

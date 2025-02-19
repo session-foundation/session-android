@@ -435,7 +435,6 @@
     <string name="groupOnlyAdmin">Siz <b>{group_name}</b> qrupunda yeganə adminsiniz.\n\nQrup üzvləri və ayarları admin olmadan dəyişdirilə bilməz.</string>
     <string name="groupPromotedYou"><b>Siz</b> Admin oldunuz.</string>
     <string name="groupPromotedYouMultiple"><b>Siz</b> və <b> digər {count} nəfər</b> Admin oldunuz.</string>
-    <string name="groupPromotedYouTwo"><b>Siz</b> və<b>{name}</b> Admin oldunuz.</string>
     <string name="groupRemoveDescription"><b>{name}</b> istifadəçisini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{name}</b> və digər <b>{count} nəfəri</b> <b>{group_name}</b> qrupundan çıxartmaq istəyirsiniz?</string>
     <string name="groupRemoveDescriptionTwo"><b>{name}</b> və <b>{other_name}</b> istifadəçilərini <b>{group_name}</b> qrupundan çıxarmaq istəyirsiniz?</string>

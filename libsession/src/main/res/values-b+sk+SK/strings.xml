@@ -445,7 +445,6 @@
     <string name="groupOnlyAdmin">Ste jediným správcom v <b>{group_name}</b>.\n\nČlenovia skupiny a nastavenia sa bez správcu nedajú meniť.</string>
     <string name="groupPromotedYou"><b>Vy</b> ste boli povýšený/á na správcu.</string>
     <string name="groupPromotedYouMultiple"><b>Vy</b> a <b>{count} ďalší</b> ste boli povýšení na správcov.</string>
-    <string name="groupPromotedYouTwo"><b>Vy</b> a <b>{name}</b> ste boli povýšení na správcov.</string>
     <string name="groupRemoveDescription">Chcete odstrániť <b>{name}</b> z <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Chcete odstrániť <b>{name}</b> a <b>{count} ďalších</b> z <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Chcete odstrániť <b>{name}</b> a <b>{other_name}</b> z <b>{group_name}</b>?</string>

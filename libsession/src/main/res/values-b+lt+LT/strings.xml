@@ -445,7 +445,6 @@
     <string name="groupOnlyAdmin">Jūs esate vienintelis administratorius grupėje <b>{group_name}</b>.\n\nGrupės nariai ir nustatymai negali būti keičiami be administratoriaus.</string>
     <string name="groupPromotedYou"><b>Jūs</b> buvote paskirti adminu.</string>
     <string name="groupPromotedYouMultiple"><b>Jūs</b> ir <b>{count} kiti</b> buvo paskirti adminais.</string>
-    <string name="groupPromotedYouTwo"><b>Jūs</b> ir <b>{name}</b> buvo paskirti adminais.</string>
     <string name="groupRemoveDescription">Ar norėtumėte pašalinti <b>{name}</b> iš <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ar norėtumėte pašalinti <b>{name}</b> ir <b>{count} kitus</b> iš <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ar norėtumėte pašalinti <b>{name}</b> ir <b>{other_name}</b> iš <b>{group_name}</b>?</string>

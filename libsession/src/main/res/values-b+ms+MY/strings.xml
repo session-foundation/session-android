@@ -430,7 +430,6 @@
     <string name="groupOnlyAdmin">Anda adalah satu-satunya pentadbir dalam <b>{group_name}</b>.\n\nAhli kumpulan dan tetapan tidak boleh diubah tanpa pentadbir.</string>
     <string name="groupPromotedYou"><b>Anda</b> dinaikkan ke Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> dinaikkan ke Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Anda</b> dan <b>{name}</b> dinaikkan ke Admin.</string>
     <string name="groupRemoveDescription">Adakah anda ingin mengeluarkan <b>{name}</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Adakah anda ingin mengeluarkan <b>{name}</b> dan <b>{count} yang lain</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Adakah anda ingin mengeluarkan <b>{name}</b> dan <b>{other_name}</b> dari <b>{group_name}</b>?</string>

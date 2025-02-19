@@ -458,7 +458,6 @@
     <string name="groupPendingRemoval">Đang chờ loại bỏ</string>
     <string name="groupPromotedYou"><b>Bạn</b> được thăng lên làm Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được thăng lên làm Admin.</string>
-    <string name="groupPromotedYouTwo"><b>Bạn</b> và <b>{name}</b> đã được thăng lên làm Admin.</string>
     <string name="groupRemoveDescription">Bạn có muốn xóa <b>{name}</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionMultiple">Bạn có muốn xóa <b>{name}</b> và <b>{count} người khác</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionTwo">Bạn có muốn xóa <b>{name}</b> và <b>{other_name}</b> khỏi <b>{group_name}</b> không?</string>
