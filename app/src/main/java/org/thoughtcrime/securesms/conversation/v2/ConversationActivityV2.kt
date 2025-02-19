@@ -1803,7 +1803,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             // ..otherwise, set the pending highlight target and trigger a scroll.
             // Note: We scroll slightly past the target highlight message position otherwise it looks
-            // a bit to close to the top of the screen.
+            // a bit too close to the top of the screen.
             pendingHighlightMessagePosition = targetMessagePosition
             val offsetPendingHighlightMessagePosition = max(0, targetMessagePosition - 1)
             binding.conversationRecyclerView.smoothScrollToPosition(offsetPendingHighlightMessagePosition)
