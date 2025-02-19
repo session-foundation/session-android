@@ -11,6 +11,7 @@ import android.text.util.Linkify
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -123,7 +124,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 val r = Rect()
                 binding.quoteView.root.getGlobalVisibleRect(r)
                 if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-                    delegate?.scrollToMessageIfPossible(quote.id)
+                    delegate?.highlightMessageFromTimestamp(quote.id)
                 }
             }
         }

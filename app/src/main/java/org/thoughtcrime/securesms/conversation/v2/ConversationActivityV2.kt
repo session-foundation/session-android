@@ -102,10 +102,10 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.RecipientModifiedListener
 import org.session.libsignal.crypto.MnemonicCodec
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
@@ -118,7 +118,7 @@ import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.MESSAGE_TIMESTAMP
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_COPY
 import org.thoughtcrime.securesms.conversation.v2.MessageDetailActivity.Companion.ON_DELETE
@@ -138,7 +138,6 @@ import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCa
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCallbackDelegate
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
-import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageContentView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
@@ -195,6 +194,7 @@ import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
+import java.lang.Integer.max
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -498,14 +498,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
             val targetPosition = if (reverseMessageList) 0 else adapter.itemCount
 
-            // If we are currently in the process of scrolling then we'll use `scrollToPosition` to quick-jump..
+            // If we are currently in the process of smooth scrolling then we'll use `scrollToPosition` to quick-jump..
             if (layoutManager.isSmoothScrolling) {
                 binding.conversationRecyclerView.scrollToPosition(targetPosition)
             } else {
-                // ..otherwise we'll use the animated `smoothScrollToPosition` (which we have to post for it to take effect).
-                binding.conversationRecyclerView.post {
-                    binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
-                }
+                // ..otherwise we'll use the animated `smoothScrollToPosition` to scroll to our target position.
+                binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
             }
         }
 
@@ -1791,7 +1789,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         return hitRect.contains(x, y)
     }
 
-    override fun scrollToMessageIfPossible(timestamp: Long) {
+    override fun highlightMessageFromTimestamp(timestamp: Long) {
         // Try to find the message with the given timestamp
         adapter.getItemPositionForTimestamp(timestamp)?.let { targetMessagePosition ->
 
@@ -1804,8 +1802,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             // ..otherwise, set the pending highlight target and trigger a scroll.
+            // Note: We scroll slightly past the target highlight message position otherwise it looks
+            // a bit to close to the top of the screen.
             pendingHighlightMessagePosition = targetMessagePosition
-            binding.conversationRecyclerView.smoothScrollToPosition(targetMessagePosition)
+            val offsetPendingHighlightMessagePosition = max(0, targetMessagePosition - 1)
+            binding.conversationRecyclerView.smoothScrollToPosition(offsetPendingHighlightMessagePosition)
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
 
