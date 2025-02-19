@@ -319,6 +319,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val isScrolledToWithin30dpOfBottom: Boolean
         get() = binding.conversationRecyclerView.isScrolledToWithin30dpOfBottom
 
+    // When the user clicks on the original message in reply to an existing message then we scroll to and
+    // highlight the original message. To do this, we keep track of the original message location in the
+    // recycler view as needed.
+    private var pendingHighlightMessagePosition: Int? = null
+
     private val layoutManager: LinearLayoutManager?
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
 
@@ -699,6 +704,17 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 recyclerScrollState = newState
+
+                // If we were scrolling towards a specific message to highlight when scrolling stops then do so
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    pendingHighlightMessagePosition?.let { position ->
+                        recyclerView.findViewHolderForLayoutPosition(position)?.let { viewHolder ->
+                            (viewHolder.itemView as? VisibleMessageView)?.playHighlight()
+                                ?: Log.w(TAG, "View at position $position is not a VisibleMessageView - cannot highlight.")
+                        } ?: Log.w(TAG, "ViewHolder at position $position is null - cannot highlight.")
+                        pendingHighlightMessagePosition = null
+                    }
+                }
             }
         })
 
@@ -1779,7 +1795,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // Try to find the message with the given timestamp
         adapter.getItemPositionForTimestamp(timestamp)?.let { targetMessagePosition ->
 
-            // If the view is already visible then we don't have to scroll to it before highlighting it..
+            // If the view is already visible then we don't have to scroll before highlighting it..
             binding.conversationRecyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
                 if (viewHolder.itemView is VisibleMessageView) {
                     (viewHolder.itemView as VisibleMessageView).playHighlight()
@@ -1787,25 +1803,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
             }
 
-            // ..otherwise create a temporary scroll listener to scroll to the view and then highlight it.
-            // Note: We could incorporate this logic into the existing recycler view listener, but multiple
-            // listeners are legal, and this approach separates our concerns into the generic case and this
-            // specific case.
-            // Also: The view must be visible to obtain the VisibleMessageView for highlighting - if it's
-            // offscreen then we're likely to receive a null response from `findViewHolderForLayoutPosition`.
-            val temporaryScrollListener = object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        recyclerView.removeOnScrollListener(this)
-                        recyclerView.findViewHolderForLayoutPosition(targetMessagePosition)?.let { viewHolder ->
-                            (viewHolder.itemView as? VisibleMessageView)?.playHighlight()
-                                ?: Log.w(TAG, "View at position $targetMessagePosition is not a VisibleMessageView - cannot highlight.")
-                        } ?: Log.w(TAG, "ViewHolder at position $targetMessagePosition is null - cannot highlight.")
-                    }
-                }
-            }
-
-            binding.conversationRecyclerView.addOnScrollListener(temporaryScrollListener)
+            // ..otherwise, set the pending highlight target and trigger a scroll.
+            pendingHighlightMessagePosition = targetMessagePosition
             binding.conversationRecyclerView.smoothScrollToPosition(targetMessagePosition)
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
