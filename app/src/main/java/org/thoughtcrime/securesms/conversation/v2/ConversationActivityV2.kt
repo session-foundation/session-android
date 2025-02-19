@@ -432,9 +432,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val isScrolledToBottom: Boolean
         get() = binding.conversationRecyclerView.isScrolledToBottom
 
-    private val isScrolledToWithin30dpOfBottom: Boolean
-        get() = binding.conversationRecyclerView.isScrolledToWithin30dpOfBottom
-
     // When the user clicks on the original message in a reply then we scroll to and highlight that original
     // message. To do this we keep track of the replied-to message's location in the recycler view.
     private var pendingHighlightMessagePosition: Int? = null
