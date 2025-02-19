@@ -8,6 +8,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -54,7 +55,11 @@ class ClosedGroupPoller(
 
     sealed interface State
     data object IdleState : State
-    data class StartedState(internal val job: Job, val hadAtLeastOneSuccessfulPoll: Boolean = false) : State
+    data class StartedState(
+        internal val job: Job,
+        val expired: Boolean? = null,
+        val hadAtLeastOneSuccessfulPoll: Boolean = false,
+    ) : State
 
     private val mutableState = MutableStateFlow<State>(IdleState)
     val state: StateFlow<State> get() = mutableState
@@ -120,7 +125,7 @@ class ClosedGroupPoller(
     }
 
     fun stop() {
-        Log.d(TAG, "Stopping closed group poller for ${closedGroupSessionId.hexString.take(4)}")
+        Log.d(TAG, "Stopping closed group poller for $closedGroupSessionId")
         (state.value as? StartedState)?.job?.cancel()
     }
 
@@ -238,11 +243,17 @@ class ClosedGroupPoller(
                 saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
                 saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
 
+                val isGroupExpired = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                    it.groupKeys.size() == 0
+                }
+
                 // As soon as we have handled config messages, the polling count as successful,
                 // as normally the outside world really only cares about configs.
-                val currentState = state.value as? StartedState
-                if (currentState != null && !currentState.hadAtLeastOneSuccessfulPoll) {
-                    mutableState.value = currentState.copy(hadAtLeastOneSuccessfulPoll = true)
+                mutableState.update {
+                    (it as? StartedState)?.copy(
+                        hadAtLeastOneSuccessfulPoll = true,
+                        expired = isGroupExpired,
+                    ) ?: it
                 }
 
                 val regularMessages = groupMessageRetrieval.await()

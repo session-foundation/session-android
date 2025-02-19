@@ -481,6 +481,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         updateUnreadCountIndicator()
         updatePlaceholder()
         setUpBlockedBanner()
+        setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
         setUpMessageRequests()
@@ -822,9 +823,18 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     // called from onCreate
     private fun setUpBlockedBanner() {
         val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
-        binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
-        binding.blockedBanner.isVisible = recipient.isBlocked
-        binding.blockedBanner.setOnClickListener { unblock() }
+        binding.conversationHeader.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
+        binding.conversationHeader.blockedBanner.isVisible = recipient.isBlocked
+        binding.conversationHeader.blockedBanner.setOnClickListener { unblock() }
+    }
+
+    private fun setUpExpiredGroupBanner() {
+        lifecycleScope.launch {
+            viewModel.showExpiredGroupBanner
+                .collectLatest {
+                    binding.conversationHeader.groupExpiredBanner.isVisible = it
+                }
+        }
     }
 
     private fun setUpOutdatedClientBanner() {
@@ -833,13 +843,13 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
                 legacyRecipient != null
 
-        binding.outdatedDisappearingBanner.isVisible = shouldShowLegacy
+        binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
                 .put(NAME_KEY, legacyRecipient!!.toShortString())
                 .format()
-            binding.outdatedDisappearingBannerTextView.text = txt
+            binding.conversationHeader.outdatedDisappearingBannerTextView.text = txt
         }
     }
 
@@ -848,11 +858,11 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
             viewModel.legacyGroupBanner
                 .collectLatest { banner ->
                     if (banner == null) {
-                        binding.outdatedGroupBanner.isVisible = false
-                        binding.outdatedGroupBanner.text = null
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = false
+                        binding.conversationHeader.outdatedGroupBanner.text = null
                     } else {
-                        binding.outdatedGroupBanner.isVisible = true
-                        binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = true
+                        binding.conversationHeader.outdatedGroupBanner.text = SpannableStringBuilder(banner)
                             .apply {
                                 // Append a space as a placeholder
                                 append(" ")
@@ -875,7 +885,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                                 )
                             }
 
-                        binding.outdatedGroupBanner.setOnClickListener {
+                        binding.conversationHeader.outdatedGroupBanner.setOnClickListener {
                             showOpenUrlDialog("https://getsession.org/groups")
                         }
                     }
@@ -1018,7 +1028,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         runOnUiThread {
             val threadRecipient = viewModel.recipient ?: return@runOnUiThread
             if (threadRecipient.isContactRecipient) {
-                binding.blockedBanner.isVisible = threadRecipient.isBlocked
+                binding.conversationHeader.blockedBanner.isVisible = threadRecipient.isBlocked
             }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
@@ -1035,15 +1045,15 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun setUpMessageRequests() {
-        binding.acceptMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.acceptMessageRequestButton.setOnClickListener {
             viewModel.acceptMessageRequest()
         }
 
-        binding.messageRequestBlock.setOnClickListener {
+        binding.messageRequestBar.messageRequestBlock.setOnClickListener {
             block(deleteThread = true)
         }
 
-        binding.declineMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.declineMessageRequestButton.setOnClickListener {
             fun doDecline() {
                 viewModel.declineMessageRequest()
                 finish()
@@ -1063,12 +1073,12 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
                     .map { it.messageRequestState }
                     .distinctUntilChanged()
                     .collectLatest { state ->
-                        binding.messageRequestBar.isVisible = state is MessageRequestUiState.Visible
+                        binding.messageRequestBar.root.isVisible = state is MessageRequestUiState.Visible
 
                         if (state is MessageRequestUiState.Visible) {
-                            binding.sendAcceptsTextView.setText(state.acceptButtonText)
-                            binding.messageRequestBlock.isVisible = state.blockButtonText != null
-                            binding.messageRequestBlock.text = state.blockButtonText
+                            binding.messageRequestBar.sendAcceptsTextView.setText(state.acceptButtonText)
+                            binding.messageRequestBar.messageRequestBlock.isVisible = state.blockButtonText != null
+                            binding.messageRequestBar.messageRequestBlock.text = state.blockButtonText
                         }
                     }
             }
@@ -1076,7 +1086,7 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
     }
 
     private fun acceptMessageRequest() {
-        binding.messageRequestBar.isVisible = false
+        binding.messageRequestBar.root.isVisible = false
         viewModel.acceptMessageRequest()
     }
 

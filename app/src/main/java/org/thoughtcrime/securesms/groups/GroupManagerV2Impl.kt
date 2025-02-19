@@ -63,7 +63,6 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.PollerFactory
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -78,7 +77,6 @@ class GroupManagerV2Impl @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val lokiDatabase: LokiMessageDatabase,
     private val threadDatabase: ThreadDatabase,
-    private val pollerFactory: PollerFactory,
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
     @ApplicationContext val application: Context,
     private val clock: SnodeClock,
@@ -86,6 +84,7 @@ class GroupManagerV2Impl @Inject constructor(
     private val lokiAPIDatabase: LokiAPIDatabase,
     private val configUploader: ConfigUploader,
     private val scope: GroupScope,
+    private val groupPollerManager: GroupPollerManager,
 ) : GroupManagerV2 {
     private val dispatcher = Dispatchers.Default
 
@@ -196,7 +195,6 @@ class GroupManagerV2Impl @Inject constructor(
             profileManager.setName(application, recipient, groupName)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, true)
-            pollerFactory.updatePollers()
 
             // Invite members
             JobQueue.shared.add(
@@ -494,8 +492,6 @@ class GroupManagerV2Impl @Inject constructor(
                         }
                     }
 
-                    pollerFactory.pollerFor(groupId)?.stop()
-
                     // Delete conversation and group configs
                     storage.getThreadId(Address.fromSerialized(groupId.hexString))
                         ?.let(storage::deleteConversation)
@@ -678,14 +674,12 @@ class GroupManagerV2Impl @Inject constructor(
             ))
         }
 
-        val poller = checkNotNull(pollerFactory.pollerFor(group.groupAccountId)) { "Unable to start a poller for groups " }
-        poller.start()
-
         // We need to wait until we have the first data polled from the poller, otherwise
         // we won't have the necessary configs to send invite response/or do anything else.
         // We can't hang on here forever if things don't work out, bail out if it's the camse
         withTimeout(20_000L) {
-            poller.state.filterIsInstance<ClosedGroupPoller.StartedState>()
+            groupPollerManager.watchGroupPollingState(group.groupAccountId)
+                .filterIsInstance<ClosedGroupPoller.StartedState>()
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }
@@ -904,9 +898,6 @@ class GroupManagerV2Impl @Inject constructor(
 
     override suspend fun handleKicked(groupId: AccountId): Unit = scope.launchAndWait(groupId, "Handle kicked") {
         Log.d(TAG, "We were kicked from the group, delete and stop polling")
-
-        // Stop polling the group immediately
-        pollerFactory.pollerFor(groupId)?.stop()
 
         val userId = requireNotNull(storage.getUserPublicKey()) { "No current user available" }
         val group = configFactory.getGroup(groupId) ?: return@launchAndWait

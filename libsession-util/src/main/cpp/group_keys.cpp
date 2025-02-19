@@ -306,3 +306,11 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_admin(JNIEnv *env, 
     auto ptr = ptrToKeys(env, thiz);
     return ptr->admin();
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_network_loki_messenger_libsession_1util_GroupKeysConfig_size(JNIEnv *env, jobject thiz) {
+    std::lock_guard lock{util::util_mutex_};
+    auto ptr = ptrToKeys(env, thiz);
+    return ptr->size();
+}

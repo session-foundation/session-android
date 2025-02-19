@@ -78,12 +78,13 @@ import org.thoughtcrime.securesms.dependencies.AppComponent;
 import org.thoughtcrime.securesms.dependencies.ConfigFactory;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.dependencies.DatabaseModule;
-import org.thoughtcrime.securesms.dependencies.PollerFactory;
 import org.thoughtcrime.securesms.emoji.EmojiSource;
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager;
 import org.thoughtcrime.securesms.groups.OpenGroupManager;
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync;
 import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler;
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync;
+import org.thoughtcrime.securesms.groups.GroupPollerManager;
 import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler;
 import org.thoughtcrime.securesms.home.HomeActivity;
 import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
@@ -98,6 +99,7 @@ import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager;
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository;
+import org.thoughtcrime.securesms.util.AppVisibilityManager;
 import org.thoughtcrime.securesms.util.Broadcaster;
 import org.thoughtcrime.securesms.util.VersionDataFetcher;
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor;
@@ -151,7 +153,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject MessageDataProvider messageDataProvider;
     @Inject TextSecurePreferences textSecurePreferences;
     @Inject ConfigFactory configFactory;
-    @Inject PollerFactory pollerFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
     @Inject PushRegistrationHandler pushRegistrationHandler;
@@ -175,6 +176,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
     @Inject CleanupInvitationHandler cleanupInvitationHandler;
+    @Inject AppVisibilityManager appVisibilityManager;  // Exists here only to start upon app starts
+    @Inject GroupPollerManager groupPollerManager;  // Exists here only to start upon app starts
+    @Inject ExpiredGroupManager expiredGroupManager; // Exists here only to start upon app starts
 
     public volatile boolean isAppVisible;
     public String KEYGUARD_LOCK_TAG = NonTranslatableStringConstants.APP_NAME + ":KeyguardLock";
@@ -350,7 +354,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.stopIfNeeded();
         }
-        pollerFactory.stopAll();
         legacyClosedGroupPollerV2.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
     }
@@ -359,7 +362,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     public void onTerminate() {
         stopKovenant(); // Loki
         OpenGroupManager.INSTANCE.stopPolling();
-        pollerFactory.stopAll();
         versionDataFetcher.stopTimedVersionCheck();
         super.onTerminate();
     }
@@ -462,7 +464,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         if (poller != null) {
             poller.startIfNeeded();
         }
-        pollerFactory.startAll();
         legacyClosedGroupPollerV2.start();
     }
 

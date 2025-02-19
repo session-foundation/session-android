@@ -16,6 +16,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -60,6 +62,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
@@ -82,6 +85,7 @@ class ConversationViewModel(
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    private val expiredGroupManager: ExpiredGroupManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -244,6 +248,13 @@ class ConversationViewModel(
             admin && recipient?.isLegacyGroupRecipient == true
                     && state != LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING
         }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    val showExpiredGroupBanner: Flow<Boolean> = if (recipient?.isGroupV2Recipient != true) {
+        flowOf(false)
+    } else {
+        val groupId = AccountId(recipient!!.address.toString())
+        expiredGroupManager.expiredGroups.map { groupId in it }
+    }
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -1089,6 +1100,7 @@ class ConversationViewModel(
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+        private val expiredGroupManager: ExpiredGroupManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1107,6 +1119,7 @@ class ConversationViewModel(
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
+                expiredGroupManager = expiredGroupManager,
             ) as T
         }
     }

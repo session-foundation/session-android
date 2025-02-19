@@ -29,6 +29,9 @@ sealed class GroupInfo {
 
         fun hasAdminKey() = adminKey != null
 
+        val shouldPoll: Boolean
+            get() = !invited && !kicked && !destroyed
+
         companion object {
             /**
              * Generate the group's admin key(64 bytes) from seed (32 bytes, normally used

@@ -26,6 +26,13 @@ data class AccountId(
         Hex.fromStringCondensed(hexString.drop(2))
     }
 
+    override fun toString(): String {
+        return StringBuilder(8)
+            .append(hexString, 0, 5)
+            .append("...")
+            .toString()
+    }
+
     override fun compareTo(other: AccountId): Int {
         return hexString.compareTo(other.hexString)
     }

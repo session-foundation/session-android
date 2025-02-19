@@ -458,6 +458,7 @@ interface ReadableGroupKeysConfig {
     fun subAccountSign(message: ByteArray, signingValue: ByteArray): GroupKeysConfig.SwarmAuth
     fun getSubAccountToken(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
     fun currentGeneration(): Int
+    fun size(): Int
 }
 
 interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
@@ -539,6 +540,7 @@ class GroupKeysConfig private constructor(
 
     external override fun currentGeneration(): Int
     external fun admin(): Boolean
+    external override fun size(): Int
 
     data class SwarmAuth(
         val subAccount: String,

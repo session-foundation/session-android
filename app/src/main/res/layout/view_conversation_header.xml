@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:id="@+id/blockedBanner"
+        android:contentDescription="@string/AccessibilityId_blockedBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?danger"
+        android:visibility="gone"
+        tools:visibility="visible"
+        >
+
+        <TextView
+            android:id="@+id/blockedBannerTextView"
+            android:contentDescription="@string/AccessibilityId_blockedBannerText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="@dimen/medium_spacing"
+            android:textColor="@color/white"
+            android:textSize="@dimen/small_font_size"
+            android:textStyle="bold"
+            tools:text="Elon is blocked. Unblock them?" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/outdatedDisappearingBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?colorAccent"
+        android:contentDescription="@string/AccessibilityId_outdated_group_banner"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TextView
+            android:id="@+id/outdatedDisappearingBannerTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_gravity="center"
+            android:layout_marginVertical="@dimen/very_small_spacing"
+            android:layout_marginHorizontal="@dimen/medium_spacing"
+            android:textColor="@color/black"
+            android:textSize="@dimen/small_font_size"
+            tools:text="This user's client is outdated, things may not work as expected" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/outdatedGroupBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="?colorAccent"
+        android:paddingVertical="@dimen/very_small_spacing"
+        android:gravity="center_horizontal"
+        android:textColor="?message_sent_text_color"
+        android:paddingHorizontal="@dimen/medium_spacing"
+        android:contentDescription="@string/AccessibilityId_outdated_group_banner"
+        android:textSize="@dimen/small_font_size"
+        android:visibility="gone"
+        tools:text="@string/groupLegacyBanner"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/groupExpiredBanner"
+        android:text="@string/groupNotUpdatedWarning"
+        android:gravity="center"
+        android:background="@color/accent_orange"
+        android:textColor="@color/black"
+        android:paddingHorizontal="@dimen/medium_spacing"
+        android:paddingVertical="@dimen/very_small_spacing"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
