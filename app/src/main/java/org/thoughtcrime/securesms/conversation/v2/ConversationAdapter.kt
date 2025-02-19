@@ -13,6 +13,8 @@ import androidx.core.util.set
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
+import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.min
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -28,8 +30,6 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDel
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.min
 
 class ConversationAdapter(
     context: Context,
@@ -73,9 +73,7 @@ class ConversationAdapter(
     }
 
     @WorkerThread
-    private fun getSenderInfo(sender: String): Contact? {
-        return contactDB.getContactWithAccountID(sender)
-    }
+    private fun getSenderInfo(sender: String): Contact? = contactDB.getContactWithAccountID(sender)
 
     sealed class ViewType(val rawValue: Int) {
         object Visible : ViewType(0)
@@ -193,9 +191,7 @@ class ConversationAdapter(
         super.onItemViewRecycled(viewHolder)
     }
 
-    private fun getMessage(cursor: Cursor): MessageRecord? {
-        return messageDB.readerFor(cursor).current
-    }
+    private fun getMessage(cursor: Cursor): MessageRecord? = messageDB.readerFor(cursor).current
 
     private fun getMessageBefore(position: Int, cursor: Cursor): MessageRecord? {
         // The message that's visually before the current one is actually after the current
