@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
@@ -58,7 +57,7 @@ class GroupPollerManager @Inject constructor(
     appVisibilityManager: AppVisibilityManager,
 ) {
     @Suppress("OPT_IN_USAGE")
-    val activeGroupPollers: StateFlow<Map<AccountId, ClosedGroupPoller>> =
+    private val activeGroupPollers: StateFlow<Map<AccountId, ClosedGroupPoller>> =
         combine(
             preferences.watchLocalNumber(),
             appVisibilityManager.isAppVisible
@@ -84,12 +83,12 @@ class GroupPollerManager @Inject constructor(
                 }
             }
 
-            // This scan compares the current group pollers with the incoming set of groups
+            // This scan compares the previous active group pollers with the incoming set of groups
             // that should be polled now, to work out which pollers should be started or stopped,
             // and finally emits the new state
-            .scan(emptyMap<AccountId, ClosedGroupPoller>()) { current, newActiveGroupIDs ->
-                // Go through current pollers and stop those that are not in the new set
-                for ((groupId, poller) in current) {
+            .scan(emptyMap<AccountId, ClosedGroupPoller>()) { previous, newActiveGroupIDs ->
+                // Go through previous pollers and stop those that are not in the new set
+                for ((groupId, poller) in previous) {
                     if (groupId !in newActiveGroupIDs) {
                         Log.d(TAG, "Stopping poller for $groupId")
                         poller.stop()
@@ -97,9 +96,9 @@ class GroupPollerManager @Inject constructor(
                 }
 
                 // Go through new set, pick the existing pollers and create/start those that are
-                // not in the current set
+                // not in the previous map
                 newActiveGroupIDs.associateWith { groupId ->
-                    var poller = current[groupId]
+                    var poller = previous[groupId]
 
                     if (poller == null) {
                         Log.d(TAG, "Starting poller for $groupId")
@@ -121,9 +120,6 @@ class GroupPollerManager @Inject constructor(
 
             .stateIn(GlobalScope, SharingStarted.Eagerly, emptyMap())
 
-    fun peekGroupPollingState(groupId: AccountId): ClosedGroupPoller.State {
-        return activeGroupPollers.value[groupId]?.state?.value ?: ClosedGroupPoller.IdleState
-    }
 
     @Suppress("OPT_IN_USAGE")
     fun watchGroupPollingState(groupId: AccountId): Flow<ClosedGroupPoller.State> {

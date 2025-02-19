@@ -253,6 +253,7 @@
         app:layout_constraintBottom_toTopOf="@+id/recreateGroupButtonContainer"
         app:layout_constraintTop_toBottomOf="@+id/textSendAfterApproval"
         layout="@layout/view_conversation_message_request_bar"
+        android:layout_marginBottom="@dimen/large_spacing"
         tools:visibility="visible"
         android:visibility="gone" />
 
