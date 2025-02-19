@@ -195,7 +195,6 @@ import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
-import java.lang.Integer.max
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -314,17 +313,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private val EMOJI_REACTIONS_ALLOWED_PER_MINUTE = 20
     private val ONE_MINUTE_IN_MILLISECONDS = 1.minutes.inWholeMilliseconds
 
-    private val isScrolledToBottom: Boolean
-        get() = binding.conversationRecyclerView.isScrolledToBottom
-
-    private val isScrolledToWithin30dpOfBottom: Boolean
-        get() = binding.conversationRecyclerView.isScrolledToWithin30dpOfBottom
-
-    // When the user clicks on the original message in reply to an existing message then we scroll to and
-    // highlight the original message. To do this, we keep track of the original message location in the
-    // recycler view as needed.
-    private var pendingHighlightMessagePosition: Int? = null
-
     private val layoutManager: LinearLayoutManager?
         get() { return binding.conversationRecyclerView.layoutManager as LinearLayoutManager? }
 
@@ -436,10 +424,31 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    // Properties for what message indices are visible previously & now, as well as the scroll state
+    // Properties related to the conversation recycler view's scroll state and position
     private var previousLastVisibleRecyclerViewIndex: Int = RecyclerView.NO_POSITION
     private var currentLastVisibleRecyclerViewIndex:  Int = RecyclerView.NO_POSITION
     private var recyclerScrollState: Int = RecyclerView.SCROLL_STATE_IDLE
+
+    private val isScrolledToBottom: Boolean
+        get() = binding.conversationRecyclerView.isScrolledToBottom
+
+    private val isScrolledToWithin30dpOfBottom: Boolean
+        get() = binding.conversationRecyclerView.isScrolledToWithin30dpOfBottom
+
+    // When the user clicks on the original message in a reply then we scroll to and highlight that original
+    // message. To do this we keep track of the replied-to message's location in the recycler view.
+    private var pendingHighlightMessagePosition: Int? = null
+
+    // Used to target a specific message and scroll to it with some breathing room above (offset)
+    private var targetedScrollOffsetPx: Int = 0
+    private val linearSmoothScroller by lazy {
+        object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
+            override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+            override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
+                return super.calculateDyToMakeVisible(view, snapPreference) - targetedScrollOffsetPx
+            }
+        }
+    }
 
     // region Settings
     companion object {
@@ -1806,20 +1815,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
             // Also: The offset must be negative to provide room above it.
             pendingHighlightMessagePosition = targetMessagePosition
-            val offsetPx = if (targetMessagePosition > 0) resources.getDimensionPixelSize(R.dimen.large_spacing) * -1 else 0
-
-            layoutManager?.let { lm ->
-                val smoothScroller = object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
-                    override fun getVerticalSnapPreference(): Int = SNAP_TO_START
-
-                    override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                        return super.calculateDyToMakeVisible(view, snapPreference) - offsetPx
-                    }
-                }
-                smoothScroller.targetPosition = targetMessagePosition
-                lm.startSmoothScroll(smoothScroller)
-            }
-
+            targetedScrollOffsetPx = if (targetMessagePosition > 0) resources.getDimensionPixelSize(R.dimen.massive_spacing) * -1 else 0
+            linearSmoothScroller.targetPosition = targetMessagePosition
+            (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
+            
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
 
