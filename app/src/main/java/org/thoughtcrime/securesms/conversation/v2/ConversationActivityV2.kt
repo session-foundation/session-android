@@ -51,6 +51,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.annimon.stream.Stream
 import com.bumptech.glide.Glide
@@ -1802,11 +1803,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
 
             // ..otherwise, set the pending highlight target and trigger a scroll.
-            // Note: We scroll slightly past the target highlight message position otherwise it looks
-            // a bit too close to the top of the screen.
+            // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
+            // Also: The offset must be negative to provide room above it.
             pendingHighlightMessagePosition = targetMessagePosition
-            val offsetPendingHighlightMessagePosition = max(0, targetMessagePosition - 1)
-            binding.conversationRecyclerView.smoothScrollToPosition(offsetPendingHighlightMessagePosition)
+            val offsetPx = if (targetMessagePosition > 0) resources.getDimensionPixelSize(R.dimen.large_spacing) * -1 else 0
+
+            layoutManager?.let { lm ->
+                val smoothScroller = object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
+                    override fun getVerticalSnapPreference(): Int = SNAP_TO_START
+
+                    override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
+                        return super.calculateDyToMakeVisible(view, snapPreference) - offsetPx
+                    }
+                }
+                smoothScroller.targetPosition = targetMessagePosition
+                lm.startSmoothScroll(smoothScroller)
+            }
+
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
 
