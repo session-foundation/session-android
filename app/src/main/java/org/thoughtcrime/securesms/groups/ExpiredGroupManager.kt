@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
-import org.session.libsession.messaging.sending_receiving.pollers.GroupPoller
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import javax.inject.Inject

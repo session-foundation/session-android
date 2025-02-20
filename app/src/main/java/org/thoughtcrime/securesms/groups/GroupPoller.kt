@@ -1,4 +1,4 @@
-package org.session.libsession.messaging.sending_receiving.pollers
+package org.thoughtcrime.securesms.groups
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

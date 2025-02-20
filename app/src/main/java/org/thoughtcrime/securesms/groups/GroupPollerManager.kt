@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.sending_receiving.pollers.GroupPoller
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
