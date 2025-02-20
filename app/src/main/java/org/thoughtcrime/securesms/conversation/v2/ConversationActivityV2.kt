@@ -436,13 +436,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // message. To do this we keep track of the replied-to message's location in the recycler view.
     private var pendingHighlightMessagePosition: Int? = null
 
-    // Used to target a specific message and scroll to it with some breathing room above (offset)
-    private var targetedScrollOffsetPx: Int = 0
+    // Used to target a specific message and scroll to it with some breathing room above (offset) for all messages but the first
+    private var currentTargetedScrollOffsetPx: Int = 0
+    private val nonFirstMessageOffsetPx by lazy { resources.getDimensionPixelSize(R.dimen.massive_spacing) * -1 }
     private val linearSmoothScroller by lazy {
         object : LinearSmoothScroller(binding.conversationRecyclerView.context) {
             override fun getVerticalSnapPreference(): Int = SNAP_TO_START
             override fun calculateDyToMakeVisible(view: View, snapPreference: Int): Int {
-                return super.calculateDyToMakeVisible(view, snapPreference) - targetedScrollOffsetPx
+                return super.calculateDyToMakeVisible(view, snapPreference) - currentTargetedScrollOffsetPx
             }
         }
     }
@@ -1812,7 +1813,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             // Note: If the targeted message isn't the very first one then we scroll slightly past it to give it some breathing room.
             // Also: The offset must be negative to provide room above it.
             pendingHighlightMessagePosition = targetMessagePosition
-            targetedScrollOffsetPx = if (targetMessagePosition > 0) resources.getDimensionPixelSize(R.dimen.massive_spacing) * -1 else 0
+            currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
             linearSmoothScroller.targetPosition = targetMessagePosition
             (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
             
