@@ -34,9 +34,11 @@ import androidx.annotation.StringRes;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.hilt.work.HiltWorkerFactory;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Configuration;
 
 import com.squareup.phrase.Phrase;
 
@@ -134,7 +136,7 @@ import network.loki.messenger.R;
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster {
+public class ApplicationContext extends Application implements DefaultLifecycleObserver, Toaster, Configuration.Provider {
 
     public static final String PREFERENCES_NAME = "SecureSMS-Preferences";
 
@@ -147,6 +149,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private Handler conversationListHandler;
     private PersistentLogger persistentLogger;
 
+    @Inject HiltWorkerFactory workerFactory;
     @Inject LokiAPIDatabase lokiAPIDatabase;
     @Inject public Storage storage;
     @Inject Device device;
@@ -316,6 +319,14 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut);
         }
+    }
+
+    @NonNull
+    @Override
+    public Configuration getWorkManagerConfiguration() {
+        return new Configuration.Builder()
+                .setWorkerFactory(workerFactory)
+                .build();
     }
 
     @Override

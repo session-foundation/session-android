@@ -30,7 +30,7 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
+import org.session.libsession.messaging.sending_receiving.pollers.GroupPoller
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
@@ -679,7 +679,7 @@ class GroupManagerV2Impl @Inject constructor(
         // We can't hang on here forever if things don't work out, bail out if it's the camse
         withTimeout(20_000L) {
             groupPollerManager.watchGroupPollingState(group.groupAccountId)
-                .filterIsInstance<ClosedGroupPoller.StartedState>()
+                .filterIsInstance<GroupPoller.StartedState>()
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }

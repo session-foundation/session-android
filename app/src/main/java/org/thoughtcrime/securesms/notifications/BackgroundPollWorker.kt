@@ -3,7 +3,9 @@ package org.thoughtcrime.securesms.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
+import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -12,12 +14,15 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.GlobalScope
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
@@ -28,10 +33,20 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.recover
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.groups.GroupPollerManager
 import java.util.concurrent.TimeUnit
 
-class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Worker(context, params) {
+@HiltWorker
+class BackgroundPollWorker @AssistedInject constructor(
+    @Assisted val context: Context,
+    @Assisted params: WorkerParameters,
+    val storage: StorageProtocol,
+    val deprecationManager: LegacyGroupDeprecationManager,
+    val lokiThreadDatabase: LokiThreadDatabase,
+    val groupPollerManager: GroupPollerManager,
+) : CoroutineWorker(context, params) {
     enum class Targets {
         DMS, CLOSED_GROUPS, OPEN_GROUPS
     }
@@ -79,8 +94,9 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
         }
     }
 
-    override fun doWork(): Result {
-        if (TextSecurePreferences.getLocalNumber(context) == null) {
+    override suspend fun doWork(): Result {
+        val userAuth = storage.userAuth
+        if (userAuth == null) {
             Log.v(TAG, "User not registered yet.")
             return Result.failure()
         }
@@ -102,7 +118,7 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
                 catch(e: Exception) { null }
             }
             .filterNotNull()
-            .ifEmpty { Targets.values().toList() }
+            .ifEmpty { Targets.entries.toList() }
 
         try {
             Log.v(TAG, "Performing background poll for ${requestTargets.joinToString { it.name }}.")
@@ -112,7 +128,6 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
             var dmsPromise: Promise<Unit, Exception> = Promise.ofSuccess(Unit)
 
             if (requestTargets.contains(Targets.DMS)) {
-                val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
                 dmsPromise = SnodeAPI.getMessages(userAuth).bind { envelopes ->
                     val params = envelopes.map { (envelope, serverHash) ->
                         // FIXME: Using a job here seems like a bad idea...
@@ -128,11 +143,7 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
 
             // Closed groups
             if (requestTargets.contains(Targets.CLOSED_GROUPS)) {
-                val closedGroupPoller = LegacyClosedGroupPollerV2(
-                    MessagingModuleConfiguration.shared.storage,
-                    MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.deprecationManager
-                ) // Intentionally don't use shared
-                val storage = MessagingModuleConfiguration.shared.storage
+                val closedGroupPoller = LegacyClosedGroupPollerV2(storage, deprecationManager) // Intentionally don't use shared
                 val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
                 allGroupPublicKeys.iterator().forEach { closedGroupPoller.poll(it) }
             }
@@ -141,8 +152,7 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
             var ogPollError: Exception? = null
 
             if (requestTargets.contains(Targets.OPEN_GROUPS)) {
-                val threadDB = DatabaseComponent.get(context).lokiThreadDatabase()
-                val openGroups = threadDB.getAllOpenGroups()
+                val openGroups = lokiThreadDatabase.getAllOpenGroups()
                 val openGroupServers = openGroups.map { it.value.server }.toSet()
 
                 for (server in openGroupServers) {

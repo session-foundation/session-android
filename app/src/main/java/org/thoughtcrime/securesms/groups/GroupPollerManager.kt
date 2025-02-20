@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
+import org.session.libsession.messaging.sending_receiving.pollers.GroupPoller
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
@@ -57,7 +57,7 @@ class GroupPollerManager @Inject constructor(
     appVisibilityManager: AppVisibilityManager,
 ) {
     @Suppress("OPT_IN_USAGE")
-    private val activeGroupPollers: StateFlow<Map<AccountId, ClosedGroupPoller>> =
+    private val activeGroupPollers: StateFlow<Map<AccountId, GroupPoller>> =
         combine(
             preferences.watchLocalNumber(),
             appVisibilityManager.isAppVisible
@@ -86,7 +86,7 @@ class GroupPollerManager @Inject constructor(
             // This scan compares the previous active group pollers with the incoming set of groups
             // that should be polled now, to work out which pollers should be started or stopped,
             // and finally emits the new state
-            .scan(emptyMap<AccountId, ClosedGroupPoller>()) { previous, newActiveGroupIDs ->
+            .scan(emptyMap<AccountId, GroupPoller>()) { previous, newActiveGroupIDs ->
                 // Go through previous pollers and stop those that are not in the new set
                 for ((groupId, poller) in previous) {
                     if (groupId !in newActiveGroupIDs) {
@@ -102,10 +102,10 @@ class GroupPollerManager @Inject constructor(
 
                     if (poller == null) {
                         Log.d(TAG, "Starting poller for $groupId")
-                        poller = ClosedGroupPoller(
+                        poller = GroupPoller(
                             scope = scope,
                             executor = executor,
-                            closedGroupSessionId = groupId,
+                            groupId = groupId,
                             configFactoryProtocol = configFactory,
                             groupManagerV2 = groupManagerV2.get(),
                             storage = storage,
@@ -122,16 +122,16 @@ class GroupPollerManager @Inject constructor(
 
 
     @Suppress("OPT_IN_USAGE")
-    fun watchGroupPollingState(groupId: AccountId): Flow<ClosedGroupPoller.State> {
+    fun watchGroupPollingState(groupId: AccountId): Flow<GroupPoller.State> {
         return activeGroupPollers
             .flatMapLatest { pollers ->
-                pollers[groupId]?.state ?: flowOf(ClosedGroupPoller.IdleState)
+                pollers[groupId]?.state ?: flowOf(GroupPoller.IdleState)
             }
             .distinctUntilChanged()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun watchAllGroupPollingState(): Flow<Pair<AccountId, ClosedGroupPoller.State>> {
+    fun watchAllGroupPollingState(): Flow<Pair<AccountId, GroupPoller.State>> {
         return activeGroupPollers
             .flatMapLatest { pollers ->
                 // Merge all poller states into a single flow of (groupId, state) pairs

@@ -13,7 +13,6 @@ import kotlinx.coroutines.GlobalScope
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences

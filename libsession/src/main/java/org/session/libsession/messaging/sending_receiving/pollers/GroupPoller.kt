@@ -36,10 +36,10 @@ import org.session.libsignal.utilities.Snode
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.days
 
-class ClosedGroupPoller(
+class GroupPoller(
     private val scope: CoroutineScope,
     private val executor: CoroutineDispatcher,
-    private val closedGroupSessionId: AccountId,
+    private val groupId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val storage: StorageProtocol,
@@ -67,12 +67,12 @@ class ClosedGroupPoller(
     fun start() {
         if ((state.value as? StartedState)?.job?.isActive == true) return // already started, don't restart
 
-        Log.d(TAG, "Starting closed group poller for ${closedGroupSessionId.hexString.take(4)}")
+        Log.d(TAG, "Starting closed group poller for ${groupId.hexString.take(4)}")
         val job = scope.launch(executor) {
             while (isActive) {
                 try {
                     val swarmNodes =
-                        SnodeAPI.fetchSwarmNodes(closedGroupSessionId.hexString).toMutableSet()
+                        SnodeAPI.fetchSwarmNodes(groupId.hexString).toMutableSet()
                     var currentSnode: Snode? = null
 
                     while (isActive) {
@@ -125,14 +125,14 @@ class ClosedGroupPoller(
     }
 
     fun stop() {
-        Log.d(TAG, "Stopping closed group poller for $closedGroupSessionId")
+        Log.d(TAG, "Stopping closed group poller for $groupId")
         (state.value as? StartedState)?.job?.cancel()
     }
 
     private suspend fun poll(snode: Snode): Unit = supervisorScope {
         val groupAuth =
-            configFactoryProtocol.getGroupAuth(closedGroupSessionId) ?: return@supervisorScope
-        val configHashesToExtends = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+            configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
+        val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
             buildSet {
                 addAll(it.groupKeys.currentHashes())
                 addAll(it.groupInfo.currentHashes())
@@ -140,7 +140,7 @@ class ClosedGroupPoller(
             }
         }
 
-        val group = configFactoryProtocol.getGroup(closedGroupSessionId)
+        val group = configFactoryProtocol.getGroup(groupId)
         if (group == null) {
             throw NonRetryableException("Group doesn't exist")
         }
@@ -156,11 +156,11 @@ class ClosedGroupPoller(
         val receiveRevokeMessage = async {
             SnodeAPI.sendBatchRequest(
                 snode,
-                closedGroupSessionId.hexString,
+                groupId.hexString,
                 SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                     lastHash = lokiApiDatabase.getLastMessageHashValue(
                         snode,
-                        closedGroupSessionId.hexString,
+                        groupId.hexString,
                         Namespace.REVOKED_GROUP_MESSAGES()
                     ).orEmpty(),
                     auth = groupAuth,
@@ -175,7 +175,7 @@ class ClosedGroupPoller(
             pollingTasks += "extending group config TTL" to async {
                 SnodeAPI.sendBatchRequest(
                     snode,
-                    closedGroupSessionId.hexString,
+                    groupId.hexString,
                     SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
                         messageHashes = configHashesToExtends.toList(),
                         auth = groupAuth,
@@ -189,7 +189,7 @@ class ClosedGroupPoller(
         val groupMessageRetrieval = async {
             val lastHash = lokiApiDatabase.getLastMessageHashValue(
                 snode,
-                closedGroupSessionId.hexString,
+                groupId.hexString,
                 Namespace.CLOSED_GROUP_MESSAGES()
             ).orEmpty()
 
@@ -197,7 +197,7 @@ class ClosedGroupPoller(
 
             SnodeAPI.sendBatchRequest(
                 snode = snode,
-                publicKey = closedGroupSessionId.hexString,
+                publicKey = groupId.hexString,
                 request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                     lastHash = lastHash,
                     auth = groupAuth,
@@ -216,11 +216,11 @@ class ClosedGroupPoller(
             async {
                 SnodeAPI.sendBatchRequest(
                     snode = snode,
-                    publicKey = closedGroupSessionId.hexString,
+                    publicKey = groupId.hexString,
                     request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode,
-                            closedGroupSessionId.hexString,
+                            groupId.hexString,
                             ns
                         ).orEmpty(),
                         auth = groupAuth,
@@ -243,7 +243,7 @@ class ClosedGroupPoller(
                 saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
                 saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
 
-                val isGroupExpired = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                val isGroupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
                     it.groupKeys.size() == 0
                 }
 
@@ -299,7 +299,7 @@ class ClosedGroupPoller(
         if (messages.isNotEmpty()) {
             lokiApiDatabase.setLastMessageHashValue(
                 snode = snode,
-                publicKey = closedGroupSessionId.hexString,
+                publicKey = groupId.hexString,
                 newValue = messages.last().hash,
                 namespace = namespace
             )
@@ -311,7 +311,7 @@ class ClosedGroupPoller(
             val decoded = configFactoryProtocol.decryptForUser(
                 msg.data,
                 Sodium.KICKED_DOMAIN,
-                closedGroupSessionId,
+                groupId,
             )
 
             if (decoded != null) {
@@ -329,7 +329,7 @@ class ClosedGroupPoller(
                     return@forEach
                 }
 
-                val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+                val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(groupId) {
                     it.groupKeys.currentGeneration()
                 }
 
@@ -337,7 +337,7 @@ class ClosedGroupPoller(
                 Log.d(TAG, "Received kicked message, for us? ${isForMe}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
 
                 if (isForMe && messageGeneration >= currentKeysGeneration) {
-                    groupManagerV2.handleKicked(closedGroupSessionId)
+                    groupManagerV2.handleKicked(groupId)
                 }
             }
         }
@@ -360,7 +360,7 @@ class ClosedGroupPoller(
         )
 
         configFactoryProtocol.mergeGroupConfigMessages(
-            groupId = closedGroupSessionId,
+            groupId = groupId,
             keys = keysResponse.map { it.toConfigMessage() },
             info = infoResponse.map { it.toConfigMessage() },
             members = membersResponse.map { it.toConfigMessage() },
@@ -368,11 +368,11 @@ class ClosedGroupPoller(
     }
 
     private fun handleMessages(body: RawResponse, snode: Snode) {
-        val messages = configFactoryProtocol.withGroupConfigs(closedGroupSessionId) {
+        val messages = configFactoryProtocol.withGroupConfigs(groupId) {
             SnodeAPI.parseRawMessagesResponse(
                 rawResponse = body,
                 snode = snode,
-                publicKey = closedGroupSessionId.hexString,
+                publicKey = groupId.hexString,
                 decrypt = it.groupKeys::decrypt,
                 namespace = Namespace.CLOSED_GROUP_MESSAGES(),
             )
@@ -382,7 +382,7 @@ class ClosedGroupPoller(
             MessageReceiveParameters(
                 envelope.toByteArray(),
                 serverHash = serverHash,
-                closedGroup = Destination.ClosedGroup(closedGroupSessionId.hexString)
+                closedGroup = Destination.ClosedGroup(groupId.hexString)
             )
         }
 
