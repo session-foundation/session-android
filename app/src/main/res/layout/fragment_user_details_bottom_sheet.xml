@@ -25,29 +25,26 @@
         android:layout_marginTop="@dimen/medium_spacing"
         android:gravity="center">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/nameTextViewContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingStart="@dimen/medium_spacing"
             android:paddingEnd="@dimen/medium_spacing"
-            android:gravity="center"
-            android:orientation="horizontal"
             android:layout_centerInParent="true"
             android:visibility="visible">
 
-            <View
-                android:layout_width="24dp"
-                android:layout_height="24dp" />
-
             <TextView
                 android:id="@+id/nameTextView"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-
                 android:layout_gravity="center"
-                android:layout_marginStart="@dimen/small_spacing"
-                android:layout_marginEnd="@dimen/small_spacing"
+                app:layout_constraintWidth_max="wrap"
+                app:layout_constraintWidth_percent="0.8"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 android:textSize="@dimen/large_font_size"
                 android:textStyle="bold"
                 android:textColor="?android:textColorPrimary"
@@ -58,14 +55,18 @@
                 android:id="@+id/nameEditIcon"
                 android:layout_width="20dp"
                 android:layout_height="22dp"
+                app:layout_constraintStart_toEndOf="@+id/nameTextView"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="@dimen/small_spacing"
                 android:contentDescription="@string/AccessibilityId_displayNameNew"
                 android:paddingTop="2dp"
                 android:layout_marginEnd="20dp"
                 android:src="@drawable/ic_baseline_edit_24" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/nameEditTextContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -77,16 +78,24 @@
                 android:id="@+id/cancelNicknameEditingButton"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginLeft="@dimen/large_spacing"
+                app:layout_constraintEnd_toStartOf="@+id/nicknameEditText"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginEnd="@dimen/small_spacing"
                 android:contentDescription="@string/AccessibilityId_cancel"
                 android:src="@drawable/ic_baseline_clear_24" />
 
             <EditText
                 android:id="@+id/nicknameEditText"
                 style="@style/SmallSessionEditText"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintWidth_max="wrap"
+                app:layout_constraintWidth_percent="0.8"
                 android:contentDescription="@string/AccessibilityId_displayName"
                 android:textAlignment="center"
                 android:paddingVertical="12dp"
@@ -100,11 +109,14 @@
                 android:id="@+id/saveNicknameButton"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginRight="@dimen/large_spacing"
+                app:layout_constraintStart_toEndOf="@+id/nicknameEditText"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="@dimen/small_spacing"
                 android:contentDescription="@string/AccessibilityId_apply"
                 android:src="@drawable/ic_baseline_done_24" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </RelativeLayout>
 

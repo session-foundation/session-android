@@ -24,6 +24,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 
@@ -86,7 +87,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             }
             nameTextView.text = recipient.name
 
-            nameEditIcon.isVisible = threadRecipient.isContactRecipient
+            nameEditIcon.isVisible = recipient.isContactRecipient
                     && !threadRecipient.isCommunityInboxRecipient
                     && !threadRecipient.isCommunityOutboxRecipient
 
@@ -141,6 +142,9 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
         contact.nickname = newNickName
         storage.setContact(contact)
         nameTextView.text = recipient.name
+
+        (parentFragment as? UserDetailsBottomSheetCallback)
+            ?: (requireActivity() as? UserDetailsBottomSheetCallback)?.onNicknameSaved()
     }
 
     @SuppressLint("ServiceCast")
@@ -155,5 +159,9 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
     fun hideSoftKeyboard() {
         val imm = context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
         imm?.hideSoftInputFromWindow(binding.nicknameEditText.windowToken, 0)
+    }
+
+    interface UserDetailsBottomSheetCallback {
+        fun onNicknameSaved()
     }
 }
