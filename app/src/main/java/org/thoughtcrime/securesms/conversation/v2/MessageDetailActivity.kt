@@ -59,6 +59,8 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.ui.Avatar
@@ -207,6 +209,10 @@ fun MessageDetails(
 fun CellMetadata(
     state: MessageDetailsState,
 ) {
+    val context = LocalContext.current
+    val messageOriginatorAddress = TextSecurePreferences.getLocalNumber(context)
+    Log.w("ACL", "local address is: " + messageOriginatorAddress)
+
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
         Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
@@ -214,8 +220,31 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                TitledText(sent)
-                TitledText(received)
+                // If we're the sender of the message we show the sent timestamp, otherwise we show the received timestamp
+
+                //senderInfo.
+
+
+
+                sender?.let { recipient ->
+
+                    val messageRecipientAddress = recipient.address.toString()
+                    val weSentThisMessage = messageOriginatorAddress == messageRecipientAddress
+
+
+                    Log.w("ACL", "recipient address is: " + recipient.address.toString())
+                    Log.w("ACL", "sender info text is: " + senderInfo?.text)
+                    Log.w("ACL", "sender info component2 is: " + senderInfo?.component2())
+
+                    if (weSentThisMessage) {
+                        Log.w("ACL", "We think WE sent this message - showing sent block!")
+                        TitledText(sent)
+                    } else {
+                        Log.w("ACL", "We think they sent this message - showing received block!")
+                        TitledText(received)
+                    }
+                }
+
                 TitledErrorText(error)
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
