@@ -684,7 +684,8 @@ class GroupManagerV2Impl @Inject constructor(
                 .first()
         }
 
-        if (group.adminKey == null) {
+        val adminKey = group.adminKey
+        if (adminKey == null) {
             // Send an invite response to the group if we are invited as a regular member
             val inviteResponse = GroupUpdateInviteResponseMessage.newBuilder()
                 .setIsApproved(true)
@@ -700,6 +701,8 @@ class GroupManagerV2Impl @Inject constructor(
         } else {
             // If we are invited as admin, we can just update the group info ourselves
             configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
+                configs.groupKeys.loadAdminKey(adminKey)
+
                 configs.groupMembers.get(key)?.let { member ->
                     configs.groupMembers.set(member.apply {
                         setPromotionAccepted()
@@ -778,9 +781,10 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Update our promote state
             configFactory.withMutableGroupConfigs(
-                recreateConfigInstances = true,
                 groupId = groupId
             ) { configs ->
+                configs.groupKeys.loadAdminKey(adminKey)
+
                 configs.groupMembers.get(userAuth.accountId.hexString)?.let { member ->
                     member.setPromotionAccepted()
                     configs.groupMembers.set(member)

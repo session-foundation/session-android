@@ -464,6 +464,7 @@ interface ReadableGroupKeysConfig {
 interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
     fun makeSubAccount(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
     fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean
+    fun loadAdminKey(adminKey: ByteArray)
 }
 
 class GroupKeysConfig private constructor(
@@ -516,6 +517,12 @@ class GroupKeysConfig private constructor(
     override fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean {
         return loadKey(message, hash, timestampMs, info.pointer, members.pointer)
     }
+
+    override fun loadAdminKey(adminKey: ByteArray) {
+        loadAdminKey(adminKey, info.pointer, members.pointer)
+    }
+
+    private external fun loadAdminKey(adminKey: ByteArray, infoPtr: Long, membersPtr: Long)
 
     external override fun needsRekey(): Boolean
     external override fun pendingKey(): ByteArray?
