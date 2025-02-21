@@ -54,7 +54,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 class GroupPoller(
-    private val scope: CoroutineScope,
+    scope: CoroutineScope,
     private val groupId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val groupManagerV2: GroupManagerV2,
@@ -65,7 +65,6 @@ class GroupPoller(
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
-        private const val POLL_ERROR_RETRY_DELAY = 10_000L
 
         private const val TAG = "GroupPoller"
     }
@@ -93,8 +92,10 @@ class GroupPoller(
         var currentSnode: Snode? = null,
     )
 
+    // A channel to send tokens to trigger a poll
     private val pollOnceTokens = Channel<PollOnceToken>()
 
+    // A flow that represents the state of the poller.
     val state: StateFlow<State> = flow {
         var lastState = State()
         val pendingTokens = mutableListOf<PollOnceToken>()
@@ -126,6 +127,8 @@ class GroupPoller(
     }.stateIn(scope, SharingStarted.Eagerly, State())
 
     init {
+        // This coroutine is here to periodically request polling the group when the app
+        // becomes visible
         scope.launch {
             while (true) {
                 // Wait for the app becomes visible
@@ -160,6 +163,12 @@ class GroupPoller(
         }
     }
 
+    /**
+     * Request to poll the group once and return the result. It's guaranteed that
+     * the poll will be run AT LEAST once after the request is sent, but it's not guaranteed
+     * that one request will result in one poll, as the poller may choose to batch multiple requests
+     * together.
+     */
     suspend fun pollOnce(): PollResult {
         val resultChannel = Channel<PollResult>()
         pollOnceTokens.send(PollOnceToken(resultChannel))
@@ -466,5 +475,9 @@ class GroupPoller(
         }
     }
 
-    data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
+    /**
+     * A token to poll a group once and receive the result. Note that it's not guaranteed that
+     * one token will trigger one poll, as the poller may batch multiple requests together.
+     */
+    private data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
 }
