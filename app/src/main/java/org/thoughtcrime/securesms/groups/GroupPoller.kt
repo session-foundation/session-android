@@ -1,17 +1,30 @@
 package org.thoughtcrime.securesms.groups
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.isActive
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.timeout
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -33,258 +46,315 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.util.AppVisibilityManager
+import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 
 class GroupPoller(
     private val scope: CoroutineScope,
-    private val executor: CoroutineDispatcher,
     private val groupId: AccountId,
     private val configFactoryProtocol: ConfigFactoryProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
+    private val appVisibilityManager: AppVisibilityManager,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
         private const val POLL_ERROR_RETRY_DELAY = 10_000L
 
-        private const val TAG = "ClosedGroupPoller"
+        private const val TAG = "GroupPoller"
     }
 
-    sealed interface State
-    data object IdleState : State
-    data class StartedState(
-        internal val job: Job,
-        val expired: Boolean? = null,
+    data class State(
         val hadAtLeastOneSuccessfulPoll: Boolean = false,
-    ) : State
+        val lastPoll: PollResult? = null,
+        val inProgress: Boolean = false,
+    )
 
-    private val mutableState = MutableStateFlow<State>(IdleState)
-    val state: StateFlow<State> get() = mutableState
+    data class PollResult(
+        val startedAt: Instant,
+        val finishedAt: Instant,
+        val result: Result<Unit>,
+        val groupExpired: Boolean?
+    ) {
+        fun hasNonRetryableError(): Boolean {
+            val e = result.exceptionOrNull()
+            return e != null && (e is NonRetryableException || e is CancellationException)
+        }
+    }
 
-    fun start() {
-        if ((state.value as? StartedState)?.job?.isActive == true) return // already started, don't restart
+    private class InternalPollState(
+        var swarmNodes: MutableSet<Snode> = mutableSetOf(),
+        var currentSnode: Snode? = null,
+    )
 
-        Log.d(TAG, "Starting closed group poller for ${groupId.hexString.take(4)}")
-        val job = scope.launch(executor) {
-            while (isActive) {
-                try {
-                    val swarmNodes =
-                        SnodeAPI.fetchSwarmNodes(groupId.hexString).toMutableSet()
-                    var currentSnode: Snode? = null
+    private val pollOnceTokens = Channel<PollOnceToken>()
 
-                    while (isActive) {
-                        if (currentSnode == null) {
-                            check(swarmNodes.isNotEmpty()) { "No more swarm nodes found" }
-                            Log.d(
-                                TAG,
-                                "No current snode, getting a new one. Remaining in pool = ${swarmNodes.size - 1}"
-                            )
-                            currentSnode = swarmNodes.random()
-                            swarmNodes.remove(currentSnode)
-                        }
+    val state: StateFlow<State> = flow {
+        var lastState = State()
+        val pendingTokens = mutableListOf<PollOnceToken>()
+        val internalPollState = InternalPollState()
 
-                        val result = runCatching { poll(currentSnode!!) }
-                        when {
-                            result.isSuccess -> {
-                                delay(POLL_INTERVAL)
-                            }
+        while (true) {
+            pendingTokens.add(pollOnceTokens.receive())
 
-                            result.isFailure -> {
-                                val error = result.exceptionOrNull()!!
-                                if (error is CancellationException || error is NonRetryableException) {
-                                    throw error
-                                }
+            // Drain all the tokens we've received up to this point, so we can reply them all at once
+            while (true) {
+                val result = pollOnceTokens.tryReceive()
+                result.getOrNull()?.let(pendingTokens::add) ?: break
+            }
 
-                                Log.e(TAG, "Error polling closed group", error)
-                                // Clearing snode so we get a new one next time
-                                currentSnode = null
-                                delay(POLL_INTERVAL)
-                            }
-                        }
+            lastState = lastState.copy(inProgress = true).also { emit(it) }
+
+            val pollResult = poll(internalPollState)
+
+            lastState = lastState.copy(
+                hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
+                lastPoll = pollResult,
+                inProgress = false
+            ).also { emit(it) }
+
+            // Notify all pending tokens
+            pendingTokens.forEach { it.resultCallback.send(pollResult) }
+            pendingTokens.clear()
+        }
+    }.stateIn(scope, SharingStarted.Eagerly, State())
+
+    init {
+        scope.launch {
+            while (true) {
+                // Wait for the app becomes visible
+                appVisibilityManager.isAppVisible.first { visible -> visible }
+
+                // As soon as the app becomes visible, start polling
+                if (pollOnce().hasNonRetryableError()) {
+                    Log.v(TAG, "Error polling group $groupId and stopped polling")
+                    break
+                }
+
+                // As long as the app is visible, keep polling
+                while (true) {
+                    // Wait POLL_INTERVAL or until the app becomes invisible
+                    val becameInvisible = withTimeoutOrNull(POLL_INTERVAL) {
+                        appVisibilityManager.isAppVisible.first { visible -> !visible }
+                    } != null
+
+                    if (becameInvisible) {
+                        Log.d(TAG, "App became invisible, stopping polling group $groupId")
+                        break
                     }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: NonRetryableException) {
-                    Log.e(TAG, "Non-retryable error during group poller", e)
-                    throw e
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error during group poller", e)
-                    delay(POLL_ERROR_RETRY_DELAY)
+
+                    Log.v(TAG, "Routine polling group $groupId")
+                    
+                    if (pollOnce().hasNonRetryableError()) {
+                        Log.v(TAG, "Error polling group $groupId and stopped polling")
+                        return@launch
+                    }
                 }
             }
         }
-
-        mutableState.value = StartedState(job = job)
-
-        job.invokeOnCompletion {
-            mutableState.value = IdleState
-        }
     }
 
-    fun stop() {
-        Log.d(TAG, "Stopping closed group poller for $groupId")
-        (state.value as? StartedState)?.job?.cancel()
+    suspend fun pollOnce(): PollResult {
+        val resultChannel = Channel<PollResult>()
+        pollOnceTokens.send(PollOnceToken(resultChannel))
+        return resultChannel.receive()
     }
 
-    private suspend fun poll(snode: Snode): Unit = supervisorScope {
-        val groupAuth =
-            configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
-        val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
-            buildSet {
-                addAll(it.groupKeys.currentHashes())
-                addAll(it.groupInfo.currentHashes())
-                addAll(it.groupMembers.currentHashes())
-            }
-        }
+    private suspend fun poll(pollState: InternalPollState): PollResult {
+        val pollStartedAt = Instant.now()
+        var groupExpired: Boolean? = null
 
-        val group = configFactoryProtocol.getGroup(groupId)
-        if (group == null) {
-            throw NonRetryableException("Group doesn't exist")
-        }
+        val result = runCatching {
+            supervisorScope {
+                // Grab current snode or pick (and remove) a random one from the pool
+                val snode = pollState.currentSnode ?: run {
+                    if (pollState.swarmNodes.isEmpty()) {
+                        Log.d(TAG, "Fetching swarm nodes for $groupId")
+                        pollState.swarmNodes.addAll(SnodeAPI.fetchSwarmNodes(groupId.hexString))
+                    }
 
-        if (group.kicked) {
-            throw NonRetryableException("Group has been kicked")
-        }
+                    check(pollState.swarmNodes.isNotEmpty()) { "No swarm nodes found" }
+                    pollState.swarmNodes.random().also {
+                        pollState.currentSnode = it
+                        pollState.swarmNodes.remove(it)
+                    }
+                }
 
-        val adminKey = group.adminKey
+                val groupAuth =
+                    configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
+                val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
+                    buildSet {
+                        addAll(it.groupKeys.currentHashes())
+                        addAll(it.groupInfo.currentHashes())
+                        addAll(it.groupMembers.currentHashes())
+                    }
+                }
 
-        val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
+                val group = configFactoryProtocol.getGroup(groupId)
+                if (group == null) {
+                    throw NonRetryableException("Group doesn't exist")
+                }
 
-        val receiveRevokeMessage = async {
-            SnodeAPI.sendBatchRequest(
-                snode,
-                groupId.hexString,
-                SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                    lastHash = lokiApiDatabase.getLastMessageHashValue(
+                if (group.kicked) {
+                    throw NonRetryableException("Group has been kicked")
+                }
+
+                val adminKey = group.adminKey
+
+                val pollingTasks = mutableListOf<Pair<String, Deferred<*>>>()
+
+                val receiveRevokeMessage = async {
+                    SnodeAPI.sendBatchRequest(
                         snode,
                         groupId.hexString,
-                        Namespace.REVOKED_GROUP_MESSAGES()
-                    ).orEmpty(),
-                    auth = groupAuth,
-                    namespace = Namespace.REVOKED_GROUP_MESSAGES(),
-                    maxSize = null,
-                ),
-                RetrieveMessageResponse::class.java
-            ).messages.filterNotNull()
-        }
+                        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                            lastHash = lokiApiDatabase.getLastMessageHashValue(
+                                snode,
+                                groupId.hexString,
+                                Namespace.REVOKED_GROUP_MESSAGES()
+                            ).orEmpty(),
+                            auth = groupAuth,
+                            namespace = Namespace.REVOKED_GROUP_MESSAGES(),
+                            maxSize = null,
+                        ),
+                        RetrieveMessageResponse::class.java
+                    ).messages.filterNotNull()
+                }
 
-        if (configHashesToExtends.isNotEmpty() && adminKey != null) {
-            pollingTasks += "extending group config TTL" to async {
-                SnodeAPI.sendBatchRequest(
-                    snode,
-                    groupId.hexString,
-                    SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                        messageHashes = configHashesToExtends.toList(),
-                        auth = groupAuth,
-                        newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
-                        extend = true
-                    ),
-                )
-            }
-        }
-
-        val groupMessageRetrieval = async {
-            val lastHash = lokiApiDatabase.getLastMessageHashValue(
-                snode,
-                groupId.hexString,
-                Namespace.CLOSED_GROUP_MESSAGES()
-            ).orEmpty()
-
-            Log.d(TAG, "Retrieving group message since lastHash = $lastHash")
-
-            SnodeAPI.sendBatchRequest(
-                snode = snode,
-                publicKey = groupId.hexString,
-                request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                    lastHash = lastHash,
-                    auth = groupAuth,
-                    namespace = Namespace.CLOSED_GROUP_MESSAGES(),
-                    maxSize = null,
-                ),
-                responseType = Map::class.java
-            )
-        }
-
-        val groupConfigRetrieval = listOf(
-            Namespace.ENCRYPTION_KEYS(),
-            Namespace.CLOSED_GROUP_INFO(),
-            Namespace.CLOSED_GROUP_MEMBERS()
-        ).map { ns ->
-            async {
-                SnodeAPI.sendBatchRequest(
-                    snode = snode,
-                    publicKey = groupId.hexString,
-                    request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-                        lastHash = lokiApiDatabase.getLastMessageHashValue(
+                if (configHashesToExtends.isNotEmpty() && adminKey != null) {
+                    pollingTasks += "extending group config TTL" to async {
+                        SnodeAPI.sendBatchRequest(
                             snode,
                             groupId.hexString,
-                            ns
-                        ).orEmpty(),
-                        auth = groupAuth,
-                        namespace = ns,
-                        maxSize = null,
-                    ),
-                    responseType = RetrieveMessageResponse::class.java
-                ).messages.filterNotNull()
+                            SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                                messageHashes = configHashesToExtends.toList(),
+                                auth = groupAuth,
+                                newExpiry = clock.currentTimeMills() + 14.days.inWholeMilliseconds,
+                                extend = true
+                            ),
+                        )
+                    }
+                }
+
+                val groupMessageRetrieval = async {
+                    val lastHash = lokiApiDatabase.getLastMessageHashValue(
+                        snode,
+                        groupId.hexString,
+                        Namespace.CLOSED_GROUP_MESSAGES()
+                    ).orEmpty()
+
+                    Log.d(TAG, "Retrieving group message since lastHash = $lastHash")
+
+                    SnodeAPI.sendBatchRequest(
+                        snode = snode,
+                        publicKey = groupId.hexString,
+                        request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                            lastHash = lastHash,
+                            auth = groupAuth,
+                            namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                            maxSize = null,
+                        ),
+                        responseType = Map::class.java
+                    )
+                }
+
+                val groupConfigRetrieval = listOf(
+                    Namespace.ENCRYPTION_KEYS(),
+                    Namespace.CLOSED_GROUP_INFO(),
+                    Namespace.CLOSED_GROUP_MEMBERS()
+                ).map { ns ->
+                    async {
+                        SnodeAPI.sendBatchRequest(
+                            snode = snode,
+                            publicKey = groupId.hexString,
+                            request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                                lastHash = lokiApiDatabase.getLastMessageHashValue(
+                                    snode,
+                                    groupId.hexString,
+                                    ns
+                                ).orEmpty(),
+                                auth = groupAuth,
+                                namespace = ns,
+                                maxSize = null,
+                            ),
+                            responseType = RetrieveMessageResponse::class.java
+                        ).messages.filterNotNull()
+                    }
+                }
+
+                // The retrieval of the all group messages can be done concurrently,
+                // however, in order for the messages to be able to be decrypted, the config messages
+                // must be processed first.
+                pollingTasks += "polling and handling group config keys and messages" to async {
+                    val result = runCatching {
+                        val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
+                        handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
+                        saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
+                        saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
+                        saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
+
+                        groupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
+                            it.groupKeys.size() == 0
+                        }
+
+                        val regularMessages = groupMessageRetrieval.await()
+                        handleMessages(regularMessages, snode)
+                    }
+
+                    // Revoke message must be handled regardless, and at the end
+                    val revokedMessages = receiveRevokeMessage.await()
+                    handleRevoked(revokedMessages)
+                    saveLastMessageHash(snode, revokedMessages, Namespace.REVOKED_GROUP_MESSAGES())
+
+                    // Propagate any prior exceptions
+                    result.getOrThrow()
+                }
+
+                // Wait for all tasks to complete, gather any exceptions happened during polling
+                val errors = pollingTasks.mapNotNull { (name, task) ->
+                    runCatching { task.await() }
+                        .exceptionOrNull()
+                        ?.takeIf { it !is CancellationException }
+                        ?.let { RuntimeException("Error $name", it) }
+                }
+
+                // If there were any errors, throw the first one and add the rest as "suppressed" exceptions
+                if (errors.isNotEmpty()) {
+                    throw errors.first().apply {
+                        for (index in 1 until errors.size) {
+                            addSuppressed(errors[index])
+                        }
+                    }
+                }
             }
         }
 
-        // The retrieval of the all group messages can be done concurrently,
-        // however, in order for the messages to be able to be decrypted, the config messages
-        // must be processed first.
-        pollingTasks += "polling and handling group config keys and messages" to async {
-            val result = runCatching {
-                val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
-                handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
-                saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
-                saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
-                saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
+        if (result.isFailure) {
+            val error = result.exceptionOrNull()
+            Log.e(TAG, "Error polling group", error)
 
-                val isGroupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
-                    it.groupKeys.size() == 0
-                }
-
-                // As soon as we have handled config messages, the polling count as successful,
-                // as normally the outside world really only cares about configs.
-                mutableState.update {
-                    (it as? StartedState)?.copy(
-                        hadAtLeastOneSuccessfulPoll = true,
-                        expired = isGroupExpired,
-                    ) ?: it
-                }
-
-                val regularMessages = groupMessageRetrieval.await()
-                handleMessages(regularMessages, snode)
-            }
-
-            // Revoke message must be handled regardless, and at the end
-            val revokedMessages = receiveRevokeMessage.await()
-            handleRevoked(revokedMessages)
-            saveLastMessageHash(snode, revokedMessages, Namespace.REVOKED_GROUP_MESSAGES())
-
-            // Propagate any prior exceptions
-            result.getOrThrow()
-        }
-
-        // Wait for all tasks to complete, gather any exceptions happened during polling
-        val errors = pollingTasks.mapNotNull { (name, task) ->
-            runCatching { task.await() }
-                .exceptionOrNull()
-                ?.takeIf { it !is CancellationException }
-                ?.let { RuntimeException("Error $name", it) }
-        }
-
-        // If there were any errors, throw the first one and add the rest as "suppressed" exceptions
-        if (errors.isNotEmpty()) {
-            throw errors.first().apply {
-                for (index in 1 until errors.size) {
-                    addSuppressed(errors[index])
-                }
+            if (error !is NonRetryableException && error !is CancellationException) {
+                // If the error can be retried, reset the current snode so we use another one
+                pollState.currentSnode = null
             }
         }
+
+        val pollResult = PollResult(
+            startedAt = pollStartedAt,
+            finishedAt = Instant.now(),
+            result = result,
+            groupExpired = groupExpired
+        )
+
+        Log.d(TAG, "Polling group $groupId result = $pollResult")
+
+        return pollResult
     }
 
     private fun RetrieveMessageResponse.Message.toConfigMessage(): ConfigMessage {
@@ -395,4 +465,6 @@ class GroupPoller(
             Log.d(TAG, "Received and handled ${messages.size} group messages")
         }
     }
+
+    data class PollOnceToken(val resultCallback: SendChannel<PollResult>)
 }

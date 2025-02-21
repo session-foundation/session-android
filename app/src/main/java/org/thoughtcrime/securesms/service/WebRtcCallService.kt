@@ -426,7 +426,7 @@ class WebRtcCallService : LifecycleService(), CallManager.WebRtcListener {
 
             BackgroundPollWorker.scheduleOnce(
                 this,
-                arrayOf(BackgroundPollWorker.Targets.DMS)
+                listOf(BackgroundPollWorker.Target.ONE_TO_ONE)
             )
         }
     }

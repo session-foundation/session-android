@@ -93,6 +93,7 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint;
 import org.thoughtcrime.securesms.logging.AndroidLogger;
 import org.thoughtcrime.securesms.logging.PersistentLogger;
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
+import org.thoughtcrime.securesms.notifications.BackgroundPollManager;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
@@ -118,6 +119,7 @@ import java.util.Timer;
 import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import dagger.Lazy;
 import dagger.hilt.EntryPoints;
@@ -179,6 +181,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject LegacyClosedGroupPollerV2 legacyClosedGroupPollerV2;
     @Inject LegacyGroupDeprecationManager legacyGroupDeprecationManager;
     @Inject CleanupInvitationHandler cleanupInvitationHandler;
+    @Inject BackgroundPollManager backgroundPollManager;  // Exists here only to start upon app starts
     @Inject AppVisibilityManager appVisibilityManager;  // Exists here only to start upon app starts
     @Inject GroupPollerManager groupPollerManager;  // Exists here only to start upon app starts
     @Inject ExpiredGroupManager expiredGroupManager; // Exists here only to start upon app starts
@@ -285,7 +288,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         broadcaster = new Broadcaster(this);
         boolean useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET;
         SnodeModule.Companion.configure(apiDB, broadcaster, useTestNet);
-        initializePeriodicTasks();
         SSKEnvironment.Companion.configure(typingStatusRepository, readReceiptManager, profileManager, getMessageNotifier(), expiringMessageManager);
         initializeWebRtc();
         initializeBlobProvider();
@@ -443,10 +445,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void initializeCrashHandling() {
         final Thread.UncaughtExceptionHandler originalHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionLogger(originalHandler));
-    }
-
-    private void initializePeriodicTasks() {
-        BackgroundPollWorker.schedulePeriodic(this);
     }
 
     private void initializeWebRtc() {
