@@ -677,6 +677,8 @@ class GroupManagerV2Impl @Inject constructor(
         // we won't have the necessary configs to send invite response/or do anything else.
         // We can't hang on here forever if things don't work out, bail out if it's the case.
         withTimeout(20_000L) {
+            // We must tell the poller to poll once, as we could have received this invitation
+            // in the background where the poller isn't running
             groupPollerManager.ensurePolledOnce(group.groupAccountId)
 
             groupPollerManager.watchGroupPollingState(group.groupAccountId)

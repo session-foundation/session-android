@@ -18,6 +18,10 @@ import org.thoughtcrime.securesms.util.AppVisibilityManager
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * This class automatically schedules and cancels the background polling work based on the
+ * visibility of the app and the availability of the logged in user.
+ */
 @OptIn(FlowPreview::class)
 @Singleton
 class BackgroundPollManager @Inject constructor(
