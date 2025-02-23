@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -679,7 +678,7 @@ class GroupManagerV2Impl @Inject constructor(
         withTimeout(20_000L) {
             // We must tell the poller to poll once, as we could have received this invitation
             // in the background where the poller isn't running
-            groupPollerManager.ensurePolledOnce(group.groupAccountId)
+            groupPollerManager.pollOnce(group.groupAccountId)
 
             groupPollerManager.watchGroupPollingState(group.groupAccountId)
                 .filter { it.hadAtLeastOneSuccessfulPoll }

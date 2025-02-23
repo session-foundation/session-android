@@ -48,7 +48,7 @@ class LegacyClosedGroupPollerV2(
     class PollingCanceledException() : Exception("Polling canceled.")
 
     fun start() {
-        val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
+        val allGroupPublicKeys = storage.getAllLegacyGroupPublicKeys()
         allGroupPublicKeys.iterator().forEach { startPolling(it) }
     }
 

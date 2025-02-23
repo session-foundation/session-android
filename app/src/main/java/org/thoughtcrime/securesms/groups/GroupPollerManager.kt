@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.groups
 
 import dagger.Lazy
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,22 +33,23 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.POLLER_SCOPE
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.InternetConnectivity
 import javax.inject.Inject
-import javax.inject.Named
 import javax.inject.Singleton
 
 /**
  * This class manages the lifecycle of group pollers.
  *
- * It listens for changes in the user's groups config and starts or stops pollers as needed. It
- * also considers the app's visibility state to decide whether to start or stop pollers.
+ * It listens for changes in the user's groups config and create or destroyed pollers as needed. Other
+ * factors like network availability and user's local number are also taken into account.
  *
- * All the processes here are automatic and you don't need to do anything to start or stop pollers.
+ * All the processes here are automatic and you don't need to do anything to create or destroy pollers.
  *
  * This class also provide state monitoring facilities to check the state of a group poller.
+ *
+ * Note that whether a [GroupPoller] is polling things or not is determined by itself. The manager
+ * class is only responsible for the overall lifecycle of the pollers.
  */
 @Singleton
 class GroupPollerManager @Inject constructor(
@@ -155,7 +155,7 @@ class GroupPollerManager @Inject constructor(
         supervisorScope {
             groupPollers.value.values.map {
                 async {
-                    it.poller.pollOnce()
+                    it.poller.requestPollOnce()
                 }
             }.awaitAll()
         }
@@ -167,11 +167,11 @@ class GroupPollerManager @Inject constructor(
      * Note that if the group is not supposed to be polled (kicked, destroyed, etc) then
      * this function will hang forever. It's your responsibility to set a timeout if needed.
      */
-    suspend fun ensurePolledOnce(groupId: AccountId): GroupPoller.PollResult {
+    suspend fun pollOnce(groupId: AccountId): GroupPoller.PollResult {
         return groupPollers.mapNotNull { it[groupId] }
             .first()
             .poller
-            .pollOnce()
+            .requestPollOnce()
     }
 
     data class GroupPollerHandle(

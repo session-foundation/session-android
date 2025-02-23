@@ -3,28 +3,16 @@ package org.thoughtcrime.securesms.groups
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.isActive
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.flow.timeout
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.supervisorScope
-import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -49,9 +37,7 @@ import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.milliseconds
 
 class GroupPoller(
     scope: CoroutineScope,
@@ -112,7 +98,7 @@ class GroupPoller(
 
             lastState = lastState.copy(inProgress = true).also { emit(it) }
 
-            val pollResult = poll(internalPollState)
+            val pollResult = doPollOnce(internalPollState)
 
             lastState = lastState.copy(
                 hadAtLeastOneSuccessfulPoll = lastState.hadAtLeastOneSuccessfulPoll || pollResult.result.isSuccess,
@@ -135,26 +121,24 @@ class GroupPoller(
                 appVisibilityManager.isAppVisible.first { visible -> visible }
 
                 // As soon as the app becomes visible, start polling
-                if (pollOnce().hasNonRetryableError()) {
+                if (requestPollOnce().hasNonRetryableError()) {
                     Log.v(TAG, "Error polling group $groupId and stopped polling")
                     break
                 }
 
                 // As long as the app is visible, keep polling
                 while (true) {
-                    // Wait POLL_INTERVAL or until the app becomes invisible
-                    val becameInvisible = withTimeoutOrNull(POLL_INTERVAL) {
-                        appVisibilityManager.isAppVisible.first { visible -> !visible }
-                    } != null
+                    // Wait POLL_INTERVAL
+                    delay(POLL_INTERVAL)
 
-                    if (becameInvisible) {
+                    val appInBackground = !appVisibilityManager.isAppVisible.value
+
+                    if (appInBackground) {
                         Log.d(TAG, "App became invisible, stopping polling group $groupId")
                         break
                     }
 
-                    Log.v(TAG, "Routine polling group $groupId")
-                    
-                    if (pollOnce().hasNonRetryableError()) {
+                    if (requestPollOnce().hasNonRetryableError()) {
                         Log.v(TAG, "Error polling group $groupId and stopped polling")
                         return@launch
                     }
@@ -169,13 +153,13 @@ class GroupPoller(
      * that one request will result in one poll, as the poller may choose to batch multiple requests
      * together.
      */
-    suspend fun pollOnce(): PollResult {
+    suspend fun requestPollOnce(): PollResult {
         val resultChannel = Channel<PollResult>()
         pollOnceTokens.send(PollOnceToken(resultChannel))
         return resultChannel.receive()
     }
 
-    private suspend fun poll(pollState: InternalPollState): PollResult {
+    private suspend fun doPollOnce(pollState: InternalPollState): PollResult {
         val pollStartedAt = Instant.now()
         var groupExpired: Boolean? = null
 

@@ -120,11 +120,13 @@ class BackgroundPollWorker @AssistedInject constructor(
 
                 // Legacy groups
                 if (requestTargets.contains(Target.LEGACY_GROUPS)) {
-                    storage.getAllClosedGroupPublicKeys()
+                    val poller = LegacyClosedGroupPollerV2(storage, deprecationManager)
+
+                    storage.getAllLegacyGroupPublicKeys()
                         .mapTo(tasks) { key ->
                             async {
                                 Log.d(TAG, "Polling legacy group ${key.substring(0, 8)}...")
-                                LegacyClosedGroupPollerV2(storage, deprecationManager).poll(key)
+                                poller.poll(key)
                             }
                         }
                 }

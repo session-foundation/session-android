@@ -227,7 +227,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
     TextSecurePreferences.setHasLegacyConfig(context, true)
     if (!firstTimeSync) return
 
-    val allClosedGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
+    val allClosedGroupPublicKeys = storage.getAllLegacyGroupPublicKeys()
     for (closedGroup in message.closedGroups) {
         if (allClosedGroupPublicKeys.contains(closedGroup.publicKey)) {
             // just handle the closed group encryption key pairs to avoid sync'd devices getting out of sync
