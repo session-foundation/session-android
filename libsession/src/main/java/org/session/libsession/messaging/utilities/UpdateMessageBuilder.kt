@@ -237,7 +237,7 @@ object UpdateMessageBuilder {
                                 .format()
                             number == 2 && containsUser -> Phrase.from(context,
                                 R.string.groupPromotedYouTwo)
-                                .put(NAME_KEY,  getGroupMemberName(updateData.sessionIds.first{ it != userPublicKey }, groupV2Id))
+                                .put(OTHER_NAME_KEY,  getGroupMemberName(updateData.sessionIds.first{ it != userPublicKey }, groupV2Id))
                                 .format()
                             number == 2 -> Phrase.from(context,
                                 R.string.adminTwoPromotedToAdmin)
