@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription"><b>{group_name}</b> யிலிருந்து வெளியேற விரும்புகிறீர்களா?</string>
     <string name="groupLeaveDescriptionAdmin">நீங்கள் <b>{group_name}</b> க்கு விட்டு வெளியேற உறுதியாக உள்ளீர்களா?\n\nஇது அனைத்து உறுப்பினர்களையும் அகற்றி, அனைத்து குழு உள்ளடக்கங்களை நீக்கும்.</string>
     <string name="groupLeaveErrorFailed">{group_name} விட்டு நீக்குவதில் தோல்வி</string>
-    <string name="groupLegacyBanner">குழுக்கள் மேம்படுத்தப்பட்டுள்ளன, மேம்படுத்த புதிய குழுவை உருவாக்கவும். பழைய குழு செயல்பாடு {date} முதல் குறைக்கப்படும்.</string>
     <string name="groupMemberLeft"><b>{name}</b> குழுவிலிருந்து வெளியேற்றம் செய்யப்பட்டார்.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> மற்றும் <b>{count} பிறர்</b> குழுவிலிருந்து வெளியேறினர்.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> மற்றும் <b>{other_name}</b> குழுவிலிருந்து வெளியேறினர்.</string>

@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">დარწმუნებული ხართ, რომ გსურთ <b>{group_name}</b>-დან გასვლა?</string>
     <string name="groupLeaveDescriptionAdmin">დარწმუნებული ხართ, რომ გსურთ წასვლა ჯგუფიდან <b>{group_name}</b>?\n\nეს წაშლის ყველა წევრს და ყველა ჯგუფის შინაარსს.</string>
     <string name="groupLeaveErrorFailed">ვერ შევძელიში {group_name} ჯგუფიდან ანუ მიცემა</string>
-    <string name="groupLegacyBanner">ჯგუფები გაუმჯობესებულია, შექმენით ახალი ჯგუფი. ძველ ჯგუფის ფუნქციონალი დაქვეითებული იქნება {date}-დან.</string>
     <string name="groupMemberLeft"><b>{name}ს</b> დატოვა ჯგუფი.</string>
     <string name="groupMemberLeftMultiple"><b>{name}ს</b> და <b>{count} სხვებს</b> დატოვეს ჯგუფი.</string>
     <string name="groupMemberLeftTwo"><b>{name}ს</b> და <b>{other_name}ს</b> დატოვეს ჯგუფი.</string>

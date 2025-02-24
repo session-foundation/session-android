@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">ඔබට <b>{group_name}</b> හැර යාමට අවශ්‍ය බව විශ්වාසද?</string>
     <string name="groupLeaveDescriptionAdmin">ඔබට <b>{group_name}</b> හැර පිටවීමට අවශ්‍ය බව විශ්වාසද?\n\nමෙය සියලු සාමාජිකයින් ඉවත් කර සහ සමූහ අන්තර්ගතය සියල්ල මකනු ඇත.</string>
     <string name="groupLeaveErrorFailed">{group_name} හැර පිටවීමට අසමත් විය</string>
-    <string name="groupLegacyBanner">සමූහ යාවත්කාලීන කිරීමට, නව සමූහයක් සාදන්න. පරණ සමූහ ක්‍රියාකාරකම {date} සිට අඩක නිර්මිත කරනු ඇත.</string>
     <string name="groupMemberLeft"><b>{name} </b>කණ්ඩායම හැර ගියා.</string>
     <string name="groupMemberLeftMultiple"><b>{name} </b>සහ <b>{count} වෙනත් අය </b>කණ්ඩායම හැර ගියා.</string>
     <string name="groupMemberLeftTwo"><b>{name} </b>සහ <b>{other_name} </b>කණ්ඩායම හැර ගියා.</string>

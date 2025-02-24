@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Tem a certeza de que pretende sair <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Tem a certeza de que pretende sair <b>{group_name}</b>?\n\nIsto irá remover todos os membros e eliminar todo o conteúdo do grupo.</string>
     <string name="groupLeaveErrorFailed">Erro ao sair do grupo {group_name}</string>
-    <string name="groupLegacyBanner">Os grupos foram atualizados, crie um novo grupo para atualizar. A funcionalidade do grupo antigo será degradada a partir de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> saiu do grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> e <b>{count} outros</b> saíram do grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> e <b>{other_name}</b> saíram do grupo.</string>

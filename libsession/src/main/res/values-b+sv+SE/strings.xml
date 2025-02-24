@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Är du säker på att du vill lämna <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Är du säker på att du vill lämna <b>{group_name}</b>?\n\nDetta kommer att ta bort alla medlemmar och radera allt gruppinnehåll.</string>
     <string name="groupLeaveErrorFailed">Misslyckades med att lämna {group_name}</string>
-    <string name="groupLegacyBanner">Grupper har uppgraderats, skapa en ny grupp för att uppgradera. Gamla gruppfunktioner kommer att försämras från och med {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> lämnade gruppen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> och <b>{count} andra</b> lämnade gruppen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> och <b>{other_name}</b> lämnade gruppen.</string>

@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">మీరు <b>{group_name}</b> ను వదిలిపెట్టాలనుకుంటున్నారా?</string>
     <string name="groupLeaveDescriptionAdmin">మీరు <b>{group_name}</b> వదిలివేయాలనుకుంటున్నారా?\n\n ఇది అన్ని సభ్యులను తొలగించి, అన్ని సమూహ విషయాన్ని తొలగిస్తుంది.</string>
     <string name="groupLeaveErrorFailed">{group_name} ను వదిలివేయడంలో విఫలమైంది</string>
-    <string name="groupLegacyBanner">సమూహాలు అభివృద్ధి చేయబడ్డాయి, మెరుగుపరచడానికి కొత్త సమూహం సృష్టించండి. పాత సమూహ పనితీరు {date} నుండి దిగజారిపోతుంది.</string>
     <string name="groupMemberLeft"><b>{name}</b> సమూహాన్ని వదిలి వెళ్లారు.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> మరియు <b>{count}ఇతరులు</b> సమూహాన్ని వదిలివేశారు.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> మరియు <b>{other_name}</b> సమూహాన్ని వదిలి వెళ్లారు.</string>

@@ -416,7 +416,6 @@
     <string name="groupLeaveDescription">Ești sigur/ă că vrei să părăsești grupul <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ești sigur/ă că vrei să părăsești <b>{group_name}</b>?\n\nAceastă acțiune va elimina toți membrii și va șterge tot conținutul grupului.</string>
     <string name="groupLeaveErrorFailed">Nu s-a putut părăsi grupul {group_name}</string>
-    <string name="groupLegacyBanner">Grupurile au fost actualizate, creează un grup nou pentru actualizare. Funcționalitatea grupului vechi va fi întreruptă începând cu {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> a părăsit grupul.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> și <b>alți {count}</b> au părăsit grupul.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> și <b>{other_name}</b> au părăsit grupul.</string>

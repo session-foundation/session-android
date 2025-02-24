@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Kas soovite grupist või kogukonnast <b>{group_name}</b> lahkuda?</string>
     <string name="groupLeaveDescriptionAdmin">Kas olete kindel, et soovite lahkuda grupist <b>{group_name}</b>?\n\nSee eemaldab kõik liikmed ja kustutab kogu grupi sisu.</string>
     <string name="groupLeaveErrorFailed">Ebaõnnestus lahkuda grupist {group_name}</string>
-    <string name="groupLegacyBanner">Grupid on uuendatud, loo uus grupp, et uuendada. Vana grupi funktsionaalsus hakkab alates {date} aeguma.</string>
     <string name="groupMemberLeft"><b>{name}</b> lahkus grupist.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ja <b>{count} teist</b> lahkusid grupist.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ja <b>{other_name}</b> lahkusid grupist.</string>

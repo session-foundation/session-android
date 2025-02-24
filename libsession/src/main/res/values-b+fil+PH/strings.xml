@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Sigurado ka bang nais mong umalis sa <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Sigurado ka bang gusto mong umalis sa <b>{group_name}</b>?\n\nTatanggalin nito ang lahat ng miyembro at ang lahat ng nilalaman ng grupo.</string>
     <string name="groupLeaveErrorFailed">Nabigo sa pag-alis sa {group_name}</string>
-    <string name="groupLegacyBanner">Na-upgrade na ang mga grupo, lumikha ng bagong grupo para maisagawa ang upgrade. Ang lumang functionality ng grupo ay bababa mula {date}.</string>
     <string name="groupMemberLeft">Umalis na si <b>{name}</b> sa grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> at <b>{count} iba pa</b> umalis na sa grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name} </b> at <b>{other_name}</b> umalis na sa grupo.</string>

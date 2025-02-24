@@ -439,7 +439,6 @@
     <string name="groupLeaveDescription">Вы уверены, что хотите покинуть <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Вы уверены, что хотите покинуть <b>{group_name}</b>?\n\nЭто удалит всех участников и всё содержимое группы.</string>
     <string name="groupLeaveErrorFailed">Не удалось выйти из {group_name}</string>
-    <string name="groupLegacyBanner">Функциональность групп была обновлена, создайте новую группу. Старые группы перестанут работать с {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинул(а) группу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> и <b>{count} других человек</b> покинули группу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> и <b>{other_name}</b> покинули группу.</string>

@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Er du sikker på at du ønskjer å forlate <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Er du sikker på at du vil forlate <b>{group_name}</b>?\n\nDette vil fjerne alle medlemmane og slette alt av gruppeinnhald.</string>
     <string name="groupLeaveErrorFailed">Klarte ikkje forlata {group_name}</string>
-    <string name="groupLegacyBanner">Grupper har blitt oppgradert, opprett ei ny gruppe for å oppgrader dei. Den gamle gruppefunksjonaliteten vil bli degradert frå {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> forlot gruppa.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> og <b>{count} andre</b> forlot gruppa.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> og <b>{other_name}</b> forlot gruppa.</string>

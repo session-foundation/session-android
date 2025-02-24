@@ -405,7 +405,6 @@
     <string name="groupLeaveDescription">ဤ <b>{group_name}</b> မှ ထွက်လိုသည်မှာ သေချာပါသလား။</string>
     <string name="groupLeaveDescriptionAdmin">သင် <b>{group_name}</b>ကို ထွက်ချင်သေချာပါသလား?\n\n၎င်းသည် အဖွဲ့ဝင်များအားလုံးကို ဖယ်ရှားပြီး အဖွဲ့၏အကြောင်းအရာအားလုံးကို ဖျက်သိမ်းပါမည်။</string>
     <string name="groupLeaveErrorFailed">အဖွဲ့ {group_name} မှထွက်ရန် မဖြစ်နိုင်ပါ</string>
-    <string name="groupLegacyBanner">အုပ်စုများအားအဆင့်မြှင့်ထားပြီး၊ Upgrade လုပ်ရန် အုပ်စုအသစ်တစ်ခုကိုဖန်တီးပါ။ အုပ်စု ဟောင်းများ၏ အလုပ်လုပ်မှုကို {date} မှာကျဆင်းသွားမှာဖြစ်သည်။</string>
     <string name="groupMemberLeft"><b>{name}</b> အဖွဲ့မှ ထွက်သွားပါပြီ။</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> နှင့် <b>{count} ဦး</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> နှင့် <b>{other_name}</b> အဖွဲ့မှ ထွက်သွားကြသည်။</string>

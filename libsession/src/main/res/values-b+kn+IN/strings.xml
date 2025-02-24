@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">ನೀವು <b>{group_name}</b> ತೊರೆಯಲು ಖಚಿತವಾಗಿದೆಯ?</string>
     <string name="groupLeaveDescriptionAdmin">ನೀವು <b>{group_name}</b> ತೊರೆಯಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ?\n\nಇದು ಎಲ್ಲಾ ಸದಸ್ಯರನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ ಮತ್ತು ಗುಂಪು ವಿಷಯವನ್ನು ಅಳಿಸುತ್ತದೆ.</string>
     <string name="groupLeaveErrorFailed">{group_name} ತೊರೆಯಲು ವಿಫಲವಾಗಿದೆ</string>
-    <string name="groupLegacyBanner">ಗುಂಪುಗಳನ್ನು ನವೀಕರಿಸಲಾಗಿದೆ, ನವೀಕರಣ ಮಾಡಲು ಹೊಸ ಗುಂಪನ್ನು ರಚಿಸಿ. ಹಳೆಯ ಗುಂಪು ಕಾರ್ಯಕ್ಷಮತೆ {date} ರಿಂದ ನಾಷಿಯಾಗುತ್ತದೆ.</string>
     <string name="groupMemberLeft"><b>{name}</b> ಅವರು ಗುಂಪನ್ನು ತೊರೆದು ಹೋದರು.</string>
     <string name="groupMemberLeftMultiple"><b>{name} ಪ್ರ</b> ಮತ್ತು <b>{count} ಇತರೆರು</b> ಗುಂಪನ್ನು ತೊರೆದು ಹೋದರು.</string>
     <string name="groupMemberLeftTwo"><b>{name} ಪ್ರ</b> ಮತ್ತು <b>{other_name} ಪ್ರ</b> ಗುಂಪನ್ನು ತೊರೆದು ಹೋದರು.</string>

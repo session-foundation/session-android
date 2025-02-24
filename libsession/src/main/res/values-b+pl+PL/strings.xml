@@ -463,7 +463,6 @@
     <string name="groupLeaveDescription">Czy na pewno chcesz opuścić grupę <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Czy na pewno chcesz opuścić grupę <b>{group_name}</b>?\n\nUsunie to wszystkich jej członków i całą zawartość grupy.</string>
     <string name="groupLeaveErrorFailed">Nie udało się opuścić grupy {group_name}</string>
-    <string name="groupLegacyBanner">Grupy zostały zaktualizowane. Aby zaktualizować, utwórz nową grupę. Funkcjonalność starej grupy zostanie ograniczona od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> opuścił(a) grupę.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> opuścili grupę.</string>
     <string name="groupMemberLeftTwo">Użytkownicy <b>{name}</b> i <b>{other_name}</b> opuścili grupę.</string>

@@ -386,7 +386,6 @@
     <string name="groupLeaveDescription">Vai tiešām vēlaties pamest <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Vai esat pārliecināts, ka vēlaties pamest <b>{group_name}</b>?\n\nTas noņems visus dalībniekus un dzēsīs visu grupas saturu.</string>
     <string name="groupLeaveErrorFailed">Neizdevās pamest {group_name}</string>
-    <string name="groupLegacyBanner">Grupas ir atjauninātas. Izveido jaunu grupu, lai atjauninātu. Vecas grupas funkcionalitāte būs degradēta no {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> atstāja grupu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> un <b>{count} citi</b> atstāja grupu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> un <b>{other_name}</b> atstāja grupu.</string>

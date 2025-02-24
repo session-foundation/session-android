@@ -405,7 +405,6 @@
     <string name="groupLeaveDescription">តើអ្នកប្រាកដទេថាចង់ចាកចេញពី <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">តើអ្នកប្រាកដទេថាអ្នកចង់ចាកចេញពី <b>{group_name}</b>?\n\nនេះនឹងដកសមាជិកទាំងអស់និងលុបមាតិកាក្រុមទាំងមូល។</string>
     <string name="groupLeaveErrorFailed">បរាជ័យក្នុងការចាកចេញពី {group_name}</string>
-    <string name="groupLegacyBanner">ក្រុមបានធ្វើឱ្យប្រសើរឡើង បង្កើតក្រុមថ្មីដើម្បីធ្វើឱ្យប្រសើរ។ មុខងារក្រុមចាស់នឹងត្រូវបានបន្ទោរបង់ចាប់ពី {date}។</string>
     <string name="groupMemberLeft"><b>{name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
     <string name="groupMemberLeftTwo"><b>{name}‍</b> និង <b>{other_name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
     <string name="groupMemberNew"><b>{name}‍</b>បន ចូលក្រុម។</string>

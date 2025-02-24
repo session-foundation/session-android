@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Je, una uhakika unataka kuondoka <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Una uhakika unataka kutoka <b>{group_name}</b>?\n\nHii itawaondoa wanachama wote na kufuta maudhui yote ya kikundi.</string>
     <string name="groupLeaveErrorFailed">Imeshindikana kuondoka {group_name}</string>
-    <string name="groupLegacyBanner">Makundi yameboreshwa, unda kikundi kipya kuboresha. Utendaji wa kikundi wa zamani utapungua kutoka {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ameondoka kwenye kundi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> na <b>{count} wengine</b> wameondoka kwenye kundi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> na <b>{other_name}</b> wameondoka kwenye kundi.</string>

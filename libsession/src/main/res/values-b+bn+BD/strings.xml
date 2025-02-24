@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">আপনি কি <b>{group_name}</b> গ্রুপ ছাড়তে নিশ্চিত?</string>
     <string name="groupLeaveDescriptionAdmin">আপনি কি নিশ্চিত যে আপনি <b>{group_name}</b> ত্যাগ করতে চান?\n\nএটি সমস্ত সদস্যদের সরিয়ে দেবে এবং সমস্ত গ্রুপ বিষয়বস্তু মুছে দেবে।</string>
     <string name="groupLeaveErrorFailed">{group_name} ছাড়তে ব্যর্থ হয়েছে</string>
-    <string name="groupLegacyBanner">গ্রুপগুলো আপগ্রেড করা হয়েছে, আপগ্রেড করতে একটি নতুন গ্রুপ তৈরি করুন। পুরানো গ্রুপ কার্যকারিতা {date} থেকে হ্রাস করা হবে।</string>
     <string name="groupMemberLeft"><b>{name}</b> গ্রুপ থেকে বের হয়ে গিয়েছে।</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> এবং <b>{count} জন অন্যরা</b> গ্রুপ থেকে বের হয়ে গিয়েছে।</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> এবং <b>{other_name}</b> গ্রুপ থেকে বের হয়ে গিয়েছে।</string>

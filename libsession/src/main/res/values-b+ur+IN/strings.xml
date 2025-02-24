@@ -407,7 +407,6 @@
     <string name="groupLeave">گروپ چھوڑیں</string>
     <string name="groupLeaveDescriptionAdmin">کیا آپ واقعی <b>{group_name}</b> چھوڑنا چاہتے ہیں؟\n\nاس سے تمام اراکین کو ہٹا دیا جائے گا اور تمام گروپ مواد کو حذف کر دیا جائے گا۔</string>
     <string name="groupLeaveErrorFailed">{group_name} چھوڑنے میں ناکام</string>
-    <string name="groupLegacyBanner">گروپس کو اپ گریڈ کر دیا گیا ہے، اپ گریڈ کرنے کے لیے ایک نیا گروپ بنائیں۔ پرانے گروپ کی فعالیت کو {date} سے کم کر دیا جائے گا۔</string>
     <string name="groupMemberLeft"><b>{name}</b> نے گروپ چھوڑ دیا۔</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> اور <b>{count} دیگر</b> نے گروپ چھوڑ دیا۔</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> اور <b>{other_name}</b> نے گروپ چھوڑ دیا۔</string>

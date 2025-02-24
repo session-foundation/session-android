@@ -266,7 +266,7 @@
     <string name="deleteAfterGroupPR1BlockThisUser">Blok Bike Vê Bikarhênerê</string>
     <string name="deleteAfterGroupPR1BlockUser">Bikarhênerê Blok Bike</string>
     <string name="deleteAfterGroupPR1GroupSettings">Mîhengên Komê</string>
-    <string name="deleteAfterGroupPR1MentionsOnly">Tenê tiya din ji bo peyamên şaneke edə par kendiakirinani wallah</string>
+    <string name="deleteAfterGroupPR1MentionsOnly">Tenê ji bo Behskirinan Agahdar Bike</string>
     <string name="deleteAfterGroupPR1MentionsOnlyDescription">Gava pêveka aktîv bike, hûn ten foraan bêjin mesajên yedi nexşanda te kirîna hûncarî.</string>
     <string name="deleteAfterGroupPR1MessageSound">Peyama Dengî</string>
     <string name="deleteAfterGroupPR3DeleteMessagesConfirmation">Bila ev mesajên di vê sohbetê de daîmen were jêbirin?</string>
@@ -289,7 +289,7 @@
     <string name="deleteMessageDeletedLocally">Ev peyam di vî berdan dema tesfîr hatî jêbirin.</string>
     <string name="deleteMessageDescriptionEveryone">Tu piştrast î ku tu dixwazî vê peyamê ji bo tevan jê bibî?</string>
     <string name="deleteMessageDeviceOnly">Peyama Tenê di vî cîhazê de jê bibe</string>
-    <string name="deleteMessageDevicesAll">Peymaneyan di ser hemû amêrakên min de jê bibe</string>
+    <string name="deleteMessageDevicesAll">Li ser temamê cîhazên min jê bibe</string>
     <string name="deleteMessageEveryone">Ji bo tevan jê bibe</string>
     <plurals name="deleteMessageFailed">
         <item quantity="one">Bi ser neket ku peyama jê derbike.</item>
@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Tu piştrast î ku tu dixwazî ji <b>{group_name}</b> derkevî?</string>
     <string name="groupLeaveDescriptionAdmin">Tu piştrast î ku tu dixwazî ji <b>{group_name}</b> derkeve?\n\nEv dixwazî hemû endaman derxistîn û hemû naveroka komeyê jê reş dikirin.</string>
     <string name="groupLeaveErrorFailed">Têbînete cavaniyên {group_name}</string>
-    <string name="groupLegacyBanner">Komên ku westîna nûvekirinê hene, koma nû biafirîne. Karûbarî grûpa kevn vê sererast be dê hertir bimeşine ji vira {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ji komê derket.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> û <b>{count} yên din</b> ji komê derketin.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> û <b>{other_name}</b> ji komê derketin.</string>
@@ -753,7 +752,7 @@
     <string name="screenshotTaken"><b>{name}</b> wêneyekî ekranê kişand.</string>
     <string name="search">Gerr</string>
     <string name="searchContacts">Li kontaktekî bigerrin</string>
-    <string name="searchConversation">Li söylek bigerrin</string>
+    <string name="searchConversation">Li sohbetekê bigere</string>
     <string name="searchEnter">Kerem bike tu li ser Giphy ne girêdane - ne têketina gêrê, usbikirina tambûra têkeve</string>
     <plurals name="searchMatches">
         <item quantity="one">%1$d ji %2$d li hev tê</item>

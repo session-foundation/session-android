@@ -447,7 +447,6 @@
     <string name="groupLeaveDescription">Чи дійсно ви бажаєте вийти з <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ви впевнені, що хочете вийти з <b>{group_name}</b>?\n\nЦе видалить усіх учасників та вміст групи.</string>
     <string name="groupLeaveErrorFailed">Не вдалося вийти з {group_name}</string>
-    <string name="groupLegacyBanner">Групи було оновлено, створіть нову групу для оновлення. Функціонал старої групи буде скорочено з {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> покинув групу.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> та ще <b>{count} інших</b> покинули групу.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> та <b>{other_name}</b> покинули групу.</string>

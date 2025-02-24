@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Та <b>{group_name}</b>-ээс гарахдаа итгэлтэй байна уу?</string>
     <string name="groupLeaveDescriptionAdmin">Та <b>{group_name}</b> бүлгээс гарахдаа итгэлтэй байна уу?\n\nЭнэ нь бүх гишүүдийг устгаж, бүлгийн бүх контентыг устгана.</string>
     <string name="groupLeaveErrorFailed">{group_name} оос гарахад алдаа гарлаа</string>
-    <string name="groupLegacyBanner">Бүлгүүд шинэчлэгдсэн, шинэ бүлэг үүсгэ. Хуучин бүлгийн үйл ажиллагаа {date}-аас муудна.</string>
     <string name="groupMemberLeft"><b>{name} </b> бүлгээс гарлаа.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> болон <b>{count} бусад </b> бүлгээс гарлаа.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> болон <b>{other_name} </b> бүлгээс гарлаа.</string>

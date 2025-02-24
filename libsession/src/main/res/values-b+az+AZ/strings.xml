@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?</string>
     <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> qrupunu tərk etmək istədiyinizə əminsiniz?\n\nBununla bütün üzvləri çıxarılacaq və qrupun bütün məzmunu silinəcək.</string>
     <string name="groupLeaveErrorFailed">{group_name} qrupunu tərk etmə uğursuz oldu</string>
-    <string name="groupLegacyBanner">Qruplar yüksəldildi. Yüksəltmək üçün yeni bir qrup yaradın. Köhnə qrup funksionallıqları {date} tarixindən etibarən azaldılacaq.</string>
     <string name="groupMemberLeft"><b>{name}</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> və <b>{count} başqaları</b> qrupu tərk etdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> və <b>{other_name}</b> qrupu tərk etdi.</string>

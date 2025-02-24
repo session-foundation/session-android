@@ -415,7 +415,6 @@
     <string name="groupLeave">ترک کردن گروه</string>
     <string name="groupLeaveDescriptionAdmin">ایا مطمین هستید می خواهید <b>{group_name}</b> را ترک کنید؟ \n\nاین کار باعث حذف همه ی اعضا و پاک شدن تمام محتوای گروه خواهد شد.</string>
     <string name="groupLeaveErrorFailed">ترک {group_name} ناموفق بود</string>
-    <string name="groupLegacyBanner">گروه‌ها ارتقا یافته‌اند، یک گروه جدید ایجاد کنید تا ارتقا دهید. عملکرد گروه قدیمی از {date} کاهش می‌یابد.</string>
     <string name="groupMemberLeft"><b>{name}</b> گروه را ترک کرد.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} نفر دیگر</b> گروه را ترک کردند.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> گروه را ترک کردند.</string>

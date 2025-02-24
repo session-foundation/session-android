@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">तपाईं <b>{group_name}</b> समूह छोड्न निश्चित हुनुहुन्छ?</string>
     <string name="groupLeaveDescriptionAdmin">के तपाई पक्का हुनुहुन्छ कि तपाई <b>{group_name}</b> छोड्न चाहनुहुन्छ?\n\nयसले सबै सदस्यहरूलाई हटाउँछ र सबै समूह सामग्री मेटाउँछ।</string>
     <string name="groupLeaveErrorFailed">{group_name} छोड्न असफल।</string>
-    <string name="groupLegacyBanner">समूहहरू अपग्रेड गरिएका छन्, अपग्रेड गर्न नयाँ समूह सिर्जना गर्नुहोस्। पुरानो समूह कार्यक्षमता {date} देखि घटाइनेछ।</string>
     <string name="groupMemberLeft"><b>{name}</b> समूह छोड्नुभयो।</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> र <b>{count} अन्य</b> समूह छोड्नुभयो।</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> र <b>{other_name}</b> समूह छोड्नुभयो।</string>

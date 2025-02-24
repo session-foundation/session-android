@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Ka tabbata kana so ka barin <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Kana tabbata kana so ka bar <b>{group_name}</b>?\n\nWannan zai cire dukkan mambobi kuma ya goge duk abubuwan da aka ƙunsa a rukuni.</string>
     <string name="groupLeaveErrorFailed">An kasa barin {group_name}</string>
-    <string name="groupLegacyBanner">Siffofin rukuni sun inganta, ƙirƙiri sabon rukuni don haɓakawa. Karfin aikin rukunin tsoffin za a rage daga {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> ya bar ƙungiyar.</string>
     <string name="groupMemberLeftMultiple"><b>{name} </b> da <b>{count} wasu </b> sun bar ƙungiyar.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> da <b>{other_name}</b> sun bar ƙungiyar.</string>

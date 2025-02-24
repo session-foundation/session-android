@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Uqinisekile ukuba ufuna ukufumana <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Uqinisekile ukuba ufuna ukushiya <b>{group_name}</b>?\n\nOku kuyakususa onke amalungu kwaye kusebenzise yonke imixholo yeqela.</string>
     <string name="groupLeaveErrorFailed">Koyekile ukuphuma ku {group_name}</string>
-    <string name="groupLegacyBanner">Amaqela aphuculwe, yenza iqela elitsha ukuphucula. Umsebenzi weqela elidala uya kunciphisa ukusukela ngomhla we {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> bashiye iqela.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> kunye <b>{count} abanye abantu</b> bashiye iqela.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> kunye <b>{other_name}</b> bashiye iqela.</string>

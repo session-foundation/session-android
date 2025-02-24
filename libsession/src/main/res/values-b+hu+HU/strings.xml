@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Biztos, hogy ki akarsz lépni a(z) <b>{group_name}</b> csoportból?</string>
     <string name="groupLeaveDescriptionAdmin">Biztos, hogy ki akarsz lépni a <b>{group_name}</b> csoportból?\n\nEz az összes tag eltávolításával és a csoport teljes tartalmának törlésével jár.</string>
     <string name="groupLeaveErrorFailed">Nem sikerült kilépni a {group_name} csoportból</string>
-    <string name="groupLegacyBanner">A csoportok funkció frissítve lett, hozzon létre egy új csoportot a frissítéshez. A régi csoportok funkcionalitása {date} dátumtól csökkenni fog.</string>
     <string name="groupMemberLeft"><b>{name}</b> kilépett a csoportból.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> és <b>{count} másik személy</b> kiléptek a csoportból.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> és <b>{other_name}</b> kiléptek a csoportból.</string>

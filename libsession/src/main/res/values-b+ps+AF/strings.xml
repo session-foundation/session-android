@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">ایا تاسو ډاډه یاست چې <b>{group_name}</b> پریږدئ؟</string>
     <string name="groupLeaveDescriptionAdmin">ایا تاسو ډاډه یاست چې تاسو غواړئ <b>{group_name}</b> پریږدئ؟\n\nدا به ټول غړي لرې کړي او د ډلې ټول مینځپانګه به حذف کړي.</string>
     <string name="groupLeaveErrorFailed">د {group_name} پرېښودو کې ناکامه</string>
-    <string name="groupLegacyBanner">ډلې پرمختګ کړی دی، د نویو ډلو د جوړولو لپاره نوی ډله جوړه کړئ. د زړو ډلو فعالیت به له {date} څخه کم شي.</string>
     <string name="groupMemberLeft"><b>{name}</b> ګروپ پریښود.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> او <b>{count} نورو</b> ګروپ پریښود.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> او <b>{other_name}</b> ګروپ پریښود.</string>

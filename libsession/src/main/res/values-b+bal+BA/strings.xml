@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">دم کی لحاظ انت کہ ایی <b>{group_name}</b> اخلیقی؟</string>
     <string name="groupLeaveDescriptionAdmin">آیا شما مطمئن هستن که صرف <b>{group_name}</b>؟\n\nایگ انت تمام ممبران بکھی و پیغامانی ڈلیٹ.</string>
     <string name="groupLeaveErrorFailed">{group_name} کو چھوڑنے میں ناکامی</string>
-    <string name="groupLegacyBanner">گروپاںءَ آپگریڈ بوءِ گا اِنّی ایک نوک گروپ ٺاہگ۔ پُرانا گروپءِ کجيعت  {date} ہد کجے.</string>
     <string name="groupMemberLeft"><b>{name}</b> jāmš.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> a <b>{count} drīg</b> šumārīyā jāmš.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> a <b>{other_name} </b> jāmš.</string>
