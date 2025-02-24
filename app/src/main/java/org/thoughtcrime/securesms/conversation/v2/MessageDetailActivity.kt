@@ -214,10 +214,8 @@ fun CellMetadata(
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
                 // Show the sent details if we're the sender of the message, otherwise show the received details
-                sender?.let {
-                    if (sent != null)     { TitledText(sent) }
-                    if (received != null) { TitledText(received) }
-                }
+                if (sent     != null) { TitledText(sent)     }
+                if (received != null) { TitledText(received) }
 
                 TitledErrorText(error)
                 senderInfo?.let {

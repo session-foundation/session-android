@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.text.Typography.ellipsis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -92,7 +93,7 @@ class MessageDetailsViewModel @Inject constructor(
 
                     // Set the "Sent" message info TitledText appropriately
                     sent = if (messageRecord.isSending && errorString == null) {
-                        val sendingWithEllipsisString = context.getString(R.string.sending) + "..."
+                        val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
                         TitledText(sendingWithEllipsisString, null)
                     } else if (messageRecord.isSent && errorString == null) {
                         dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
