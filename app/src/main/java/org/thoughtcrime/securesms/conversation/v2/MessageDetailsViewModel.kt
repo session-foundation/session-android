@@ -83,28 +83,31 @@ class MessageDetailsViewModel @Inject constructor(
                 val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
                                               deprecationManager.isDeprecated
 
+
+                val errorString = lokiMessageDatabase.getErrorMessage(id)
+
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
                     record = messageRecord,
 
                     // Set the "Sent" message info TitledText appropriately
-                    sent = if (messageRecord.isSending) {
+                    sent = if (messageRecord.isSending && errorString == null) {
                         val sendingWithEllipsisString = context.getString(R.string.sending) + "..."
                         TitledText(sendingWithEllipsisString, null)
-                    } else if (messageRecord.isSent) {
+                    } else if (messageRecord.isSent && errorString == null) {
                         dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
                     } else {
                         null // Not sending or sent? Don't display anything for the "Sent" element.
                     },
 
                     // Set the "Received" message info TitledText appropriately
-                    received = if (messageRecord.isIncoming) {
+                    received = if (messageRecord.isIncoming && errorString == null) {
                         dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
                     } else {
                         null // Not incoming? Then don't display anything for the "Received" element.
                     },
 
-                    error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.theError, it) },
+                    error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
                     senderInfo = individualRecipient.run { TitledText(name, address.toString()) },
                     sender = individualRecipient,
                     thread = recipient,
