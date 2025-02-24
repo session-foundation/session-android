@@ -83,7 +83,10 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadKey(JNIEnv *env
     auto hash_bytes = env->GetStringUTFChars(hash, nullptr);
     auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
     auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
-    bool processed = keys->load_key_message(hash_bytes, message_bytes, timestamp_ms, *info, *members);
+
+    auto processed = jni_utils::run_catching_cxx_exception_or_throws<jboolean>(env, [&] {
+        return keys->load_key_message(hash_bytes, message_bytes, timestamp_ms, *info, *members);
+    });
 
     env->ReleaseStringUTFChars(hash, hash_bytes);
     return processed;
