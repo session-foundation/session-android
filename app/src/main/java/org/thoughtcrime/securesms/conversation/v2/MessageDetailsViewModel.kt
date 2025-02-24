@@ -36,6 +36,9 @@ import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 
+import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.ApplicationContext
+
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
     private val attachmentDb: AttachmentDatabase,
@@ -44,6 +47,7 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val context: ApplicationContext
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -59,38 +63,57 @@ class MessageDetailsViewModel @Inject constructor(
             job?.cancel()
 
             field = value
-            val record = mmsSmsDatabase.getMessageForTimestamp(timestamp)
+            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp)
 
-            if (record == null) {
+            if (messageRecord == null) {
                 viewModelScope.launch { event.send(Event.Finish) }
                 return
             }
 
-            val mmsRecord = record as? MmsMessageRecord
+            val mmsRecord = messageRecord as? MmsMessageRecord
+
+            // We'll say that message that is outgoing but has not yet been sent is sending
+            //val isCurrentlySending = !messageRecord.isOutgoing && !messageRecord.isSent
 
             job = viewModelScope.launch {
-                repository.changes(record.threadId)
+                repository.changes(messageRecord.threadId)
                     .filter { mmsSmsDatabase.getMessageForTimestamp(value) == null }
                     .collect { event.send(Event.Finish) }
             }
 
-            state.value = record.run {
+            state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
                 val recipient = threadDb.getRecipientForThreadId(threadId)!!
                 val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                        deprecationManager.isDeprecated
+                                              deprecationManager.isDeprecated
 
                 MessageDetailsState(
                     attachments = slides.map(::Attachment),
-                    record = record,
-                    sent = dateSent.let(::Date).toString().let { TitledText(R.string.sent, it) },
-                    received = dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) },
+                    record = messageRecord,
+
+                    // Set the "Sent" message info TitledText appropriately
+                    sent = if (messageRecord.isSending) {
+                        val sendingWithEllipsisString = context.getString(R.string.sending) + "..."
+                        TitledText(sendingWithEllipsisString, null)
+                    } else if (messageRecord.isSent) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                    } else {
+                        null // Not sending or sent? Don't display anything for the "Sent" element.
+                    },
+
+                    // Set the "Received" message info TitledText appropriately
+                    received = if (messageRecord.isIncoming) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                    } else {
+                        null // Not incoming? Then don't display anything for the "Received" element.
+                    },
+
                     error = lokiMessageDatabase.getErrorMessage(id)?.let { TitledText(R.string.theError, it) },
                     senderInfo = individualRecipient.run { TitledText(name, address.toString()) },
                     sender = individualRecipient,
                     thread = recipient,
-                    readOnly = isDeprecatedLegacyGroup,
+                    readOnly = isDeprecatedLegacyGroup
                 )
             }
         }

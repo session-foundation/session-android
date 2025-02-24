@@ -209,10 +209,6 @@ fun MessageDetails(
 fun CellMetadata(
     state: MessageDetailsState,
 ) {
-    val context = LocalContext.current
-    val messageOriginatorAddress = TextSecurePreferences.getLocalNumber(context)
-    Log.w("ACL", "local address is: " + messageOriginatorAddress)
-
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
         Cell(modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)) {
@@ -220,29 +216,10 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
-                // If we're the sender of the message we show the sent timestamp, otherwise we show the received timestamp
-
-                //senderInfo.
-
-
-
-                sender?.let { recipient ->
-
-                    val messageRecipientAddress = recipient.address.toString()
-                    val weSentThisMessage = messageOriginatorAddress == messageRecipientAddress
-
-
-                    Log.w("ACL", "recipient address is: " + recipient.address.toString())
-                    Log.w("ACL", "sender info text is: " + senderInfo?.text)
-                    Log.w("ACL", "sender info component2 is: " + senderInfo?.component2())
-
-                    if (weSentThisMessage) {
-                        Log.w("ACL", "We think WE sent this message - showing sent block!")
-                        TitledText(sent)
-                    } else {
-                        Log.w("ACL", "We think they sent this message - showing received block!")
-                        TitledText(received)
-                    }
+                // Show the sent details if we're the sender of the message, otherwise show the received details
+                sender?.let {
+                    if (sent != null)     { TitledText(sent) }
+                    if (received != null) { TitledText(received) }
                 }
 
                 TitledErrorText(error)
@@ -514,12 +491,14 @@ fun TitledText(
 ) {
     titledText?.apply {
         TitledView(title, modifier) {
-            Text(
-                text,
-                style = style,
-                color = color,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (text != null) {
+                Text(
+                    text,
+                    style = style,
+                    color = color,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
