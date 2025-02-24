@@ -6,6 +6,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import java.io.File
@@ -27,7 +28,12 @@ object DownloadUtilities {
                 downloadFile(outputStream, url)
                 exception = null
                 break
-            } catch (e: Exception) {
+            }
+            catch (e: HTTP.HTTPNoNetworkException) {
+                if(e.statusCode == 404) throw NonRetryableException("404 response trying to download file: $url", e)
+                else exception = e
+            }
+            catch (e: Exception) {
                 exception = e
             }
         }

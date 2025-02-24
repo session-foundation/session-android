@@ -15,6 +15,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
@@ -74,7 +75,8 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         val threadID = storage.getThreadIdForMms(databaseMessageID)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if (exception == Error.NoAttachment
+            if (exception is NonRetryableException ||
+                exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
                     || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
