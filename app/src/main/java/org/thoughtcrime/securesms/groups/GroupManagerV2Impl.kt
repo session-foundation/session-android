@@ -324,7 +324,7 @@ class GroupManagerV2Impl @Inject constructor(
     /**
      * Send a group update message to the group telling members someone has been invited.
      */
-    private suspend fun sendGroupUpdateForAddingMembers(
+    private fun sendGroupUpdateForAddingMembers(
         group: AccountId,
         adminKey: ByteArray,
         newMembers: Collection<AccountId>,
@@ -346,9 +346,9 @@ class GroupManagerV2Impl @Inject constructor(
                 .build()
         ).apply { this.sentTimestamp = timestamp }
 
-        MessageSender.sendAndAwait(updatedMessage, Address.fromSerialized(group.hexString))
-
         storage.insertGroupInfoChange(updatedMessage, group)
+
+        MessageSender.send(updatedMessage, Address.fromSerialized(group.hexString))
     }
 
     override suspend fun removeMembers(
