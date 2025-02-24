@@ -94,7 +94,7 @@ data class PushNotificationMetadata(
 
         /** The swarm namespace in which this message arrived. */
         @SerialName("n")
-        val namespace: Int,
+        val namespace: Int?,
 
         @SerialName("t")
         val timestampSeconds: Long,
