@@ -29,7 +29,7 @@ object DownloadUtilities {
                 exception = null
                 break
             }
-            catch (e: HTTP.HTTPNoNetworkException) {
+            catch (e: HTTP.HTTPRequestFailedException) {
                 if(e.statusCode == 404) throw NonRetryableException("404 response trying to download file: $url", e)
                 else exception = e
             }
