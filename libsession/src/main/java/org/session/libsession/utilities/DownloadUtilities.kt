@@ -19,25 +19,28 @@ object DownloadUtilities {
      * Blocks the calling thread.
      */
     suspend fun downloadFile(destination: File, url: String) {
-        val outputStream = FileOutputStream(destination) // Throws
         var remainingAttempts = 2
         var exception: Exception? = null
-        while (remainingAttempts > 0) {
-            remainingAttempts -= 1
-            try {
-                downloadFile(outputStream, url)
-                exception = null
-                break
-            }
-            catch (e: HTTP.HTTPRequestFailedException) {
-                if(e.statusCode == 404) throw NonRetryableException("404 response trying to download file: $url", e)
-                else exception = e
-            }
-            catch (e: Exception) {
-                exception = e
+
+        destination.outputStream().use { outputStream ->
+            while (remainingAttempts > 0) {
+                remainingAttempts -= 1
+
+                try {
+                    downloadFile(outputStream, url)
+                    return  // return on success
+                } catch (e: HTTP.HTTPRequestFailedException) {
+                    if (e.statusCode == 404) {
+                        throw NonRetryableException("404 response trying to download file: $url", e)
+                    }
+                    exception = e
+                } catch (e: Exception) {
+                    exception = e
+                }
             }
         }
-        if (exception != null) { throw exception }
+
+        throw exception ?: NonRetryableException("Couldn't download file: $url")
     }
 
     /**
