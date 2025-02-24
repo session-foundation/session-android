@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Haqiqatan ham <b>{group_name}</b> dan ajralmoqchimisiz?</string>
     <string name="groupLeaveDescriptionAdmin">Haqiqatan ham <b>{group_name}</b> guruhini tark etmoqchimisiz?\n\nBu barcha a\'zo va guruh kontentlarini o\'chiradi.</string>
     <string name="groupLeaveErrorFailed">{group_name} dan chiqish vaqtida muammo chiqdi</string>
-    <string name="groupLegacyBanner">Guruhlar yangilandi, yangilanish uchun yangi guruh yarating. Eski guruh qobiliyatlari {date} dan pastga ketadi.</string>
     <string name="groupMemberLeft"><b>{name}</b> guruhni tark etdi.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> va <b>{count} boshqalar</b> guruhni tark etishdi.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> va <b>{other_name}</b> guruhni tark etdi.</string>

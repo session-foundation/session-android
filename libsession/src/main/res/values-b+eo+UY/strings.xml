@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Ĉu vi certas, ke vi volas forlasi <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ĉu vi certas, ke vi volas foriri el <b>{group_name}</b>?\n\nĈi tio forigos ĉiujn membrojn kaj forigos ĉiun grupon enhavo.</string>
     <string name="groupLeaveErrorFailed">Malsukceso forlasi {group_name}</string>
-    <string name="groupLegacyBanner">Grupoj ĝisdatigitaj, kreu novan grupon por ĝisdatigi. Malnova grupa funkcio malkreskos de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> forlasis la grupon.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> forlasis la grupon.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> kaj <b>{other_name}</b> forlasis la grupon.</string>

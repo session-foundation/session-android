@@ -420,7 +420,6 @@
     <string name="groupLeaveDescription">Ar tikrai norite išeiti iš <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ar tikrai norite išeiti iš <b>{group_name}</b>?\n\nTai pašalins visus narius ir ištrins visą grupės turinį.</string>
     <string name="groupLeaveErrorFailed">Nepavyko išeiti iš {group_name}</string>
-    <string name="groupLegacyBanner">Grupės buvo atnaujintos, sukurkite naują grupę norėdami atnaujinti. Senų grupių funkcionalumas bus apribotas nuo {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> išėjo iš grupės.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ir <b>{count} kiti</b> išėjo iš grupės.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ir <b>{other_name}</b> išėjo iš grupės.</string>

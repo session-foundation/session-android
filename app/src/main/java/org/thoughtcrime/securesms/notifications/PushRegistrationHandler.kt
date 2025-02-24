@@ -73,7 +73,7 @@ constructor(
                 getGroupSubscriptions(
                     token = token
                 ) + mapOf(
-                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, 0)
+                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, listOf(Namespace.DEFAULT()))
                 )
             }
                 .scan<Map<SubscriptionKey, Subscription>, Pair<Map<SubscriptionKey, Subscription>, Map<SubscriptionKey, Subscription>>?>(
@@ -103,7 +103,7 @@ constructor(
                                 pushRegistry.register(
                                     token = key.token,
                                     swarmAuth = subscription.auth,
-                                    namespaces = listOf(subscription.namespace)
+                                    namespaces = subscription.namespaces.toList()
                                 )
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to register for push notification", e)
@@ -135,6 +135,16 @@ constructor(
     ): Map<SubscriptionKey, Subscription> {
         return buildMap {
             val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+                .filter { it.shouldPoll }
+
+            val namespaces = listOf(
+                Namespace.GROUP_MESSAGES(),
+                Namespace.GROUP_INFO(),
+                Namespace.GROUP_MEMBERS(),
+                Namespace.GROUP_KEYS(),
+                Namespace.REVOKED_GROUP_MESSAGES(),
+            )
+
             for (group in groups) {
                 val adminKey = group.adminKey
                 if (adminKey != null && adminKey.isNotEmpty()) {
@@ -142,7 +152,7 @@ constructor(
                         SubscriptionKey(group.groupAccountId, token),
                         Subscription(
                             auth = OwnedSwarmAuth.ofClosedGroup(group.groupAccountId, adminKey),
-                            namespace = Namespace.GROUPS()
+                            namespaces = namespaces
                         )
                     )
                     continue
@@ -154,7 +164,7 @@ constructor(
                         ?.let {
                             Subscription(
                                 auth = it,
-                                namespace = Namespace.GROUPS()
+                                namespaces = namespaces
                             )
                         }
 
@@ -167,5 +177,5 @@ constructor(
     }
 
     private data class SubscriptionKey(val accountId: AccountId, val token: String)
-    private data class Subscription(val auth: SwarmAuth, val namespace: Int)
+    private data class Subscription(val auth: SwarmAuth, val namespaces: List<Int>)
 }

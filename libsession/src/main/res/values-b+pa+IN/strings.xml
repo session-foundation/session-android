@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ <b>{group_name}</b> ਨੂੰ ਛੱਡਣਾ ਚਾਹੁੰਦੇ ਹੋ?</string>
     <string name="groupLeaveDescriptionAdmin">ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ <b>{group_name}</b> ਛੱਡਣਾ ਚਾਹੁੰਦੇ ਹੋ?\n\nਇਹ ਸਾਰੇ ਮੈਂਬਰਾਂ ਨੂੰ ਹਟਾ ਦੇਵੇਗਾ ਅਤੇ ਸਾਰੀ ਗਰੁੱਪ ਸੂਚਨਾ ਨੂੰ ਮਿਟਾ ਦੇਵੇਗਾ।</string>
     <string name="groupLeaveErrorFailed">{group_name} ਨੂੰ ਛੱਡਣ ਵਿੱਚ ਅਸਫਲ</string>
-    <string name="groupLegacyBanner">ਗਰੁੱਪਾਂ ਨੂੰ ਅਪਗਰੇਡ ਕੀਤਾ ਗਿਆ ਹੈ, ਅਪਗਰੇਡ ਕਰਨ ਲਈ ਨਵਾਂ ਗਰੁੱਪ ਬਣਾਓ। ਪੁਰਾਣੀ ਗਰੁੱਪ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ {date} ਤੋਂ ਘਟਦਾ ਰਹਿਣਗੀਆਂ।</string>
     <string name="groupMemberLeft"><b>{name}</b>ਗਰੁੱਪ ਛੱਡਕੇ ਚਲੇ ਗਏ।</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b>ਅਤੇ<b>{count}ਹੋਰਾਂ</b>ਗਰੁੱਪ ਛੱਡਕਰ ਚਲੇ ਗਏ।</string>
     <string name="groupMemberLeftTwo"><b>{name}</b>ਅਤੇ<b>{other_name}</b>ਗਰੁੱਪ ਛੱਡਕਰ ਚਲੇ ਗਏ।</string>

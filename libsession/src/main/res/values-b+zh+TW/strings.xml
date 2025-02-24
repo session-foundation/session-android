@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">您確定要離開 <b>{group_name}</b> 嗎？</string>
     <string name="groupLeaveDescriptionAdmin">您確定要離開 <b>{group_name}</b> 嗎？\n\n這將移除所有成員並刪除所有群組內容。</string>
     <string name="groupLeaveErrorFailed">無法退出 {group_name}</string>
-    <string name="groupLegacyBanner">群組已升級，創建一個新群組以進行升級。舊群組的功能將從 {date} 開始無法正常使用。</string>
     <string name="groupMemberLeft"><b>{name}</b> 離開此群組。</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> 和 <b>{count} 位其他成員</b> 離開了群組。</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> 和 <b>{other_name}</b> 離開此群組。</string>

@@ -973,7 +973,7 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
     }
 
-    override fun getAllClosedGroupPublicKeys(): Set<String> {
+    override fun getAllLegacyGroupPublicKeys(): Set<String> {
         return lokiAPIDatabase.getAllClosedGroupPublicKeys()
     }
 

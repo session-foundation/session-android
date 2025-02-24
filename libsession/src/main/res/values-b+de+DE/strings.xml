@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Bist du sicher, dass du <b> {group_name}</b> verlassen möchtest?</string>
     <string name="groupLeaveDescriptionAdmin">Bist du sicher, dass du <b>{group_name}</b> verlassen möchtest?\n\nDadurch werden alle Mitglieder entfernt und alle Gruppendaten gelöscht.</string>
     <string name="groupLeaveErrorFailed">Fehler beim Verlassen von {group_name}</string>
-    <string name="groupLegacyBanner">Gruppen wurden aktualisiert. Erstelle eine neue Gruppe, um sie zu aktualisieren. Alte Gruppenfunktionen werden ab {date} eingeschränkt.</string>
     <string name="groupMemberLeft"><b>{name}</b> hat die Gruppe verlassen.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> und <b>{count} andere</b> haben die Gruppe verlassen.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> und <b>{other_name}</b> haben die Gruppe verlassen.</string>

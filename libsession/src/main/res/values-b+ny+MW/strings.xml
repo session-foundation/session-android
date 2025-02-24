@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Mukutsimikizika kuti mukufuna kusiya <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Mukutsimikiza kuti mukufuna kuchoka pa <b>{group_name}</b>?\n\nIzi zithandizira kuchotsa mamembala onse ndikuchotsa zonse zomwe zili m\'gulu.</string>
     <string name="groupLeaveErrorFailed">Zalephera kusiya {group_name}</string>
-    <string name="groupLegacyBanner">Magulu asinthidwa, pangani gulu latsopano kuti muwonjeze. Ntchito yakale ya magulu idzalephera kuyambira {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> achoka gulu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ndi <b>{count} ena</b> achoka gulu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ndi <b>{other_name}</b> achoka gulu.</string>

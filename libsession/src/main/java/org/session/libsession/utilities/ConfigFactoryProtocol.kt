@@ -108,7 +108,7 @@ enum class UserConfigType(val namespace: Int) {
     CONTACTS(Namespace.CONTACTS()),
     USER_PROFILE(Namespace.USER_PROFILE()),
     CONVO_INFO_VOLATILE(Namespace.CONVO_INFO_VOLATILE()),
-    USER_GROUPS(Namespace.GROUPS()),
+    USER_GROUPS(Namespace.USER_GROUPS()),
 }
 
 /**

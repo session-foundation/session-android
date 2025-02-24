@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Êtes-vous sûr de vouloir quitter <b>{group_name}</b> ?</string>
     <string name="groupLeaveDescriptionAdmin">Êtes-vous certain de vouloir quitter <b>{group_name}</b>?\n\n Cela supprimera tous les membres et tout le contenu du groupe.</string>
     <string name="groupLeaveErrorFailed">Échec de quitter {group_name}</string>
-    <string name="groupLegacyBanner">Les groupes ont été améliorés, créez un nouveau groupe pour mettre à jour. Les fonctionnalités de l\'ancien groupe seront dégradées à partir de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> a quitté le groupe.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> et <b>{count} autres</b> ont quitté le groupe.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> et <b>{other_name}</b> ont quitté le groupe.</string>

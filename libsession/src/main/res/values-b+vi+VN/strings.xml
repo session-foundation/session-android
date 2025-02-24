@@ -431,7 +431,6 @@
     <string name="groupLeaveDescription">Bạn có chắc chắn rằng bạn muốn rời <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Bạn có chắc chắn rằng bạn muốn rời khỏi <b>{group_name}</b>?\n\nĐiều này sẽ loại bỏ tất cả các thành viên và xóa tất cả nội dung nhóm.</string>
     <string name="groupLeaveErrorFailed">Không thể rời khỏi nhóm {group_name}</string>
-    <string name="groupLegacyBanner">Các nhóm đã được nâng cấp, tạo một nhóm mới để nâng cấp. Chức năng nhóm cũ sẽ bị suy giảm từ {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> đã rời nhóm.</string>
     <string name="groupMemberLeftMultiple"><b>{name} </b> và <b>{count} người khác </b> đã rời nhóm.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> và <b>{other_name} </b> đã rời nhóm.</string>

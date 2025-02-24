@@ -7,7 +7,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -30,7 +29,6 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.visible.Profile
 import org.session.libsession.messaging.sending_receiving.MessageSender
-import org.session.libsession.messaging.sending_receiving.pollers.ClosedGroupPoller
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
@@ -256,7 +254,7 @@ class GroupManagerV2Impl @Inject constructor(
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
                     SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                        namespace = Namespace.ENCRYPTION_KEYS(),
+                        namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
@@ -676,10 +674,13 @@ class GroupManagerV2Impl @Inject constructor(
 
         // We need to wait until we have the first data polled from the poller, otherwise
         // we won't have the necessary configs to send invite response/or do anything else.
-        // We can't hang on here forever if things don't work out, bail out if it's the camse
+        // We can't hang on here forever if things don't work out, bail out if it's the case.
         withTimeout(20_000L) {
+            // We must tell the poller to poll once, as we could have received this invitation
+            // in the background where the poller isn't running
+            groupPollerManager.pollOnce(group.groupAccountId)
+
             groupPollerManager.watchGroupPollingState(group.groupAccountId)
-                .filterIsInstance<ClosedGroupPoller.StartedState>()
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }

@@ -429,7 +429,6 @@
     <string name="groupLeaveDescription">Weet u zeker dat u <b>{group_name}</b> wilt verlaten?</string>
     <string name="groupLeaveDescriptionAdmin">Weet u zeker dat u de groep <b>{group_name}</b> wil verlaten?\n\nDit zal alle leden en de inhoud van de groep verwijderen.</string>
     <string name="groupLeaveErrorFailed">Het verlaten van {group_name} is mislukt</string>
-    <string name="groupLegacyBanner">Groepen zijn geüpgraded, maak een nieuwe groep aan om te upgraden. De oude groepsfunctionaliteit zal vanaf {date} worden afgebouwd.</string>
     <string name="groupMemberLeft"><b>{name}</b> heeft de groep verlaten.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> en <b>{count} anderen</b> hebben de groep verlaten.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> en <b>{other_name}</b> hebben de groep verlaten.</string>

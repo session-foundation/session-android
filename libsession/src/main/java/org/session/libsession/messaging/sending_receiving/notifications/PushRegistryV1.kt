@@ -36,7 +36,7 @@ object PushRegistryV1 {
         device: Device,
         isPushEnabled: Boolean = TextSecurePreferences.isPushEnabled(context),
         publicKey: String? = TextSecurePreferences.getLocalNumber(context),
-        legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllClosedGroupPublicKeys()
+        legacyGroupPublicKeys: Collection<String> = MessagingModuleConfiguration.shared.storage.getAllLegacyGroupPublicKeys()
     ): Promise<*, Exception> = scope.asyncPromise {
         if (isPushEnabled) {
             retryWithUniformInterval(maxRetryCount = MAX_RETRY_COUNT) { doRegister(publicKey, device, legacyGroupPublicKeys) }

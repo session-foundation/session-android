@@ -421,7 +421,6 @@
     <string name="groupLeaveDescription">Naozaj chcete opustiť skupinu <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ste si istí, že chcete opustiť <b>{group_name}</b>?\n\nTým sa odstránia všetci členovia a všetok obsah skupiny bude vymazaný.</string>
     <string name="groupLeaveErrorFailed">Nepodarilo sa opustiť {group_name}</string>
-    <string name="groupLegacyBanner">Skupiny boli aktualizované, vytvorte novú skupinu na aktualizáciu. Funkčnosť starých skupín sa obmedzí od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> opustil/a skupinu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> a <b>{count} ďalší</b> opustili skupinu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> a <b>{other_name}</b> opustili skupinu.</string>

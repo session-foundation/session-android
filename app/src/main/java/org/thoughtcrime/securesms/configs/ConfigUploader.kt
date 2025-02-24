@@ -235,14 +235,14 @@ class ConfigUploader @Inject constructor(
                     auth,
                     snode,
                     push,
-                    Namespace.CLOSED_GROUP_MEMBERS()
+                    Namespace.GROUP_MEMBERS()
                 )
             }
         }
 
         val infoConfigHashTask = infoPush?.let { push ->
             async {
-                push to pushConfig(auth, snode, push, Namespace.CLOSED_GROUP_INFO())
+                push to pushConfig(auth, snode, push, Namespace.GROUP_INFO())
             }
         }
 
@@ -252,7 +252,7 @@ class ConfigUploader @Inject constructor(
                 snode = snode,
                 publicKey = auth.accountId.hexString,
                 request = SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                    Namespace.ENCRYPTION_KEYS(),
+                    Namespace.GROUP_KEYS(),
                     SnodeMessage(
                         auth.accountId.hexString,
                         Base64.encodeBytes(push),

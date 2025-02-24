@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Σίγουρα θέλετε να αποχωρήσετε από την ομάδα <b>{group_name}</b></string>
     <string name="groupLeaveDescriptionAdmin">Σίγουρα θέλετε να αποχωρήσετε από την <b>{group_name}</b>?\n\nΑυτό θα αφαιρέσει όλα τα μέλη και θα διαγράψει όλο το περιεχόμενο της ομάδας.</string>
     <string name="groupLeaveErrorFailed">Αποτυχία αποχώρησης από το {group_name}</string>
-    <string name="groupLegacyBanner">Οι ομάδες έχουν αναβαθμιστεί, δημιουργήστε μια νέα ομάδα για αναβάθμιση. Η παλαιά λειτουργία ομάδας θα υποβαθμιστεί από {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> αποχώρησε από την ομάδα.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> και <b>{count} ακόμη</b> έφυγαν από την ομάδα.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> και <b>{other_name}</b> έφυγε από την ομάδα.</string>

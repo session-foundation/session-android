@@ -372,7 +372,6 @@
     <string name="groupLeaveDescription">Tes a certeza de querer abandonar <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Tes a certeza de querer abandonar <b>{group_name}</b>?\n\n Isto desactivará o grupo para todos os membros.</string>
     <string name="groupLeaveErrorFailed">Non se puido abandonar {group_name}</string>
-    <string name="groupLegacyBanner">Os grupos foron modernizados, crea un novo grupo para actualizar. A funcionalidade dos antigos reséntase a partir de {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> abandonou o grupo.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> e <b>{count} máis</b> abandonaron o grupo.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> e <b>{other_name}</b> abandonaron o grupo.</string>

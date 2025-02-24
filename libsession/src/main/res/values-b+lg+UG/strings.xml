@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Oli mukakafu nti oyagala okuva mu <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Oli mbanankubye okusula <b>{group_name}</b>?\n\nAbalonzi bonna bajja kuvawa ne ebikozesebwa byonna bijja kusangiibwa.</string>
     <string name="groupLeaveErrorFailed">Ensobi okuzaako okwetaalya mu {group_name}</string>
-    <string name="groupLegacyBanner">Ebibinja byonnookyekulusizza, Tandika ekibinja ekipya okwasuzibwa. Ekola ya Kibinja ekijja kwefaananamu kubanga okuva {date}.</string>
     <string name="groupMemberLeft"><b>{name}﻿</b> yava mu kibiina.</string>
     <string name="groupMemberLeftMultiple"><b>{name}﻿</b> ne <b>{count} abalala﻿</b> baava mu kibiina.</string>
     <string name="groupMemberLeftTwo"><b>{name}﻿</b> ne <b>{other_name}﻿</b> baava mu kibiina.</string>

@@ -144,7 +144,7 @@ interface StorageProtocol {
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
     fun setZombieMembers(groupID: String, members: List<Address>)
-    fun getAllClosedGroupPublicKeys(): Set<String>
+    fun getAllLegacyGroupPublicKeys(): Set<String>
     fun getAllActiveClosedGroupPublicKeys(): Set<String>
     fun addClosedGroupPublicKey(groupPublicKey: String)
     fun removeClosedGroupPublicKey(groupPublicKey: String)

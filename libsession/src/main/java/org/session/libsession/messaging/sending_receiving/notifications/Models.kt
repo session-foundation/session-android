@@ -96,6 +96,9 @@ data class PushNotificationMetadata(
         @SerialName("n")
         val namespace: Int,
 
+        @SerialName("t")
+        val timestampSeconds: Long,
+
         /** The length of the message data.  This is always included, even if the message content
          * itself was too large to fit into the push notification. */
         @SerialName("l")

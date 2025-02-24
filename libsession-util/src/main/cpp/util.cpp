@@ -361,31 +361,31 @@ Java_org_session_libsignal_utilities_Namespace_CONVO_1INFO_1VOLATILE(JNIEnv *env
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_session_libsignal_utilities_Namespace_GROUPS(JNIEnv *env, jobject thiz) {
+Java_org_session_libsignal_utilities_Namespace_USER_1GROUPS(JNIEnv *env, jobject thiz) {
     return (int) session::config::Namespace::UserGroups;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1INFO(JNIEnv *env, jobject thiz) {
+Java_org_session_libsignal_utilities_Namespace_GROUP_1INFO(JNIEnv *env, jobject thiz) {
     return (int) session::config::Namespace::GroupInfo;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1MEMBERS(JNIEnv *env, jobject thiz) {
+Java_org_session_libsignal_utilities_Namespace_GROUP_1MEMBERS(JNIEnv *env, jobject thiz) {
     return (int) session::config::Namespace::GroupMembers;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_session_libsignal_utilities_Namespace_ENCRYPTION_1KEYS(JNIEnv *env, jobject thiz) {
+Java_org_session_libsignal_utilities_Namespace_GROUP_1KEYS(JNIEnv *env, jobject thiz) {
     return (int) session::config::Namespace::GroupKeys;
 }
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_org_session_libsignal_utilities_Namespace_CLOSED_1GROUP_1MESSAGES(JNIEnv *env, jobject thiz) {
+Java_org_session_libsignal_utilities_Namespace_GROUP_1MESSAGES(JNIEnv *env, jobject thiz) {
     return  (int) session::config::Namespace::GroupMessages;
 }
 

@@ -420,7 +420,6 @@
     <string name="groupLeaveDescription">Ali ste prepričani, da želite zapustiti <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ali ste prepričani, da želite zapustiti <b>{group_name}</b>?\n\nTo bo odstranilo vse člane in izbrisalo vsebine skupine.</string>
     <string name="groupLeaveErrorFailed">Ni uspelo zapustiti skupine {group_name}</string>
-    <string name="groupLegacyBanner">Skupine so bile nadgrajene, ustvarite novo skupino za nadgradnjo. Stara funkcionalnost skupine bo od {date} omejena.</string>
     <string name="groupMemberLeft"><b>{name} </b> je zapustil skupino.</string>
     <string name="groupMemberLeftMultiple"><b>{name} </b> in <b>{count} drugi </b> so zapustili skupino.</string>
     <string name="groupMemberLeftTwo"><b>{name} </b> in <b>{other_name} </b> sta zapustila skupino.</string>

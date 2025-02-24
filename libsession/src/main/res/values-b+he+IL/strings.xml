@@ -420,7 +420,6 @@
     <string name="groupLeaveDescription">האם אתה בטוח שברצונך לעזוב את <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">האם אתה בטוח שברצונך לעזוב את <b>{group_name}</b>?\n\nפעולה זו תסיר את כל החברים ותמחק את כל תוכן הקבוצה.</string>
     <string name="groupLeaveErrorFailed">נכשל לעזוב את {group_name}</string>
-    <string name="groupLegacyBanner">שדרגו קבוצות, צרו קבוצה חדשה לשדרוג. תפקוד הקבוצה הישן ידרדר מ-{date}.</string>
     <string name="groupMemberLeft"><b>{name}‏</b> עזב את הקבוצה.</string>
     <string name="groupMemberLeftMultiple"><b>{name}‏</b> ו<b>{count} אחרים‏</b> עזבו את הקבוצה.</string>
     <string name="groupMemberLeftTwo"><b>{name}‏</b> ו<b>{other_name}‏</b> עזבו את הקבוצה.</string>

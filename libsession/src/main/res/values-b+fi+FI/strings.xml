@@ -411,7 +411,6 @@
     <string name="groupLeaveDescription">Haluatko varmasti poistua yhteisöstä <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Haluatko varmasti poistua ryhmästä <b>{group_name}</b>?\n\nTämä poistaa kaikki jäsenet ja poistaa kaiken ryhmäsisällön.</string>
     <string name="groupLeaveErrorFailed">Poistuminen ryhmästä {group_name} epäonnistui</string>
-    <string name="groupLegacyBanner">Ryhmäominaisuuksia päivitetty. Käytä muutoksia luomalla uusi ryhmä. Vanhat ominaisuudet poistuvat {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> poistui ryhmästä.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ja <b>{count} muuta</b> poistui ryhmästä.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ja <b>{other_name}</b> poistui ryhmästä.</string>

@@ -246,7 +246,7 @@ object MessageSender {
                     Namespace.UNAUTHENTICATED_CLOSED_GROUP(),
                     Namespace.DEFAULT
                 ())
-                destination is Destination.ClosedGroup -> listOf(Namespace.CLOSED_GROUP_MESSAGES())
+                destination is Destination.ClosedGroup -> listOf(Namespace.GROUP_MESSAGES())
 
                 else -> listOf(Namespace.DEFAULT())
             }

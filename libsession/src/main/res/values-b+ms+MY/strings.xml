@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">Adakah anda yakin anda mahu meninggalkan <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Adakah anda pasti mahu meninggalkan <b>{group_name}</b>?\n\nIni akan membuang semua ahli dan memadamkan semua kandungan kumpulan.</string>
     <string name="groupLeaveErrorFailed">Gagal keluar dari {group_name}</string>
-    <string name="groupLegacyBanner">Kumpulan telah dinaik taraf, buat kumpulan baru untuk naik taraf. Fungsi kumpulan lama akan semakin merosot dari {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> meninggalkan kumpulan.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> dan <b>{count} lainnya </b> meninggalkan kumpulan.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> dan <b>{other_name} </b> meninggalkan kumpulan.</string>

@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">คุณแน่ใจหรือว่าต้องการออก <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">คุณแน่ใจหรือไม่ว่าต้องการออกจากกลุ่ม <b>{group_name}</b>?\n\nการกระทำนี้จะลบสมาชิกทั้งหมดและลบเนื้อหากลุ่มทั้งหมด</string>
     <string name="groupLeaveErrorFailed">ไม่สามารถออกจาก {group_name} ได้</string>
-    <string name="groupLegacyBanner">กลุ่มถูกอัปเกรด สร้างกลุ่มใหม่เพื่ออัปเกรด ฟังก์ชันกลุ่มเก่าจะลดลงตั้งแต่ {date}</string>
     <string name="groupMemberLeft"><b>{name}</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> and <b>{count} อื่นๆ</b> ได้ออกจากกลุ่ม</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> และ <b>{other_name}</b> ได้ออกจากกลุ่ม</string>

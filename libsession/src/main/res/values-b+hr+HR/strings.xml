@@ -415,7 +415,6 @@
     <string name="groupLeaveDescription">Jeste li sigurni da želite napustiti <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Jeste li sigurni da želite napustiti <b>{group_name}</b>?\n\nOvo će ukloniti sve članove i izbrisati sve sadržaje grupe.</string>
     <string name="groupLeaveErrorFailed">Napustanje grupe {group_name} nije uspjelo</string>
-    <string name="groupLegacyBanner">Grupe su nadograđene, stvorite novu grupu za nadogradnju. Stara funkcionalnost grupe bit će degradirana od {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> je napustio grupu.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> i <b>{count} drugi</b> napustili su grupu.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> i <b>{other_name}</b> napustili su grupu.</string>

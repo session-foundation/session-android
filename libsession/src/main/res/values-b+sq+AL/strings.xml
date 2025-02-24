@@ -409,7 +409,6 @@
     <string name="groupLeaveDescription">A jeni të sigurt që doni ta lini <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">A jeni të sigurt që doni të largoheni nga <b>{group_name}</b>?\n\nKjo do të heqë të gjithë anëtarët dhe do të fshijë të gjitha përmbajtjet e grupit.</string>
     <string name="groupLeaveErrorFailed">Dështoi dalja nga {group_name}</string>
-    <string name="groupLegacyBanner">Grupet janë përmirësuar, krijoni një grup të ri për të përditësuar. Funksionaliteti i grupit të vjetër do të degradohet nga {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> e la grupin.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> dhe <b>{count} të tjerë</b> braktisën grupin.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> dhe <b>{other_name}</b> braktisën grupin.</string>

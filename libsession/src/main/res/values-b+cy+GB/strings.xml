@@ -431,7 +431,6 @@
     <string name="groupLeaveDescription">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?\n\nBydd hyn yn dileu\'r holl aelodau ac yn dileu\'r holl gynnwys grŵp.</string>
     <string name="groupLeaveErrorFailed">Methu gadael {group_name}</string>
-    <string name="groupLegacyBanner">Mae grwpiau wedi\'u huwchraddio, creu grŵp newydd i uwchraddio. Bydd swyddogaeth hen grŵp yn dirywio o {date}.</string>
     <string name="groupMemberLeft"><b>{name} y</b> gadawodd y grŵp.</string>
     <string name="groupMemberLeftMultiple"><b>{name} y</b> a <b>{count} eraill</b> gadawodd y grŵp.</string>
     <string name="groupMemberLeftTwo"><b>{name} y</b> a <b>{other_name}</b> gadawodd y grŵp.</string>

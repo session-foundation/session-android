@@ -430,7 +430,6 @@
     <string name="groupLeaveDescription">Apakah Anda yakin ingin meninggalkan <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Apakah Anda yakin ingin keluar dari <b>{group_name}</b>?\n\nIni akan menghapus semua anggota dan menghapus semua konten grup.</string>
     <string name="groupLeaveErrorFailed">Gagal meninggalkan {group_name}</string>
-    <string name="groupLegacyBanner">Grup telah ditingkatkan, buat grup baru untuk meningkatkan. Fungsi grup lama akan menurun mulai {date}.</string>
     <string name="groupMemberLeft"><b>{name}</b> keluar dari grup.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> dan <b>{count} lainnya</b> keluar dari grup.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> dan <b>{other_name}</b> keluar dari grup.</string>

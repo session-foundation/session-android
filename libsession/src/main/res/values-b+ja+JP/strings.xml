@@ -406,7 +406,6 @@
     <string name="groupLeaveDescription">本当に<b>{group_name}</b>を退出しますか？</string>
     <string name="groupLeaveDescriptionAdmin">本当に<b>{group_name}</b>を退会しますか？\n\nこれにより、すべてのメンバーが削除され、すべてのグループコンテンツが削除されます。</string>
     <string name="groupLeaveErrorFailed">{group_name} を退出できませんでした</string>
-    <string name="groupLegacyBanner">グループがアップグレードされました。アップグレードするには新しいグループを作成してください。古いグループの機能は{date}以降低下します。</string>
     <string name="groupMemberLeft"><b>{name}</b> がグループを退会しました.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> と <b>{count}人</b> がグループから退会しました</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> と <b>{other_name}</b> がグループから退会しました</string>

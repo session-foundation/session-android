@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">دڵنیایت دەتەوێت لە <b>{group_name}</b> بڕی؟</string>
     <string name="groupLeaveDescriptionAdmin">دڵنیایت دەتەوێت مەڵحقەت ببەی تەواوی <b>{group_name}</b>?\n\nئەمە لە هەموو ئەندامەکان جێستەک دەبات و هەموو ناوەراسەکانی گروپ دەسڕێنەوە.</string>
     <string name="groupLeaveErrorFailed">نەتوانرا لاتەوێ بۆ {group_name}</string>
-    <string name="groupLegacyBanner">گروپەکان نوێکرانەوە، گروپی نوێ دروست بکە بۆ نوێکردنەوە. کار کردی گروپی کهن دابەش دەبێت لە {date}دا.</string>
     <string name="groupMemberLeft"><b>{name}</b> گروپەکەی بەجێهێشت.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> و <b>{count} کەس دیکە</b> گروپەکەی بەجێهێشت.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> و <b>{other_name}</b> گروپەکەیان بەجێهێشت.</string>

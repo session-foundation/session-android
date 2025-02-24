@@ -410,7 +410,6 @@
     <string name="groupLeaveDescription">Վստա՞հ եք, որ ուզում եք լքել <b>{group_name}</b> խումբը:</string>
     <string name="groupLeaveDescriptionAdmin">Իսկապե՞ս ուզում եք լքել <b>{group_name}</b>-ը:\n\nՍա կհեռացնի բոլոր անդամներին և կհեռացնի խմբի բոլոր բովանդակությունները:</string>
     <string name="groupLeaveErrorFailed">Չհաջողվեց լքել {group_name} խումբը</string>
-    <string name="groupLegacyBanner">Խմբերն թարմացվել են, ստեղծեք նոր խումբ՝ թարմացնելու համար: Հին խմբի ֆունկցիոնալությունը վատթարանուլ է {date}-ից:</string>
     <string name="groupMemberLeft"><b>{name}֊ը</b> լքեց խումբը:</string>
     <string name="groupMemberLeftMultiple"><b>{name}֊ը</b> և <b>{count} ուրիշներ</b> լքեցին խումբը:</string>
     <string name="groupMemberLeftTwo"><b>{name}֊ը</b> և <b>{other_name}֊ը</b> լքեցին խումբը:</string>

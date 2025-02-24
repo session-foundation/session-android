@@ -295,6 +295,10 @@
         <item quantity="one">İleti teslim edilemedi</item>
         <item quantity="other">İleti teslim edilemedi</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Bu ileti tüm cihazlarınızdan silinemez</item>
+        <item quantity="other">Seçtiğiniz bazı iletiler tüm cihazlarınızdan silinemez</item>
+    </plurals>
     <plurals name="deleteMessageWarning">
         <item quantity="one">Bu ileti herkes için silinemiyor</item>
         <item quantity="other">Seçtiğiniz iletilerden bazıları herkes için silinemiyor</item>
@@ -345,6 +349,7 @@
     <string name="displayNameNew">Yeni görünecek ad seçin</string>
     <string name="displayNamePick">Görünecek adınızı seçin</string>
     <string name="displayNameSet">Görünür Ad Belirle</string>
+    <string name="displayNameVisible">Görünen Adınız, etkileşimde bulunduğunuz kullanıcılar, gruplar ve topluluklar tarafından görülebilir.</string>
     <string name="document">Belge</string>
     <string name="done">Tamamlandı</string>
     <string name="download">İndir</string>
@@ -405,17 +410,21 @@
     <string name="groupInviteFailedMultiple">{name} ve {count} diğerleri {group_name} davet edilemedi</string>
     <string name="groupInviteFailedTwo">{name} ve {other_name} {group_name} davet edilemedi</string>
     <string name="groupInviteFailedUser">{name} {group_name} davet edilemedi</string>
+    <string name="groupInviteNotSent">Davet gönderilemedi</string>
+    <string name="groupInviteReinvite"><b>{name}</b> sizi yönetici olduğunuz <b>{group_name}</b> grubuna yeniden katılmaya davet etti.</string>
+    <string name="groupInviteReinviteYou">Yönetici olduğunuz <b>{group_name}</b> grubuna yeniden katılmaya davet edildiniz.</string>
     <string name="groupInviteSent">Davet gönderildi</string>
+    <string name="groupInviteStatusUnknown">Davet durumu bilinmiyor</string>
     <string name="groupInviteSuccessful">Grup daveti başarılı</string>
     <string name="groupInviteVersion">Kullanıcıların davetleri alabilmesi için en son sürüme sahip olmaları gerekiyor</string>
     <string name="groupInviteYou"><b>Sen</b> gruba katılmaya davet edildin.</string>
     <string name="groupInviteYouAndMoreNew"><b>Siz</b> ve <b>{count} diğer</b> gruba katıldınız.</string>
     <string name="groupInviteYouAndOtherNew"><b>Siz</b> ve <b>{other_name}</b> gruba katıldınız.</string>
+    <string name="groupInviteYouHistory">Gruba katılmaya <b>davet edildiniz</b>. Sohbet geçmişi paylaşıldı.</string>
     <string name="groupLeave">Gruptan Ayrıl</string>
     <string name="groupLeaveDescription"><b>{group_name}</b> grubundan ayrılmak istediğinizden emin misiniz?</string>
     <string name="groupLeaveDescriptionAdmin"><b>{group_name}</b> adlı gruptan ayrılmak istediğinizden emin misiniz?\n\nBu, tüm üyeleri kaldıracak ve tüm grup içeriğini silecektir.</string>
     <string name="groupLeaveErrorFailed">{group_name} çıkış yapılamadı</string>
-    <string name="groupLegacyBanner">Gruplar güncellendi, yükseltmek için yeni bir grup oluşturun. Eski grup işlevselliği {date} tarihinden itibaren azaltılacaktır.</string>
     <string name="groupMemberLeft"><b>{name}</b> gruptan ayrıldı.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> ve <b>{count} diğer</b> gruptan ayrıldı.</string>
     <string name="groupMemberLeftTwo"><b>{name}</b> ve <b>{other_name}</b> gruptan ayrıldı.</string>
@@ -435,6 +444,7 @@
     <string name="groupNameEnterShorter">Lütfen daha kısa bir grup ismi giriniz</string>
     <string name="groupNameNew">Grup adı artık {group_name}.</string>
     <string name="groupNameUpdated">Grup adı güncellendi.</string>
+    <string name="groupNameVisible">Grup adı tüm grup üyelerine görünür.</string>
     <string name="groupNoMessages"><b>{group_name}</b> kullanıcısından herhangi bir iletiniz yok. Sohbeti başlatmak için bir ileti gönderin!</string>
     <string name="groupOnlyAdmin"><b>{group_name}</b> grubunda tek adminsiniz.\n\nAdmin olmadan grup üyeleri ve ayarları değiştirilemez.</string>
     <string name="groupPromotedYou"><b>Sen</b> yönetici olarak terfi ettin.</string>
@@ -454,6 +464,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> ve <b>{count} diğer</b> gruptan çıkarıldı.</string>
     <string name="groupRemovedTwo"><b>{name}</b> ve <b>{other_name}</b> gruptan çıkarıldı.</string>
     <string name="groupRemovedYou"><b>{group_name}</b> grubundan çıkarıldınız.</string>
+    <string name="groupRemovedYouGeneral">Gruptan çıkarıldınız.</string>
     <string name="groupRemovedYouMultiple"><b>Siz</b> ve <b>{count} diğer</b> gruptan çıkarıldı.</string>
     <string name="groupRemovedYouTwo"><b>Sen</b> ve <b>{other_name}</b> gruptan çıkarıldınız.</string>
     <string name="groupSetDisplayPicture">Grup Profil Resmini Seçin</string>
@@ -582,6 +593,7 @@
     <string name="next">İleri</string>
     <string name="nicknameDescription"><b>{name}</b> için bir takma ad seçin. Bu, bire bir ve grup sohbetlerinizde size görünecektir.</string>
     <string name="nicknameEnter">Bir kullanıcı adı girin</string>
+    <string name="nicknameErrorShorter">Lütfen daha kısa bir takma ad girin</string>
     <string name="nicknameRemove">Takma adı kaldır</string>
     <string name="nicknameSet">Takma Ad Belirle</string>
     <string name="no">Hayır</string>
@@ -737,6 +749,7 @@
     <string name="recoveryPasswordRestoreDescription">Hesabınızı yüklemek için kurtarma parolanızı girin. Kaydetmediyseniz, uygulama ayarlarınızda bulabilirsiniz.</string>
     <string name="recoveryPasswordView">Şifreyi Görüntüle</string>
     <string name="recoveryPasswordWarningSendDescription">Bu sizin kurtarma ifadenizdir. Birine gönderirseniz, hesabınızda tam erişime sahip olurlar.</string>
+    <string name="recreateGroup">Grubu Yeniden Oluştur</string>
     <string name="redo">Yinele</string>
     <string name="remove">Kaldır</string>
     <string name="removePasswordFail">Parola kaldırma başarısız oldu</string>

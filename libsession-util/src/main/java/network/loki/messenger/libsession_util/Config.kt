@@ -298,7 +298,7 @@ class UserGroupsConfig private constructor(pointer: Long): ConfigBase(pointer), 
         )
     )
 
-    override fun namespace() = Namespace.GROUPS()
+    override fun namespace() = Namespace.USER_GROUPS()
 
     external override fun getCommunityInfo(baseUrl: String, room: String): GroupInfo.CommunityGroupInfo?
     external override fun getLegacyGroupInfo(accountId: String): GroupInfo.LegacyGroupInfo?
@@ -359,7 +359,7 @@ class GroupInfoConfig private constructor(pointer: Long): ConfigBase(pointer), M
         ): Long
     }
 
-    override fun namespace() = Namespace.CLOSED_GROUP_INFO()
+    override fun namespace() = Namespace.GROUP_INFO()
 
     external override fun id(): AccountId
     external override fun destroyGroup()
@@ -425,7 +425,7 @@ class GroupMembersConfig private constructor(pointer: Long): ConfigBase(pointer)
     constructor(groupPubKey: ByteArray, groupAdminKey: ByteArray?, initialDump: ByteArray?)
             : this(newInstance(groupPubKey, groupAdminKey, initialDump))
 
-    override fun namespace() = Namespace.CLOSED_GROUP_MEMBERS()
+    override fun namespace() = Namespace.GROUP_MEMBERS()
 
     external override fun all(): Stack<GroupMember>
     external override fun erase(pubKeyHex: String): Boolean
@@ -503,7 +503,7 @@ class GroupKeysConfig private constructor(
         members
     )
 
-    override fun namespace() = Namespace.ENCRYPTION_KEYS()
+    override fun namespace() = Namespace.GROUP_KEYS()
 
     external override fun groupKeys(): Stack<ByteArray>
     external override fun needsDump(): Boolean
