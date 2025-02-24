@@ -23,6 +23,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -35,9 +36,6 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
-
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -71,9 +69,6 @@ class MessageDetailsViewModel @Inject constructor(
             }
 
             val mmsRecord = messageRecord as? MmsMessageRecord
-
-            // We'll say that message that is outgoing but has not yet been sent is sending
-            //val isCurrentlySending = !messageRecord.isOutgoing && !messageRecord.isSent
 
             job = viewModelScope.launch {
                 repository.changes(messageRecord.threadId)
