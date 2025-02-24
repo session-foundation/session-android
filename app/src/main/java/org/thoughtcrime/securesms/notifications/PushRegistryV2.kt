@@ -46,13 +46,14 @@ class PushRegistryV2 @Inject constructor(
 
         val timestamp = clock.currentTimeMills() / 1000 // get timestamp in ms -> s
         val publicKey = swarmAuth.accountId.hexString
+        val sortedNamespace = namespaces.sorted()
         val signed = swarmAuth.sign(
-            "MONITOR${publicKey}${timestamp}1${namespaces.joinToString(separator = ",")}".encodeToByteArray()
+            "MONITOR${publicKey}${timestamp}1${sortedNamespace.joinToString(separator = ",")}".encodeToByteArray()
         )
         val requestParameters = SubscriptionRequest(
             pubkey = publicKey,
             session_ed25519 = swarmAuth.ed25519PublicKeyHex,
-            namespaces = namespaces,
+            namespaces = sortedNamespace,
             data = true, // only permit data subscription for now (?)
             service = device.service,
             sig_ts = timestamp,

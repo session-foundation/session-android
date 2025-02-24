@@ -61,6 +61,7 @@ class GroupPollerManager @Inject constructor(
     preferences: TextSecurePreferences,
     appVisibilityManager: AppVisibilityManager,
     connectivity: InternetConnectivity,
+    groupRevokedMessageHandler: GroupRevokedMessageHandler,
 ) {
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
@@ -117,6 +118,7 @@ class GroupPollerManager @Inject constructor(
                                 lokiApiDatabase = lokiApiDatabase,
                                 clock = clock,
                                 appVisibilityManager = appVisibilityManager,
+                                groupRevokedMessageHandler = groupRevokedMessageHandler,
                             ),
                             scope = scope
                         )

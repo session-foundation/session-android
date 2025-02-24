@@ -48,6 +48,7 @@ class GroupPoller(
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val clock: SnodeClock,
     private val appVisibilityManager: AppVisibilityManager,
+    private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
 ) {
     companion object {
         private const val POLL_INTERVAL = 3_000L
@@ -370,40 +371,7 @@ class GroupPoller(
     }
 
     private suspend fun handleRevoked(messages: List<RetrieveMessageResponse.Message>) {
-        messages.forEach { msg ->
-            val decoded = configFactoryProtocol.decryptForUser(
-                msg.data,
-                Sodium.KICKED_DOMAIN,
-                groupId,
-            )
-
-            if (decoded != null) {
-                // The message should be in the format of "<sessionIdPubKeyBinary><messageGenerationASCII>",
-                // where the pub key is 32 bytes, so we need to have at least 33 bytes of data
-                if (decoded.size < 33) {
-                    Log.w(TAG, "Received an invalid kicked message, expecting at least 33 bytes, got ${decoded.size}")
-                    return@forEach
-                }
-
-                val sessionId = AccountId(IdPrefix.STANDARD, decoded.copyOfRange(0, 32))
-                val messageGeneration = decoded.copyOfRange(32, decoded.size).decodeToString().toIntOrNull()
-                if (messageGeneration == null) {
-                    Log.w(TAG, "Received an invalid kicked message: missing message generation")
-                    return@forEach
-                }
-
-                val currentKeysGeneration = configFactoryProtocol.withGroupConfigs(groupId) {
-                    it.groupKeys.currentGeneration()
-                }
-
-                val isForMe = sessionId.hexString == storage.getUserPublicKey()
-                Log.d(TAG, "Received kicked message, for us? ${isForMe}, message key generation = $messageGeneration, our key generation = $currentKeysGeneration")
-
-                if (isForMe && messageGeneration >= currentKeysGeneration) {
-                    groupManagerV2.handleKicked(groupId)
-                }
-            }
-        }
+        groupRevokedMessageHandler.handleRevokeMessage(groupId, messages.map { it.data })
     }
 
     private fun handleGroupConfigMessages(
