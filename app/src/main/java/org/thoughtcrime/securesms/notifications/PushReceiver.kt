@@ -71,22 +71,22 @@ class PushReceiver @Inject constructor(
         try {
             val namespace = pushData.metadata?.namespace
             val params = when {
-                namespace == Namespace.CLOSED_GROUP_MESSAGES() ||
+                namespace == Namespace.GROUP_MESSAGES() ||
                         namespace == Namespace.REVOKED_GROUP_MESSAGES() ||
-                        namespace == Namespace.CLOSED_GROUP_INFO() ||
-                        namespace == Namespace.CLOSED_GROUP_MEMBERS() ||
-                        namespace == Namespace.ENCRYPTION_KEYS() -> {
+                        namespace == Namespace.GROUP_INFO() ||
+                        namespace == Namespace.GROUP_MEMBERS() ||
+                        namespace == Namespace.GROUP_KEYS() -> {
                     val groupId = AccountId(requireNotNull(pushData.metadata.account) {
                         "Received a closed group message push notification without an account ID"
                     })
 
-                    if (namespace == Namespace.CLOSED_GROUP_MESSAGES()) {
-                        val envelop = checkNotNull(tryDecryptGroupEnvelop(groupId, pushData.data)) {
+                    if (namespace == Namespace.GROUP_MESSAGES()) {
+                        val envelope = checkNotNull(tryDecryptGroupEnvelope(groupId, pushData.data)) {
                             "Unable to decrypt closed group message"
                         }
 
                         MessageReceiveParameters(
-                            data = envelop.toByteArray(),
+                            data = envelope.toByteArray(),
                             serverHash = pushData.metadata.msg_hash,
                             closedGroup = Destination.ClosedGroup(groupId.hexString)
                         )
@@ -113,11 +113,11 @@ class PushReceiver @Inject constructor(
 
                         configFactory.mergeGroupConfigMessages(
                             groupId = groupId,
-                            keys = configMessage.takeIf { namespace == Namespace.ENCRYPTION_KEYS() }
+                            keys = configMessage.takeIf { namespace == Namespace.GROUP_KEYS() }
                                 .orEmpty(),
-                            members = configMessage.takeIf { namespace == Namespace.CLOSED_GROUP_MEMBERS() }
+                            members = configMessage.takeIf { namespace == Namespace.GROUP_MEMBERS() }
                                 .orEmpty(),
-                            info = configMessage.takeIf { namespace == Namespace.CLOSED_GROUP_INFO() }
+                            info = configMessage.takeIf { namespace == Namespace.GROUP_INFO() }
                                 .orEmpty(),
                         )
 
@@ -148,7 +148,7 @@ class PushReceiver @Inject constructor(
 
     }
 
-    private fun tryDecryptGroupEnvelop(groupId: AccountId, data: ByteArray): Envelope? {
+    private fun tryDecryptGroupEnvelope(groupId: AccountId, data: ByteArray): Envelope? {
         val (envelopBytes, sender) = checkNotNull(configFactory.withGroupConfigs(groupId) {
             it.groupKeys.decrypt(
                 data

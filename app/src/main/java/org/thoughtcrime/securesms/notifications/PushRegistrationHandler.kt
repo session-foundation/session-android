@@ -138,10 +138,10 @@ constructor(
                 .filter { it.shouldPoll }
 
             val namespaces = listOf(
-                Namespace.CLOSED_GROUP_MESSAGES(),
-                Namespace.CLOSED_GROUP_INFO(),
-                Namespace.CLOSED_GROUP_MEMBERS(),
-                Namespace.ENCRYPTION_KEYS(),
+                Namespace.GROUP_MESSAGES(),
+                Namespace.GROUP_INFO(),
+                Namespace.GROUP_MEMBERS(),
+                Namespace.GROUP_KEYS(),
                 Namespace.REVOKED_GROUP_MESSAGES(),
             )
 

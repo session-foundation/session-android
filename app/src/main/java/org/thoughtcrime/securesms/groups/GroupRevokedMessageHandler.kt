@@ -34,7 +34,7 @@ class GroupRevokedMessageHandler @Inject constructor(
                     return@forEach
                 }
 
-                val sessionId = AccountId(IdPrefix.STANDARD, decoded.copyOfRange(0, 32))
+                val sessionId = AccountId(IdPrefix.STANDARD, decoded.copyOfRange(0, 32)) // copyOfRange: [start,end)
                 val messageGeneration = decoded.copyOfRange(32, decoded.size).decodeToString().toIntOrNull()
                 if (messageGeneration == null) {
                     Log.w(TAG, "Received an invalid kicked message: missing message generation")

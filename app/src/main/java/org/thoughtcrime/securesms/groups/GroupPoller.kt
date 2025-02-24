@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
@@ -30,7 +29,6 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
@@ -240,7 +238,7 @@ class GroupPoller(
                     val lastHash = lokiApiDatabase.getLastMessageHashValue(
                         snode,
                         groupId.hexString,
-                        Namespace.CLOSED_GROUP_MESSAGES()
+                        Namespace.GROUP_MESSAGES()
                     ).orEmpty()
 
                     Log.d(TAG, "Retrieving group message since lastHash = $lastHash")
@@ -251,7 +249,7 @@ class GroupPoller(
                         request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                             lastHash = lastHash,
                             auth = groupAuth,
-                            namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                            namespace = Namespace.GROUP_MESSAGES(),
                             maxSize = null,
                         ),
                         responseType = Map::class.java
@@ -259,9 +257,9 @@ class GroupPoller(
                 }
 
                 val groupConfigRetrieval = listOf(
-                    Namespace.ENCRYPTION_KEYS(),
-                    Namespace.CLOSED_GROUP_INFO(),
-                    Namespace.CLOSED_GROUP_MEMBERS()
+                    Namespace.GROUP_KEYS(),
+                    Namespace.GROUP_INFO(),
+                    Namespace.GROUP_MEMBERS()
                 ).map { ns ->
                     async {
                         SnodeAPI.sendBatchRequest(
@@ -289,9 +287,9 @@ class GroupPoller(
                     val result = runCatching {
                         val (keysMessage, infoMessage, membersMessage) = groupConfigRetrieval.map { it.await() }
                         handleGroupConfigMessages(keysMessage, infoMessage, membersMessage)
-                        saveLastMessageHash(snode, keysMessage, Namespace.ENCRYPTION_KEYS())
-                        saveLastMessageHash(snode, infoMessage, Namespace.CLOSED_GROUP_INFO())
-                        saveLastMessageHash(snode, membersMessage, Namespace.CLOSED_GROUP_MEMBERS())
+                        saveLastMessageHash(snode, keysMessage, Namespace.GROUP_KEYS())
+                        saveLastMessageHash(snode, infoMessage, Namespace.GROUP_INFO())
+                        saveLastMessageHash(snode, membersMessage, Namespace.GROUP_MEMBERS())
 
                         groupExpired = configFactoryProtocol.withGroupConfigs(groupId) {
                             it.groupKeys.size() == 0
@@ -405,7 +403,7 @@ class GroupPoller(
                 snode = snode,
                 publicKey = groupId.hexString,
                 decrypt = it.groupKeys::decrypt,
-                namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                namespace = Namespace.GROUP_MESSAGES(),
             )
         }
 

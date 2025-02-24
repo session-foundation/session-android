@@ -138,7 +138,7 @@ class RemoveGroupMemberHandler @Inject constructor(
             // Call No 3. Conditionally send the `GroupUpdateDeleteMemberContent`
             if (pendingRemovals.any { (member, status) -> member.shouldRemoveMessages(status) }) {
                 calls += SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                    namespace = Namespace.CLOSED_GROUP_MESSAGES(),
+                    namespace = Namespace.GROUP_MESSAGES(),
                     message = buildDeleteGroupMemberContentMessage(
                         adminKey = adminKey,
                         groupAccountId = groupAccountId.hexString,

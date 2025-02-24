@@ -254,7 +254,7 @@ class GroupManagerV2Impl @Inject constructor(
                 val memberKey = configs.groupKeys.supplementFor(newMembers.map { it.hexString })
                 batchRequests.add(
                     SnodeAPI.buildAuthenticatedStoreBatchInfo(
-                        namespace = Namespace.ENCRYPTION_KEYS(),
+                        namespace = Namespace.GROUP_KEYS(),
                         message = SnodeMessage(
                             recipient = group.hexString,
                             data = Base64.encodeBytes(memberKey),
