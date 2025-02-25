@@ -566,8 +566,8 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
         }
 
         // ================================
-        // NUEVO CÓDIGO: Leer encryption_prefs y actualizar escudo
-        // ================================
+// NUEVO CÓDIGO: Leer encryption_prefs y actualizar escudo
+// ================================
         try {
             val masterKey = MasterKey.Builder(this)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
@@ -575,13 +575,16 @@ class ConversationActivityV2 : PassphraseRequiredActionBarActivity(), InputBarDe
 
             val sharedPrefs = EncryptedSharedPreferences.create(
                 /* context  = */ this,
-                /* fileName = */ "encryption_prefs",
+                /* fileName = */ "encryption_prefs", // Mismo nombre que en ExtraSecurityActivity
                 /* masterKey= */ masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
 
-            val encryptionEnabled = sharedPrefs.getBoolean("encryption_enabled", false)
+            // Nota: Aquí usamos "encryption_enabled_universalConv" para que coincida
+            //       con la constante BASE_KEY_ENCRYPTION_ENABLED en ExtraSecurityActivity.
+            val encryptionEnabled = sharedPrefs.getBoolean("encryption_enabled_universalConv", false)
+
             val shieldIV = binding.extraSecurityShield
             val shieldStatusTV = binding.extraSecurityStatusText
 

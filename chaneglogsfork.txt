@@ -1,0 +1,136 @@
+1. **Extensión del esquema de Base de Datos**
+   - **Se agregó la columna** ed25519PublicKey en la tabla recipient_preferences (archivo RecipientDatabase.java).
+     - Para ello, se creó el método getAddEd25519PublicKeyColumn().
+     - Se incluyó una migración que verifica si la columna existe y, de no existir, la crea.
+   - **Se incrementó la versión del esquema** en SQLCipherOpenHelper.java a lokiV48 (o 69) para reflejar esta migración.
+     - Dentro de onUpgrade(...), se agregó el **bloque de migración** que llama a RecipientDatabase.getAddEd25519PublicKeyColumn() si oldVersion < lokiV48.
+     - Se agregaron logs de depuración (p. ej. Log.i(...)) para saber cuándo se añade dicha columna.
+
+2. **Cambios en RecipientDatabase.java**
+   - Se añadió el **campo** ed25519PublicKey al CREATE TABLE de recipient_preferences.
+   - Se implementaron (o renombraron) métodos para añadir la columna cuando la tabla ya existía:
+     - getAddEd25519PublicKeyColumn().
+   - Se eliminaron/renombraron métodos duplicados (por ejemplo, evitando la colisión Ambiguous method call).
+
+3. **Actualización de SQLCipherOpenHelper.java**
+   - Se incrementó la constante DATABASE_VERSION (p. ej. private static final int DATABASE_VERSION = lokiV48;).
+   - En el método onUpgrade(), se añadió un if (oldVersion < lokiV48) que crea la columna ed25519PublicKey llamando al método de RecipientDatabase.
+   - Se mantuvo intacto el resto del archivo (no se eliminaron ni reordenaron migraciones existentes).
+
+4. **Modificaciones en StorageProtocol**
+   - Se **agregaron** dos funciones nuevas:
+     1. fun getContactEd25519(sessionID: String): String?
+     2. fun setContactEd25519(sessionID: String, ed25519PublicKey: String?)
+   - Dichas funciones permiten **leer** y **escribir** la clave pública Ed25519 de un contacto específico, identificada por sessionID.
+
+5. **Implementación en Storage.kt**
+   - Storage es la clase que implementa StorageProtocol, por lo que fue obligatorio sobrescribir:
+kotlin
+     override fun getContactEd25519(sessionID: String): String? { ... }
+     override fun setContactEd25519(sessionID: String, ed25519PublicKey: String?) { ... }
+
+- Al principio se utilizó un return null de ejemplo; luego se ajustó para que consulte la columna ed25519PublicKey en la base de datos (vía recipientDatabase).
+
+6. **Corrección de duplicados y errores de compilación**
+   - Se eliminaron métodos repetidos (como varios getAddEd25519PublicKeyColumn()) que causaban errores de compilación.
+   - Se implementaron todos los métodos obligatorios de StorageProtocol para evitar errores del tipo *"Class 'Storage' is not abstract..."*.
+   - Ajustes de migración para que no se llamara dos veces el mismo método.
+
+7. **Nuevo campo en Contact.kt (data class)**
+   - Añadido var ed25519PublicKey: String? = null a Contact.
+   - Permite manejar la clave pública Ed25519 en la capa de datos Kotlin.
+   - Se mantuvo un constructor que no rompe la compatibilidad binaria con JNI, según el caso.
+
+8. **Resultado final**
+   - La aplicación ahora puede **almacenar** la clave pública Ed25519 en la BD, migrar la tabla recipient_preferences y exponer métodos para su lectura y escritura mediante Storage.
+   - Se resolvieron los errores de duplicación de métodos e implementación de interfaces.
+   - **Se respeta** la compatibilidad binaria nativa (no se suprimieron constructores que el JNI pudiera necesitar).
+
+9. **En el Changelog**:
+   1. *Migración DB a lokiV48*: Se añade la columna ed25519PublicKey en recipient_preferences.
+   2. *RecipientDatabase*:
+      - Nuevo método getAddEd25519PublicKeyColumn().
+      - Ajustes en CREATE_TABLE para incluir ed25519PublicKey.
+   3. *SQLCipherOpenHelper*:
+      - Aumento de la versión de base de datos a 69.
+      - Bloque de migración en onUpgrade().
+   4. *StorageProtocol*:
+      - Nuevos métodos getContactEd25519() y setContactEd25519().
+   5. *Storage.kt*:
+      - Implementación de ambos métodos.
+      - Evita el error por no implementar miembros de la interfaz.
+   6. *Contact.kt* (o .java):
+      - Campo ed25519PublicKey en la data class.
+
+ESTOS CAMBIOS NO SE CONSIGUIERON LLEGAR  A CABO SE DEJA REFERENCIA PAR FUTURA IMPLEMENTACION
+
+// ====================== RESUMEN DE CAMBIOS IMPLEMENTADOS ======================
+
+// 1. INTERCAMBIO DE CLAVES Y NUEVO CAMPO senderID EN ENVELOPE
+// ------------------------------------------------------------------------------
+// - Se elimina la inclusión in-band de la clave pública ED25519 en cada mensaje.
+// - Se agrega el campo "senderID" en el proto (SignalServiceProtos.Envelope) para transportar
+//   el identificador real del remitente.
+// - Se actualiza MessageWrapper.kt para que al empaquetar el mensaje, el Envelope incluya senderID.
+// - Se regeneran las clases proto (ejecutando el Makefile) para que se incluya el nuevo campo.
+
+// 2. UNIFICACIÓN DE LA VERSIÓN DE PROTOBUF
+// ------------------------------------------------------------------------------
+// - Se actualiza gradle.properties para que la variable "protobufVersion" tenga, por ejemplo, "3.25.3"
+//   (en lugar de una versión antigua, como 2.5.0).
+// - En libsignal/build.gradle se declara la dependencia:
+//       implementation "com.google.protobuf:protobuf-java:$protobufVersion"
+// - En el build.gradle raíz se fuerza la resolución global con:
+//       configurations.all {
+//           resolutionStrategy {
+//               force "com.google.protobuf:protobuf-java:$protobufVersion"
+//           }
+//       }
+// - Se limpia y reconstruye el proyecto, y se ejecuta el Makefile para regenerar los protos.
+
+// 3. CAMBIOS EN ARCHIVOS DE LÓGICA DE MENSAJES
+// ------------------------------------------------------------------------------
+// MessageEncrypter.kt:
+//    - Se elimina la inclusión in-band de la clave pública del remitente en el payload.
+//    - La firma se genera usando solo el plaintext y otros datos conocidos, sin adjuntar la clave.
+//
+// MessageDecrypter.kt:
+//    - Se elimina la extracción in-band de la clave pública.
+//    - Durante el descifrado, se busca la clave pública del remitente en el almacenamiento local
+//      utilizando el senderID (obtenido del Envelope).
+//    - La verificación de la firma se realiza con esa clave confiable.
+//
+// MessageSender.kt:
+//    - Se modifica la construcción del Envelope para que no se incluya la clave pública in-band.
+//    - Se utiliza la clave pública del usuario (obtenida de la base de datos o perfil) para asignar
+//      el remitente y firmar el mensaje.
+//
+// MessageWrapper.kt:
+//    - Se mantiene el proceso de empaquetado, pero se espera que el Envelope incluya el nuevo campo senderID.
+//
+// MessageReceiver.kt:
+//    - Se actualiza el proceso de desempaquetado para extraer el senderID (si está presente; si no, se usa source).
+//    - Se crea una variable inmutable (por ejemplo, senderFinal) para evitar problemas de smart cast.
+//    - Se utiliza senderFinal para pasar el valor al método de descifrado (MessageDecrypter.decrypt).
+//
+// ReceivedMessageHandler.kt:
+//    - Se adapta la lógica de procesamiento y persistencia de mensajes para trabajar con el nuevo flujo
+//      basado en senderID, sin depender de claves públicas in-band.
+
+// 4. CONSIDERACIONES DE SEGURIDAD Y FLUJO DE CLAVES
+// ------------------------------------------------------------------------------
+// - Para que la verificación de firma funcione correctamente, ambos usuarios deben haber intercambiado
+//   y almacenado sus claves públicas de forma segura (por ejemplo, mediante el escaneo mutuo de QR).
+// - Si un mensaje llega de un remitente cuya clave no está almacenada, la verificación fallará y se
+//   rechazará el mensaje.
+// - En la capa de transporte (OnionRequestAPI) se debe utilizar la clave pública del destinatario obtenida
+//   de forma segura, sin depender de la información in-band.
+//
+// 5. COMPILACIÓN Y LIMPIEZA DEL PROYECTO
+// ------------------------------------------------------------------------------
+// - Una vez realizados los cambios, es imprescindible ejecutar nuevamente el Makefile para regenerar
+//   las clases proto con el nuevo campo senderID.
+// - Luego, limpiar y reconstruir el proyecto para que se actualicen todas las dependencias y fuentes.
+// - Verificar que no existan versiones conflictivas de Protobuf usando comandos como:
+//       ./gradlew dependencyInsight --configuration compileClasspath --dependency com.google.protobuf:protobuf-java
+// =============================================================================

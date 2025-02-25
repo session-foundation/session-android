@@ -47,13 +47,13 @@
                 <ImageView
                     android:id="@+id/sessionHeaderImage"
                     android:layout_width="0dp"
-                    android:layout_height="16dp"
+                    android:layout_height="48dp"
                     android:layout_centerInParent="true"
                     android:layout_toLeftOf="@+id/searchViewContainer"
                     android:layout_toRightOf="@+id/profileButton"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_session"
-                    app:tint="?sessionLogoTint" />
+                     />
 
                 <RelativeLayout
                     android:id="@+id/searchViewContainer"
@@ -69,7 +69,7 @@
                         android:layout_height="wrap_content"
                         android:layout_centerInParent="true"
                         android:src="@drawable/ic_baseline_search_24"
-                        app:tint="?sessionLogoTint" />
+                         />
 
                 </RelativeLayout>
 

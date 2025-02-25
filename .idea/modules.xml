@@ -10,6 +10,10 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.test.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.iml" filepath="$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.main.iml" filepath="$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/commonlib/session-android.commonlib.unitTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.main.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.main.iml" />

@@ -8,8 +8,10 @@
     android:layout_height="match_parent"
     android:focusable="false"
     android:orientation="vertical"
-    android:paddingTop="32dp">
+    android:paddingTop="32dp"
+    tools:context=".conversation.v2.ConversationActivityV2">
 
+    <!-- 1) Tu Toolbar principal -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -21,45 +23,50 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Tu vista de cabecera con el nombre y fecha -->
-        <org.thoughtcrime.securesms.conversation.ConversationActionBarView
-            android:id="@+id/toolbarContent"
+        <!-- 2) Contenedor intermedio: RelativeLayout -->
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content">
 
-        <!-- AÑADIDO: Escudo + Texto de “Extra Security” -->
-        <LinearLayout
-            android:id="@+id/extraSecurityContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|center_vertical"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:paddingRight="16dp">
-
-            <ImageView
-                android:id="@+id/extraSecurityShield"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/extrasecurityoff"
-                android:contentDescription="@string/extra_security_status" />
-
-            <TextView
-                android:id="@+id/extraSecurityStatusText"
+            <!-- 2a) Vista personalizada a la IZQUIERDA -->
+            <org.thoughtcrime.securesms.conversation.ConversationActionBarView
+                android:id="@+id/toolbarContent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Extra Security OFF"
-                android:textColor="@android:color/white"
-                android:textSize="12sp" />
-        </LinearLayout>
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true" />
+
+            <!-- 2b) Escudo y texto de “Extra Security” a la DERECHA -->
+            <LinearLayout
+                android:id="@+id/extraSecurityContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:id="@+id/extraSecurityShield"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/extrasecurityoff"
+                    android:contentDescription="@string/extra_security_status" />
+
+                <TextView
+                    android:id="@+id/extraSecurityStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Extra Security OFF"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </RelativeLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <!--
-    Add this to the below recycler view if you need to debug
-    activity `adjustResize` issues:
-    android:background="@drawable/cross"
-    -->
+    <!-- RecyclerView de la conversación -->
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
         android:id="@+id/conversationRecyclerView"
         android:layout_width="match_parent"
@@ -70,6 +77,7 @@
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintVertical_weight="1" />
 
+    <!-- View para el "is typing..." -->
     <org.thoughtcrime.securesms.conversation.v2.components.TypingIndicatorViewContainer
         android:id="@+id/typingIndicatorViewContainer"
         android:layout_width="match_parent"
@@ -81,6 +89,7 @@
         app:layout_constraintTop_toBottomOf="@+id/conversationRecyclerView"
         tools:visibility="visible" />
 
+    <!-- Input bar donde escribes mensajes -->
     <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
         android:id="@+id/inputBar"
         android:layout_width="match_parent"
@@ -90,6 +99,7 @@
         app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
         tools:layout_height="60dp" />
 
+    <!-- Barra de búsqueda (oculta por defecto) -->
     <org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
         android:id="@+id/searchBottomBar"
         android:layout_width="match_parent"
@@ -114,6 +124,7 @@
         android:layout="@layout/conversation_reaction_scrubber"
         android:inflatedId="@+id/conversation_reaction_scrubber" />
 
+    <!-- RecyclerView para menciones (oculta por defecto) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/conversation_mention_candidates"
         android:layout_width="match_parent"
@@ -127,6 +138,7 @@
         tools:listitem="@layout/view_mention_candidate_v2"
         tools:visibility="gone" />
 
+    <!-- Botones flotantes de adjuntos (GIF, archivo, etc.) -->
     <LinearLayout
         android:id="@+id/attachmentOptionsContainer"
         android:layout_width="wrap_content"
@@ -170,6 +182,7 @@
             android:contentDescription="@string/AccessibilityId_camera" />
     </LinearLayout>
 
+    <!-- Texto que muestra si estás pendiente de aprobación para enviar msg (invisible por defecto) -->
     <TextView
         android:id="@+id/textSendAfterApproval"
         android:layout_width="match_parent"
@@ -187,6 +200,7 @@
         tools:text="You'll be able to send"
         tools:visibility="visible" />
 
+    <!-- Botón flotante para scrollear al final de la conversación -->
     <RelativeLayout
         android:id="@+id/scrollToBottomButton"
         android:layout_width="40dp"
@@ -238,6 +252,7 @@
         </RelativeLayout>
     </RelativeLayout>
 
+    <!-- Vista para grabar audios (oculta por defecto) -->
     <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarRecordingView
         android:id="@+id/inputBarRecordingView"
         android:layout_width="match_parent"
@@ -246,6 +261,7 @@
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <!-- Banner de “bloqueado” (invisible por defecto) -->
     <FrameLayout
         android:id="@+id/blockedBanner"
         android:layout_width="match_parent"
@@ -269,6 +285,7 @@
             tools:text="Elon is blocked. Unblock them?" />
     </FrameLayout>
 
+    <!-- Banner de “outdated client” (invisible por defecto) -->
     <FrameLayout
         android:id="@+id/outdatedBanner"
         android:layout_width="match_parent"
@@ -291,6 +308,7 @@
             tools:text="This user's client is outdated, things may not work as expected" />
     </FrameLayout>
 
+    <!-- Texto placeholder (aparece si no hay mensajes) -->
     <TextView
         android:id="@+id/placeholderText"
         style="@style/Signal.Text.Preview"
@@ -304,6 +322,7 @@
         app:layout_constraintTop_toBottomOf="@+id/outdatedBanner"
         tools:text="Some Control Message Text" />
 
+    <!-- Barra de solicitudes de mensaje (oculta por defecto) -->
     <LinearLayout
         android:id="@+id/messageRequestBar"
         android:layout_width="match_parent"
@@ -365,13 +384,13 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- ComposeView para cargar composables (diálogos, etc.) -->
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/dialog_open_url"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:layout_editor_absoluteX="56dp"
-        tools:layout_editor_absoluteY="88dp" />
+        android:layout_height="match_parent" />
 
+    <!-- Loader / SpinKit (oculto por defecto) -->
     <RelativeLayout
         android:id="@+id/loader"
         android:layout_width="match_parent"
