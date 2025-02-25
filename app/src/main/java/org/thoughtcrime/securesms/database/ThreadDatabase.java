@@ -35,7 +35,6 @@ import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupRecord;
@@ -605,7 +604,12 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  // ACL - DON'T DO THIS HERE - WE NEED TO DELETE THE CONTACT FROM THE CONTACTS ACTIVITY, NOT THE CONVERSATION ACTIVITY!
   public void deleteConversation(long threadId) {
+
+    // Attempt to get the recipient BEFORE we delete the thread!
+    Recipient recipient = getRecipientForThreadId(threadId);
+
     DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).draftDatabase().clearDrafts(threadId);
@@ -614,6 +618,15 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
     SessionMetaProtocol.clearReceivedMessages();
+
+    // ACL - MOVE ALL THIS TO HAPPEN WHEN WE DELETE A *CONTACT*!!
+    // if we're deleting a 1-on-1 conversation with a single recipient then remove the contact from the contact database to reset all their properties
+    if (recipient != null) {
+      String address = recipient.getAddress().toString();
+      DatabaseComponent.get(context).sessionContactDatabase().deleteContact(address);
+      DatabaseComponent.get(context).recipientDatabase().deleteRecipient(address);
+      addressCache.remove(threadId);
+    }
   }
 
   public long getThreadIdIfExistsFor(String address) {

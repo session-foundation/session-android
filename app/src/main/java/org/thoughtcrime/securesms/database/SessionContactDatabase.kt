@@ -8,6 +8,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
 class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
@@ -84,6 +85,17 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         contentValues.put(threadID, contact.threadID)
         database.insertOrUpdate(sessionContactTable, contentValues, "$accountID = ?", arrayOf( contact.accountID ))
         notifyConversationListListeners()
+    }
+
+    fun deleteContact(accountId: String) {
+        val database = databaseHelper.writableDatabase
+        val rowsAffected = database.delete(sessionContactTable, "$accountID = ?", arrayOf( accountId ))
+
+        Log.w("ACL", "Deleted contact: " + accountId + ", rows affected: " + rowsAffected)
+
+        if (rowsAffected == 0) {
+            Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
+        }
     }
 
     fun contactFromCursor(cursor: Cursor): Contact {

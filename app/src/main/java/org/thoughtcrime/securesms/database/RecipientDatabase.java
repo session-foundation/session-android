@@ -350,6 +350,22 @@ public class RecipientDatabase extends Database {
     notifyRecipientListeners();
   }
 
+  // Delete a recipient with the given address from the database
+  public void deleteRecipient(@NonNull String recipientAddress) {
+    SQLiteDatabase db = getWritableDatabase();
+    db.beginTransaction();
+    try {
+      int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
+
+      Log.w("ACL", "deleteRecipient affected rows: " + rowCount);
+
+      db.setTransactionSuccessful();
+    } finally {
+      db.endTransaction();
+    }
+    notifyRecipientListeners();
+  }
+
   public void setAutoDownloadAttachments(@NonNull Recipient recipient, boolean shouldAutoDownloadAttachments) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();

@@ -1476,19 +1476,16 @@ open class Storage @Inject constructor(
     override fun deleteConversation(threadID: Long) {
         val threadDB = threadDatabase
         val groupDB = groupDatabase
-        threadDB.deleteConversation(threadID)
 
         val recipient = getRecipientForThread(threadID)
-        if (recipient == null) {
-            Log.w(TAG, "Got null recipient when deleting conversation - aborting.");
-            return
-        }
 
-        // There is nothing further we need to do if this is a 1-on-1 conversation, and it's not
-        // possible to delete communities in this manner so bail.
-        if (recipient.isContactRecipient || recipient.isCommunityRecipient) return
+        // Delete the conversation
+        threadDB.deleteConversation(threadID)
 
-        // If we get here then this is a closed group conversation (i.e., recipient.isClosedGroupRecipient)
+        // If this wasn't a group recipient then there's nothing further we need to do..
+        if (recipient == null || !recipient.isGroupRecipient) return
+
+        // ..but if this IS a group recipient then we need to delete the group details.
         configFactory.withMutableUserConfigs { configs ->
             val volatile = configs.convoInfoVolatile
             val groups = configs.userGroups

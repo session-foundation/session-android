@@ -607,18 +607,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
             lifecycleScope.launch(Dispatchers.Main) {
                 val context = this@HomeActivity
                 // Cancel any outstanding jobs
-                sessionJobDatabase
-                    .cancelPendingMessageSendJobs(threadID)
+                sessionJobDatabase.cancelPendingMessageSendJobs(threadID)
 
                 // Delete the conversation
-                val community = lokiThreadDatabase
-                    .getOpenGroupChat(threadID)
+                val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(
-                        community.server,
-                        community.room,
-                        context
-                    )
+                    OpenGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
                         threadDb.deleteConversation(threadID)
