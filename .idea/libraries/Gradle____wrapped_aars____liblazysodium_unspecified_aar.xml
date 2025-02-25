@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Gradle: __wrapped_aars__::liblazysodium:unspecified@aar" external-system-id="GRADLE">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/transforms-4/e417514c042010cea69f2df9b56362ba/transformed/jetified-session-lazysodium-android/jars/classes.jar!/" />
+      <root url="file://$USER_HOME$/.gradle/caches/transforms-4/e417514c042010cea69f2df9b56362ba/transformed/jetified-session-lazysodium-android/AndroidManifest.xml" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

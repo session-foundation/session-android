@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: androidx.collection:collection-jvm:1.4.0" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="androidx.collection" artifactId="collection-jvm" version="1.4.0" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.collection/collection-jvm/1.4.0/e209fb7bd1183032f55a0408121c6251a81acb49/collection-jvm-1.4.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.collection/collection-jvm/1.4.0/d85f9e6eecd7ec453dd808c6429dd84650112ac4/collection-jvm-1.4.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

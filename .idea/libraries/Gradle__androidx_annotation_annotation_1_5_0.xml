@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="Gradle: androidx.annotation:annotation:1.5.0" type="java-imported" external-system-id="GRADLE">
+    <properties groupId="androidx.annotation" artifactId="annotation" version="1.5.0" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.annotation/annotation/1.5.0/857678d6b4ca7b28571ef7935c668bdb57e15027/annotation-1.5.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/androidx.annotation/annotation/1.5.0/31f8c57024fd39cfa1ce4b1a73a80d22901978b3/annotation-1.5.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

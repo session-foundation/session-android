@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/session-android.iml" filepath="$PROJECT_DIR$/.idea/modules/session-android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/session-android.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/session-android.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/session-android.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/session-android.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/session-android.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/session-android.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/session-android.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/session-android.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.main.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.test.iml" filepath="$PROJECT_DIR$/.idea/modules/buildSrc/session-android.buildSrc.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.main.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/content-descriptions/session-android.content-descriptions.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/liblazysodium/session-android.liblazysodium.iml" filepath="$PROJECT_DIR$/.idea/modules/liblazysodium/session-android.liblazysodium.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.main.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession-util/session-android.libsession-util.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.main.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsession/session-android.libsession.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.iml" filepath="$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.main.iml" filepath="$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/libsignal/session-android.libsignal.unitTest.iml" />
+    </modules>
+  </component>
+</project>
