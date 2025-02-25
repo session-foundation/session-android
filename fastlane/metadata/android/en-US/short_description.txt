@@ -1,1 +1,1 @@
-Text & File Encryption/Decryption with new OverlayTechnology
+A Forked Version focused on privacy from SESSION
