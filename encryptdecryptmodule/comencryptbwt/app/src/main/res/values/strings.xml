@@ -1,0 +1,92 @@
+<resources>
+    <!-- Nombre de la App -->
+    <string name="app_name">EncryptionApp</string>
+
+    <!-- Labels de la pantalla principal -->
+    <string name="label_secret_key">Secret Key</string>
+    <string name="label_cipher_type">Encryption Algorithm</string>
+    <string name="label_text_to_encrypt">Text to Encrypt</string>
+    <string name="label_encrypted_text">Encrypted Text</string>
+    <string name="label_decrypted_text">Decrypted Text</string>
+
+    <!-- Hints -->
+    <string name="hint_secret_key">Enter Secret Key</string>
+    <string name="hint_plain_text">Enter text to encrypt</string>
+    <string name="hint_encrypted_text">Encrypted text</string>
+    <string name="hint_decrypted_text">Decrypted text</string>
+    <string name="hint_enter_encrypted_text">Enter encrypted text</string>
+
+    <!-- Botones -->
+    <string name="button_encrypt">Encrypt</string>
+    <string name="button_decrypt">Decrypt</string>
+    <string name="add_key_button">Add Key</string>
+    <string name="manage_keys_button_label">Manage Keys</string>
+    <string name="select_stored_key_button">Select Stored Key</string>
+
+    <!-- Opciones del Spinner -->
+    <string-array name="cipher_types">
+        <item>AES</item>
+        <item>DES</item>
+        <item>CAMELLIA</item>
+        <item>CHACHA20POLY1305</item>
+        <item>XCHACHA20POLY1305</item>
+        <item>AEGIS256</item>
+    </string-array>
+
+    <!-- Action labels para los Activities de encriptar/desencriptar -->
+    <string name="action_encrypt_label">Encrypt with Key</string>
+    <string name="action_decrypt_label">Decrypt with Key</string>
+
+    <!-- Mensajes / Errores para ProcessActivity -->
+    <string name="error_no_text_provided">No text received!</string>
+    <string name="encrypt_error_message">Error encrypting text.</string>
+    <string name="decrypt_error_message">Error decrypting text.</string>
+    <string name="error_empty_key">Please enter a valid key.</string>
+
+    <!-- Diálogos de Encriptar/Desencriptar -->
+    <string name="enter_key_dialog_title">Enter your key</string>
+    <string name="ok_button">OK</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="copy_button">COPY</string>
+    <string name="encrypted_text_title">Encrypted Text</string>
+    <string name="decrypted_text_title">Decrypted Text</string>
+    <string name="hint_enter_key">Encryption key</string>
+    <string name="share_encrypt_label">Encrypt Share</string>
+    <string name="share_decrypt_label">Decrypt Share</string>
+
+    <!-- Para KeyManagerActivity -->
+    <string name="manage_keys_title">Manage Keys</string>
+    <string name="delete_key_title">Delete Key</string>
+    <string name="delete_key_message">Do you really want to delete the key &quot;%1$s&quot;?</string>
+    <string name="delete_key_positive">Delete</string>
+    <string name="add_key_dialog_title">Add New Key</string>
+    <string name="hint_nickname">Enter nickname</string>
+    <string name="hint_secret">Enter secret key</string>
+    <string name="save_key_button">Save</string>
+    <string name="choose_key_dialog_title">Choose a key</string>
+    <string name="add_new_key_option">Enter a new key...</string>
+
+    <!-- NUEVAS strings para la funcionalidad de QR y random keys -->
+    <string name="generate_random_key">Generate Random Key</string>
+    <string name="import_key_from_qr">Import Key from QR</string>
+    <string name="export_key_as_qr">Export Key as QR</string>
+    <string name="scan_qr_hint">Scan the QR code</string>
+    <string name="options_for_key">Options for &quot;%1$s&quot;</string>
+    <string name="key_alias">Key alias: %1$s</string>
+    <string name="msg_enter_alias_for_random">Enter a nickname for the new key:</string>
+    <string name="label_enter_nickname_for_generated_key">Nickname for this key</string>
+    <string name="msg_key_scanned_successfully">Key scanned successfully. Please enter a nickname:</string>
+
+    <!-- NUEVO: para el botón de burbuja -->
+    <string name="bubble_encryption_button_label">BurbujaEncryptDecrypt</string>
+
+    <string-array name="bubble_modes">
+        <item>Encrypt</item>
+        <item>Decrypt</item>
+    </string-array>
+
+    <!-- Descripción del servicio de accesibilidad (nuevo) -->
+    <string name="accessibility_service_description">
+        Servicio de cifrado accesible: permite detectar texto seleccionado en otras apps.
+    </string>
+</resources>

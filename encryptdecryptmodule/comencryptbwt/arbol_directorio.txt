@@ -1,0 +1,154 @@
+.
+├── app
+│   ├── build.gradle.kts
+│   ├── proguard-rules.pro
+│   ├── release
+│   │   ├── baselineProfiles
+│   │   │   ├── 0
+│   │   │   │   └── app-release.dm
+│   │   │   └── 1
+│   │   │       └── app-release.dm
+│   │   ├── Encrypt-DecryptV10.apk
+│   │   └── output-metadata.json
+│   └── src
+│       ├── androidTest
+│       │   └── java
+│       │       └── com
+│       │           └── example
+│       │               └── bwt
+│       │                   └── ExampleInstrumentedTest.kt
+│       ├── main
+│       │   ├── AndroidManifest.xml
+│       │   ├── ic_launcher-playstore.png
+│       │   ├── java
+│       │   │   └── com
+│       │   │       └── encrypt
+│       │   │           └── bwt
+│       │   │               ├── AccessibilityEncryptionService.kt
+│       │   │               ├── aegis
+│       │   │               │   ├── Aegis128L.java
+│       │   │               │   ├── Aegis256.java
+│       │   │               │   ├── Aesblock.java
+│       │   │               │   ├── AuthenticatedCiphertext.java
+│       │   │               │   └── VerificationFailedException.java
+│       │   │               ├── DecryptProcessActivity.kt
+│       │   │               ├── DecryptShareActivity.kt
+│       │   │               ├── DialogFlowEncryptionActivity.kt
+│       │   │               ├── EncryptDecryptHelper.kt
+│       │   │               ├── EncryptProcessActivity.kt
+│       │   │               ├── EncryptShareActivity.kt
+│       │   │               ├── FileEncryptionActivity.kt
+│       │   │               ├── FileHelper.kt
+│       │   │               ├── ImportKeyActivity.kt
+│       │   │               ├── KeyItem.kt
+│       │   │               ├── KeyManagerActivity.kt
+│       │   │               ├── KeysRepository.kt
+│       │   │               ├── MainActivity.kt
+│       │   │               ├── PendingIntentHelper.kt
+│       │   │               ├── QrScannerActivity.kt
+│       │   │               ├── QrUtils.kt
+│       │   │               ├── QuickEncryptActivity.kt
+│       │   │               ├── ui
+│       │   │               │   └── theme
+│       │   │               │       ├── Color.kt
+│       │   │               │       ├── Theme.kt
+│       │   │               │       └── Type.kt
+│       │   │               └── XChaCha20Poly1305.java
+│       │   └── res
+│       │       ├── drawable
+│       │       │   ├── background.jpg
+│       │       │   ├── ic_launcher_background.xml
+│       │       │   ├── ic_launcher_foreground.xml
+│       │       │   └── ic_notification_overlay.xml
+│       │       ├── layout
+│       │       │   ├── activity_file_encryption.xml
+│       │       │   ├── activity_key_manager.xml
+│       │       │   ├── activity_main.xml
+│       │       │   ├── activity_quick_encrypt.xml
+│       │       │   ├── dialog_add_key.xml
+│       │       │   └── overlay_draggable_panel.xml
+│       │       ├── mipmap-anydpi-v26
+│       │       │   ├── ic_launcher_round.xml
+│       │       │   └── ic_launcher.xml
+│       │       ├── mipmap-hdpi
+│       │       │   ├── ic_launcher_foreground.webp
+│       │       │   ├── ic_launcher_round.webp
+│       │       │   └── ic_launcher.webp
+│       │       ├── mipmap-mdpi
+│       │       │   ├── ic_launcher_foreground.webp
+│       │       │   ├── ic_launcher_round.webp
+│       │       │   └── ic_launcher.webp
+│       │       ├── mipmap-xhdpi
+│       │       │   ├── ic_launcher_foreground.webp
+│       │       │   ├── ic_launcher_round.webp
+│       │       │   └── ic_launcher.webp
+│       │       ├── mipmap-xxhdpi
+│       │       │   ├── ic_launcher_foreground.webp
+│       │       │   ├── ic_launcher_round.webp
+│       │       │   └── ic_launcher.webp
+│       │       ├── mipmap-xxxhdpi
+│       │       │   ├── ic_launcher_foreground.webp
+│       │       │   ├── ic_launcher_round.webp
+│       │       │   └── ic_launcher.webp
+│       │       ├── values
+│       │       │   ├── colors.xml
+│       │       │   ├── strings.xml
+│       │       │   ├── styles.xml
+│       │       │   └── themes.xml
+│       │       └── xml
+│       │           ├── backup_rules.xml
+│       │           ├── data_extraction_rules.xml
+│       │           └── encryption_accessibility_service_config.xml
+│       └── test
+│           └── java
+│               └── com
+│                   └── example
+│                       └── bwt
+│                           └── ExampleUnitTest.kt
+├── arbol_directorio.txt
+├── build.gradle.kts
+├── fastlane
+│   └── metadata
+│       └── android
+│           ├── en-US
+│           │   ├── changelogs
+│           │   │   ├── 1.txt
+│           │   │   ├── 2.txt
+│           │   │   └── 3.txt
+│           │   ├── full_description.txt
+│           │   ├── images
+│           │   │   ├── icon.png
+│           │   │   └── phoneScreenshots
+│           │   │       ├── Screenshot-20250122-165001.png
+│           │   │       ├── Screenshot-20250122-165010.png
+│           │   │       ├── Screenshot-20250122-165013.png
+│           │   │       └── Screenshot-20250122-184737.png
+│           │   ├── short_description.txt
+│           │   └── title.txt
+│           └── es-ES
+│               ├── changelogs
+│               │   ├── 1.txt
+│               │   ├── 2.txt
+│               │   └── 3.txt
+│               ├── full_description.txt
+│               ├── images
+│               │   ├── icon.png
+│               │   └── phoneScreenshots
+│               │       ├── Screenshot-20250122-165001.png
+│               │       ├── Screenshot-20250122-165010.png
+│               │       ├── Screenshot-20250122-165013.png
+│               │       └── Screenshot-20250122-184737.png
+│               ├── short_description.txt
+│               └── title.txt
+├── gradle
+│   ├── libs.versions.toml
+│   └── wrapper
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+├── gradle.properties
+├── gradlew
+├── gradlew.bat
+├── local.properties
+└── settings.gradle.kts
+
+49 directories, 103 files

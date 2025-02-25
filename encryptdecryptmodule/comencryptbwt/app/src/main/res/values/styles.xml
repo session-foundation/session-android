@@ -1,0 +1,31 @@
+<resources>
+
+    <!-- Tema principal de la app -->
+    <style name="Theme.Encryption" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <!-- Cualquier otro ajuste que quieras -->
+    </style>
+
+    <!-- Estilo base para diálogos en overlay -->
+    <style name="OverlayAlertDialog" parent="@style/Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowCloseOnTouchOutside">true</item>
+    </style>
+
+    <!-- Spinner con texto blanco cuando está cerrado -->
+    <style name="MySpinnerStyle" parent="Widget.AppCompat.Spinner">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:popupBackground">@android:color/white</item>
+        <item name="android:spinnerDropDownItemStyle">@style/MySpinnerDropDownItemStyle</item>
+    </style>
+
+    <!-- Ítems de la lista con texto negro -->
+    <style name="MySpinnerDropDownItemStyle" parent="@android:style/Widget.Holo.ListView">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <!-- Tema Neutral minimalista para submódulo -->
+    <style name="NeutralTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Sin personalizaciones adicionales -->
+    </style>
+
+</resources>

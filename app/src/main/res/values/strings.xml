@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="extra_security_status">Estado de seguridad extra</string>
+    <string name="extra_security" translatable="false">Extra Security</string>
+    <string name="add_key" translatable="false">Add encryption key</string>
+    <string name="choose_algorithm" translatable="false">Choose default algorithm</string>
+    <string name="copy_key" translatable="false">Copy key to clipboard</string>
+    <string name="show_qr_code" translatable="false">Show QR code for key</string>
+    <string name="AccessibilityId_extraSecurity" translatable="false">Extra Security</string>
+    <string name="app_name" translatable="false">ThreadScoopOnionChat</string>
+
+    <!-- Labels de la pantalla principal -->
+    <string name="label_secret_key" translatable="false">Secret Key</string>
+    <string name="label_cipher_type" translatable="false">Encryption Algorithm</string>
+    <string name="label_text_to_encrypt" translatable="false">Text to Encrypt</string>
+    <string name="label_encrypted_text" translatable="false">Encrypted Text</string>
+    <string name="label_decrypted_text" translatable="false">Decrypted Text</string>
+
+    <!-- Hints -->
+    <string name="hint_secret_key" translatable="false">Enter Secret Key</string>
+    <string name="hint_plain_text" translatable="false">Enter text to encrypt</string>
+    <string name="hint_encrypted_text" translatable="false">Encrypted text</string>
+    <string name="hint_decrypted_text" translatable="false">Decrypted text</string>
+    <string name="hint_enter_encrypted_text" translatable="false">Enter encrypted text</string>
+
+    <!-- Botones -->
+    <string name="button_encrypt" translatable="false">Encrypt</string>
+    <string name="button_decrypt" translatable="false">Decrypt</string>
+    <string name="add_key_button" translatable="false">Add Key</string>
+    <string name="manage_keys_button_label" translatable="false">Manage Keys</string>
+    <string name="select_stored_key_button" translatable="false">Select Stored Key</string>
+
+    <!-- Opciones del Spinner -->
+    <string-array name="cipher_types">
+        <item>AES</item>
+        <item>DES</item>
+        <item>CAMELLIA</item>
+        <item>CHACHA20POLY1305</item>
+        <item>XCHACHA20POLY1305</item>
+        <item>AEGIS256</item>
+    </string-array>
+
+    <!-- Action labels para los Activities de encriptar/desencriptar -->
+    <string name="action_encrypt_label" translatable="false">Encrypt with Key</string>
+    <string name="action_decrypt_label" translatable="false">Decrypt with Key</string>
+
+    <!-- Mensajes / Errores para ProcessActivity -->
+    <string name="error_no_text_provided" translatable="false">No text received!</string>
+    <string name="encrypt_error_message" translatable="false">Error encrypting text.</string>
+    <string name="decrypt_error_message" translatable="false">Error decrypting text.</string>
+    <string name="error_empty_key" translatable="false">Please enter a valid key.</string>
+
+    <!-- Diálogos de Encriptar/Desencriptar -->
+    <string name="enter_key_dialog_title" translatable="false">Enter your key</string>
+    <string name="ok_button" translatable="false">OK</string>
+    <string name="cancel_button" translatable="false">Cancel</string>
+    <string name="copy_button" translatable="false">COPY</string>
+    <string name="encrypted_text_title" translatable="false">Encrypted Text</string>
+    <string name="decrypted_text_title" translatable="false">Decrypted Text</string>
+    <string name="hint_enter_key" translatable="false">Encryption key</string>
+    <string name="share_encrypt_label" translatable="false">Encrypt Share</string>
+    <string name="share_decrypt_label" translatable="false">Decrypt Share</string>
+
+    <!-- Para KeyManagerActivity -->
+    <string name="manage_keys_title" translatable="false">Manage Keys</string>
+    <string name="delete_key_title" translatable="false">Delete Key</string>
+    <string name="delete_key_message" translatable="false">Do you really want to delete the key &quot;%1$s&quot;?</string>
+    <string name="delete_key_positive" translatable="false">Delete</string>
+    <string name="add_key_dialog_title" translatable="false">Add New Key</string>
+    <string name="hint_nickname" translatable="false">Enter nickname</string>
+    <string name="hint_secret" translatable="false">Enter secret key</string>
+    <string name="save_key_button" translatable="false">Save</string>
+    <string name="choose_key_dialog_title" translatable="false">Choose a key</string>
+    <string name="add_new_key_option" translatable="false">Enter a new key...</string>
+
+    <!-- NUEVAS strings para la funcionalidad de QR y random keys -->
+    <string name="generate_random_key" translatable="false">Generate Random Key</string>
+    <string name="import_key_from_qr" translatable="false">Import Key from QR</string>
+    <string name="export_key_as_qr" translatable="false">Export Key as QR</string>
+    <string name="scan_qr_hint" translatable="false">Scan the QR code</string>
+    <string name="options_for_key" translatable="false">Options for &quot;%1$s&quot;</string>
+    <string name="key_alias" translatable="false">Key alias: %1$s</string>
+    <string name="msg_enter_alias_for_random" translatable="false">Enter a nickname for the new key:</string>
+    <string name="label_enter_nickname_for_generated_key" translatable="false">Nickname for this key</string>
+    <string name="msg_key_scanned_successfully" translatable="false">Key scanned successfully. Please enter a nickname:</string>
+
+    <!-- NUEVO: para el botón de burbuja -->
+    <string name="bubble_encryption_button_label" translatable="false">BurbujaEncryptDecrypt</string>
+
+    <string-array name="bubble_modes">
+        <item>Encrypt</item>
+        <item>Decrypt</item>
+    </string-array>
+
+    <!-- Descripción del servºicio de accesibilidad (nuevo) -->
+    <string name="accessibility_service_description" translatable="false">
+        Servicio de cifrado accesible: permite detectar texto seleccionado en otras apps.
+    </string>
+</resources>

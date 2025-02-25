@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: liboxenc
+Description: Base 16/32/64 and Bittorrent Encoding/Decoding Header Only Library
+Version: @PROJECT_VERSION@
+Libs:
+Cflags: -I${includedir}

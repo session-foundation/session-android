@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="120dp">
+
+    <!-- Título de la pantalla -->
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Configuración Extra Security"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
+
+    <!-- Switch para activar o desactivar la función -->
+    <Switch
+        android:id="@+id/switch_enable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Activar cifrado extra"
+        android:checked="false"
+        android:paddingBottom="16dp" />
+
+    <!-- Etiqueta para seleccionar algoritmo -->
+    <TextView
+        android:id="@+id/textAlgorithm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecciona Algoritmo:"
+        android:textSize="16sp"
+        android:paddingBottom="8dp" />
+
+    <!-- Spinner para seleccionar el algoritmo de cifrado -->
+    <Spinner
+        android:id="@+id/spinnerAlgorithm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecciona Hilo:"
+        android:textSize="16sp"
+        android:paddingBottom="8dp" />
+
+
+    <Spinner
+        android:id="@+id/spinnerThread"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:spinnerMode="dropdown"/>
+
+    <!-- Etiqueta para seleccionar la clave -->
+    <TextView
+        android:id="@+id/textKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecciona Clave de Cifrado:"
+        android:textSize="16sp"
+        android:paddingBottom="8dp" />
+
+    <!-- Spinner para mostrar/seleccionar la clave (clave guardada) -->
+    <Spinner
+        android:id="@+id/spinnerKey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp" />
+
+    <!-- Botón para abrir la gestión de claves (KeyManagerActivity) -->
+    <Button
+        android:id="@+id/buttonManageKeys"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gestionar claves" />
+
+    <!-- Botón para guardar la configuración -->
+    <Button
+        android:id="@+id/buttonSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Guardar"
+        android:layout_marginTop="24dp" />
+
+</LinearLayout>

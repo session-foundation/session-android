@@ -1,0 +1,21 @@
+[submodule "external/oxen-encoding"]
+	path = external/oxen-encoding
+	url = https://github.com/session-foundation/oxen-encoding.git
+[submodule "external/libsodium-internal"]
+    path = external/libsodium-internal
+    url = https://github.com/session-foundation/libsodium-internal.git
+[submodule "tests/Catch2"]
+	path = tests/Catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "external/ios-cmake"]
+	path = external/ios-cmake
+	url = https://github.com/leetal/ios-cmake
+[submodule "external/zstd"]
+	path = external/zstd
+	url = https://github.com/facebook/zstd.git
+[submodule "external/nlohmann-json"]
+	path = external/nlohmann-json
+	url = https://github.com/nlohmann/json.git
+[submodule "external/protobuf"]
+	path = external/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git

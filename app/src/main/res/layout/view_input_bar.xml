@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/inputBarLinearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?input_bar_background">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/separator" />
+
+    <!-- Additional content layout is a LinearLayout with a vertical split (i.e., it uses rows) to
+    allow multiple Views to exist, specifically both QuoteDraft and LinkPreviewDraft Views -->
+    <LinearLayout
+        android:id="@+id/inputBarAdditionalContentContainer"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <RelativeLayout
+        android:padding="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <RelativeLayout
+            android:id="@+id/attachmentsButtonContainer"
+            android:contentDescription="@string/AccessibilityId_attachmentsButton"
+            android:layout_width="@dimen/input_bar_button_expanded_size"
+            android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/small_spacing" />
+
+        <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarEditText
+            android:id="@+id/inputBarEditText"
+            android:contentDescription="@string/AccessibilityId_inputBox"
+            android:inputType="textCapSentences|textMultiLine"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_centerInParent="true"
+            android:layout_marginStart="64dp"
+            android:layout_marginEnd="64dp"
+            android:background="@null"
+            android:gravity="center_vertical"
+            android:maxLength="@integer/max_input_chars"
+            android:hint="@string/message"
+            android:textColorHint="?attr/input_bar_text_hint"
+            android:textColor="?input_bar_text_user"
+            android:textSize="@dimen/small_font_size" />
+
+        <RelativeLayout
+            android:id="@+id/microphoneOrSendButtonContainer"
+            android:layout_width="@dimen/input_bar_button_expanded_size"
+            android:layout_height="@dimen/input_bar_button_expanded_size"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/small_spacing" />
+
+    </RelativeLayout>
+
+</LinearLayout>

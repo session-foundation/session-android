@@ -1,0 +1,90 @@
+Cifrado/Descifrado de Texto
+
+    Algoritmos soportados: AES, DES, CAMELLIA, ChaCha20-Poly1305, XChaCha20-Poly1305 y Aegis256.
+    Interfaz intuitiva para ingresar texto, elegir un algoritmo y obtener el resultado (cifrado o descifrado).
+
+Generar Clave de 256 bits automáticamente
+
+    Puedes generar claves aleatorias de 256 bits en la sección Manage Keys.
+    Ideales para cifrar y descifrar sin tener que crear manualmente una clave.
+
+Compartir/Importar Clave de Cifrado vía QR
+
+    Comparte cualquier clave que hayas creado con otras personas para que ambos puedan usar la misma clave de cifrado.
+    Exporta tu clave presionándola en la lista y seleccionando “Export”.
+    Importa una clave con un código QR en “Import key via QR” desde la sección de gestión de claves.
+
+Cifrado/Descifrado de Archivos
+
+    Selecciona archivos desde tu dispositivo.
+    Cifra o descifra usando los mismos algoritmos.
+    El nombre de salida del archivo se marca automáticamente con la extensión “.encrypted” o “.decrypted”.
+
+Administrador de Claves Incorporado :key:
+
+    Agrega, elimina o genera claves aleatorias.
+    Importa claves desde códigos QR o expórtalas también como QR.
+    Todas las claves se guardan de forma segura (usando EncryptedSharedPreferences).
+
+Flujo de Compartir Cifrado
+
+    Usa la acción Compartir en otras apps → selecciona “Encrypt” o “Decrypt” para texto/archivos.
+    Proceso rápido y cómodo para trabajar con múltiples apps.
+
+Servicio de Accesibilidad Opcional :handshake:
+
+    Detecta texto seleccionado (al resaltar texto en pantalla).
+    Detecta texto copiado (clipboard).
+    Muestra una notificación para cifrar/descifrar al instante, abriendo la misma actividad (DialogFlowEncryptionActivity) con la opción “Choose Operation”.
+
+Alternar Lógica de Accesibilidad
+
+    Un botón llamado “BurbujaEncryption” (o similar) activa/desactiva la lógica internamente sin tener que deshabilitar el servicio en Ajustes de Android.
+    Perfecto para pausar la detección sin salir a la configuración del sistema.
+
+Dialog Flow (DialogFlowEncryptionActivity) :speech_balloon:
+
+    Muestra una secuencia paso a paso:
+        “Choose Operation” (Encrypt/Decrypt)
+        “Choose Cipher”
+        “Pick/Enter Key”
+        Resultado final
+    Facilita una experiencia guiada y amigable para el usuario.
+
+Compatibilidad con Android 13+
+
+    Solicita el permiso POST_NOTIFICATIONS si deseas ver notificaciones cuando se selecciona o copia texto.
+
+Uso Básico :rocket:
+Pantalla Principal
+
+    Ingresa un texto y una clave (o selecciona una clave guardada).
+    Elige el algoritmo en el menú desplegable (spinner).
+    Pulsa Encrypt o Decrypt.
+    Copia o comparte el resultado.
+
+Cifrado de Archivos :file_folder:
+
+    Toca “FILE ENCRYPTION” en la pantalla principal (MainActivity).
+    Selecciona un archivo y una carpeta de salida.
+    Elige el algoritmo y la clave.
+    Pulsa EXECUTE.
+
+Accesibilidad (opcional)
+
+    Habilítalo en Ajustes → Accesibilidad → “Encrypt-DecrypT Service”.
+    Una vez activo, al seleccionar o copiar texto en cualquier app, aparecerá una notificación.
+    Tócala para abrir el DialogFlow (“Choose Operation”).
+    Desde la pantalla principal (MainActivity), usa “BurbujaEncryption” para habilitar o deshabilitar la detección sin apagar el servicio en Ajustes.
+
+Preguntas Frecuentes (FAQ) :question:
+
+    ¿Cómo activo/desactivo la lógica de accesibilidad sin ir a la configuración del sistema?
+        Usa el botón “BurbujaEncryption” en la MainActivity. Cambia una bandera interna en SharedPreferences. Si está desactivada, el servicio no procesará eventos aunque siga habilitado en los ajustes del sistema.
+
+    ¿Qué pasa si olvido mi clave?
+        No podrás descifrar tu texto o archivo. Asegúrate de llevar un registro de tus claves o de guardarlas en el Administrador de Claves.
+
+    ¿Por qué no veo notificaciones cuando copio texto?
+        En Android 13 o superior, debes otorgar el permiso de notificaciones (POST_NOTIFICATIONS).
+        Verifica que el servicio de accesibilidad esté habilitado y que la lógica no esté desactivada internamente.

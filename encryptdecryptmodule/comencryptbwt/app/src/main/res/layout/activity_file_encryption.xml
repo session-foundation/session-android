@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@android:color/black">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Título principal -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FILE ENCRYPTION/DECRYPTION"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <!-- RadioGroup para “Encrypt File” / “Decrypt File” -->
+        <RadioGroup
+            android:id="@+id/actionRadioGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radioEncrypt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Encrypt File"
+                android:checked="true"
+                android:textColor="@android:color/white" />
+
+            <RadioButton
+                android:id="@+id/radioDecrypt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Decrypt File"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="32dp"/>
+        </RadioGroup>
+
+        <!-- Botón: Pick File -->
+        <Button
+            android:id="@+id/buttonPickFile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CHOOSE FILE"
+            android:layout_marginBottom="8dp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"/>
+
+        <!-- Texto: ruta del archivo elegido -->
+        <TextView
+            android:id="@+id/textSelectedFile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No file selected"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Título “Cipher:” -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cipher:"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+
+        <!-- Spinner ciphers -->
+        <Spinner
+            android:id="@+id/spinnerCipher"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Botón: Pick Key -->
+        <Button
+            android:id="@+id/buttonPickKey"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CHOOSE KEY"
+            android:textStyle="bold"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Texto con la key elegida -->
+        <TextView
+            android:id="@+id/textChosenKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="(No key chosen)"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- (Eliminado CheckBox “Use default path” o lo puedes comentar) -->
+        <!--<CheckBox
+            android:id="@+id/checkboxUseDefaultPath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Use Default Output Folder"
+            android:textColor="@android:color/white"
+            android:checked="true"
+            android:layout_marginBottom="8dp"/>-->
+
+        <!-- Botón: Elegir carpeta de salida (siempre habilitado) -->
+        <Button
+            android:id="@+id/buttonPickOutputDir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CHOOSE OUTPUT FOLDER"
+            android:textStyle="bold"
+            android:backgroundTint="@color/purple_500"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"
+            android:enabled="true"/>
+
+        <!-- Texto que muestra la carpeta actual -->
+        <TextView
+            android:id="@+id/textOutputDir"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="(No folder selected yet)"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Botón: EXECUTE (Encrypt o Decrypt) -->
+        <Button
+            android:id="@+id/buttonProcess"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="EXECUTE"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/purple_700"
+            android:layout_marginTop="16dp" />
+
+        <!-- Texto de resultado -->
+        <TextView
+            android:id="@+id/textResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:layout_marginTop="16dp"
+            android:text="Result output..."
+            android:visibility="gone"/>
+    </LinearLayout>
+</ScrollView>

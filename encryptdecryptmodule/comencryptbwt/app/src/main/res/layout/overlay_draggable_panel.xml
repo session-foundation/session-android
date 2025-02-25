@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/draggableRootLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@android:color/background_light"
+    android:padding="8dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Overlay Panel"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <!-- Modo: Encrypt/Decrypt -->
+    <Spinner
+        android:id="@+id/spinnerMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/bubble_modes"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Ciphers (AES, DES, etc.) -->
+    <Spinner
+        android:id="@+id/spinnerCipher"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:entries="@array/cipher_types"
+        android:layout_marginTop="8dp" />
+
+    <!-- Botón pick key -->
+    <Button
+        android:id="@+id/btnPickKey"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose Key"
+        android:layout_marginTop="8dp" />
+
+    <!-- Label de la key elegida -->
+    <TextView
+        android:id="@+id/textChosenKey"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(No key chosen)"
+        android:layout_marginTop="4dp" />
+
+    <!-- EditText input -->
+    <EditText
+        android:id="@+id/edtInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter text..."
+        android:layout_marginTop="8dp" />
+
+    <!-- EditText output -->
+    <EditText
+        android:id="@+id/edtOutput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Result..."
+        android:layout_marginTop="8dp" />
+
+    <!-- Botón Execute -->
+    <Button
+        android:id="@+id/btnExecute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Execute"
+        android:layout_marginTop="12dp" />
+
+    <!-- Botón Close Overlay -->
+    <Button
+        android:id="@+id/btnCloseOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Close Overlay"
+        android:layout_marginTop="4dp" />
+</LinearLayout>

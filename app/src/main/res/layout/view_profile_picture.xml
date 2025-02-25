@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <RelativeLayout
+        android:id="@+id/doubleModeImageViewContainer"
+        android:layout_width="@dimen/medium_profile_picture_size"
+        android:layout_height="@dimen/medium_profile_picture_size">
+
+        <ImageView
+            android:id="@+id/doubleModeImageView1"
+            android:layout_width="@dimen/small_profile_picture_size"
+            android:layout_height="@dimen/small_profile_picture_size"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:scaleType="centerCrop"
+            android:background="@drawable/profile_picture_view_small_background" />
+
+        <ImageView
+            android:id="@+id/doubleModeImageView2"
+            android:layout_width="@dimen/small_profile_picture_size"
+            android:layout_height="@dimen/small_profile_picture_size"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:scaleType="centerCrop"
+            android:background="@drawable/profile_picture_view_small_background" />
+
+    </RelativeLayout>
+
+    <ImageView
+        android:id="@+id/singleModeImageView"
+        android:scaleType="centerCrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        android:background="@drawable/profile_picture_view_background" />
+
+</merge>

@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: libsession-util
+Description: Session utility libraries
+Version: @PROJECT_VERSION@
+
+Libs: -L${libdir} @libsession_target_links@
+Libs.private: -lprotobuf-lite -lnettle
+Requires: liboxenc
+Requires.private: nettle protobuf-lite
+Cflags: -I${includedir}

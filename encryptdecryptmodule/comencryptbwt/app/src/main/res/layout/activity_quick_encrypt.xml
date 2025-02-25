@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Spinner
+            android:id="@+id/spinnerModeQE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <Spinner
+            android:id="@+id/spinnerCipherQE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/btnPickKeyQE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose Key"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/textChosenKeyQE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="(Key chosen: ...)"
+            android:layout_marginTop="4dp" />
+
+        <EditText
+            android:id="@+id/edtQEInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter or see text..."
+            android:layout_marginTop="8dp" />
+
+        <EditText
+            android:id="@+id/edtQEOutput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Result..."
+            android:layout_marginTop="8dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:longClickable="true"
+            android:textIsSelectable="true" />
+
+        <Button
+            android:id="@+id/btnExecuteQE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Execute"
+            android:layout_marginTop="12dp" />
+
+        <Button
+            android:id="@+id/btnCloseQE"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+</ScrollView>

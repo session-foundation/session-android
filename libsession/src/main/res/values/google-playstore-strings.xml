@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+	These strings are the source of the TextSecure Google Play Store description.
+	https://play.google.com/store/apps/details?id=org.thoughtcrime.securesms&hl=en
+
+	The sparse numbering of the string variables allows inserting additional lines
+	later without the need to renumber existing strings.
+
+	How these strings are translated:
+	see https://github.com/signalapp/TextSecure/wiki/Translation-workflow
+
+-->
+
+<resources>
+
+    <!-- EOF -->
+
+</resources>

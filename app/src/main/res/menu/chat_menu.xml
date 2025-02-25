@@ -1,0 +1,10 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Otras opciones existentes del menú -->
+    <!-- ... -->
+    <!-- Nueva opción de Seguridad Extra -->
+    <item
+        android:id="@+id/menu_extra_security"
+        android:title="Extra Security"
+        android:icon="@drawable/ic_lock"
+    android:showAsAction="never" />
+</menu>

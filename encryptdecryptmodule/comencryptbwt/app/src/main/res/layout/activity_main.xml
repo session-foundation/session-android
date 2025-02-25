@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!-- Imagen de fondo con alpha -->
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:alpha="0.3"
+        android:src="@drawable/background" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:background="@android:color/transparent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- LABEL: Secret Key -->
+            <TextView
+                android:id="@+id/secretKeyLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_secret_key"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- EDITTEXT: Secret Key Input -->
+            <EditText
+                android:id="@+id/secretKeyInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_secret_key"
+                android:layout_marginTop="4dp"
+                android:minHeight="56dp"
+                android:padding="10dp"
+                android:autofillHints="password"
+                android:inputType="textPassword"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColorHint="@color/hint_gray"
+                android:background="?android:attr/editTextBackground" />
+
+            <!-- BOTÓN: SELECT STORED KEY -->
+            <Button
+                android:id="@+id/selectKeyButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/select_stored_key_button"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+
+            <!-- LABEL: Encryption Algorithm -->
+            <TextView
+                android:id="@+id/cipherTypeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_cipher_type"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- SPINNER: Algoritmo (AES, DES, etc.) -->
+            <Spinner
+                android:id="@+id/cipherTypeSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginTop="4dp" />
+
+            <!-- LABEL: Text to Encrypt -->
+            <TextView
+                android:id="@+id/plainTextLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_text_to_encrypt"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- EDITTEXT: Texto a encriptar -->
+            <EditText
+                android:id="@+id/plainTextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_plain_text"
+                android:layout_marginTop="4dp"
+                android:minHeight="56dp"
+                android:padding="10dp"
+                android:autofillHints="username"
+                android:inputType="text"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColorHint="@color/hint_gray"
+                android:background="?android:attr/editTextBackground" />
+
+            <!-- BOTÓN: Encrypt -->
+            <Button
+                android:id="@+id/encryptButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_encrypt"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@android:color/white" />
+
+            <!-- LABEL: Encrypted Text -->
+            <TextView
+                android:id="@+id/encryptedTextLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_encrypted_text"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- EDITTEXT (salida) texto encriptado -->
+            <EditText
+                android:id="@+id/encryptedTextOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_encrypted_text"
+                android:layout_marginTop="4dp"
+                android:minHeight="56dp"
+                android:padding="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:longClickable="true"
+                android:textIsSelectable="true"
+                android:cursorVisible="false"
+                android:inputType="textMultiLine"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColorHint="@color/hint_gray"
+                android:background="?android:attr/editTextBackground" />
+
+            <!-- EDITTEXT: campo para introducir texto cifrado (a descifrar) -->
+            <EditText
+                android:id="@+id/encryptedTextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_enter_encrypted_text"
+                android:layout_marginTop="16dp"
+                android:minHeight="56dp"
+                android:padding="10dp"
+                android:autofillHints="username"
+                android:inputType="text"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColorHint="@color/hint_gray"
+                android:background="?android:attr/editTextBackground" />
+
+            <!-- Botón: Manage Keys (abre KeyManagerActivity) -->
+            <Button
+                android:id="@+id/manageKeysButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_keys_button_label"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="16sp" />
+
+            <!-- BOTÓN: Decrypt -->
+            <Button
+                android:id="@+id/decryptButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_decrypt"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@android:color/white" />
+
+            <!-- LABEL: Decrypted Text -->
+            <TextView
+                android:id="@+id/decryptedTextLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_decrypted_text"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp" />
+
+            <!-- EDITTEXT (salida) texto desencriptado -->
+            <EditText
+                android:id="@+id/decryptedTextOutput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/hint_decrypted_text"
+                android:layout_marginTop="4dp"
+                android:minHeight="56dp"
+                android:padding="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:longClickable="true"
+                android:textIsSelectable="true"
+                android:cursorVisible="false"
+                android:inputType="textMultiLine"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textColorHint="@color/hint_gray"
+                android:background="?android:attr/editTextBackground" />
+
+            <!-- BOTÓN NUEVO: FILE ENCRYPTION -->
+            <Button
+                android:id="@+id/buttonFileEncryption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="FILE ENCRYPTION"
+                android:layout_marginTop="16dp"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:backgroundTint="@color/purple_700"
+                android:textColor="@android:color/white" />
+
+            <!-- BOTÓN NUEVO: BURBUJA (id=buttonBubbleEncryption) -->
+            <Button
+                android:id="@+id/buttonBubbleEncryption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bubble_encryption_button_label"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/purple_700"
+                android:textColor="@android:color/white" />
+            <Button
+                android:id="@+id/buttonStartOverlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="START OVERLAY" />
+
+            <Button
+                android:id="@+id/buttonStopOverlay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="STOP OVERLAY"
+                android:layout_marginTop="8dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_key_manager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Lista de claves guardadas -->
+    <ListView
+        android:id="@+id/listViewKeys"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp"
+        android:layout_marginTop="100dp"
+    />
+
+    <!-- Contenedor horizontal para 2 botones -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+
+        <!-- Botón para añadir clave manualmente -->
+        <Button
+            android:id="@+id/buttonAddKey"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/add_key_button"
+            android:layout_marginEnd="4dp"/>
+
+        <!-- Botón para generar clave aleatoria -->
+        <Button
+            android:id="@+id/buttonGenerateRandom"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/generate_random_key"
+            android:layout_marginStart="4dp"/>
+    </LinearLayout>
+
+    <!-- Botón para importar clave desde QR -->
+    <Button
+        android:id="@+id/buttonImportFromQR"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/import_key_from_qr"
+        android:layout_marginTop="8dp"/>
+</LinearLayout>

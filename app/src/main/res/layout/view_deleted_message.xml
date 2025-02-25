@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.thoughtcrime.securesms.conversation.v2.messages.DeletedMessageView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="@dimen/small_spacing">
+
+    <ImageView
+        android:id="@+id/deletedMessageViewIconImageView"
+        android:layout_width="19dp"
+        android:layout_height="19dp"
+        android:layout_marginStart="18dp"
+        android:src="@drawable/ic_delete"
+        app:tint="?android:textColorPrimary" />
+
+    <TextView
+        android:id="@+id/deleteTitleTextView"
+        android:contentDescription="@string/AccessibilityId_deleteMessageDeleted"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="@dimen/large_spacing"
+        android:textSize="@dimen/very_small_font_size"
+        android:textColor="?android:textColorPrimary"
+        tools:text="This message has been deleted"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</org.thoughtcrime.securesms.conversation.v2.messages.DeletedMessageView>

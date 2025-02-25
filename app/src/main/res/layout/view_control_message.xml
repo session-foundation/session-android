@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/massive_spacing"
+    android:paddingVertical="@dimen/medium_spacing">
+
+    <TextView
+        android:id="@+id/dateBreakTextView"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="@dimen/very_small_font_size"
+        android:textStyle="bold"
+        tools:text="@tools:sample/date/hhmm" />
+
+    <ImageView
+        android:id="@+id/iconImageView"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginBottom="@dimen/small_spacing"
+        android:visibility="gone"
+        app:tint="?android:textColorTertiary"
+        tools:src="@drawable/ic_timer"
+        tools:visibility="visible" />
+
+    <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
+        android:id="@+id/expirationTimerView"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:layout_marginBottom="@dimen/small_spacing"
+        android:visibility="gone"
+        app:tint="?android:textColorTertiary"
+        tools:src="@drawable/ic_timer"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/controlContentView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/AccessibilityId_control_message"
+            android:gravity="center"
+            android:textColor="?android:textColorTertiary"
+            android:textSize="@dimen/very_small_font_size"
+            tools:text="You disabled disappearing messages" />
+
+        <FrameLayout
+            android:id="@+id/call_view"
+            style="@style/CallMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/call_text_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textAlignment="center"
+                android:textColor="?message_received_text_color"
+                app:drawableStartCompat="@drawable/ic_missed_call"
+                tools:text="You missed a call" />
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/followSetting"
+            style="@style/Widget.Session.Button.Common.Borderless"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:contentDescription="@string/AccessibilityId_disappearingMessagesFollowSetting"
+            android:text="@string/disappearingMessagesFollowSetting"
+            android:textColor="@color/accent_green"
+            android:textSize="@dimen/very_small_font_size" />
+
+    </LinearLayout>
+
+</LinearLayout>

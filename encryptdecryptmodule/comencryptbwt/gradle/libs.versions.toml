@@ -1,0 +1,51 @@
+[versions]
+# Plugins
+agp = "8.7.3"
+kotlin = "1.9.0"
+
+# Versiones de librerías
+coreKtx = "1.15.0"
+appcompat = "1.7.0"
+material = "1.12.0"
+constraintlayout = "2.2.0"
+activityCompose = "1.10.0"
+composeUi = "1.7.6"
+composeMaterial = "1.7.6"
+composeMaterial3 = "1.3.1"
+lifecycleRuntimeKtx = "2.8.7"
+bouncycastle = "1.70"
+securityCrypto = "1.1.0-alpha06"
+gson = "2.10.1"
+zxingAndroid = "4.3.0"
+zxingCore = "3.5.1"
+junit = "4.13.2"
+junitExt = "1.2.1"
+espressoCore = "3.6.1"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "composeUi" }
+androidx-compose-material = { group = "androidx.compose.material", name = "material", version.ref = "composeMaterial" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "composeMaterial3" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "composeUi" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "composeUi" }
+
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+bouncycastle-bcprov-jdk15on = { group = "org.bouncycastle", name = "bcprov-jdk15on", version.ref = "bouncycastle" }
+androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+google-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+zxing-android-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingAndroid" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitExt" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

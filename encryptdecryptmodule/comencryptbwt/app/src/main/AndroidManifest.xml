@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.encrypt.bwt"
+    tools:node="merge">
+
+    <!-- (Opcional) Permiso para mostrar notificaciones en Android 13+ -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        tools:node="merge" />
+
+    <!--
+         Si NO usas superposición (SYSTEM_ALERT_WINDOW),
+         puedes comentarlo o borrarlo.
+    -->
+    <!--
+    <uses-permission
+        android:name="android.permission.SYSTEM_ALERT_WINDOW"
+        tools:node="remove" />
+    -->
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/NeutralTheme"
+
+
+    tools:replace="android:theme,android:label,android:icon,android:roundIcon"
+    tools:node="merge"
+    >
+
+    <!-- Actividad principal -->
+    <activity
+        android:name=".MainActivity"
+        android:exported="true"
+        android:theme="@style/NeutralTheme">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+    </activity>
+
+    <!-- ENCRIPTAR texto seleccionado (ACTION_PROCESS_TEXT) -->
+    <activity
+        android:name="org.thoughtcrime.securesms.EncryptProcessActivity"
+        android:label="@string/action_encrypt_label"
+        android:exported="true"
+        android:theme="@style/NeutralTheme"
+        tools:ignore="AppLinkUrlError">
+        <intent-filter>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+    </activity>
+
+    <!-- DESENCRIPTAR texto seleccionado (ACTION_PROCESS_TEXT) -->
+    <activity
+        android:name="org.thoughtcrime.securesms.DecryptProcessActivity"
+        android:label="@string/action_decrypt_label"
+        android:exported="true"
+        android:theme="@style/NeutralTheme"
+        tools:ignore="AppLinkUrlError">
+        <intent-filter>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+    </activity>
+
+    <!-- ENCRIPTAR al COMPARTIR (ACTION_SEND) => text/* y file/* -->
+    <activity
+        android:name=".EncryptShareActivity"
+        android:label="@string/share_encrypt_label"
+        android:exported="true"
+        android:theme="@style/NeutralTheme">
+        <intent-filter>
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="*/*" />
+        </intent-filter>
+    </activity>
+
+    <!-- DESENCRIPTAR al COMPARTIR (ACTION_SEND) => text/* y file/* -->
+    <activity
+        android:name=".DecryptShareActivity"
+        android:label="@string/share_decrypt_label"
+        android:exported="true"
+        android:theme="@style/NeutralTheme">
+        <intent-filter>
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="*/*" />
+        </intent-filter>
+    </activity>
+
+    <!-- Import Key from QR -->
+    <activity
+        android:name="org.thoughtcrime.securesms.ImportKeyActivity"
+        android:label="@string/import_key_from_qr"
+        android:exported="true"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- KeyManager -->
+    <activity
+        android:name="org.thoughtcrime.securesms.KeyManagerActivity"
+        android:label="@string/manage_keys_title"
+        android:exported="true"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- QrScannerActivity -->
+    <activity
+        android:name="org.thoughtcrime.securesms.QrScannerActivity"
+        android:exported="false"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- Activity para manejo local de archivos -->
+    <activity
+        android:name=".FileEncryptionActivity"
+        android:label="File Encrypt/Decrypt"
+        android:exported="true"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- ===== Servicio de Accesibilidad ===== -->
+    <service
+        android:name=".AccessibilityEncryptionService"
+        android:label="@string/app_name"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+        android:exported="true"
+        android:enabled="true"
+        android:description="@string/accessibility_service_description">
+        <intent-filter>
+            <action android:name="android.accessibilityservice.AccessibilityService" />
+        </intent-filter>
+        <meta-data
+            android:name="android.accessibilityservice"
+            android:resource="@xml/encryption_accessibility_service_config" />
+    </service>
+
+    <!-- QuickEncryptActivity (si aún la usas) -->
+    <activity
+        android:name=".QuickEncryptActivity"
+        android:label="Quick Encrypt"
+        android:exported="true"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- DialogFlowEncryptionActivity -->
+    <activity
+        android:name=".DialogFlowEncryptionActivity"
+        android:label="DialogFlow Encryption"
+        android:exported="true"
+        android:theme="@style/NeutralTheme" />
+
+    <!-- OverlayService (coméntalo o elimínalo si NO lo usas) -->
+    <!--
+    <service
+        android:name=".OverlayService"
+        android:exported="false"
+        android:enabled="false"
+        tools:node="remove" />
+    -->
+</application>
+
+    </manifest>

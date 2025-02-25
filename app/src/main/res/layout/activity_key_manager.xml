@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:windowBackground"
+    tools:theme="@style/Theme.Session.DayNight.NoActionBar">
+
+    <!-- Scrollable container para que el contenido no se solape con menús -->
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none"
+        android:padding="16dp"
+        android:layout_above="@+id/bottomMenuPlaceholder">
+
+        <LinearLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Título -->
+            <TextView
+                android:id="@+id/textViewTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Key Manager"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"
+                android:textColor="?android:textColorPrimary" />
+
+            <!-- Botón para agregar clave -->
+            <Button
+                android:id="@+id/buttonAddKey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Key"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Botón para generar clave aleatoria -->
+            <Button
+                android:id="@+id/buttonGenerateRandom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Generate Random Key"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Botón para importar clave desde QR -->
+            <Button
+                android:id="@+id/buttonImportQR"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Import Key from QR"
+                android:layout_marginBottom="16dp" />
+
+            <!-- ListView para mostrar las claves -->
+            <ListView
+                android:id="@+id/listView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:divider="?android:attr/listDivider"
+                android:dividerHeight="1dp"/>
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Opcional: contenedor para un menú inferior si se requiere -->
+    <FrameLayout
+        android:id="@+id/bottomMenuPlaceholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>

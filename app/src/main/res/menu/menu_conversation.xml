@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:title="@string/conversationsSettingsAllMedia"
+        android:id="@+id/menu_view_all_media"
+        android:contentDescription="@string/AccessibilityId_conversationsSettingsAllMedia"/>
+
+    <item
+        android:title="@string/search"
+        android:id="@+id/menu_search"
+        android:contentDescription="@string/AccessibilityId_search"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        app:showAsAction="collapseActionView" />
+
+    <item
+        android:title="@string/conversationsAddToHome"
+        android:id="@+id/menu_add_shortcut" />
+
+    <!-- Nuevo ítem para Extra Security -->
+    <item
+        android:title="@string/extra_security"
+        android:id="@+id/menu_extra_security"
+        android:icon="@drawable/ic_lock"
+        android:contentDescription="@string/AccessibilityId_extraSecurity"
+        app:showAsAction="never"/>
+</menu>

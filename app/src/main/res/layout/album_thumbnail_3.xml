@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/album_thumbnail_root"
+    android:layout_width="@dimen/album_total_width"
+    android:layout_height="@dimen/album_3_total_height">
+
+    <include layout="@layout/thumbnail_view"
+        android:id="@+id/album_cell_1"
+        android:layout_width="@dimen/album_3_cell_width_big"
+        android:layout_height="@dimen/album_3_total_height"/>
+
+    <include layout="@layout/thumbnail_view"
+        android:id="@+id/album_cell_2"
+        android:layout_width="@dimen/album_3_cell_size_small"
+        android:layout_height="@dimen/album_3_cell_size_small"
+        android:layout_gravity="end|top"/>
+
+
+    <FrameLayout
+        android:layout_width="@dimen/album_5_cell_size_small"
+        android:layout_height="@dimen/album_5_cell_size_small"
+        android:layout_gravity="end|bottom">
+
+        <include layout="@layout/thumbnail_view"
+            android:id="@+id/album_cell_3"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:layout_gravity="center_horizontal|bottom"/>
+
+        <TextView
+            tools:visibility="visible"
+            android:visibility="gone"
+            android:id="@+id/album_cell_overflow_text"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:gravity="center"
+            android:textSize="@dimen/text_size"
+            android:textColor="@color/core_white"
+            android:background="@color/transparent_black_70"
+            tools:text="+2" />
+
+    </FrameLayout>
+
+</FrameLayout>

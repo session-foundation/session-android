@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "661520236555",
+    "project_id": "onionthreadscoopchat",
+    "storage_bucket": "onionthreadscoopchat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:661520236555:android:588b48cff46fd44cb1c70e",
+        "android_client_info": {
+          "package_name": "com.bwt.threadscooponionchatcom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAASR151U8tP35tlnes9YAdmdNHHyb8vY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
