@@ -123,10 +123,11 @@ abstract class BaseGroupMembersViewModel (
                 }
             }
 
+            GroupMember.Status.INVITE_NOT_SENT -> context.getString(R.string.groupInviteNotSent)
+            GroupMember.Status.PROMOTION_NOT_SENT -> context.getString(R.string.adminPromotionNotSent)
+
             GroupMember.Status.INVITE_UNKNOWN,
             GroupMember.Status.INVITE_ACCEPTED,
-            GroupMember.Status.INVITE_NOT_SENT,
-            GroupMember.Status.PROMOTION_NOT_SENT,
             GroupMember.Status.PROMOTION_UNKNOWN,
             GroupMember.Status.PROMOTION_ACCEPTED -> ""
         }
