@@ -1,0 +1,90 @@
+Text Encryption/Decryption
+
+    Supported algorithms: AES, DES, CAMELLIA, ChaCha20-Poly1305, XChaCha20-Poly1305, and Aegis256.
+    Intuitive interface to enter text, choose an algorithm, and get the encrypted or decrypted result.
+
+Generate 256-bit Key Automatically
+
+    Automatically generate random 256-bit keys in the Manage Keys section.
+    Ideal for encrypting/decrypting without manually creating keys.
+
+Share/Import Encryption Keys via QR
+
+    Share any key you’ve created so others can use the same encryption key.
+    Export your key by pressing it in the list and choosing “Export.”
+    Import a key using a QR code in “Import key via QR” under key management.
+
+File Encryption/Decryption
+
+    Select files from your device.
+    Encrypt or decrypt them using the same algorithms.
+    The output file name is automatically labeled “.encrypted” or “.decrypted.”
+
+Built-In Key Manager :key:
+
+    Add, delete, or generate random keys.
+    Import keys from QR codes or export them as QR codes too.
+    Keys are stored securely (using EncryptedSharedPreferences).
+
+Share Encryption Flow
+
+    Use the Share action in other apps → choose “Encrypt” or “Decrypt” for text/files.
+    Quick and convenient for multi-app workflows.
+
+Optional Accessibility Service :handshake:
+
+    Detects selected text (when you highlight text on-screen).
+    Detects copied text (clipboard).
+    Displays a notification to encrypt/decrypt on the fly, opening the same activity (DialogFlowEncryptionActivity) with “Choose Operation.”
+
+Toggle Accessibility Logic
+
+    A “BurbujaEncryption” button (or similar) enables/disables the logic internally without turning off the service in Android Settings.
+    Perfect for pausing detection without leaving system settings.
+
+Dialog Flow (DialogFlowEncryptionActivity) :speech_balloon:
+
+    A step-by-step sequence:
+        “Choose Operation” (Encrypt/Decrypt)
+        “Choose Cipher”
+        “Pick/Enter Key”
+        Final result
+    Offers a guided, user-friendly experience.
+
+Android 13+ Support
+
+    Requests POST_NOTIFICATIONS permission if you want to see notifications when text is selected or copied.
+
+Basic Usage :rocket:
+Main Screen
+
+    Enter text and a key (or pick a saved key).
+    Select the algorithm from the spinner.
+    Tap Encrypt or Decrypt.
+    Copy or share the resulting text.
+
+File Encryption :file_folder:
+
+    Tap “FILE ENCRYPTION” on the main screen (MainActivity).
+    Choose a file and an output folder.
+    Pick the algorithm and a key.
+    Tap EXECUTE.
+
+Accessibility (Optional)
+
+    Enable it in Settings → Accessibility → “Encrypt-DecrypT Service.”
+    Once enabled, selecting or copying text in any app triggers a notification.
+    Tap it to open the DialogFlow (“Choose Operation”).
+    In MainActivity, use “BurbujaEncryption” to enable or disable detection without turning the service off in Settings.
+
+Frequently Asked Questions (FAQ) :question:
+
+    How do I enable/disable the accessibility service logic without going to system settings?
+        Use the “BurbujaEncryption” button in MainActivity. It toggles an internal SharedPreferences flag. If disabled, the service won’t process events even if it’s still enabled in system settings.
+
+    What if I forget my key?
+        You won’t be able to decrypt your text/file. Make sure you keep a record of your keys or store them in the Key Manager.
+
+    Why am I not seeing notifications when copying text?
+        On Android 13+, you must grant the POST_NOTIFICATIONS permission.
+        Check that the accessibility service is enabled and the internal logic is not toggled off.

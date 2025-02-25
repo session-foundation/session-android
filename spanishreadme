@@ -1,0 +1,149 @@
+![Añadir un título (3)](https://github.com/user-attachments/assets/0bb8b4b6-ec23-478d-b3eb-54c9454e12a5)
+
+***AVISO TODA LA PERSONA QUE QUIERA COLABORAR EN EL PROYECTO ES BIEN RECIBIDA, HACE FALTA ALGUIEN EXPERTO EN UI, PARA SOLUCIONAR UN PEQUEÑO BUG DEL TECLADO***
+*** PARA COLABORAR , ESCRIBIR EN ISSUE ***
+
+
+
+# ThreadScoopOnionChat
+
+Esta version es un Fork de " https://github.com/session-foundation/session-android ", enfocado en la privacidad.
+
+## Como surgio ThreadScoopOnionChat ?
+
+Desde siempre soy un fanatico de la privacidad y de la seguridad en las comunicaciones, siempre estoy investigando sobbre posibles brechas de seguridad en aplicaciones de mensajeria.
+ThreadScoopOnionChat Surge despues del analisis de este blog " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/ ", en este blog se desriben varios aspectos por los que no se recomienda
+utilizar Session, y yo me preguntaba como es posible que una Fundacion enfocada en la privacidad con las subvenciones que recibe y apoyos no an podido mejorar este protocolo?
+La respuesta sigo sin entenderla, puesto que mis recursos son mucho menores que los de una fundacion comparado con una persona simplemente fan de la privacidad y seguridad.
+En este Blog se relataron ciertos problemas :
+
+1> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#insufficient-entropy-ed25519 "
+2> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#in-band-negotiation "
+3> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#public-keys-aes-gcm "
+
+## Soluciones proporcionadas en esta version
+
+## En respecto a la referencia 1> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#insufficient-entropy-ed25519 "
+
+Se corrige este fallo subiendo las llavesa 256 bits en vez de 128 bits,
+
+Archivos corregidos <p> <b> KeyPairUtilities.kt </b></p>  <p> <b> MnemonicCodec.kt </b></p>
+
+<p> <b> KeyPairUtilities.kt </b></p>
+
+Se aumenta la longitud de la semilla generada a 32 bytes:
+val seed = sodium.randomBytesBuf(32)
+Se elimina el padding de 16 bytes en cero y se pasa la semilla directamente a cryptoSignSeedKeypair(seed)
+
+<p> <b> MnemonicCodec.kt </b></p>
+
+·En el método decode, se fuerza a que la frase mnemónica tenga 25 palabras exactas:
+if (words.size != 25) throw DecodingError.InputTooShort
+
+Con estos ajustes se corrige el problema de insuficiente entropía (ahora 256 bits) y se implementa la recuperación con 25 palabras para la clave Ed2551
+
+![image](https://github.com/user-attachments/assets/217b5a7c-a455-4938-88af-961cf660cad9)
+
+
+## En respecto a la referencia 2> " https://soatok.blog/2025/01/14/dont-use-session-signal-fork/#in-band-negotiation "
+
+Para solucionar este fallo , se implementa " ExtraSecurity" , actividad a la cual se puede acceder desde settings
+![image](https://github.com/user-attachments/assets/5e54af7c-e6a4-4564-94ad-63a178a9d973)
+ ![image](https://github.com/user-attachments/assets/f23be3db-1c84-417e-8743-fe171ccf1c99)
+ ![image](https://github.com/user-attachments/assets/3bec5806-1bf2-40e8-ae98-f17a10fcbbec)
+![image](https://github.com/user-attachments/assets/c45b7416-2849-47c4-9641-bbca2eecf3af)
+
+![image](https://github.com/user-attachments/assets/a1b174a1-5cb8-4c24-a35a-2a89d6af2597)
+![image](https://github.com/user-attachments/assets/062e14d3-a614-4d8a-a4a0-16978d590da5)
+
+
+
+
+
+  ![image](https://github.com/user-attachments/assets/07586efc-9087-4f2c-84de-41562d3cfaca)
+
+![image](https://github.com/user-attachments/assets/4336130e-7f01-4e5e-90a0-e09d95ed139c) ![image](https://github.com/user-attachments/assets/c6f76289-404e-4452-8d8b-0758462ea8f6)
+
+
+
+## Detalles Clave:
+<p> <b> La adición de esa capa extra con un cifrado simétrico fuera de banda puede solventar el problema. Al hacerlo, el mensaje se protege desde antes de entrar en el protocolo de sesión, de modo que ni un atacante puede inyectar o modificar la clave Ed25519 incluida, ya que solo el emisor y el receptor conocen la clave para esa primera capa de cifrado.
+
+En otras palabras, al aplicar primero un cifrado con una clave secreta precompartida, se evita que un adversario pueda alterar el contenido o sustituir la clave pública sin romper esa protección. Esto efectivamente enlaza la firma Ed25519 al mensaje original, haciendo que la firma deje de ser una simple verificación de integridad (similar a un CRC32) y se convierta en una verdadera garantía de autenticidad.
+
+Sin embargo, es fundamental asegurarse de que:
+
+La clave compartida se intercambie y almacene de forma segura fuera de banda , por ejemplo intercambiandolo personalmente, o a traves de otro canal que no sea session por ejemplo. </b></p>
+
+<p> <b>Cifrado Simétrico Previo:</b></p>
+
+Se cifra el mensaje utilizando una clave compartida (precompartida entre emisor y receptor) antes de que se aplique el cifrado del protocolo de sesión. Esto asegura que el contenido, incluida la clave Ed25519, esté protegido contra manipulaciones.
+
+<p> <b> Protección de la Clave Pública:</b></p>
+
+Al incorporar la capa adicional de cifrado, la clave pública Ed25519 ya no se transmite en texto claro. Esto mitiga la vulnerabilidad donde un atacante podía sustituir arbitrariamente dicha clave, reduciendo efectivamente la firma a una verificación similar a un CRC32.
+
+<p> <b> Intercambio Seguro de Claves:</b></p>
+
+La clave simétrica se intercambia y almacena de forma segura fuera de banda (por ejemplo, mediante la exportación en Settings/Extrasecurity), lo que garantiza que solo el emisor y el receptor tengan acceso a ella.
+
+<p> <b> Beneficio de Seguridad:</b></p>
+
+Con este cambio, la autenticidad del mensaje se refuerza, ya que la firma Ed25519 queda enlazada de manera segura al mensaje original, eliminando la posibilidad de inyección o modificación maliciosa de la clave pública.
+
+Este enfoque refuerza la seguridad global del protocolo, preservando la integridad y autenticidad del mensaje en todo el proceso de cifrado y transmisión.
+
+
+## Para poder implementar esta funcion se modificaron varios archivos:
+<p> <b>·Storage.kt </b></p>
+<p> <b>·SQLCipherOpenHelper.kt </b></p>
+<p> <b>·Messagesender.kt </b></p>
+<p> <b>·Messagereceiver.kt </b></p>
+<p> <b>·Threadatabase.java </b></p>
+<p> <b>·ConversationsV2.kt </b></p>
+<p> <b>·SettingsActivity</b></p>
+<p> <b>·Extrasecurityactivity.kt </b></p>
+<p> <b>·Storageprotocol.kt </b></p>
+<p> <b>·ConversationMenuHelper.kt </b></p>
+<p> <b>·MessagingModuleConfiguration.kt </b></p>
+<p> <b>·KeyPairUtilities </b></p>
+<p> <b>·Contact.kt </b></p>
+<p> <b>·SignalServiceProto </b></p>
+<p> <b>·MessageWrapper.kt </b></p>
+<p> <b>·ReceivedMessageHandler.kt: </b></p>
+
+
+## PASOS PARA CONFIGURAR Y USAR EXTRASECURITY (CIFRADO THREADSOOP)
+
+ * 1. Acceso a la Configuración:
+ *    - Abrir la aplicación y navegar a "Settings".
+ *    - Dentro de "Settings", seleccionar la opción "Extrasecurity".
+ *
+ * 2. Generación de Llaves:
+ *    - En la sección "Extrasecurity", generar las llaves que se utilizarán para el cifrado.
+ *    - Opciones disponibles:
+ *         a. "Generate Random" para crear una llave aleatoria.
+ *         b. "Import from QR" para importar una llave existente mediante código QR.
+ *    - Se recomienda tener una llave única para cada chat.
+ *
+ * 3. Exportación de Llaves:
+ *    - Para exportar una llave, mantener presionada la llave deseada en la lista.
+ *    - Seleccionar la opción "Export as QR" para generar un código QR de la llave.
+ *
+ * 4. Importación de Llaves:
+ *    - Utilizar la opción "Import key from QR" para escanear el código QR y añadir la llave.
+ *
+ * 5. Importancia del Alias:
+ *    - Es fundamental que tanto el emisor como el receptor usen la misma llave y el mismo alias.
+ *    - Ejemplo: Si se exporta una llave con el alias "Test", al importar la llave se debe asignar exactamente "Test".
+ *
+ * 6. Activación del Cifrado en la Conversación:
+ *    - Iniciar un chat normal con el contacto deseado.
+ *    - En el menú desplegable de la conversación, seleccionar "ExtraSecurity".
+ *    - Elegir la clave de cifrado que tenga el mismo alias en ambos dispositivos.
+ *    - Activar el cifrado extra y guardar la configuración.
+ *
+ * Resultado:
+ *    - Las conversaciones estarán protegidas mediante el cifrado ThreadScoop, asegurando que únicamente
+ *      los participantes con la llave y alias correctos puedan descifrar los mensajes.
+
