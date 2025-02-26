@@ -58,9 +58,9 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
             val openGroup = storage.getOpenGroup(threadID.toLong())
 
-            // Pass through a flag regarding whether this is an outgoing voice message to the success handler to
-            // skip updating the final voice message duration if so (older android APIs <= 28 can miscalculate it).
-            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.voiceNote && attachment.contentType.startsWith("audio/")
+            // Pass through a flag regarding whether this is an outgoing voice message to the success handler which
+            // will skip updating the final voice message duration if so (older android APIs <= 28 can miscalculate it).
+            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.voiceNote
 
             if (openGroup != null) {
                 val keyAndResult = upload(attachment, openGroup.server, false) {
@@ -120,11 +120,11 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
 
-        // Voice messages that we've recorded do not have their final duration set because older Android versions (API 28 and below)
-        // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim" voice message
-        // duration as the final duration as we know that it'll be correct.
+        // Outgoing voice messages do not have their final duration set because older Android versions (API 28 and below)
+        // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim"
+        // voice message duration as the final duration as we know that it'll be correct..
         if (attachment.contentType.startsWith("audio/") && !isOutgoingVoiceMessage) {
-            // process the duration
+            // ..but for outgoing audio files we do process the duration to the best of our ability.
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->

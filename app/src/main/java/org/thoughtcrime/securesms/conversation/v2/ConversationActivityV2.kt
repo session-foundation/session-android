@@ -1942,8 +1942,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
 
-
-
         // Create the message
         val message = VisibleMessage().applyExpiryMode(viewModel.threadId)
         message.sentTimestamp = sentTimestamp
