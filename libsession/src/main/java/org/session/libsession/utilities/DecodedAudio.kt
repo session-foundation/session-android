@@ -5,8 +5,6 @@ import android.media.MediaCodec
 import android.media.MediaDataSource
 import android.media.MediaExtractor
 import android.media.MediaFormat
-import android.os.Build
-import org.session.libsignal.utilities.Log
 import java.io.FileDescriptor
 import java.io.IOException
 import java.io.InputStream
@@ -55,8 +53,8 @@ class DecodedAudio {
 
     val sampleRate: Int
 
-    /** In microseconds. There are 1 million microseconds in a second. */
-    val totalDurationMicroseconds: Long
+    /** In microseconds. */
+    val totalDuration: Long
 
     val channels: Int
 
@@ -98,25 +96,16 @@ class DecodedAudio {
         channels = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
         sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         // On some old APIs (23) this field might be missing.
-        totalDurationMicroseconds = if (mediaFormat.containsKey(MediaFormat.KEY_DURATION)) {
+        totalDuration = if (mediaFormat.containsKey(MediaFormat.KEY_DURATION)) {
             mediaFormat.getLong(MediaFormat.KEY_DURATION)
         } else {
             -1L
         }
 
         // Expected total number of samples per channel.
-//        val expectedNumSamples = if (totalDurationMicroseconds >= 0) {
-//            ((totalDurationMicroseconds / 1000000f) * sampleRate + 0.5f).toInt()
-//        } else {
-//            Int.MAX_VALUE
-//        }
-
-        // Expected total number of samples per channel.
-        val useDurationMetadata = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q // `Q` is Android API 29
-        val expectedNumSamples = if (useDurationMetadata && mediaFormat.containsKey(MediaFormat.KEY_DURATION)) {
-            ((mediaFormat.getLong(MediaFormat.KEY_DURATION) / 1_000_000f) * sampleRate + 0.5f).toInt()
+        val expectedNumSamples = if (totalDuration >= 0) {
+            ((totalDuration / 1000000f) * sampleRate + 0.5f).toInt()
         } else {
-            // Fallback: don't rely on duration metadata on older devices.
             Int.MAX_VALUE
         }
 
@@ -148,20 +137,14 @@ class DecodedAudio {
         // only once.
         var decodedBytes: ByteBuffer = ByteBuffer.allocate(1 shl 20)
         var firstSampleData = true
-
-        // Flags to allow us to exit if we don't read audio samples for a given number of attempts
-        val MAX_NO_OUTPUT_COUNT = 50
-        var noOutputCount = 0
-
         while (true) {
             // read data from file and feed it to the decoder input buffers.
             val inputBufferIndex: Int = codec.dequeueInputBuffer(100)
             if (!doneReading && inputBufferIndex >= 0) {
                 sampleSize = extractor.readSampleData(codec.getInputBuffer(inputBufferIndex)!!, 0)
-                if (firstSampleData                                                    &&
-                    mediaFormat.getString(MediaFormat.KEY_MIME)!! == "audio/mp4a-latm" &&
-                    sampleSize == 2                                                    &&
-                    Build.VERSION.SDK_INT <= Build.VERSION_CODES.P // Only apply this workaround for legacy devices <= API 28
+                if (firstSampleData
+                        && mediaFormat.getString(MediaFormat.KEY_MIME)!! == "audio/mp4a-latm"
+                        && sampleSize == 2
                 ) {
                     // For some reasons on some devices (e.g. the Samsung S3) you should not
                     // provide the first two bytes of an AAC stream, otherwise the MediaCodec will
@@ -173,10 +156,11 @@ class DecodedAudio {
                     totalSizeRead += sampleSize
                 } else if (sampleSize < 0) {
                     // All samples have been read.
-                    codec.queueInputBuffer(inputBufferIndex, 0, 0, -1, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                    codec.queueInputBuffer(
+                            inputBufferIndex, 0, 0, -1, MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                    )
                     doneReading = true
                 } else {
-                    // Normal case - feed the sample data through
                     presentationTime = extractor.sampleTime
                     codec.queueInputBuffer(inputBufferIndex, 0, sampleSize, presentationTime, 0)
                     extractor.advance()
@@ -188,15 +172,10 @@ class DecodedAudio {
             // Get decoded stream from the decoder output buffers.
             val outputBufferIndex: Int = codec.dequeueOutputBuffer(info, 100)
             if (outputBufferIndex >= 0 && info.size > 0) {
-
-                // Reset counter on successful output
-                noOutputCount = 0
-
                 if (decodedSamplesSize < info.size) {
                     decodedSamplesSize = info.size
                     decodedSamples = ByteArray(decodedSamplesSize)
                 }
-
                 val outputBuffer: ByteBuffer = codec.getOutputBuffer(outputBufferIndex)!!
                 outputBuffer.get(decodedSamples!!, 0, info.size)
                 outputBuffer.clear()
@@ -234,18 +213,20 @@ class DecodedAudio {
                 }
                 decodedBytes.put(decodedSamples, 0, info.size)
                 codec.releaseOutputBuffer(outputBufferIndex, false)
-            } else {
-                // Increase counter if no output is available.
-                noOutputCount++
-                Log.w("ACL", "Incrementing noOutputCount - now: " + noOutputCount)
             }
 
-            // Only use the End-of-Stream (EOS) flag if available, otherwise use our no-output timeout to break
-            if (
-                (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0 ||
-                (doneReading && noOutputCount >= MAX_NO_OUTPUT_COUNT)
+            if ((info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                    || (decodedBytes.position() / (2 * channels)) >= expectedNumSamples
             ) {
-                Log.w("ACL", "Bailing!!!!!!!!!")
+                // We got all the decoded data from the decoder. Stop here.
+                // Theoretically dequeueOutputBuffer(info, ...) should have set info.flags to
+                // MediaCodec.BUFFER_FLAG_END_OF_STREAM. However some phones (e.g. Samsung S3)
+                // won't do that for some files (e.g. with mono AAC files), in which case subsequent
+                // calls to dequeueOutputBuffer may result in the application crashing, without
+                // even an exception being thrown... Hence the second check.
+                // (for mono AAC files, the S3 will actually double each sample, as if the stream
+                // was stereo. The resulting stream is half what it's supposed to be and with a much
+                // lower pitch.)
                 break
             }
         }
