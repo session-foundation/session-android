@@ -60,7 +60,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
 
             // Pass through a flag regarding whether this is an outgoing voice message to the success handler to
             // skip updating the final voice message duration if so (older android APIs <= 28 can miscalculate it).
-            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.contentType.startsWith("audio/")
+            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.voiceNote && attachment.contentType.startsWith("audio/")
 
             if (openGroup != null) {
                 val keyAndResult = upload(attachment, openGroup.server, false) {
@@ -128,9 +128,9 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->
-                    val durationMs = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
+                    val durationMS = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
                     messageDataProvider.getDatabaseAttachment(attachmentID)?.attachmentId?.let { attachmentId ->
-                        messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMs, threadID.toLong())
+                        messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMS, threadID.toLong())
                     }
                 }
             } catch (e: Exception) {
