@@ -58,20 +58,16 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
             val openGroup = storage.getOpenGroup(threadID.toLong())
 
-            // Pass through a flag regarding whether this is an outgoing voice message to the success handler which
-            // will skip updating the final voice message duration if so (older android APIs <= 28 can miscalculate it).
-            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.voiceNote
-
             if (openGroup != null) {
                 val keyAndResult = upload(attachment, openGroup.server, false) {
                     OpenGroupApi.upload(it, openGroup.room, openGroup.server)
                 }
-                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second, isOutgoingVoiceMessage)
+                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
                 val keyAndResult = upload(attachment, FileServerApi.server, true) {
                     FileServerApi.upload(it)
                 }
-                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second, isOutgoingVoiceMessage)
+                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             }
         } catch (e: java.lang.Exception) {
             if (e == Error.NoAttachment) {
@@ -114,7 +110,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         return Pair(key, UploadResult(id, "${server}/file/$id", digest))
     }
 
-    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult, isOutgoingVoiceMessage: Boolean) {
+    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
         Log.d(TAG, "Attachment uploaded successfully.")
         delegate?.handleJobSucceeded(this, dispatcherName)
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
@@ -123,7 +119,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         // Outgoing voice messages do not have their final duration set because older Android versions (API 28 and below)
         // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim"
         // voice message duration as the final duration as we know that it'll be correct..
-        if (attachment.contentType.startsWith("audio/") && !isOutgoingVoiceMessage) {
+        if (attachment.contentType.startsWith("audio/") && !attachment.voiceNote) {
             // ..but for outgoing audio files we do process the duration to the best of our ability.
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
