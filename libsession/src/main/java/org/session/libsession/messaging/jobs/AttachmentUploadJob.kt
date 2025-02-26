@@ -109,17 +109,22 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         return Pair(key, UploadResult(id, "${server}/file/$id", digest))
     }
 
-    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
+    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult, isVoiceMessage: Boolean = false) {
         Log.d(TAG, "Attachment uploaded successfully.")
         delegate?.handleJobSucceeded(this, dispatcherName)
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
-        if (attachment.contentType.startsWith("audio/")) {
+        if (attachment.contentType.startsWith("audio/") && !isVoiceMessage) {
             // process the duration
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->
-                    val durationMs = (DecodedAudio.create(mediaDataSource).totalDuration / 1000.0).toLong()
+                    val durationMs = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
+
+                    Log.w("ACL", "We think the duration is: " + durationMs)
+
+                    // far out - change this so that we don't do the final duration update if this is a voice message (we have the correct duration from the initial recording state)
+
                     messageDataProvider.getDatabaseAttachment(attachmentID)?.attachmentId?.let { attachmentId ->
                         messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMs, threadID.toLong())
                     }

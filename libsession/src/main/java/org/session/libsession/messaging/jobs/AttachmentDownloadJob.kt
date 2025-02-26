@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
@@ -150,7 +149,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 // process the duration
                     try {
                         InputStreamMediaDataSource(getInputStream(tempFile, attachment)).use { mediaDataSource ->
-                            val durationMs = (DecodedAudio.create(mediaDataSource).totalDuration / 1000.0).toLong()
+                            val durationMs = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
                             messageDataProvider.updateAudioAttachmentDuration(
                                 attachment.attachmentId,
                                 durationMs,
