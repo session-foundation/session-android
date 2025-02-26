@@ -119,7 +119,6 @@ public abstract class DisplayRecord {
     return SmsDatabase.Types.isGroupUpdateMessage(type);
   }
   public boolean isExpirationTimerUpdate() { return SmsDatabase.Types.isExpirationTimerUpdate(type); }
-  public boolean isGroupV2ExpirationTimerUpdate() { return false; }
   public boolean isMediaSavedNotification() { return MmsSmsColumns.Types.isMediaSavedExtraction(type); }
   public boolean isScreenshotNotification() { return MmsSmsColumns.Types.isScreenshotExtraction(type); }
   public boolean isDataExtractionNotification() { return isMediaSavedNotification() || isScreenshotNotification(); }

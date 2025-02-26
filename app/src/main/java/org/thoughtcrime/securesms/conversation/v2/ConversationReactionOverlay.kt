@@ -40,6 +40,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
@@ -271,11 +272,6 @@ class ConversationReactionOverlay : FrameLayout {
             (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
         }
 
-        val isDeprecatedLegacyGroup =
-            recipient?.isLegacyGroupRecipient == true &&
-                deprecationManager.isDeprecated
-        foregroundView.isVisible = !isDeprecatedLegacyGroup
-        backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
         backgroundView.x = scrubberX
@@ -548,6 +544,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Prepare
         val containsControlMessage = message.isControlMessage
+        Log.d("", "*** is control? $containsControlMessage")
         val hasText = !message.body.isEmpty()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
@@ -631,8 +628,8 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
         // deleted messages have  no emoji reactions
-        backgroundView.isVisible = !isDeleteOnly
-        foregroundView.isVisible = !isDeleteOnly
+        backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
+        foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         return items
     }
 
