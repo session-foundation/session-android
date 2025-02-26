@@ -57,16 +57,21 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
             val attachment = messageDataProvider.getScaledSignalAttachmentStream(attachmentID)
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
             val openGroup = storage.getOpenGroup(threadID.toLong())
+
+            // Pass through a flag regarding whether this is an outgoing voice message to the success handler to
+            // skip updating the final voice message duration if so (older android APIs <= 28 can miscalculate it).
+            val isOutgoingVoiceMessage = message.isSenderSelf && attachment.contentType.startsWith("audio/")
+
             if (openGroup != null) {
                 val keyAndResult = upload(attachment, openGroup.server, false) {
                     OpenGroupApi.upload(it, openGroup.room, openGroup.server)
                 }
-                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
+                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second, isOutgoingVoiceMessage)
             } else {
                 val keyAndResult = upload(attachment, FileServerApi.server, true) {
                     FileServerApi.upload(it)
                 }
-                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
+                handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second, isOutgoingVoiceMessage)
             }
         } catch (e: java.lang.Exception) {
             if (e == Error.NoAttachment) {
@@ -109,22 +114,21 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         return Pair(key, UploadResult(id, "${server}/file/$id", digest))
     }
 
-    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult, isVoiceMessage: Boolean = false) {
+    private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult, isOutgoingVoiceMessage: Boolean) {
         Log.d(TAG, "Attachment uploaded successfully.")
         delegate?.handleJobSucceeded(this, dispatcherName)
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
-        if (attachment.contentType.startsWith("audio/") && !isVoiceMessage) {
+
+        // Voice messages that we've recorded do not have their final duration set because older Android versions (API 28 and below)
+        // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim" voice message
+        // duration as the final duration as we know that it'll be correct.
+        if (attachment.contentType.startsWith("audio/") && !isOutgoingVoiceMessage) {
             // process the duration
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->
                     val durationMs = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
-
-                    Log.w("ACL", "We think the duration is: " + durationMs)
-
-                    // far out - change this so that we don't do the final duration update if this is a voice message (we have the correct duration from the initial recording state)
-
                     messageDataProvider.getDatabaseAttachment(attachmentID)?.attachmentId?.let { attachmentId ->
                         messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMs, threadID.toLong())
                     }
@@ -133,6 +137,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 Log.e("Loki", "Couldn't process audio attachment", e)
             }
         }
+
         val storage = MessagingModuleConfiguration.shared.storage
         storage.getMessageSendJob(messageSendJobID)?.let {
             val destination = it.destination as? Destination.OpenGroup ?: return@let
