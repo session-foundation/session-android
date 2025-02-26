@@ -634,7 +634,7 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
     }
 
     // Update profile if needed
-    if (message.profile != null) {
+    if (message.profile != null && !message.isSenderSelf) {
         val profile = message.profile
         val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
         val profileManager = SSKEnvironment.shared.profileManager
