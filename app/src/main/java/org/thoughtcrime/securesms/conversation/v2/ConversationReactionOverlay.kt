@@ -544,7 +544,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Prepare
         val containsControlMessage = message.isControlMessage
-        Log.d("", "*** is control? $containsControlMessage")
+        
         val hasText = !message.body.isEmpty()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
