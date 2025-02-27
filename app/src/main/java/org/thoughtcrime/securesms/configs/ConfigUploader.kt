@@ -228,25 +228,8 @@ class ConfigUploader @Inject constructor(
         val snode = SnodeAPI.getSingleTargetSnode(groupId.hexString).await()
         val auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey)
 
-        // Spawn the config pushing concurrently
-        val membersConfigHashTask = membersPush?.let { push ->
-            async {
-                push to pushConfig(
-                    auth,
-                    snode,
-                    push,
-                    Namespace.GROUP_MEMBERS()
-                )
-            }
-        }
-
-        val infoConfigHashTask = infoPush?.let { push ->
-            async {
-                push to pushConfig(auth, snode, push, Namespace.GROUP_INFO())
-            }
-        }
-
-        // Keys push is different: it doesn't have the delete call so we don't call pushConfig
+        // Keys push is different: it doesn't have the delete call so we don't call pushConfig.
+        // Keys must be pushed first because the other configs depend on it.
         val keysPushResult = keysPush?.let { push ->
             SnodeAPI.sendBatchRequest(
                 snode = snode,
@@ -263,6 +246,24 @@ class ConfigUploader @Inject constructor(
                 ),
                 responseType = StoreMessageResponse::class.java
             ).toConfigPushResult()
+        }
+
+        // Spawn the config pushing concurrently
+        val membersConfigHashTask = membersPush?.let { push ->
+            async {
+                push to pushConfig(
+                    auth,
+                    snode,
+                    push,
+                    Namespace.GROUP_MEMBERS()
+                )
+            }
+        }
+
+        val infoConfigHashTask = infoPush?.let { push ->
+            async {
+                push to pushConfig(auth, snode, push, Namespace.GROUP_INFO())
+            }
         }
 
         // Wait for all other config push to come back

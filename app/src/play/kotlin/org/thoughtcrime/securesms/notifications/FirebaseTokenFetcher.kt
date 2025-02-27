@@ -2,9 +2,6 @@ package org.thoughtcrime.securesms.notifications
 
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-
-import kotlinx.coroutines.tasks.await
 import org.session.libsession.messaging.notifications.TokenFetcher
 import javax.inject.Inject
 import javax.inject.Singleton

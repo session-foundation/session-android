@@ -26,6 +26,7 @@ import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
 import org.session.libsession.utilities.bencode.BencodeString
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
@@ -62,14 +63,8 @@ class PushReceiver @Inject constructor(
     }
 
     private fun addMessageReceiveJob(pushData: PushData?) {
-        // send a generic notification if we have no data
-        if (pushData?.data == null) {
-            sendGenericNotification()
-            return
-        }
-
         try {
-            val namespace = pushData.metadata?.namespace
+            val namespace = pushData?.metadata?.namespace
             val params = when {
                 namespace == Namespace.GROUP_MESSAGES() ||
                         namespace == Namespace.REVOKED_GROUP_MESSAGES() ||
@@ -79,6 +74,17 @@ class PushReceiver @Inject constructor(
                     val groupId = AccountId(requireNotNull(pushData.metadata.account) {
                         "Received a closed group message push notification without an account ID"
                     })
+
+                    if (configFactory.getGroup(groupId)?.shouldPoll != true) {
+                        Log.d(TAG, "Received a push notification for a group that isn't active")
+                        return
+                    }
+
+                    // send a generic notification if we have no data
+                    if (pushData.data == null) {
+                        sendGenericNotification()
+                        return
+                    }
 
                     if (namespace == Namespace.GROUP_MESSAGES()) {
                         val envelope = checkNotNull(tryDecryptGroupEnvelope(groupId, pushData.data)) {
@@ -125,7 +131,13 @@ class PushReceiver @Inject constructor(
                     }
                 }
 
-                namespace == Namespace.DEFAULT() || pushData.metadata == null -> {
+                namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
+                    // send a generic notification if we have no data
+                    if (pushData?.data == null) {
+                        sendGenericNotification()
+                        return
+                    }
+
                     val envelopeAsData = MessageWrapper.unwrap(pushData.data).toByteArray()
                     MessageReceiveParameters(
                         data = envelopeAsData,
