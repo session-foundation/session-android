@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 import kotlinx.coroutines.tasks.await
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
