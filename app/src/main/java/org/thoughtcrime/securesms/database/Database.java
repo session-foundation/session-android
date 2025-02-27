@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
 
@@ -30,6 +31,7 @@ import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
+import java.util.Arrays;
 import java.util.Set;
 
 public abstract class Database {
@@ -79,7 +81,20 @@ public abstract class Database {
   }
 
   protected void setNotifyConversationListeners(Cursor cursor, long threadId) {
-    cursor.setNotificationUri(context.getContentResolver(), DatabaseContentProviders.Conversation.getUriForThread(threadId));
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          cursor.setNotificationUris(
+                  context.getContentResolver(),
+                  Arrays.asList(
+                          DatabaseContentProviders.Conversation.getUriForThread(threadId),
+                          DatabaseContentProviders.Attachment.CONTENT_URI
+                  )
+          );
+      } else {
+        cursor.setNotificationUri(
+                context.getContentResolver(),
+                DatabaseContentProviders.Conversation.getUriForThread(threadId)
+        );
+      }
   }
 
   protected void setNotifyConversationListListeners(Cursor cursor) {
