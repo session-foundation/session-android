@@ -202,5 +202,9 @@ class ProfilePictureView @JvmOverloads constructor(
     fun recycle() {
         profilePicturesCache.clear()
     }
+
+    fun getProfilePictureImageView(): ImageView {
+        return binding.singleModeImageView
+    }
     // endregion
 }

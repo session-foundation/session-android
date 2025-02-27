@@ -1,23 +1,16 @@
 package org.thoughtcrime.securesms.conversation.v2.search
 
-import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.Closeable
+import javax.inject.Inject
 import org.session.libsession.utilities.Debouncer
 import org.session.libsession.utilities.Util.runOnMain
-import org.session.libsession.utilities.concurrent.SignalExecutors
-import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
-import org.thoughtcrime.securesms.database.SearchDatabase
-import org.thoughtcrime.securesms.database.SessionContactDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.search.SearchRepository
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.util.CloseableLiveData
-import java.io.Closeable
-import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(

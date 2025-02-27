@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
@@ -25,6 +26,8 @@ public class CommunicationActions {
 
       @Override
       protected void onPostExecute(Long threadId) {
+        Log.w("ACL", "In CommunicationActions.onPostExecute");
+
         Intent intent = new Intent(context, ConversationActivityV2.class);
         intent.putExtra(ConversationActivityV2.ADDRESS, recipient.getAddress());
         intent.putExtra(ConversationActivityV2.THREAD_ID, threadId);

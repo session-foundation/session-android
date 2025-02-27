@@ -117,7 +117,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter { model ->
+    private val globalSearchAdapter = GlobalSearchAdapter(context = this) { model ->
         when (model) {
             is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
                 model.messageResult.run {
@@ -178,7 +178,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
         homeAdapter.glide = glide
-        binding.recyclerView.adapter = homeAdapter
+        binding.searchContactsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
@@ -210,7 +210,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 homeViewModel.data
                     .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
                     .collectLatest { data ->
-                        val manager = binding.recyclerView.layoutManager as LinearLayoutManager
+                        val manager = binding.searchContactsRecyclerView.layoutManager as LinearLayoutManager
                         val firstPos = manager.findFirstCompletelyVisibleItemPosition()
                         val offsetTop = if(firstPos >= 0) {
                             manager.findViewByPosition(firstPos)?.let { view ->
@@ -343,8 +343,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun setSearchShown(isShown: Boolean) {
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
-        binding.recyclerView.isVisible = !isShown
-        binding.emptyStateContainer.isVisible = (binding.recyclerView.adapter as HomeAdapter).itemCount == 0 && binding.recyclerView.isVisible
+        binding.searchContactsRecyclerView.isVisible = !isShown
+        binding.emptyStateContainer.isVisible = (binding.searchContactsRecyclerView.adapter as HomeAdapter).itemCount == 0 && binding.searchContactsRecyclerView.isVisible
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isInvisible = !isShown
         binding.newConversationButton.isVisible = !isShown
@@ -391,8 +391,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     // region Updating
     private fun updateEmptyState() {
-        val threadCount = (binding.recyclerView.adapter)!!.itemCount
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.recyclerView.isVisible
+        val threadCount = (binding.searchContactsRecyclerView.adapter)!!.itemCount
+        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.searchContactsRecyclerView.isVisible
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -420,6 +420,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
+        Log.w("ACL", "Hit onConversationClick")
+
         val intent = Intent(this, ConversationActivityV2::class.java)
         intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
         push(intent)
@@ -510,7 +512,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     storage.setBlocked(listOf(thread.recipient), true)
 
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
                 // Block confirmation toast added as per SS-64
@@ -529,7 +531,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -542,7 +544,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             lifecycleScope.launch(Dispatchers.Default) {
                 recipientDatabase.setMuted(thread.recipient, 0)
                 withContext(Dispatchers.Main) {
-                    binding.recyclerView.adapter!!.notifyDataSetChanged()
+                    binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                 }
             }
         } else {
@@ -550,7 +552,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     recipientDatabase.setMuted(thread.recipient, until)
                     withContext(Dispatchers.Main) {
-                        binding.recyclerView.adapter!!.notifyDataSetChanged()
+                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }
@@ -561,7 +563,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         lifecycleScope.launch(Dispatchers.Default) {
             recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
             withContext(Dispatchers.Main) {
-                binding.recyclerView.adapter!!.notifyDataSetChanged()
+                binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
             }
         }
     }

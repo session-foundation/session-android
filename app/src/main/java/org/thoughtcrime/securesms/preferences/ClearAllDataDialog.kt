@@ -68,7 +68,7 @@ class ClearAllDataDialog : DialogFragment() {
         val network = radioOption("deviceAndNetwork", R.string.clearDeviceAndNetwork)
         var selectedOption: RadioOption<String> = device
         val optionAdapter = RadioOptionAdapter { selectedOption = it }
-        binding.recyclerView.apply {
+        binding.homeActivityRecyclerView.apply {
             itemAnimator = null
             adapter = optionAdapter
             setHasFixedSize(true)
@@ -112,7 +112,7 @@ class ClearAllDataDialog : DialogFragment() {
                 }
             }
 
-            binding.recyclerView.isVisible = step == Steps.INFO_PROMPT
+            binding.homeActivityRecyclerView.isVisible = step == Steps.INFO_PROMPT
             binding.cancelButton.isVisible = !isLoading
             binding.clearAllDataButton.isVisible = !isLoading
             binding.progressBar.isVisible = isLoading

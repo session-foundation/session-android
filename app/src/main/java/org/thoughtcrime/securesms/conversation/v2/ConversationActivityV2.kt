@@ -114,7 +114,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.contacts.SelectContactsActivity.Companion.selectedContactsKey
+import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
@@ -2097,8 +2097,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             INVITE_CONTACTS -> {
                 if (viewModel.recipient?.isCommunityRecipient != true) { return }
                 val extras = intent?.extras ?: return
-                if (!intent.hasExtra(selectedContactsKey)) { return }
-                val selectedContacts = extras.getStringArray(selectedContactsKey)!!
+                if (!intent.hasExtra(SELECTED_CONTACTS_KEY)) { return }
+                val selectedContacts = extras.getStringArray(SELECTED_CONTACTS_KEY)!!
                 val recipients = selectedContacts.map { contact ->
                     Recipient.from(this, fromSerialized(contact), true)
                 }

@@ -87,7 +87,7 @@
         app:show_always="true" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+        android:id="@+id/createGroupRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="@dimen/small_spacing"
@@ -111,14 +111,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/recyclerView"/>
+        app:layout_constraintTop_toBottomOf="@id/createGroupRecyclerView"/>
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/mainContentGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="nameEditText, contactSearch, recyclerView, createClosedGroupButton"
+        app:constraint_referenced_ids="nameEditText, contactSearch, createGroupRecyclerView, createClosedGroupButton"
         tools:visibility="visible" />
 
     <TextView

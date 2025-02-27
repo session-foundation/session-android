@@ -181,16 +181,22 @@
 
     <style name="Dark.Popup" parent="@style/ThemeOverlay.AppCompat.Dark">
         <item name="android:actionMenuTextColor">?android:textColorPrimary</item>
+        <!--
         <item name="colorBackgroundFloating">?colorPrimary</item>
         <item name="android:colorBackground">?colorPrimary</item>
         <item name="android:windowBackground">?colorPrimary</item>
+        -->
+        <item name="android:actionMenuTextColor">?android:textColorPrimary</item>
+        <item name="colorBackgroundFloating">@color/red_400</item>item> <!--?colorPrimary</item> -->
+        <item name="android:colorBackground">@color/green_400</item>item> <!-- ?colorPrimary</item> -->
+        <item name="android:windowBackground">@color/blue_400</item> <!-- ?colorPrimary</item> -->
     </style>
 
     <style name="Light.Popup" parent="@style/ThemeOverlay.AppCompat.Light">
         <item name="android:actionMenuTextColor">?android:textColorPrimary</item>
-        <item name="colorBackgroundFloating">?colorPrimary</item>
-        <item name="android:colorBackground">?colorPrimary</item>
-        <item name="android:windowBackground">?colorPrimary</item>
+        <item name="colorBackgroundFloating">@color/red_400</item>item> <!--?colorPrimary</item> -->
+        <item name="android:colorBackground">@color/green_400</item>item> <!-- ?colorPrimary</item> -->
+        <item name="android:windowBackground">@color/blue_400</item> <!-- ?colorPrimary</item> -->
     </style>
 
     <style name="Classic">
@@ -408,7 +414,10 @@
         <item name="android:colorControlHighlight">@color/ocean_dark_4</item>
         <item name="colorControlHighlight">@color/ocean_dark_4</item>
         <item name="bottomSheetDialogTheme">@style/Ocean.Dark.BottomSheet</item>
-        <item name="popupTheme">?actionBarPopupTheme</item>
+
+        <!-- <item name="popupTheme">?actionBarPopupTheme</item> -->
+        <item name="popupTheme">@style/Dark.Popup</item>
+
         <item name="actionMenuTextColor">?android:textColorPrimary</item>
         <item name="actionBarPopupTheme">@style/Dark.Popup</item>
         <item name="actionBarWidgetTheme">@null</item>
