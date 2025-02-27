@@ -16,6 +16,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
@@ -25,6 +26,7 @@ class DebugMenuViewModel @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val clearDataUtils: ClearDataUtils
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -86,7 +88,7 @@ class DebugMenuViewModel @Inject constructor(
                 // restart app
                 viewModelScope.launch {
                     delay(500) // giving time to save data
-                    ApplicationContext.getInstance(application).restartApplication()
+                    clearDataUtils.restartApplication()
                 }
             }
 
@@ -128,21 +130,21 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear remote and local data, then restart the app
         viewModelScope.launch {
-            ApplicationContext.getInstance(application).clearAllData().let { success ->
-                if(success){
-                    // save the environment
-                    textSecurePreferences.setEnvironment(env)
-                    delay(500)
-                    ApplicationContext.getInstance(application).restartApplication()
-                } else {
-                    _uiState.value = _uiState.value.copy(
-                        showEnvironmentWarningDialog = false,
-                        showLoadingDialog = false
-                    )
-                    Log.e(TAG, "Failed to force sync when deleting data")
-                    _uiState.value = _uiState.value.copy(snackMessage = "Sorry, something went wrong...")
-                    return@launch
-                }
+            val success = runCatching { clearDataUtils.clearAllData() } .isSuccess
+
+            if(success){
+                // save the environment
+                textSecurePreferences.setEnvironment(env)
+                delay(500)
+                clearDataUtils.restartApplication()
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    showEnvironmentWarningDialog = false,
+                    showLoadingDialog = false
+                )
+                Log.e(TAG, "Failed to force sync when deleting data")
+                _uiState.value = _uiState.value.copy(snackMessage = "Sorry, something went wrong...")
+                return@launch
             }
         }
     }

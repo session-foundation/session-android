@@ -54,7 +54,7 @@ class ClearDataUtils @Inject constructor(
         restartApplication()
     }
 
-    private fun restartApplication() {
+    fun restartApplication() {
         val intent = Intent(application, HomeActivity::class.java)
         application.startActivity(Intent.makeRestartActivityTask(intent.component))
         Runtime.getRuntime().exit(0)
