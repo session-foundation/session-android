@@ -422,8 +422,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        Log.w("ACL", "Hit onConversationClick")
-
         val intent = Intent(this, ConversationActivityV2::class.java)
         intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
         push(intent)
@@ -476,9 +474,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         bottomSheet.onDeleteTapped = {
             bottomSheet.dismiss()
-            Log.w("ACL", "About to delete thread: " + thread)
-
-            //deleteConversation(thread)
+            deleteConversation(thread)
         }
         bottomSheet.onSetMuteTapped = { muted ->
             bottomSheet.dismiss()

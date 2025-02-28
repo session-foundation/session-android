@@ -90,9 +90,6 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     fun deleteContact(accountId: String) {
         val database = databaseHelper.writableDatabase
         val rowsAffected = database.delete(sessionContactTable, "$accountID = ?", arrayOf( accountId ))
-
-        Log.w("ACL", "Deleted contact: " + accountId + ", rows affected: " + rowsAffected)
-
         if (rowsAffected == 0) {
             Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
         }

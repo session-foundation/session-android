@@ -1,14 +1,11 @@
 package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
-import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup
-import org.session.libsession.utilities.Address
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
-
-import org.session.libsignal.utilities.Log
-
 
 class SelectContactsAdapter(private val context: Context, private val glide: RequestManager) : RecyclerView.Adapter<SelectContactsAdapter.ViewHolder>() {
     val selectedMembers = mutableSetOf<String>()
@@ -29,8 +26,6 @@ class SelectContactsAdapter(private val context: Context, private val glide: Req
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val member = members[position]
         viewHolder.view.setOnClickListener { onMemberClick(member) }
-
-        viewHolder.view.setOnLongClickListener { onMemberLongClick(member) }
 
         val isSelected = selectedMembers.contains(member)
         viewHolder.view.bind(Recipient.from(
@@ -63,9 +58,6 @@ class SelectContactsAdapter(private val context: Context, private val glide: Req
     }
 
     private fun onMemberClick(member: String) {
-
-        Log.w("ACL", "Hit on member click for member: " + member)
-
         if (selectedMembers.contains(member)) {
             selectedMembers.remove(member)
         } else {
@@ -73,21 +65,6 @@ class SelectContactsAdapter(private val context: Context, private val glide: Req
         }
         val index = members.indexOf(member)
         notifyItemChanged(index, Payload.MEMBER_CLICKED)
-    }
-
-    private fun onMemberLongClick(member: String): Boolean {
-
-        Log.w("ACL", "Long click on member: " + member)
-
-        return true
-
-//        if (selectedMembers.contains(member)) {
-//            selectedMembers.remove(member)
-//        } else {
-//            selectedMembers.add(member)
-//        }
-//        val index = members.indexOf(member)
-//        notifyItemChanged(index, Payload.MEMBER_CLICKED)
     }
 
     // define below the different events used to notify the adapter

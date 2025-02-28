@@ -12,9 +12,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBannerBinding
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
-import org.session.libsignal.utilities.Log
-
-
 class HomeAdapter(
     private val context: Context,
     private val configFactory: ConfigFactory,
@@ -60,7 +57,6 @@ class HomeAdapter(
                 val conversationView = LayoutInflater.from(parent.context).inflate(R.layout.view_conversation, parent, false) as ConversationView
                 val viewHolder = ConversationViewHolder(conversationView)
                 viewHolder.view.setOnClickListener { viewHolder.view.thread?.let {
-                    Log.w("ACL", "Hit ITEM_TYPE_CONVO on click")
                     listener.onConversationClick(it) }
                 }
                 viewHolder.view.setOnLongClickListener {

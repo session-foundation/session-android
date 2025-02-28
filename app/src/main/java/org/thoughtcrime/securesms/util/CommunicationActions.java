@@ -26,8 +26,6 @@ public class CommunicationActions {
 
       @Override
       protected void onPostExecute(Long threadId) {
-        Log.w("ACL", "In CommunicationActions.onPostExecute");
-
         Intent intent = new Intent(context, ConversationActivityV2.class);
         intent.putExtra(ConversationActivityV2.ADDRESS, recipient.getAddress());
         intent.putExtra(ConversationActivityV2.THREAD_ID, threadId);

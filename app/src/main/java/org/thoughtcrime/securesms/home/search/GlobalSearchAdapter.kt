@@ -13,19 +13,19 @@ import androidx.core.view.get
 import androidx.core.view.size
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import java.security.InvalidParameterException
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.contacts.Contact as ContactModel
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
-import java.security.InvalidParameterException
-import org.session.libsession.messaging.contacts.Contact as ContactModel
 
 class GlobalSearchAdapter(
     val context: Context,
@@ -140,7 +140,7 @@ class GlobalSearchAdapter(
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w("GlobalSearchAdapter", "Failed to show pop-up menu icons.", e)
             }
         }
 

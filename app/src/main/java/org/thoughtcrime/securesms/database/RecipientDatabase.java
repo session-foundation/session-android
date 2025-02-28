@@ -356,9 +356,6 @@ public class RecipientDatabase extends Database {
     db.beginTransaction();
     try {
       int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
-
-      Log.w("ACL", "deleteRecipient affected rows: " + rowCount);
-
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();

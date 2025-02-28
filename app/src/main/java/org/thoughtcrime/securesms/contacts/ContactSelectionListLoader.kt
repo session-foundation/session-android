@@ -3,12 +3,9 @@ package org.thoughtcrime.securesms.contacts
 import android.content.Context
 import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.thoughtcrime.securesms.util.ContactUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.AsyncLoader
-
-import org.session.libsignal.utilities.Log
-
+import org.thoughtcrime.securesms.util.ContactUtilities
 
 sealed class ContactSelectionListItem {
     class Header(val name: String) : ContactSelectionListItem()
@@ -54,8 +51,6 @@ class ContactSelectionListLoader(
     }
 
     private fun getContacts(contacts: List<Recipient>): List<ContactSelectionListItem> {
-        Log.w("ACL", "Hit ContactSelectionListLoader.getContacts")
-
         return getItems(contacts, context.getString(R.string.contactContacts)) {
             !it.isGroupOrCommunityRecipient
         }
