@@ -179,7 +179,6 @@ class GlobalSearchAdapter(
                     }
                     else -> false
                 }
-                true // Consume the event and end
             }
 
             // Finally show the popup
