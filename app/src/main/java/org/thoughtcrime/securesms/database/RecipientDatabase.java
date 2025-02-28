@@ -357,6 +357,7 @@ public class RecipientDatabase extends Database {
     try {
       int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
       db.setTransactionSuccessful();
+      if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
     } finally {
       db.endTransaction();
     }
