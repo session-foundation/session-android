@@ -56,10 +56,9 @@
         <item name="android:paddingEnd">@dimen/very_large_spacing</item>
     </style>
 
-    <style name="ContactPopupMenuStyle" > <!-- parent="Widget.AppCompat.PopupMenu"> -->
+    <style name="ContactPopupMenuStyle" >
         <item name="android:textColor">?danger</item>
         <item name="android:background">?backgroundSecondary</item>
-        <!-- <item name="android:popupBackground">@android:color/holo_blue_bright</item> -->
     </style>
 
     <style name="TextAppearance.Session.ConversationSettings.OptionSummary">

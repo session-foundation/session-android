@@ -629,6 +629,15 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  // Remove contact from database
+  public void deleteContact(String address) {
+    long threadId = getThreadIdIfExistsFor(address);
+    DatabaseComponent.get(context).sessionContactDatabase().deleteContact(address);
+    DatabaseComponent.get(context).recipientDatabase().deleteRecipient(address);
+    DatabaseComponent.get(context).threadDatabase().deleteThread(threadId);
+    addressCache.entrySet().removeIf(entry -> entry.getValue().toString().equals(address));
+  }
+
   public long getThreadIdIfExistsFor(String address) {
     SQLiteDatabase db      = databaseHelper.getReadableDatabase();
     String where           = ADDRESS + " = ?";

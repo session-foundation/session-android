@@ -22,7 +22,6 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -117,33 +116,36 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter(context = this) { model ->
-        when (model) {
-            is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                model.messageResult.run {
-                    putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+    // The search adapter has to be lazy so we get a chance to set up the threadDB, which we use to delete contacts
+    private val globalSearchAdapter by lazy {
+        GlobalSearchAdapter(context = this, threadDB = threadDb) { model ->
+            when (model) {
+                is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                    model.messageResult.run {
+                        putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
+                    }
                 }
-            }
-            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-            }
-            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                putExtra(
-                    ConversationActivityV2.ADDRESS,
-                    model.contact.accountID.let(Address::fromSerialized)
-                )
-            }
+                is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                    putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
+                }
+                is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                    putExtra(
+                        ConversationActivityV2.ADDRESS,
+                        model.contact.accountID.let(Address::fromSerialized)
+                    )
+                }
 
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
-                .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                .let(threadDb::getThreadIdIfExistsFor)
-                .takeIf { it >= 0 }
-                ?.let {
-                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                }
-            else -> Log.d("Loki", "callback with model: $model")
+                is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
+                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                    .let(threadDb::getThreadIdIfExistsFor)
+                    .takeIf { it >= 0 }
+                    ?.let {
+                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                    }
+                else -> Log.d("Loki", "callback with model: $model")
+            }
         }
     }
 
@@ -474,7 +476,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         bottomSheet.onDeleteTapped = {
             bottomSheet.dismiss()
-            deleteConversation(thread)
+            Log.w("ACL", "About to delete thread: " + thread)
+
+            //deleteConversation(thread)
         }
         bottomSheet.onSetMuteTapped = { muted ->
             bottomSheet.dismiss()
@@ -501,7 +505,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
-    private fun blockConversation(thread: ThreadRecord) {
+    fun blockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
