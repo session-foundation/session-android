@@ -32,6 +32,7 @@ import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
@@ -60,6 +61,8 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -78,6 +81,7 @@ public class ThreadDatabase extends Database {
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
+  // Map of threadID -> Address
   private final Map<Long, Address> addressCache = new HashMap<>();
 
   public  static final String TABLE_NAME             = "thread";
@@ -619,9 +623,38 @@ public class ThreadDatabase extends Database {
   // Remove contact from database
   public void deleteContact(String address) {
     long threadId = getThreadIdIfExistsFor(address);
-    DatabaseComponent.get(context).sessionContactDatabase().deleteContact(address);
-    DatabaseComponent.get(context).recipientDatabase().deleteRecipient(address);
-    DatabaseComponent.get(context).threadDatabase().deleteThread(threadId);
+
+    // Mark contact as untrusted and delete.
+    // Note: You would think simple deletion would be enough but it isn't - hard to say what's getting cached.
+    SessionContactDatabase scd = DatabaseComponent.get(context).sessionContactDatabase();
+    Contact contact = scd.getContactWithAccountID(address);
+    if (contact == null) {
+      Log.w("ACL", "Could not get contact with ID: " + address);
+    } else {
+      Log.w("ACL", "Found contact with address: " + address);
+    }
+    scd.setContactIsTrusted(contact, false, threadId);
+    scd.deleteContact(address);
+
+    // Disable recipient approved / approvedMe / autodownload then delete the recipient
+    RecipientDatabase rd = DatabaseComponent.get(context).recipientDatabase();
+    Recipient r = getRecipientForThreadId(threadId);
+
+    // Disable recipient status'
+    rd.setApproved(r, false);
+    rd.setApprovedMe(r, false);
+    rd.setAutoDownloadAttachments(r, false);
+
+    // Delete the recipient from the database
+    rd.deleteRecipient(address);
+
+    // Unblock the recipient in the storage
+    MessagingModuleConfiguration.getShared()
+      .getStorage()
+      .setBlocked(Collections.singletonList(r), false, false); // Final false indicates this is not from a config update
+
+    deleteThread(threadId);
+    SessionMetaProtocol.clearReceivedMessages();
     addressCache.entrySet().removeIf(entry -> entry.getValue().toString().equals(address));
   }
 

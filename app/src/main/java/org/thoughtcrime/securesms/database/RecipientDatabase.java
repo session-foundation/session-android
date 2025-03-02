@@ -5,14 +5,10 @@ import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
 import com.annimon.stream.Stream;
-
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.Util;
@@ -24,7 +20,6 @@ import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
