@@ -54,8 +54,6 @@ import javax.inject.Singleton
 @Singleton
 class GroupPollerManager @Inject constructor(
     configFactory: ConfigFactory,
-    groupManagerV2: Lazy<GroupManagerV2>,
-    storage: StorageProtocol,
     lokiApiDatabase: LokiAPIDatabaseProtocol,
     clock: SnodeClock,
     preferences: TextSecurePreferences,
@@ -113,8 +111,6 @@ class GroupPollerManager @Inject constructor(
                                 scope = scope,
                                 groupId = groupId,
                                 configFactoryProtocol = configFactory,
-                                groupManagerV2 = groupManagerV2.get(),
-                                storage = storage,
                                 lokiApiDatabase = lokiApiDatabase,
                                 clock = clock,
                                 appVisibilityManager = appVisibilityManager,
