@@ -36,9 +36,9 @@ class HomeAdapter(
         }
 
     override fun getItemId(position: Int): Long  {
-        when (val item = data.items[position]) {
-            is HomeViewModel.Item.MessageRequests -> return NO_ID
-            is HomeViewModel.Item.Thread -> return item.thread.threadId
+        return when (val item = data.items[position]) {
+            is HomeViewModel.Item.MessageRequests -> NO_ID
+            is HomeViewModel.Item.Thread          -> item.thread.threadId
         }
     }
 
@@ -56,7 +56,9 @@ class HomeAdapter(
             ITEM_TYPE_CONVO -> {
                 val conversationView = LayoutInflater.from(parent.context).inflate(R.layout.view_conversation, parent, false) as ConversationView
                 val viewHolder = ConversationViewHolder(conversationView)
-                viewHolder.view.setOnClickListener { viewHolder.view.thread?.let { listener.onConversationClick(it) } }
+                viewHolder.view.setOnClickListener { viewHolder.view.thread?.let { threadRecord ->
+                    listener.onConversationClick(threadRecord) }
+                }
                 viewHolder.view.setOnLongClickListener {
                     viewHolder.view.thread?.let { listener.onLongConversationClick(it) }
                     true

@@ -32,10 +32,11 @@ import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
+import org.session.libsession.messaging.contacts.Contact;
+import org.session.libsession.messaging.jobs.BatchMessageReceiveJob;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupRecord;
@@ -61,6 +62,8 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,6 +82,7 @@ public class ThreadDatabase extends Database {
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
+  // Map of threadID -> Address
   private final Map<Long, Address> addressCache = new HashMap<>();
 
   public  static final String TABLE_NAME             = "thread";
@@ -225,7 +229,7 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  private void deleteThread(long threadId) {
+  public void deleteThread(long threadId) {
     Recipient recipient = getRecipientForThreadId(threadId);
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     int numberRemoved = db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
@@ -605,6 +609,7 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  // Note: Deleting a conversation deliberately does NOT delete the contact - we merely delete the convo.
   public void deleteConversation(long threadId) {
     DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);
@@ -614,6 +619,53 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
     SessionMetaProtocol.clearReceivedMessages();
+  }
+
+  // Remove contact from database
+  public void deleteContactZZ(String address) {
+    long threadId = getThreadIdIfExistsFor(address);
+
+    // Mark contact as untrusted and delete.
+    // Note: You would think simple deletion would be enough but it isn't - hard to say what's getting cached.
+    SessionContactDatabase scd = DatabaseComponent.get(context).sessionContactDatabase();
+    Contact contact = scd.getContactWithAccountID(address);
+    if (contact == null) {
+      Log.w("ACL", "Could not get contact with ID: " + address);
+    } else {
+      Log.w("ACL", "Found contact with address: " + address);
+      scd.setContactIsTrusted(contact, false, threadId);
+    }
+
+    scd.deleteContact(address);
+    scd.notifyRecipientListeners();
+
+
+
+    // Disable recipient approved / approvedMe / autodownload then delete the recipient
+    RecipientDatabase rd = DatabaseComponent.get(context).recipientDatabase();
+    Recipient r = getRecipientForThreadId(threadId);
+
+    // Disable recipient status'
+    rd.setApproved(r, false);
+    rd.setApprovedMe(r, false);
+    rd.setAutoDownloadAttachments(r, false);
+
+    Recipient.removeCached(r.getAddress());
+
+    // Delete the recipient from the database
+    rd.deleteRecipient(address);
+
+    DatabaseComponent.get(context).threadDatabase().getApprovedConversationList();
+
+
+    // Unblock the recipient in the storage
+    MessagingModuleConfiguration.getShared()
+      .getStorage()
+      .setBlocked(Collections.singletonList(r), false, false); // Final false indicates this is not from a config update
+
+    deleteConversation(threadId);
+
+    addressCache.entrySet().removeIf(entry -> entry.getValue().toString().equals(address));
   }
 
   public long getThreadIdIfExistsFor(String address) {

@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.TaskStackBuilder;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 

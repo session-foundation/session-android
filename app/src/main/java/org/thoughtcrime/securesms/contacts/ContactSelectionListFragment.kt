@@ -59,8 +59,8 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.recyclerView.layoutManager = LinearLayoutManager(activity)
-        binding.recyclerView.adapter = listAdapter
+        binding.homeActivityRecyclerView.layoutManager = LinearLayoutManager(activity)
+        binding.homeActivityRecyclerView.adapter = listAdapter
     }
 
     override fun onStop() {
@@ -103,7 +103,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
         }
         listAdapter.items = items
         binding.loader.visibility = View.GONE
-        binding.recyclerView.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
+        binding.homeActivityRecyclerView.visibility = if (items.isEmpty()) View.GONE else View.VISIBLE
         binding.emptyStateContainer.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
     }
 

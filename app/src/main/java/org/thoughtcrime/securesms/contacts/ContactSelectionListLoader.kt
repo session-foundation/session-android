@@ -3,9 +3,9 @@ package org.thoughtcrime.securesms.contacts
 import android.content.Context
 import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.thoughtcrime.securesms.util.ContactUtilities
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.AsyncLoader
+import org.thoughtcrime.securesms.util.ContactUtilities
 
 sealed class ContactSelectionListItem {
     class Header(val name: String) : ContactSelectionListItem()
