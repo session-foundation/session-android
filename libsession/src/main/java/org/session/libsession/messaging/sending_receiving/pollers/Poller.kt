@@ -98,7 +98,7 @@ class Poller(
     // region Private API
     private suspend fun setUpPolling() {
         val pollPool = hashSetOf<Snode>() // pollPool is the list of snodes we can use while rotating snodes from our swarm
-        var errorIncrement = 1.0f
+        var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
         while(true){
             Log.d(TAG, "Polling...")
