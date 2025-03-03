@@ -183,7 +183,7 @@ class Poller(
         }
     }
 
-    //todo we will need to modify this further to fit within the new coroutine setup
+    //todo we will need to modify this further to fit within the new coroutine setup (currently used by ApplicationContext which is a java class)
     private fun pollUserProfile(snode: Snode) {
         val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
         val hashesToExtend = mutableSetOf<String>()
