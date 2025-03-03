@@ -355,13 +355,14 @@ class GroupPoller(
             // then we will remove this snode from our swarm nodes set
             if (error != null && currentSnode != null) {
                 val badResponse = (sequenceOf(error) + error.suppressedExceptions.asSequence())
-                    .firstOrNull { it.getRootCause<BatchResponse.Error>()?.item?.isServerError == true }
+                    .firstOrNull { err ->
+                        err.getRootCause<BatchResponse.Error>()?.item?.let { it.isServerError || it.isSnodeNoLongerPartOfSwarm } == true
+                    }
 
                 if (badResponse != null) {
                     Log.e(TAG, "Group polling failed due to a server error", badResponse)
+                    pollState.swarmNodes -= currentSnode!!
                 }
-
-                pollState.swarmNodes -= currentSnode!!
             }
         }
 

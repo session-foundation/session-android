@@ -16,6 +16,9 @@ data class BatchResponse @JsonCreator constructor(
 
         val isServerError: Boolean
             get() = code in 500..599
+
+        val isSnodeNoLongerPartOfSwarm: Boolean
+            get() = code == 421
     }
 
     data class Error(val item: Item)
