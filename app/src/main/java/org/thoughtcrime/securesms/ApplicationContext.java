@@ -466,7 +466,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     private void setUpPollingIfNeeded() {
         String userPublicKey = textSecurePreferences.getLocalNumber();
         if (userPublicKey == null) return;
-        poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        if(poller == null) {
+            poller = new Poller(configFactory, storage, lokiAPIDatabase);
+        }
     }
 
     public void startPollingIfNeeded() {
