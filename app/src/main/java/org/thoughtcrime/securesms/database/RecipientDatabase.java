@@ -348,14 +348,8 @@ public class RecipientDatabase extends Database {
   // Delete a recipient with the given address from the database
   public void deleteRecipient(@NonNull String recipientAddress) {
     SQLiteDatabase db = getWritableDatabase();
-    db.beginTransaction();
-    try {
-      int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
-      db.setTransactionSuccessful();
-      if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
-    } finally {
-      db.endTransaction();
-    }
+    int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
+    if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
     notifyRecipientListeners();
   }
 

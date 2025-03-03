@@ -93,6 +93,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         if (rowsAffected == 0) {
             Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
         }
+        notifyConversationListListeners()
     }
 
     fun contactFromCursor(cursor: Cursor): Contact {

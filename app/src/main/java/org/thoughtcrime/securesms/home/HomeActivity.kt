@@ -33,6 +33,7 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -118,7 +119,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     // The search adapter has to be lazy so we get a chance to set up the threadDB, which we use to delete contacts
     private val globalSearchAdapter by lazy {
-        GlobalSearchAdapter(context = this, threadDB = threadDb) { model ->
+        GlobalSearchAdapter(context = this) { model ->
             when (model) {
                 is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
                     model.messageResult.run {

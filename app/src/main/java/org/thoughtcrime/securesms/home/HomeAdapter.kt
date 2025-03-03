@@ -56,8 +56,8 @@ class HomeAdapter(
             ITEM_TYPE_CONVO -> {
                 val conversationView = LayoutInflater.from(parent.context).inflate(R.layout.view_conversation, parent, false) as ConversationView
                 val viewHolder = ConversationViewHolder(conversationView)
-                viewHolder.view.setOnClickListener { viewHolder.view.thread?.let {
-                    listener.onConversationClick(it) }
+                viewHolder.view.setOnClickListener { viewHolder.view.thread?.let { threadRecord ->
+                    listener.onConversationClick(threadRecord) }
                 }
                 viewHolder.view.setOnLongClickListener {
                     viewHolder.view.thread?.let { listener.onLongConversationClick(it) }

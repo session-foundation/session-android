@@ -211,6 +211,7 @@ interface StorageProtocol {
     fun getContactWithAccountID(accountID: String): Contact?
     fun getAllContacts(): Set<Contact>
     fun setContact(contact: Contact)
+    fun deleteContactWithAccountId(accountId: String)
     fun getRecipientForThread(threadId: Long): Recipient?
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)

@@ -23,13 +23,11 @@ import org.session.libsession.messaging.contacts.Contact as ContactModel
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 
 class GlobalSearchAdapter(
     val context: Context,
-    val threadDB: ThreadDatabase,
     private val modelCallback: (Model) -> Unit
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -173,7 +171,7 @@ class GlobalSearchAdapter(
                         true
                     }
                     R.id.action_delete -> {
-                        threadDB.deleteContact(model.contact.accountID)
+                        MessagingModuleConfiguration.shared.storage.deleteContactWithAccountId(model.contact.accountID)
                         removeItem(model)
                         true
                     }

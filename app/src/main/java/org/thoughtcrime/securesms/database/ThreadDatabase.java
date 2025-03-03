@@ -33,6 +33,7 @@ import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.contacts.Contact;
+import org.session.libsession.messaging.jobs.BatchMessageReceiveJob;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
@@ -228,7 +229,7 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  private void deleteThread(long threadId) {
+  public void deleteThread(long threadId) {
     Recipient recipient = getRecipientForThreadId(threadId);
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     int numberRemoved = db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
@@ -621,7 +622,7 @@ public class ThreadDatabase extends Database {
   }
 
   // Remove contact from database
-  public void deleteContact(String address) {
+  public void deleteContactZZ(String address) {
     long threadId = getThreadIdIfExistsFor(address);
 
     // Mark contact as untrusted and delete.
@@ -632,9 +633,13 @@ public class ThreadDatabase extends Database {
       Log.w("ACL", "Could not get contact with ID: " + address);
     } else {
       Log.w("ACL", "Found contact with address: " + address);
+      scd.setContactIsTrusted(contact, false, threadId);
     }
-    scd.setContactIsTrusted(contact, false, threadId);
+
     scd.deleteContact(address);
+    scd.notifyRecipientListeners();
+
+
 
     // Disable recipient approved / approvedMe / autodownload then delete the recipient
     RecipientDatabase rd = DatabaseComponent.get(context).recipientDatabase();
@@ -645,16 +650,21 @@ public class ThreadDatabase extends Database {
     rd.setApprovedMe(r, false);
     rd.setAutoDownloadAttachments(r, false);
 
+    Recipient.removeCached(r.getAddress());
+
     // Delete the recipient from the database
     rd.deleteRecipient(address);
+
+    DatabaseComponent.get(context).threadDatabase().getApprovedConversationList();
+
 
     // Unblock the recipient in the storage
     MessagingModuleConfiguration.getShared()
       .getStorage()
       .setBlocked(Collections.singletonList(r), false, false); // Final false indicates this is not from a config update
 
-    deleteThread(threadId);
-    SessionMetaProtocol.clearReceivedMessages();
+    deleteConversation(threadId);
+
     addressCache.entrySet().removeIf(entry -> entry.getValue().toString().equals(address));
   }
 

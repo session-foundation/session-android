@@ -16,6 +16,7 @@ import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
+import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -85,9 +86,11 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
@@ -559,7 +562,7 @@ open class Storage @Inject constructor(
         preferences.setProfileAvatarId(0)
         preferences.setProfilePictureURL(null)
 
-        Recipient.removeCached(fromSerialized(userPublicKey))
+        Recipient.removeCached(fromSerialized(userPublicKey)) // ACL HERE?!?!?!
         if (clearConfig) {
             configFactory.withMutableUserConfigs {
                 it.userProfile.setPic(UserPic.DEFAULT)
@@ -1257,6 +1260,42 @@ open class Storage @Inject constructor(
         val recipientHash = profileManager.contactUpdatedInternal(contact)
         val recipient = Recipient.from(context, address, false)
         setRecipientHash(recipient, recipientHash)
+    }
+
+    override fun deleteContactWithAccountId(accountId: String) {
+        val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
+
+        // Mark contact as untrusted and delete.
+        // Note: You would think simple deletion would be enough but it isn't - hard to say what's getting cached.
+        val scd = get(context).sessionContactDatabase()
+        val contact = scd.getContactWithAccountID(accountId)
+        if (contact == null) {
+            Log.w("ACL", "Could not get contact with ID: $accountId")
+        } else {
+            Log.w("ACL", "Found contact with address: $accountId")
+            scd.setContactIsTrusted(contact, false, threadId)
+        }
+
+        scd.deleteContact(accountId)
+        scd.notifyRecipientListeners()
+
+        // Disable recipient approved / approvedMe / auto-download flags then delete the recipient
+        val rd = get(context).recipientDatabase()
+        val r: Recipient? = threadDatabase.getRecipientForThreadId(threadId)
+        r?.let {
+            Recipient.removeCached(r.address)
+            setBlocked(listOf(r),false,false)
+            rd.deleteRecipient(r.address.toString())
+
+            // Careful: Call the versions in this Storage class, which will call through to the RecipientDatabase versions amongst other things
+            setRecipientApproved(r, false)
+            setRecipientApprovedMe(r, false)
+            setAutoDownloadAttachments(r, false)
+
+        }
+
+        // Delete the recipient from the database
+        deleteConversation(threadId)
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
