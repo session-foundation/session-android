@@ -344,13 +344,9 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             return;
         }
 
+        startPollingIfNeeded();
+
         ThreadUtils.queue(()->{
-            if (poller != null) {
-                poller.setCaughtUp(false);
-            }
-
-            startPollingIfNeeded();
-
             OpenGroupManager.INSTANCE.startPolling();
             return Unit.INSTANCE;
         });

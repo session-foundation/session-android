@@ -52,7 +52,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller poller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (poller != null) {
-      isCaughtUp = isCaughtUp && poller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !poller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -69,7 +69,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -86,7 +86,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
@@ -103,7 +103,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
     Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
     if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && lokiPoller.isCaughtUp();
+      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
     isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
