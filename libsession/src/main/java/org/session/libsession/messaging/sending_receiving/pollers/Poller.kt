@@ -32,6 +32,9 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeAPI.KEY_BODY
+import org.session.libsession.snode.SnodeAPI.KEY_CODE
+import org.session.libsession.snode.SnodeAPI.KEY_RESULTS
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
@@ -120,11 +123,11 @@ class Poller(
             var pollDelay = RETRY_INTERVAL_MS
             try {
                 poll(currentNode)
-                errorIncrement = 1f
+                retryScalingFactor = 1f
             } catch (e: Exception){
                 Log.e(TAG, "Error while polling:", e)
-                pollDelay = minOf(MAX_RETRY_INTERVAL_MS, (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * errorIncrement)).toLong())
-                errorIncrement++
+                pollDelay = minOf(MAX_RETRY_INTERVAL_MS, (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong())
+                retryScalingFactor++
             } finally {
                 isPolling = false
             }
@@ -215,12 +218,12 @@ class Poller(
         if (requests.isNotEmpty()) {
             SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
 
-                val responseList = (rawResponses["results"] as List<RawResponse>)
+                val responseList = (rawResponses[KEY_RESULTS] as List<RawResponse>)
                 responseList.getOrNull(0)?.let { rawResponse ->
-                    if (rawResponse["code"] as? Int != 200) {
-                        Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                    if (rawResponse[KEY_CODE] as? Int != 200) {
+                        Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}")
                     } else {
-                        val body = rawResponse["body"] as? RawResponse
+                        val body = rawResponse[KEY_BODY] as? RawResponse
                         if (body == null) {
                             Log.e(TAG, "Batch sub-request didn't contain a body")
                         } else {
@@ -291,7 +294,7 @@ class Poller(
 
         if (requests.isNotEmpty()) {
             val rawResponses = SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).await()
-            val responseList = (rawResponses["results"] as List<RawResponse>)
+            val responseList = (rawResponses[KEY_RESULTS] as List<RawResponse>)
             // in case we had null configs, the array won't be fully populated
             // index of the sparse array key iterator should be the request index, with the key being the namespace
             UserConfigType.entries
@@ -299,11 +302,11 @@ class Poller(
                 .filter { (_, i) -> i >= 0 }
                 .forEach { (configType, requestIndex) ->
                     responseList.getOrNull(requestIndex)?.let { rawResponse ->
-                        if (rawResponse["code"] as? Int != 200) {
-                            Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}")
+                        if (rawResponse[KEY_CODE] as? Int != 200) {
+                            Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}")
                             return@forEach
                         }
-                        val body = rawResponse["body"] as? RawResponse
+                        val body = rawResponse[KEY_BODY] as? RawResponse
                         if (body == null) {
                             Log.e(TAG, "Batch sub-request didn't contain a body")
                             return@forEach
@@ -317,11 +320,11 @@ class Poller(
             val personalResponseIndex = requestSparseArray.indexOfKey(Namespace.DEFAULT())
             if (personalResponseIndex >= 0) {
                 responseList.getOrNull(personalResponseIndex)?.let { rawResponse ->
-                    if (rawResponse["code"] as? Int != 200) {
+                    if (rawResponse[KEY_CODE] as? Int != 200) {
                         // If we got a non-success response then the snode might be bad
-                        throw(RuntimeException("Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse["code"] as? Int) ?: "[unknown]"}"))
+                        throw(RuntimeException("Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}"))
                     } else {
-                        val body = rawResponse["body"] as? RawResponse
+                        val body = rawResponse[KEY_BODY] as? RawResponse
                         if (body == null) {
                             throw(RuntimeException("Batch sub-request for personal messages didn't contain a body"))
                         } else {
