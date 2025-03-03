@@ -13,5 +13,17 @@ data class BatchResponse @JsonCreator constructor(
     ) {
         val isSuccessful: Boolean
             get() = code in 200..299
+
+        val isServerError: Boolean
+            get() = code in 500..599
+    }
+
+    data class Error(val item: Item)
+        : RuntimeException("Batch request failed with code ${item.code}") {
+        init {
+            require(!item.isSuccessful) {
+                "This response item does not represent an error state"
+            }
+        }
     }
 }

@@ -4,6 +4,8 @@ package org.session.libsession.snode
 
 import android.os.SystemClock
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.NullNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.goterl.lazysodium.exceptions.SodiumException
 import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.PwHash
@@ -657,14 +659,14 @@ object SnodeAPI {
                         // back through the request's callback.
                         for ((req, resp) in batch.zip(responses.results)) {
                             val result = runCatching {
-                                check(resp.code == 200) {
-                                    "Error calling \"${req.request.method}\" with code = ${resp.code}, msg = ${resp.body}"
+                                if (!resp.isSuccessful) {
+                                    throw BatchResponse.Error(resp)
                                 }
 
                                 JsonUtil.fromJson(resp.body, req.responseType)
                             }
 
-                            runCatching{
+                            runCatching {
                                 req.callback.send(result)
                             }
                         }
