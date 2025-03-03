@@ -49,7 +49,7 @@
             android:hint="@string/message"
             android:textColorHint="?attr/input_bar_text_hint"
             android:textColor="?input_bar_text_user"
-            android:textSize="@dimen/small_font_size" />
+            android:textSize="@dimen/medium_font_size" />
 
         <RelativeLayout
             android:id="@+id/microphoneOrSendButtonContainer"
