@@ -129,6 +129,7 @@ import kotlin.Deprecated;
 import kotlin.Unit;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
+import network.loki.messenger.libsession_util.util.Logger;
 
 /**
  * Will be called once when the TextSecure process is created.
@@ -437,6 +438,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
             persistentLogger = new PersistentLogger(this);
         }
         Log.initialize(new AndroidLogger(), persistentLogger);
+        Logger.initLogger();
     }
 
     private void initializeCrashHandling() {
