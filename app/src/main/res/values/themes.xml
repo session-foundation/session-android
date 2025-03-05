@@ -219,6 +219,7 @@
         <item name="colorControlActivated">?colorAccent</item>
         <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
+        <item name="disabled">@color/classic_light_1</item>
         <item name="android:textColorPrimary">@color/classic_dark_6</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
         <item name="android:textColorTertiary">@color/classic_dark_5</item>
@@ -303,6 +304,7 @@
         <item name="colorControlActivated">?colorAccent</item>
         <item name="warning">@color/rust</item>
         <item name="danger">@color/danger_light</item>
+        <item name="disabled">@color/classic_dark_5</item>
         <item name="android:textColorPrimary">@color/classic_light_0</item>
         <item name="android:textColorSecondary">@color/classic_light_1</item>
         <item name="android:textColorTertiary">@color/classic_light_1</item>
@@ -395,6 +397,7 @@
         <item name="colorControlActivated">?colorAccent</item>
         <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
+        <item name="disabled">@color/classic_light_1</item>
         <item name="android:textColorPrimary">@color/ocean_dark_7</item>
         <item name="android:textColorSecondary">@color/ocean_dark_5</item>
         <item name="android:textColorTertiary">@color/ocean_dark_5</item>
@@ -482,6 +485,7 @@
         <item name="colorControlActivated">?colorAccent</item>
         <item name="warning">@color/rust</item>
         <item name="danger">@color/danger_light</item>
+        <item name="disabled">@color/classic_dark_5</item>
         <item name="android:textColorPrimary">@color/ocean_light_1</item>
         <item name="android:textColorSecondary">@color/ocean_light_2</item>
         <item name="android:textColorTertiary">@color/ocean_light_2</item>
@@ -596,6 +600,7 @@
         <item name="elementBorderColor">@color/classic_dark_3</item>
         <item name="warning">@color/accent_orange</item>
         <item name="danger">@color/danger_dark</item>
+        <item name="disabled">@color/classic_light_1</item>
         <item name="textColorAlert">@color/classic_dark_6</item>
 
         <!-- Home screen -->

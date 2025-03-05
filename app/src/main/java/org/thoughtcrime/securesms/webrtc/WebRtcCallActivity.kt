@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.IntentFilter
+import android.content.res.ColorStateList
 import android.graphics.Outline
 import android.media.AudioManager
 import android.os.Build
@@ -30,6 +31,7 @@ import org.apache.commons.lang3.time.DurationFormatUtils
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -76,6 +78,9 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     private val CALL_DURATION_FORMAT_HOURS = "HH:mm:ss"
     private val CALL_DURATION_FORMAT_MINS = "mm:ss"
     private val ONE_HOUR: Long = Duration.ofHours(1).toMillis()
+
+    private val buttonColorEnabled by lazy { getColor(R.color.white) }
+    private val buttonColorDisabled by lazy { getColorFromAttr(R.attr.disabled) }
 
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
     val TEMP_SEND_PRE_OFFER = "Creating Call"
@@ -464,6 +469,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
                     // handle buttons
                     binding.enableCameraButton.isSelected = state.userVideoEnabled
+                    binding.switchCameraButton.isEnabled = state.userVideoEnabled
+                    binding.switchCameraButton.imageTintList =
+                        ColorStateList.valueOf(
+                            if(state.userVideoEnabled) buttonColorEnabled
+                            else buttonColorDisabled
+                        )
                 }
             }
         }
