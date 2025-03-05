@@ -49,6 +49,7 @@ import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_SENDING_ICE
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.NETWORK_FAILURE
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.RECIPIENT_UNAVAILABLE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
+import java.time.Duration
 
 @AndroidEntryPoint
 class WebRtcCallActivity : ScreenLockActionBarActivity() {
@@ -61,8 +62,6 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
 
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
 
-        private const val CALL_DURATION_FORMAT = "HH:mm:ss"
-
         fun getCallActivityIntent(context: Context): Intent{
             return Intent(context, WebRtcCallActivity::class.java)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
@@ -73,6 +72,10 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
     private lateinit var binding: ActivityWebrtcBinding
     private var uiJob: Job? = null
     private var hangupReceiver: BroadcastReceiver? = null
+
+    private val CALL_DURATION_FORMAT_HOURS = "HH:mm:ss"
+    private val CALL_DURATION_FORMAT_MINS = "mm:ss"
+    private val ONE_HOUR: Long = Duration.ofHours(1).toMillis()
 
     //todo PHONE TEMP STRINGS THAT WILL NEED TO BE REPLACED WITH CS STRINGS - putting them all here to easily discard them later
     val TEMP_SEND_PRE_OFFER = "Creating Call"
@@ -400,9 +403,12 @@ class WebRtcCallActivity : ScreenLockActionBarActivity() {
                     val startTime = viewModel.callStartTime
                     if (startTime != -1L) {
                         if(viewModel.currentCallState == CALL_CONNECTED) {
+                            val duration = System.currentTimeMillis() - startTime
+                            // apply format based on whether the call is more than 1h long
+                            val durationFormat = if (duration > ONE_HOUR) CALL_DURATION_FORMAT_HOURS else CALL_DURATION_FORMAT_MINS
                             binding.callTitle.text = DurationFormatUtils.formatDuration(
-                                System.currentTimeMillis() - startTime,
-                                CALL_DURATION_FORMAT
+                                duration,
+                                durationFormat
                             )
                         }
                     }
