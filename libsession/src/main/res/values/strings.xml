@@ -262,6 +262,7 @@
     <string name="copied">Copied</string>
     <string name="copy">Copy</string>
     <string name="create">Create</string>
+    <string name="creatingCall">Creating Call</string>
     <string name="cut">Cut</string>
     <string name="databaseErrorGeneric">A database error occurred.\n\nExport your application logs to share for troubleshooting. If this is unsuccessful, reinstall {app_name} and restore your account.\n\nWarning: This will result in loss of all messages, attachments, and account data older than two weeks.</string>
     <string name="databaseErrorTimeout">We\'ve noticed {app_name} is taking a long time to start.\n\nYou can continue to wait, export your device logs to share for troubleshooting, or try restarting {app_name}.</string>
@@ -496,6 +497,7 @@
     <string name="groupSetDisplayPicture">Set Group Display Picture</string>
     <string name="groupUnknown">Unknown Group</string>
     <string name="groupUpdated">Group updated</string>
+    <string name="handlingConnectionCandidates">Handling Connection Candidates</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Help us translate {app_name}</string>
     <string name="helpReportABug">Report a bug</string>
@@ -781,6 +783,9 @@
     <string name="readReceipts">Read Receipts</string>
     <string name="readReceiptsDescription">Show read receipts for all messages you send and receive.</string>
     <string name="received">Received:</string>
+    <string name="receivedAnswer">Received Answer</string>
+    <string name="receivingCallOffer">Receiving Call Offer</string>
+    <string name="receivingPreOffer">Receiving Pre Offer</string>
     <string name="recommended">Recommended</string>
     <string name="recoveryPasswordBannerDescription">Save your recovery password to make sure you don\'t lose access to your account.</string>
     <string name="recoveryPasswordBannerTitle">Save your recovery password</string>
@@ -835,6 +840,8 @@
     <string name="selectAll">Select All</string>
     <string name="send">Send</string>
     <string name="sending">Sending</string>
+    <string name="sendingCallOffer">Sending Call Offer</string>
+    <string name="sendingConnectionCandidates">Sending Connection Candidates</string>
     <string name="sent">Sent:</string>
     <string name="sessionAppearance">Appearance</string>
     <string name="sessionClearData">Clear Data</string>
