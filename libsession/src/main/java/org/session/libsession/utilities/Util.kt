@@ -45,7 +45,7 @@ object Util {
     @JvmStatic
     @Throws(IOException::class)
     fun copy(`in`: InputStream, out: OutputStream?): Long {
-        val buffer = ByteArray(8192)
+        val buffer = ByteArray(24560)
         var read: Int
         var total: Long = 0
         while (`in`.read(buffer).also { read = it } != -1) {

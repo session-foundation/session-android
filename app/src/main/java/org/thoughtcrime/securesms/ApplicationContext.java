@@ -67,7 +67,6 @@ import org.session.libsignal.utilities.HTTP;
 import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.ThreadUtils;
-import org.signal.aesgcmprovider.AesGcmProvider;
 import org.thoughtcrime.securesms.components.TypingStatusSender;
 import org.thoughtcrime.securesms.configs.ConfigUploader;
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
@@ -127,6 +126,8 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.android.HiltAndroidApp;
 import kotlin.Deprecated;
 import kotlin.Unit;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.DispatchersKt;
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 import network.loki.messenger.libsession_util.util.Logger;
@@ -410,22 +411,22 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     // Loki
 
     private void initializeSecurityProvider() {
-        try {
-            Class.forName("org.signal.aesgcmprovider.AesGcmCipher");
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, "Failed to find AesGcmCipher class");
-            throw new ProviderInitializationException();
-        }
+//        try {
+//            Class.forName("org.signal.aesgcmprovider.AesGcmCipher");
+//        } catch (ClassNotFoundException e) {
+//            Log.e(TAG, "Failed to find AesGcmCipher class");
+//            throw new ProviderInitializationException();
+//        }
+//
+//        int aesPosition = Security.insertProviderAt(new AesGcmProvider(), 1);
+//        Log.i(TAG, "Installed AesGcmProvider: " + aesPosition);
+//
+//        if (aesPosition < 0) {
+//            Log.e(TAG, "Failed to install AesGcmProvider()");
+//            throw new ProviderInitializationException();
+//        }
 
-        int aesPosition = Security.insertProviderAt(new AesGcmProvider(), 1);
-        Log.i(TAG, "Installed AesGcmProvider: " + aesPosition);
-
-        if (aesPosition < 0) {
-            Log.e(TAG, "Failed to install AesGcmProvider()");
-            throw new ProviderInitializationException();
-        }
-
-        int conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2);
+        int conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 1);
         Log.i(TAG, "Installed Conscrypt provider: " + conscryptPosition);
 
         if (conscryptPosition < 0) {
@@ -532,4 +533,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         }
     }
 
+    static {
+        System.setProperty(DispatchersKt.IO_PARALLELISM_PROPERTY_NAME, "10");
+    }
 }

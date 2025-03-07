@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.selects.onTimeout
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -83,7 +84,7 @@ object SnodeAPI {
     private const val minimumSnodePoolCount = 12
     private const val minimumSwarmSnodeCount = 3
     // Use port 4433 to enforce pinned certificates
-    private val seedNodePort = 4443
+    private val seedNodePort = 443
 
     private val seedNodePool = if (SnodeModule.shared.useTestNet) setOf(
         "http://public.loki.foundation:38157"

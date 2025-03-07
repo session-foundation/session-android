@@ -19,6 +19,7 @@ import javax.crypto.ShortBufferException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+//TODO: Rewrite this class so that it doesn't rely on specific cipher length assumptions
 public class ProfileCipherInputStream extends FilterInputStream {
 
   private final Cipher cipher;
@@ -35,12 +36,9 @@ public class ProfileCipherInputStream extends FilterInputStream {
       Util.readFully(in, nonce);
 
       this.cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new GCMParameterSpec(128, nonce));
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    } catch (NoSuchPaddingException e) {
-      throw new AssertionError(e);
-    } catch (InvalidAlgorithmParameterException e) {
-      throw new AssertionError(e);
+    } catch (NoSuchAlgorithmException | NoSuchPaddingException |
+             InvalidAlgorithmParameterException e) {
+      throw new RuntimeException(e);
     } catch (InvalidKeyException e) {
       throw new IOException(e);
     }
@@ -67,21 +65,21 @@ public class ProfileCipherInputStream extends FilterInputStream {
       synchronized (CIPHER_LOCK) {
         if (read == -1) {
           if (cipher.getOutputSize(0) > outputLength) {
-            throw new AssertionError("Need: " + cipher.getOutputSize(0) + " but only have: " + outputLength);
+            throw new RuntimeException("Need: " + cipher.getOutputSize(0) + " but only have: " + outputLength);
           }
 
           finished = true;
           return cipher.doFinal(output, outputOffset);
         } else {
           if (cipher.getOutputSize(read) > outputLength) {
-            throw new AssertionError("Need: " + cipher.getOutputSize(read) + " but only have: " + outputLength);
+            throw new RuntimeException("Need: " + cipher.getOutputSize(read) + " but only have: " + outputLength);
           }
 
           return cipher.update(ciphertext, 0, read, output, outputOffset);
         }
       }
     } catch (IllegalBlockSizeException | ShortBufferException e) {
-      throw new AssertionError(e);
+      throw new RuntimeException(e);
     } catch (BadPaddingException e) {
       throw new IOException(e);
     }
