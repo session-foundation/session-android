@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.util
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Intent
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -15,11 +14,12 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.HomeActivity
 import javax.inject.Inject
 import androidx.core.content.edit
-import kotlinx.coroutines.tasks.await
+import org.session.libsession.messaging.notifications.TokenFetcher
 
 class ClearDataUtils @Inject constructor(
     private val application: Application,
     private val configFactory: ConfigFactory,
+    private val tokenFetcher: TokenFetcher,
 ) {
     // Method to clear the local data - returns true on success otherwise false
     @SuppressLint("ApplySharedPref")
@@ -36,9 +36,9 @@ class ClearDataUtils @Inject constructor(
 
             // The token deletion is nice but not critical, so don't let it block the rest of the process
             runCatching {
-                FirebaseMessaging.getInstance().deleteToken().await()
+                tokenFetcher.resetToken()
             }.onFailure { e ->
-                Log.w("ClearDataUtils", "Failed to delete Firebase token: ${e.message}", e)
+                Log.w("ClearDataUtils", "Failed to reset push notification token: ${e.message}", e)
             }
         }
     }
