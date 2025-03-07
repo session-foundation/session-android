@@ -62,6 +62,8 @@ object SnodeAPI {
         get() = SnodeModule.shared.broadcaster
 
     private var snodeFailureCount: MutableMap<Snode, Int> = mutableMapOf()
+
+    // the  list of "generic" nodes we use to make non swarm specific api calls
     internal var snodePool: Set<Snode>
         get() = database.getSnodePool()
         set(newValue) { database.setSnodePool(newValue) }
@@ -306,6 +308,7 @@ object SnodeAPI {
         }
     }.unwrap()
 
+    // the list of snodes that represent the swarm for that pubkey
     fun getSwarm(publicKey: String): Promise<Set<Snode>, Exception> =
         database.getSwarm(publicKey)?.takeIf { it.size >= minimumSwarmSnodeCount }?.let(Promise.Companion::of)
             ?: getRandomSnode().bind {
