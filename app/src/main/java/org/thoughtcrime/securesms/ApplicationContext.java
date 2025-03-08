@@ -97,7 +97,7 @@ import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger;
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager;
 import org.thoughtcrime.securesms.notifications.BackgroundPollWorker;
 import org.thoughtcrime.securesms.notifications.NotificationChannels;
-import org.thoughtcrime.securesms.notifications.PushRegistrationHandler;
+import org.thoughtcrime.securesms.notifications.PushRegistrationManager;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.service.ExpiringMessageManager;
 import org.thoughtcrime.securesms.service.KeyCachingService;
@@ -162,7 +162,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject ConfigFactory configFactory;
     @Inject LastSentTimestampCache lastSentTimestampCache;
     @Inject VersionDataFetcher versionDataFetcher;
-    @Inject PushRegistrationHandler pushRegistrationHandler;
+    @Inject PushRegistrationManager pushRegistrationManager; // Exists here only to start upon app starts
     @Inject TokenFetcher tokenFetcher;
     @Inject GroupManagerV2 groupManagerV2;
     @Inject SSKEnvironment.ProfileManagerProtocol profileManager;
@@ -301,7 +301,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         HTTP.INSTANCE.setConnectedToNetwork(networkConstraint::isMet);
 
         snodeClock.start();
-        pushRegistrationHandler.run();
         configUploader.start();
         removeGroupMemberHandler.start();
         destroyedGroupSync.start();

@@ -13,7 +13,6 @@ private const val TAG = "FirebasePushNotificationService"
 class FirebasePushService : FirebaseMessagingService() {
 
     @Inject lateinit var pushReceiver: PushReceiver
-    @Inject lateinit var handler: PushRegistrationHandler
     @Inject lateinit var tokenFetcher: TokenFetcher
 
     override fun onNewToken(token: String) {

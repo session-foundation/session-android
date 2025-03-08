@@ -91,6 +91,8 @@ interface ConfigFactoryProtocol {
 
     fun deleteGroupConfigs(groupId: AccountId)
 
+    // Take a snapshot of given group's auth data for signing purpose
+    fun snapshotGroupAuth(groupId: AccountId): SwarmAuth?
 }
 
 class ConfigMessage(

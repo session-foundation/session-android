@@ -16,24 +16,18 @@ import org.session.libsignal.utilities.Namespace
 import java.io.Closeable
 import java.util.Stack
 
-sealed class Config(initialPointer: Long): Closeable {
-    var pointer = initialPointer
-        private set
-
+sealed class Config(val pointer: Long) {
     init {
         check(pointer != 0L) { "Pointer is null" }
     }
 
     abstract fun namespace(): Int
 
-    private external fun free()
-
-    final override fun close() {
-        if (pointer != 0L) {
-            free()
-            pointer = 0L
-        }
+    fun finalize() {
+        free()
     }
+
+    private external fun free()
 }
 
 interface ReadableConfig {
@@ -459,18 +453,24 @@ interface ReadableGroupKeysConfig {
     fun getSubAccountToken(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
     fun currentGeneration(): Int
     fun size(): Int
+    fun copy(): ReadableGroupKeysConfig
 }
 
 interface MutableGroupKeysConfig : ReadableGroupKeysConfig {
     fun makeSubAccount(sessionId: AccountId, canWrite: Boolean = true, canDelete: Boolean = false): ByteArray
     fun loadKey(message: ByteArray, hash: String, timestampMs: Long): Boolean
     fun loadAdminKey(adminKey: ByteArray)
+
+    override fun copy(): MutableGroupKeysConfig
 }
 
 class GroupKeysConfig private constructor(
     pointer: Long,
     private val info: GroupInfoConfig,
-    private val members: GroupMembersConfig
+    private val members: GroupMembersConfig,
+    private val userSecretKey: ByteArray,
+    private val groupPublicKey: ByteArray,
+    private val groupAdminKey: ByteArray?
 ): ConfigSig(pointer), MutableGroupKeysConfig {
     companion object {
         private external fun newInstance(
@@ -491,16 +491,19 @@ class GroupKeysConfig private constructor(
         info: GroupInfoConfig,
         members: GroupMembersConfig
     ) : this(
-        newInstance(
-            userSecretKey,
-            groupPublicKey,
-            groupAdminKey,
-            initialDump,
-            info.pointer,
-            members.pointer
+        pointer = newInstance(
+            userSecretKey = userSecretKey,
+            groupPublicKey = groupPublicKey,
+            groupSecretKey = groupAdminKey,
+            initialDump = initialDump,
+            infoPtr = info.pointer,
+            members = members.pointer
         ),
-        info,
-        members
+        info = info,
+        members = members,
+        userSecretKey = userSecretKey,
+        groupPublicKey = groupPublicKey,
+        groupAdminKey = groupAdminKey
     )
 
     override fun namespace() = Namespace.GROUP_KEYS()
@@ -548,6 +551,24 @@ class GroupKeysConfig private constructor(
     external override fun currentGeneration(): Int
     external fun admin(): Boolean
     external override fun size(): Int
+
+    override fun copy(): GroupKeysConfig {
+        return GroupKeysConfig(
+            pointer = newInstance(
+                userSecretKey = userSecretKey,
+                groupPublicKey = groupPublicKey,
+                groupSecretKey = groupAdminKey,
+                initialDump = dump(),
+                infoPtr = info.pointer,
+                members = members.pointer
+            ),
+            info = info,
+            members = members,
+            userSecretKey = userSecretKey,
+            groupPublicKey = groupPublicKey,
+            groupAdminKey = groupAdminKey
+        )
+    }
 
     data class SwarmAuth(
         val subAccount: String,

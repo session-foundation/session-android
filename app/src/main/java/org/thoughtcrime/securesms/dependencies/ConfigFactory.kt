@@ -17,6 +17,7 @@ import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.MutableUserGroupsConfig
 import network.loki.messenger.libsession_util.MutableUserProfile
+import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
@@ -299,6 +300,20 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    override fun snapshotGroupAuth(groupId: AccountId): SwarmAuth? {
+        val group = getGroup(groupId) ?: return null
+        if (group.hasAdminKey()) {
+            return OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!)
+        }
+
+        val token = group.authData ?: return null
+        val keyAccess = StaticGroupKeyAccess(withGroupConfigs(groupId) {
+            it.groupKeys.copy()
+        })
+
+        return GroupSubAccountSwarmAuth(groupId, keyAccess, token)
+    }
+
     override fun decryptForUser(
         encoded: ByteArray,
         domain: String,
@@ -466,7 +481,7 @@ class ConfigFactory @Inject constructor(
         return if (group.adminKey != null) {
             OwnedSwarmAuth.ofClosedGroup(groupId, group.adminKey!!)
         } else if (group.authData != null) {
-            GroupSubAccountSwarmAuth(groupId, this, group.authData!!)
+            GroupSubAccountSwarmAuth(groupId, ConfigFactoryGroupKeyAccess(groupId), group.authData!!)
         } else {
             null
         }
@@ -482,17 +497,38 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    // Provides access to the group keys
+    private interface GroupKeysAccess {
+        fun <T> accessKeys(cb: (ReadableGroupKeysConfig) -> T): T
+    }
+
+    // Provides access to the group keys for a specific group from the ConfigFactory
+    private inner class ConfigFactoryGroupKeyAccess(val groupId: AccountId) : GroupKeysAccess {
+        override fun <T> accessKeys(cb: (ReadableGroupKeysConfig) -> T): T {
+            return withGroupConfigs(groupId) {
+                cb(it.groupKeys)
+            }
+        }
+    }
+
+    // Provides access to a group key config directly
+    private class StaticGroupKeyAccess(val groupKeysConfig: ReadableGroupKeysConfig) : GroupKeysAccess {
+        override fun <T> accessKeys(cb: (ReadableGroupKeysConfig) -> T): T {
+            return cb(groupKeysConfig)
+        }
+    }
+
     private class GroupSubAccountSwarmAuth(
         override val accountId: AccountId,
-        val factory: ConfigFactory,
+        private val keyAccess: GroupKeysAccess,
         val authData: ByteArray,
     ) : SwarmAuth {
         override val ed25519PublicKeyHex: String?
             get() = null
 
         override fun sign(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
+            return keyAccess.accessKeys {
+                val auth = it.subAccountSign(data, authData)
                 buildMap {
                     put("subaccount", auth.subAccount)
                     put("subaccount_sig", auth.subAccountSig)
@@ -502,8 +538,8 @@ class ConfigFactory @Inject constructor(
         }
 
         override fun signForPushRegistry(data: ByteArray): Map<String, String> {
-            return factory.withGroupConfigs(accountId) {
-                val auth = it.groupKeys.subAccountSign(data, authData)
+            return keyAccess.accessKeys {
+                val auth = it.subAccountSign(data, authData)
                 buildMap {
                     put("subkey_tag", auth.subAccount)
                     put("signature", auth.signature)
