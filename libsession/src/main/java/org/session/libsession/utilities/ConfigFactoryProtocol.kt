@@ -52,9 +52,12 @@ interface ConfigFactoryProtocol {
     fun saveGroupConfigs(groupId: AccountId, groupConfigs: MutableGroupConfigs)
 
     /**
-     * @param recreateConfigInstances If true, the group configs will be recreated before calling the callback. This is useful when you have received an admin key or otherwise.
+     * @param forceChangeNotification If true, the group configs will be marked as changed even if no changes were made.
+     * Normally this is not needed, as in most cases the underlying config system will be able to work out
+     * something has changed, but in some very rare cases it might not be able to, and in those cases you
+     * will need to force a change notification so that other parts of the app can react to the change.
      */
-    fun <T> withMutableGroupConfigs(groupId: AccountId, cb: (MutableGroupConfigs) -> T): T
+    fun <T> withMutableGroupConfigs(groupId: AccountId, forceChangeNotification: Boolean = false, cb: (MutableGroupConfigs) -> T): T
 
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean
     fun canPerformChange(variant: String, publicKey: String, changeTimestampMs: Long): Boolean

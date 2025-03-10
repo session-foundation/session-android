@@ -782,7 +782,8 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Update our promote state
             configFactory.withMutableGroupConfigs(
-                groupId = groupId
+                groupId = groupId,
+                forceChangeNotification = true,
             ) { configs ->
                 configs.groupKeys.loadAdminKey(adminKey)
 

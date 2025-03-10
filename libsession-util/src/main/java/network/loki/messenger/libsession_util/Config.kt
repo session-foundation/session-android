@@ -508,7 +508,7 @@ class GroupKeysConfig private constructor(
     external override fun groupKeys(): Stack<ByteArray>
     external override fun needsDump(): Boolean
     external override fun dump(): ByteArray
-    external fun loadKey(message: ByteArray,
+    private external fun loadKey(message: ByteArray,
                          hash: String,
                          timestampMs: Long,
                          infoPtr: Long,

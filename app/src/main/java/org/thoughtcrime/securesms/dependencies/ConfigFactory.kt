@@ -48,6 +48,7 @@ import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
@@ -275,10 +276,11 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withMutableGroupConfigs(
         groupId: AccountId,
+        forceChangeNotification: Boolean,
         cb: (MutableGroupConfigs) -> T
     ): T {
         return doWithMutableGroupConfigs(groupId = groupId) {
-            cb(it) to it.dumpIfNeeded(clock)
+            cb(it) to (it.dumpIfNeeded(clock) || forceChangeNotification)
         }
     }
 
@@ -323,14 +325,30 @@ class ConfigFactory @Inject constructor(
         val changed = doWithMutableGroupConfigs(groupId) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
-                configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
+                val loaded = runCatching {
+                    configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp)
+                }.onFailure { e ->
+                    Log.w("ConfigFactory", "Failed to load group key for $groupId", e)
+                }.getOrDefault(false)
+
+                loaded || acc
             }
 
             val infoMerged = info.isNotEmpty() &&
-                    configs.groupInfo.merge(info.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+                    runCatching {
+                        configs.groupInfo.merge(info.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+                    }.onFailure { e ->
+                        Log.w("ConfigFactory", "Failed to merge group info for $groupId", e)
+                    }.getOrDefault(false)
+
 
             val membersMerged = members.isNotEmpty() &&
-                    configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+                    runCatching {
+                        configs.groupMembers.merge(members.map { it.hash to it.data }.toTypedArray()).isNotEmpty()
+                    }.onFailure { e ->
+                        Log.w("ConfigFactory", "Failed to merge group members for $groupId", e)
+                    }.getOrDefault(false)
+
 
             configs.dumpIfNeeded(clock)
 
@@ -396,7 +414,7 @@ class ConfigFactory @Inject constructor(
             keysPush?.let { (hash, timestamp) ->
                 val pendingConfig = configs.groupKeys.pendingConfig()
                 if (pendingConfig != null) {
-                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer)
+                    configs.groupKeys.loadKey(pendingConfig, hash, timestamp)
                 }
             }
 
