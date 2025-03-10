@@ -17,6 +17,12 @@ abstract class Message {
     var recipient: String? = null
     var sender: String? = null
     var isSenderSelf: Boolean = false
+
+    // Convenience accessor to avoid having to `!isSenderSelf` all the time.
+    // e.g, `message.senderIsNotUs` is simpler than mentally parsing `!message.isSenderSelf`.
+    val senderIsNotUs: Boolean
+        get() = !isSenderSelf
+
     var groupPublicKey: String? = null
     var openGroupServerMessageID: Long? = null
     var serverHash: String? = null

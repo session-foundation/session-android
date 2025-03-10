@@ -121,3 +121,13 @@ fun EditText.addTextChangedListener(listener: (String) -> Unit) {
         }
     })
 }
+
+// Listener class that only accepts clicks at given interval to prevent button spam - can be used instead
+// of a standard `onClickListener` in many places. A separate mechanism exists for VisibleMessageViews to
+// prevent interfering with gestures.
+fun View.setSafeOnClickListener(clickIntervalMS: Long = 1000L, onSafeClick: (View) -> Unit) {
+    val safeClickListener = SafeClickListener(minimumClickIntervalMS = clickIntervalMS) {
+        onSafeClick(it)
+    }
+    setOnClickListener(safeClickListener)
+}
