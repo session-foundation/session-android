@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -32,12 +33,14 @@ import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -182,10 +185,22 @@ class VisibleMessageContentView : ConstraintLayout {
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
                 // Show any message that came with the attached document
                 hideBody = false
-
+                Log.w("", "*** HAVE DOC: ${message.slideDeck.documentSlide?.filename}")
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
+                    message.slideDeck.documentSlide?.let { slide ->
+                        onContentClick.add {
+                            // open the document when tapping it
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            intent.setDataAndType(
+                                PartAuthority.getAttachmentPublicUri(slide.uri),
+                                slide.contentType
+                            )
+                            context.startActivity(intent)
+                        }
+                    }
                 } else {
                     // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
@@ -194,7 +209,9 @@ class VisibleMessageContentView : ConstraintLayout {
                             getTextColor(context,message),
                             attachment
                             )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
+                        onContentClick.add {
+                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
+                        }
                     }
                 }
             }
