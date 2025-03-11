@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -10,8 +11,10 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -196,7 +199,17 @@ class VisibleMessageContentView : ConstraintLayout {
                                 PartAuthority.getAttachmentPublicUri(slide.uri),
                                 slide.contentType
                             )
-                            context.startActivity(intent)
+
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: ActivityNotFoundException) {
+                                Log.e("VisibleMessageContentView", "Error opening document", e)
+                                Toast.makeText(
+                                    context,
+                                    R.string.attachmentsErrorOpen,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     }
                 } else {
