@@ -36,7 +36,16 @@ jobs:
           java-version: '17'
           cache: gradle
       - name: Build and test with Gradle
+        id: build
         run: ./gradlew ${{ matrix.build_commands }} ${{ matrix.extra_build_command_options }}
+
+      - name: Upload test results when failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: app/build/reports/tests
+          if-no-files-found: warning
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
