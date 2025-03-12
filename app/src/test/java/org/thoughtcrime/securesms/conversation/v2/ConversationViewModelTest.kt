@@ -10,6 +10,7 @@ import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
@@ -21,12 +22,16 @@ import org.mockito.kotlin.whenever
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
+import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import java.time.ZonedDateTime
 
 class ConversationViewModelTest: BaseViewModelTest() {
+
+    @get:Rule
+    val rule = MainCoroutineRule()
 
     private val repository = mock<ConversationRepository>()
     private val storage = mock<Storage>()
