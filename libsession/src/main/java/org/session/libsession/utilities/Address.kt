@@ -14,7 +14,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class Address private constructor(address: String) : Parcelable, Comparable<Address?> {
-    private val address: String = address.toLowerCase()
+    private val address: String = address.lowercase()
 
     constructor(`in`: Parcel) : this(`in`.readString()!!) {}
 

@@ -248,7 +248,7 @@ object SnodeAPI {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
-        val onsName = onsName.toLowerCase(Locale.US)
+        val onsName = onsName.lowercase(Locale.US)
         val nameAsData = onsName.toByteArray()
         val nameHash = ByteArray(GenericHash.BYTES)
         if (!sodium.cryptoGenericHash(nameHash, nameHash.size, nameAsData, nameAsData.size.toLong())) {
