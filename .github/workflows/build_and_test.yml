@@ -16,8 +16,7 @@ jobs:
     strategy:
       fail-fast: false # Continue with other matrix items if one fails
       matrix:
-#        variant: [ 'play', 'website', 'huawei' ]
-        variant: [ 'play', 'huawei' ]
+        variant: [ 'play', 'website', 'huawei' ]
         build_type: [ 'debug' ]
         include:
           - variant: 'huawei'

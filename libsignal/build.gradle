@@ -17,6 +17,11 @@ android {
     kotlinOptions {
         jvmTarget = '11'
     }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
     namespace 'org.session.libsignal'
 }
 
