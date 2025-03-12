@@ -31,22 +31,23 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: gradle
+
       - name: Build and test with Gradle
         id: build
         run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} test${{ matrix.variant }}${{ matrix.build_type }}UnitTest  ${{ matrix.extra_build_command_options }}
 
-      - name: Upload test results when failed
+      - name: Upload build results when failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.variant }}-${{ matrix.build_type }}
-          path: app/build/reports/tests
-          if-no-files-found: warning
+          path: app/build/reports
+          if-no-files-found: warn
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: session-${{ matrix.variant }}-${{ matrix.build_type }}
-          path: app/build/outputs/apk/${{ matrix.variant }}/${{ matrix.build_type }}/*.apk
+          path: app/build/outputs/apk/${{ matrix.variant }}/${{ matrix.build_type }}/*-universal.apk
           if-no-files-found: error
           compression-level: 0
