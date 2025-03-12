@@ -21,11 +21,13 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 
 @RunWith(RobolectricTestRunner::class)
-class MentionViewModelTest {
+class MentionViewModelTest : BaseViewModelTest() {
     @OptIn(ExperimentalCoroutinesApi::class)
     @get:Rule
     val mainCoroutineRule = MainCoroutineRule()
@@ -37,16 +39,22 @@ class MentionViewModelTest {
     private data class MemberInfo(
         val name: String,
         val pubKey: String,
-        val roles: List<GroupMemberRole>
+        val roles: List<GroupMemberRole>,
+        val isMe: Boolean
     )
 
+    private val myId = AccountId.fromString(
+        "151234567890123456789012345678901234567890123456789012345678901234"
+    )!!
+
     private val threadMembers = listOf(
-        MemberInfo("Alice", "pubkey1", listOf(GroupMemberRole.ADMIN)),
-        MemberInfo("Bob", "pubkey2", listOf(GroupMemberRole.STANDARD)),
-        MemberInfo("Charlie", "pubkey3", listOf(GroupMemberRole.MODERATOR)),
-        MemberInfo("David", "pubkey4", listOf(GroupMemberRole.HIDDEN_ADMIN)),
-        MemberInfo("Eve", "pubkey5", listOf(GroupMemberRole.HIDDEN_MODERATOR)),
-        MemberInfo("李云海", "pubkey6", listOf(GroupMemberRole.ZOOMBIE)),
+        MemberInfo("You", myId.hexString, listOf(GroupMemberRole.STANDARD), isMe = true),
+        MemberInfo("Alice", "pubkey1", listOf(GroupMemberRole.ADMIN), isMe = false),
+        MemberInfo("Bob", "pubkey2", listOf(GroupMemberRole.STANDARD), isMe = false),
+        MemberInfo("Charlie", "pubkey3", listOf(GroupMemberRole.MODERATOR), isMe = false),
+        MemberInfo("David", "pubkey4", listOf(GroupMemberRole.HIDDEN_ADMIN), isMe = false),
+        MemberInfo("Eve", "pubkey5", listOf(GroupMemberRole.HIDDEN_MODERATOR), isMe = false),
+        MemberInfo("李云海", "pubkey6", listOf(GroupMemberRole.ZOOMBIE), isMe = false),
     )
 
     private val memberContacts = threadMembers.map { m ->
@@ -106,7 +114,8 @@ class MentionViewModelTest {
             },
             storage = mock {
                 on { getOpenGroup(threadID) } doReturn openGroup
-            },
+                on { getUserBlindedAccountId(any()) } doReturn myId
+           },
             dispatcher = StandardTestDispatcher(),
             configFactory = mock(),
             threadID = threadID,
@@ -135,11 +144,11 @@ class MentionViewModelTest {
                 result as MentionViewModel.AutoCompleteState.Result
 
                 assertThat(result.members).isEqualTo(threadMembers.mapIndexed { index, m ->
-                    val name =
+                    val name = if (m.isMe) "You" else
                         memberContacts[index].displayName(Contact.ContactContext.OPEN_GROUP)
 
                     MentionViewModel.Candidate(
-                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = false),
+                        MentionViewModel.Member(m.pubKey, name, m.roles.any { it.isModerator }, isMe = m.isMe),
                         name,
                         0
                     )
@@ -157,8 +166,8 @@ class MentionViewModelTest {
                     .isInstanceOf(MentionViewModel.AutoCompleteState.Result::class.java)
                 result as MentionViewModel.AutoCompleteState.Result
 
-                assertThat(result.members[0].member.name).isEqualTo("Alice (pubk...key1)")
-                assertThat(result.members[1].member.name).isEqualTo("Charlie (pubk...key3)")
+                assertThat(result.members[0].member.name).isEqualTo("Alice (pubkey1)")
+                assertThat(result.members[1].member.name).isEqualTo("Charlie (pubkey3)")
             }
         }
     }

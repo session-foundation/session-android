@@ -23,6 +23,8 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.BaseCoroutineTest
+import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.MainCoroutineRule
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryRadioOption
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
@@ -44,9 +46,8 @@ private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(MockitoJUnitRunner::class)
-class DisappearingMessagesViewModelTest {
+class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
-    @ExperimentalCoroutinesApi
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
