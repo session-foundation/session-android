@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Պահպանեք ձեր վերականգնման բառը։</string>
     <string name="recoveryPasswordDescription">Օգտագործեք ձեր վերականգնման գաղտնաբառը ձեր հաշիվը նոր սարքերում ներբեռնելու համար.\n\nՁեր հաշիվը հնարավոր չէ վերականգնել առանց վերականգնման գաղտնաբառի: Համոզվեք, որ այն պահված է անվտանգ տեղում և չկիսեք այն ուրիշների հետ։</string>
     <string name="recoveryPasswordEnter">Մուտքագրեք ձեր վերականգնման թողարկում</string>
-    <string name="recoveryPasswordErrorLoad">Սխալ տեղի ունեցավ ձեր վերականգնման գաղտնաբառը բեռնելու ժամանակ:\n\nԽնդրում ենք արտահանել ձեր հաղորդագրությունների գրառումները, ապա վերբեռնել ֆայլը Session-ի օժանդակ կենտրոնի միջոցով, որպեսզի օգնեք լուծելու այս խնդիրը:</string>
     <string name="recoveryPasswordErrorMessageGeneric">Խնդրում ենք ստուգել ձեր վերականգնման գաղտնաբառը և փորձել նորից:</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Վերականգնման գաղտնաբառի որոշ բառեր սխալ են։ Խնդրում ենք ստուգեք և փորձեք նորից։</string>
     <string name="recoveryPasswordErrorMessageShort">Ձեր մուտքագրած վերականգնման գաղտնաբառը բավական երկար չէ։ Խնդրում ենք ստուգեք և նորից փորձեք։</string>

@@ -744,7 +744,6 @@
     <string name="recoveryPasswordBannerTitle">Įrašyti jūsų atkūrimo slaptažodį</string>
     <string name="recoveryPasswordDescription">Naudokite savo atkūrimo slaptažodį, kad įkeltumėte savo paskyrą į naujus įrenginius.\n\nJūsų paskyra negali būti atkurta be jūsų atkūrimo slaptažodžio. Įsitikinkite, kad jis yra saugomas saugioje vietoje — ir nesidalinkite juo su niekuo.</string>
     <string name="recoveryPasswordEnter">Įveskite savo atkūrimo slaptažodį</string>
-    <string name="recoveryPasswordErrorLoad">Įkeliant jūsų atkūrimo slaptažodį įvyko klaida.\n\nPrašome eksportuoti savo žurnalus ir įkelkite failą per \"Session\" pagalbos tarnybą, kad galėtume išspręsti šią problemą.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Patikrinkite atkūrimo slaptažodį ir bandykite dar kartą.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Kai kurie jūsų atkūrimo slaptažodžio žodžiai neteisingi. Prašome patikrinti ir bandykite dar kartą.</string>
     <string name="recoveryPasswordErrorMessageShort">Įvestas atkūrimo slaptažodis yra per trumpas. Prašome patikrinti ir bandyti dar kartą.</string>

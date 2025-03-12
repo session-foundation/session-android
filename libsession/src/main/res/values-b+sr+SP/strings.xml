@@ -729,7 +729,6 @@
     <string name="recoveryPasswordBannerTitle">Сачувај своју Recovery Password</string>
     <string name="recoveryPasswordDescription">Користите своју Recovery password да учитате свој налог на нове уређаје.\n\nВаш налог не може бити опорављен без ваше Recovery password. Обавезно га чувајте на сигурном месту и не делите га са никим.</string>
     <string name="recoveryPasswordEnter">Унесите вашe recovery password</string>
-    <string name="recoveryPasswordErrorLoad">Дошло је до грешке при покушају учитавања ваше лозинке за опоравак.\n\nИзвезите своје записе, а затим отпремите датотеку преко Session центра за помоћ како бисте помогли у решавању овог проблема.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Проверите вашу Recovery Password и покушајте поново.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Неки од речи у твојој Рекавери Лозинки су погрешне. Молимо провери и покушај поново.</string>
     <string name="recoveryPasswordErrorMessageShort">Унета фраза за опоравак није довољно дуга. Молимо проверите и покушајте поново.</string>

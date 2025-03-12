@@ -722,7 +722,6 @@
     <string name="recoveryPasswordBannerTitle">رمز عبور بازیابی خود را ذخیره کنید</string>
     <string name="recoveryPasswordDescription">از گذرواژه بازیابی خود برای بارگذاری حساب کاربری خود در دستگاه‌های جدید استفاده کنید.\n\nحساب شما بدون گذرواژه بازیابی‌تان بازیابی نخواهد شد. مطمئن شوید که آن را در مکانی امن ذخیره کرده‌اید و با کسی به اشتراک نگذارید.</string>
     <string name="recoveryPasswordEnter">رمز بازیابی خود را وارد کنید</string>
-    <string name="recoveryPasswordErrorLoad">خطایی هنگام تلاش برای بارگیری رمز بازیابی شما رخ داد.\n\n لطفا فایل گزارش خطا را استخراج کنید و سپس ان را از طریق میز پشتیبانی سشن اپلود کنید تا این مشکل حل شود.</string>
     <string name="recoveryPasswordErrorMessageGeneric">لطفاً شناسه بازیابی خود را بررسی و دوباره تلاش کنید.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">برخی از کلمات در رمز بازیابی شما نادرست است. لطفاً بررسی کنید و دوباره تلاش کنید.</string>
     <string name="recoveryPasswordErrorMessageShort">رمز بازیابی وارد شده به اندازه کافی طولانی نیست. لطفا بررسی کنید و دوباره تلاش کنید.</string>

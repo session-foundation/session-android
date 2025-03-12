@@ -705,7 +705,6 @@
     <string name="recoveryPasswordBannerTitle">သင့်ပြန်လည်ပေးမည့်စကားဝှက်ကို သိမ်းဆည်းပါ</string>
     <string name="recoveryPasswordDescription">သင့်အကောင့်ကို နောက်ထပ်စက်ပစ္စည်းများပေါ်တွင် တင်ရန် သင့် recovery password ကို အသုံးပြုပါ။\n\nသင့် recovery password မရှိပဲ သင့်အကောင့်ကို ပြန်ယူ၍ မရနိုင်ပါ။ ၎င်းကို ဘေးကင်းသောနေရာတစ်ခုတွင် သိမ်းဆည်းထားပြီး သက်သေပြရန် မမျှဝေပါနှင့်။</string>
     <string name="recoveryPasswordEnter">Recovery စကားဝှက်ထည့်ပါ</string>
-    <string name="recoveryPasswordErrorLoad">သင်၏ <b>Recovery password</b> ကို ဖွင့်ပါစဉ် အမှားအယွင်းတစ်ခု ဖြစ်ပွါးနေသည်။\n\nသင်၏ မှတ်တမ်းများ ကို တင်ပို့ပြီး <b>Session</b> ၏အကူအညီဌာနမှတဆင့် ကိုယ်မူတည်ကို ပြန်တင်ပါ။</string>
     <string name="recoveryPasswordErrorMessageGeneric">သင့်ပြန်လည်ရယူဖို့ စကားဝှက်ကို စစ်ဆေးပြီး ထပ်မံကြိုးစားပါ</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ကြောင့် သင့် Recovery Password ထဲက စကားလုံးအချို့မှားနေသည်။ ပြန်လည်စစ်ဆေးပြီးထပ်မံကြိုးစားပါ</string>
     <string name="recoveryPasswordErrorMessageShort">သင်ရေးထည့်ထားသော Recovery Password ပေးပို့ပီးပြီးမှအတိအကျမရပါဘူး။ ကျေးဇူးပြု၍ ပို၍ထည့်သွင်းပါ။</string>

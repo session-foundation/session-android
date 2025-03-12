@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Запазете вашата парола за възстановяване</string>
     <string name="recoveryPasswordDescription">Използвайте вашата парола за възстановяване, за да заредите акаунта си на нови устройства.\n\nВашият акаунт не може да бъде възстановен без вашата парола за възстановяване. Уверете се, че е съхранена някъде на сигурно място — и не я споделяйте с никого.</string>
     <string name="recoveryPasswordEnter">Въведете паролата за възстановяване</string>
-    <string name="recoveryPasswordErrorLoad">Възникна грешка при опит за зареждане на вашата възстановителна парола.\n\nМоля, експортирайте вашите съобщения и после качете файла през помощния център на Session, за да помогнете за разрешаването на този проблем.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Моля, проверете вашата възстановителна парола и опитайте отново.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Някои от думите в Паролата за възстановяване са неправилни. Моля, проверете и опитайте отново.</string>
     <string name="recoveryPasswordErrorMessageShort">Въведеният от вас възстановителна парола не е достатъчно дълга. Моля, проверете и опитайте отново.</string>

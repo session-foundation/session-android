@@ -722,7 +722,6 @@
     <string name="recoveryPasswordBannerTitle">Spara ditt återställningslösenord</string>
     <string name="recoveryPasswordDescription">Använd din återställningslösenord för att ladda ditt konto på nya enheter. \n\nDitt konto kan inte återställas utan ditt återställningslösenord. Se till att det lagras säkert och dela det inte med någon.</string>
     <string name="recoveryPasswordEnter">Ange ditt recovery password</string>
-    <string name="recoveryPasswordErrorLoad">Ett fel inträffade vid försök att läsa in ditt återställningslösenord.\n\nExportera dina loggar och ladda upp filen via Sessions Help Desk för att hjälpa oss att lösa det här problemet.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Kontrollera ditt återställningslösenord och försök igen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Några av orden i din återställningsfras är felaktiga. Kontrollera och försök igen.</string>
     <string name="recoveryPasswordErrorMessageShort">Den återställningslösenord du angav är inte tillräckligt lång. Kontrollera och försök igen.</string>
