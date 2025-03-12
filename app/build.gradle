@@ -37,7 +37,6 @@ def getGitHash = { ->
 }
 
 android {
-    compileSdkVersion androidCompileSdkVersion
     namespace 'network.loki.messenger'
     useLibrary 'org.apache.http.legacy'
 
@@ -79,6 +78,7 @@ android {
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
 
+        compileSdk androidCompileSdkVersion
         minSdkVersion androidMinimumSdkVersion
         targetSdkVersion androidTargetSdkVersion
 

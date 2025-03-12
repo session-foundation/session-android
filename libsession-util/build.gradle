@@ -5,9 +5,9 @@ plugins {
 
 android {
     namespace 'network.loki.messenger.libsession_util'
-    compileSdkVersion androidCompileSdkVersion
 
     defaultConfig {
+        compileSdk androidCompileSdkVersion
         minSdkVersion androidMinimumSdkVersion
         targetSdkVersion androidCompileSdkVersion
 
