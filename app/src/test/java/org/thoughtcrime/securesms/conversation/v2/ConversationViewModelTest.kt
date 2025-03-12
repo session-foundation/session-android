@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import com.goterl.lazysodium.utils.KeyPair
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import org.hamcrest.CoreMatchers.equalTo
@@ -14,13 +15,16 @@ import org.mockito.Mockito
 import org.mockito.Mockito.anyLong
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import java.time.ZonedDateTime
 
 class ConversationViewModelTest: BaseViewModelTest() {
 
@@ -49,7 +53,10 @@ class ConversationViewModelTest: BaseViewModelTest() {
             configFactory = mock(),
             groupManagerV2 = mock(),
             callManager = mock(),
-            legacyGroupDeprecationManager = mock(),
+            legacyGroupDeprecationManager = mock {
+                on { deprecationState } doReturn MutableStateFlow(LegacyGroupDeprecationManager.DeprecationState.DEPRECATED)
+                on { deprecatedTime } doReturn MutableStateFlow(ZonedDateTime.now())
+            },
             expiredGroupManager = mock(),
             usernameUtils = mock()
         )
