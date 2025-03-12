@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Geri qaytarma parolunuzu saxlayın</string>
     <string name="recoveryPasswordDescription">Hesabınızı yeni cihazlara yükləmək üçün geri qaytarma parolunuzu istifadə edin.\n\nGeri qaytarma parolunuz olmadan hesabınız geri qaytarıla bilməz. Təhlükəsiz və etibarlı yerdə saxladığınıza əmin olun və heç kəslə paylaşmayın.</string>
     <string name="recoveryPasswordEnter">Geri qaytarma parolunuzu daxil edin</string>
-    <string name="recoveryPasswordErrorLoad">Geri qaytarma parolunuzu yükləməyə çalışarkən bir xəta baş verdi.\n\nBu problemi həll etməyə kömək etmək üçün lütfən jurnalı xaricə köçürün, daha sonra Session-un Kömək Masası üzərindən həmin faylı yükləyin.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Lütfən geri qaytarma parolunuzu yoxlayıb yenidən sınayın.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Geri qaytarma parolunuzdakı bəzi sözlər yanlışdır. Lütfən yoxlayıb yenidən sınayın.</string>
     <string name="recoveryPasswordErrorMessageShort">Daxil etdiyiniz Geri qaytarma parolu yetərincə uzun deyil. Lütfən, yoxlayıb yenidən sınayın.</string>

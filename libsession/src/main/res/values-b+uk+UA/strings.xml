@@ -768,7 +768,6 @@
     <string name="recoveryPasswordBannerTitle">Збережіть свій пароль для відновлення</string>
     <string name="recoveryPasswordDescription">Використовуйте свій пароль для відновлення, щоб завантажити свій обліковий запис на нових пристроях.\n\nВаш обліковий запис не може бути відновлений без вашого пароля для відновлення. Переконайтеся, що він зберігається десь у надійному місці та не передавайте його нікому.</string>
     <string name="recoveryPasswordEnter">Введіть свій пароль відновлення</string>
-    <string name="recoveryPasswordErrorLoad">Під час завантаження паролю для відновлення сталася помилка.\n\nБудь ласка, експортуйте ваші журнали, а потім вивантажте отриманий файл через службу підтримки Session для розв\'язання цієї проблеми.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Будь ласка, перевірте свій пароль для відновлення і повторіть спробу.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Деякі слова у вашому паролі для відновлення хибні. Будь ласка, перевірте все та спробуйте ще раз.</string>
     <string name="recoveryPasswordErrorMessageShort">Введений вами пароль для відновлення надто короткий. Будь ласка, перевірте і повторіть спробу.</string>

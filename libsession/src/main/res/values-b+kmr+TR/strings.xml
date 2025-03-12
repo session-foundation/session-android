@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Şîfreya vegerê xwe qeyd bike</string>
     <string name="recoveryPasswordDescription">Ji bo barkirina hesabê xwe ya li ser amadekarên nû şîfreya recoverîya xwe bikar bînin.\n\nHesabên we ne matur nirx bikin jî. Da sûçiyên guman dikin ku ew li ciheke nehiş jî au reş bike û bi kesî re nebibe.</string>
     <string name="recoveryPasswordEnter">Şîfreyê te ya vegerandinê binivîse</string>
-    <string name="recoveryPasswordErrorLoad">Xeletî çû dema ku hûn şîfreya vegerê xwe barkirin.\n\nJi kerema xwe logên xwe bişînin, paşê pel bihêle bi sesyona saziya alîkarîyê da ku vê pirsgirêkê bihêle.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Kerem bike şîfreya vê bidawî bike û dîsa biceribîne.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Hin ji peyamên recoveyê we ne raste. Ji kerema xwe kontrol bikin û cardin biceribînin.</string>
     <string name="recoveryPasswordErrorMessageShort">Şîfreya paqij bişînî ya neyê giring ne gihîştî. Ji kerema xwe bijêre û dubare biceribîne.</string>

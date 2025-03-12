@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Lagre gjenopprettingspassordet ditt</string>
     <string name="recoveryPasswordDescription">Bruk recovery password for å laste inn kontoen din på nye enheter.\n\n Kontoen din kan ikke gjenopprettes uten recovery password. Sørg for at det er lagret et trygt og sikkert sted – og del det ikke med noen.</string>
     <string name="recoveryPasswordEnter">Skriv inn gjenopprettingspassordet ditt</string>
-    <string name="recoveryPasswordErrorLoad">Det oppstod en feil ved innlasting av ditt gjenoprettingspassord.\n\nVennligst eksporter dine logger, og last deretter opp filen via Sessions hjelpesenter for å bidra til å løse problemet.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Vennligst sjekk gjenopprettingspassordet ditt og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Noen av ordene i gjenopprettingspassordet ditt er feil. Vennligst sjekk og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageShort">Gjenopprettingspassordet du skrev inn er ikke langt nok. Vennligst sjekk og prøv igjen.</string>

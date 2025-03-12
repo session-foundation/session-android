@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">შეინახე შენი recovery password</string>
     <string name="recoveryPasswordDescription">გამოიყენეთ თქვენი აღდგენის პაროლი ანგარიშის ახალი მოწყობილობებზე ჩასატვირთად.\n\nთქვენი ანგარიში ვერ აღდგება თქვენი აღდგენის პაროლის გარეშე. დარწმუნდით, რომ ეს მრავალსაფრთილად და უსაფრთხოდ არის შენახული — და არ გააზიაროთ ეს სხვა ადამიანებთან.</string>
     <string name="recoveryPasswordEnter">შეიყვანეთ თქვენი სახელის პაროლი</string>
-    <string name="recoveryPasswordErrorLoad">დაფიქსირდა შეცდომა თქვენი აღდგენის პაროლის ჩატვირთვისას.\n\nგთხოვთ, ექსპორტით გამოსაწერეთ თქვენი ლოგები, შემდეგ ატვირთეთ ეს ფაილი Session-ის დახმარების სერვისზე რათა ეს პრობლემა მოაგვაროსთ.</string>
     <string name="recoveryPasswordErrorMessageGeneric">გთხოვთ შეამოწმოთ თქვენი აღდგენის პაროლი და სცადეთ კიდევ ერთხელ.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ზოგიერთი სიტყვა თქვენი აღდგენის პაროლში არასწორია. გთხოვთ, შეამოწმეთ და სცადეთ კიდევ.</string>
     <string name="recoveryPasswordErrorMessageShort">თქვენ მიერ შეყვანილი აღდგენის პაროლი არ არის საკმარისად გრძელი. გთხოვთ, გადაამოწმეთ და სცადეთ თავიდან.</string>

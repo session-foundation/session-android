@@ -10,7 +10,7 @@
     <string name="actualSize">ຂະໜາດທີ່</string>
     <string name="add">ເພີ່ມ</string>
     <string name="adminCannotBeRemoved">ຜູ້ຄຸ້ມການບໍ່ສາມາດຖຶກຖອນໄດ້.</string>
-    <string name="adminMorePromotedToAdmin"><b>{name}</b> ແລະ <b>{count}</b> \",</string>
+    <string name="adminMorePromotedToAdmin"><b>{name}</b> ແລະ <b>{count}</b>.</string>
     <string name="adminPromoteDescription">ທ່ານແນ່ໃຈບໍ່ວ່າທ່ານຈະຍ້າຍເຢັນໄປໃຫ້ <b>{name}</b>? ຄວາມສາມາດບໍ່ອາດຖືກຢຽບເມືອນ.</string>
     <string name="adminPromoteMoreDescription">ທ່ານແນ່ໃຈບໍ່ວ່າທ່ານຈະຍ້າຍເຢັນໄປໃຫ້ <b>{name}</b> ແລະ <b>{count} ຫຼາຍເພື່ອນ</b>? ຄວາມສາມາດບໍ່ອາດຖືກຢຽບເມືອນ.</string>
     <string name="adminPromoteTwoDescription">ທ່ານແນ່ໃຈບໍ່ວ່າທ່ານຈະຍ້າຍເຢັນໄປໃຫ້ <b>{name}</b> ແລະ <b>{other_name}</b>? ຄວາມສາມາດບໍ່ອາດຖືກຢຽບເມືອນ.</string>
@@ -200,7 +200,7 @@
     <string name="helpReportABugExportLogs">ສົ່ງຂໍ້ຄວາມບັກ</string>
     <string name="helpReportABugExportLogsDescription">ສົ່ງຂໍ້ມູນຂອງທ່ານ, ແລ້ວດາວໂຫຼດໄຟລຜ່ານທາງโต๊ะຊ່ວຍເຫຼືອຂອງ {app_name}.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> ແລະ <b>{count}</b></string>
-    <string name="legacyGroupMemberTwoNew"><b>{name}</b> ແລະ <b>{other_name}</b> \",</string>
+    <string name="legacyGroupMemberTwoNew"><b>{name}</b> ແລະ <b>{other_name}</b>.</string>
     <string name="linkPreviewsEnable">ເປີດການພິມລິ້ງເບິ່ງກ່ອນ</string>
     <string name="linkPreviewsTurnedOffDescription">{app_name} ຕ້ອງຕິດຕໍ່ກັບເວັບໄຊທ໌ທີ່ເຊື່ອມໂຍງເພື່ອສ້າງຮູບພາບພາບຢ່າງລະອຽດຂອງການລະດົມທີ່ເຈົ້າສົ່ງແລະຮັບ.\n\nປິດເຄື່ອງທີ່ຕັ້ງຂອງ {app_name} ໄດ້.</string>
     <string name="lockAppLocked">{app_name} ຖືກລ໋ອກ</string>

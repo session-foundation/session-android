@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Kuuma Recovery password yo</string>
     <string name="recoveryPasswordDescription">Kozesa oba Recovery password yo okuwonya account ku kiga kya njawulo.\n\nAccount yo teyeetaagulaamu soola kusasaanya oba Recovery password yo. Kakatila nkumu kakati lwaki tekiriza musajja yenna.</string>
     <string name="recoveryPasswordEnter">Yingiza Recovery password yo</string>
-    <string name="recoveryPasswordErrorLoad">Ensobi yabaddewo ng’ogezaako okutikkula recovery password yo.\n\nKuuma ssensa zyo, olwo olaze failo eri omwerezebwa ogobezzaamu okukyusa ekizibu mu Session Help Desk.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Kakasa akasumulizo k’okwenyiga kwoziize okubiddamu.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Ebimu ku bigambo mu Recovery Password si bituufu. Funa endala osuubuye nate.</string>
     <string name="recoveryPasswordErrorMessageShort">Akazambayiro k\'obufuzi k\'oyo yeetegedde tekiri kiwanvu. Kebera gwe kyusa lowooza edaako.</string>

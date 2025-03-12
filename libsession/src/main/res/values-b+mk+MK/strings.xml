@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Зачувај ја твојата лозинка за враќање</string>
     <string name="recoveryPasswordDescription">Користете ја вашата лозинка за враќање за да го вчитајте вашиот профил на нови уреди.\n\nВашиот профил не може да се поврати без вашата лозинка за враќање. Осигурајте се дека е безбедно и сигурно сочувана — и не ја споделувајте со никој.</string>
     <string name="recoveryPasswordEnter">Внесете ја вашата лозинка за враќање</string>
-    <string name="recoveryPasswordErrorLoad">Се случи грешка при обид за вчитување на вашата лозинка за опоравување.\n\nВе молиме извезете ги вашите логови, а потоа прикачете го атракот преку Help Desk на Session за да помогнете во решавањето на овој проблем.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Ве молиме проверете ја вашата лозинка за обновување и обидете се повторно.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Некои од зборовите во твојата Recovery Password се некоректни. Ве молиме провери ги и обиди се повторно.</string>
     <string name="recoveryPasswordErrorMessageShort">Внесената лозинка за опоравка не е доволно долга. Проверете и обидете се повторно.</string>

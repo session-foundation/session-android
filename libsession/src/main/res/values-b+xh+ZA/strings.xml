@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Gcina iphasiwedi yakho yokubuyisela kwi imeyile</string>
     <string name="recoveryPasswordDescription">Faka iphasiwedi yakho yokufumana kwakhona ukuze ufake iakhawunti yakho kwizixhobo ezintsha.\n\nIakhawunti yakho ayinakufumaneka ngaphandle kwephasiwedi yakho yokufumana kwakhona. Qinisekisa ukuba iyonke indawo ekhuselekileyo kwaye ungayabelani nabani na.</string>
     <string name="recoveryPasswordEnter">Ngenisa i-password yakho yokubuyisela</string>
-    <string name="recoveryPasswordErrorLoad">Impazamo yenzekile xa uzama ukulayisha iphasiwedi yakho yokubuyisela.\n\nNceda upapashe iilog zenkqubo yakho, uze ulayishe ifayile e-Desk ka-Session yokuNceda ukusombulula lo mba.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Nceda ujonge ipassword yakho yokubuyisela kwaye uzame kwakhona.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
     <string name="recoveryPasswordErrorMessageShort">I-Password yokubuyisela oyifakileyo ayide. Nceda ujonge uze uzame kwakhona.</string>

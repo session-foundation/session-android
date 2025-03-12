@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">ඔබේ ප්‍රතිසාධන මුරපදය සුරකින්න</string>
     <string name="recoveryPasswordDescription">ඔබගේ ගිණුම නැවත ආරම්භ කිරීමට නැවත ආරම්භ කරන්න පරිශීලන මුරපදය භාවිතා කරන්න.\n\nඔබගේ පරිශීලන මුරපදය නැත්තහොත් ඔබේ ගිණුම නැවත ලබා ගැනීමට නොහැක. ආරක්ෂිත සහ ආරක්ෂිත ස්ථානයක එය ගබඩා කර ඇති බවට වග බලා ගන්න — එය කිසිවෙකුට හුවමාරු නොකරන්න.</string>
     <string name="recoveryPasswordEnter">ඔබගේ ප්‍රතිසාධන මුරපදය ඇතුළත් කරන්න</string>
-    <string name="recoveryPasswordErrorLoad">ඔබගේ ප්‍රතිසාධක විසර්ජන(Recovery password) පෙරළන්න ට උත්සාහ කරන විට දෝෂයක් සිදුවිය.\n\nකරුණාකර ඔබගේ ලඝු සටහන් අයාත කරන්න. එවිට Session \'s Help Desk මගින් මෙම ගැටලුවට පිළිතුරක් ලැබෙනු ඇත.</string>
     <string name="recoveryPasswordErrorMessageGeneric">කරුණාකර ඔබේ ප්‍රතිසාධන මුරපදය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ඔබගේ ප්රතිසාධන මුරපදයේ පදවල් කිහිපයක් වැරටිය. කරුණාකර නැවත පරීක්ෂා කර උත්සාහ කරන්න.</string>
     <string name="recoveryPasswordErrorMessageShort">ඔබ ඇතුළත් කළ ප්‍රතිසාධන මුරපදය ප්‍රමාණවත් ලෙස දිග නැහැ. කරුණාකර පිරික්සා නැවත උත්සාහ කරන්න.</string>

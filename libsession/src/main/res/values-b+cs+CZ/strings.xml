@@ -789,7 +789,6 @@
     <string name="recoveryPasswordBannerTitle">Uložte si heslo pro obnovení</string>
     <string name="recoveryPasswordDescription">Použijte své heslo pro obnovení pro načtení účtu na nových zařízeních.\n\nBez hesla pro obnovení nelze obnovit účet. Ujistěte se, že je uložené na bezpečném místě – a nesdílejte ho s nikým.</string>
     <string name="recoveryPasswordEnter">Zadejte heslo pro obnovení</string>
-    <string name="recoveryPasswordErrorLoad">Došlo k chybě při pokusu o načtení vašeho hesla pro obnovení.\n\nPro vyřešení problému prosím exportujte své logy a soubor nahrajte pomocí Session Help Desku.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Zkontrolujte prosím své heslo pro obnovení a zkuste to znovu.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Některá ze slov ve vašem hesle pro obnovení jsou nesprávná. Zkontrolujte je a zkuste to znovu.</string>
     <string name="recoveryPasswordErrorMessageShort">Zadané heslo pro obnovení není dostatečně dlouhé. Prosím zkontrolujte ho a zkuste to znovu.</string>

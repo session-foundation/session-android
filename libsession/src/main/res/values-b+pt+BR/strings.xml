@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Salve sua senha de recuperação</string>
     <string name="recoveryPasswordDescription">Use sua senha de recuperação para carregar sua conta em novos dispositivos.\n\nSua conta não pode ser recuperada sem sua senha de recuperação. Certifique-se de armazená-la em um lugar seguro e não a compartilhe com ninguém.</string>
     <string name="recoveryPasswordEnter">Digite sua senha de recuperação</string>
-    <string name="recoveryPasswordErrorLoad">Um erro ocorreu ao tentar carregar a sua senha de recuperação. U\n\nPor favor, exporte seus logs e, em seguida, envie o arquivo no Suporte de Sessão para ajudar a resolver esse problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Por favor, verifique sua senha de recuperação e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algumas das palavras em sua senha de recuperação estão incorretas. Por favor, verifique e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageShort">A Recovery Password que você inseriu não é longa o suficiente. Por favor, verifique e tente novamente.</string>

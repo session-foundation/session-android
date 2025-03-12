@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Guarde a sua chave de recuperação</string>
     <string name="recoveryPasswordDescription">Use a sua chave de recuperação para carregar a sua conta em novos dispositivos.\n\nA sua conta não pode ser recuperada sem a sua chave de recuperação. Certifique-se de que está armazenada num lugar seguro — e não a partilhe com ninguém.</string>
     <string name="recoveryPasswordEnter">Insira a sua chave de recuperação</string>
-    <string name="recoveryPasswordErrorLoad">Ocorreu um erro ao tentar carregar a sua palavra-passe.\n\nPor favor exporte os seus logs e, depois envie o ficheiro para o Centro de Ajuda da Sessão para ajudar a resolver este problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Por favor, verifique a sua chave de recuperação e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algumas das palavras na sua Chave de Recuperação estão incorretas. Por favor verifique e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageShort">A Chave de Recuperação inserida não é longa o suficiente. Por favor, verifique e tente novamente.</string>

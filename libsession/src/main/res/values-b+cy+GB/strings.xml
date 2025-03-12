@@ -766,7 +766,6 @@
     <string name="recoveryPasswordBannerTitle">Cadwch eich cyfrinair adfer</string>
     <string name="recoveryPasswordDescription">Defnyddiwch eich chyfrinair adfer i lwytho eich cyfrif ar ddyfeisiau newydd.\n\nNi ellir adfer eich cyfrif heb eich cyfrinair adfer. Sicrhewch ei fod yn cael ei storio yn rhywle diogel - ac na fyddwch yn ei rannu ag unrhyw un.</string>
     <string name="recoveryPasswordEnter">Rhowch eich cyfrinair adfer</string>
-    <string name="recoveryPasswordErrorLoad">Cafodd gwall pan oedd yn ceisio llwytho eich cyfrinair adfer.\n\nAllforiwch eich logiau, yna uwchgwynwch y ffeil drwy\'r Help Desk Session i helpu i ddatrys y mater hwn.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Gwiriwch eich cyfrinair adfer a cheisio eto.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Mae rhai o\'r geiriau yn eich Cyfrinair Adfer yn anghywir. Gwiriwch a cheisiwch eto.</string>
     <string name="recoveryPasswordErrorMessageShort">Nid yw\'r Cyfrinair Adfer y gwnaethoch ei nodi yn ddigon hir. Gwiriwch a rhowch gynnig arall arni os gwelwch yn dda.</string>

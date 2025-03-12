@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Enregistrer votre mot de passe de récupération</string>
     <string name="recoveryPasswordDescription">Utilisez votre mot de passe de récupération pour charger votre compte sur de nouveaux appareils.\n\nVotre compte ne peut pas être récupéré sans votre mot de passe de récupération. Assurez-vous qu\'il soit stocké en lieu sûr et sécurisé - et ne le partagez avec personne.</string>
     <string name="recoveryPasswordEnter">Entrez votre mot de passe de récupération</string>
-    <string name="recoveryPasswordErrorLoad">Une erreur s\'est produite lors de la tentative de chargement de votre mot de passe de récupération. \n\nVeuillez exporter vos logs, puis télécharger le fichier via le service d\'assistance de Session pour aider à résoudre ce problème.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Veuillez vérifier votre mot de passe de récupération et réessayer.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Certains mots de votre mot de passe de récupération sont incorrects. Veuillez vérifier et réessayer.</string>
     <string name="recoveryPasswordErrorMessageShort">Le mot de passe de récupération que vous avez entré n\'est pas assez long. Veuillez vérifier et réessayer.</string>

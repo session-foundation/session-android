@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Таны нууц үгийг хадгалах</string>
     <string name="recoveryPasswordDescription">Таны аккаунтыг шинэ төхөөрөмжүүдэд ачаалахын тулд сэргээх нууц үгийг ашиглана уу.\n\nТаны аккаунтыг сэргээх нууц үггүйгээр сэргээх боломжгүй. Энэ нууц үгийг аюулгүй газар хадгалаарай – хэзээ ч хүнд бүү өгөөрэй.</string>
     <string name="recoveryPasswordEnter">Сэргээх нууц үг оруулна уу</string>
-    <string name="recoveryPasswordErrorLoad">Сэргээх нууц үгийг ачаалахад алдаа гарлаа.\n\nАсуудлыг шийдвэрлэхийн тулд лог файлуудаа экспортлоод, Session-ий Тусламжийн төвөөр дамжуулан файлыг оруулаарай.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Сэргээх нууц үгээ шалгаж дахин оролдоно уу.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Таны нөхөн сэргээх нууц үгний зарим үгс буруу байна. Шалгаад дахин оролдоорой.</string>
     <string name="recoveryPasswordErrorMessageShort">Таны оруулсан нууц үг хангалттай урт биш байна. Шалгаж дахин оролдоно уу.</string>

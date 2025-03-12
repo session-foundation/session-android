@@ -741,7 +741,6 @@
     <string name="recoveryPasswordBannerTitle">Захавайце свой Recovery password</string>
     <string name="recoveryPasswordDescription">Выкарыстоўвайце свой пароль для аднаўлення, каб загрузіць свой уліковы запіс на новых прыладах.\n\nВаш уліковы запіс не можа быць адноўлены без вашага пароля для аднаўлення. Захоўвайце яго ў бяспечным і надзейным месцы — і не дзяліце з нікога.</string>
     <string name="recoveryPasswordEnter">Увядзіце recovery password</string>
-    <string name="recoveryPasswordErrorLoad">Пры спробе загрузіць пароль аднаўлення адбылася памылка.\n\nКалі ласка, экспартуйце свае часопісы, а затым загрузіце файл у службу падтрымкі Session, каб вырашыць гэтую праблему.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Калі ласка, праверце ваш пароль для аднаўлення і паспрабуйце зноў.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Некаторыя з слоў у вашым Recovery password няправільныя. Калі ласка, праверце і паспрабуйце яшчэ раз.</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>

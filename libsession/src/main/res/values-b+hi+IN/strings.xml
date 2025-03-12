@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">अपना रिकवरी पासवर्ड सहेजें</string>
     <string name="recoveryPasswordDescription">अपना अकाउंट नए डिवाइस पर लोड करने के लिए अपने रिकवरी पासवर्ड का उपयोग करें।\n\nआपका अकाउंट आपके रिकवरी पासवर्ड के बिना पुनर्प्राप्त नहीं किया जा सकता है। सुनिश्चित करें कि इसे कहीं सुरक्षित रखें और इसे किसी के साथ साझा न करें।</string>
     <string name="recoveryPasswordEnter">अपना पुनर्प्राप्ति पासवर्ड दर्ज करें</string>
-    <string name="recoveryPasswordErrorLoad">आपके पुनर्प्राप्ति पासवर्ड को लोड करने का प्रयास करते समय एक त्रुटि हुई।\n\nकृपया अपनी लॉग निर्यात करें, फिर इस समस्या को हल करने में मदद के लिए फ़ाइल को Session की हेल्प डेस्क के माध्यम से अपलोड करें।</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">आपके पुनर्प्राप्ति पासवर्ड के कुछ शब्द गलत हैं। कृपया जांच कर पुनः प्रयास करें।</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>

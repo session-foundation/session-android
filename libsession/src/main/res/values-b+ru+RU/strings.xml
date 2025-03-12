@@ -760,7 +760,6 @@
     <string name="recoveryPasswordBannerTitle">Сохраните ваш пароль восстановления</string>
     <string name="recoveryPasswordDescription">Используйте пароль восстановления, чтобы загрузить свою учетную запись на новых устройствах.\n\nВаша учетная запись не может быть восстановлена без пароля восстановления. Убедитесь, что он хранится в безопасном месте, и не передавайте его никому.</string>
     <string name="recoveryPasswordEnter">Введите ваш пароль восстановления</string>
-    <string name="recoveryPasswordErrorLoad">Произошла ошибка при попытке загрузить ваш Пароль Восстановления.\n\nПожалуйста, экспортируйте ваш журнал отладки, а затем загрузите его через службу поддержки Session, чтобы помочь решить эту проблему.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Пожалуйста, проверьте ваш пароль восстановления и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Некоторые из слов в вашем Пароле Восстановления неверны. Пожалуйста, проверьте и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageShort">Введенный вами Пароль Восстановления недостаточно длинный. Пожалуйста, проверьте и попробуйте снова.</string>

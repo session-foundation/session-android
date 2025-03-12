@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">پاشەکەوتی تێپەڕەوشەی گەڕانەوە</string>
     <string name="recoveryPasswordDescription">بەکارھێنانی تێپەڕەوشەی گەڕاندنەکەت بۆ بارکردنی هەژمارەکەت لەسەر ئامێرە نوێکان.\n\nئەکاونتەکەت بێ بەکردنی تێپەڕەوشەی گەڕاندنەکەت ناتواندرێت بەسەردەبڕێت. پێویستەوە تەواوەتی پارێزگای دەستیفێڵ بکەیت و وتاپیشت نیبیت.</string>
     <string name="recoveryPasswordEnter">وشەی تێپەڕی Recovery بنووسە</string>
-    <string name="recoveryPasswordErrorLoad">هەڵەیەک ڕوویدا کاتێک هەوڵ دەدرێت ووشەی نهێنیت پاکبکرێت.\n\nتکایە تۆمارەکانت دەرخە، پاشان فایلەکە باربکەرە بە ئاژانسە هاوکاریەکانی Session بۆ یاریدانی چارەسەرکردنی ئەم کێشەیە.</string>
     <string name="recoveryPasswordErrorMessageGeneric">پەیامی دەبێ پەیامی زانیاری بکە و دووبارە بکەوە.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ژینەگوڕ</string>
     <string name="recoveryPasswordErrorMessageShort">رمزە هێنانی وەرگرتنی تۆ بەرز نییە. تکایە ئاماژە بکە و دوبارە هەوڵبدەوە.</string>

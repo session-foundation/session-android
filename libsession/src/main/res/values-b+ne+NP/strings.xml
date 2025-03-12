@@ -709,7 +709,6 @@
     <string name="recoveryPasswordBannerTitle">तपाईंको पुनःस्थापना पासवर्ड बचत गर्नुहोस्</string>
     <string name="recoveryPasswordDescription">तपाईंको खाता नयाँ उपकरणहरूमा लोड गर्न आफ्नो पुनर्प्राप्ति पासवर्ड प्रयोग गर्नुहोस्।\n\nतपाईँको खाता बिना पुनर्प्राप्ति पासवर्ड पुनः प्राप्त गर्न सकिन्न। यो सुरक्षित र सुरक्षित ठाउँमा राखिएको सुनिश्चित गर्नुहोस् - र यसलाई कसैसँग साझा नगर्नुहोस्।</string>
     <string name="recoveryPasswordEnter">तपाईंको पुनर्प्राप्ति पासवर्ड प्रविष्ट गर्नुहोस्</string>
-    <string name="recoveryPasswordErrorLoad">तपाईंको पुनप्राप्ति पासवर्ड लोड गर्ने प्रयास गर्दा एउटा त्रुटि देखा पर्यो।\n\nकृपया आफ्नो लकहरू निर्यात गर्नुहोस्, त्यसपछि यस मुद्दाको समाधान गर्न मद्दत गर्न यसलाई Sessionको हेल्प डेस्क मार्फत अपलोड गर्नुहोस्।</string>
     <string name="recoveryPasswordErrorMessageGeneric">कृपया आफ्नो रिकभरी पासवर्ड जाँच गर्नुहोस् र प्रयास गर्नुहोस्।</string>
     <string name="recoveryPasswordErrorMessageIncorrect">तपाईंका रिकभरी पासवर्डका केही शब्दहरू गलत छन्। कृपया जाँच गर्नुहोस् अनि फेरि प्रयास गर्नुहोस्।</string>
     <string name="recoveryPasswordErrorMessageShort">तपाईंले प्रविष्ट गरेको रिकभरी पासवर्ड पर्याप्त लामो छैन। कृपया जाँच गर्नुहोस् अनि फेरि प्रयास गर्नुहोस्।</string>

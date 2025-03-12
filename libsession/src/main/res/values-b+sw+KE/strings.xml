@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Hifadhi neno lako la siri la urejesho</string>
     <string name="recoveryPasswordDescription">Tumia nywila ya urejeshaji kufungua akaunti yako kwenye vifaa vipya.\n\nAkaunti yako haiwezi kurejeshwa bila nywila yako ya urejeshaji. Hakikisha umeihifadhi mahali salama na siri — usishiriki na yeyote.</string>
     <string name="recoveryPasswordEnter">Weka nenosiri lako la kurejeshea akaunti</string>
-    <string name="recoveryPasswordErrorLoad">Hitilafu ilitokea wakati wa kujaribu kupakia nywila yako ya kurejesha.\n\nTafadhali hamisha kumbukumbu zako za matumizi, kisha pakia faili kupitia Dawati la Usaidizi la Session ili kusaidia kutatua tatizo hili.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Tafadhali kagua nyila yako ya kurejesha na ujaribu tena.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Baadhi ya maneno katika Nywila yako ya Urejeshaji si sahihi. Tafadhali angalia na jaribu tena.</string>
     <string name="recoveryPasswordErrorMessageShort">Nywila ya Urejeshaji uliyoweka haijatosha. Tafadhali angalia na ujaribu tena.</string>

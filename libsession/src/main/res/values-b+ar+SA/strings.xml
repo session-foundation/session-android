@@ -800,7 +800,6 @@
     <string name="recoveryPasswordBannerTitle">احفظ كلمة مرور الاسترداد الخاصة بك</string>
     <string name="recoveryPasswordDescription">استخدم كلمة المرور لاستعادة التحميل على أجهزة جديدة.\n\n لا يمكن استعادة الحساب بدون كلمة المرور. تأكد من تخزينها في مكان آمن وسري - ولا تشاركها مع أي أحد.</string>
     <string name="recoveryPasswordEnter">أدخل كلمة مرور الاسترجاع</string>
-    <string name="recoveryPasswordErrorLoad">حدث خطأ عند محاولة تحميل كلمة المرور الاحتياطية الخاصة بك.\n\nيرجى تصدير السجلات الخاصة بك، ثم تحميل الملف عبر مكتب مساعدة Session للمساعدة في حل هذه المشكلة.</string>
     <string name="recoveryPasswordErrorMessageGeneric">يرجى التحقق من كلمة مرور الاسترداد الخاصة بك وحاول مرة أخرى.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">بعض الكلمات في كلمة الاسترداد الخاصة بك غير صحيحة. تحقق وحاول مرة أخرى.</string>
     <string name="recoveryPasswordErrorMessageShort">كلمة استرداد الحساب التي أدخلتها غير كافية. يرجى التحقق والمحاولة مرة أخرى.</string>

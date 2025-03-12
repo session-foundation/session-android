@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Gem din recovery password</string>
     <string name="recoveryPasswordDescription">Brug din recovery password til at indlæse din konto på nye enheder.\n\nDin konto kan ikke gendannes uden din recovery password. Sørg for, at den er opbevaret et sikkert sted, og del den ikke med nogen.</string>
     <string name="recoveryPasswordEnter">Indtast din gendannelsesadgangskode</string>
-    <string name="recoveryPasswordErrorLoad">Der opstod en fejl ved indlæsning af din recovery password.\n\nEksporter dine logs, og upload derefter filen via Sessions Help Desk for at hjælpe med at løse dette problem.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Nogle af ordene i din Recovery Password er forkerte. Venligst tjek igen.</string>
     <string name="recoveryPasswordErrorMessageShort">Den indtastede Gendannelseskode er ikke lang nok. Kontroller den og prøv igen.</string>

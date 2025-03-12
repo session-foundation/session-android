@@ -722,7 +722,6 @@
     <string name="recoveryPasswordBannerTitle">Speichere dein Wiederherstellungspasswort</string>
     <string name="recoveryPasswordDescription">Verwende dein Wiederherstellungspasswort, um deinen Account auf neuen Geräten zu laden.\n\nDein Account kann ohne dein Wiederherstellungspasswort nicht wiederhergestellt werden. Stelle sicher, dass es an einem sicheren Ort aufbewahrt ist – und teile es niemandem mit.</string>
     <string name="recoveryPasswordEnter">Gib dein Wiederherstellungspasswort ein</string>
-    <string name="recoveryPasswordErrorLoad">Beim Laden des Wiederherstellungspassworts ist ein Fehler aufgetreten.\n\n Bitte exportiere die Logs und lade die Datei über den Session Helpdesk hoch, um das Problem zu lösen.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Bitte überprüfe dein Wiederherstellungspasswort und versuche es erneut.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Einige Wörter in deinem Wiederherstellungspasswort sind falsch. Bitte überprüfe sie und versuche es erneut.</string>
     <string name="recoveryPasswordErrorMessageShort">Das eingegebene Wiederherstellungspasswort ist nicht lang genug. Bitte überprüfen und erneut versuchen.</string>

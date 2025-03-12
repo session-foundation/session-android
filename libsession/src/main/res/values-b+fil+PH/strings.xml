@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Save your recovery password</string>
     <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices.\n\nYour account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
     <string name="recoveryPasswordEnter">Ilagay ang iyong recovery password</string>
-    <string name="recoveryPasswordErrorLoad">Nagkaroon ng isang error sa pag-load ng iyong recovery password.\n\nPaki-export ang iyong mga log, pagkatapos ay i-upload ang file sa pamamagitan ng Session\'s Help Desk upang matulungan na malutas ang isyung ito.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Pakibanggitin ang iyong recovery password at subukang muli.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Ang ilan sa mga salita sa iyong Recovery Password ay mali. Pakisuyong tingnang mabuti at subukan muli.</string>
     <string name="recoveryPasswordErrorMessageShort">Ang Recovery Password na iyong ipinasok ay hindi sapat ang haba. Paki-check at subukan muli.</string>
