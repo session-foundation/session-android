@@ -17,15 +17,11 @@ jobs:
       fail-fast: false # Continue with other matrix items if one fails
       matrix:
 #        variant: [ 'play', 'website', 'huawei' ]
-        variant: [ 'play' ]
+        variant: [ 'play', 'huawei' ]
+        build_type: [ 'debug' ]
         include:
-#          - variant: 'huawei'
-#            build_commands: 'assembleHuaweiDebug'
-#            extra_build_command_options: '-Phuawei=1'
-#          - variant: 'website'
-#            build_commands: 'assembleWebsiteDebug'
-          - variant: 'play'
-            build_commands: 'assemblePlayDebug testPlayDebugUnitTest'
+          - variant: 'huawei'
+            extra_build_command_options: '-Phuawei=1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,20 +34,20 @@ jobs:
           cache: gradle
       - name: Build and test with Gradle
         id: build
-        run: ./gradlew ${{ matrix.build_commands }} ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} test${{ matrix.variant }}${{ matrix.build_type }}UnitTest  ${{ matrix.extra_build_command_options }}
 
       - name: Upload test results when failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.variant }}
+          name: test-results-${{ matrix.variant }}-${{ matrix.build_type }}
           path: app/build/reports/tests
           if-no-files-found: warning
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: session-${{ matrix.variant }}-debug
-          path: app/build/outputs/apk/${{ matrix.variant }}/*.apk
+          name: session-${{ matrix.variant }}-${{ matrix.build_type }}
+          path: app/build/outputs/apk/${{ matrix.variant }}/${{ matrix.build_type }}/*.apk
           if-no-files-found: error
           compression-level: 0
