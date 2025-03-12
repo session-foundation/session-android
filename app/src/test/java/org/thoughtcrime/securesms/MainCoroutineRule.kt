@@ -9,19 +9,26 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainCoroutineRule() :
     TestWatcher() {
 
-    override fun starting(description: Description) {
-        super.starting(description)
-        Dispatchers.setMain(UnconfinedTestDispatcher(TestCoroutineScheduler()))
+    companion object {
+        private val dispatcherSet = AtomicBoolean(false)
     }
 
-    override fun finished(description: Description) {
-        super.finished(description)
+    override fun starting(description: Description) {
+        super.starting(description)
 
-        Dispatchers.resetMain()
+        // Set the main dispatcher to test dispatcher, however we shouldn't reset the main dispatcher
+        // as some coroutine tasks spawn during the testing may try to resume on the main dispatcher,
+        // which will cause an exception if it has been reset.
+        // Right now there aren't good ways to force the coroutines run on other threads to behave
+        // correctly everytime so we'll just keep the main dispatcher as the test dispatcher globally.
+        if (dispatcherSet.compareAndSet(false, true)) {
+            Dispatchers.setMain(UnconfinedTestDispatcher(TestCoroutineScheduler()))
+        }
     }
 }

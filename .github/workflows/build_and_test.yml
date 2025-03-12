@@ -36,7 +36,7 @@ jobs:
         id: build
         run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} test${{ matrix.variant }}${{ matrix.build_type }}UnitTest  ${{ matrix.extra_build_command_options }}
 
-      - name: Upload build results when failed
+      - name: Upload build reports when failed
         if: failure()
         uses: actions/upload-artifact@v4
         with:

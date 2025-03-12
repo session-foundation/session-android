@@ -48,7 +48,6 @@ private val GROUP_ADDRESS = Address.fromSerialized(GROUP_NUMBER)
 @RunWith(MockitoJUnitRunner::class)
 class DisappearingMessagesViewModelTest : BaseViewModelTest() {
 
-    @ExperimentalCoroutinesApi
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
