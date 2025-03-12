@@ -141,10 +141,7 @@ class MentionViewModel(
                 }
 
                 val myId = if (openGroup != null) {
-                    AccountId(IdPrefix.BLINDED,
-                        SodiumUtilities.blindedKeyPair(openGroup.publicKey,
-                            requireNotNull(storage.getUserED25519KeyPair()))!!.publicKey.asBytes)
-                        .hexString
+                    requireNotNull(storage.getUserBlindedAccountId(openGroup.publicKey)).hexString
                 } else {
                     requireNotNull(storage.getUserPublicKey())
                 }
