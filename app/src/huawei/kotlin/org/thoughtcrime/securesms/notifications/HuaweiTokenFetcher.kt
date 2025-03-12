@@ -25,6 +25,12 @@ class HuaweiTokenFetcher @Inject constructor(
         this.token.value = token
     }
 
+    override suspend fun resetToken() {
+        withContext(Dispatchers.Default) {
+            HmsInstanceId.getInstance(context).deleteToken(APP_ID, TOKEN_SCOPE)
+        }
+    }
+
     init {
         GlobalScope.launch {
             val instanceId = HmsInstanceId.getInstance(context)
@@ -32,6 +38,5 @@ class HuaweiTokenFetcher @Inject constructor(
                 instanceId.getToken(APP_ID, TOKEN_SCOPE)
             }
         }
-
     }
 }

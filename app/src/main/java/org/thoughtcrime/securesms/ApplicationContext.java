@@ -38,7 +38,6 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Configuration;
 
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.squareup.phrase.Phrase;
 
 import org.conscrypt.Conscrypt;
