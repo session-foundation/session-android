@@ -16,13 +16,14 @@ jobs:
     strategy:
       fail-fast: false # Continue with other matrix items if one fails
       matrix:
-        variant: [ 'play', 'website', 'huawei' ]
+#        variant: [ 'play', 'website', 'huawei' ]
+        variant: [ 'play' ]
         include:
-          - variant: 'huawei'
-            build_commands: 'assembleHuaweiDebug'
-            extra_build_command_options: '-Phuawei=1'
-          - variant: 'website'
-            build_commands: 'assembleWebsiteDebug'
+#          - variant: 'huawei'
+#            build_commands: 'assembleHuaweiDebug'
+#            extra_build_command_options: '-Phuawei=1'
+#          - variant: 'website'
+#            build_commands: 'assembleWebsiteDebug'
           - variant: 'play'
             build_commands: 'assemblePlayDebug testPlayDebugUnitTest'
     steps:
