@@ -191,24 +191,26 @@ class VisibleMessageContentView : ConstraintLayout {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
                     message.slideDeck.documentSlide?.let { slide ->
-                        onContentClick.add {
-                            // open the document when tapping it
-                            val intent = Intent(Intent.ACTION_VIEW)
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            intent.setDataAndType(
-                                PartAuthority.getAttachmentPublicUri(slide.uri),
-                                slide.contentType
-                            )
+                        if(!mediaInProgress) { // do not attempt to open a doc in progress of downloading
+                            onContentClick.add {
+                                // open the document when tapping it
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.setDataAndType(
+                                        PartAuthority.getAttachmentPublicUri(slide.uri),
+                                        slide.contentType
+                                    )
 
-                            try {
-                                context.startActivity(intent)
-                            } catch (e: ActivityNotFoundException) {
-                                Log.e("VisibleMessageContentView", "Error opening document", e)
-                                Toast.makeText(
-                                    context,
-                                    R.string.attachmentsErrorOpen,
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                    context.startActivity(intent)
+                                } catch (e: ActivityNotFoundException) {
+                                    Log.e("VisibleMessageContentView", "Error opening document", e)
+                                    Toast.makeText(
+                                        context,
+                                        R.string.attachmentsErrorOpen,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
                         }
                     }

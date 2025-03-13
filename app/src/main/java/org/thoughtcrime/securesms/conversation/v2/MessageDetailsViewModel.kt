@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +23,8 @@ import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
@@ -40,6 +43,7 @@ import org.thoughtcrime.securesms.ui.TitledText
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
+    private val prefs: TextSecurePreferences,
     private val attachmentDb: AttachmentDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
@@ -77,43 +81,65 @@ class MessageDetailsViewModel @Inject constructor(
                     .collect { event.send(Event.Finish) }
             }
 
-            state.value = messageRecord.run {
-                val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
+            viewModelScope.launch {
+                state.value = messageRecord.run {
+                    val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val recipient = threadDb.getRecipientForThreadId(threadId)!!
-                val isDeprecatedLegacyGroup = recipient.isLegacyGroupRecipient &&
-                                              deprecationManager.isDeprecated
+                    val conversation = threadDb.getRecipientForThreadId(threadId)!!
+                    val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
+                                                  deprecationManager.isDeprecated
 
 
-                val errorString = lokiMessageDatabase.getErrorMessage(id)
+                    val errorString = lokiMessageDatabase.getErrorMessage(id)
 
-                MessageDetailsState(
-                    attachments = slides.map(::Attachment),
-                    record = messageRecord,
+                    var status: MessageStatus? = null
+                    // create a 'failed to send' status if appropriate
+                    if(messageRecord.isFailed){
+                        status = MessageStatus(
+                            title = context.getString(R.string.messageStatusFailedToSend),
+                            icon = R.drawable.ic_triangle_alert,
+                            errorStatus = true
+                        )
+                    }
 
-                    // Set the "Sent" message info TitledText appropriately
-                    sent = if (messageRecord.isSending && errorString == null) {
-                        val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
-                        TitledText(sendingWithEllipsisString, null)
-                    } else if (messageRecord.isSent && errorString == null) {
-                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
-                    } else {
-                        null // Not sending or sent? Don't display anything for the "Sent" element.
-                    },
+                    val sender = if(messageRecord.isOutgoing){
+                        Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                    } else individualRecipient
 
-                    // Set the "Received" message info TitledText appropriately
-                    received = if (messageRecord.isIncoming && errorString == null) {
-                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
-                    } else {
-                        null // Not incoming? Then don't display anything for the "Received" element.
-                    },
+                    MessageDetailsState(
+                        attachments = slides.map(::Attachment),
+                        record = messageRecord,
 
-                    error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
-                    senderInfo = individualRecipient.run { TitledText(name, address.toString()) },
-                    sender = individualRecipient,
-                    thread = recipient,
-                    readOnly = isDeprecatedLegacyGroup
-                )
+                        // Set the "Sent" message info TitledText appropriately
+                        sent = if (messageRecord.isSending && errorString == null) {
+                            val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
+                            TitledText(sendingWithEllipsisString, null)
+                        } else if (messageRecord.isSent && errorString == null) {
+                            dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                        } else {
+                            null // Not sending or sent? Don't display anything for the "Sent" element.
+                        },
+
+                        // Set the "Received" message info TitledText appropriately
+                        received = if (messageRecord.isIncoming && errorString == null) {
+                            dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                        } else {
+                            null // Not incoming? Then don't display anything for the "Received" element.
+                        },
+
+                        error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
+                        status = status,
+                        senderInfo = sender.run {
+                            TitledText(
+                                if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                                address.toString()
+                            )
+                        },
+                        sender = sender,
+                        thread = conversation,
+                        readOnly = isDeprecatedLegacyGroup
+                    )
+                }
             }
         }
 
@@ -181,6 +207,7 @@ data class MessageDetailsState(
     val sent: TitledText? = null,
     val received: TitledText? = null,
     val error: TitledText? = null,
+    val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val sender: Recipient? = null,
     val thread: Recipient? = null,
@@ -196,6 +223,12 @@ data class Attachment(
     val fileName: String?,
     val uri: Uri?,
     val hasImage: Boolean
+)
+
+data class MessageStatus(
+    val title: String,
+    @DrawableRes val icon: Int,
+    val errorStatus: Boolean
 )
 
 sealed class Event {
