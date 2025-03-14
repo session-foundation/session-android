@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.notifications
 
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.tasks.await
 import org.session.libsession.messaging.notifications.TokenFetcher
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,5 +19,9 @@ class FirebaseTokenFetcher @Inject constructor(): TokenFetcher {
 
     override fun onNewToken(token: String) {
         this.token.value = token
+    }
+
+    override suspend fun resetToken() {
+        FirebaseMessaging.getInstance().deleteToken().await()
     }
 }
