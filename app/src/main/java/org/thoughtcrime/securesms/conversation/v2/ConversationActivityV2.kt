@@ -378,10 +378,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private val glide by lazy { Glide.with(this) }
     private val lockViewHitMargin by lazy { toPx(40, resources) }
-    private val gifButton by lazy { InputBarButton(this, R.drawable.ic_gif, hasOpaqueBackground = true) }
-    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file, hasOpaqueBackground = true) }
-    private val libraryButton by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
-    private val cameraButton by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
+
+    private val gifButton      by lazy { InputBarButton(this, R.drawable.ic_gif,    hasOpaqueBackground = true) }
+    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file,   hasOpaqueBackground = true) }
+    private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
+    private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
+
     private val messageToScrollTimestamp = AtomicLong(-1)
     private val messageToScrollAuthor = AtomicReference<Address?>(null)
     private val firstLoad = AtomicBoolean(true)
@@ -795,19 +797,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // GIF button
         binding.gifButtonContainer.addView(gifButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         gifButton.onUp = { showGIFPicker() }
-        gifButton.snIsEnabled = false
         // Document button
         binding.documentButtonContainer.addView(documentButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         documentButton.onUp = { showDocumentPicker() }
-        documentButton.snIsEnabled = false
         // Library button
         binding.libraryButtonContainer.addView(libraryButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         libraryButton.onUp = { pickFromLibrary() }
-        libraryButton.snIsEnabled = false
         // Camera button
         binding.cameraButtonContainer.addView(cameraButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         cameraButton.onUp = { showCamera() }
-        cameraButton.snIsEnabled = false
     }
 
     // called from onCreate
@@ -1017,7 +1015,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.uiState.collect { state ->
                     binding.inputBar.run {
                         isVisible = state.showInput
-                        showMediaControls = state.enableInputMediaControls
+                        allowAttachMultimediaButtons = state.enableAttachMediaControls
                     }
 
                     // show or hide loading indicator
@@ -1160,7 +1158,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
-        val inputBarText = binding.inputBar.text // TODO check if we should be referencing newContent here instead
+        val inputBarText = binding.inputBar.text
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
             linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
         }
@@ -1196,8 +1194,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             animation.start()
         }
         isShowingAttachmentOptions = !isShowingAttachmentOptions
+
+        // Note: These custom buttons exist invisibly in the layout even when the attachments bar is not
+        // expanded so they MUST be disabled in such circumstances.
         val allButtons = listOf( cameraButton, libraryButton, documentButton, gifButton )
-        allButtons.forEach { it.snIsEnabled = isShowingAttachmentOptions }
+        allButtons.forEach { it.isEnabled = isShowingAttachmentOptions }
     }
 
     override fun showVoiceMessageUI() {

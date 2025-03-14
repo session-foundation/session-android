@@ -284,7 +284,7 @@ class ConversationViewModel(
                     it.copy(
                         shouldExit = recipient == null,
                         showInput = shouldShowInput(recipient, community, deprecationState),
-                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                         messageRequestState = buildMessageRequestState(recipient),
                     )
                 }
@@ -317,13 +317,34 @@ class ConversationViewModel(
      *     Since we haven't been approved by them, we can't send them any media, only text
      */
     private fun shouldEnableInputMediaControls(recipient: Recipient?): Boolean {
-        if (recipient != null &&
-            (recipient.is1on1 && !recipient.isLocalNumber) &&
-            !recipient.hasApprovedMe()) {
+
+        // Specifically disallow multimedia if we don't have a recipient to send anything to
+        if (recipient == null) {
+            Log.i("ConversationViewModel", "Will not enable media controls for a null recipient.")
             return false
         }
 
-        return true
+        // Specifically allow multimedia in our note-to-self
+        if (recipient.isLocalNumber) return true
+
+        // To send multimedia content to other people:
+        // - For 1-on-1 conversations they must have approved us as a contact.
+        val allowedFor1on1 = recipient.is1on1 && recipient.hasApprovedMe()
+
+        // - For groups you just have to be a member of the group. Note: `isGroupRecipient` convers both legacy and V2 groups.
+        val allowedForGroup = recipient.isGroupRecipient
+
+        // - For communities you must have write access to the community
+        val allowedForCommunity = (recipient.isCommunityRecipient && openGroup?.canWrite == true)
+
+        // - For blinded recipients you must be a contact of the recipient - without which you CAN
+        // send them SMS messages - but they will not get through if the recipient does not have
+        // community message requests enabled. Being a "contact recipient" implies
+        // `!recipient.blocksCommunityMessageRequests` in this case.
+        val allowedForBlindedCommunityRecipient = recipient.isCommunityInboxRecipient && recipient.isContactRecipient
+
+        // If any of the above are true we allow sending multimedia files - otherwise we don't
+        return allowedFor1on1 || allowedForGroup || allowedForCommunity || allowedForBlindedCommunityRecipient
     }
 
     /**
@@ -1192,7 +1213,12 @@ data class ConversationUiState(
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
     val showInput: Boolean = true,
-    val enableInputMediaControls: Boolean = true,
+
+    // Note: These input media controls are with regard to whether the user can attach multimedia files
+    // or record voice messages to be sent to a recipient - they are NOT things like video or audio
+    // playback controls.
+    val enableAttachMediaControls: Boolean = true,
+
     val showLoader: Boolean = false,
 )
 
