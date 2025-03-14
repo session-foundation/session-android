@@ -107,21 +107,20 @@ class Poller(
             Log.d(TAG, "Polling...")
 
             isPolling = true
-
-            // check if the polling pool is empty
-            if(pollPool.isEmpty()){
-                // if it is empty, fill it with the snodes from our swarm
-                pollPool.addAll(SnodeAPI.getSwarm(userPublicKey).await())
-            }
-
-            // randomly get a snode from the pool
-            val currentNode = pollPool.random()
-
-            // remove that snode from the pool
-            pollPool.remove(currentNode)
-
             var pollDelay = RETRY_INTERVAL_MS
             try {
+                // check if the polling pool is empty
+                if (pollPool.isEmpty()){
+                    // if it is empty, fill it with the snodes from our swarm
+                    pollPool.addAll(SnodeAPI.getSwarm(userPublicKey).await())
+                }
+
+                // randomly get a snode from the pool
+                val currentNode = pollPool.random()
+
+                // remove that snode from the pool
+                pollPool.remove(currentNode)
+
                 poll(currentNode)
                 retryScalingFactor = 1f
             } catch (e: Exception){
