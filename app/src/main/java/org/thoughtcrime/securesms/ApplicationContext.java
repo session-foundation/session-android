@@ -302,7 +302,6 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
         snodeClock.start();
         pushRegistrationHandler.run();
         configUploader.start();
-        removeGroupMemberHandler.start();
         destroyedGroupSync.start();
         adminStateSync.start();
         cleanupInvitationHandler.start();

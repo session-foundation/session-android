@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.groups.handler
 import android.content.Context
 import com.google.protobuf.ByteString
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -49,6 +50,7 @@ private const val TAG = "RemoveGroupMemberHandler"
  *
  * It automatically does so by listening to the config updates changes and checking for any pending removals.
  */
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 @Singleton
 class RemoveGroupMemberHandler @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -59,13 +61,8 @@ class RemoveGroupMemberHandler @Inject constructor(
     private val storage: StorageProtocol,
     private val groupScope: GroupScope,
 ) {
-    private var job: Job? = null
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun start() {
-        require(job == null) { "Already started" }
-
-        job = GlobalScope.launch {
+    init {
+        GlobalScope.launch {
             textSecurePreferences
                 .watchLocalNumber()
                 .flatMapLatest { localNumber ->
@@ -80,13 +77,16 @@ class RemoveGroupMemberHandler @Inject constructor(
                     val adminKey = configFactory.getGroup(update.groupId)?.adminKey
                     if (adminKey != null) {
                         groupScope.launch(update.groupId, "Handle possible group removals") {
-                            processPendingRemovalsForGroup(update.groupId, adminKey)
+                            try {
+                                processPendingRemovalsForGroup(update.groupId, adminKey)
+                            } catch (ec: Exception) {
+                                Log.e("RemoveGroupMemberHandler", "Error processing pending removals", ec)
+                            }
                         }
                     }
                 }
         }
     }
-
 
     private suspend fun processPendingRemovalsForGroup(
         groupAccountId: AccountId,
