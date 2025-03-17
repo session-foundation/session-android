@@ -169,7 +169,7 @@ public class ApplicationContext extends Application implements DefaultLifecycleO
     @Inject ConfigUploader configUploader;
     @Inject AdminStateSync adminStateSync;
     @Inject DestroyedGroupSync destroyedGroupSync;
-    @Inject RemoveGroupMemberHandler removeGroupMemberHandler;
+    @Inject RemoveGroupMemberHandler removeGroupMemberHandler;  // Exists here only to start upon app starts
     @Inject SnodeClock snodeClock;
     @Inject ExpiringMessageManager expiringMessageManager;
     @Inject TypingStatusRepository typingStatusRepository;
