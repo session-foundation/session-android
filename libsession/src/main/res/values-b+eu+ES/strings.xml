@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Gorde zure Recovery Password</string>
     <string name="recoveryPasswordDescription">Erabili zure berreskurapen pasahitza zure kontua kargatzeko gailu berrietan.\n\nZure kontua ezin da berreskuratu berreskurapen pasahitzik gabe. Ziurtatu leku seguru batean gordeta dagoela eta ez partekatu inorekin.</string>
     <string name="recoveryPasswordEnter">Sartu zure berreskuratze pasahitza</string>
-    <string name="recoveryPasswordErrorLoad">Errore bat gertatu da zure berreskuratze pasahitza kargatzean.\n\nMesedez esportatu zure erregistroak, eta igo fitxategia Session-en Laguntza Mahaiaren bidez arazo hau konpontzeko.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Mesedez, egiaztatu zure berreskurapen pasahitza eta saiatu berriro.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Zure berreskurapen pasahitzean hitz batzuk okerrak dira. Mesedez, egiaztatu eta saiatu berriro.</string>
     <string name="recoveryPasswordErrorMessageShort">Sartu duzun Berreskuratze Pasahitza ez da nahikoa luzea. Mesedez, egiaztatu eta saiatu berriro.</string>

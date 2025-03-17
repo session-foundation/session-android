@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Ajiye kalmar sirrin dawo da asusunka</string>
     <string name="recoveryPasswordDescription">Yi amfani da kalmar wucewa ta dawo da asusun naka a kan sabbin na\'urori.\n\nBa za a iya dawo da asusunku ba tare da kalmar wucewarku ta dawo ba. Tabbatar an adana ta wani wuri mai tsaro kuma kada ku raba ta da kowa ba.</string>
     <string name="recoveryPasswordEnter">Shigar da kalmar sirrin dawo da ku</string>
-    <string name="recoveryPasswordErrorLoad">An error occurred when trying to load your recovery password.\n\nPlease export your logs, then upload the file though Session\'s Help Desk to help resolve this issue.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Duba kalmar maidowarka kuma sake gwadawa.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Wasu kalmomin cikin Kalmar Tseratarku ba daidai bane. Da fatan za ku duba kuma ku sake gwadawa.</string>
     <string name="recoveryPasswordErrorMessageShort">Kalmar wucewar Warkar da ka shigar ba ta daɗe sosai ba. Da fatan a duba kuma a sake gwadawa.</string>

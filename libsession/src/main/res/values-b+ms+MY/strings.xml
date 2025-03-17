@@ -706,7 +706,6 @@
     <string name="recoveryPasswordBannerTitle">Simpan kata laluan pemulihan anda</string>
     <string name="recoveryPasswordDescription">Gunakan recovery password anda untuk memuatkan akaun anda pada peranti baharu.\n\nAkaun anda tidak boleh dipulihkan tanpa recovery password anda. Pastikan ia disimpan di tempat yang selamat dan selamat — dan jangan kongsikan dengan sesiapa.</string>
     <string name="recoveryPasswordEnter">Masukkan kata laluan pemulihan anda</string>
-    <string name="recoveryPasswordErrorLoad">Ralat berlaku semasa cuba memuatkan kata laluan pemulihan anda.\n\nSila eksport log anda, kemudian muat naik fail tersebut melalui Meja Bantuan Session untuk membantu menyelesaikan isu ini.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sila semak kata laluan pemulihan anda dan cuba lagi.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Beberapa perkataan dalam Kata Laluan Pemulihan anda adalah tidak tepat. Sila periksa dan cuba lagi.</string>
     <string name="recoveryPasswordErrorMessageShort">Kata Laluan Pemulihan yang anda masukkan tidak cukup panjang. Sila semak dan cuba lagi.</string>

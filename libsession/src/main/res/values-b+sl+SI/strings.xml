@@ -741,7 +741,6 @@
     <string name="recoveryPasswordBannerTitle">Shrani vaše obnovitveno geslo</string>
     <string name="recoveryPasswordDescription">Uporabite geslo za obnovitev, da naložite svoj račun na novih napravah.\n\nVašega računa ni mogoče obnoviti brez obnovitvenega gesla. Poskrbite, da bo shranjeno na varnem mestu — in ga ne delite z nikomer.</string>
     <string name="recoveryPasswordEnter">Vnesite vaše obnovitveno geslo</string>
-    <string name="recoveryPasswordErrorLoad">Prišlo je do napake pri nalaganju vašega obnovitvenega gesla.\n\nProsimo, izvozite svoje dnevnike in nato naložite datoteko prek kupca za pomoč Session, da pomagajo rešiti to težavo.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Prosimo, preveri svoje geslo za obnovitev in poskusi znova.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Nekatere besede v vašem geslu za obnovitev so napačne. Prosim preverite in poskusite znova.</string>
     <string name="recoveryPasswordErrorMessageShort">Geslo za obnovitev, ki ste ga vnesli, ni dovolj dolgo. Preverite in poskusite znova.</string>

@@ -729,7 +729,6 @@
     <string name="recoveryPasswordBannerTitle">Spremi svoju lozinku za oporavak</string>
     <string name="recoveryPasswordDescription">Koristite svoju lozinku za oporavak za učitavanje računa na novim uređajima.\n\nVaš račun nije moguće oporaviti bez lozinke za oporavak. Osigurajte da je pohranjena na sigurnom mjestu i ne dijelite je s nikim.</string>
     <string name="recoveryPasswordEnter">Unesite svoju lozinku za oporavak</string>
-    <string name="recoveryPasswordErrorLoad">Došlo je do pogreške prilikom učitavanja vaše lozinke za oporavak.\n\nMolimo izvezite svoje zapise, zatim učitajte datoteku putem Session Pomoć Desk kako biste pomogli u rješavanju ovog problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Molimo provjerite svoju lozinku za oporavak i pokušajte ponovno.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Neke riječi u vašoj lozinci za oporavak nisu točne. Provjerite i pokušajte ponovno.</string>
     <string name="recoveryPasswordErrorMessageShort">Unesena lozinka za oporavak nije dovoljno dugačka. Provjerite i pokušajte ponovno.</string>

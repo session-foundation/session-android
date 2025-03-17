@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Qayta tiklash parolingizni saqlang</string>
     <string name="recoveryPasswordDescription">Hisobingizni yangi qurilmalarda yuklash uchun qayta parolingizdan foydalaning.\n\nHisobingiz qayta parolsiz tiklanmaydi. Unga xavfsiz va ishonchli joyda saqlanganidan ishonch hosil qiling va hech kimga oshkor qilmang.</string>
     <string name="recoveryPasswordEnter">Qayta tiklash parolingizni kiriting</string>
-    <string name="recoveryPasswordErrorLoad">Qayta tiklash parolingizni yuklashda xatolik yuz berdi.\n\nMuammoni hal qilishda yordam berish uchun ilovangiz jurnallarini eksport qiling, so\'ngra Session Yordam Markaziga faylni yuklang.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Qayta tiklash parolingizni tekshiring va qaytadan urinib ko‘ring.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Qayta tiklash parolingizdagi ayrim so\'zlar noto\'g\'ri. Iltimos, tekshirib ko\'ring va qaytadan urinib ko\'ring.</string>
     <string name="recoveryPasswordErrorMessageShort">Kiritilgan Recovery Password yetarlicha uzun emas. Iltimos, tekshiring va qayta urinib ko\'ring.</string>

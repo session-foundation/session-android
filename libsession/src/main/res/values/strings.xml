@@ -47,6 +47,20 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> and <b>{other_name}</b> were promoted to Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
+    <string name="appIcon">App Icon</string>
+    <string name="appIconAndNameDescription">Alternate app icon and name is displayed on home screen and app drawer.</string>
+    <string name="appIconAndNameSelectionTitle">Icon and name</string>
+    <string name="appIconDescription">Alternate app icon is displayed on home screen and app library. App name will still appear as \'{app_name}\'.</string>
+    <string name="appIconEnableIcon">Use alternate app icon</string>
+    <string name="appIconEnableIconAndName">Use alternate app icon and name</string>
+    <string name="appIconSelect">Select alternate app icon</string>
+    <string name="appIconSelectionTitle">Icon</string>
+    <string name="appNameCalculator">Calculator</string>
+    <string name="appNameMeetingSE">MeetingSE</string>
+    <string name="appNameNews">News</string>
+    <string name="appNameNotes">Notes</string>
+    <string name="appNameStocks">Stocks</string>
+    <string name="appNameWeather">Weather</string>
     <string name="appearanceAutoDarkMode">Auto dark-mode</string>
     <string name="appearanceHideMenuBar">Hide Menu Bar</string>
     <string name="appearanceLanguage">Language</string>
@@ -739,6 +753,7 @@
     <string name="permissionsKeepInSystemTray">Keep in System Tray</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} continues running in the background when you close the window</string>
     <string name="permissionsLibrary">{app_name} needs photo library access to continue. You can enable access in the iOS settings.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} needs access to local network to make voice and video calls.</string>
     <string name="permissionsMicrophone">Microphone</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} needs microphone access to make calls and send audio messages, but it has been permanently denied. Tap settings → Permissions, and turn \"Microphone\" on.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">You can enable microphone access in {app_name}\'s privacy settings</string>
@@ -791,7 +806,7 @@
     <string name="recoveryPasswordBannerTitle">Save your recovery password</string>
     <string name="recoveryPasswordDescription">Use your recovery password to load your account on new devices.\n\nYour account cannot be recovered without your recovery password. Make sure it\'s stored somewhere safe and secure — and don\'t share it with anyone.</string>
     <string name="recoveryPasswordEnter">Enter your recovery password</string>
-    <string name="recoveryPasswordErrorLoad">An error occurred when trying to load your recovery password.\n\nPlease export your logs, then upload the file though Session\'s Help Desk to help resolve this issue.</string>
+    <string name="recoveryPasswordErrorLoad">An error occurred when trying to load your recovery password.\n\nPlease export your logs, then upload the file though the {app_name} Help Desk to help resolve this issue.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
