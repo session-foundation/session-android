@@ -79,8 +79,12 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
                 GlobalScope.launch {
-                    fetchUpdatedExpiriesAndScheduleDeletion(context, hashToMessages)
-                    shortenExpiryOfDisappearingAfterRead(hashToMessages)
+                    try {
+                        fetchUpdatedExpiriesAndScheduleDeletion(context, hashToMessages)
+                        shortenExpiryOfDisappearingAfterRead(hashToMessages)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to fetch updated expiries and schedule deletion", e)
+                    }
                 }
             }
         }

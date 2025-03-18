@@ -45,6 +45,7 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
@@ -511,7 +512,11 @@ object MessageSender {
 
             storage.markAsSyncing(timestamp, userPublicKey)
             GlobalScope.launch {
-                sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
+                try {
+                    sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
+                } catch (ec: Exception) {
+                    Log.e("MessageSender", "Unable to send sync message", ec)
+                }
             }
         }
     }
