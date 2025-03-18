@@ -387,11 +387,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             binding.seedReminderView.isVisible = false
         }
 
-        // refresh search on resume, in case we a conversation was deleted
-        if (binding.globalSearchRecycler.isVisible){
-            globalSearchViewModel.refresh()
-        }
-
         updateLegacyConfigView()
     }
 
@@ -437,7 +432,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (binding.globalSearchRecycler.isVisible) binding.globalSearchInputLayout.clearSearch(true)
+        if (binding.globalSearchRecycler.isVisible && binding.globalSearchInputLayout.hasFocus()) {
+            binding.globalSearchInputLayout.clearSearch(true)
+        }
         else super.onBackPressed()
     }
 
