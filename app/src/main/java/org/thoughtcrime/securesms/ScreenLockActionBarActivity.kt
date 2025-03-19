@@ -104,7 +104,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     fun onMasterSecretCleared() {
         Log.i(TAG, "onMasterSecretCleared()")
-        if (ApplicationContext.getInstance(this).isAppVisible()) routeApplicationState(true)
+        if (ApplicationContext.getInstance(this).isAppVisible) routeApplicationState(true)
         else finish()
     }
 
