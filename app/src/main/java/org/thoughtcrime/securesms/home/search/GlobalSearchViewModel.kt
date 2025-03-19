@@ -45,6 +45,10 @@ class GlobalSearchViewModel @Inject constructor(
     private val searchRepository: SearchRepository,
     private val configFactory: ConfigFactory,
 ) : ViewModel() {
+
+    // The query text here is not the source of truth due to the limitation of Android view system
+    // Currently it's only set by the user input: if you try to set it programmatically, it won't
+    // be reflected in the UI and could be overwritten by the user input.
     private val _queryText = MutableStateFlow<String>("")
 
     private fun observeChangesAffectingSearch(): Flow<*> = merge(

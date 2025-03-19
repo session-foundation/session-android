@@ -13,6 +13,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -58,6 +59,10 @@ class HomeViewModel @Inject constructor(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
+    private val mutableIsSearchOpen = MutableStateFlow(false)
+
+    val isSearchOpen: StateFlow<Boolean> get() = mutableIsSearchOpen
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected
@@ -144,6 +149,23 @@ class HomeViewModel @Inject constructor(
         .onStart { emit(Unit) }
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
+
+    fun onSearchClicked() {
+        mutableIsSearchOpen.value = true
+    }
+
+    fun onCancelSearchClicked() {
+        mutableIsSearchOpen.value = false
+    }
+
+    fun onBackPressed(): Boolean {
+        if (mutableIsSearchOpen.value) {
+            mutableIsSearchOpen.value = false
+            return true
+        }
+
+        return false
+    }
 
     data class Data(
         val items: List<Item>,

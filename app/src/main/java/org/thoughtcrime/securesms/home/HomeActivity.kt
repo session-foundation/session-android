@@ -167,8 +167,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up toolbar buttons
         binding.profileButton.setOnClickListener { openSettings() }
         binding.searchViewContainer.setOnClickListener {
-            globalSearchViewModel.refresh()
-            binding.globalSearchInputLayout.requestFocus()
+            homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
@@ -177,6 +176,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
             }
         }
+
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
@@ -251,11 +251,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
 
-            // monitor the global search VM query
+            // sync view -> viewModel
             launch {
-                binding.globalSearchInputLayout.query
+                binding.globalSearchInputLayout.query()
                     .collect(globalSearchViewModel::setQuery)
             }
+
             // Get group results and display them
             launch {
                 globalSearchViewModel.result.map { result ->
@@ -308,6 +309,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
         }
+
+        // Set up search layout
+        lifecycleScope.launch {
+            homeViewModel.isSearchOpen.collect { open ->
+                setSearchShown(open)
+            }
+        }
+    }
+
+    override fun onCancelClicked() {
+        homeViewModel.onCancelSearchClicked()
     }
 
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
@@ -358,11 +370,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    override fun onInputFocusChanged(hasFocus: Boolean) {
-        setSearchShown(hasFocus || binding.globalSearchInputLayout.query.value.isNotEmpty())
-    }
-
     private fun setSearchShown(isShown: Boolean) {
+        // Request focus immediately so the user can start typing
+        if (isShown) {
+            binding.globalSearchInputLayout.requestFocus()
+        }
+
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
         binding.recyclerView.isVisible = !isShown
@@ -432,10 +445,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (binding.globalSearchRecycler.isVisible && binding.globalSearchInputLayout.hasFocus()) {
-            binding.globalSearchInputLayout.clearSearch(true)
+        if (homeViewModel.isSearchOpen.value && binding.globalSearchInputLayout.handleBackPressed()) {
+            return
         }
-        else super.onBackPressed()
+
+        if (!homeViewModel.onBackPressed()) {
+            super.onBackPressed()
+        }
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
