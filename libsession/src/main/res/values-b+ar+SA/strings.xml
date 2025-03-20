@@ -890,7 +890,6 @@
     <string name="updateError">لا يمكن التحديث</string>
     <string name="updateErrorDescription">{app_name} فشل في التحديث. يرجى الانتقال إلى {session_download_url} وتثبيت الإصدار الجديد يدويًا، ثم قم بالاتصال بمركز المساعدة لإعلامنا بالمشكلة.</string>
     <string name="updateNewVersion">إصدار جديد من {app_name} متاح، انقر للتحديث.</string>
-    <string name="updateNewVersionDescription">إصدار جديد من {app_name} متاح.</string>
     <string name="updateReleaseNotes">اِذهب الى ملاحظات الاِصدار</string>
     <string name="updateSession">تحديث {app_name}</string>
     <string name="updateVersion">النسخة {version}</string>

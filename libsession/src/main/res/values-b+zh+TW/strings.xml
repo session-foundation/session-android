@@ -791,7 +791,6 @@
     <string name="updateError">無法更新</string>
     <string name="updateErrorDescription">{app_name} 更新失敗。請前往 {session_download_url} 手動安裝新版本，然後聯繫我們的幫助中心通知我們這個問題。</string>
     <string name="updateNewVersion">有新版本的 {app_name}，輕觸更新</string>
-    <string name="updateNewVersionDescription">有新版本的 {app_name}。</string>
     <string name="updateReleaseNotes">前往發行紀錄</string>
     <string name="updateSession">{app_name} 更新</string>
     <string name="updateVersion">版本： {version}</string>

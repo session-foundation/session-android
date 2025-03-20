@@ -808,7 +808,6 @@
     <string name="updateError">Kan inte uppdatera</string>
     <string name="updateErrorDescription">{app_name} misslyckades med att uppdatera. Gå till {session_download_url} och installera den nya versionen manuellt, och kontakta vårt Hjälpcenter för att informera oss om detta problem.</string>
     <string name="updateNewVersion">En ny version av {app_name} är tillgänglig, tryck för att uppdatera</string>
-    <string name="updateNewVersionDescription">En ny version av {app_name} är tillgänglig.</string>
     <string name="updateReleaseNotes">Gå till versionsanteckningar</string>
     <string name="updateSession">{app_name}-uppdatering</string>
     <string name="updateVersion">Version {version}</string>

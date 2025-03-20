@@ -808,7 +808,6 @@
     <string name="updateError">آپدیت ناموفق بود</string>
     <string name="updateErrorDescription">{app_name} اپدیت نشد. لطفا به {session_download_url} بروید و نسخه جدید را به صورت دستی نصب کنید. سپس با مرکز پشتیبانی ما تماس بگیرید تا ما را در جریان این مشکل قرار دهید.</string>
     <string name="updateNewVersion">نسخه جدیدی از {app_name} موجود است، برای به‌روزرسانی ضربه بزنید</string>
-    <string name="updateNewVersionDescription">نسخه جدیدی از {app_name} موجود است.</string>
     <string name="updateReleaseNotes">رفتن به یادداشت‌های ریلیز</string>
     <string name="updateSession">به‌روزرسانی {app_name}</string>
     <string name="updateVersion">نسخه {version}</string>

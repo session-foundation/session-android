@@ -922,7 +922,6 @@
     <string name="updateError">Обновить не удается</string>
     <string name="updateErrorDescription">Не удалось обновить {app_name}. Пожалуйста, перейдите по ссылке {session_download_url} и установите новую версию вручную, затем свяжитесь с нашим Центром поддержки, чтобы сообщить нам об этой проблеме.</string>
     <string name="updateNewVersion">Доступна новая версия {app_name}, нажмите для обновления</string>
-    <string name="updateNewVersionDescription">Доступна новая версия {app_name}.</string>
     <string name="updateReleaseNotes">Перейти к описанию обновления</string>
     <string name="updateSession">Обновление {app_name}</string>
     <string name="updateVersion">Версия {version}</string>

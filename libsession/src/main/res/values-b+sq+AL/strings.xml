@@ -802,7 +802,6 @@
     <string name="updateError">Nuk mund të përditësohet</string>
     <string name="updateErrorDescription">{app_name} nuk arriti të përditësohej. Ju lutemi shkoni te {session_download_url} dhe instaloni versionin e ri manualisht, pastaj kontaktoni qendrën tonë të ndihmës për të na informuar për këtë problem.</string>
     <string name="updateNewVersion">Është gati një version i ri i {app_name}, prekeni që të përditësohet</string>
-    <string name="updateNewVersionDescription">Është gati një version i ri i {app_name}.</string>
     <string name="updateReleaseNotes">Kalo te Shënime Versioni</string>
     <string name="updateSession">Përditësimi i {app_name}</string>
     <string name="updateVersion">Versioni {version}</string>

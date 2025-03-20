@@ -803,7 +803,6 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name} walephera kusintha. Chonde pitani ku {session_download_url} ndikuyika mtundu watsopano pamanja, kenako lemberani Thandizo lathu kuti mutidziwitse za vutoli.</string>
     <string name="updateNewVersion">Mtundu watsopano wa {app_name} upezeka, dinani kuti muzitha kusintha</string>
-    <string name="updateNewVersionDescription">Mtundu watsopano wa {app_name} ulipezeka.</string>
     <string name="updateReleaseNotes">Pitani ku Zolemba Zogwira Ntchito</string>
     <string name="updateSession">{app_name} Kusintha</string>
     <string name="updateVersion">Mtundu {version}</string>

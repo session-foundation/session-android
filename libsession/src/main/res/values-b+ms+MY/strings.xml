@@ -791,7 +791,6 @@
     <string name="updateError">Tidak Dapat Kemas Kini</string>
     <string name="updateErrorDescription">{app_name} gagal untuk dikemaskini. Sila pergi ke {session_download_url} dan pasang versi baru secara manual, kemudian hubungi Pusat Bantuan kami untuk memberitahu kami tentang masalah ini.</string>
     <string name="updateNewVersion">Versi baru {app_name} tersedia, ketik untuk mengemaskini</string>
-    <string name="updateNewVersionDescription">Versi baru {app_name} tersedia.</string>
     <string name="updateReleaseNotes">Pergi ke Nota Keluaran</string>
     <string name="updateSession">Kemaskini {app_name}</string>
     <string name="updateVersion">Versi {version}</string>

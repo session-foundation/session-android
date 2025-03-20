@@ -415,6 +415,7 @@
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
     <string name="errorUnknown">An unknown error occurred.</string>
+    <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
     <string name="file">File</string>
     <string name="files">Files</string>
@@ -526,6 +527,7 @@
     <string name="hideMenuBarDescription">Toggle system menu bar visibility</string>
     <string name="hideOthers">Hide Others</string>
     <string name="image">Image</string>
+    <string name="images">images</string>
     <string name="incognitoKeyboard">Incognito Keyboard</string>
     <string name="incognitoKeyboardDescription">Request incognito mode if available. Depending on the keyboard you are using, your keyboard may ignore this request.</string>
     <string name="info">Info</string>
@@ -883,6 +885,7 @@
     <string name="stickers">Stickers</string>
     <string name="supportGoTo">Go to Support Page</string>
     <string name="systemInformationDesktop">System Information: {information}</string>
+    <string name="tapToRetry">Tap to retry</string>
     <string name="theContinue">Continue</string>
     <string name="theDefault">Default</string>
     <string name="theError">Error</string>
@@ -897,7 +900,7 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name} failed to update. Please go to {session_download_url} and install the new version manually, then contact our Help Center to let us know about this problem.</string>
     <string name="updateNewVersion">A new version of {app_name} is available, tap to update</string>
-    <string name="updateNewVersionDescription">A new version of {app_name} is available.</string>
+    <string name="updateNewVersionDescription">A new version ({version}) of {app_name} is available.</string>
     <string name="updateReleaseNotes">Go to Release Notes</string>
     <string name="updateSession">{app_name} Update</string>
     <string name="updateVersion">Version {version}</string>

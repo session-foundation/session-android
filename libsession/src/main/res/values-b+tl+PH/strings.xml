@@ -804,7 +804,6 @@
     <string name="updateError">Hindi Ma-update</string>
     <string name="updateErrorDescription">Nabigo ang {app_name} na mag-update. Pumunta sa {session_download_url} at i-install ang bagong bersyon nang manu-manong, pagkatapos ay makipag-ugnayan sa aming Help Center upang ipaalam sa amin ang tungkol sa problemang ito.</string>
     <string name="updateNewVersion">May bagong bersyon ng {app_name} na available, tapikin para i-update</string>
-    <string name="updateNewVersionDescription">May bagong bersyon ng {app_name} na available.</string>
     <string name="updateReleaseNotes">Pumunta sa Mga Tala sa Paglabas</string>
     <string name="updateSession">Pag-update ng {app_name}</string>
     <string name="updateVersion">Bersyon {version}</string>

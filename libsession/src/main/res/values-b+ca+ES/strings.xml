@@ -803,7 +803,6 @@
     <string name="updateError">No es pot actualitzar</string>
     <string name="updateErrorDescription">Ha fallat l\'actualització de {app_name}. Aneu a {session_download_url} i instal·leu la nova versió manualment, llavors contacteu amb el nostre Centre de Suport per a informar sobre aquest problema.</string>
     <string name="updateNewVersion">Hi ha disponible una nova versió de {app_name}. Toqueu per actualitzar-lo</string>
-    <string name="updateNewVersionDescription">Hi ha disponible una nova versió de {app_name}</string>
     <string name="updateReleaseNotes">Vés a les notes de versió</string>
     <string name="updateSession">Actualització de {app_name}</string>
     <string name="updateVersion">Versió {version}</string>

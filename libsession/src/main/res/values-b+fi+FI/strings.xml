@@ -804,7 +804,6 @@
     <string name="updateError">Päivitys epäonnistui</string>
     <string name="updateErrorDescription">{app_name} päivitys epäonnistui. Mene osoitteeseen {session_download_url} ja asenna uusi versio manuaalisesti. Ota yhteyttä tukipalveluumme ja ilmoita tästä ongelmasta.</string>
     <string name="updateNewVersion">Uusi versio {app_name} on saatavilla, napauta päivittääksesi</string>
-    <string name="updateNewVersionDescription">Uusi versio {app_name} on saatavilla.</string>
     <string name="updateReleaseNotes">Siirry julkaisutietoihin</string>
     <string name="updateSession">{app_name} Päivitys</string>
     <string name="updateVersion">Versio {version}</string>

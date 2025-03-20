@@ -832,7 +832,6 @@
     <string name="updateError">Nepavyksta atnaujinti</string>
     <string name="updateErrorDescription">Nepavyko atnaujinti {app_name}. Prašome eiti į {session_download_url} ir rankiniu būdu įdiegti naują versiją, tada susisiekite su mūsų Pagalbos Centru, kad praneštumėte apie šią problemą.</string>
     <string name="updateNewVersion">Yra prieinama nauja {app_name} versija, bakstelėkite, norėdami atnaujinti</string>
-    <string name="updateNewVersionDescription">Yra prieinama nauja {app_name} versija.</string>
     <string name="updateReleaseNotes">Pereiti į laidos informaciją</string>
     <string name="updateSession">{app_name} atnaujinimas</string>
     <string name="updateVersion">Versija {version}</string>

@@ -856,7 +856,6 @@
     <string name="updateError">Не вдалося оновити</string>
     <string name="updateErrorDescription">{app_name} не вдалося оновити. Будь ласка, перейдіть на {session_download_url} і встановіть нову версію вручну, потім зв\'яжіться з нашою Службою підтримки для інформування про цю проблему.</string>
     <string name="updateNewVersion">Нова версія {app_name} доступна.</string>
-    <string name="updateNewVersionDescription">Доступна нова версія {app_name}.</string>
     <string name="updateReleaseNotes">Перейти в примітки до випуску</string>
     <string name="updateSession">Оновлення {app_name}</string>
     <string name="updateVersion">Версія {version}</string>

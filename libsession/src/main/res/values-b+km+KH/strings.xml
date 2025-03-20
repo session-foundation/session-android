@@ -789,7 +789,6 @@
     <string name="updateError">មិនអាចធ្វើបច្ចុប្បន្នភាព</string>
     <string name="updateErrorDescription">{app_name} បានបរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាព។ សូមចូលទៅកាន់ {session_download_url} ហើយដំឡើងជំនាន់ថ្មីដោយដៃ បន្ទាប់មកទាក់ទងមជ្ឈមណ្ឌលជំនួយរបស់យើង ដើម្បីជំរាបព័ត៌មានអំពីបញ្ហានេះ។</string>
     <string name="updateNewVersion">កំណែថ្មីរបស់{app_name}អាចប្រើប្រាស់បានហើយ សូមចុចធ្វើបច្ចុប្បន្នភាព។</string>
-    <string name="updateNewVersionDescription">កំណែថ្មីរបស់ {app_name} ចេញហើយ។</string>
     <string name="updateReleaseNotes">ចូលទៅកាន់កំណត់ចេញថ្មី</string>
     <string name="updateSession">{app_name} ភើពុទ្ធ</string>
     <string name="updateVersion">កំណែ {version}</string>

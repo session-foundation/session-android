@@ -829,7 +829,6 @@
     <string name="updateError">Немагчыма абнавіць</string>
     <string name="updateErrorDescription">{app_name} не ўдалося абнавіць. Калі ласка, перайдзіце на {session_download_url} і ўсталявайце новую версію ўручную, затым звяжыцеся з нашым цэнтрам дапамогі, каб паведаміць пра гэтую праблему.</string>
     <string name="updateNewVersion">Даступна новая версія {app_name}, націсніце для абнаўлення</string>
-    <string name="updateNewVersionDescription">Даступна новая версія {app_name}.</string>
     <string name="updateReleaseNotes">Перайсці да Release Notes</string>
     <string name="updateSession">Абнаўленне {app_name}</string>
     <string name="updateVersion">Версія {version}</string>

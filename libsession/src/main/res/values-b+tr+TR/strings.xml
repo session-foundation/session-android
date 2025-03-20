@@ -822,7 +822,6 @@
     <string name="updateError">Güncellenemiyor</string>
     <string name="updateErrorDescription">{app_name} güncellenirken bir sorun meydana geldi. Lütfen {session_download_url} bağlantısını ziyaret edip yeni sürümü manuel olarak yükleyin, ve Yardım Merkezi üzerinden bu sorunu bize bildirin.</string>
     <string name="updateNewVersion">{app_name} yeni bir sürümü mevcut, güncellemek için dokunun</string>
-    <string name="updateNewVersionDescription">{app_name} yeni bir sürümü mevcut.</string>
     <string name="updateReleaseNotes">Sürüm Notlarına Git</string>
     <string name="updateSession">{app_name} Güncellemesi</string>
     <string name="updateVersion">Sürüm {version}</string>

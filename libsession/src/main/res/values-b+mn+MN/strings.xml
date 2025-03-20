@@ -804,7 +804,6 @@
     <string name="updateError">Шинэчлэх боломжгүй</string>
     <string name="updateErrorDescription">{app_name} шинэчлэлт амжилтгүй боллоо. Та {session_download_url} руу орж шинэ хувилбарыг гараар суулгаад, асуудлын талаар бидэнд мэдэгдэнэ үү.</string>
     <string name="updateNewVersion">{app_name} шинэ хувилбар гарсан байна, шинэчлэхийн тулд товш</string>
-    <string name="updateNewVersionDescription">{app_name} шинэ хувилбар гарсан байна.</string>
     <string name="updateReleaseNotes">Гаргах тэмдэглэлүүд рүү очих</string>
     <string name="updateSession">{app_name} шинэчлэлт</string>
     <string name="updateVersion">Хувилбар {version}</string>

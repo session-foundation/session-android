@@ -804,7 +804,6 @@
     <string name="updateError">Impossible de mettre à jour</string>
     <string name="updateErrorDescription">La mise à jour de {app_name} a échoué. Veuillez aller sur {session_download_url} et installer la nouvelle version manuellement, contactez ensuite le support pour nous informer du problème.</string>
     <string name="updateNewVersion">Une nouvelle version de {app_name} est disponible, appuyez pour lancer la mise à jour</string>
-    <string name="updateNewVersionDescription">Une nouvelle version de {app_name} est disponible.</string>
     <string name="updateReleaseNotes">Accéder aux notes de mise à jour</string>
     <string name="updateSession">Mise à jour de {app_name}</string>
     <string name="updateVersion">Version {version}</string>

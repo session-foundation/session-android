@@ -804,7 +804,6 @@
     <string name="updateError">Ayinakho Uhlaziyo</string>
     <string name="updateErrorDescription">{app_name} ayiphumelelanga ukuhlaziya. Nceda uye ku {session_download_url} ufake inguqulelo entsha ngesandla, emva koko unxibelelane neZiko lethu loNcedo ukuze usixelele ngale ngxaki.</string>
     <string name="updateNewVersion">Uhlobo olutsha lwe-{app_name} luyafumaneka, cofa ukuze uhlaziye</string>
-    <string name="updateNewVersionDescription">Uhlobo olutsha lwe-{app_name} luyafumaneka.</string>
     <string name="updateReleaseNotes">Yiya kuNgcaciso olupapashiweyo</string>
     <string name="updateSession">Ukuhlaziya i-{app_name}</string>
     <string name="updateVersion">Inguqulelo {version}</string>

@@ -830,7 +830,6 @@
     <string name="updateError">Nie je možné aktualizovať</string>
     <string name="updateErrorDescription">{app_name} sa nepodarilo aktualizovať. Prosím prejdite na {session_download_url} a manuálne nainštalujte novú verziu, potom kontaktujte naše Help Centrum aby ste nám dali vedieť o tomto probléme.</string>
     <string name="updateNewVersion">K dispozícii je nová verzia {app_name}, ťuknite, aby ste aktualizovali</string>
-    <string name="updateNewVersionDescription">K dispozícii je nová verzia {app_name}.</string>
     <string name="updateReleaseNotes">Navštíviť Poznámky k Vydaniu</string>
     <string name="updateSession">Aktualizácia {app_name}</string>
     <string name="updateVersion">Verzia {version}</string>

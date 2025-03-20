@@ -790,7 +790,6 @@
     <string name="updateError">ပြင်ပေး၍ မရပါ</string>
     <string name="updateErrorDescription">{app_name} ကိုအပ်ဒိတ်လုပ်ရန်မအောင်မြင်ပါ။ ကျေးဇူးပြု၍ {session_download_url} သို့သွားပြီး ဗားရှင်းအသစ်ကိုလက်ဝယ်လုပ်ဖွင့်ပါ၊ ၎င်းပြဿနာကြောင့်ကျွန်ုပ်တို့၏အကူအညီစင်တာကိုဆက်သွယ်ပါ။</string>
     <string name="updateNewVersion">{app_name} မှ အသစ်ဗားရှင်း ရရှိနေပါသည်၊ အပ်ဒိတ်လုပ်ရန် နှိပ်ပါ</string>
-    <string name="updateNewVersionDescription">{app_name} အသစ်ဗားရှင်း ရရှိနေပီး။</string>
     <string name="updateReleaseNotes">Release Notes သို့သွားပါ</string>
     <string name="updateSession">{app_name} မှာထပ်မံ ပြင်ဆင်မှုရှိနေသည်။</string>
     <string name="updateVersion">ဗားရှင်း {version}</string>

@@ -803,7 +803,6 @@
     <string name="updateError">Не може да се ажурира</string>
     <string name="updateErrorDescription">{app_name} не успеа да се ажурира. Ве молиме одете на {session_download_url} и рачно инсталирајте ја новата верзија, потоа контактирајте го нашиот Центар за помош за да нè известите за овој проблем.</string>
     <string name="updateNewVersion">Достапна е нова верзија на {app_name}, допрете за ажурирање</string>
-    <string name="updateNewVersionDescription">Достапна е нова верзија на {app_name}.</string>
     <string name="updateReleaseNotes">Оди до белешки за верзијата</string>
     <string name="updateSession">Ажурирање на {app_name}</string>
     <string name="updateVersion">Верзија {version}</string>

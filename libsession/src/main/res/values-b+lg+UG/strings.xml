@@ -803,7 +803,6 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name} ekulemye okwekkulaakulanya. Nnyigamu {session_download_url} n\'okuteekamu eddala eddala nga bwotekako, olwo olindako okuyita mu Help Center waffe okututegeeza ku buzibu buno.</string>
     <string name="updateNewVersion">Enkyukakyuka empya ya {app_name} eriwo, kakkirizza okkyusamu</string>
-    <string name="updateNewVersionDescription">Enkyukakyuka empya ya {app_name} eriwo.</string>
     <string name="updateReleaseNotes">Genda ku Notiizi za Release</string>
     <string name="updateSession">{app_name} Update</string>
     <string name="updateVersion">Version {version}</string>

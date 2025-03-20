@@ -254,7 +254,6 @@
     <string name="updateDownloading">ກຳລັງດາວໂຫລດການປັບປຸງ: {percent_loader}%</string>
     <string name="updateError">ບໍ່ສາມາດອັບເດດໄດ້</string>
     <string name="updateNewVersion">ວິທີໃຫມ່ຂອງ {app_name} ມີໃຫ້, ກົດເພື່ອອັບເດດ</string>
-    <string name="updateNewVersionDescription">ວິທີໃຫມ່ຂອງ {app_name} ມີໃຫ້.</string>
     <string name="updateSession">ອັບເດດ {app_name}</string>
     <string name="urlCopy">ເສັກກີ້າບເອີຢ໇ລໍ້າ</string>
 </resources>

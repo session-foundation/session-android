@@ -824,7 +824,6 @@
     <string name="updateError">Kan niet bijwerken</string>
     <string name="updateErrorDescription">{app_name} kon niet worden bijgewerkt. Ga naar {session_download_url} en installeer handmatig de nieuwe versie, neem vervolgens contact op met ons Help Center om dit probleem te laten weten.</string>
     <string name="updateNewVersion">Er is een nieuwe versie van {app_name} beschikbaar, tik om bij te werken</string>
-    <string name="updateNewVersionDescription">Er is een nieuwe versie van {app_name} beschikbaar.</string>
     <string name="updateReleaseNotes">Ga naar Release Opmerkingen</string>
     <string name="updateSession">{app_name} Bijwerken</string>
     <string name="updateVersion">Versie {version}</string>

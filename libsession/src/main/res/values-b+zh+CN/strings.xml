@@ -807,7 +807,6 @@
     <string name="updateError">无法更新</string>
     <string name="updateErrorDescription">{app_name}更新失败。请返回{session_download_url}并手动安装新版本，并联系帮助中心反馈此问题。</string>
     <string name="updateNewVersion">有新版本的{app_name}可用，点击更新</string>
-    <string name="updateNewVersionDescription">有新版本的{app_name}可用。</string>
     <string name="updateReleaseNotes">跳转到版本信息</string>
     <string name="updateSession">{app_name}更新</string>
     <string name="updateVersion">版本 {version}</string>

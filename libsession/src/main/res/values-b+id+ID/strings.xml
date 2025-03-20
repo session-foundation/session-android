@@ -818,7 +818,6 @@
     <string name="updateError">Pembeharuan Gagal</string>
     <string name="updateErrorDescription">{app_name} gagal diperbarui. Silahkan pergi ke {session_download_url} dan instal versi terbaru secara manual, kemudian hubungi Pusat Bantuan kami untuk memberitahu terkait masalah ini.</string>
     <string name="updateNewVersion">Versi terbaru dari {app_name} telah tersedia, ketuk untuk memperbarui</string>
-    <string name="updateNewVersionDescription">Versi baru {app_name} telah tersedia.</string>
     <string name="updateReleaseNotes">Lihat Catatan Rilis</string>
     <string name="updateSession">Pembaruan {app_name}</string>
     <string name="updateVersion">Versi {version}</string>

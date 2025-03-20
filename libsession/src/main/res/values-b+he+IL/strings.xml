@@ -829,7 +829,6 @@
     <string name="updateError">לא ניתן לבצע עדכון</string>
     <string name="updateErrorDescription">לא ניתן היה לעדכן את {app_name}. נא לעבור אל {session_download_url} ולהתקין את הגרסה החדשה ידנית, ואז לפנות למרכז העזרה שלנו כדי לעדכן אותנו על בעיה זו.</string>
     <string name="updateNewVersion">גרסה חדשה של {app_name} זמינה, הקש כדי לעדכן</string>
-    <string name="updateNewVersionDescription">גרסה חדשה של {app_name} זמינה.</string>
     <string name="updateReleaseNotes">לך אל הערות שחרור</string>
     <string name="updateSession">עדכון {app_name}</string>
     <string name="updateVersion">גרסה {version}</string>

@@ -816,7 +816,6 @@
     <string name="updateError">Не могу ажурирати</string>
     <string name="updateErrorDescription">{app_name} није успео да се ажурира. Молимо идите на {session_download_url} и ручно инсталирајте нову верзију, затим контактирајте наш Центар за помоћ да нас обавестите о овом проблему.</string>
     <string name="updateNewVersion">Нова верзија {app_name} је доступна, тапните за ажурирање</string>
-    <string name="updateNewVersionDescription">Нова верзија {app_name} је доступна.</string>
     <string name="updateReleaseNotes">Идите на Напомене о издању</string>
     <string name="updateSession">Ажурирање {app_name}</string>
     <string name="updateVersion">Верзија {version}</string>

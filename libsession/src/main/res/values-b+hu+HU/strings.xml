@@ -804,7 +804,6 @@
     <string name="updateError">A frissítés sikertelen</string>
     <string name="updateErrorDescription">{app_name} frissítése sikertelen. Kérlek, látogass el a {session_download_url} oldalra és telepítsd manuálisan az új verziót, majd vedd fel a kapcsolatot az ügyfélszolgálatunkkal, hogy többet tudhassunk a problémáról.</string>
     <string name="updateNewVersion">A(z) {app_name} új verziója elérhető, koppints a frissítéshez</string>
-    <string name="updateNewVersionDescription">A(z) {app_name} új verziója elérhető.</string>
     <string name="updateReleaseNotes">Verzióinformáció megnyitása</string>
     <string name="updateSession">{app_name} Frissítés</string>
     <string name="updateVersion">Verzió {version}</string>

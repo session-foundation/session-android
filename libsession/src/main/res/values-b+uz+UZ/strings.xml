@@ -804,7 +804,6 @@
     <string name="updateError">Yangilanmadi</string>
     <string name="updateErrorDescription">{app_name} yangilanishida xatolik yuz berdi. Iltimos, {session_download_url} ga o\'ting va yangi versiyasini qo\'lda o\'rnating, keyin bu muammo haqida bizga xabar berish uchun yordam markazimizga murojaat qiling.</string>
     <string name="updateNewVersion">{app_name} ning yangi versiyasi mavjud, yangilanish uchun bosing</string>
-    <string name="updateNewVersionDescription">{app_name} ning yangi versiyasi mavjud.</string>
     <string name="updateReleaseNotes">Qaydlarni och</string>
     <string name="updateSession">{app_name} yangilanishi</string>
     <string name="updateVersion">Versiyasi {version}</string>

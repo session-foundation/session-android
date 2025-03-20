@@ -803,7 +803,6 @@
     <string name="updateError">යාවත්කාල කළ නොහැකිය</string>
     <string name="updateErrorDescription">{app_name} යාවත්කාලීන කිරීමට අසාර්ථක විය. කරුණාකර {session_download_url} වෙත ගොස් අනුමාන නව අනුවාදය මැනුවල්ව ස්ථාපනය කර, පසුව මෙම ගැටලුව සම්බන්ධයෙන් අපගේ උදව් මධ්‍යස්ථානය අමතන්න.</string>
     <string name="updateNewVersion">{app_name} නව අනුවාදය දැනට ලබා ගත හැක, යාවත්කාලීන කිරීමට තෝරන්න</string>
-    <string name="updateNewVersionDescription">නව අනුවාදයක් {app_name} ලාබා ගත හැක.</string>
     <string name="updateReleaseNotes">නිකුතු සටහන් වෙත යන්න</string>
     <string name="updateSession">{app_name} උත්සවය</string>
     <string name="updateVersion">අනුවාදය {version}</string>

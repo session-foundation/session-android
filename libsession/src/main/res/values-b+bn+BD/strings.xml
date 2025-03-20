@@ -803,7 +803,6 @@
     <string name="updateError">আপডেট করা সম্ভব নয়</string>
     <string name="updateErrorDescription">{app_name} আপডেট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে {session_download_url} এ যান এবং নতুন ভার্সন নিজে নিজে ইনস্টল করুন, এরপর আমাদের সাহায্য কেন্দ্রের সাথে যোগাযোগ করুন এই সমস্যা সম্পর্কে আমাদের জানাতে।</string>
     <string name="updateNewVersion">{app_name} এর একটি নতুন সংস্করণ উপলব্ধ, আপডেট করতে ট্যাপ করুন</string>
-    <string name="updateNewVersionDescription">{app_name} এর একটি নতুন সংস্করণ উপলব্ধ।</string>
     <string name="updateReleaseNotes">রিলিজ নোটে যান</string>
     <string name="updateSession">{app_name} আপডেট</string>
     <string name="updateVersion">ভার্সন {version}</string>
