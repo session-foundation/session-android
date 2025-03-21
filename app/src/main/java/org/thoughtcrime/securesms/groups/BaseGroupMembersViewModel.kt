@@ -16,11 +16,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 
@@ -74,11 +74,12 @@ abstract class BaseGroupMembersViewModel (
         myAccountId: AccountId,
         amIAdmin: Boolean,
     ): GroupMemberState {
-        val isMyself = member.accountId == myAccountId
+        val memberAccountId = AccountId(member.accountId())
+        val isMyself = memberAccountId == myAccountId
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            usernameUtils.getContactNameWithAccountID(member.accountId.hexString, groupId)
+            usernameUtils.getContactNameWithAccountID(memberAccountId.hexString, groupId)
         }
 
         val highlightStatus = status in EnumSet.of(
@@ -87,15 +88,15 @@ abstract class BaseGroupMembersViewModel (
         )
 
         return GroupMemberState(
-            accountId = member.accountId,
+            accountId = memberAccountId,
             name = name,
-            canRemove = amIAdmin && member.accountId != myAccountId
+            canRemove = amIAdmin && memberAccountId != myAccountId
                     && !member.isAdminOrBeingPromoted(status) && !member.isRemoved(status),
-            canPromote = amIAdmin && member.accountId != myAccountId
+            canPromote = amIAdmin && memberAccountId != myAccountId
                     && !member.isAdminOrBeingPromoted(status) && !member.isRemoved(status),
-            canResendPromotion = amIAdmin && member.accountId != myAccountId
+            canResendPromotion = amIAdmin && memberAccountId != myAccountId
                     && status == GroupMember.Status.PROMOTION_FAILED && !member.isRemoved(status),
-            canResendInvite = amIAdmin && member.accountId != myAccountId
+            canResendInvite = amIAdmin && memberAccountId != myAccountId
                     && !member.isRemoved(status)
                     && (status == GroupMember.Status.INVITE_SENT || status == GroupMember.Status.INVITE_FAILED),
             status = status.takeIf { !isMyself }, // Status is only meant for other members

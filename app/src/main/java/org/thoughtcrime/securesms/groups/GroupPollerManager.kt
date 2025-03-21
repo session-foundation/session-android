@@ -78,6 +78,7 @@ class GroupPollerManager @Inject constructor(
                             configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
                                 .mapNotNullTo(hashSetOf()) { group ->
                                     group.groupAccountId.takeIf { group.shouldPoll }
+                                        ?.let(::AccountId)
                                 }
                         }
                         .distinctUntilChanged()

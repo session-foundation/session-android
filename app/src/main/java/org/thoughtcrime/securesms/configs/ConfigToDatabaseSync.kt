@@ -175,7 +175,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val deleteAttachmentsBefore: Long?
     ) {
         constructor(groupInfoConfig: ReadableGroupInfoConfig) : this(
-            id = groupInfoConfig.id(),
+            id = AccountId(groupInfoConfig.id()),
             name = groupInfoConfig.getName(),
             destroyed = groupInfoConfig.isDestroyed(),
             deleteBefore = groupInfoConfig.getDeleteBefore(),
@@ -302,7 +302,7 @@ class ConfigToDatabaseSync @Inject constructor(
         val groupThreadsToKeep = hashMapOf<AccountId, Long>()
 
         for (closedGroup in userGroups.closedGroupInfo) {
-            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId.hexString), false)
+            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId), false)
             storage.setRecipientApprovedMe(recipient, true)
             storage.setRecipientApproved(recipient, !closedGroup.invited)
             profileManager.setName(context, recipient, closedGroup.name)
@@ -316,7 +316,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 )
             }
 
-            groupThreadsToKeep[closedGroup.groupAccountId] = threadId
+            groupThreadsToKeep[AccountId(closedGroup.groupAccountId)] = threadId
 
             storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
 

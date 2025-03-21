@@ -8,6 +8,7 @@ import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.AccountId
 import javax.inject.Inject
 
 /**
@@ -37,8 +38,9 @@ class CleanupInvitationHandler @Inject constructor(
                 .asSequence()
                 .filter { !it.kicked && !it.destroyed && it.hasAdminKey() }
                 .forEach { group ->
-                    groupScope.launch(group.groupAccountId, debugName = "CleanupInvitationHandler") {
-                        configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
+                    val groupId = AccountId(group.groupAccountId)
+                    groupScope.launch(groupId, debugName = "CleanupInvitationHandler") {
+                        configFactory.withMutableGroupConfigs(groupId) { configs ->
                             configs.groupMembers
                                 .allWithStatus()
                                 .filter { it.second == GroupMember.Status.INVITE_SENDING }

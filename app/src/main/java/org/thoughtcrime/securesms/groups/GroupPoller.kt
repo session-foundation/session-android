@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -29,7 +30,6 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.getRootCause
@@ -429,7 +429,10 @@ class GroupPoller(
                 rawResponse = body,
                 snode = snode,
                 publicKey = groupId.hexString,
-                decrypt = it.groupKeys::decrypt,
+                decrypt = { data ->
+                    val (decrypted, sender) = it.groupKeys.decrypt(data) ?: return@parseRawMessagesResponse null
+                    decrypted to AccountId(sender)
+                },
                 namespace = Namespace.GROUP_MESSAGES(),
             )
         }

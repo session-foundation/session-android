@@ -1,6 +1,7 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import kotlinx.coroutines.GlobalScope
+import network.loki.messenger.libsession_util.Namespace
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.bind
 import nl.komponents.kovenant.functional.map
@@ -15,7 +16,6 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.crypto.secureRandomOrNull
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import java.text.DateFormat

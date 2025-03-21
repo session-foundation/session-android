@@ -13,6 +13,7 @@ import network.loki.messenger.libsession_util.MutableGroupKeysConfig
 import network.loki.messenger.libsession_util.MutableGroupMembersConfig
 import network.loki.messenger.libsession_util.MutableUserGroupsConfig
 import network.loki.messenger.libsession_util.MutableUserProfile
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.ReadableConfig
 import network.loki.messenger.libsession_util.ReadableContacts
 import network.loki.messenger.libsession_util.ReadableConversationVolatileConfig
@@ -26,7 +27,6 @@ import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Namespace
 
 interface ConfigFactoryProtocol {
     val configUpdateNotifications: Flow<ConfigUpdateNotification>

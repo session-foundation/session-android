@@ -1,5 +1,6 @@
-package network.loki.messenger.libsession_util.util
+package org.session.libsession.utilities
 
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsignal.utilities.AccountId
 
 data class GroupDisplayInfo(

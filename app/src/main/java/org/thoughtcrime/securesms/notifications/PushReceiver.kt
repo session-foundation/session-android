@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Debug
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -17,6 +16,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -34,7 +34,6 @@ import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -180,7 +179,7 @@ class PushReceiver @Inject constructor(
         Log.d(TAG, "Successfully decrypted group message from $sender")
         return Envelope.parseFrom(envelopBytes)
             .toBuilder()
-            .setSource(sender.hexString)
+            .setSource(sender)
             .build()
     }
 

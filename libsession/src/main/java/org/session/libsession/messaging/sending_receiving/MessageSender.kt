@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -46,7 +47,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import org.session.libsignal.utilities.hexEncodedPublicKey

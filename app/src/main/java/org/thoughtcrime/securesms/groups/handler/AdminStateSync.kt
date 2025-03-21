@@ -45,7 +45,7 @@ class AdminStateSync @Inject constructor(
                             .asSequence()
                             .mapNotNull {
                                 if ((it as? GroupInfo.ClosedGroupInfo)?.hasAdminKey() == true) {
-                                    it.groupAccountId
+                                    AccountId(it.groupAccountId)
                                 } else {
                                     null
                                 }

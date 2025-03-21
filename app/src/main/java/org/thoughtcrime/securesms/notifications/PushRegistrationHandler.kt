@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -23,7 +24,6 @@ import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -73,7 +73,8 @@ constructor(
                 getGroupSubscriptions(
                     token = token
                 ) + mapOf(
-                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, listOf(Namespace.DEFAULT()))
+                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, listOf(
+                        Namespace.DEFAULT()))
                 )
             }
                 .scan<Map<SubscriptionKey, Subscription>, Pair<Map<SubscriptionKey, Subscription>, Map<SubscriptionKey, Subscription>>?>(
@@ -147,11 +148,12 @@ constructor(
 
             for (group in groups) {
                 val adminKey = group.adminKey
+                val groupId = AccountId(group.groupAccountId)
                 if (adminKey != null && adminKey.isNotEmpty()) {
                     put(
-                        SubscriptionKey(group.groupAccountId, token),
+                        SubscriptionKey(groupId, token),
                         Subscription(
-                            auth = OwnedSwarmAuth.ofClosedGroup(group.groupAccountId, adminKey),
+                            auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
                             namespaces = namespaces
                         )
                     )
@@ -160,7 +162,7 @@ constructor(
 
                 val authData = group.authData
                 if (authData != null && authData.isNotEmpty()) {
-                    val subscription = configFactory.getGroupAuth(group.groupAccountId)
+                    val subscription = configFactory.getGroupAuth(groupId)
                         ?.let {
                             Subscription(
                                 auth = it,
@@ -169,7 +171,7 @@ constructor(
                         }
 
                     if (subscription != null) {
-                        put(SubscriptionKey(group.groupAccountId, token), subscription)
+                        put(SubscriptionKey(groupId, token), subscription)
                     }
                 }
             }
