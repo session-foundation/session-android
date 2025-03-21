@@ -19,13 +19,11 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
-import android.util.Log
 import androidx.annotation.DrawableRes
 import com.squareup.phrase.Phrase
-import kotlin.String
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.Util.equals
@@ -106,10 +104,19 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
         get() = attachment.isInProgress
 
     val isPendingDownload: Boolean
-        get() = transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED ||
-                transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING
+        get() = transferState == AttachmentState.FAILED.value ||
+                transferState == AttachmentState.PENDING.value
 
-    val transferState: Int
+    val isDone: Boolean
+        get() = transferState == AttachmentState.DONE.value
+
+    val isFailed: Boolean
+        get() = transferState == AttachmentState.FAILED.value
+
+    val isExpired: Boolean
+        get() = transferState == AttachmentState.EXPIRED.value
+
+    private val transferState: Int
         get() = attachment.transferState
 
     @DrawableRes
@@ -160,7 +167,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
                 uri,
                 if (hasThumbnail) uri else null,
                 resolvedType!!,
-                AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+                AttachmentState.DOWNLOADING.value,
                 size,
                 width,
                 height,

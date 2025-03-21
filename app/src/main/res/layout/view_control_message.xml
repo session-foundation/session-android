@@ -71,7 +71,9 @@
                 android:gravity="center"
                 android:textAlignment="center"
                 android:textColor="?message_received_text_color"
+                android:textSize="@dimen/medium_font_size"
                 app:drawableStartCompat="@drawable/ic_phone_missed"
+                android:drawablePadding="@dimen/very_small_spacing"
                 tools:text="You missed a call" />
 
         </FrameLayout>

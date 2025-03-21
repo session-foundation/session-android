@@ -7,6 +7,7 @@ import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.core.view.isVisible
 import network.loki.messenger.databinding.ViewDocumentBinding
+import org.session.libsession.utilities.Util
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 
 class DocumentView : LinearLayout {
@@ -23,6 +24,8 @@ class DocumentView : LinearLayout {
         val document = message.slideDeck.documentSlide!!
         binding.documentTitleTextView.text = document.filename
         binding.documentTitleTextView.setTextColor(textColor)
+        binding.documentSize.text = Util.getPrettyFileSize(document.fileSize)
+        binding.documentSize.setTextColor(textColor)
         binding.documentViewIconImageView.imageTintList = ColorStateList.valueOf(textColor)
 
         // Show the progress spinner if the attachment is downloading, otherwise show

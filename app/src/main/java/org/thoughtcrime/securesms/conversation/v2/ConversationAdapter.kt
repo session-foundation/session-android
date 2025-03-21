@@ -41,7 +41,8 @@ class ConversationAdapter(
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
     private val onItemLongPress: (MessageRecord, Int, View) -> Unit,
     private val onDeselect: (MessageRecord, Int) -> Unit,
-    private val onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit,
+    private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
+    private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     private val glide: RequestManager,
     lifecycleCoroutineScope: LifecycleCoroutineScope
 ) : CursorRecyclerViewAdapter<ViewHolder>(context, cursor) {
@@ -143,7 +144,8 @@ class ConversationAdapter(
                     senderId,
                     lastSeen.get(),
                     visibleMessageViewDelegate,
-                    onAttachmentNeedsDownload
+                    downloadPendingAttachment,
+                    retryFailedAttachments
                 )
 
                 if (!message.isDeleted) {

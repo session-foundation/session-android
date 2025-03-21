@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/message_bubble_background_received"
+    android:contentDescription="@string/AccessibilityId_attachmentsClickToDownload"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/message_spacing"
+    android:paddingVertical="@dimen/small_spacing">
+
+    <ImageView
+        android:id="@+id/pendingDownloadIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="8dp"
+        android:src="@drawable/ic_images"
+        app:tint="?android:textColorPrimary" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/pendingDownloadSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="@dimen/medium_font_size"
+                tools:text="1.23MB" />
+
+            <ImageView
+                android:id="@+id/separator"
+                android:layout_width="2dp"
+                android:layout_height="2dp"
+                android:layout_marginHorizontal="6dp"
+                android:src="@drawable/circle_tintable"
+                app:tint="?android:textColorPrimary" />
+
+            <TextView
+                android:id="@+id/pendingDownloadTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="@dimen/medium_font_size"
+                tools:text="I'm a very long document title. Did you know that?" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/pendingDownloadSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tapToRetry"
+            android:textColor="?android:textColorTertiary"
+            android:textSize="@dimen/small_font_size" />
+    </LinearLayout>
+
+</org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView>

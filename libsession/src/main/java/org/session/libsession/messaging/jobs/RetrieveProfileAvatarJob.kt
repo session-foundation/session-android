@@ -12,6 +12,7 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.ProfileCipherInputStream
+import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.io.File
@@ -99,11 +100,17 @@ class RetrieveProfileAvatarJob(
             return delegate.handleJobFailedPermanently(this, dispatcherName, e)
         }
         catch (e: Exception) {
-            Log.e("Loki", "Failed to download profile avatar", e)
-            if (failureCount + 1 >= maxFailureCount) {
+            if(e is HTTP.HTTPRequestFailedException && e.statusCode == 404){
+                Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)
                 errorUrls += profileAvatar
+                return delegate.handleJobFailedPermanently(this, dispatcherName, e)
+            } else {
+                Log.e("Loki", "Failed to download profile avatar", e)
+                if (failureCount + 1 >= maxFailureCount) {
+                    errorUrls += profileAvatar
+                }
+                return delegate.handleJobFailed(this, dispatcherName, e)
             }
-            return delegate.handleJobFailed(this, dispatcherName, e)
         } finally {
             downloadDestination.delete()
         }

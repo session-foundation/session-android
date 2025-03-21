@@ -39,7 +39,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/dialog_button_height"
         android:orientation="horizontal">
 
         <Button
@@ -64,8 +64,10 @@
             android:layout_width="0dp"
             android:layout_height="@dimen/small_button_height"
             android:layout_weight="1"
+            android:layout_gravity="center_vertical"
             app:SpinKit_Color="?colorAccent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            tools:visibility="visible"/>
 
     </LinearLayout>
 

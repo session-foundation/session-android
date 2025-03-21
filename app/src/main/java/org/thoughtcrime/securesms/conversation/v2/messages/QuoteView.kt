@@ -100,33 +100,47 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             binding.quoteViewAccentLine.setBackgroundColor(getLineColor(isOutgoingMessage))
         } else if (attachments != null) {
             binding.quoteViewAttachmentPreviewImageView.imageTintList = ColorStateList.valueOf(textColor)
-            binding.quoteViewAttachmentPreviewImageView.isVisible = false
+            binding.quoteViewAttachmentPreviewImageView.isVisible = true
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
-
                     val isVoiceNote = attachments.isVoiceNote
-                    binding.quoteViewBodyTextView.text = if (isVoiceNote) {
-                        resources.getString(R.string.messageVoice)
+                    if (isVoiceNote) {
+                        binding.quoteViewBodyTextView.text = resources.getString(R.string.messageVoice)
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     } else {
-                        resources.getString(R.string.audio)
+                        binding.quoteViewBodyTextView.text = resources.getString(R.string.audio)
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_volume_2)
                     }
                 }
                 attachments.documentSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
-                    binding.quoteViewAttachmentPreviewImageView.isVisible = true
                     binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
                 }
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
-                    // This internally fetches the thumbnail
-                    binding.quoteViewAttachmentThumbnailImageView
-                        .root.setRoundedCorners(toPx(4, resources))
-                    binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(glide, slide, false)
-                    binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
-                    binding.quoteViewBodyTextView.text = if (MediaUtil.isVideo(slide.asAttachment())) resources.getString(R.string.video) else resources.getString(R.string.image)
+
+                    if (MediaUtil.isVideo(slide.asAttachment())){
+                        binding.quoteViewBodyTextView.text = resources.getString(R.string.video)
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_square_play)
+                    } else {
+                        binding.quoteViewBodyTextView.text = resources.getString(R.string.image)
+                        binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_image)
+                    }
+
+                    // display the image if we are in the appropriate state
+                    if(attachments.asAttachments().all { it.isDone }) {
+                        binding.quoteViewAttachmentThumbnailImageView
+                            .root.setRoundedCorners(toPx(4, resources))
+                        binding.quoteViewAttachmentThumbnailImageView.root.setImageResource(
+                            glide,
+                            slide,
+                            false
+                        )
+                        binding.quoteViewAttachmentThumbnailImageView.root.isVisible = true
+                        binding.quoteViewAttachmentPreviewImageView.isVisible = false
+                    }
+
                 }
             }
         }

@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState;
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.utilities.MediaTypes;
@@ -183,7 +183,7 @@ public class LinkPreviewRepository {
     return Optional.of(new UriAttachment(uri,
            uri,
            contentType,
-           AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+            AttachmentState.DOWNLOADING.getValue(),
            bytes.length,
            bitmap.getWidth(),
            bitmap.getHeight(),

@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment;
 import org.session.libsignal.utilities.JsonUtil;
@@ -642,7 +642,7 @@ public class Contact implements Parcelable {
 
     private static Attachment attachmentFromUri(@Nullable Uri uri) {
       if (uri == null) return null;
-      return new UriAttachment(uri, MediaTypes.IMAGE_JPEG, AttachmentTransferProgress.TRANSFER_PROGRESS_DONE, 0, null, false, false, null);
+      return new UriAttachment(uri, MediaTypes.IMAGE_JPEG, AttachmentState.DONE.getValue(), 0, null, false, false, null);
     }
 
     @Override

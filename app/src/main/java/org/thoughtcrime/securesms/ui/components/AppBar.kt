@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
@@ -29,6 +30,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
@@ -71,6 +73,7 @@ fun AppBarPreview(
 fun BasicAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     navigationIcon: @Composable () -> Unit = {},
@@ -79,7 +82,7 @@ fun BasicAppBar(
     CenterAlignedTopAppBar(
         modifier = modifier,
         title = {
-            AppBarText(title = title)
+            AppBarText(title = title, singleLine = singleLine)
         },
         colors = appBarColors(backgroundColor),
         navigationIcon = navigationIcon,
@@ -118,6 +121,7 @@ fun BackAppBar(
 fun ActionAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     actionMode: Boolean = false,
@@ -130,7 +134,7 @@ fun ActionAppBar(
         modifier = modifier,
         title = {
             if (!actionMode) {
-                AppBarText(title = title)
+                AppBarText(title = title, singleLine = singleLine)
             }
         },
         navigationIcon = {
@@ -140,7 +144,7 @@ fun ActionAppBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     navigationIcon()
-                    AppBarText(title = actionModeTitle)
+                    AppBarText(title = actionModeTitle, singleLine = singleLine)
                 }
             } else {
                 navigationIcon()
@@ -159,8 +163,13 @@ fun ActionAppBar(
 }
 
 @Composable
-fun AppBarText(title: String) {
-    Text(text = title, style = LocalType.current.h4)
+fun AppBarText(title: String, singleLine: Boolean = false) {
+    Text(
+        text = title,
+        style = LocalType.current.h4,
+        maxLines = if(singleLine) 1 else Int.MAX_VALUE,
+        overflow = if(singleLine) TextOverflow.Ellipsis else TextOverflow.Clip
+    )
 }
 
 @Composable

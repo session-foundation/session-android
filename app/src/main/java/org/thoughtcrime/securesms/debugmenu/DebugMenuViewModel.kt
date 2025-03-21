@@ -1,8 +1,11 @@
 package org.thoughtcrime.securesms.debugmenu
 
 import android.app.Application
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,20 +16,27 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISI
 import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.thoughtcrime.securesms.database.AttachmentDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
 import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
-    private val application: Application,
+    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val clearDataUtils: ClearDataUtils
+    private val clearDataUtils: ClearDataUtils,
+    private val threadDb: ThreadDatabase,
+    private val recipientDatabase: RecipientDatabase,
+    private val attachmentDatabase: AttachmentDatabase,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -107,6 +117,10 @@ class DebugMenuViewModel @Inject constructor(
 
             is Commands.ShowDeprecationChangeDialog ->
                 showDeprecatedStateWarningDialog(command.state)
+
+            is Commands.ClearTrustedDownloads -> {
+                clearTrustedDownloads()
+            }
         }
     }
 
@@ -157,6 +171,38 @@ class DebugMenuViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(showDeprecatedStateWarningDialog = true)
     }
 
+    private fun clearTrustedDownloads() {
+        // show a loading state
+        _uiState.value = _uiState.value.copy(
+            showEnvironmentWarningDialog = false,
+            showLoadingDialog = true
+        )
+
+        // clear trusted downloads for all recipients
+        viewModelScope.launch {
+            val conversations: List<ThreadRecord> = threadDb.approvedConversationList.use { openCursor ->
+                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+            }
+
+            conversations.filter { !it.recipient.isLocalNumber }.forEach {
+                recipientDatabase.setAutoDownloadAttachments(it.recipient, false)
+            }
+
+            // set all attachments back to pending
+            attachmentDatabase.allAttachments.forEach {
+                attachmentDatabase.setTransferState(it.mmsId, it.attachmentId, AttachmentState.PENDING.value)
+            }
+
+            Toast.makeText(context, "Cleared!", Toast.LENGTH_LONG).show()
+
+            // hide loading
+            _uiState.value = _uiState.value.copy(
+                showEnvironmentWarningDialog = false,
+                showLoadingDialog = false
+            )
+        }
+    }
+
     data class UIState(
         val currentEnvironment: String,
         val environments: List<String>,
@@ -183,5 +229,6 @@ class DebugMenuViewModel @Inject constructor(
         object OverrideDeprecationState : Commands()
         data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands()
         data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
+        object ClearTrustedDownloads: Commands()
     }
 }

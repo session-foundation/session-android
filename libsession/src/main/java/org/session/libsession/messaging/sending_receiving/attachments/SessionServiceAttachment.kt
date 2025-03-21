@@ -100,10 +100,10 @@ abstract class SessionServiceAttachment protected constructor(val contentType: S
     }
 }
 
-// matches values in AttachmentDatabase.java
 enum class AttachmentState(val value: Int) {
     DONE(0),
-    STARTED(1),
+    DOWNLOADING(1),
     PENDING(2),
-    FAILED(3)
+    FAILED(3),
+    EXPIRED(4)
 }

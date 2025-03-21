@@ -14,7 +14,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.flatten
@@ -24,14 +24,14 @@ import org.thoughtcrime.securesms.util.timedBuffer
  * [AttachmentDownloadHandler] is responsible for handling attachment download requests. These
  * requests will go through different level of checking before they are queued for download.
  *
- * To use this handler, call [onAttachmentDownloadRequest] with the attachment that needs to be
- * downloaded. The call to [onAttachmentDownloadRequest] is cheap and can be called multiple times.
+ * To use this handler, call [downloadPendingAttachment] with the attachment that needs to be
+ * downloaded. The call to [downloadPendingAttachment] is cheap and can be called multiple times.
  */
 class AttachmentDownloadHandler(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
     jobQueue: JobQueue = JobQueue.shared,
-    scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
 ) {
     companion object {
         private const val BUFFER_TIMEOUT_MILLS = 500L
@@ -101,15 +101,26 @@ class AttachmentDownloadHandler(
     }
 
 
-    fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
-        if (attachment.transferState != AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING) {
+    fun downloadPendingAttachment(attachment: DatabaseAttachment) {
+        if (attachment.transferState != AttachmentState.PENDING.value) {
             Log.i(
                 LOG_TAG,
-                "Attachment ${attachment.attachmentId} is not pending, skipping download"
+                "Attachment ${attachment.attachmentId} is not pending nor failed, skipping download (state = ${attachment.transferState})}"
             )
             return
         }
 
         downloadRequests.trySend(attachment)
+    }
+
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachments.forEach { attachment ->
+            if (attachment.transferState != AttachmentState.FAILED.value) return Log.d(
+                LOG_TAG,
+                "Attachment ${attachment.attachmentId} is not failed, skipping retry"
+            )
+
+            downloadRequests.trySend(attachment)
+        }
     }
 }

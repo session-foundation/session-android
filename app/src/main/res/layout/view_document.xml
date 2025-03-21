@@ -6,34 +6,57 @@
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
-    android:paddingHorizontal="@dimen/medium_spacing"
-    android:paddingVertical="12dp"
+    android:paddingEnd="@dimen/message_spacing"
     android:gravity="center"
     android:contentDescription="@string/AccessibilityId_document">
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/documentViewProgress"
-        style="@style/Widget.Material3.CircularProgressIndicator.Small"
-        android:indeterminate="true"
-        android:layout_width="36dp"
-        android:layout_height="36dp"/>
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="@dimen/message_spacing"
+        android:background="@drawable/view_quote_attachment_preview_background">
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/documentViewProgress"
+            style="@style/Widget.Material3.CircularProgressIndicator.Small"
+            android:layout_gravity="center_vertical"
+            android:indeterminate="true"
+            android:layout_width="24dp"
+            android:layout_height="24dp"/>
 
-    <ImageView
-        android:id="@+id/documentViewIconImageView"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:src="@drawable/ic_file"
-        app:tint="?android:textColorPrimary" />
+        <ImageView
+            android:id="@+id/documentViewIconImageView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/ic_file"
+            android:contentDescription="@null"
+            app:tint="?android:textColorPrimary" />
+    </FrameLayout>
 
-    <TextView
-        android:id="@+id/documentTitleTextView"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:textSize="@dimen/medium_font_size"
-        android:textColor="?android:textColorPrimary"
-        tools:text="I'm a very long document title. Did you know that?"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:orientation="vertical"
+        android:paddingVertical="@dimen/small_spacing"
+        android:layout_marginStart="@dimen/message_spacing">
+
+        <TextView
+            android:id="@+id/documentTitleTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/medium_font_size"
+            android:textColor="?android:textColorPrimary"
+            tools:text="I'm a very long document title. Did you know that?"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/documentSize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="5.4MB"
+            android:textColor="?android:textColorPrimary"
+            android:textSize="@dimen/very_small_font_size" />
+    </LinearLayout>
 
 </org.thoughtcrime.securesms.conversation.v2.messages.DocumentView>

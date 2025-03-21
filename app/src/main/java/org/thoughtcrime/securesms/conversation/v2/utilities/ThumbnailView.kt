@@ -19,7 +19,6 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ThumbnailViewBinding
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.ListenableFuture
@@ -45,8 +44,6 @@ open class ThumbnailView @JvmOverloads constructor(
     private val binding: ThumbnailViewBinding by lazy { ThumbnailViewBinding.bind(this) }
 
     // region Lifecycle
-
-    val loadIndicator: View by lazy { binding.thumbnailLoadIndicator }
 
     private val dimensDelegate = ThumbnailDimensDelegate()
 
@@ -123,7 +120,7 @@ open class ThumbnailView @JvmOverloads constructor(
         naturalHeight: Int
     ): ListenableFuture<Boolean> {
         val showPlayOverlay = (slide.thumbnailUri != null && slide.hasPlayOverlay() &&
-                (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_DONE || isPreview))
+                (slide.isDone || isPreview))
         if(showPlayOverlay) {
             binding.playOverlay.isVisible = true
             // The views are poorly constructed at the moment and there is no good way to know
@@ -147,10 +144,6 @@ open class ThumbnailView @JvmOverloads constructor(
 
         this.slide = slide
 
-        binding.thumbnailLoadIndicator.isVisible = slide.isInProgress
-        binding.thumbnailDownloadIcon.isVisible =
-            slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED
-
         dimensDelegate.setDimens(naturalWidth, naturalHeight)
         invalidate()
 
@@ -158,7 +151,7 @@ open class ThumbnailView @JvmOverloads constructor(
             when {
                 slide.thumbnailUri != null -> {
                     buildThumbnailGlideRequest(glide, slide).into(
-                        GlideDrawableListeningTarget(binding.thumbnailImage, binding.thumbnailLoadIndicator, it)
+                        GlideDrawableListeningTarget(binding.thumbnailImage, null, it)
                     )
                 }
                 slide.hasPlaceholder() -> {
@@ -208,7 +201,7 @@ open class ThumbnailView @JvmOverloads constructor(
     private fun RequestBuilder<Drawable>.intoDrawableTargetAsFuture() =
         SettableFuture<Boolean>().also {
             binding.run {
-                GlideDrawableListeningTarget(thumbnailImage, thumbnailLoadIndicator, it)
+                GlideDrawableListeningTarget(thumbnailImage, null, it)
             }.let { into(it) }
         }
 

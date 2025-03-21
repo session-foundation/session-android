@@ -125,6 +125,16 @@ public class SlideDeck {
     return null;
   }
 
+  public boolean hasVideo() {
+    for (Slide slide : slides) {
+      if (slide.hasVideo()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public @Nullable TextSlide getTextSlide() {
     for (Slide slide: slides) {
       if (MediaUtil.isLongTextType(slide.getContentType())) {
