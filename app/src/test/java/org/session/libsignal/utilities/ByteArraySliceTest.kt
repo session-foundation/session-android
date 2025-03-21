@@ -1,17 +1,11 @@
 package org.session.libsignal.utilities
 
-import org.junit.Assert.*
-
-import org.junit.Before
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.session.libsignal.utilities.ByteArrayView.Companion.view
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 
-class ByteArrayViewTest {
-
-    @Before
-    fun setUp() {
-    }
-
+class ByteArraySliceTest {
     @Test
     fun `view works`() {
         val sliced = byteArrayOf(1, 2, 3, 4, 5).view(1..3)
@@ -39,5 +33,12 @@ class ByteArrayViewTest {
             "hello, world".toByteArray(),
             "hello, world".toByteArray().inputStream().readBytes()
         )
+    }
+
+    @Test
+    fun `able to view empty array`() {
+        val sliced = byteArrayOf().view()
+        assertEquals(0, sliced.len)
+        assertEquals(0, sliced.offset)
     }
 }

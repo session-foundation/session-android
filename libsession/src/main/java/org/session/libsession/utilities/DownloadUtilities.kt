@@ -8,7 +8,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArrayView.Companion.write
+import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
 import java.io.OutputStream
 

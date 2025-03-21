@@ -15,7 +15,7 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArrayView
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.toHexString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -52,7 +52,7 @@ object FileServerApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun send(request: Request): Promise<ByteArrayView, Exception> {
+    private fun send(request: Request): Promise<ByteArraySlice, Exception> {
         val url = server.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
         val urlBuilder = HttpUrl.Builder()
             .scheme(url.scheme)
@@ -107,7 +107,7 @@ object FileServerApi {
         }
     }
 
-    fun download(file: String): Promise<ByteArrayView, Exception> {
+    fun download(file: String): Promise<ByteArraySlice, Exception> {
         val request = Request(verb = HTTP.Verb.GET, endpoint = "file/$file")
         return send(request)
     }

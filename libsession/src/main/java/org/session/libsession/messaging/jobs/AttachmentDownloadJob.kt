@@ -18,7 +18,7 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArrayView.Companion.write
+import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream

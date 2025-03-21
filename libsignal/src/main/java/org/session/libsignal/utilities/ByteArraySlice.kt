@@ -7,7 +7,7 @@ import java.io.OutputStream
 /**
  * A view of a byte array with a range. This is useful for avoiding copying data when slicing a byte array.
  */
-class ByteArrayView private constructor(
+class ByteArraySlice private constructor(
     val data: ByteArray,
     val offset: Int,
     val len: Int,
@@ -17,10 +17,10 @@ class ByteArrayView private constructor(
         check(len in 0..data.size) { "Length $len is not within [0..${data.size}]" }
     }
 
-    fun view(range: IntRange): ByteArrayView {
+    fun view(range: IntRange): ByteArraySlice {
         val newOffset = offset + range.first
         val newLength = range.last + 1 - range.first
-        return ByteArrayView(
+        return ByteArraySlice(
             data = data,
             offset = newOffset,
             len = newLength
@@ -38,9 +38,9 @@ class ByteArrayView private constructor(
     fun asList(): List<Byte> {
         return object : AbstractList<Byte>() {
             override val size: Int
-                get() = this@ByteArrayView.len
+                get() = this@ByteArraySlice.len
 
-            override fun get(index: Int) = this@ByteArrayView[index]
+            override fun get(index: Int) = this@ByteArraySlice[index]
         }
     }
 
@@ -57,7 +57,7 @@ class ByteArrayView private constructor(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is ByteArrayView) return false
+        if (other !is ByteArraySlice) return false
 
         if (offset != other.offset) return false
         if (len != other.len) return false
@@ -74,20 +74,20 @@ class ByteArrayView private constructor(
     }
 
     companion object {
-        val EMPTY = ByteArrayView(byteArrayOf(), 0, 0)
+        val EMPTY = ByteArraySlice(byteArrayOf(), 0, 0)
 
         /**
          * Create a view of a byte array
          */
-        fun ByteArray.view(range: IntRange = indices): ByteArrayView {
-            return ByteArrayView(
+        fun ByteArray.view(range: IntRange = indices): ByteArraySlice {
+            return ByteArraySlice(
                 data = this,
                 offset = range.first,
                 len = range.last + 1 - range.first
             )
         }
 
-        fun OutputStream.write(view: ByteArrayView) {
+        fun OutputStream.write(view: ByteArraySlice) {
             write(view.data, view.offset, view.len)
         }
     }

@@ -30,8 +30,8 @@ import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArrayView
-import org.session.libsignal.utilities.ByteArrayView.Companion.view
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
@@ -651,11 +651,11 @@ object OnionRequestAPI {
         }
     }
 
-    private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArrayView {
+    private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArraySlice {
         // If there is no data in the response, i.e. only `l123:jsone`, then just return the ResponseInfo
         val infoLengthStringLength = infoLength.toString().length
         if (size <= infoLength + infoLengthStringLength + 2/*l and e bytes*/) {
-            return ByteArrayView.EMPTY
+            return ByteArraySlice.EMPTY
         }
         // Extract the response data as well
         val dataSlice = view(infoEndIndex + 1 until size - 1)
@@ -674,7 +674,7 @@ enum class Version(val value: String) {
 
 data class OnionResponse(
     val info: Map<*, *>,
-    val body: ByteArrayView? = null
+    val body: ByteArraySlice? = null
 ) {
     val code: Int? get() = info["code"] as? Int
     val message: String? get() = info["message"] as? String
