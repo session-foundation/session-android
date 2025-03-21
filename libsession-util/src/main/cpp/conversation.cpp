@@ -152,8 +152,8 @@ Java_network_loki_messenger_libsession_1util_ConversationVolatileConfig_getOrCon
     auto convos = ptrToConvoInfo(env, thiz);
     auto base_url_chars = env->GetStringUTFChars(base_url, nullptr);
     auto room_chars = env->GetStringUTFChars(room, nullptr);
-    auto pub_key_ustring = util::ustring_from_bytes(env, pub_key);
-    auto open = convos->get_or_construct_community(base_url_chars, room_chars, pub_key_ustring);
+    auto pub_key_vector = util::vector_from_bytes(env, pub_key);
+    auto open = convos->get_or_construct_community(base_url_chars, room_chars, pub_key_vector);
     auto serialized = serialize_open_group(env, open);
     return serialized;
 }

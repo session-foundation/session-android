@@ -8,15 +8,15 @@ Java_network_loki_messenger_libsession_1util_GroupMembersConfig_00024Companion_n
         JNIEnv *env, jobject thiz, jbyteArray pub_key, jbyteArray secret_key,
         jbyteArray initial_dump) {
     std::lock_guard lock{util::util_mutex_};
-    auto pub_key_bytes = util::ustring_from_bytes(env, pub_key);
-    std::optional<session::ustring> secret_key_optional{std::nullopt};
-    std::optional<session::ustring> initial_dump_optional{std::nullopt};
+    auto pub_key_bytes = util::vector_from_bytes(env, pub_key);
+    std::optional<std::vector<unsigned char>> secret_key_optional{std::nullopt};
+    std::optional<std::vector<unsigned char>> initial_dump_optional{std::nullopt};
     if (secret_key && env->GetArrayLength(secret_key) > 0) {
-        auto secret_key_bytes = util::ustring_from_bytes(env, secret_key);
+        auto secret_key_bytes = util::vector_from_bytes(env, secret_key);
         secret_key_optional = secret_key_bytes;
     }
     if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
-        auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
+        auto initial_dump_bytes = util::vector_from_bytes(env, initial_dump);
         initial_dump_optional = initial_dump_bytes;
     }
 
@@ -209,7 +209,7 @@ Java_network_loki_messenger_libsession_1util_util_GroupMember_setProfilePic(JNIE
                                                                             jobject pic) {
     const auto [jurl, jkey] = util::deserialize_user_pic(env, pic);
     auto url = util::string_from_jstring(env, jurl);
-    auto key = util::ustring_from_bytes(env, jkey);
+    auto key = util::vector_from_bytes(env, jkey);
     auto &picture = ptrToMember(env, thiz)->profile_picture;
     picture.url = url;
     picture.key = key;

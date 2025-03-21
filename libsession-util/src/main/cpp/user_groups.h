@@ -62,8 +62,8 @@ inline session::config::legacy_group_info deserialize_legacy_group_info(JNIEnv *
 
     auto id_bytes = util::string_from_jstring(env, id);
     auto name_bytes = env->GetStringUTFChars(name, nullptr);
-    auto enc_pub_key_bytes = util::ustring_from_bytes(env, enc_pub_key);
-    auto enc_sec_key_bytes = util::ustring_from_bytes(env, enc_sec_key);
+    auto enc_pub_key_bytes = util::vector_from_bytes(env, enc_pub_key);
+    auto enc_sec_key_bytes = util::vector_from_bytes(env, enc_sec_key);
 
     auto info_deserialized = conf->get_or_construct_legacy_group(id_bytes);
 
@@ -115,8 +115,8 @@ inline jobject serialize_legacy_group_info(JNIEnv *env, session::config::legacy_
     jstring account_id = env->NewStringUTF(info.session_id.data());
     jstring name = env->NewStringUTF(info.name.data());
     jobject members = serialize_members(env, info.members());
-    jbyteArray enc_pubkey = util::bytes_from_ustring(env, info.enc_pubkey);
-    jbyteArray enc_seckey = util::bytes_from_ustring(env, info.enc_seckey);
+    jbyteArray enc_pubkey = util::bytes_from_vector(env, info.enc_pubkey);
+    jbyteArray enc_seckey = util::bytes_from_vector(env, info.enc_seckey);
     long long priority = info.priority;
     long long joined_at = info.joined_at;
 
@@ -128,8 +128,8 @@ inline jobject serialize_legacy_group_info(JNIEnv *env, session::config::legacy_
 
 inline jobject serialize_closed_group_info(JNIEnv* env, session::config::group_info info) {
     auto session_id = util::serialize_account_id(env, info.id);
-    jbyteArray admin_bytes = info.secretkey.empty() ? nullptr : util::bytes_from_ustring(env, info.secretkey);
-    jbyteArray auth_bytes = info.auth_data.empty() ? nullptr : util::bytes_from_ustring(env, info.auth_data);
+    jbyteArray admin_bytes = info.secretkey.empty() ? nullptr : util::bytes_from_vector(env, info.secretkey);
+    jbyteArray auth_bytes = info.auth_data.empty() ? nullptr : util::bytes_from_vector(env, info.auth_data);
     jstring name = util::jstringFromOptional(env, info.name);
 
     jclass group_info_class = env->FindClass("network/loki/messenger/libsession_util/util/GroupInfo$ClosedGroupInfo");
@@ -159,8 +159,8 @@ inline session::config::group_info deserialize_closed_group_info(JNIEnv* env, jo
     jstring name_jstring = (jstring)env->GetObjectField(info_serialized, name_field);
 
     auto id_bytes = util::deserialize_account_id(env, id_jobject);
-    auto secret_bytes = util::ustring_from_bytes(env, secret_jBytes);
-    auto auth_bytes = util::ustring_from_bytes(env, auth_jBytes);
+    auto secret_bytes = util::vector_from_bytes(env, secret_jBytes);
+    auto auth_bytes = util::vector_from_bytes(env, auth_jBytes);
     auto name = util::string_from_jstring(env, name_jstring);
 
     session::config::group_info group_info(id_bytes);

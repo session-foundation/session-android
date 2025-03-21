@@ -23,18 +23,18 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_00024Companion_newI
                                                                                         jlong members_pointer) {
     return jni_utils::run_catching_cxx_exception_or_throws<jlong>(env, [=] {
         std::lock_guard lock{util::util_mutex_};
-        auto user_key_bytes = util::ustring_from_bytes(env, user_secret_key);
-        auto pub_key_bytes = util::ustring_from_bytes(env, group_public_key);
-        std::optional<session::ustring> secret_key_optional{std::nullopt};
-        std::optional<session::ustring> initial_dump_optional{std::nullopt};
+        auto user_key_bytes = util::vector_from_bytes(env, user_secret_key);
+        auto pub_key_bytes = util::vector_from_bytes(env, group_public_key);
+        std::optional<std::vector<unsigned char>> secret_key_optional{std::nullopt};
+        std::optional<std::vector<unsigned char>> initial_dump_optional{std::nullopt};
 
         if (group_secret_key && env->GetArrayLength(group_secret_key) > 0) {
-            auto secret_key_bytes = util::ustring_from_bytes(env, group_secret_key);
+            auto secret_key_bytes = util::vector_from_bytes(env, group_secret_key);
             secret_key_optional = secret_key_bytes;
         }
 
         if (initial_dump && env->GetArrayLength(initial_dump) > 0) {
-            auto initial_dump_bytes = util::ustring_from_bytes(env, initial_dump);
+            auto initial_dump_bytes = util::vector_from_bytes(env, initial_dump);
             initial_dump_optional = initial_dump_bytes;
         }
 
@@ -63,7 +63,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_groupKeys(JNIEnv *e
     jobject our_stack = env->NewObject(stack, init);
     jmethodID push = env->GetMethodID(stack, "push", "(Ljava/lang/Object;)Ljava/lang/Object;");
     for (auto& key : keys) {
-        auto key_bytes = util::bytes_from_ustring(env, key.data());
+        auto key_bytes = util::bytes_from_span(env, key);
         env->CallObjectMethod(our_stack, push, key_bytes);
     }
     return our_stack;
@@ -79,7 +79,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadKey(JNIEnv *env
                                                                      jlong members_ptr) {
     std::lock_guard lock{util::util_mutex_};
     auto keys = ptrToKeys(env, thiz);
-    auto message_bytes = util::ustring_from_bytes(env, message);
+    auto message_bytes = util::vector_from_bytes(env, message);
     auto hash_bytes = env->GetStringUTFChars(hash, nullptr);
     auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
     auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
@@ -119,7 +119,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_pendingKey(JNIEnv *
     if (!pending) {
         return nullptr;
     }
-    auto pending_bytes = util::bytes_from_ustring(env, *pending);
+    auto pending_bytes = util::bytes_from_span(env, *pending);
     return pending_bytes;
 }
 
@@ -133,7 +133,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_pendingConfig(JNIEn
     if (!pending) {
         return nullptr;
     }
-    auto pending_bytes = util::bytes_from_ustring(env, *pending);
+    auto pending_bytes = util::bytes_from_span(env, *pending);
     return pending_bytes;
 }
 
@@ -146,7 +146,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_rekey(JNIEnv *env, 
     auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
     auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
     auto rekey = keys->rekey(*info, *members);
-    auto rekey_bytes = util::bytes_from_ustring(env, rekey.data());
+    auto rekey_bytes = util::bytes_from_span(env, rekey);
     return rekey_bytes;
 }
 
@@ -156,7 +156,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_dump(JNIEnv *env, j
     std::lock_guard lock{util::util_mutex_};
     auto keys = ptrToKeys(env, thiz);
     auto dump = keys->dump();
-    auto byte_array = util::bytes_from_ustring(env, dump);
+    auto byte_array = util::bytes_from_vector(env, dump);
     return byte_array;
 }
 
@@ -175,9 +175,9 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_encrypt(JNIEnv *env
     return jni_utils::run_catching_cxx_exception_or_throws<jbyteArray>(env, [=] {
         std::lock_guard lock{util::util_mutex_};
         auto ptr = ptrToKeys(env, thiz);
-        auto plaintext_ustring = util::ustring_from_bytes(env, plaintext);
-        auto enc = ptr->encrypt_message(plaintext_ustring);
-        return util::bytes_from_ustring(env, enc);
+        auto plaintext_vector = util::vector_from_bytes(env, plaintext);
+        auto enc = ptr->encrypt_message(plaintext_vector);
+        return util::bytes_from_vector(env, enc);
     });
 }
 
@@ -188,11 +188,11 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_decrypt(JNIEnv *env
     return jni_utils::run_catching_cxx_exception_or_throws<jobject>(env, [=] {
         std::lock_guard lock{util::util_mutex_};
         auto ptr = ptrToKeys(env, thiz);
-        auto ciphertext_ustring = util::ustring_from_bytes(env, ciphertext);
-        auto decrypted = ptr->decrypt_message(ciphertext_ustring);
+        auto ciphertext_vector = util::vector_from_bytes(env, ciphertext);
+        auto decrypted = ptr->decrypt_message(ciphertext_vector);
         auto sender = decrypted.first;
         auto plaintext = decrypted.second;
-        auto plaintext_bytes = util::bytes_from_ustring(env, plaintext);
+        auto plaintext_bytes = util::bytes_from_vector(env, plaintext);
         auto sender_session_id = util::serialize_account_id(env, sender.data());
         auto pair_class = env->FindClass("kotlin/Pair");
         auto pair_constructor = env->GetMethodID(pair_class, "<init>", "(Ljava/lang/Object;Ljava/lang/Object;)V");
@@ -212,7 +212,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_keys(JNIEnv *env, j
     jobject our_stack = env->NewObject(stack, init);
     jmethodID push = env->GetMethodID(stack, "push", "(Ljava/lang/Object;)Ljava/lang/Object;");
     for (auto& key : keys) {
-        auto key_bytes = util::bytes_from_ustring(env, key);
+        auto key_bytes = util::bytes_from_span(env, key);
         env->CallObjectMethod(our_stack, push, key_bytes);
     }
     return our_stack;
@@ -246,7 +246,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_makeSubAccount(JNIE
     auto ptr = ptrToKeys(env, thiz);
     auto deserialized_id = util::deserialize_account_id(env, session_id);
     auto new_subaccount_key = ptr->swarm_make_subaccount(deserialized_id.data(), can_write, can_delete);
-    auto jbytes = util::bytes_from_ustring(env, new_subaccount_key);
+    auto jbytes = util::bytes_from_vector(env, new_subaccount_key);
     return jbytes;
 }
 
@@ -261,7 +261,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_getSubAccountToken(
     auto ptr = ptrToKeys(env, thiz);
     auto deserialized_id = util::deserialize_account_id(env, session_id);
     auto token = ptr->swarm_subaccount_token(deserialized_id, can_write, can_delete);
-    auto jbytes = util::bytes_from_ustring(env, token);
+    auto jbytes = util::bytes_from_vector(env, token);
     return jbytes;
 }
 
@@ -273,9 +273,9 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_subAccountSign(JNIE
                                                                             jbyteArray signing_value) {
     std::lock_guard lock{util::util_mutex_};
     auto ptr = ptrToKeys(env, thiz);
-    auto message_ustring = util::ustring_from_bytes(env, message);
-    auto signing_value_ustring = util::ustring_from_bytes(env, signing_value);
-    auto swarm_auth = ptr->swarm_subaccount_sign(message_ustring, signing_value_ustring, false);
+    auto message_vector = util::vector_from_bytes(env, message);
+    auto signing_value_vector = util::vector_from_bytes(env, signing_value);
+    auto swarm_auth = ptr->swarm_subaccount_sign(message_vector, signing_value_vector, false);
     return util::deserialize_swarm_auth(env, swarm_auth);
 }
 
@@ -291,7 +291,7 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_supplementFor(JNIEn
         user_session_ids.push_back(util::string_from_jstring(env, (jstring)(env->GetObjectArrayElement(j_user_session_ids, i))));
     }
     auto supplement = ptr->key_supplement(user_session_ids);
-    return util::bytes_from_ustring(env, supplement);
+    return util::bytes_from_vector(env, supplement);
 }
 extern "C"
 JNIEXPORT jint JNICALL
@@ -326,11 +326,11 @@ Java_network_loki_messenger_libsession_1util_GroupKeysConfig_loadAdminKey(JNIEnv
                                                                           jlong members_ptr) {
     std::lock_guard lock{util::util_mutex_};
     auto ptr = ptrToKeys(env, thiz);
-    auto admin_key_ustring = util::ustring_from_bytes(env, admin_key);
+    auto admin_key_vector = util::vector_from_bytes(env, admin_key);
     auto info = reinterpret_cast<session::config::groups::Info*>(info_ptr);
     auto members = reinterpret_cast<session::config::groups::Members*>(members_ptr);
 
     jni_utils::run_catching_cxx_exception_or_throws<void>(env, [&] {
-        ptr->load_admin_key(admin_key_ustring, *info, *members);
+        ptr->load_admin_key(admin_key_vector, *info, *members);
     });
 }

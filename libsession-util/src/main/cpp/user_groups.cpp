@@ -339,8 +339,8 @@ Java_network_loki_messenger_libsession_1util_util_GroupInfo_00024ClosedGroupInfo
 
     auto seed_bytes = env->GetByteArrayElements(seed, nullptr);
     auto admin_key = session::ed25519::ed25519_key_pair(
-            session::ustring_view(reinterpret_cast<unsigned char *>(seed_bytes), 32)).second;
+            std::span<const unsigned char>(reinterpret_cast<const unsigned char *>(seed_bytes), 32)).second;
     env->ReleaseByteArrayElements(seed, seed_bytes, 0);
 
-    return util::bytes_from_ustring(env, session::ustring_view(admin_key.data(), admin_key.size()));
+    return util::bytes_from_span(env, std::span<const unsigned char>(admin_key.data(), admin_key.size()));
 }

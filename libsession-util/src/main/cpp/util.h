@@ -4,6 +4,8 @@
 #include <jni.h>
 #include <array>
 #include <optional>
+#include <span>
+#include <vector>
 #include "session/types.hpp"
 #include "session/config/groups/info.hpp"
 #include "session/config/groups/keys.hpp"
@@ -14,8 +16,9 @@
 
 namespace util {
     extern std::mutex util_mutex_;
-    jbyteArray bytes_from_ustring(JNIEnv* env, session::ustring_view from_str);
-    session::ustring ustring_from_bytes(JNIEnv* env, jbyteArray byteArray);
+    jbyteArray bytes_from_vector(JNIEnv* env, std::vector<unsigned char> from_str);
+    std::vector<unsigned char> vector_from_bytes(JNIEnv* env, jbyteArray byteArray);
+    jbyteArray bytes_from_span(JNIEnv* env, std::span<const unsigned char> from_str);
     std::string string_from_jstring(JNIEnv* env, jstring string);
     jobject serialize_user_pic(JNIEnv *env, session::config::profile_pic pic);
     std::pair<jstring, jbyteArray> deserialize_user_pic(JNIEnv *env, jobject user_pic);

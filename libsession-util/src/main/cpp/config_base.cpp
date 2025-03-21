@@ -32,7 +32,7 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_push(JNIEnv *env, jobjec
     auto to_push_str = std::get<1>(push_tuple);
     auto to_delete = std::get<2>(push_tuple);
 
-    jbyteArray returnByteArray = util::bytes_from_ustring(env, to_push_str);
+    jbyteArray returnByteArray = util::bytes_from_vector(env, to_push_str);
     jlong seqNo = std::get<0>(push_tuple);
     jclass returnObjectClass = env->FindClass("network/loki/messenger/libsession_util/util/ConfigPush");
     jclass stackClass = env->FindClass("java/util/Stack");
@@ -59,7 +59,7 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_dump(JNIEnv *env, jobjec
     std::lock_guard lock{util::util_mutex_};
     auto config = ptrToConfigBase(env, thiz);
     auto dumped = config->dump();
-    jbyteArray bytes = util::bytes_from_ustring(env, dumped);
+    jbyteArray bytes = util::bytes_from_vector(env, dumped);
     return bytes;
 }
 
@@ -90,7 +90,7 @@ Java_network_loki_messenger_libsession_1util_ConfigBase_merge___3Lkotlin_Pair_2(
         std::lock_guard lock{util::util_mutex_};
         auto conf = ptrToConfigBase(env, thiz);
         size_t number = env->GetArrayLength(to_merge);
-        std::vector<std::pair<std::string, session::ustring>> configs = {};
+        std::vector<std::pair<std::string, std::vector<unsigned char>>> configs = {};
         for (int i = 0; i < number; i++) {
             auto jElement = (jobject) env->GetObjectArrayElement(to_merge, i);
             auto pair = extractHashAndData(env, jElement);
