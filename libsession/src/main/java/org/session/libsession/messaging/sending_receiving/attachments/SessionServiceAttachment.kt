@@ -34,7 +34,6 @@ abstract class SessionServiceAttachment protected constructor(val contentType: S
         private var contentType: String? = null
         private var filename: String = "PlaceholderFilename"
         private var length: Long = 0
-        private var listener: SignalServiceAttachment.ProgressListener? = null
         private var voiceNote = false
         private var width = 0
         private var height = 0
@@ -56,11 +55,6 @@ abstract class SessionServiceAttachment protected constructor(val contentType: S
 
         fun withFilename(filename: String): Builder {
             this.filename = filename
-            return this
-        }
-
-        fun withListener(listener: SignalServiceAttachment.ProgressListener?): Builder {
-            this.listener = listener
             return this
         }
 
@@ -88,7 +82,7 @@ abstract class SessionServiceAttachment protected constructor(val contentType: S
             requireNotNull(inputStream) { "Must specify stream!" }
             requireNotNull(contentType) { "No content type specified!" }
             require(length != 0L) { "No length specified!" }
-            return SessionServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.absent(), width, height, Optional.fromNullable(caption), listener)
+            return SessionServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.absent(), width, height, Optional.fromNullable(caption))
         }
     }
 
