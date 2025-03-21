@@ -19,6 +19,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.Namespace
 import nl.komponents.kovenant.Deferred
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -44,9 +45,7 @@ import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.Snode
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 
 private const val TAG = "Poller"
 

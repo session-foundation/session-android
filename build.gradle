@@ -32,6 +32,13 @@ plugins {
 
 allprojects {
     repositories {
+        maven {
+            url uri("https://jitpack.io")
+            content {
+                includeGroup 'com.github.session-foundation'
+            }
+        }
+
         google()
         mavenCentral()
         maven {

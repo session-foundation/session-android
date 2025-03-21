@@ -336,7 +336,6 @@ dependencies {
     implementation 'net.zetetic:sqlcipher-android:4.6.1@aar'
     implementation project(":libsignal")
     implementation project(":libsession")
-    implementation project(":libsession-util")
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxJsonVersion"
     implementation "com.github.session-foundation.session-android-curve-25519:curve25519-java:$curve25519Version"
     implementation project(":liblazysodium")

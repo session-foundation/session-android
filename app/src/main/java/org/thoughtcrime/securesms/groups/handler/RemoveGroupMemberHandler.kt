@@ -6,12 +6,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
@@ -38,7 +38,6 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsession.messaging.groups.GroupScope
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -118,7 +117,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 SnodeAPI.buildAuthenticatedRevokeSubKeyBatchRequest(
                     groupAdminAuth = groupAuth,
                     subAccountTokens = pendingRemovals.map { (member, _) ->
-                        configs.groupKeys.getSubAccountToken(member.accountId)
+                        configs.groupKeys.getSubAccountToken(member.accountId())
                     }
                 )
             ) { "Fail to create a revoke request" }
@@ -145,7 +144,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                         memberSessionIDs = pendingRemovals
                             .asSequence()
                             .filter { (member, status) -> member.shouldRemoveMessages(status) }
-                            .map { (member, _) -> member.accountIdString() },
+                            .map { (member, _) -> member.accountId() },
                     ),
                     auth = groupAuth,
                 )
@@ -178,7 +177,7 @@ class RemoveGroupMemberHandler @Inject constructor(
         // now we can go ahead and update the configs
         configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
             pendingRemovals.forEach { (member, _) ->
-                configs.groupMembers.erase(member.accountIdString())
+                configs.groupMembers.erase(member.accountId())
             }
             configs.rekey()
         }
@@ -200,7 +199,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                         messageDataProvider.markUserMessagesAsDeleted(
                             threadId = threadId,
                             until = until,
-                            sender = member.accountIdString(),
+                            sender = member.accountId(),
                             displayedMessage = context.getString(R.string.deleteMessageDeletedGlobally)
                         )
                     } catch (e: Exception) {
@@ -258,11 +257,11 @@ class RemoveGroupMemberHandler @Inject constructor(
         data = Base64.encodeBytes(
             Sodium.encryptForMultipleSimple(
                 messages = Array(pendingRemovals.size) {
-                    pendingRemovals[it].accountId.pubKeyBytes
+                    AccountId(pendingRemovals[it].accountId()).pubKeyBytes
                         .plus(keys.currentGeneration().toString().toByteArray())
                 },
                 recipients = Array(pendingRemovals.size) {
-                    pendingRemovals[it].accountId.pubKeyBytes
+                    AccountId(pendingRemovals[it].accountId()).pubKeyBytes
                 },
                 ed25519SecretKey = adminKey,
                 domain = Sodium.KICKED_DOMAIN
