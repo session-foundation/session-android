@@ -96,9 +96,9 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         val outputStreamFactory = if (encrypt) AttachmentCipherOutputStreamFactory(key) else PlaintextOutputStreamFactory()
         // Create a digesting request body but immediately read it out to a buffer. Doing this makes
         // it easier to deal with inputStream and outputStreamFactory.
-        val pad = PushAttachmentData(attachment.contentType, inputStream, length, outputStreamFactory, attachment.listener)
+        val pad = PushAttachmentData(attachment.contentType, inputStream, length, outputStreamFactory)
         val contentType = "application/octet-stream"
-        val drb = DigestingRequestBody(pad.data, pad.outputStreamFactory, contentType, pad.dataSize, pad.listener)
+        val drb = DigestingRequestBody(pad.data, pad.outputStreamFactory, contentType, pad.dataSize)
         Log.d("Loki", "File size: ${length.toDouble() / 1000} kb.")
         val b = Buffer()
         drb.writeTo(b)

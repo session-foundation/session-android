@@ -14,19 +14,17 @@ public class SignalServiceAttachmentStream extends SignalServiceAttachment {
   private final InputStream      inputStream;
   private final long             length;
   private final String           filename;
-  private final ProgressListener listener;
   private final Optional<byte[]> preview;
   private final boolean          voiceNote;
   private final int              width;
   private final int              height;
   private final Optional<String> caption;
 
-  public SignalServiceAttachmentStream(InputStream inputStream, String contentType, long length, String filename, boolean voiceNote, Optional<byte[]> preview, int width, int height, Optional<String> caption, ProgressListener listener) {
+  public SignalServiceAttachmentStream(InputStream inputStream, String contentType, long length, String filename, boolean voiceNote, Optional<byte[]> preview, int width, int height, Optional<String> caption) {
     super(contentType);
     this.inputStream = inputStream;
     this.length      = length;
     this.filename    = filename;
-    this.listener    = listener;
     this.voiceNote   = voiceNote;
     this.preview     = preview;
     this.width       = width;
@@ -43,7 +41,6 @@ public class SignalServiceAttachmentStream extends SignalServiceAttachment {
   public InputStream getInputStream()   { return inputStream; }
   public long getLength()               { return length;      }
   public String getFilename()           { return filename;    }
-  public ProgressListener getListener() { return listener;    }
   public Optional<byte[]> getPreview()  { return preview;     }
   public boolean getVoiceNote()         { return voiceNote;   }
   public int getWidth()                 { return width;       }

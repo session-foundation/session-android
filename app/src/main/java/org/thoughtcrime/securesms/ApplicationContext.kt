@@ -40,7 +40,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.Logger.initLogger
 import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
-import org.conscrypt.Conscrypt
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
@@ -66,7 +65,6 @@ import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.signal.aesgcmprovider.AesGcmProvider
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
@@ -380,33 +378,33 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     // Loki
     private fun initializeSecurityProvider() {
-        try {
-            Class.forName("org.signal.aesgcmprovider.AesGcmCipher")
-        } catch (e: ClassNotFoundException) {
-            Log.e(TAG, "Failed to find AesGcmCipher class")
-            throw ProviderInitializationException()
-        }
-
-        val aesPosition = Security.insertProviderAt(AesGcmProvider(), 1)
-        Log.i(
-            TAG,
-            "Installed AesGcmProvider: $aesPosition"
-        )
-
-        if (aesPosition < 0) {
-            Log.e(TAG, "Failed to install AesGcmProvider()")
-            throw ProviderInitializationException()
-        }
-
-        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2)
-        Log.i(
-            TAG,
-            "Installed Conscrypt provider: $conscryptPosition"
-        )
-
-        if (conscryptPosition < 0) {
-            Log.w(TAG, "Did not install Conscrypt provider. May already be present.")
-        }
+//        try {
+//            Class.forName("org.signal.aesgcmprovider.AesGcmCipher")
+//        } catch (e: ClassNotFoundException) {
+//            Log.e(TAG, "Failed to find AesGcmCipher class")
+//            throw ProviderInitializationException()
+//        }
+//
+//        val aesPosition = Security.insertProviderAt(AesGcmProvider(), 1)
+//        Log.i(
+//            TAG,
+//            "Installed AesGcmProvider: $aesPosition"
+//        )
+//
+//        if (aesPosition < 0) {
+//            Log.e(TAG, "Failed to install AesGcmProvider()")
+//            throw ProviderInitializationException()
+//        }
+//
+//        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2)
+//        Log.i(
+//            TAG,
+//            "Installed Conscrypt provider: $conscryptPosition"
+//        )
+//
+//        if (conscryptPosition < 0) {
+//            Log.w(TAG, "Did not install Conscrypt provider. May already be present.")
+//        }
     }
 
     private fun initializeLogging() {

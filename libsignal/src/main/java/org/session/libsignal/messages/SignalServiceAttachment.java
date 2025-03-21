@@ -43,7 +43,6 @@ public abstract class SignalServiceAttachment {
     private String           contentType;
     private String           filename;
     private long             length;
-    private ProgressListener listener;
     private boolean          voiceNote;
     private int              width;
     private int              height;
@@ -68,11 +67,6 @@ public abstract class SignalServiceAttachment {
 
     public Builder withFileName(String filename) {
       this.filename = filename;
-      return this;
-    }
-
-    public Builder withListener(ProgressListener listener) {
-      this.listener = listener;
       return this;
     }
 
@@ -101,21 +95,7 @@ public abstract class SignalServiceAttachment {
       if (contentType == null) throw new IllegalArgumentException("No content type specified!");
       if (length == 0)         throw new IllegalArgumentException("No length specified!");
 
-      return new SignalServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.<byte[]>absent(), width, height, Optional.fromNullable(caption), listener);
+      return new SignalServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.<byte[]>absent(), width, height, Optional.fromNullable(caption));
     }
-  }
-
-  /**
-   * An interface to receive progress information on upload/download of
-   * an attachment.
-   */
-  public interface ProgressListener {
-    /**
-     * Called on a progress change event.
-     *
-     * @param total The total amount to transmit/receive in bytes.
-     * @param progress The amount that has been transmitted/received in bytes thus far
-     */
-    public void onAttachmentProgress(long total, long progress);
   }
 }
