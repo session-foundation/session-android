@@ -1,6 +1,5 @@
 package org.session.libsession.snode
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,15 +26,15 @@ import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.crypto.secureRandomOrNull
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
-import org.session.libsignal.utilities.Broadcaster
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.set
 
 private typealias Path = List<Snode>
@@ -629,7 +628,7 @@ object OnionRequestAPI {
                                 )
                                 return deferred.reject(exception)
                             }
-                            deferred.resolve(OnionResponse(body, JsonUtil.toJson(body).toByteArray()))
+                            deferred.resolve(OnionResponse(body, JsonUtil.toJson(body).toByteArray().view()))
                         }
                         else -> {
                             if (statusCode != 200) {
@@ -640,7 +639,7 @@ object OnionRequestAPI {
                                 )
                                 return deferred.reject(exception)
                             }
-                            deferred.resolve(OnionResponse(json, JsonUtil.toJson(json).toByteArray()))
+                            deferred.resolve(OnionResponse(json, JsonUtil.toJson(json).toByteArray().view()))
                         }
                     }
                 } catch (exception: Exception) {
@@ -652,17 +651,16 @@ object OnionRequestAPI {
         }
     }
 
-    private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArray {
+    private fun ByteArray.getBody(infoLength: Int, infoEndIndex: Int): ByteArraySlice {
         // If there is no data in the response, i.e. only `l123:jsone`, then just return the ResponseInfo
         val infoLengthStringLength = infoLength.toString().length
         if (size <= infoLength + infoLengthStringLength + 2/*l and e bytes*/) {
-            return byteArrayOf()
+            return ByteArraySlice.EMPTY
         }
         // Extract the response data as well
-        val dataSlice = slice(infoEndIndex + 1 until size - 1)
-        val dataSepIdx = dataSlice.indexOfFirst { byteArrayOf(it).contentEquals(":".toByteArray()) }
-        val responseBody = dataSlice.slice(dataSepIdx + 1 until dataSlice.size)
-        return responseBody.toByteArray()
+        val dataSlice = view(infoEndIndex + 1 until size - 1)
+        val dataSepIdx = dataSlice.asList().indexOfFirst { it.toInt() == ':'.code  }
+        return dataSlice.view(dataSepIdx + 1 until dataSlice.len)
     }
 
     // endregion
@@ -676,7 +674,7 @@ enum class Version(val value: String) {
 
 data class OnionResponse(
     val info: Map<*, *>,
-    val body: ByteArray? = null
+    val body: ByteArraySlice? = null
 ) {
     val code: Int? get() = info["code"] as? Int
     val message: String? get() = info["message"] as? String

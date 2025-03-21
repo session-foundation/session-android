@@ -147,21 +147,45 @@
 
     </androidx.appcompat.widget.Toolbar>
 
-    <RelativeLayout
+    <FrameLayout
+        android:animateLayoutChanges="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipChildren="false"
-        android:focusable="false">
+        android:layout_height="match_parent">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="172dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:itemCount="6"
-            tools:listitem="@layout/view_conversation" />
+            android:id="@+id/conversationListContainer">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingBottom="172dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:itemCount="6"
+                tools:listitem="@layout/view_conversation" />
+
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/emptyStateContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/newConversationButton"
+                android:contentDescription="@string/AccessibilityId_conversationsNew"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="@dimen/new_conversation_button_bottom_offset"
+                app:rippleColor="@color/button_primary_ripple"
+                android:src="@drawable/ic_plus"
+                app:maxImageSize="32dp"
+                android:tint="?message_sent_text_color"/>
+
+        </FrameLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/globalSearchRecycler"
@@ -173,25 +197,7 @@
             tools:itemCount="6"
             tools:listitem="@layout/view_global_search_result" />
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/emptyStateContainer"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone"/>
+    </FrameLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/newConversationButton"
-            android:contentDescription="@string/AccessibilityId_conversationsNew"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="@dimen/new_conversation_button_bottom_offset"
-            app:rippleColor="@color/button_primary_ripple"
-            android:src="@drawable/ic_plus"
-            app:maxImageSize="32dp"
-            android:tint="?message_sent_text_color"/>
-
-    </RelativeLayout>
 
 </LinearLayout>

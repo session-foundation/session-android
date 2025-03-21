@@ -18,8 +18,10 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStream
 
 class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long) : Job {
@@ -138,8 +140,8 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await().let {
-                    tempFile.writeBytes(it)
+                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await().let { data ->
+                    FileOutputStream(tempFile).use { output -> output.write(data) }
                 }
             }
             Log.d("AttachmentDownloadJob", "getting input stream")

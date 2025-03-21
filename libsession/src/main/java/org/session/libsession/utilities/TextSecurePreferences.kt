@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.session.libsession.R
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_DARK
@@ -213,7 +214,8 @@ interface TextSecurePreferences {
 
 
         // This is a stop-gap solution for static access to shared preference.
-        internal lateinit var preferenceInstance: TextSecurePreferences
+        val preferenceInstance: TextSecurePreferences
+            get() = MessagingModuleConfiguration.shared.preferences
 
         const val DISABLE_PASSPHRASE_PREF = "pref_disable_passphrase"
         const val LANGUAGE_PREF = "pref_language"
@@ -987,11 +989,6 @@ interface TextSecurePreferences {
 class AppTextSecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ): TextSecurePreferences {
-    init {
-        // Should remove once all static access to the companion objects is removed
-        TextSecurePreferences.preferenceInstance = this
-    }
-
     private val localNumberState = MutableStateFlow(getStringPreference(TextSecurePreferences.LOCAL_NUMBER_PREF, null))
 
     override var migratedToGroupV2Config: Boolean

@@ -383,10 +383,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
         binding.recyclerView.isVisible = !isShown
-        binding.emptyStateContainer.isVisible = (binding.recyclerView.adapter as HomeAdapter).itemCount == 0 && binding.recyclerView.isVisible
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isInvisible = !isShown
-        binding.newConversationButton.isVisible = !isShown
+        binding.conversationListContainer.isInvisible = isShown
     }
 
     private fun updateLegacyConfigView() {

@@ -10,7 +10,6 @@ import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Sign
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
@@ -39,6 +38,7 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.whispersystems.curve25519.Curve25519
 import java.util.concurrent.TimeUnit
@@ -79,7 +79,7 @@ object OpenGroupApi {
         object NoEd25519KeyPair : Error("Couldn't find ed25519 key pair.")
     }
 
-    data class DefaultGroup(val id: String, val name: String, val image: ByteArray?) {
+    data class DefaultGroup(val id: String, val name: String, val image: ByteArraySlice?) {
 
         val joinURL: String get() = "$defaultServer/$id?public_key=$defaultServerPublicKey"
     }
@@ -290,7 +290,7 @@ object OpenGroupApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun getResponseBody(request: Request): Promise<ByteArray, Exception> {
+    private fun getResponseBody(request: Request): Promise<ByteArraySlice, Exception> {
         return send(request).map { response ->
             response.body ?: throw Error.ParsingFailed
         }
@@ -417,7 +417,7 @@ object OpenGroupApi {
         server: String,
         roomID: String,
         imageId: String
-    ): Promise<ByteArray, Exception> {
+    ): Promise<ByteArraySlice, Exception> {
         val request = Request(
             verb = GET,
             room = roomID,
@@ -445,7 +445,7 @@ object OpenGroupApi {
         }
     }
 
-    fun download(fileId: String, room: String, server: String): Promise<ByteArray, Exception> {
+    fun download(fileId: String, room: String, server: String): Promise<ByteArraySlice, Exception> {
         val request = Request(
             verb = GET,
             room = room,

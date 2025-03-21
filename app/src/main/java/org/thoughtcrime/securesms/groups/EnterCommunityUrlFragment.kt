@@ -66,7 +66,7 @@ class EnterCommunityUrlFragment : Fragment() {
         groups.iterator().forEach { defaultGroup ->
             val chip = layoutInflater.inflate(R.layout.default_group_chip, binding.defaultRoomsFlexboxLayout, false) as Chip
             val drawable = defaultGroup.image?.let { bytes ->
-                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                val bitmap = BitmapFactory.decodeByteArray(bytes.data, bytes.offset, bytes.len)
                 RoundedBitmapDrawableFactory.create(resources, bitmap).apply {
                     isCircular = true
                 }
