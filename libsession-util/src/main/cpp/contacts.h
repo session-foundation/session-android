@@ -2,6 +2,7 @@
 #define SESSION_ANDROID_CONTACTS_H
 
 #include <jni.h>
+#include <vector>
 #include "session/config/contacts.hpp"
 #include "util.h"
 
@@ -58,7 +59,7 @@ inline session::config::contact_info deserialize_contact(JNIEnv *env, jobject in
     auto expiry_pair = util::deserialize_expiry(env, expiry_mode);
 
     std::string url;
-    session::ustring key;
+    std::vector<unsigned char> key;
 
     if (user_pic != nullptr) {
         auto deserialized_pic = util::deserialize_user_pic(env, user_pic);
@@ -66,7 +67,7 @@ inline session::config::contact_info deserialize_contact(JNIEnv *env, jobject in
         auto url_bytes = env->GetStringUTFChars(url_jstring, nullptr);
         url = std::string(url_bytes);
         env->ReleaseStringUTFChars(url_jstring, url_bytes);
-        key = util::ustring_from_bytes(env, deserialized_pic.second);
+        key = util::vector_from_bytes(env, deserialized_pic.second);
     }
 
     auto account_id_bytes = env->GetStringUTFChars(account_id, nullptr);

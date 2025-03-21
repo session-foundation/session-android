@@ -17,9 +17,9 @@ Java_network_loki_messenger_libsession_1util_ConfigKt_createConfigObject(
         jbyteArray initial_dump) {
     return jni_utils::run_catching_cxx_exception_or_throws<jlong>(env, [=] {
         auto config_name = util::string_from_jstring(env, java_config_name);
-        auto secret_key = util::ustring_from_bytes(env, ed25519_secret_key);
+        auto secret_key = util::vector_from_bytes(env, ed25519_secret_key);
         auto initial = initial_dump
-                       ? std::optional(util::ustring_from_bytes(env, initial_dump))
+                       ? std::optional(util::vector_from_bytes(env, initial_dump))
                        : std::nullopt;
 
 
