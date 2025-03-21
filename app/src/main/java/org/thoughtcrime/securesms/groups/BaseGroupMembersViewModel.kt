@@ -88,7 +88,7 @@ abstract class BaseGroupMembersViewModel (
         )
 
         return GroupMemberState(
-            accountId = AccountId(member.accountId()),
+            accountId = memberAccountId,
             name = name,
             canRemove = amIAdmin && memberAccountId != myAccountId
                     && !member.isAdminOrBeingPromoted(status) && !member.isRemoved(status),
