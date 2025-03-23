@@ -430,7 +430,8 @@ object MessageSender {
 
     // Result Handling
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
-        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, openGroupSentTimestamp)
+        val threadId = message.threadID!!
+        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(threadId, openGroupSentTimestamp)
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
         val timestamp = message.sentTimestamp!!
@@ -439,7 +440,7 @@ object MessageSender {
         storage.getMessageIdInDatabase(timestamp, userPublicKey)?.let { (messageID, mms) ->
             if (openGroupSentTimestamp != -1L && message is VisibleMessage) {
                 storage.addReceivedMessageTimestamp(openGroupSentTimestamp)
-                storage.updateSentTimestamp(messageID, message.isMediaMessage(), openGroupSentTimestamp, message.threadID!!)
+                storage.updateSentTimestamp(messageID, message.isMediaMessage(), openGroupSentTimestamp, threadId)
                 message.sentTimestamp = openGroupSentTimestamp
             }
 
@@ -488,8 +489,11 @@ object MessageSender {
             // Fixed in: https://optf.atlassian.net/browse/SES-1567
             if (messageIsAddressedToCommunity)
             {
-                storage.markAsSentToCommunity(message.threadID!!, message.id!!)
-                storage.markUnidentifiedInCommunity(message.threadID!!, message.id!!)
+                val messageId = message.id
+                if (messageId != null) {
+                    storage.markAsSentToCommunity(threadId, messageId)
+                    storage.markUnidentifiedInCommunity(threadId, messageId)
+                }
             }
             else
             {

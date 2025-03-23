@@ -109,7 +109,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             case GroupMessage: {
               OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
               try {
-                mmsDatabase.insertMessageOutbox(reply, threadId, false, null, true);
+                message.setId(mmsDatabase.insertMessageOutbox(reply, threadId, false, null, true));
                 MessageSender.send(message, address);
               } catch (MmsException e) {
                 Log.w(TAG, e);
@@ -118,7 +118,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             }
             case SecureMessage: {
               OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
-              smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), null, true);
+              message.setId(smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), null, true));
               MessageSender.send(message, address);
               break;
             }
