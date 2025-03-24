@@ -101,7 +101,11 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             val groupName = configs.withGroupConfigs(sessionId) { it.groupInfo.getName() }
                 ?: configs.getGroup(sessionId)?.name
 
-            val failures = results.filter { it.second.isFailure }
+            // Gather all the exceptions, while keeping track of the invitee account IDs
+            val failures = results.mapNotNull { (id, result) ->
+                result.exceptionOrNull()?.let { err -> id to err }
+            }
+
             // if there are failed invites, display a message
             // assume job "success" even if we fail, the state of invites is tracked outside of this job
             if (failures.isNotEmpty()) {
@@ -109,14 +113,15 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                 val storage = MessagingModuleConfiguration.shared.storage
                 val toaster = MessagingModuleConfiguration.shared.toaster
 
-                val underlying = failures.first().second.exceptionOrNull()!!
+                val (_, firstError) = failures.first()
 
-                Log.w("InviteContactsJob", "Failed to invite contacts", underlying)
+                Log.w("InviteContactsJob", "Failed to invite contacts", firstError)
+
                 GroupInviteException(
                     isPromotion = false,
                     inviteeAccountIds = failures.map { it.first },
                     groupName = groupName.orEmpty(),
-                    underlying = underlying,
+                    underlying = firstError,
                 ).format(MessagingModuleConfiguration.shared.context, storage).let {
                     withContext(Dispatchers.Main) {
                         toaster.toast(it, Toast.LENGTH_LONG)
