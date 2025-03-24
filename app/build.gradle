@@ -15,8 +15,8 @@ configurations.configureEach {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 397
-def canonicalVersionName = "1.21.1"
+def canonicalVersionCode = 399
+def canonicalVersionName = "1.21.3"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -349,7 +349,6 @@ dependencies {
     implementation "nl.komponents.kovenant:kovenant:$kovenantVersion"
     implementation "nl.komponents.kovenant:kovenant-android:$kovenantVersion"
     implementation "com.jakewharton.rxbinding3:rxbinding:3.1.0"
-    implementation "com.github.ybq:Android-SpinKit:1.4.0"
     implementation "com.opencsv:opencsv:4.6"
     testImplementation "junit:junit:$junitVersion"
     testImplementation 'org.assertj:assertj-core:3.11.1'

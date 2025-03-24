@@ -79,6 +79,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
   private ViewGroup         playbackControlsContainer;
   private TextView          charactersLeft;
   private View              closeButton;
+  private View              loader;
 
   private ControllableViewPager         fragmentPager;
   private MediaSendFragmentPagerAdapter fragmentPagerAdapter;
@@ -137,6 +138,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
     playbackControlsContainer = view.findViewById(R.id.mediasend_playback_controls_container);
     charactersLeft            = view.findViewById(R.id.mediasend_characters_left);
     closeButton               = view.findViewById(R.id.mediasend_close_button);
+    loader                    = view.findViewById(R.id.loader);
 
     View sendButtonBkg = view.findViewById(R.id.mediasend_send_button_bkg);
 
@@ -342,18 +344,12 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
 
       private Stopwatch   renderTimer;
       private Runnable    progressTimer;
-      private AlertDialog dialog;
 
       @Override
       protected void onPreExecute() {
         renderTimer   = new Stopwatch("ProcessMedia");
         progressTimer = () -> {
-          dialog = new AlertDialog.Builder(new ContextThemeWrapper(requireContext(), R.style.Theme_TextSecure_Dialog_MediaSendProgress))
-                                  .setView(R.layout.progress_dialog)
-                                  .setCancelable(false)
-                                  .create();
-          dialog.show();
-          dialog.getWindow().setLayout(getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size), getResources().getDimensionPixelSize(R.dimen.mediasend_progress_dialog_size));
+          loader.setVisibility(View.VISIBLE);
         };
         Util.runOnMainDelayed(progressTimer, 250);
       }
@@ -394,9 +390,7 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
       protected void onPostExecute(List<Media> media) {
         controller.onSendClicked(media, composeText.getTextTrimmed());
         Util.cancelRunnableOnMain(progressTimer);
-        if (dialog != null) {
-          dialog.dismiss();
-        }
+        loader.setVisibility(View.GONE);
         renderTimer.stop(TAG);
       }
     }.execute();
