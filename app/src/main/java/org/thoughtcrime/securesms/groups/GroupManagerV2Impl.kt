@@ -299,6 +299,8 @@ class GroupManagerV2Impl @Inject constructor(
                 configs.groupInfo.getName().orEmpty()
             }
 
+            Log.w(TAG, "Failed to invite members to group $group", e)
+
             throw GroupInviteException(
                 isPromotion = false,
                 inviteeAccountIds = newMembers.map { it.hexString },

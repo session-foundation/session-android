@@ -21,6 +21,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateInviteMessage
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateMessage
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 
 class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<String>) : Job {
 
@@ -108,11 +109,14 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                 val storage = MessagingModuleConfiguration.shared.storage
                 val toaster = MessagingModuleConfiguration.shared.toaster
 
+                val underlying = failures.first().second.exceptionOrNull()!!
+
+                Log.w("InviteContactsJob", "Failed to invite contacts", underlying)
                 GroupInviteException(
                     isPromotion = false,
                     inviteeAccountIds = failures.map { it.first },
                     groupName = groupName.orEmpty(),
-                    underlying = failures.first().second.exceptionOrNull()!!,
+                    underlying = underlying,
                 ).format(MessagingModuleConfiguration.shared.context, storage).let {
                     withContext(Dispatchers.Main) {
                         toaster.toast(it, Toast.LENGTH_LONG)
