@@ -115,6 +115,11 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
 
                 val (_, firstError) = failures.first()
 
+                // Add the rest of the exceptions as suppressed
+                for ((_, suppressed) in failures.asSequence().drop(1)) {
+                    firstError.addSuppressed(suppressed)
+                }
+
                 Log.w("InviteContactsJob", "Failed to invite contacts", firstError)
 
                 GroupInviteException(
