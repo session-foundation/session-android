@@ -2,6 +2,7 @@
 #include "sodium/randombytes.h"
 #include <sodium/crypto_sign.h>
 #include <session/multi_encrypt.hpp>
+#include <session/util.hpp>
 #include <string>
 
 #include <android/log.h>
@@ -17,24 +18,33 @@ namespace util {
 
     std::mutex util_mutex_ = std::mutex();
 
-    jbyteArray bytes_from_ustring(JNIEnv* env, session::ustring_view from_str) {
-        size_t length = from_str.length();
+    jbyteArray bytes_from_vector(JNIEnv* env, std::vector<unsigned char> from_str) {
+        size_t length = from_str.size();
         auto jlength = (jsize)length;
         jbyteArray new_array = env->NewByteArray(jlength);
         env->SetByteArrayRegion(new_array, 0, jlength, (jbyte*)from_str.data());
         return new_array;
     }
 
-    session::ustring ustring_from_bytes(JNIEnv* env, jbyteArray byteArray) {
+    std::vector<unsigned char> vector_from_bytes(JNIEnv* env, jbyteArray byteArray) {
         if (byteArray == nullptr) {
             return {};
         }
         size_t len = env->GetArrayLength(byteArray);
         auto bytes = env->GetByteArrayElements(byteArray, nullptr);
 
-        session::ustring st{reinterpret_cast<const unsigned char *>(bytes), len};
+        auto begin = reinterpret_cast<const unsigned char *>(bytes);
+        std::vector<unsigned char> st{begin, begin + len};
         env->ReleaseByteArrayElements(byteArray, bytes, 0);
         return st;
+    }
+
+    jbyteArray bytes_from_span(JNIEnv* env, std::span<const unsigned char> from_str) {
+        size_t length = from_str.size();
+        auto jlength = (jsize)length;
+        jbyteArray new_array = env->NewByteArray(jlength);
+        env->SetByteArrayRegion(new_array, 0, jlength, (jbyte*)from_str.data());
+        return new_array;
     }
 
     std::string string_from_jstring(JNIEnv* env, jstring string) {
@@ -50,7 +60,7 @@ namespace util {
         jclass returnObjectClass = env->FindClass("network/loki/messenger/libsession_util/util/UserPic");
         jmethodID constructor = env->GetMethodID(returnObjectClass, "<init>", "(Ljava/lang/String;[B)V");
         jstring url = env->NewStringUTF(pic.url.data());
-        jbyteArray byteArray = util::bytes_from_ustring(env, pic.key);
+        jbyteArray byteArray = util::bytes_from_vector(env, pic.key);
         return env->NewObject(returnObjectClass, constructor, url, byteArray);
     }
 
@@ -202,14 +212,14 @@ JNIEXPORT jobject JNICALL
 Java_network_loki_messenger_libsession_1util_util_Sodium_ed25519KeyPair(JNIEnv *env, jobject thiz, jbyteArray seed) {
     std::array<unsigned char, 32> ed_pk; // NOLINT(cppcoreguidelines-pro-type-member-init)
     std::array<unsigned char, 64> ed_sk; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    auto seed_bytes = util::ustring_from_bytes(env, seed);
+    auto seed_bytes = util::vector_from_bytes(env, seed);
     crypto_sign_ed25519_seed_keypair(ed_pk.data(), ed_sk.data(), seed_bytes.data());
 
     jclass kp_class = env->FindClass("network/loki/messenger/libsession_util/util/KeyPair");
     jmethodID kp_constructor = env->GetMethodID(kp_class, "<init>", "([B[B)V");
 
-    jbyteArray pk_jarray = util::bytes_from_ustring(env, session::ustring_view {ed_pk.data(), ed_pk.size()});
-    jbyteArray sk_jarray = util::bytes_from_ustring(env, session::ustring_view {ed_sk.data(), ed_sk.size()});
+    jbyteArray pk_jarray = util::bytes_from_span(env, std::span<const unsigned char> {ed_pk.data(), ed_pk.size()});
+    jbyteArray sk_jarray = util::bytes_from_span(env, std::span<const unsigned char> {ed_sk.data(), ed_sk.size()});
 
     jobject return_obj = env->NewObject(kp_class, kp_constructor, pk_jarray, sk_jarray);
     return return_obj;
@@ -220,7 +230,7 @@ JNIEXPORT jbyteArray JNICALL
 Java_network_loki_messenger_libsession_1util_util_Sodium_ed25519PkToCurve25519(JNIEnv *env,
                                                                                jobject thiz,
                                                                                jbyteArray pk) {
-    auto ed_pk = util::ustring_from_bytes(env, pk);
+    auto ed_pk = util::vector_from_bytes(env, pk);
     std::array<unsigned char, 32> curve_pk; // NOLINT(cppcoreguidelines-pro-type-member-init)
     int success = crypto_sign_ed25519_pk_to_curve25519(curve_pk.data(), ed_pk.data());
     if (success != 0) {
@@ -228,7 +238,7 @@ Java_network_loki_messenger_libsession_1util_util_Sodium_ed25519PkToCurve25519(J
         env->ThrowNew(exception, "Invalid crypto_sign_ed25519_pk_to_curve25519 operation");
         return nullptr;
     }
-    jbyteArray curve_pk_jarray = util::bytes_from_ustring(env, session::ustring_view {curve_pk.data(), curve_pk.size()});
+    jbyteArray curve_pk_jarray = util::bytes_from_span(env, std::span<const unsigned char> {curve_pk.data(), curve_pk.size()});
     return curve_pk_jarray;
 }
 
@@ -243,26 +253,26 @@ Java_network_loki_messenger_libsession_1util_util_Sodium_encryptForMultipleSimpl
         env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Messages and recipients must be the same size");
         return nullptr;
     }
-    std::vector<session::ustring> message_vec{};
-    std::vector<session::ustring> recipient_vec{};
+    std::vector<std::vector<unsigned char>> message_vec{};
+    std::vector<std::vector<unsigned char>> recipient_vec{};
     for (int i = 0; i < size; i++) {
         jbyteArray message_j = static_cast<jbyteArray>(env->GetObjectArrayElement(messages, i));
         jbyteArray recipient_j = static_cast<jbyteArray>(env->GetObjectArrayElement(recipients, i));
-        session::ustring message = util::ustring_from_bytes(env, message_j);
-        session::ustring recipient = util::ustring_from_bytes(env, recipient_j);
+        std::vector<unsigned char> message = util::vector_from_bytes(env, message_j);
+        std::vector<unsigned char> recipient = util::vector_from_bytes(env, recipient_j);
 
-        message_vec.emplace_back(session::ustring{message});
-        recipient_vec.emplace_back(session::ustring{recipient});
+        message_vec.emplace_back(message);
+        recipient_vec.emplace_back(recipient);
     }
 
-    std::vector<session::ustring_view> message_sv_vec{};
-    std::vector<session::ustring_view> recipient_sv_vec{};
+    std::vector<std::span<const unsigned char>> message_sv_vec{};
+    std::vector<std::span<const unsigned char>> recipient_sv_vec{};
     for (int i = 0; i < size; i++) {
-        message_sv_vec.emplace_back(session::to_unsigned_sv(message_vec[i]));
-        recipient_sv_vec.emplace_back(session::to_unsigned_sv(recipient_vec[i]));
+        message_sv_vec.emplace_back(session::to_span(message_vec[i]));
+        recipient_sv_vec.emplace_back(session::to_span(recipient_vec[i]));
     }
 
-    auto sk = util::ustring_from_bytes(env, ed25519_secret_key);
+    auto sk = util::vector_from_bytes(env, ed25519_secret_key);
     std::array<unsigned char, 24> random_nonce;
     randombytes_buf(random_nonce.data(), random_nonce.size());
 
@@ -273,11 +283,11 @@ Java_network_loki_messenger_libsession_1util_util_Sodium_encryptForMultipleSimpl
             recipient_sv_vec,
             sk,
             domain_string,
-            session::ustring_view {random_nonce.data(), 24}
+            std::span<const unsigned char> {random_nonce.data(), 24}
     );
 
     env->ReleaseStringUTFChars(domain, domain_string);
-    auto encoded = util::bytes_from_ustring(env, result);
+    auto encoded = util::bytes_from_vector(env, result);
     return encoded;
 }
 
@@ -289,19 +299,19 @@ Java_network_loki_messenger_libsession_1util_util_Sodium_decryptForMultipleSimpl
                                                                                   jbyteArray secret_key,
                                                                                   jbyteArray sender_pub_key,
                                                                                   jstring domain) {
-    auto sk_ustring = util::ustring_from_bytes(env, secret_key);
-    auto encoded_ustring = util::ustring_from_bytes(env, encoded);
-    auto pub_ustring = util::ustring_from_bytes(env, sender_pub_key);
+    auto sk_vector = util::vector_from_bytes(env, secret_key);
+    auto encoded_vector = util::vector_from_bytes(env, encoded);
+    auto pub_vector = util::vector_from_bytes(env, sender_pub_key);
     auto domain_bytes = env->GetStringUTFChars(domain, nullptr);
     auto result = session::decrypt_for_multiple_simple(
-            encoded_ustring,
-            sk_ustring,
-            pub_ustring,
+            encoded_vector,
+            sk_vector,
+            pub_vector,
             domain_bytes
             );
     env->ReleaseStringUTFChars(domain,domain_bytes);
     if (result) {
-        return util::bytes_from_ustring(env, *result);
+        return util::bytes_from_vector(env, *result);
     } else {
         LOGD("no result from decrypt");
     }
@@ -321,7 +331,7 @@ Java_network_loki_messenger_libsession_1util_util_BaseCommunityInfo_00024Compani
 
     auto base_j = env->NewStringUTF(base.data());
     auto room_j = env->NewStringUTF(room.data());
-    auto pk_jbytes = util::bytes_from_ustring(env, pk);
+    auto pk_jbytes = util::bytes_from_vector(env, pk);
 
     jobject triple = env->NewObject(clazz, constructor, base_j, room_j, pk_jbytes);
     return triple;

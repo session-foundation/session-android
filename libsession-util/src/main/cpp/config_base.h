@@ -12,15 +12,15 @@ inline session::config::ConfigBase* ptrToConfigBase(JNIEnv *env, jobject obj) {
     return (session::config::ConfigBase*) env->GetLongField(obj, pointerField);
 }
 
-inline std::pair<std::string, session::ustring> extractHashAndData(JNIEnv *env, jobject kotlin_pair) {
+inline std::pair<std::string, std::vector<unsigned char>> extractHashAndData(JNIEnv *env, jobject kotlin_pair) {
     jclass pair = env->FindClass("kotlin/Pair");
     jfieldID first = env->GetFieldID(pair, "first", "Ljava/lang/Object;");
     jfieldID second = env->GetFieldID(pair, "second", "Ljava/lang/Object;");
     jstring hash_as_jstring = static_cast<jstring>(env->GetObjectField(kotlin_pair, first));
     jbyteArray data_as_jbytes = static_cast<jbyteArray>(env->GetObjectField(kotlin_pair, second));
     auto hash_as_string = env->GetStringUTFChars(hash_as_jstring, nullptr);
-    auto data_as_ustring = util::ustring_from_bytes(env, data_as_jbytes);
-    auto ret_pair = std::pair<std::string, session::ustring>{hash_as_string, data_as_ustring};
+    auto data_as_vector = util::vector_from_bytes(env, data_as_jbytes);
+    auto ret_pair = std::pair<std::string, std::vector<unsigned char>>{hash_as_string, data_as_vector};
     env->ReleaseStringUTFChars(hash_as_jstring, hash_as_string);
     return ret_pair;
 }
