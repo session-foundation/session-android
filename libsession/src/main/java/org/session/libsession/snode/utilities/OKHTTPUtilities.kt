@@ -17,7 +17,7 @@ internal fun Request.getHeadersForOnionRequest(): Map<String, Any> {
     for (name in headers.names()) {
         val value = headers[name]
         if (value != null) {
-            if (value.toLowerCase(Locale.US) == "true" || value.toLowerCase(Locale.US) == "false") {
+            if (value.lowercase(Locale.US) == "true" || value.lowercase(Locale.US) == "false") {
                 result[name] = value.toBoolean()
             } else if (value.toIntOrNull() != null) {
                 result[name] = value.toInt()

@@ -180,7 +180,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     List<Recipient> recipients  = new LinkedList<>();
 
     for (Address member : members) {
-      if (!includeSelf && Util.isOwnNumber(context, member.serialize()))
+      if (!includeSelf && Util.isOwnNumber(context, member.toString()))
         continue;
 
       if (member.isContact()) {

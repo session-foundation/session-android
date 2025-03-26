@@ -21,7 +21,9 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
 import javax.inject.Inject
@@ -48,6 +50,9 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var storage: StorageProtocol
 
+    @Inject
+    lateinit var usernameUtils: UsernameUtils
+
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
@@ -60,7 +65,7 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     private fun createUnknownRecipientDrawable(): Drawable {
-        return ResourceContactPhoto(R.drawable.ic_profile_default)
+        return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
             .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
     }
 
@@ -83,14 +88,14 @@ class ProfilePictureView @JvmOverloads constructor(
         isGroupsV2Recipient: Boolean = false,
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: storage.getContactNameWithAccountID(publicKey)
+            ?: usernameUtils.getContactNameWithAccountID(publicKey)
 
         if (isLegacyGroupRecipient || isGroupsV2Recipient) {
             val members = if (isLegacyGroupRecipient) {
                 groupDatabase
                     .getGroupMemberAddresses(address.toGroupString(), true)
             } else {
-                storage.getMembers(address.serialize())
+                storage.getMembers(address.toString())
                     .map { Address.fromSerialized(it.accountIdString()) }
             }.sorted().take(2)
 
@@ -100,20 +105,20 @@ class ProfilePictureView @JvmOverloads constructor(
                 additionalPublicKey = ""
                 additionalDisplayName = ""
             } else {
-                val pk = members.getOrNull(0)?.serialize() ?: ""
+                val pk = members.getOrNull(0)?.toString() ?: ""
                 publicKey = pk
                 displayName = getUserDisplayName(pk)
-                val apk = members.getOrNull(1)?.serialize() ?: ""
+                val apk = members.getOrNull(1)?.toString() ?: ""
                 additionalPublicKey = apk
                 additionalDisplayName = getUserDisplayName(apk)
             }
         } else if(isCommunityInboxRecipient) {
-            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.serialize())
+            val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
         } else {
-            val publicKey = address.serialize()
+            val publicKey = address.toString()
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
             additionalPublicKey = null
@@ -148,7 +153,7 @@ class ProfilePictureView @JvmOverloads constructor(
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {
         if (publicKey.isNotEmpty()) {
             // if we already have a recipient that matches the current key, reuse it
-            val recipient = if(this.recipient != null && this.recipient?.address?.serialize() == publicKey){
+            val recipient = if(this.recipient != null && this.recipient?.address?.toString() == publicKey){
                 this.recipient!!
             }
             else {
@@ -164,7 +169,7 @@ class ProfilePictureView @JvmOverloads constructor(
 
             glide.clear(imageView)
 
-            val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: "${publicKey.take(4)}...${publicKey.takeLast(4)}")
+            val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: truncateIdForDisplay(publicKey))
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 glide.load(signalProfilePicture)

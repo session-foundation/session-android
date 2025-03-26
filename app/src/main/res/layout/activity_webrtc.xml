@@ -51,13 +51,13 @@
         app:layout_constraintLeft_toLeftOf="parent"
         android:background="@drawable/call_controls_background"
         android:elevation="8dp"
-        android:layout_marginLeft="@dimen/small_spacing"
+        android:layout_marginStart="@dimen/small_spacing"
         android:layout_marginTop="@dimen/small_spacing"
-        android:src="@drawable/ic_arrow_left"
+        android:src="@drawable/ic_chevron_left"
         android:scaleType="centerInside"
         android:layout_width="@dimen/medium_profile_picture_size"
         android:layout_height="@dimen/medium_profile_picture_size"
-        app:tint="@color/call_action_foreground" />
+        app:tint="@color/white" />
 
     <TextView
         app:layout_constraintTop_toTopOf="parent"
@@ -74,52 +74,31 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"/>
 
-    <ProgressBar
-        android:id="@+id/remote_loading_view"
-        android:layout_width="@dimen/very_large_spacing"
-        android:layout_height="@dimen/large_spacing"
-        android:layout_marginTop="@dimen/medium_spacing"
-        app:layout_constraintEnd_toEndOf="@+id/contactAvatar"
-        app:layout_constraintStart_toStartOf="@+id/contactAvatar"
-        app:layout_constraintTop_toBottomOf="@id/contactAvatar"
-        android:visibility="gone"
-        android:indeterminateTint="?android:textColorPrimary"
-        android:indeterminate="true"
-        tools:visibility="visible" />
-
-    <TextView
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/remote_loading_view"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:text="@string/callsReconnecting"
-        android:id="@+id/reconnecting_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <TextView
-        android:id="@+id/sessionCallText"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/callsSessionCall"
-        android:textColor="?android:textColorPrimary"
-        android:textSize="11sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/controlGroupBarrier"
-        android:layout_marginBottom="@dimen/small_spacing"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
+        android:layout_marginBottom="@dimen/normal_padding"
+        android:gravity="center"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/callTime"
-        android:textSize="@dimen/medium_font_size"
-        android:textColor="?android:textColorPrimary"
-        tools:text="@tools:sample/date/hhmmss"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/sessionCallText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/callTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            style="@style/TextAppearance.Session.ConversationSettings.Title"
+            tools:text="Connecting..." />
+
+        <TextView
+            tools:text="@string/callsReconnecting"
+            android:id="@+id/callSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/floating_renderer_container"
@@ -134,7 +113,7 @@
         android:background="?backgroundSecondary">
         <ImageView
             android:id="@+id/videocam_off_icon"
-            android:src="@drawable/ic_baseline_videocam_off_24"
+            android:src="@drawable/ic_video_off"
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center"
@@ -160,7 +139,7 @@
 
     <ImageView
         android:id="@+id/swap_view_icon"
-        android:src="@drawable/ic_baseline_screen_rotation_alt_24"
+        android:src="@drawable/ic_repeat_2"
         app:layout_constraintTop_toTopOf="@id/floating_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/floating_renderer_container"
         app:tint="?android:textColorPrimary"
@@ -172,9 +151,9 @@
     <ImageView
         android:id="@+id/endCallButton"
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_end_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?danger"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -187,9 +166,9 @@
     <ImageView
         android:id="@+id/switchCameraButton"
         android:background="@drawable/call_controls_background"
-        android:src="@drawable/ic_baseline_flip_camera_android_24"
+        android:src="@drawable/ic_switch_camera"
         android:padding="@dimen/medium_spacing"
-        app:tint="@color/call_action_foreground"
+        app:tint="@color/white"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
@@ -204,7 +183,7 @@
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_background"
         app:tint="@color/state_list_call_action_foreground"
-        android:src="@drawable/ic_baseline_videocam_24"
+        android:src="@drawable/ic_video"
         android:padding="@dimen/medium_spacing"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -219,12 +198,12 @@
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         android:padding="@dimen/medium_spacing"
-        android:src="@drawable/ic_baseline_mic_off_24"
+        android:src="@drawable/ic_mic_off"
         android:layout_marginBottom="@dimen/large_spacing"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_mic_background"
-        app:tint="@color/call_action_foreground"
+        app:tint="@color/white"
         app:layout_constraintEnd_toStartOf="@id/speakerPhoneButton"
         app:layout_constraintStart_toEndOf="@id/enableCameraButton"/>
 
@@ -233,7 +212,7 @@
         android:background="@drawable/circle_tintable"
         android:backgroundTint="@color/state_list_call_action_background"
         app:tint="@color/state_list_call_action_foreground"
-        android:src="@drawable/ic_baseline_volume_up_24"
+        android:src="@drawable/ic_volume_2"
         android:padding="@dimen/medium_spacing"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -246,9 +225,9 @@
 
     <ImageView
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_answer_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?colorAccent"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -262,9 +241,9 @@
 
     <ImageView
         android:background="@drawable/circle_tintable"
-        android:src="@drawable/ic_baseline_call_end_24"
-        android:padding="@dimen/medium_spacing"
-        android:foregroundTint="@color/call_action_foreground"
+        android:src="@drawable/ic_phone_fill_custom"
+        android:padding="10dp"
+        app:tint="@color/white"
         android:backgroundTint="?danger"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
@@ -279,7 +258,7 @@
         android:id="@+id/controlGroup"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:constraint_referenced_ids="enableCameraButton,endCallButton,switchCameraButton,speakerPhoneButton,microphoneButton"
+        app:constraint_referenced_ids="enableCameraButton,switchCameraButton,speakerPhoneButton,microphoneButton"
         />
 
     <androidx.constraintlayout.widget.Group

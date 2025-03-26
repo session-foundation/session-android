@@ -131,7 +131,6 @@ interface TextSecurePreferences {
     fun isNotificationVibrateEnabled(): Boolean
     fun getNotificationLedColor(): Int
     fun isThreadLengthTrimmingEnabled(): Boolean
-    fun isSystemEmojiPreferred(): Boolean
     fun getMobileMediaDownloadAllowed(): Set<String>?
     fun getWifiMediaDownloadAllowed(): Set<String>?
     fun getRoamingMediaDownloadAllowed(): Set<String>?
@@ -248,7 +247,6 @@ interface TextSecurePreferences {
         const val MEDIA_DOWNLOAD_MOBILE_PREF = "pref_media_download_mobile"
         const val MEDIA_DOWNLOAD_WIFI_PREF = "pref_media_download_wifi"
         const val MEDIA_DOWNLOAD_ROAMING_PREF = "pref_media_download_roaming"
-        const val SYSTEM_EMOJI_PREF = "pref_system_emoji"
         const val DIRECT_CAPTURE_CAMERA_ID = "pref_direct_capture_camera_id"
         const val PROFILE_KEY_PREF = "pref_profile_key"
         const val PROFILE_NAME_PREF = "pref_profile_name"
@@ -741,11 +739,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun isThreadLengthTrimmingEnabled(context: Context): Boolean {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
-        }
-
-        @JvmStatic
-        fun isSystemEmojiPreferred(context: Context): Boolean {
-            return getBooleanPreference(context, SYSTEM_EMOJI_PREF, false)
         }
 
         @JvmStatic
@@ -1357,10 +1350,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun isSystemEmojiPreferred(): Boolean {
-        return getBooleanPreference(TextSecurePreferences.SYSTEM_EMOJI_PREF, false)
     }
 
     override fun getMobileMediaDownloadAllowed(): Set<String>? {

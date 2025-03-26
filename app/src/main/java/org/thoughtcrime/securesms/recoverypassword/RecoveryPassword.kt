@@ -108,7 +108,7 @@ private fun RecoveryPasswordCell(
                         .padding(vertical = LocalDimensions.current.spacing)
                         .contentDescription(R.string.AccessibilityId_qrCode),
                     contentPadding = 10.dp,
-                    icon = R.drawable.session_shield
+                    icon = R.drawable.ic_recovery_password_custom
                 )
             }
 

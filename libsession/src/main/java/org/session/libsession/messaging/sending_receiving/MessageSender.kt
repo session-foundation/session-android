@@ -572,7 +572,7 @@ object MessageSender {
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
-        if(address.serialize() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
+        if(address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
             MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)

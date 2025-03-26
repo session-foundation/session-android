@@ -88,7 +88,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
                 Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
                 Icon(
                     modifier = Modifier.align(Alignment.CenterVertically),
-                    painter = painterResource(id = R.drawable.ic_shield_outline),
+                    painter = painterResource(id = R.drawable.ic_recovery_password_custom),
                     contentDescription = null,
                 )
             }

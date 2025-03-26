@@ -14,7 +14,7 @@
         android:adjustViewBounds="true"
         android:clickable="false"
         android:longClickable="false"
-        android:scaleType="fitCenter"
+        android:scaleType="center"
         android:contentDescription="@string/AccessibilityId_mediaMessage" />
 
     <org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailProgressBar
@@ -54,13 +54,5 @@
             app:srcCompat="@drawable/triangle_right" />
 
     </FrameLayout>
-
-    <ViewStub
-        android:id="@+id/transfer_controls_stub"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout="@layout/transfer_controls_stub"
-        android:visibility="gone" />
 
 </org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView>

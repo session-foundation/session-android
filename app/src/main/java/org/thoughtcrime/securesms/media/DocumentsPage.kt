@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
@@ -73,13 +74,14 @@ fun DocumentsPage(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Image(
-                                painterResource(R.drawable.ic_document_large_dark),
+                                painterResource(R.drawable.ic_file),
+                                colorFilter = ColorFilter.tint(LocalColors.current.text),
                                 contentDescription = null
                             )
 
                             Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
                                 Text(
-                                    text = file.fileName.orEmpty(),
+                                    text = file.filename,
                                     style = LocalType.current.large,
                                     color = LocalColors.current.text
                                 )

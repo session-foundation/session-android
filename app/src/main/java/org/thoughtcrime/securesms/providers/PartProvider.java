@@ -139,9 +139,9 @@ public class PartProvider extends ContentProvider {
         MatrixCursor       matrixCursor = new MatrixCursor(projection, 1);
         Object[]           resultRow    = new Object[projection.length];
 
-        for (int i=0;i<projection.length;i++) {
+        for (int i = 0; i < projection.length; i++) {
           if (OpenableColumns.DISPLAY_NAME.equals(projection[i])) {
-            resultRow[i] = attachment.getFileName();
+            resultRow[i] = attachment.getFilename();
           }
         }
 

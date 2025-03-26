@@ -11,8 +11,8 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import androidx.annotation.ColorInt
-import network.loki.messenger.R
 import kotlin.math.roundToInt
+import network.loki.messenger.R
 
 interface GlowView {
     var mainColor: Int

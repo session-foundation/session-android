@@ -14,7 +14,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.lang.ref.WeakReference
-import java.text.SimpleDateFormat
 import java.util.concurrent.TimeUnit
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -23,6 +22,7 @@ import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.showSessionDialog
+import java.util.Locale
 
 /**
  * Saves attachment files to an external storage using [MediaStore] API.
@@ -55,7 +55,6 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 // potential risks of other apps accessing their saved attachments.
                 context.showSessionDialog {
                     title(R.string.warning)
-                    iconAttribute(R.attr.dialog_alert_icon)
                     text(context.getString(R.string.attachmentsWarning))
                     dangerButton(R.string.save) {
                         // Set our 'haveWarned' SharedPref and perform the save on accept
@@ -68,17 +67,13 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
         }
 
         fun saveAttachment(context: Context, attachment: Attachment): String? {
-            val contentType = checkNotNull(MediaUtil.getCorrectedMimeType(attachment.contentType))
-            var fileName = attachment.fileName
+            val contentType = checkNotNull(MediaUtil.getJpegCorrectedMimeTypeIfRequired(attachment.contentType))
+            var filename = attachment.filename
+            Log.i(TAG, "Saving attachment as: $filename")
 
-            // Added for SES-2624 to prevent Android API 28 devices and lower from crashing because
-            // for unknown reasons it provides us with an empty filename when saving files.
-            // TODO: Further investigation into root cause and fix!
-            if (fileName.isNullOrEmpty()) fileName = generateOutputFileName(contentType, attachment.date)
-
-            fileName = sanitizeOutputFileName(fileName)
             val outputUri: Uri = getMediaStoreContentUriForType(contentType)
-            val mediaUri = createOutputUri(context, outputUri, contentType, fileName)
+            val mediaUri = createOutputUri(context, outputUri, contentType, filename)
+
             val updateValues = ContentValues()
             PartAuthority.getAttachmentStream(context, attachment.uri).use { inputStream ->
                 if (inputStream == null) {
@@ -104,20 +99,8 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             if (updateValues.size() > 0) {
                 context.contentResolver.update(mediaUri!!, updateValues, null, null)
             }
+
             return outputUri.lastPathSegment
-        }
-
-        private fun generateOutputFileName(contentType: String, timestamp: Long): String {
-            val mimeTypeMap = MimeTypeMap.getSingleton()
-            val extension = mimeTypeMap.getExtensionFromMimeType(contentType) ?: "attach"
-            val dateFormatter = SimpleDateFormat("yyyy-MM-dd-HHmmss")
-            val base = "session-${dateFormatter.format(timestamp)}"
-
-            return "${base}.${extension}";
-        }
-
-        private fun sanitizeOutputFileName(fileName: String): String {
-            return File(fileName).name
         }
 
         private fun getMediaStoreContentUriForType(contentType: String): Uri {
@@ -133,18 +116,19 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
             }
         }
 
-        private fun createOutputUri(context: Context, outputUri: Uri, contentType: String, fileName: String): Uri? {
-
-            // TODO: This method may pass an empty string as the filename in Android API 28 and below. This requires
-            // TODO: follow-up investigation, but has temporarily been worked around, see:
-            // TODO: https://github.com/session-foundation/session-android/commit/afbb71351a74220c312a09c25cc1c79738453c12
-
-            val fileParts: Array<String> = getFileNameParts(fileName)
+        private fun createOutputUri(context: Context, outputUri: Uri, contentType: String, filename: String): Uri? {
+            // Break the filename up into its base and extension in case we have to number the base should a file
+            // with the given filename exist. e.g., "cat.jpg" --> base = "cat", extension = "jpg"
+            val fileParts: Array<String> = getFileNameParts(filename)
             val base = fileParts[0]
-            val extension = fileParts[1]
-            val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+            val extension = fileParts[1].lowercase(Locale.getDefault())
+
+            // Some files (Giphy GIFs, for example) turn up as just a number with no file extension - so we'll use the contentType as
+            // the mimetype for those & all others are picked up via `getMimeTypeFromExtension`
+            val mimeType = if (extension.isEmpty()) contentType else MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+
             val contentValues = ContentValues()
-            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
             contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
             contentValues.put(MediaStore.MediaColumns.DATE_ADDED, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))
             contentValues.put(MediaStore.MediaColumns.DATE_MODIFIED, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))
@@ -152,26 +136,33 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 contentValues.put(MediaStore.MediaColumns.IS_PENDING, 1)
             } else if (outputUri.scheme == ContentResolver.SCHEME_FILE) {
                 val outputDirectory = File(outputUri.path)
-                var outputFile = File(outputDirectory, "$base.$extension")
+                var outputFile = File(outputDirectory, filename)
+
+                // Find a unique filename by appending numbers rather than overwriting any existing file
                 var i = 0
                 while (outputFile.exists()) {
                     outputFile = File(outputDirectory, base + "-" + ++i + "." + extension)
                 }
+
                 if (outputFile.isHidden) {
                     throw IOException("Specified name would not be visible")
                 }
                 return Uri.fromFile(outputFile)
             } else {
-                var outputFileName = fileName
+                var outputFileName = filename
                 var dataPath = String.format("%s/%s", getExternalPathToFileForType(context, contentType), outputFileName)
+
+                // Find a unique filename by appending numbers rather than overwriting any existing file
                 var i = 0
                 while (pathTaken(context, outputUri, dataPath)) {
                     Log.d(TAG, "The content exists. Rename and check again.")
                     outputFileName = base + "-" + ++i + "." + extension
                     dataPath = String.format("%s/%s", getExternalPathToFileForType(context, contentType), outputFileName)
                 }
+
                 contentValues.put(MediaStore.MediaColumns.DATA, dataPath)
             }
+
             return context.contentResolver.insert(outputUri, contentValues)
         }
 
@@ -260,6 +251,5 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
         }
     }
 
-    data class Attachment(val uri: Uri, val contentType: String, val date: Long, val fileName: String?)
-
+    data class Attachment(val uri: Uri, val contentType: String, val date: Long, val filename: String)
 }

@@ -22,6 +22,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 
@@ -32,10 +33,11 @@ const val MAX_GROUP_NAME_BYTES = 100
 class EditGroupViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
     @ApplicationContext private val context: Context,
-    private val storage: StorageProtocol,
+    storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory) {
+    private val usernameUtils: UsernameUtils,
+) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory) {
     // Input/Output state
     private val mutableEditingName = MutableStateFlow<String?>(null)
 
@@ -84,7 +86,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, storage).toString()
+                    err.format(context, usernameUtils).toString()
                 } else {
                     null
                 }
@@ -104,7 +106,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, storage).toString()
+                    err.format(context, usernameUtils).toString()
                 } else {
                     null
                 }

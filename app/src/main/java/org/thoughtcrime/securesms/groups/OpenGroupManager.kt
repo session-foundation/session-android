@@ -129,7 +129,7 @@ object OpenGroupManager {
             val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
             val recipient = threadDB.getRecipientForThreadId(threadID) ?: return
             threadDB.setThreadArchived(threadID)
-            val groupID = recipient.address.serialize()
+            val groupID = recipient.address.toString()
             // Stop the poller if needed
             val openGroups = storage.getAllOpenGroups().filter { it.value.server == server }
             if (openGroups.isNotEmpty()) {

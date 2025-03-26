@@ -75,7 +75,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .filter { mmsSmsDatabase.getMessageForTimestamp(it.timetamp)?.run {
                     isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
-                .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.serialize()) }
+                .forEach { messageExpirationManager.startDisappearAfterRead(it.timetamp, it.address.toString()) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
                 GlobalScope.launch {
@@ -145,7 +145,7 @@ class MarkReadReceiver : BroadcastReceiver() {
         }
 
         private fun scheduleDeletion(
-            context: Context?,
+            context: Context,
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
@@ -156,7 +156,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             val expireStarted = expirationInfo.expireStarted
 
             if (expirationInfo.isDisappearAfterRead() && expireStarted == 0L || now < expireStarted) {
-                val db = DatabaseComponent.get(context!!).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
+                val db = DatabaseComponent.get(context).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
                 db.markExpireStarted(expirationInfo.id, now)
             }
 

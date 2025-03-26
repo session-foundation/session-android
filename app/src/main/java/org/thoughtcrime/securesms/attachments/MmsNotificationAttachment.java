@@ -1,13 +1,10 @@
 package org.thoughtcrime.securesms.attachments;
 
-
 import android.net.Uri;
 import androidx.annotation.Nullable;
-
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
-import org.thoughtcrime.securesms.database.AttachmentDatabase;
-import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
+import org.thoughtcrime.securesms.database.MmsDatabase;
 
 public class MmsNotificationAttachment extends Attachment {
 
@@ -17,15 +14,11 @@ public class MmsNotificationAttachment extends Attachment {
 
   @Nullable
   @Override
-  public Uri getDataUri() {
-    return null;
-  }
+  public Uri getDataUri() { return null; }
 
   @Nullable
   @Override
-  public Uri getThumbnailUri() {
-    return null;
-  }
+  public Uri getThumbnailUri() { return null; }
 
   private static int getTransferStateFromStatus(int status) {
     if (status == MmsDatabase.Status.DOWNLOAD_INITIALIZED ||

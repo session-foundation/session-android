@@ -104,7 +104,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
             binding.quoteViewAttachmentThumbnailImageView.root.isVisible = false
             when {
                 attachments.audioSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_microphone)
+                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
 
                     val isVoiceNote = attachments.isVoiceNote
@@ -115,7 +115,7 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                     }
                 }
                 attachments.documentSlide != null -> {
-                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_document_large_light)
+                    binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
                     binding.quoteViewAttachmentPreviewImageView.isVisible = true
                     binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
                 }
@@ -155,6 +155,5 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 }
 
 interface QuoteViewDelegate {
-
     fun cancelQuoteDraft()
 }

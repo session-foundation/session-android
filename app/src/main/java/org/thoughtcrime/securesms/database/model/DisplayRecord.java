@@ -78,19 +78,7 @@ public abstract class DisplayRecord {
             deliveryStatus < SmsDatabase.Status.STATUS_PENDING) || deliveryReceiptCount > 0;
   }
 
-  public boolean isSent() { return MmsSmsColumns.Types.isSentType(type); }
 
-  public boolean isSyncing() {
-    return MmsSmsColumns.Types.isSyncingType(type);
-  }
-
-  public boolean isResyncing() {
-    return MmsSmsColumns.Types.isResyncingType(type);
-  }
-
-  public boolean isSyncFailed() {
-    return MmsSmsColumns.Types.isSyncFailedMessageType(type);
-  }
 
   public boolean isFailed() {
     return MmsSmsColumns.Types.isFailedMessageType(type)
@@ -105,44 +93,35 @@ public abstract class DisplayRecord {
     return isPending;
   }
 
-  public boolean isRead() { return readReceiptCount > 0; }
-
-  public boolean isOutgoing() {
-    return MmsSmsColumns.Types.isOutgoingMessageType(type);
-  }
-
-  public boolean isIncoming() {
-    return !MmsSmsColumns.Types.isOutgoingMessageType(type);
-  }
-
-  public boolean isGroupUpdateMessage() {
-    return SmsDatabase.Types.isGroupUpdateMessage(type);
-  }
-  public boolean isExpirationTimerUpdate() { return SmsDatabase.Types.isExpirationTimerUpdate(type); }
-  public boolean isMediaSavedNotification() { return MmsSmsColumns.Types.isMediaSavedExtraction(type); }
-  public boolean isScreenshotNotification() { return MmsSmsColumns.Types.isScreenshotExtraction(type); }
+  public boolean isCallLog()                    { return SmsDatabase.Types.isCallLog(type);                        }
   public boolean isDataExtractionNotification() { return isMediaSavedNotification() || isScreenshotNotification(); }
-  public boolean isOpenGroupInvitation() { return MmsSmsColumns.Types.isOpenGroupInvitation(type); }
-  public boolean isCallLog() {
-    return SmsDatabase.Types.isCallLog(type);
-  }
-  public boolean isIncomingCall() {
-    return SmsDatabase.Types.isIncomingCall(type);
-  }
-  public boolean isOutgoingCall() {
-    return SmsDatabase.Types.isOutgoingCall(type);
-  }
-  public boolean isMissedCall() {
-    return SmsDatabase.Types.isMissedCall(type);
-  }
-  public boolean isFirstMissedCall() {
-    return SmsDatabase.Types.isFirstMissedCall(type);
-  }
-  public boolean isDeleted() { return  MmsSmsColumns.Types.isDeletedMessage(type); }
-  public boolean isMessageRequestResponse() { return  MmsSmsColumns.Types.isMessageRequestResponse(type); }
+  public boolean isDeleted()                    { return  MmsSmsColumns.Types.isDeletedMessage(type);              }
+  public boolean isExpirationTimerUpdate()      { return SmsDatabase.Types.isExpirationTimerUpdate(type);          }
+  public boolean isFirstMissedCall()            { return SmsDatabase.Types.isFirstMissedCall(type);                }
+  public boolean isGroupUpdateMessage()         { return SmsDatabase.Types.isGroupUpdateMessage(type);             }
+  public boolean isIncoming()                   { return !MmsSmsColumns.Types.isOutgoingMessageType(type);         }
+  public boolean isIncomingCall()               { return SmsDatabase.Types.isIncomingCall(type);                   }
+  public boolean isMediaSavedNotification()     { return MmsSmsColumns.Types.isMediaSavedExtraction(type);         }
+  public boolean isMessageRequestResponse()     { return  MmsSmsColumns.Types.isMessageRequestResponse(type);      }
+  public boolean isMissedCall()                 { return SmsDatabase.Types.isMissedCall(type);                     }
+  public boolean isOpenGroupInvitation()        { return MmsSmsColumns.Types.isOpenGroupInvitation(type);          }
+  public boolean isOutgoing()                   { return MmsSmsColumns.Types.isOutgoingMessageType(type);          }
+  public boolean isOutgoingCall()               { return SmsDatabase.Types.isOutgoingCall(type);                   }
+  public boolean isRead()                       { return readReceiptCount > 0;                                     }
+  public boolean isResyncing()                  { return MmsSmsColumns.Types.isResyncingType(type);                }
+  public boolean isScreenshotNotification()     { return MmsSmsColumns.Types.isScreenshotExtraction(type);         }
+  public boolean isSent()                       { return MmsSmsColumns.Types.isSentType(type);                     }
+  public boolean isSending()                    { return isOutgoing() && !isSent();                                }
+  public boolean isSyncFailed()                 { return MmsSmsColumns.Types.isSyncFailedMessageType(type);        }
+  public boolean isSyncing()                    { return MmsSmsColumns.Types.isSyncingType(type);                  }
 
   public boolean isControlMessage() {
-    return isGroupUpdateMessage() || isExpirationTimerUpdate() || isDataExtractionNotification()
-            || isMessageRequestResponse() || isCallLog();
+    return isGroupUpdateMessage()          ||
+            isExpirationTimerUpdate()      ||
+            isDataExtractionNotification() ||
+            isMessageRequestResponse()     ||
+            isCallLog();
   }
+
+  public boolean isGroupV2ExpirationTimerUpdate() { return false; }
 }

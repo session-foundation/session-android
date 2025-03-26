@@ -706,7 +706,6 @@
     <string name="recoveryPasswordBannerTitle">회복 비밀번호 저장</string>
     <string name="recoveryPasswordDescription">새 장치에서 계정을 로드하려면 복구 비밀번호를 사용하십시오.\n\n복구 비밀번호 없이는 계정을 복구할 수 없습니다. 안전하게 보관하고 타인과 공유하지 않도록 주의하세요.</string>
     <string name="recoveryPasswordEnter">복구 비밀번호 입력</string>
-    <string name="recoveryPasswordErrorLoad">2차 비밀번호을 불러오는 도중 오류가 발생했습니다.\n\n이 문제를 해결하려면 Session의 헬프 데스크로 로그 파일을 보내주시기 바랍니다.</string>
     <string name="recoveryPasswordErrorMessageGeneric">복구 비밀번호를 확인하시고 다시 시도해주세요.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">복구 암호의 일부 단어가 잘못되었습니다. 확인하고 다시 시도해 주세요.</string>
     <string name="recoveryPasswordErrorMessageShort">입력한 복구 비밀번호가 충분하지 않습니다. 확인 후 다시 시도해주세요.</string>
@@ -792,7 +791,6 @@
     <string name="updateError">업데이트 불가능</string>
     <string name="updateErrorDescription">{app_name} 업데이트에 실패했습니다. {session_download_url}에서 새 버전을 수동으로 설치한 후, 이 문제를 알려주시기 위해 고객 지원 센터에 연락해 주세요.</string>
     <string name="updateNewVersion">새 버전의 {app_name}이 사용 가능합니다. 눌러서 업데이트 하세요.</string>
-    <string name="updateNewVersionDescription">새 버전의 {app_name}이 사용 가능합니다.</string>
     <string name="updateReleaseNotes">패치 노트 보기</string>
     <string name="updateSession">{app_name} 업데이트</string>
     <string name="updateVersion">버전 {version}</string>

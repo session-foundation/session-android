@@ -33,7 +33,7 @@
     <string name="adminRemoveFailed">Nie udało się usunąć użytkownika {name} z roli administratora.</string>
     <string name="adminRemoveFailedMultiple">Nie udało się usunąć użytkownika <b>{name}</b> oraz <b>{count} innych użytkowników</b> z roli administratora.</string>
     <string name="adminRemoveFailedOther">Nie udało się usunąć użytkowników <b>{name}</b> i <b>{other_name}</b> z roli administatora.</string>
-    <string name="adminRemovedUser">\"Usunięto z roli administratora: <b>{name}</b></string>
+    <string name="adminRemovedUser">Usunięto z roli administratora: <b>{name}</b>.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> nie są już administratorami.</string>
     <string name="adminRemovedUserOther">Użytkownicy <b>{name}</b> i <b>{other_name}</b> nie są już administratorami.</string>
     <plurals name="adminSendingPromotion">
@@ -355,7 +355,7 @@
     <string name="disappearingMessagesDisappearAfterSendDescription">Wiadomości są usuwane po ich wysłaniu.</string>
     <string name="disappearingMessagesDisappearAfterSendState">Usuń po wysłaniu – {time}</string>
     <string name="disappearingMessagesFollowSetting">Dopasuj do ustawień drugiej osoby</string>
-    <string name="disappearingMessagesFollowSettingOff">Wysyłane wiadomości nie będą już znikać. Czy na pewno chcesz <b>wyłączyć</b> znikające wiadomości?\"</string>
+    <string name="disappearingMessagesFollowSettingOff">Wysyłane wiadomości nie będą już znikać. Czy na pewno chcesz <b>wyłączyć</b> znikające wiadomości?</string>
     <string name="disappearingMessagesFollowSettingOn">Czy ustawić wiadomości tak, aby znikały po <b>{time}?</b> Po tym, jak zostały <b>{disappearing_messages_type}</b>?</string>
     <string name="disappearingMessagesLegacy">{name} używa nieaktualnego klienta. Znikające wiadomości mogą nie działać zgodnie z oczekiwaniami.</string>
     <string name="disappearingMessagesOnlyAdmins">Tylko administratorzy grup mogą zmienić to ustawienie.</string>
@@ -787,7 +787,6 @@
     <string name="recoveryPasswordBannerTitle">Zapisz swoje hasło odzyskiwania</string>
     <string name="recoveryPasswordDescription">Aby wczytać konto na nowych urządzeniach, użyj hasła odzyskiwania.\n\nNie można odzyskać konta bez hasła odzyskiwania. Upewnij się, że jest ono przechowywane w bezpiecznym miejscu i nie udostępniaj go nikomu.</string>
     <string name="recoveryPasswordEnter">Wprowadź hasło odzyskiwania</string>
-    <string name="recoveryPasswordErrorLoad">Wystąpił błąd podczas próby załadowania hasła odzyskiwania.\n\n Wyślij swoje dzienniki, a następnie prześlij plik przez deskę ratunkową Sesji, aby pomóc rozwiązać ten problem.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sprawdź hasło odzyskiwania i spróbuj ponownie.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Niektóre ze słów w haśle odzyskiwania są nieprawidłowe. Sprawdź i spróbuj ponownie.</string>
     <string name="recoveryPasswordErrorMessageShort">Wprowadzone hasło odzyskiwania nie jest wystarczająco długie. Sprawdź i spróbuj ponownie.</string>
@@ -876,7 +875,6 @@
     <string name="updateError">Nie można zaktualizować</string>
     <string name="updateErrorDescription">Nie udało się zaktualizować aplikacji {app_name}. Przejdź do adresu {session_download_url} i zainstaluj nową wersję ręcznie, a następnie skontaktuj się z naszym centrum pomocy, aby poinformować nas o tym problemie.</string>
     <string name="updateNewVersion">Dostępna jest nowa wersja aplikacji {app_name}. Stuknij, aby zaktualizować</string>
-    <string name="updateNewVersionDescription">Dostępna jest nowa wersja aplikacji {app_name}.</string>
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>
     <string name="updateSession">Aktualizacja aplikacji {app_name}</string>
     <string name="updateVersion">Wersja {version}</string>

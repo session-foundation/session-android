@@ -65,7 +65,7 @@ class CreateLegacyGroupFragment : Fragment() {
         binding.closeButton.setOnClickListener { delegate.onDialogClosePressed() }
         binding.contactSearch.callbacks = object : KeyboardPageSearchView.Callbacks {
             override fun onQueryChanged(query: String) {
-                adapter.members = viewModel.filter(query).map { it.address.serialize() }
+                adapter.members = viewModel.filter(query).map { it.address.toString() }
             }
         }
         binding.createNewPrivateChatButton.setOnClickListener { delegate.onNewMessageSelected() }
@@ -118,7 +118,7 @@ class CreateLegacyGroupFragment : Fragment() {
         binding.mainContentGroup.isVisible = !viewModel.recipients.value.isNullOrEmpty()
         binding.emptyStateGroup.isVisible = viewModel.recipients.value.isNullOrEmpty()
         viewModel.recipients.observe(viewLifecycleOwner) { recipients ->
-            adapter.members = recipients.map { it.address.serialize() }
+            adapter.members = recipients.map { it.address.toString() }
         }
     }
 

@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">अपना रिकवरी पासवर्ड सहेजें</string>
     <string name="recoveryPasswordDescription">अपना अकाउंट नए डिवाइस पर लोड करने के लिए अपने रिकवरी पासवर्ड का उपयोग करें।\n\nआपका अकाउंट आपके रिकवरी पासवर्ड के बिना पुनर्प्राप्त नहीं किया जा सकता है। सुनिश्चित करें कि इसे कहीं सुरक्षित रखें और इसे किसी के साथ साझा न करें।</string>
     <string name="recoveryPasswordEnter">अपना पुनर्प्राप्ति पासवर्ड दर्ज करें</string>
-    <string name="recoveryPasswordErrorLoad">आपके पुनर्प्राप्ति पासवर्ड को लोड करने का प्रयास करते समय एक त्रुटि हुई।\n\nकृपया अपनी लॉग निर्यात करें, फिर इस समस्या को हल करने में मदद के लिए फ़ाइल को Session की हेल्प डेस्क के माध्यम से अपलोड करें।</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">आपके पुनर्प्राप्ति पासवर्ड के कुछ शब्द गलत हैं। कृपया जांच कर पुनः प्रयास करें।</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">अद्यतन नहीं हो रहा</string>
     <string name="updateErrorDescription">{app_name} अपडेट होने में विफल. कृपया {session_download_url} पर जाएं और नए संस्करण को मैन्युअल रूप से इंस्टॉल करें, फिर इस समस्या के बारे में हमें हमारे सहायता केंद्र से संपर्क करें |</string>
     <string name="updateNewVersion">{app_name} का एक नया संस्करण उपलब्ध है, अपडेट करने के लिए टैप करें</string>
-    <string name="updateNewVersionDescription">{app_name} का एक नया संस्करण उपलब्ध है।</string>
     <string name="updateReleaseNotes">रिलीज़ नोट्स पे जाइए</string>
     <string name="updateSession">{app_name} अपडेट</string>
     <string name="updateVersion">वर्ज़न {version}</string>

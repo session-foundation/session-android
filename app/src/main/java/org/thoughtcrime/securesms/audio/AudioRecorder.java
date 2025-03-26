@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.audio;
 
-
 import android.content.Context;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
@@ -65,7 +64,7 @@ public class AudioRecorder {
     });
   }
 
-  public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording() {
+  public @NonNull ListenableFuture<Pair<Uri, Long>> stopRecording(boolean voiceMessageMeetsMinimumDuration) {
     Log.i(TAG, "stopRecording()");
 
     final SettableFuture<Pair<Uri, Long>> future = new SettableFuture<>();
@@ -79,7 +78,13 @@ public class AudioRecorder {
       audioCodec.stop();
 
       try {
-        long size = MediaUtil.getMediaSize(context, captureUri);
+        long size = 0L;
+        // Only obtain the media size if the voice message was at least our minimum allowed
+        // duration (bypassing this work prevents the audio recording mechanism from getting into
+        // a broken state should the user rapidly spam the record button for several seconds).
+        if (voiceMessageMeetsMinimumDuration) {
+          size = MediaUtil.getMediaSize(context, captureUri);
+        }
         sendToFuture(future, new Pair<>(captureUri, size));
       } catch (IOException ioe) {
         Log.w(TAG, ioe);

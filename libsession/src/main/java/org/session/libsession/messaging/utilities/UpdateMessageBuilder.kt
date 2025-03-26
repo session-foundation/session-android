@@ -33,9 +33,10 @@ object UpdateMessageBuilder {
 
 
     val storage = MessagingModuleConfiguration.shared.storage
+    val usernameUtils = MessagingModuleConfiguration.shared.usernameUtils
 
     private fun getGroupMemberName(memberId: String, groupId: AccountId? = null) =
-        storage.getContactNameWithAccountID(memberId, groupId)
+        usernameUtils.getContactNameWithAccountID(memberId, groupId)
 
     @JvmStatic
     fun buildGroupUpdateMessage(
@@ -401,7 +402,7 @@ object UpdateMessageBuilder {
     }
 
     fun buildCallMessage(context: Context, type: CallMessageType, senderId: String): String {
-        val senderName = storage.getContactNameWithAccountID(senderId)
+        val senderName = usernameUtils.getContactNameWithAccountID(senderId)
 
         return when (type) {
             CALL_INCOMING -> Phrase.from(context, R.string.callsCalledYou).put(NAME_KEY, senderName)

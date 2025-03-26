@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Не удалось повысить статус {name} в {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Не удалось повысить статус {name} и {count} других в {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Не удалось повысить статус {name} и {other_name} в {group_name}</string>
+    <string name="adminPromotionNotSent">Запрос не отправлен</string>
     <string name="adminPromotionSent">Повышение до администратора отправлено</string>
+    <string name="adminPromotionStatusUnknown">Состояние запроса неизвестно</string>
     <string name="adminRemove">Удалить администраторов</string>
     <string name="adminRemoveAsAdmin">Удалить из администраторов</string>
     <string name="adminRemoveCommunityNone">В этом сообществе нет администраторов.</string>
@@ -36,6 +38,12 @@
     <string name="adminRemovedUser"><b>{name}</b> был(а) снят(а) с должности администратора.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> и <b>{count} других пользователей</b> были удалены админом.</string>
     <string name="adminRemovedUserOther">Пользователи <b>{name}</b> и <b>{other_name}</b> были удалены админом.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Отправление запроса в админы</item>
+        <item quantity="few">Отправление запросов в админы</item>
+        <item quantity="many">Отправление запросов в админы</item>
+        <item quantity="other">Отправление запросов в админы</item>
+    </plurals>
     <string name="adminSettings">Настройки администратора</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> и <b>{other_name}</b> назначены администраторами.</string>
     <string name="andMore">+{count}</string>
@@ -148,6 +156,7 @@
     <string name="callsNotificationsRequired">Голосовые и видеозвонки требуют включения уведомлений в системных настройках устройства.</string>
     <string name="callsPermissionsRequired">Требуются разрешения для звонка</string>
     <string name="callsPermissionsRequiredDescription">Вы можете включить разрешение «Голосовые и видеозвонки» в настройках конфиденциальности.</string>
+    <string name="callsPermissionsRequiredDescription1">Вы можете включить разрешение \"Аудио и видео звонки\" в настройках разрешений.</string>
     <string name="callsReconnecting">Переподключение…</string>
     <string name="callsRinging">Звонок...</string>
     <string name="callsSessionCall">Звонок в {app_name}</string>
@@ -315,6 +324,18 @@
         <item quantity="many">Не удалось удалить сообщения</item>
         <item quantity="other">Не удалось удалить сообщения</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Это сообщение не может удалиться с всех ваших устройств.</item>
+        <item quantity="few">Некоторые из выбранных вами сообщений не могут удалиться с всех ваших устройств</item>
+        <item quantity="many">Некоторые из выбранных вами сообщений не могут удалиться с всех ваших устройств</item>
+        <item quantity="other">Некоторые из выбранных вами сообщений не могут удалиться с всех ваших устройств</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Это сообщение нельзя удалить для всех</item>
+        <item quantity="few">Некоторые из выбранных вами сообщений нельзя удалить для всех</item>
+        <item quantity="many">Некоторые из выбранных вами сообщений нельзя удалить для всех</item>
+        <item quantity="other">Некоторые из выбранных вами сообщений нельзя удалить для всех</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Вы уверены, что хотите удалить эти сообщения для всех?</string>
     <string name="deleting">Удаление</string>
     <string name="developerToolsToggle">Включить инструменты разработчика</string>
@@ -361,6 +382,7 @@
     <string name="displayNameNew">Введите новое отображаемое имя</string>
     <string name="displayNamePick">Выберите ваше отображаемое имя</string>
     <string name="displayNameSet">Задать отображаемое имя</string>
+    <string name="displayNameVisible">Ваше отображаемое имя видно пользователям, группам и сообществам, с которыми вы взаимодействуете.</string>
     <string name="document">Документ</string>
     <string name="done">Готово</string>
     <string name="download">Скачать</string>
@@ -411,6 +433,8 @@
     <string name="groupCreateErrorNoMembers">Пожалуйста, выберите как минимум одного участника группы.</string>
     <string name="groupDelete">Удалить группу</string>
     <string name="groupDeleteDescription">Вы уверены, что хотите удалить группу <b>{group_name}?</b> Это удалит всех участников и всё содержимое группы.</string>
+    <string name="groupDeleteDescriptionMember">Вы действительно хотите удалить группу <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} был удалён администратором группы. Вы больше не сможете отправлять сообщения в этой группе.</string>
     <string name="groupDescriptionEnter">Введите описание группы</string>
     <string name="groupDisplayPictureUpdated">Изображение группы обновлено.</string>
     <string name="groupEdit">Редактировать группу</string>
@@ -423,6 +447,9 @@
     <string name="groupInviteFailedMultiple">Не удалось пригласить {name} и {count} других в {group_name}</string>
     <string name="groupInviteFailedTwo">Не удалось пригласить {name} и {other_name} в {group_name}</string>
     <string name="groupInviteFailedUser">Не удалось пригласить {name} в {group_name}</string>
+    <string name="groupInviteNotSent">Приглашение не отправлено</string>
+    <string name="groupInviteReinvite"><b>{name}</b> приглашает вас вернуться в <b>{group_name}</b>, где вы являетесь администратором.</string>
+    <string name="groupInviteReinviteYou">Вам предложили снова присоединиться к <b>{group_name}</b>, где вы являетесь администратором.</string>
     <plurals name="groupInviteSending">
         <item quantity="one">Отправка приглашения</item>
         <item quantity="few">Отправка приглашений</item>
@@ -430,11 +457,13 @@
         <item quantity="other">Отправка приглашений</item>
     </plurals>
     <string name="groupInviteSent">Приглашение отправлено</string>
+    <string name="groupInviteStatusUnknown">Состояние приглашения не известно</string>
     <string name="groupInviteSuccessful">Приглашение в группу успешно</string>
     <string name="groupInviteVersion">Пользователи должны иметь последнюю версию приложения для получения приглашений</string>
     <string name="groupInviteYou"><b>Вы</b> были приглашены присоединиться к группе.</string>
     <string name="groupInviteYouAndMoreNew"><b>Вы</b> и <b>{count} других человек</b> приглашены вступить в группу.</string>
     <string name="groupInviteYouAndOtherNew"><b>Вы</b> и <b>{other_name}</b> приглашены вступить в группу.</string>
+    <string name="groupInviteYouHistory"><b>Вы</b> были приглашены в группу. История чата была передана.</string>
     <string name="groupLeave">Покинуть группу</string>
     <string name="groupLeaveDescription">Вы уверены, что хотите покинуть <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Вы уверены, что хотите покинуть <b>{group_name}</b>?\n\nЭто удалит всех участников и всё содержимое группы.</string>
@@ -449,6 +478,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> и <b>{count} других человек</b> были приглашены в группу.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> и <b>{other_name}</b> были приглашены в группу.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Вы</b> и <b>{count} других пользователей</b> приглашены вступить в группу. История чата была передана.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Вы</b> и <b>{other_name}</b> были приглашены в группу. История чата была передана.</string>
     <string name="groupMemberYouLeft"><b>Вы</b> покинули группу.</string>
     <string name="groupMembers">Участники группы</string>
     <string name="groupMembersNone">В этой группе нет других участников.</string>
@@ -458,10 +488,14 @@
     <string name="groupNameEnterShorter">Пожалуйста, введите более короткое название группы.</string>
     <string name="groupNameNew">Название группы поменялось на «{group_name}».</string>
     <string name="groupNameUpdated">Название группы обновлено.</string>
+    <string name="groupNameVisible">Название группы видно всем участникам группы.</string>
     <string name="groupNoMessages">У вас нет сообщений от <b>{group_name}</b>. Отправьте сообщение, чтобы начать беседу!</string>
+    <string name="groupNotUpdatedWarning">Группа не обновлялась более 30 дней. Вы можете столкнуться с проблемами при отправке сообщений или просмотре информации группы.</string>
     <string name="groupOnlyAdmin">Вы единственный администратор в <b>{group_name}</b>.\n\nУчастники группы и настройки не могут быть изменены без администратора.</string>
+    <string name="groupPendingRemoval">Ожидание удаления</string>
     <string name="groupPromotedYou"><b>Вы</b> назначены администратором.</string>
     <string name="groupPromotedYouMultiple"><b>Вы</b> и <b>{count} других человек</b> назначены администраторами.</string>
+    <string name="groupPromotedYouTwo"><b>Вы</b> и <b>{other_name}</b> были назначены Администраторами.</string>
     <string name="groupRemoveDescription">Хотите удалить <b>{name}</b> из <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Хотите удалить <b>{name}</b> и <b>{count} других</b> из <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Хотите удалить <b>{name}</b> и <b>{other_name}</b> из <b>{group_name}</b>?</string>
@@ -481,6 +515,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> и <b>{count} других пользователей</b> были удалены из группы.</string>
     <string name="groupRemovedTwo"><b>{name}</b> и <b>{other_name}</b> были удалены из группы.</string>
     <string name="groupRemovedYou">Вас исключили из <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Вы были удалены из группы.</string>
     <string name="groupRemovedYouMultiple"><b>Вы</b> и <b>{count} других пользователей</b> удалены из группы.</string>
     <string name="groupRemovedYouTwo"><b>Вы</b> и пользователь <b>{other_name}</b> удалены из группы.</string>
     <string name="groupSetDisplayPicture">Установить изображение группы</string>
@@ -504,11 +539,28 @@
     <string name="incognitoKeyboardDescription">Запросить режим «Инкогнито», если доступно. В зависимости от клавиатуры, которую вы используете, она может проигнорировать этот запрос.</string>
     <string name="info">Информация</string>
     <string name="invalidShortcut">Недопустимый ярлык</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Ошибка отправки приглашения</item>
+        <item quantity="few">Ошибка отправки приглашений</item>
+        <item quantity="many">Ошибка отправки приглашений</item>
+        <item quantity="other">Ошибка отправки приглашений</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Приглашение не отправлено. Повторить попытку?</item>
+        <item quantity="few">Приглашения не были отправлены. Повторить попытку?</item>
+        <item quantity="many">Приглашения не были отправлены. Повторить попытку?</item>
+        <item quantity="other">Приглашения не были отправлены. Повторить попытку?</item>
+    </plurals>
     <string name="join">Присоединиться</string>
     <string name="later">Позже</string>
     <string name="learnMore">Узнать больше</string>
     <string name="leave">Покинуть</string>
     <string name="leaving">Выход...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Эта группа доступна только для чтения. Пересоздайте эту группу, чтобы продолжить общаться.</string>
+    <string name="legacyGroupAfterDeprecationMember">Эта группа доступна только для чтения. Попросите владельца пересоздать группу, чтобы продолжить общаться.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Группы обновлены! Пересоздайте эту группу для надёжности. Эта группа будет доступна только для чтения {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Группы обновлены! Попросите владельца пересоздать группу для надёжности. Эта группа будет доступна только для чтения {date}.</string>
+    <string name="legacyGroupChatHistory">История переписки не может быть перенесена в новую группу. Вы всё также можете посмотреть всю историю переписки в вашей старой группе.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> присоединяется к группе.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> и <b>{count} других пользователей</b> присоединились к группе.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Вы</b> и <b>{count} других человек</b> присоединились к группе.</string>
@@ -588,6 +640,12 @@
         <item quantity="many">У вас %1$d новых сообщений.</item>
         <item quantity="other">У вас %1$d новых сообщений.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Новое сообщение в %1$s.</item>
+        <item quantity="few">%1$d новых сообщений в %2$s.</item>
+        <item quantity="many">%1$d новых сообщений в %2$s.</item>
+        <item quantity="other">%1$d новых сообщений в %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Ответить на</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> пригласил(а) вас присоединиться к <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Если вы отправите сообщение в эту группу, приглашение будет автоматически принято.</string>
@@ -619,6 +677,7 @@
     <string name="next">Далее</string>
     <string name="nicknameDescription">Выберите псевдоним для <b>{name}</b>. Он будет отображаться в индивидуальных и групповых беседах.</string>
     <string name="nicknameEnter">Введите ник</string>
+    <string name="nicknameErrorShorter">Пожалуйста, введите более короткий псевдоним</string>
     <string name="nicknameRemove">Удалить имя пользователя</string>
     <string name="nicknameSet">Задать имя пользователя</string>
     <string name="no">Нет</string>
@@ -743,6 +802,18 @@
     <string name="profileDisplayPictureSizeError">Пожалуйста, выберите файл меньшего размера.</string>
     <string name="profileErrorUpdate">Ошибка обновления профиля.</string>
     <string name="promote">Повысить</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Перевод не удался</item>
+        <item quantity="few">Переводы не удались</item>
+        <item quantity="many">Переводы не удались</item>
+        <item quantity="other">Переводы не удались</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Не удалось принять запрос. Повторить попытку?</item>
+        <item quantity="few">Не удалось принять запросы. Повторить попытку?</item>
+        <item quantity="many">Не удалось принять запросы. Повторить попытку?</item>
+        <item quantity="other">Не удалось принять запросы. Повторить попытку?</item>
+    </plurals>
     <string name="qrCode">QR-код</string>
     <string name="qrNotAccountId">Этот QR-код не содержит ID аккаунта</string>
     <string name="qrNotRecoveryPassword">Этот QR-код не содержит Пароль Восстановления</string>
@@ -760,7 +831,6 @@
     <string name="recoveryPasswordBannerTitle">Сохраните ваш пароль восстановления</string>
     <string name="recoveryPasswordDescription">Используйте пароль восстановления, чтобы загрузить свою учетную запись на новых устройствах.\n\nВаша учетная запись не может быть восстановлена без пароля восстановления. Убедитесь, что он хранится в безопасном месте, и не передавайте его никому.</string>
     <string name="recoveryPasswordEnter">Введите ваш пароль восстановления</string>
-    <string name="recoveryPasswordErrorLoad">Произошла ошибка при попытке загрузить ваш Пароль Восстановления.\n\nПожалуйста, экспортируйте ваш журнал отладки, а затем загрузите его через службу поддержки Session, чтобы помочь решить эту проблему.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Пожалуйста, проверьте ваш пароль восстановления и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Некоторые из слов в вашем Пароле Восстановления неверны. Пожалуйста, проверьте и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageShort">Введенный вами Пароль Восстановления недостаточно длинный. Пожалуйста, проверьте и попробуйте снова.</string>
@@ -774,6 +844,7 @@
     <string name="recoveryPasswordRestoreDescription">Введите ваш пароль восстановления для загрузки вашей учетной записи. Если вы не сохранили его, вы можете найти его в настройках приложения.</string>
     <string name="recoveryPasswordView">Посмотреть пароль</string>
     <string name="recoveryPasswordWarningSendDescription">Это ваш Пароль Восстановления. Если вы отправите его кому-либо, у них будет полный доступ к вашей учетной записи.</string>
+    <string name="recreateGroup">Пересоздать группу</string>
     <string name="redo">Вернуть</string>
     <string name="remove">Удалить</string>
     <string name="removePasswordFail">Не удалось удалить пароль</string>
@@ -828,6 +899,8 @@
     <string name="shareAccountIdDescription">Пригласите друга пообщаться с вами в {app_name}, поделившись с ним своим ID аккаунта.</string>
     <string name="shareAccountIdDescriptionCopied">Поделитесь с друзьями любым удобным способом — и продолжите беседу здесь.</string>
     <string name="shareExtensionDatabaseError">Возникла проблема с открытием базы данных. Пожалуйста, перезапустите приложение и попробуйте снова.</string>
+    <string name="shareExtensionNoAccountError">Ой! Кажется у вас нет аккаунта {app_name}.\n
+\n Вам нужно создать новый в приложении {app_name}, чтобы поделиться.</string>
     <string name="shareToSession">Поделиться в {app_name}</string>
     <string name="show">Показать</string>
     <string name="showAll">Показать все</string>
@@ -849,7 +922,6 @@
     <string name="updateError">Обновить не удается</string>
     <string name="updateErrorDescription">Не удалось обновить {app_name}. Пожалуйста, перейдите по ссылке {session_download_url} и установите новую версию вручную, затем свяжитесь с нашим Центром поддержки, чтобы сообщить нам об этой проблеме.</string>
     <string name="updateNewVersion">Доступна новая версия {app_name}, нажмите для обновления</string>
-    <string name="updateNewVersionDescription">Доступна новая версия {app_name}.</string>
     <string name="updateReleaseNotes">Перейти к описанию обновления</string>
     <string name="updateSession">Обновление {app_name}</string>
     <string name="updateVersion">Версия {version}</string>

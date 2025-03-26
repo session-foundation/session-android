@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Visszaállítási jelszó elmentése</string>
     <string name="recoveryPasswordDescription">A visszaállítási jelszavaddal új eszközökön is betöltheted a felhasználódat.\n\nA felhasználód nem állítható vissza a visszaálltási jelszó nélkül. Gondoskodj róla, hogy biztonságos helyen tárolod — és ne oszd meg senkivel.</string>
     <string name="recoveryPasswordEnter">Add meg a visszaálltási jelszavad</string>
-    <string name="recoveryPasswordErrorLoad">Hiba történt a visszaállítási jelszó betöltésekor.\n\nExportáld a naplóidat, majd töltsd fel a fájlt a Session ügyfélszolgálaton keresztül a probléma megoldása érdekében.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Ellenőrizd a visszaállítási jelszavad és próbáld újra.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">A visszaállítási jelszó néhány szava helytelenül lett megadva. Ellenőrizd őket és próbáld újra.</string>
     <string name="recoveryPasswordErrorMessageShort">A megadott visszaállítási jelszó nem elég hosszú. Ellenőrizd és próbáld újra.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">A frissítés sikertelen</string>
     <string name="updateErrorDescription">{app_name} frissítése sikertelen. Kérlek, látogass el a {session_download_url} oldalra és telepítsd manuálisan az új verziót, majd vedd fel a kapcsolatot az ügyfélszolgálatunkkal, hogy többet tudhassunk a problémáról.</string>
     <string name="updateNewVersion">A(z) {app_name} új verziója elérhető, koppints a frissítéshez</string>
-    <string name="updateNewVersionDescription">A(z) {app_name} új verziója elérhető.</string>
     <string name="updateReleaseNotes">Verzióinformáció megnyitása</string>
     <string name="updateSession">{app_name} Frissítés</string>
     <string name="updateVersion">Verzió {version}</string>

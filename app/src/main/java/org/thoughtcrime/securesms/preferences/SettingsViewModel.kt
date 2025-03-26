@@ -25,8 +25,8 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
@@ -47,6 +47,7 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
+    private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -94,8 +95,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getDisplayName(): String =
-        prefs.getProfileName() ?: truncateIdForDisplay(hexEncodedPublicKey)
+    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun hasAvatar() = prefs.getProfileAvatarId() != 0
 
@@ -245,9 +245,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateName(displayName: String) {
-        configFactory.withMutableUserConfigs {
-            it.userProfile.setName(displayName)
-        }
+        usernameUtils.saveCurrentUserName(displayName)
     }
 
     fun permanentlyHidePassword() {

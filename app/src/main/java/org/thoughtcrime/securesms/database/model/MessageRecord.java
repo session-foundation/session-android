@@ -142,7 +142,7 @@ public abstract class MessageRecord extends DisplayRecord {
 
       SpannableString text = new SpannableString(UpdateMessageBuilder.buildGroupUpdateMessage(
               context,
-              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().serialize()) : null, // accountId is only used for GroupsV2
+              groupRecipient.isGroupV2Recipient() ? new AccountId(groupRecipient.getAddress().toString()) : null, // accountId is only used for GroupsV2
               updateMessageData,
               MessagingModuleConfiguration.getShared().getConfigFactory(),
               isOutgoing(),
@@ -160,10 +160,10 @@ public abstract class MessageRecord extends DisplayRecord {
     } else if (isExpirationTimerUpdate()) {
       int seconds = (int) (getExpiresIn() / 1000);
       boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().serialize(), isOutgoing(), getTimestamp(), expireStarted));
+      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing(), getTimestamp(), expireStarted));
     } else if (isDataExtractionNotification()) {
-      if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().serialize())));
-      else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().serialize())));
+      if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));
+      else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().toString())));
     } else if (isCallLog()) {
       CallMessageType callType;
       if (isIncomingCall()) {
@@ -175,7 +175,7 @@ public abstract class MessageRecord extends DisplayRecord {
       } else {
         callType = CallMessageType.CALL_FIRST_MISSED;
       }
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().serialize()));
+      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildCallMessage(context, callType, getIndividualRecipient().getAddress().toString()));
     }
 
     return new SpannableString(getBody());

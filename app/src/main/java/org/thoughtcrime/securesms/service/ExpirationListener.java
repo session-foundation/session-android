@@ -12,7 +12,7 @@ public class ExpirationListener extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    ApplicationContext.getInstance(context).getExpiringMessageManager().checkSchedule();
+    ApplicationContext.getInstance(context).expiringMessageManager.checkSchedule();
   }
 
   public static void setAlarm(Context context, long waitTimeMillis) {

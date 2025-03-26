@@ -31,7 +31,7 @@ class ProfileManager @Inject constructor(
 
     override fun setNickname(context: Context, recipient: Recipient, nickname: String?) {
         if (recipient.isLocalNumber) return
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)
@@ -45,7 +45,7 @@ class ProfileManager @Inject constructor(
     override fun setName(context: Context, recipient: Recipient, name: String?) {
         // New API
         if (recipient.isLocalNumber) return
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)
@@ -72,7 +72,7 @@ class ProfileManager @Inject constructor(
 
         recipient.resolve()
 
-        val accountID = recipient.address.serialize()
+        val accountID = recipient.address.toString()
         var contact = contactDatabase.getContactWithAccountID(accountID)
         if (contact == null) contact = Contact(accountID)
         contact.threadID = storage.get().getThreadId(recipient.address)

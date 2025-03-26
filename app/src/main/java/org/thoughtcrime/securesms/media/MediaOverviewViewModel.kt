@@ -65,7 +65,7 @@ class MediaOverviewViewModel(
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     val title: StateFlow<String> = recipient
-        .map { it.toShortString() }
+        .map { it.name }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     val mediaListState: StateFlow<MediaOverviewContent?> = recipient
@@ -227,8 +227,7 @@ class MediaOverviewViewModel(
 
     fun onSaveClicked() {
         if (!inSelectionMode.value) {
-            // Not in selection mode, so we should not be able to save
-            return
+            return // Not in selection mode, so we should not be able to save
         }
 
         viewModelScope.launch {
@@ -244,7 +243,7 @@ class MediaOverviewViewModel(
                         uri = uri,
                         contentType = it.mediaRecord.contentType,
                         date = it.mediaRecord.date,
-                        fileName = it.mediaRecord.attachment.fileName,
+                        filename = it.mediaRecord.attachment.filename
                     )
                 }
 
@@ -314,7 +313,7 @@ class MediaOverviewViewModel(
                     }
                 }
 
-                threadDatabase.getThreadIdIfExistsFor(address.serialize())
+                threadDatabase.getThreadIdIfExistsFor(address.toString())
             }
 
             // Notify the content provider that the thread has been updated
@@ -414,8 +413,8 @@ data class MediaOverviewItem(
     val hasPlaceholder: Boolean
         get() = slide.hasPlaceholder()
 
-    val fileName: String?
-        get() = slide.fileName.orNull()
+    val filename: String
+        get() = slide.filename
 
     val fileSize: Long
         get() = slide.fileSize

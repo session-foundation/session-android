@@ -87,7 +87,7 @@ class ConversationActionBarView @JvmOverloads constructor(
 
     fun update(recipient: Recipient, openGroup: OpenGroup? = null, config: ExpirationConfiguration? = null) {
         binding.profilePictureView.update(recipient)
-        binding.conversationTitleView.text = recipient.takeUnless { it.isLocalNumber }?.toShortString() ?: context.getString(R.string.noteToSelf)
+        binding.conversationTitleView.text = recipient.takeUnless { it.isLocalNumber }?.name ?: context.getString(R.string.noteToSelf)
         updateSubtitle(recipient, openGroup, config)
 
         binding.conversationTitleContainer.modifyLayoutParams<MarginLayoutParams> {
@@ -116,7 +116,7 @@ class ConversationActionBarView @JvmOverloads constructor(
             settings += ConversationSetting(
                 subtitleTxt,
                 ConversationSettingType.EXPIRATION,
-                R.drawable.ic_timer,
+                R.drawable.ic_clock_11,
                 resources.getString(R.string.AccessibilityId_disappearingMessagesDisappear)
             )
         }
@@ -129,7 +129,7 @@ class ConversationActionBarView @JvmOverloads constructor(
                     }
                     ?: context.getString(R.string.notificationsMuted),
                 ConversationSettingType.NOTIFICATION,
-                R.drawable.ic_outline_notifications_off_24
+                R.drawable.ic_volume_off
             )
         }
 
@@ -139,7 +139,7 @@ class ConversationActionBarView @JvmOverloads constructor(
                 resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
             } else {
                 val userCount = if (recipient.isGroupV2Recipient) {
-                    storage.getMembers(recipient.address.serialize()).size
+                    storage.getMembers(recipient.address.toString()).size
                 } else { // legacy closed groups
                     groupDb.getGroupMemberAddresses(recipient.address.toGroupString(), true).size
                 }

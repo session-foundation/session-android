@@ -140,7 +140,7 @@
     </FrameLayout>
 
     <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/avatarDialog"
+        android:id="@+id/composeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

@@ -248,11 +248,11 @@ public class KeyCachingService extends Service {
             .put(APP_NAME_KEY, c.getString(R.string.app_name))
             .format().toString();
     builder.setContentTitle(unlockedTxt);
-    builder.setSmallIcon(R.drawable.icon_cached);
+    builder.setSmallIcon(R.drawable.ic_lock_keyhole_open);
     builder.setWhen(0);
     builder.setPriority(Notification.PRIORITY_MIN);
 
-    builder.addAction(R.drawable.ic_menu_lock_dark, getString(R.string.lockApp), buildLockIntent());
+    builder.addAction(R.drawable.ic_lock_keyhole, getString(R.string.lockApp), buildLockIntent());
     builder.setContentIntent(buildLaunchIntent());
 
     stopForeground(true);

@@ -6,11 +6,11 @@ import androidx.core.view.isVisible
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityBlockedContactsBinding
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.showSessionDialog
 
 @AndroidEntryPoint
-class BlockedContactsActivity: PassphraseRequiredActionBarActivity() {
+class BlockedContactsActivity: ScreenLockActionBarActivity() {
 
     lateinit var binding: ActivityBlockedContactsBinding
 

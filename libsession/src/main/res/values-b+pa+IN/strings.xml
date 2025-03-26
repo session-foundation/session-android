@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">ਆਪਣਾ Recovery password ਸੰਭਾਲੋ</string>
     <string name="recoveryPasswordDescription">ਆਪਣਾ ਖਾਤਾ ਨਵੇਂ ਜੰਤਰਾਂ ਤੇ ਲੋਡ ਕਰਨ ਲਈ ਆਪਣਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਵਰਤੋ।\n\nਆਪਣਾ ਖਾਤਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਤੋਂ ਬਿਨਾ ਪੁਨਰ ਪ੍ਰਾਪਤ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ। ਯਕੀਨੀ ਬਣਾਓ ਕਿ ਇਹ ਕਿਸੇ ਸੁਰੱਖਿਅਤ ਅਤੇ ਸੁਰੱਖਿਅਤ ਸਥਾਨ ਤੇ ਸਟੋਰ ਕੀਤਾ ਗਿਆ ਹੈ - ਅਤੇ ਇਸ ਨੂੰ ਕਿਸੇ ਨਾਲ ਸਾਂਝਾ ਨਾ ਕਰੋ।</string>
     <string name="recoveryPasswordEnter">ਆਪਣਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਦਰਜ ਕਰੋ</string>
-    <string name="recoveryPasswordErrorLoad">ਤੁਹਾਡਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਲੋਡ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰਦੇ ਸਮੇਂ ਇੱਕ ਗਲਤੀ ਹੋਈ।\n\nਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਲੌਗ ਐਕਸਪੋਰਟ ਕਰੋ, ਫਿਰ ਫਾਈਲ ਨੂੰ Session ਦੀ ਹੈਲਪ ਡੈਸਕ ਵਿੱਚ ਅਪਲੋਡ ਕਰੋ ਤਾੰ ਜੋ ਇਸ ਸਮੱਸਿਆ ਨੂੰ ਹੱਲ ਕਰਨ ਵਿੱਚ ਮਦਦ ਮਿਲੇ।</string>
     <string name="recoveryPasswordErrorMessageGeneric">ਕ੍ਰਿਪਾ ਕਰਕੇ ਆਪਣਾ ਸੰਨਜੀਵਨ ਪਾਸਵਰਡ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ਤੁਹਾਡੇ ਬਚਾਓ ਪਾਸਵਰਡ ਦੇ ਕੁਝ ਸ਼ਬਦ ਗਲਤ ਹਨ। ਕਿਰਪਾ ਕਰਕੇ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="recoveryPasswordErrorMessageShort">ਤੁਹਾਡੇ ਦੁਆਰਾ ਦਰਜ ਕੀਤਾ ਰਿਕਵਰੀ ਪਾਸਵਰਡ ਕਾਫੀਂ ਲੰਬਾ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਜਾਂਚ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
@@ -804,7 +803,6 @@
     <string name="updateError">ਅਪਡੇਟ ਨਹੀਂ ਕਰ ਸਕਦੇ</string>
     <string name="updateErrorDescription">{app_name} ਅੱਪਡੇਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ ਰਿਹਾ। ਕਿਰਪਾ ਕਰਕੇ {session_download_url} \'ਤੇ ਜਾਓ ਅਤੇ ਨਵਾਂ ਸੰਸਕਰਣ ਮੈਨੂਅਲ ਤੌਰ \'ਤੇ ਇੰਸਟਾਲ ਕਰੋ, ਫਿਰ ਇਸ ਸਮੱਸਿਆ ਬਾਰੇ ਸਾਨੂੰ ਦੱਸਣ ਲਈ ਸਾਡੀ ਮੁਦਦ ਕਦਰ ਵਿੱਚ ਸੰਪਰਕ ਕਰੋ।</string>
     <string name="updateNewVersion">{app_name} ਦਾ ਨਵਾਂ ਵਰਜ਼ਨ ਉਪਲਬਧ ਹੈ, ਅਪਡੇਟ ਕਰਨ ਲਈ ਜੋੜੋ</string>
-    <string name="updateNewVersionDescription">{app_name} ਦਾ ਨਵਾਂ ਵਰਜ਼ਨ ਉਪਲਬਧ ਹੈ।</string>
     <string name="updateReleaseNotes">ਰਿਲੀਜ਼ ਨੋਟਸ ਤੇ ਜਾਓ</string>
     <string name="updateSession">{app_name} ਅੱਪਡੇਟ</string>
     <string name="updateVersion">ਸੰਸਕਰਣ {version}</string>

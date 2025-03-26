@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">మీ రికవరీ పాస్‌వర్డ్‌ను భద్రపరచండి</string>
     <string name="recoveryPasswordDescription">మీ ఖాతాను కొత్త పరికరాలపై లోడ్ చేయడానికి మీ రికవరీ పాస్‌వర్డ్‌ని ఉపయోగించండి.\n\nమీ రికవరీ పాస్‌వర్డ్ లేకుండా మీ ఖాతాను పునరుద్ధరించలేరు. అది ఎక్కడైనా సురక్షితంగా నిల్వ చేయబడిందని నిర్ధారించుకోండి – మరియు దానిని ఎవరికీ పంచుకోకండి.</string>
     <string name="recoveryPasswordEnter">మీ మరుపు తిరిగి పొందుపాస్వర్డ్ ఎంటర్ చేయండి</string>
-    <string name="recoveryPasswordErrorLoad">మీ రికవరీ పాస్‌వర్డ్ లోడ్ చేయడానికి ప్రయత్నించినప్పుడు లోపం ఏర్పడింది.\n\nఈ సమస్యను పరిష్కరించడంలో సహాయపడటానికి దయచేసి మీ లాగ్‌లను ఎగుమతి చేసి, ఆ తర్వాత ఫైల్‌ను Session సహాయం డెస్క్ ద్వారా అప్‌లోడ్ చేయండి.</string>
     <string name="recoveryPasswordErrorMessageGeneric">దయచేసి మీ రికవరీ పాస్‌వర్డ్‌ను తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">మీ రికవరీ పాస్‌వర్డ్‌లోని కొన్ని పదాలు తప్పు. దయచేసి చూసి మళ్ళీ ప్రయత్నించండి.</string>
     <string name="recoveryPasswordErrorMessageShort">మీరు నమోదు చేసిన రికవరీ పాస్వర్డ్ చాలు పొడవుగా లేదు. దయచేసి తనిఖీ చేసి మళ్ళీ ప్రయత్నించండి.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">నవీకరించలేం</string>
     <string name="updateErrorDescription">{app_name} నవీకరించడం విఫలమయింది. దయచేసి {session_download_url}కి వెళ్ళి 새로운 వెర్షన్‌ను మాన్యువల్‌గా ఇన్స్టాల్ చేయండి, ఆపై ఈ సమస్య గురించి తెలియజేయడానికి మా సహాయ కేంద్రాన్ని సంప్రదించండి.</string>
     <string name="updateNewVersion">{app_name} యొక్క కొత్త సంస్కరణ అందుబాటులో ఉంది, నవీకరణ కొరకు తట్టండి</string>
-    <string name="updateNewVersionDescription">{app_name} యొక్క కొత్త సంస్కరణ అందుబాటులో ఉంది.</string>
     <string name="updateReleaseNotes">రిలీజ్ నోట్స్‌కి వెళ్ళండి</string>
     <string name="updateSession">{app_name} నవీకరణ</string>
     <string name="updateVersion">Sanskarana {version}</string>

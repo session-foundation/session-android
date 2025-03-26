@@ -49,7 +49,6 @@ import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.contacts.ContactUtil;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus;
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
@@ -62,7 +61,6 @@ import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -164,7 +162,7 @@ public class ThreadDatabase extends Database {
   private long createThreadForRecipient(Address address, boolean group, int distributionType) {
     ContentValues contentValues = new ContentValues(4);
 
-    contentValues.put(ADDRESS, address.serialize());
+    contentValues.put(ADDRESS, address.toString());
 
     if (group) contentValues.put(DISTRIBUTION_TYPE, distributionType);
 
@@ -429,7 +427,7 @@ public class ThreadDatabase extends Database {
 
       int i= 0;
       for (Address address : addresses) {
-        selectionArgs[i++] = DelimiterUtil.escape(address.serialize(), ' ');
+        selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
       }
 
       String query = createQuery(selection, 0);
@@ -638,7 +636,7 @@ public class ThreadDatabase extends Database {
   }
 
   public long getThreadIdIfExistsFor(Recipient recipient) {
-    return getThreadIdIfExistsFor(recipient.getAddress().serialize());
+    return getThreadIdIfExistsFor(recipient.getAddress().toString());
   }
 
   public long getOrCreateThreadIdFor(Recipient recipient) {
@@ -659,7 +657,7 @@ public class ThreadDatabase extends Database {
   public long getOrCreateThreadIdFor(Recipient recipient, int distributionType) {
     SQLiteDatabase db            = databaseHelper.getReadableDatabase();
     String         where         = ADDRESS + " = ?";
-    String[]       recipientsArg = new String[]{recipient.getAddress().serialize()};
+    String[]       recipientsArg = new String[]{recipient.getAddress().toString()};
     Cursor         cursor        = null;
 
     boolean created = false;
@@ -798,10 +796,6 @@ public class ThreadDatabase extends Database {
   private @NonNull String getFormattedBodyFor(@NonNull MessageRecord messageRecord) {
     if (messageRecord.isMms()) {
       MmsMessageRecord record = (MmsMessageRecord) messageRecord;
-      if (!record.getSharedContacts().isEmpty()) {
-        Contact contact = ((MmsMessageRecord)messageRecord).getSharedContacts().get(0);
-        return ContactUtil.getStringSummary(context, contact).toString();
-      }
       String attachmentString = record.getSlideDeck().getBody();
       if (!attachmentString.isEmpty()) {
         if (!messageRecord.getBody().isEmpty()) {
@@ -948,7 +942,7 @@ public class ThreadDatabase extends Database {
       if (recipient.isGroupV2Recipient() && retrieveGroupStatus) {
         GroupInfo.ClosedGroupInfo group = ConfigFactoryProtocolKt.getGroup(
                 MessagingModuleConfiguration.getShared().getConfigFactory(),
-                new AccountId(recipient.getAddress().serialize())
+                new AccountId(recipient.getAddress().toString())
         );
         if (group != null && group.getDestroyed()) {
           groupThreadStatus = GroupThreadStatus.Destroyed;

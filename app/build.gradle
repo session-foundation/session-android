@@ -15,8 +15,8 @@ configurations.configureEach {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 401
-def canonicalVersionName = "1.21.3"
+def canonicalVersionCode = 402
+def canonicalVersionName = "1.22.0"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -37,7 +37,6 @@ def getGitHash = { ->
 }
 
 android {
-    compileSdkVersion androidCompileSdkVersion
     namespace 'network.loki.messenger'
     useLibrary 'org.apache.http.legacy'
 
@@ -79,6 +78,7 @@ android {
         versionCode canonicalVersionCode * postFixSize
         versionName canonicalVersionName
 
+        compileSdk androidCompileSdkVersion
         minSdkVersion androidMinimumSdkVersion
         targetSdkVersion androidTargetSdkVersion
 
@@ -270,7 +270,7 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     implementation "androidx.appcompat:appcompat:$appcompatVersion"
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation "com.google.android.material:material:$materialVersion"
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'androidx.legacy:legacy-support-v13:1.0.0'
@@ -425,6 +425,9 @@ dependencies {
 
     // Note: ZXing 3.5.3 is the latest stable release as of 2024/08/21
     implementation "com.google.zxing:core:$zxingVersion"
+
+    // Note: 1.1.0 is the latest stable release as of 2024/12/18
+    implementation "androidx.biometric:biometric:1.1.0"
 }
 
 static def getLastCommitTimestamp() {

@@ -6,7 +6,6 @@ import org.session.libsession.messaging.messages.copyExpiration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -113,14 +112,12 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
 
     companion object {
 
-        fun getCurrent(contacts: List<Contact>): ConfigurationMessage? {
+        fun getCurrent(displayName: String, profilePicture: String?, contacts: List<Contact>): ConfigurationMessage? {
             val closedGroups = mutableListOf<ClosedGroup>()
             val openGroups = mutableListOf<String>()
             val sharedConfig = MessagingModuleConfiguration.shared
             val storage = sharedConfig.storage
             val context = sharedConfig.context
-            val displayName = TextSecurePreferences.getProfileName(context) ?: return null
-            val profilePicture = TextSecurePreferences.getProfilePictureURL(context)
             val profileKey = ProfileKeyUtil.getProfileKey(context)
             val groups = storage.getAllGroups(includeInactive = false)
             for (group in groups) {
@@ -132,8 +129,8 @@ class ConfigurationMessage(var closedGroups: List<ClosedGroup>, var openGroups: 
                         groupPublicKey,
                         group.title,
                         encryptionKeyPair,
-                        group.members.map { it.serialize() },
-                        group.admins.map { it.serialize() }
+                        group.members.map { it.toString() },
+                        group.admins.map { it.toString() }
                     )
                     closedGroups.add(closedGroup)
                 }

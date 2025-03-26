@@ -73,7 +73,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
-      setContentTitle(recipient.toShortString());
+      setContentTitle(recipient.getName());
 
       if (recipient.getContactUri() != null) {
         addPerson(recipient.getContactUri().toString());
@@ -158,7 +158,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
                          @Nullable PendingIntent wearableReplyIntent,
                          @NonNull ReplyMethod replyMethod)
   {
-    Action markAsReadAction = new Action(R.drawable.check,
+    Action markAsReadAction = new Action(R.drawable.ic_check,
                                          context.getString(R.string.messageMarkRead),
                                          markReadIntent);
 
@@ -170,9 +170,9 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
       String actionName = context.getString(R.string.reply);
       String label = context.getString(replyMethodLongDescription(replyMethod));
 
-      Action replyAction = new Action(R.drawable.ic_reply_white_36dp, actionName, quickReplyIntent);
+      Action replyAction = new Action(R.drawable.ic_reply, actionName, quickReplyIntent);
 
-      replyAction = new Action.Builder(R.drawable.ic_reply_white_36dp,
+      replyAction = new Action.Builder(R.drawable.ic_reply,
               actionName,
               wearableReplyIntent)
               .addRemoteInput(new RemoteInput.Builder(DefaultMessageNotifier.EXTRA_REMOTE_REPLY).setLabel(label).build())
@@ -321,7 +321,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   }
 
   private static Drawable getPlaceholderDrawable(Context context, Recipient recipient) {
-    String publicKey = recipient.getAddress().serialize();
+    String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getName();
     return AvatarPlaceholderGenerator.generate(context, ICON_SIZE, publicKey, displayName);
   }
@@ -331,8 +331,8 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
    * @param openGroupRecipient whether in an open group context
    */
   private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
-    return MessagingModuleConfiguration.getShared().getStorage().getContactNameWithAccountID(
-            recipient.getAddress().serialize(),
+    return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
+            recipient.getAddress().toString(),
             null,
             openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR
         );

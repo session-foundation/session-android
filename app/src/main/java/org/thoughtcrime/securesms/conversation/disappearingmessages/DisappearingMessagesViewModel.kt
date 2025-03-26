@@ -62,12 +62,12 @@ class DisappearingMessagesViewModel(
             val isAdmin = when {
                 recipient.isGroupV2Recipient -> {
                     // Handle the new closed group functionality
-                    storage.getMembers(recipient.address.serialize()).any { it.accountIdString() == textSecurePreferences.getLocalNumber() && it.admin }
+                    storage.getMembers(recipient.address.toString()).any { it.accountIdString() == textSecurePreferences.getLocalNumber() && it.admin }
                 }
                 recipient.isLegacyGroupRecipient -> {
                     val groupRecord = groupDb.getGroup(recipient.address.toGroupString()).orNull()
                     // Handle as legacy group
-                    groupRecord?.admins?.any{ it.serialize() == textSecurePreferences.getLocalNumber() } == true
+                    groupRecord?.admins?.any{ it.toString() == textSecurePreferences.getLocalNumber() } == true
                 }
                 else -> !recipient.isGroupOrCommunityRecipient
             }
@@ -76,7 +76,7 @@ class DisappearingMessagesViewModel(
                 it.copy(
                     address = recipient.address,
                     isGroup = recipient.isGroupRecipient,
-                    isNoteToSelf = recipient.address.serialize() == textSecurePreferences.getLocalNumber(),
+                    isNoteToSelf = recipient.address.toString() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = isAdmin,
                     expiryMode = expiryMode,
                     persistedMode = expiryMode

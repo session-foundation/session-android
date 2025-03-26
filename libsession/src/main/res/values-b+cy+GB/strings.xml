@@ -766,7 +766,6 @@
     <string name="recoveryPasswordBannerTitle">Cadwch eich cyfrinair adfer</string>
     <string name="recoveryPasswordDescription">Defnyddiwch eich chyfrinair adfer i lwytho eich cyfrif ar ddyfeisiau newydd.\n\nNi ellir adfer eich cyfrif heb eich cyfrinair adfer. Sicrhewch ei fod yn cael ei storio yn rhywle diogel - ac na fyddwch yn ei rannu ag unrhyw un.</string>
     <string name="recoveryPasswordEnter">Rhowch eich cyfrinair adfer</string>
-    <string name="recoveryPasswordErrorLoad">Cafodd gwall pan oedd yn ceisio llwytho eich cyfrinair adfer.\n\nAllforiwch eich logiau, yna uwchgwynwch y ffeil drwy\'r Help Desk Session i helpu i ddatrys y mater hwn.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Gwiriwch eich cyfrinair adfer a cheisio eto.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Mae rhai o\'r geiriau yn eich Cyfrinair Adfer yn anghywir. Gwiriwch a cheisiwch eto.</string>
     <string name="recoveryPasswordErrorMessageShort">Nid yw\'r Cyfrinair Adfer y gwnaethoch ei nodi yn ddigon hir. Gwiriwch a rhowch gynnig arall arni os gwelwch yn dda.</string>
@@ -857,7 +856,6 @@
     <string name="updateError">Methu Diweddaru</string>
     <string name="updateErrorDescription">Methodd {app_name} i ddiweddaru. Ewch i {session_download_url} a gosodwch y fersiwn newydd â llaw, yna cysylltwch â\'n Canolfan Cymorth i\'n hysbysu am y broblem hon.</string>
     <string name="updateNewVersion">Mae fersiwn newydd o {app_name} ar gael. Tapiwch i ddiweddaru.</string>
-    <string name="updateNewVersionDescription">Mae fersiwn newydd o {app_name} ar gael.</string>
     <string name="updateReleaseNotes">Ewch i Nodiadau Rhyddhau</string>
     <string name="updateSession">Diweddariad {app_name}</string>
     <string name="updateVersion">Fersiwn {version}</string>

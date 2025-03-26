@@ -44,7 +44,7 @@ object ClosedGroupManager {
             val groups = it.userGroups
 
             val legacyInfo = groups.getOrConstructLegacyGroupInfo(groupPublicKey)
-            val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::serialize), group.admins.map(Address::serialize))
+            val latestMemberMap = GroupUtil.createConfigMemberMap(group.members.map(Address::toString), group.admins.map(Address::toString))
             val toSet = legacyInfo.copy(
                 members = latestMemberMap,
                 name = group.title,

@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Guarde a sua chave de recuperação</string>
     <string name="recoveryPasswordDescription">Use a sua chave de recuperação para carregar a sua conta em novos dispositivos.\n\nA sua conta não pode ser recuperada sem a sua chave de recuperação. Certifique-se de que está armazenada num lugar seguro — e não a partilhe com ninguém.</string>
     <string name="recoveryPasswordEnter">Insira a sua chave de recuperação</string>
-    <string name="recoveryPasswordErrorLoad">Ocorreu um erro ao tentar carregar a sua palavra-passe.\n\nPor favor exporte os seus logs e, depois envie o ficheiro para o Centro de Ajuda da Sessão para ajudar a resolver este problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Por favor, verifique a sua chave de recuperação e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algumas das palavras na sua Chave de Recuperação estão incorretas. Por favor verifique e tente novamente.</string>
     <string name="recoveryPasswordErrorMessageShort">A Chave de Recuperação inserida não é longa o suficiente. Por favor, verifique e tente novamente.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">Impossível Atualizar</string>
     <string name="updateErrorDescription">{app_name} falhou a atualização. Por favor, vá a {session_download_url} e instale a nova versão manualmente, depois contacte o nosso Centro de Apoio para nos informar do problema.</string>
     <string name="updateNewVersion">Uma nova versão de {app_name} está disponível, toque para atualizar</string>
-    <string name="updateNewVersionDescription">Uma nova versão de {app_name} está disponível.</string>
     <string name="updateReleaseNotes">Ir para as Notas de Lançamento</string>
     <string name="updateSession">Atualização do {app_name}</string>
     <string name="updateVersion">Versão {version}</string>

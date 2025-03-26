@@ -64,7 +64,7 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
         updateCallback(true)
 
         shareJob = lifecycleScope.launch(Dispatchers.IO) {
-            val persistentLogger = ApplicationContext.getInstance(context).persistentLogger
+            val persistentLogger = ApplicationContext.getInstance(requireContext()).persistentLogger
             try {
                 Log.d(TAG, "Starting share logs job...")
 

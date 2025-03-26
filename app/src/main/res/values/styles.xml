@@ -7,15 +7,15 @@
         <item name="android:elevation">1dp</item>
         <item name="elevation">1dp</item>
         <item name="titleTextStyle">@style/TextAppearance.Session.DarkActionBar.TitleTextStyle</item>
-        <item name="homeAsUpIndicator">@drawable/ic_arrow_left</item>
-        <item name="android:homeAsUpIndicator">@drawable/ic_arrow_left</item>
+        <item name="homeAsUpIndicator">@drawable/ic_chevron_left</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_chevron_left</item>
     </style>
 
     <style name="Widget.Session.ActionBar.Flat">
         <item name="android:elevation">0dp</item>
         <item name="elevation">0dp</item>
-        <item name="homeAsUpIndicator">@drawable/ic_arrow_left</item>
-        <item name="android:homeAsUpIndicator">@drawable/ic_arrow_left</item>
+        <item name="homeAsUpIndicator">@drawable/ic_chevron_left</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_chevron_left</item>
     </style>
 
     <style name="TextAppearance.Session.ConversationSettings" parent="TextAppearance.AppCompat">

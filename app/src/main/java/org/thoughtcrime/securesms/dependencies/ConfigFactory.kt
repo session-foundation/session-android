@@ -43,6 +43,7 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
@@ -72,6 +73,7 @@ class ConfigFactory @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
+    private val usernameUtils: Lazy<UsernameUtils>
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -113,7 +115,10 @@ class ConfigFactory @Inject constructor(
                     userAccountId = userAccountId,
                     threadDb = threadDb,
                     configDatabase = configDatabase,
-                    storage = storage.get()
+                    storage = storage.get(),
+                    textSecurePreferences = textSecurePreferences,
+                    usernameUtils = usernameUtils.get()
+
                 )
             }
         }
@@ -544,13 +549,13 @@ private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
         .asSequence().filter { it.isLegacyGroup && it.isActive && it.members.size > 1 }
         .mapNotNull { group ->
             val groupAddress = Address.fromSerialized(group.encodedId)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.serialize()).toHexString()
+            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.toString()).toHexString()
             val recipient = storage.getRecipientSettings(groupAddress) ?: return@mapNotNull null
             val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: return@mapNotNull null
             val threadId = storage.getThreadId(group.encodedId)
             val isPinned = threadId?.let { storage.isPinned(threadId) } ?: false
-            val admins = group.admins.associate { it.serialize() to true }
-            val members = group.members.filterNot { it.serialize() !in admins.keys }.associate { it.serialize() to false }
+            val admins = group.admins.associate { it.toString() to true }
+            val members = group.members.filterNot { it.toString() !in admins.keys }.associate { it.toString() to false }
             GroupInfo.LegacyGroupInfo(
                 accountId = groupPublicKey,
                 name = group.title,
@@ -580,17 +585,17 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
                 recipient.isGroupV2Recipient -> {
                     // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
                     // but just in case...
-                    getOrConstructClosedGroup(recipient.address.serialize())
+                    getOrConstructClosedGroup(recipient.address.toString())
                 }
                 recipient.isLegacyGroupRecipient -> {
-                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.serialize())
+                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
                     getOrConstructLegacyGroup(groupPublicKey)
                 }
                 recipient.isContactRecipient -> {
                     if (recipient.isLocalNumber) null // this is handled by the user profile NTS data
                     else if (recipient.isCommunityInboxRecipient) null // specifically exclude
-                    else if (!recipient.address.serialize().startsWith(IdPrefix.STANDARD.value)) null
-                    else getOrConstructOneToOne(recipient.address.serialize())
+                    else if (!recipient.address.toString().startsWith(IdPrefix.STANDARD.value)) null
+                    else getOrConstructOneToOne(recipient.address.toString())
                 }
                 else -> null
             }
@@ -606,9 +611,14 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
     }
 }
 
-private fun MutableUserProfile.initFrom(storage: StorageProtocol) {
+private fun MutableUserProfile.initFrom(storage: StorageProtocol,
+                                        usernameUtils: UsernameUtils,
+                                        textSecurePreferences: TextSecurePreferences
+) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
-    val config = ConfigurationMessage.getCurrent(listOf()) ?: return
+    val displayName = usernameUtils.getCurrentUsername() ?: return
+    val profilePicture = textSecurePreferences.getProfilePictureURL()
+    val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
     setName(config.displayName)
     val picUrl = config.profilePicture
     val picKey = config.profileKey
@@ -665,6 +675,8 @@ private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
+    private val textSecurePreferences: TextSecurePreferences,
+    private val usernameUtils: UsernameUtils,
     storage: StorageProtocol,
     threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
@@ -712,7 +724,7 @@ private class UserConfigsImpl(
         }
 
         if (userProfileDump == null) {
-            userProfile.initFrom(storage)
+            userProfile.initFrom(storage, usernameUtils, textSecurePreferences)
         }
 
         if (convoInfoDump == null) {

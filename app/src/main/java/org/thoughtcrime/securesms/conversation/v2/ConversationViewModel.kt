@@ -44,6 +44,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -67,12 +68,16 @@ import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.util.UUID
+
 
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
+    private val context: Context,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -84,8 +89,11 @@ class ConversationViewModel(
     private val textSecurePreferences: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val groupManagerV2: GroupManagerV2,
+    private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     private val expiredGroupManager: ExpiredGroupManager,
+    private val usernameUtils: UsernameUtils
+
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -112,7 +120,7 @@ class ConversationViewModel(
         _isAdmin.value = when(conversationType) {
             // for Groups V2
             MessageType.GROUPS_V2 -> {
-                configFactory.getGroup(AccountId(conversation.address.serialize()))?.hasAdminKey() == true
+                configFactory.getGroup(AccountId(conversation.address.toString()))?.hasAdminKey() == true
             }
 
             // for legacy groups, check if the user created the group
@@ -169,7 +177,7 @@ class ConversationViewModel(
             val recipient = recipient ?: return GroupThreadStatus.None
             if (!recipient.isGroupV2Recipient) return GroupThreadStatus.None
 
-            return configFactory.getGroup(AccountId(recipient.address.serialize())).let { group ->
+            return configFactory.getGroup(AccountId(recipient.address.toString())).let { group ->
                 when {
                     group?.destroyed == true -> GroupThreadStatus.Destroyed
                     group?.kicked == true -> GroupThreadStatus.Kicked
@@ -260,6 +268,15 @@ class ConversationViewModel(
         scope = viewModelScope,
     )
 
+    val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
+        // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
+        if(it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address){
+            // call is started, we need to differentiate between in progress vs incoming
+            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            else context.getString(R.string.callsIncomingUnknown)
+        } else null // null when the call isn't in progress / incoming
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
     init {
         viewModelScope.launch(Dispatchers.Default) {
             combine(
@@ -272,7 +289,7 @@ class ConversationViewModel(
                     it.copy(
                         shouldExit = recipient == null,
                         showInput = shouldShowInput(recipient, community, deprecationState),
-                        enableInputMediaControls = shouldEnableInputMediaControls(recipient),
+                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
                         messageRequestState = buildMessageRequestState(recipient),
                     )
                 }
@@ -305,13 +322,34 @@ class ConversationViewModel(
      *     Since we haven't been approved by them, we can't send them any media, only text
      */
     private fun shouldEnableInputMediaControls(recipient: Recipient?): Boolean {
-        if (recipient != null &&
-            (recipient.is1on1 && !recipient.isLocalNumber) &&
-            !recipient.hasApprovedMe()) {
+
+        // Specifically disallow multimedia if we don't have a recipient to send anything to
+        if (recipient == null) {
+            Log.i("ConversationViewModel", "Will not enable media controls for a null recipient.")
             return false
         }
 
-        return true
+        // Specifically allow multimedia in our note-to-self
+        if (recipient.isLocalNumber) return true
+
+        // To send multimedia content to other people:
+        // - For 1-on-1 conversations they must have approved us as a contact.
+        val allowedFor1on1 = recipient.is1on1 && recipient.hasApprovedMe()
+
+        // - For groups you just have to be a member of the group. Note: `isGroupRecipient` convers both legacy and V2 groups.
+        val allowedForGroup = recipient.isGroupRecipient
+
+        // - For communities you must have write access to the community
+        val allowedForCommunity = (recipient.isCommunityRecipient && openGroup?.canWrite == true)
+
+        // - For blinded recipients you must be a contact of the recipient - without which you CAN
+        // send them SMS messages - but they will not get through if the recipient does not have
+        // community message requests enabled. Being a "contact recipient" implies
+        // `!recipient.blocksCommunityMessageRequests` in this case.
+        val allowedForBlindedCommunityRecipient = recipient.isCommunityInboxRecipient && recipient.isContactRecipient
+
+        // If any of the above are true we allow sending multimedia files - otherwise we don't
+        return allowedFor1on1 || allowedForGroup || allowedForCommunity || allowedForBlindedCommunityRecipient
     }
 
     /**
@@ -414,7 +452,7 @@ class ConversationViewModel(
         }
 
         if (this.recipient?.isGroupV2Recipient == true) {
-            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.serialize()))
+            groupManagerV2.onBlocked(AccountId(this.recipient!!.address.toString()))
         }
     }
 
@@ -922,7 +960,7 @@ class ConversationViewModel(
             blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
-        storage.getLastLegacyRecipient(address.serialize())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
+        storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
     }
 
     fun onAttachmentDownloadRequest(attachment: DatabaseAttachment) {
@@ -1001,7 +1039,7 @@ class ConversationViewModel(
                 _dialogsState.update {
                     it.copy(
                         recreateGroupConfirm = false,
-                        recreateGroupData = recipient?.address?.serialize()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
+                        recreateGroupData = recipient?.address?.toString()?.let { addr -> RecreateGroupDialogData(legacyGroupId = addr) }
                     )
                 }
             }
@@ -1075,6 +1113,8 @@ class ConversationViewModel(
         return true
     }
 
+    fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1097,12 +1137,15 @@ class ConversationViewModel(
         private val textSecurePreferences: TextSecurePreferences,
         private val configFactory: ConfigFactory,
         private val groupManagerV2: GroupManagerV2,
+        private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
         private val expiredGroupManager: ExpiredGroupManager,
+        private val usernameUtils: UsernameUtils,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ConversationViewModel(
+                context = context,
                 threadId = threadId,
                 edKeyPair = edKeyPair,
                 application = application,
@@ -1116,8 +1159,10 @@ class ConversationViewModel(
                 textSecurePreferences = textSecurePreferences,
                 configFactory = configFactory,
                 groupManagerV2 = groupManagerV2,
+                callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
                 expiredGroupManager = expiredGroupManager,
+                usernameUtils = usernameUtils
             ) as T
         }
     }
@@ -1174,7 +1219,12 @@ data class ConversationUiState(
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
     val showInput: Boolean = true,
-    val enableInputMediaControls: Boolean = true,
+
+    // Note: These input media controls are with regard to whether the user can attach multimedia files
+    // or record voice messages to be sent to a recipient - they are NOT things like video or audio
+    // playback controls.
+    val enableAttachMediaControls: Boolean = true,
+
     val showLoader: Boolean = false,
 )
 

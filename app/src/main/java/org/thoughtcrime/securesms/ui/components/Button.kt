@@ -267,7 +267,12 @@ fun BorderlessButtonWithIcon(
         color = color,
         onClick = onClick
     ) {
-        AnnotatedTextWithIcon(text, iconRes, style = style)
+        AnnotatedTextWithIcon(
+            text = text,
+            iconRes = iconRes,
+            color = color,
+            style = style
+        )
     }
 }
 

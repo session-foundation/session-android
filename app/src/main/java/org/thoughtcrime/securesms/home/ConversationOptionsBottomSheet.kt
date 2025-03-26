@@ -121,7 +121,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                     if (configFactory.wasKickedFromGroupV2(recipient)) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
-                        drawableStartRes = R.drawable.ic_delete_24
+                        drawableStartRes = R.drawable.ic_trash_2
                     } else {
                         text = context.getString(R.string.leave)
                         contentDescription = context.getString(R.string.AccessibilityId_leave)
@@ -133,14 +133,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
-                    drawableStartRes = R.drawable.ic_delete_24
+                    drawableStartRes = R.drawable.ic_trash_2
                 }
 
                 // 1on1
                 else -> {
                     text = context.getString(R.string.delete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
-                    drawableStartRes = R.drawable.ic_delete_24
+                    drawableStartRes = R.drawable.ic_trash_2
                 }
             }
 

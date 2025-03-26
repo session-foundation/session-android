@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Ajiye kalmar sirrin dawo da asusunka</string>
     <string name="recoveryPasswordDescription">Yi amfani da kalmar wucewa ta dawo da asusun naka a kan sabbin na\'urori.\n\nBa za a iya dawo da asusunku ba tare da kalmar wucewarku ta dawo ba. Tabbatar an adana ta wani wuri mai tsaro kuma kada ku raba ta da kowa ba.</string>
     <string name="recoveryPasswordEnter">Shigar da kalmar sirrin dawo da ku</string>
-    <string name="recoveryPasswordErrorLoad">An error occurred when trying to load your recovery password.\n\nPlease export your logs, then upload the file though Session\'s Help Desk to help resolve this issue.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Duba kalmar maidowarka kuma sake gwadawa.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Wasu kalmomin cikin Kalmar Tseratarku ba daidai bane. Da fatan za ku duba kuma ku sake gwadawa.</string>
     <string name="recoveryPasswordErrorMessageShort">Kalmar wucewar Warkar da ka shigar ba ta daɗe sosai ba. Da fatan a duba kuma a sake gwadawa.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Ba za a iya sabunta ba</string>
     <string name="updateErrorDescription">{app_name} alhali tace wajen sabunta. Da fatan za a je zuwa {session_download_url} ku shigar da sabon sigar hannu, sannan a tuntuɓi Cibiyar Taimakonmu don sanar da wannan matsalar.</string>
     <string name="updateNewVersion">Sabon sigar {app_name} yana nan, danna don sabuntawa.</string>
-    <string name="updateNewVersionDescription">Sabuwar sigar {app_name} yana nan.</string>
     <string name="updateReleaseNotes">Je zuwa Bayanan Saki</string>
     <string name="updateSession">Sabon {app_name}</string>
     <string name="updateVersion">Siga {version}</string>

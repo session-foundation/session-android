@@ -39,7 +39,8 @@
             android:layout_height="20dp"
             android:layout_centerInParent="true"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_microphone" />
+            app:tint="?message_sent_text_color"
+            android:src="@drawable/ic_mic" />
 
         <include layout="@layout/thumbnail_view"
             android:id="@+id/quoteViewAttachmentThumbnailImageView"
@@ -100,7 +101,7 @@
         android:layout_marginStart="@dimen/small_spacing"
         android:layout_marginEnd="@dimen/small_spacing"
         android:padding="6dp"
-        android:src="@drawable/ic_close_white_48dp"
+        android:src="@drawable/ic_x"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"

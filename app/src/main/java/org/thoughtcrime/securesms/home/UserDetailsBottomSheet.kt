@@ -136,7 +136,7 @@ class UserDetailsBottomSheet: BottomSheetDialogFragment() {
             newNickName = nicknameEditText.text.toString()
         }
         else { newNickName = previousContactNickname }
-        val publicKey = recipient.address.serialize()
+        val publicKey = recipient.address.toString()
         val storage = MessagingModuleConfiguration.shared.storage
         val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
         contact.nickname = newNickName

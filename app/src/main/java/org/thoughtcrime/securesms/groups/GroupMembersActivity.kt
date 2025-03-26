@@ -6,13 +6,12 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
-import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 @AndroidEntryPoint
-class GroupMembersActivity: PassphraseRequiredActionBarActivity() {
+class GroupMembersActivity: ScreenLockActionBarActivity() {
 
     companion object {
         private const val EXTRA_GROUP_ID = "GroupMembersActivity_groupID"

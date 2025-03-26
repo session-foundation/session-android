@@ -136,7 +136,7 @@ class GroupManagerV2Impl @Inject constructor(
             // Add members
             for (member in memberAsRecipients) {
                 newGroupConfigs.groupMembers.set(
-                    newGroupConfigs.groupMembers.getOrConstruct(member.address.serialize()).apply {
+                    newGroupConfigs.groupMembers.getOrConstruct(member.address.toString()).apply {
                         setName(member.name)
                         setProfilePic(member.profileAvatar?.let { url ->
                             member.profileKey?.let { key -> UserPic(url, key) }

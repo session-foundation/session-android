@@ -111,8 +111,8 @@ fun MessageSender.setName(groupPublicKey: String, newName: String) {
         Log.d("Loki", "Can't change name for nonexistent closed group.")
         throw Error.NoThread
     }
-    val members = group.members.map { it.serialize() }.toSet()
-    val admins = group.admins.map { it.serialize() }
+    val members = group.members.map { it.toString() }.toSet()
+    val admins = group.admins.map { it.toString() }
     // Send the update to the group
     val kind = LegacyGroupControlMessage.Kind.NameChange(newName)
     val sentTime = SnodeAPI.nowWithOffset
@@ -141,12 +141,12 @@ fun MessageSender.addMembers(groupPublicKey: String, membersToAdd: List<String>)
         Log.d("Loki", "Invalid closed group update.")
         throw Error.InvalidClosedGroupUpdate
     }
-    val updatedMembers = group.members.map { it.serialize() }.toSet() + membersToAdd
+    val updatedMembers = group.members.map { it.toString() }.toSet() + membersToAdd
     // Save the new group members
     storage.updateMembers(groupID, updatedMembers.map { Address.fromSerialized(it) })
     val membersAsData = updatedMembers.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
     val newMembersAsData = membersToAdd.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
-    val admins = group.admins.map { it.serialize() }
+    val admins = group.admins.map { it.toString() }
     val adminsAsData = admins.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
     val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: run {
         Log.d("Loki", "Couldn't get encryption key pair for closed group.")
@@ -198,12 +198,12 @@ fun MessageSender.removeMembers(groupPublicKey: String, membersToRemove: List<St
         Log.d("Loki", "Invalid closed group update.")
         throw Error.InvalidClosedGroupUpdate
     }
-    val admins = group.admins.map { it.serialize() }
+    val admins = group.admins.map { it.toString() }
     if (!admins.contains(userPublicKey)) {
         Log.d("Loki", "Only an admin can remove members from a group.")
         throw Error.InvalidClosedGroupUpdate
     }
-    val updatedMembers = group.members.map { it.serialize() }.toSet() - membersToRemove
+    val updatedMembers = group.members.map { it.toString() }.toSet() - membersToRemove
     if (membersToRemove.any { it in admins } && updatedMembers.isNotEmpty()) {
         Log.d("Loki", "Can't remove admin from closed group unless the group is destroyed entirely.")
         throw Error.InvalidClosedGroupUpdate
@@ -301,7 +301,7 @@ fun MessageSender.sendLatestEncryptionKeyPair(publicKey: String, groupPublicKey:
         Log.d("Loki", "Can't send encryption key pair for nonexistent closed group.")
         throw Error.NoThread
     }
-    val members = group.members.map { it.serialize() }
+    val members = group.members.map { it.toString() }
     if (!members.contains(publicKey)) {
         Log.d("Loki", "Refusing to send latest encryption key pair to non-member.")
         return

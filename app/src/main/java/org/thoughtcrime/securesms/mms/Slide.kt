@@ -19,8 +19,10 @@ package org.thoughtcrime.securesms.mms
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
+import android.util.Log
 import androidx.annotation.DrawableRes
 import com.squareup.phrase.Phrase
+import kotlin.String
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
@@ -30,7 +32,7 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.hashCode
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.conversation.v2.Util
+import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 
 abstract class Slide(@JvmField protected val context: Context, protected val attachment: Attachment) {
@@ -45,45 +47,41 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
 
     val body: Optional<String>
         get() {
-            if (MediaUtil.isAudio(attachment)) {
-                // A missing file name is the legacy way to determine if an audio attachment is
-                // a voice note vs. other arbitrary audio attachments.
-                if (attachment.isVoiceNote) {
-                     val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
-                        .put(EMOJI_KEY, "🎙")
-                        .format().toString()
-
-                    return Optional.fromNullable(voiceTxt)
-                }
+            return if (MediaUtil.isAudio(attachment) && attachment.isVoiceNote) {
+                 val voiceTxt = Phrase.from(context, R.string.messageVoiceSnippet)
+                    .put(EMOJI_KEY, "🎙")
+                    .format().toString()
+                Optional.fromNullable(voiceTxt)
+            } else {
+                val txt = Phrase.from(context, R.string.attachmentsNotification)
+                    .put(EMOJI_KEY, emojiForMimeType())
+                    .format().toString()
+                Optional.fromNullable(txt)
             }
-            val txt = Phrase.from(context, R.string.attachmentsNotification)
-                .put(EMOJI_KEY, emojiForMimeType())
-                .format().toString()
-            return Optional.fromNullable(txt)
         }
 
-    private fun emojiForMimeType(): String {
-        return when{
-            MediaUtil.isGif(attachment) -> "🎡"
-
+    private fun emojiForMimeType(): String =
+        when {
+            MediaUtil.isGif(attachment)   -> "🎡"
             MediaUtil.isImage(attachment) -> "📷"
-
             MediaUtil.isVideo(attachment) -> "🎥"
-
             MediaUtil.isAudio(attachment) -> "🎧"
-
-            MediaUtil.isFile(attachment) -> "📎"
-
-            // We don't provide emojis for other mime-types such as VCARD
-            else -> ""
+            MediaUtil.isFile(attachment)  -> "📎"
+            else -> "" // We don't provide emojis for other mime-types such as VCARD
         }
-    }
 
     val caption: Optional<String?>
         get() = Optional.fromNullable(attachment.caption)
 
-    val fileName: Optional<String?>
-        get() = Optional.fromNullable(attachment.fileName)
+    val filename: String by lazy {
+        if (attachment.filename.isNullOrEmpty()) generateSuitableFilenameFromUri(context, attachment.dataUri) else attachment.filename
+    }
+
+    // Note: All slide types EXCEPT AudioSlide use this technique to synthesize a filename from a Uri - however AudioSlide has
+    // its own custom version to handle legacy voice messages which lack filenames.
+    open fun generateSuitableFilenameFromUri(context: Context, uri: Uri?): String {
+        return FilenameUtils.getFilenameFromUri(context, attachment.dataUri, attachment.contentType)
+    }
 
     val fastPreflightId: String?
         get() = attachment.fastPreflightId
@@ -155,9 +153,9 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             voiceNote: Boolean,
             quote: Boolean
         ): Attachment {
-            val resolvedType =
-                Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
+            val resolvedType = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
+
             return UriAttachment(
                 uri,
                 if (hasThumbnail) uri else null,

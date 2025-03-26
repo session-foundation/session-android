@@ -176,8 +176,8 @@ public class ContactsCursorLoader extends CursorLoader {
       ThreadDatabase.Reader reader = threadDatabase.readerFor(rawConversations);
       ThreadRecord threadRecord;
       while ((threadRecord = reader.getNext()) != null) {
-        recentConversations.addRow(new Object[] { threadRecord.getRecipient().toShortString(),
-                                                  threadRecord.getRecipient().getAddress().serialize(),
+        recentConversations.addRow(new Object[] { threadRecord.getRecipient().getName(),
+                                                  threadRecord.getRecipient().getAddress().toString(),
                                                   ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
                                                   "",
                                                   RECENT_TYPE });

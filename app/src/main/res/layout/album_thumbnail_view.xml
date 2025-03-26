@@ -10,15 +10,4 @@
         android:layout_height="wrap_content"
         />
 
-    <ViewStub
-        android:layout_alignTop="@+id/albumCellContainer"
-        android:layout_alignStart="@+id/albumCellContainer"
-        android:layout_alignEnd="@+id/albumCellContainer"
-        android:layout_alignBottom="@+id/albumCellContainer"
-        android:id="@+id/albumTransferControlsStub"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout="@layout/transfer_controls_stub" />
-
 </org.thoughtcrime.securesms.conversation.v2.components.AlbumThumbnailView>

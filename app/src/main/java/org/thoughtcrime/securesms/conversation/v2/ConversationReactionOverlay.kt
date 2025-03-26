@@ -39,6 +39,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_K
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
@@ -107,6 +108,12 @@ class ConversationReactionOverlay : FrameLayout {
 
     private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
+
+    private val iconMore by lazy {
+        val d = ContextCompat.getDrawable(context, R.drawable.ic_plus)
+        d?.setTint(context.getColorFromAttr(android.R.attr.textColor))
+        d
+    }
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -452,7 +459,7 @@ class ConversationReactionOverlay : FrameLayout {
             view.translationY = 0f
             val isAtCustomIndex = i == customEmojiIndex
             if (isAtCustomIndex) {
-                view.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_baseline_add_24))
+                view.setImageDrawable(iconMore)
                 view.tag = null
             } else {
                 view.setImageEmoji(emojis[i])

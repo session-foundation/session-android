@@ -40,13 +40,13 @@ class DisappearingMessages @Inject constructor(
         storage.setExpirationConfiguration(ExpirationConfiguration(threadId, mode, expiryChangeTimestampMs))
 
         if (address.isGroupV2) {
-            groupManagerV2.setExpirationTimer(AccountId(address.serialize()), mode, expiryChangeTimestampMs)
+            groupManagerV2.setExpirationTimer(AccountId(address.toString()), mode, expiryChangeTimestampMs)
         } else {
             val message = ExpirationTimerUpdate(isGroup = isGroup).apply {
                 expiryMode = mode
                 sender = textSecurePreferences.getLocalNumber()
                 isSenderSelf = true
-                recipient = address.serialize()
+                recipient = address.toString()
                 sentTimestamp = expiryChangeTimestampMs
             }
 

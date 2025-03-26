@@ -26,7 +26,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.AsyncTask
-import android.os.Build
 import android.text.TextUtils
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -45,7 +44,6 @@ import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
@@ -58,7 +56,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.contacts.ContactUtil
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
 import org.thoughtcrime.securesms.database.RecipientDatabase
@@ -69,6 +66,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
 
@@ -108,11 +106,13 @@ class DefaultMessageNotifier : MessageNotifier {
             val activeNotifications = notifications.activeNotifications
 
             for (activeNotification in activeNotifications) {
-                notifications.cancel(activeNotification.id)
+                if(activeNotification.id != WEBRTC_NOTIFICATION) {
+                    notifications.cancel(activeNotification.id)
+                }
             }
         } catch (e: Throwable) {
             // XXX Appears to be a ROM bug, see #6043
-            Log.w(TAG, e)
+            Log.w(TAG, "cancel notification error: $e")
             notifications.cancelAll()
         }
         return hasNotifications
@@ -135,7 +135,9 @@ class DefaultMessageNotifier : MessageNotifier {
                     }
 
                     if (!validNotification) {
-                        notifications.cancel(notification.id)
+                        if(notification.id != WEBRTC_NOTIFICATION) {
+                            notifications.cancel(notification.id)
+                        }
                     }
                 }
             }
@@ -255,7 +257,9 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
         if (notificationState.notifications.isEmpty()) {
-            if (!bundled) cancelActiveNotifications(context)
+            if (!bundled) {
+                cancelActiveNotifications(context)
+            }
             Log.i(TAG, "Empty notification state. Skipping.")
             return
         }
@@ -265,15 +269,6 @@ class DefaultMessageNotifier : MessageNotifier {
         val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val messageIdTag = notifications[0].timestamp.toString()
-
-        val notificationManager = ServiceUtil.getNotificationManager(context)
-        for (notification in notificationManager.activeNotifications) {
-            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && notification.isAppGroup == bundled)
-                && (messageIdTag == notification.notification.extras.getString(LATEST_MESSAGE_ID_TAG))
-            ) {
-                return
-            }
-        }
 
         val timestamp = notifications[0].timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)
@@ -500,12 +495,7 @@ class DefaultMessageNotifier : MessageNotifier {
 
             // ----- Note: All further cases assume we know the contact and that Session isn't locked -----
 
-            // If this is a notification about a multimedia message from a contact we know about..
-            } else if (record.isMms && !(record as MmsMessageRecord).sharedContacts.isEmpty()) {
-                val contact = (record as MmsMessageRecord).sharedContacts[0]
-                body = ContactUtil.getStringSummary(context, contact)
-
-                // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
+            // If this is a notification about a multimedia message which contains no text but DOES contain a slide deck with at least one slide..
             } else if (record.isMms && TextUtils.isEmpty(body) && !(record as MmsMessageRecord).slideDeck.slides.isEmpty()) {
                 slideDeck = (record as MediaMmsMessageRecord).slideDeck
                 body = SpanUtil.italic(slideDeck.body)
@@ -529,13 +519,17 @@ class DefaultMessageNotifier : MessageNotifier {
                 cache[threadId] = blindedPublicKey
             }
             if (threadRecipients == null || !threadRecipients.isMuted) {
-                if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                if(record.isIncomingCall || record.isOutgoingCall){
+                    // do nothing here as we do not want to display a notification for incoming and outgoing calls,
+                    // they will instead be handled independently by the pre offer
+                }
+                else if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     // check if mentioned here
                     var isQuoteMentioned = false
                     if (record is MmsMessageRecord) {
                         val quote = (record as MmsMessageRecord).quote
                         val quoteAddress = quote?.author
-                        val serializedAddress = quoteAddress?.serialize()
+                        val serializedAddress = quoteAddress?.toString()
                         isQuoteMentioned = (serializedAddress != null && userPublicKey == serializedAddress) ||
                                 (blindedPublicKey != null && userPublicKey == blindedPublicKey)
                     }

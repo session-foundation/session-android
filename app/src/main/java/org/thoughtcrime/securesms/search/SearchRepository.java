@@ -207,9 +207,9 @@ public class SearchRepository {
     @Override
     public Contact build(@NonNull Cursor cursor) {
       ThreadRecord threadRecord = threadDb.readerFor(cursor).getCurrent();
-      Contact contact = contactDb.getContactWithAccountID(threadRecord.getRecipient().getAddress().serialize());
+      Contact contact = contactDb.getContactWithAccountID(threadRecord.getRecipient().getAddress().toString());
       if (contact == null) {
-        contact = new Contact(threadRecord.getRecipient().getAddress().serialize());
+        contact = new Contact(threadRecord.getRecipient().getAddress().toString());
         contact.setThreadID(threadRecord.getThreadId());
       }
       return contact;

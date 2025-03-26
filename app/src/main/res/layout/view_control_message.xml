@@ -26,7 +26,7 @@
         android:layout_marginBottom="@dimen/small_spacing"
         android:visibility="gone"
         app:tint="?android:textColorTertiary"
-        tools:src="@drawable/ic_timer"
+        tools:src="@drawable/ic_clock_11"
         tools:visibility="visible" />
 
     <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
@@ -36,7 +36,7 @@
         android:layout_marginBottom="@dimen/small_spacing"
         android:visibility="gone"
         app:tint="?android:textColorTertiary"
-        tools:src="@drawable/ic_timer"
+        tools:src="@drawable/ic_clock_11"
         tools:visibility="visible" />
 
     <LinearLayout
@@ -71,7 +71,7 @@
                 android:gravity="center"
                 android:textAlignment="center"
                 android:textColor="?message_received_text_color"
-                app:drawableStartCompat="@drawable/ic_missed_call"
+                app:drawableStartCompat="@drawable/ic_phone_missed"
                 tools:text="You missed a call" />
 
         </FrameLayout>

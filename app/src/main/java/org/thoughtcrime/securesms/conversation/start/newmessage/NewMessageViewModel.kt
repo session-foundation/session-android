@@ -18,8 +18,11 @@ import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.LoadingDialog
+import java.net.IDN
 
 @HiltViewModel
 internal class NewMessageViewModel @Inject constructor(
@@ -44,7 +47,21 @@ internal class NewMessageViewModel @Inject constructor(
     }
 
     override fun onContinue() {
-        val idOrONS = state.value.newMessageIdOrOns.trim()
+        val trimmed = state.value.newMessageIdOrOns.trim()
+        // Check if all characters are ASCII (code <= 127).
+        val idOrONS = if (trimmed.all { it.code <= 127 }) {
+            // Already ASCII (or punycode‐ready); no conversion needed.
+            trimmed
+        } else {
+            try {
+                // For non-ASCII input (e.g. with emojis), attempt to puny-encode
+                IDN.toASCII(trimmed, IDN.ALLOW_UNASSIGNED)
+            } catch (e: IllegalArgumentException) {
+                // if the above failed, resort to the original trimmed string
+                Log.w("", "IDN.toASCII failed. Returning: $trimmed")
+                trimmed
+            }
+        }
 
         if (PublicKeyValidation.isValid(idOrONS, isPrefixRequired = false)) {
             onUnvalidatedPublicKey(publicKey = idOrONS)

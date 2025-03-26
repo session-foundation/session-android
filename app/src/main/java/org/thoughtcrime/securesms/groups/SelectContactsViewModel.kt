@@ -107,7 +107,7 @@ class SelectContactsViewModel @AssistedInject constructor(
             .asSequence()
             .filter { query.isBlank() || it.getSearchName().contains(query, ignoreCase = true) }
             .map { contact ->
-                val accountId = AccountId(contact.address.serialize())
+                val accountId = AccountId(contact.address.toString())
                 ContactItem(
                     name = contact.getSearchName(),
                     accountID = accountId,

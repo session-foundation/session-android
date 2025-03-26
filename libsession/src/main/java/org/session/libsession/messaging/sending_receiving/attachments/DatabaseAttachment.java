@@ -1,9 +1,7 @@
 package org.session.libsession.messaging.sending_receiving.attachments;
 
 import android.net.Uri;
-
 import androidx.annotation.Nullable;
-
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 
 public class DatabaseAttachment extends Attachment {
@@ -12,17 +10,17 @@ public class DatabaseAttachment extends Attachment {
   private final long         mmsId;
   private final boolean      hasData;
   private final boolean      hasThumbnail;
-  private boolean isUploaded = false;
+  private boolean            isUploaded = false;
 
   public DatabaseAttachment(AttachmentId attachmentId, long mmsId,
                             boolean hasData, boolean hasThumbnail,
                             String contentType, int transferProgress, long size,
-                            String fileName, String location, String key, String relay,
+                            String filename, String location, String key, String relay,
                             byte[] digest, String fastPreflightId, boolean voiceNote,
                             int width, int height, boolean quote, @Nullable String caption,
-                            String url)
-  {
-    super(contentType, transferProgress, size, fileName, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, caption, url);
+                            String url
+  ) {
+    super(contentType, transferProgress, size, filename, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, caption, url);
     this.attachmentId = attachmentId;
     this.hasData      = hasData;
     this.hasThumbnail = hasThumbnail;

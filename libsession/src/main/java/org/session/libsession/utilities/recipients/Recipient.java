@@ -44,6 +44,7 @@ import org.session.libsession.utilities.ListenableFutureTask;
 import org.session.libsession.utilities.MaterialColor;
 import org.session.libsession.utilities.ProfilePictureModifiedEvent;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.session.libsession.utilities.UsernameUtils;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.RecipientProvider.RecipientDetails;
 import org.session.libsignal.utilities.Log;
@@ -321,13 +322,13 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   }
 
   public synchronized @NonNull String getName() {
-    StorageProtocol storage = MessagingModuleConfiguration.getShared().getStorage();
+    UsernameUtils usernameUtils = MessagingModuleConfiguration.getShared().getUsernameUtils();
     String accountID = this.address.toString();
     if (isGroupOrCommunityRecipient()) {
       if (this.name == null) {
         List<String> names = new LinkedList<>();
         for (Recipient recipient : participants) {
-          names.add(recipient.toShortString());
+          names.add(recipient.name);
         }
         return Util.join(names, ", ");
       } else {
@@ -335,9 +336,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       }
     } else if (isCommunityInboxRecipient()){
       String inboxID = GroupUtil.getDecodedOpenGroupInboxAccountId(accountID);
-      return storage.getContactNameWithAccountID(inboxID, null, Contact.ContactContext.OPEN_GROUP);
+      return usernameUtils.getContactNameWithAccountID(inboxID, null, Contact.ContactContext.OPEN_GROUP);
     } else {
-      return storage.getContactNameWithAccountID(accountID, null, Contact.ContactContext.REGULAR);
+      return usernameUtils.getContactNameWithAccountID(accountID, null, Contact.ContactContext.REGULAR);
     }
   }
 
@@ -516,10 +517,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     if (listeners.isEmpty()) {
       for (Recipient recipient : participants) recipient.removeListener(this);
     }
-  }
-
-  public synchronized String toShortString() {
-    return getName();
   }
 
   public synchronized @NonNull Drawable getFallbackContactPhotoDrawable(Context context, boolean inverted) {

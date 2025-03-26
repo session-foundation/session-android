@@ -14,16 +14,19 @@ import org.session.libsignal.utilities.guava.Optional
  *
  * @author Moxie Marlinspike
  */
-class SessionServiceAttachmentPointer(val id: Long, contentType: String?, key: ByteArray?,
-                                      val size: Optional<Int>, val preview: Optional<ByteArray>,
-                                      val width: Int, val height: Int,
-                                      val digest: Optional<ByteArray>, val fileName: Optional<String>,
-                                      val voiceNote: Boolean, val caption: Optional<String>, url: String) : SessionServiceAttachment(contentType) {
-    override fun isStream(): Boolean {
-        return false
-    }
+class SessionServiceAttachmentPointer(val id: Long, contentType: String?,
+                                      key: ByteArray?,
+                                      val size: Optional<Int>,
+                                      val preview: Optional<ByteArray>,
+                                      val width: Int,
+                                      val height: Int,
+                                      val digest: Optional<ByteArray>,
+                                      val filename: String,
+                                      val voiceNote: Boolean,
+                                      val caption: Optional<String>,
+                                      url: String
+) : SessionServiceAttachment(contentType) {
 
-    override fun isPointer(): Boolean {
-        return true
-    }
+    override fun isStream():  Boolean { return false }
+    override fun isPointer(): Boolean { return true  }
 }

@@ -62,7 +62,8 @@
                 android:contentDescription="@string/AccessibilityId_displayNameNew"
                 android:paddingTop="2dp"
                 android:layout_marginEnd="20dp"
-                android:src="@drawable/ic_baseline_edit_24" />
+                android:src="@drawable/ic_pencil"
+                app:tint="?android:textColorPrimary" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -83,7 +84,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_marginEnd="@dimen/small_spacing"
                 android:contentDescription="@string/AccessibilityId_cancel"
-                android:src="@drawable/ic_baseline_clear_24" />
+                app:tint="?colorControlNormal"
+                android:src="@drawable/ic_x" />
 
             <EditText
                 android:id="@+id/nicknameEditText"
@@ -114,7 +116,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:layout_marginStart="@dimen/small_spacing"
                 android:contentDescription="@string/AccessibilityId_apply"
-                android:src="@drawable/ic_baseline_done_24" />
+                android:src="@drawable/ic_check"
+                app:tint="?colorControlNormal"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

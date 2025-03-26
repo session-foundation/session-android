@@ -45,7 +45,7 @@ public class AvatarHelper {
     File avatarDirectory = new File(context.getFilesDir(), AVATAR_DIRECTORY);
     avatarDirectory.mkdirs();
 
-    return new File(avatarDirectory, new File(address.serialize()).getName());
+    return new File(avatarDirectory, new File(address.toString()).getName());
   }
 
   public static boolean avatarFileExists(@NonNull Context context , @NonNull Address address) {

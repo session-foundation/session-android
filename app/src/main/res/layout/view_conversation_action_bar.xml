@@ -17,8 +17,11 @@
 
     <LinearLayout
         android:id="@+id/conversationTitleContainer"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/medium_spacing"
+        android:paddingEnd="@dimen/medium_spacing"
         android:gravity="center_horizontal|center_vertical"
         android:orientation="vertical">
 

@@ -110,7 +110,6 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
             // assume job "success" even if we fail, the state of invites is tracked outside of this job
             if (failures.isNotEmpty()) {
                 // show the failure toast
-                val storage = MessagingModuleConfiguration.shared.storage
                 val toaster = MessagingModuleConfiguration.shared.toaster
 
                 val (_, firstError) = failures.first()
@@ -127,7 +126,8 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                     inviteeAccountIds = failures.map { it.first },
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
-                ).format(MessagingModuleConfiguration.shared.context, storage).let {
+                ).format(MessagingModuleConfiguration.shared.context,
+                    MessagingModuleConfiguration.shared.usernameUtils).let {
                     withContext(Dispatchers.Main) {
                         toaster.toast(it, Toast.LENGTH_LONG)
                     }

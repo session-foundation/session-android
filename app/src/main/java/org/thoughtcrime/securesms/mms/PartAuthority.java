@@ -4,18 +4,15 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+import java.io.IOException;
+import java.io.InputStream;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.providers.BlobProvider;
 import org.thoughtcrime.securesms.providers.PartProvider;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 public class PartAuthority {
 
@@ -66,7 +63,7 @@ public class PartAuthority {
     case PART_ROW:
       Attachment attachment = DatabaseComponent.get(context).attachmentDatabase().getAttachment(new PartUriParser(uri).getPartId());
 
-      if (attachment != null) return attachment.getFileName();
+      if (attachment != null) return attachment.getFilename();
       else                    return null;
     case BLOB_ROW:
       return BlobProvider.getFileName(uri);

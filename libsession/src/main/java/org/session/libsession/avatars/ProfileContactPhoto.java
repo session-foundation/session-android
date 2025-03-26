@@ -41,7 +41,7 @@ public class ProfileContactPhoto implements ContactPhoto {
 
   @Override
   public void updateDiskCacheKey(@NonNull MessageDigest messageDigest) {
-    messageDigest.update(address.serialize().getBytes());
+    messageDigest.update(address.toString().getBytes());
     messageDigest.update(avatarObject.getBytes());
   }
 

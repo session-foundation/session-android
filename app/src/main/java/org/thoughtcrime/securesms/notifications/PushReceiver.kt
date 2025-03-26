@@ -1,8 +1,11 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Debug
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -34,6 +37,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
 import javax.inject.Inject
 
@@ -51,6 +55,7 @@ class PushReceiver @Inject constructor(
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
+        Log.d("", "Push data received: $dataMap")
         addMessageReceiveJob(dataMap?.asPushData())
     }
 
@@ -132,9 +137,12 @@ class PushReceiver @Inject constructor(
                 }
 
                 namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
-                    // send a generic notification if we have no data
                     if (pushData?.data == null) {
-                        sendGenericNotification()
+                        Log.d(TAG, "Push data is null")
+                        if(pushData?.metadata?.data_too_long != true) {
+                            Log.d(TAG, "Sending a generic notification (data_too_long was false)")
+                            sendGenericNotification()
+                        }
                         return
                     }
 
@@ -177,8 +185,6 @@ class PushReceiver @Inject constructor(
     }
 
     private fun sendGenericNotification() {
-        Log.d(TAG, "Failed to decode data for message.")
-
         // no need to do anything if notification permissions are not granted
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -198,6 +204,7 @@ class PushReceiver @Inject constructor(
 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
         NotificationManagerCompat.from(context).notify(11111, builder.build())
     }
@@ -232,7 +239,7 @@ class PushReceiver @Inject constructor(
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
 
-        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
+        val metadataJson = (expectedList.getOrNull(0) as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = json.decodeFromString(String(metadataJson))
 
         return PushData(

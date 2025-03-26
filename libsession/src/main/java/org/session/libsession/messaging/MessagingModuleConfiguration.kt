@@ -15,6 +15,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.Toaster
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 
 class MessagingModuleConfiguration(
@@ -31,6 +32,7 @@ class MessagingModuleConfiguration(
     val preferences: TextSecurePreferences,
     val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
     val deprecationManager: LegacyGroupDeprecationManager,
+    val usernameUtils: UsernameUtils
 ) {
 
     companion object {

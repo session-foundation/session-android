@@ -53,8 +53,8 @@ class DecodedAudio {
 
     val sampleRate: Int
 
-    /** In microseconds. */
-    val totalDuration: Long
+    /** In microseconds. There are 1 million microseconds in a second. */
+    val totalDurationMicroseconds: Long
 
     val channels: Int
 
@@ -96,15 +96,15 @@ class DecodedAudio {
         channels = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
         sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         // On some old APIs (23) this field might be missing.
-        totalDuration = if (mediaFormat.containsKey(MediaFormat.KEY_DURATION)) {
+        totalDurationMicroseconds = if (mediaFormat.containsKey(MediaFormat.KEY_DURATION)) {
             mediaFormat.getLong(MediaFormat.KEY_DURATION)
         } else {
             -1L
         }
 
         // Expected total number of samples per channel.
-        val expectedNumSamples = if (totalDuration >= 0) {
-            ((totalDuration / 1000000f) * sampleRate + 0.5f).toInt()
+        val expectedNumSamples = if (totalDurationMicroseconds >= 0) {
+            ((totalDurationMicroseconds / 1000000f) * sampleRate + 0.5f).toInt()
         } else {
             Int.MAX_VALUE
         }

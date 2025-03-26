@@ -5,16 +5,20 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewUserBinding
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import com.bumptech.glide.RequestManager
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class UserView : LinearLayout {
     private lateinit var binding: ViewUserBinding
+
+    @Inject
+    lateinit var usernameUtils: UsernameUtils
 
     enum class ActionIndicator {
         None,
@@ -51,12 +55,12 @@ class UserView : LinearLayout {
         fun getUserDisplayName(publicKey: String): String {
             if (isLocalUser) return context.getString(R.string.you)
 
-            return MessagingModuleConfiguration.shared.storage.getContactNameWithAccountID(publicKey)
+            return usernameUtils.getContactNameWithAccountID(publicKey)
         }
 
-        val address = user.address.serialize()
+        val address = user.address.toString()
         binding.profilePictureView.update(user)
-        binding.actionIndicatorImageView.setImageResource(R.drawable.ic_baseline_edit_24)
+        binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         binding.nameTextView.text = if (user.isGroupOrCommunityRecipient) user.name else getUserDisplayName(address)
         when (actionIndicator) {
             ActionIndicator.None -> {
@@ -64,14 +68,14 @@ class UserView : LinearLayout {
             }
             ActionIndicator.Menu -> {
                 binding.actionIndicatorImageView.visibility = View.VISIBLE
-                binding.actionIndicatorImageView.setImageResource(R.drawable.ic_more_horiz_white)
+                binding.actionIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
             }
             ActionIndicator.Tick -> {
                 binding.actionIndicatorImageView.visibility = View.VISIBLE
                 if (isSelected) {
-                    binding.actionIndicatorImageView.setImageResource(R.drawable.padded_circle_accent)
+                    binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_selected)
                 } else {
-                    binding.actionIndicatorImageView.setImageDrawable(null)
+                    binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
                 }
             }
         }
@@ -80,9 +84,9 @@ class UserView : LinearLayout {
     fun toggleCheckbox(isSelected: Boolean = false) {
         binding.actionIndicatorImageView.visibility = View.VISIBLE
         if (isSelected) {
-            binding.actionIndicatorImageView.setImageResource(R.drawable.padded_circle_accent)
+            binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_selected)
         } else {
-            binding.actionIndicatorImageView.setImageDrawable(null)
+            binding.actionIndicatorImageView.setImageResource(R.drawable.ic_radio_unselected)
         }
     }
 

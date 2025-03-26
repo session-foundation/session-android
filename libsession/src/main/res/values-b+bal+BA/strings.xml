@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">آسائی کوڈا بلوچ</string>
     <string name="recoveryPasswordDescription">اپنے اکاؤنٹ کو نئے ڈیوائس پر لوڈ کرنے کے لئے اپنا ریکوری پاس ورڈ استعمال کریں۔\n\nآپ کا اکاؤنٹ آپ کے ریکوری پاس ورڈ کے بغیر بازیافت نہیں کیا جا سکتا۔ اسے محفوظ اور محفوظ جگہ پر ذخیرہ کرنا یقینی بنائیں — اور اسے کسی کے ساتھ شیئر نہ کریں۔</string>
     <string name="recoveryPasswordEnter">اپنا ریکوری پاسورڈ درج بکنا</string>
-    <string name="recoveryPasswordErrorLoad">تھئے ریکوری پاسورڈ لوڈ توارےء میں مسئله کرتے ہوءِ.\n\nمہربانی بانی لوگ انی برآمد کنانءَ, پھر فائل اپلوڈ کنو میٹ سےشنز ہیلپ ڈیسک بگو یہ مسئله حل کن.</string>
     <string name="recoveryPasswordErrorMessageGeneric">براہء مہربانی اپنے بازیابی رمز چیک کنیں و دوبارہ کوشش کنیں.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">کچھ کلمہاں بشکیند درمانی خلق مجھولات ناستیت</string>
     <string name="recoveryPasswordErrorMessageShort">شل کنتریک ریکوری پاسورڈ درست نہ ونی۔ مہر بانی کرکے چک کنیں و پہ دوباره اَز آزمائیں.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">اپ ڈیٹ نہیں ہو سکتا</string>
     <string name="updateErrorDescription">{app_name} سورین پہ بروز اسلامی. مھرن {session_download_url} بزوک کوہ وِساہ زانتربان نسکیۂ په زر برابرہ وفقث، ہماں مشکلا اسٹہ مذ بہ دوں سا عد مرکزِ پردیسہ.</string>
     <string name="updateNewVersion">New version {app_name} wājūd dā, tap ke update beñ.</string>
-    <string name="updateNewVersionDescription">New version {app_name} wājūd dā.</string>
     <string name="updateReleaseNotes">رہائی نوٹ بوت</string>
     <string name="updateSession">{app_name} بہ روز آپ ڈیٹ</string>
     <string name="updateVersion">ورژن {version}</string>

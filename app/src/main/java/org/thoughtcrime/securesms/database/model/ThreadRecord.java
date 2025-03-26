@@ -167,7 +167,7 @@ public class ThreadRecord extends DisplayRecord {
 
         } else if (MmsSmsColumns.Types.isMessageRequestResponse(type)) {
             try {
-                if (lastMessage.getRecipient().getAddress().serialize().equals(
+                if (lastMessage.getRecipient().getAddress().toString().equals(
                         TextSecurePreferences.getLocalNumber(context))) {
                     return UtilKt.getSubbedCharSequence(
                             context,
@@ -214,7 +214,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().toShortString();
+                prefix = lastMessage.getIndividualRecipient().getName();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

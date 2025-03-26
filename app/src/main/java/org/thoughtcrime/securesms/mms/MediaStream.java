@@ -31,19 +31,11 @@ public class MediaStream {
     this.height   = height;
   }
 
-  public InputStream getStream() {
-    return stream;
-  }
+  public InputStream getStream() { return stream; }
 
-  public String getMimeType() {
-    return mimeType;
-  }
+  public String getMimeType() { return mimeType; }
 
-  public int getWidth() {
-    return width;
-  }
+  public int getWidth() { return width; }
 
-  public int getHeight() {
-    return height;
-  }
+  public int getHeight() { return height; }
 }

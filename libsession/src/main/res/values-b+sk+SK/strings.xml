@@ -742,7 +742,6 @@
     <string name="recoveryPasswordBannerTitle">Uložte si svoju frázu pre obnovenie</string>
     <string name="recoveryPasswordDescription">Použite svoje recovery password na načítanie účtu na nových zariadeniach.\n\nBez recovery password váš účet nebude možné obnoviť. Uistite sa, že je uložené na bezpečnom mieste a nezdieľajte ho s nikým.</string>
     <string name="recoveryPasswordEnter">Zadajte frázu pre obnovenie</string>
-    <string name="recoveryPasswordErrorLoad">Pri pokuse o načítanie hesla na obnovenie došlo k chybe.\n\nProsím, exportujte svoje protokoly a potom súbor odošlite prostredníctvom asistenčnej služby Session, aby vám pomohli vyriešiť tento problém.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Skontrolujte prosím frázu na obnovenie a skúste to znova.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Niektoré slová vo vašom Recovery Password sú nesprávne. Skontrolujte ich prosím a skúste to znova.</string>
     <string name="recoveryPasswordErrorMessageShort">Zadané heslo na obnovenie nie je dostatočne dlhé. Skontrolujte ho a skúste to znova.</string>
@@ -831,7 +830,6 @@
     <string name="updateError">Nie je možné aktualizovať</string>
     <string name="updateErrorDescription">{app_name} sa nepodarilo aktualizovať. Prosím prejdite na {session_download_url} a manuálne nainštalujte novú verziu, potom kontaktujte naše Help Centrum aby ste nám dali vedieť o tomto probléme.</string>
     <string name="updateNewVersion">K dispozícii je nová verzia {app_name}, ťuknite, aby ste aktualizovali</string>
-    <string name="updateNewVersionDescription">K dispozícii je nová verzia {app_name}.</string>
     <string name="updateReleaseNotes">Navštíviť Poznámky k Vydaniu</string>
     <string name="updateSession">Aktualizácia {app_name}</string>
     <string name="updateVersion">Verzia {version}</string>

@@ -43,7 +43,7 @@ public class ResourceContactPhoto implements FallbackContactPhoto {
       if(padding == 0f){
         foreground.setScaleType(ImageView.ScaleType.CENTER_CROP);
       } else {
-        // apply padding via a transparent border oterhwise things get misaligned
+        // apply padding via a transparent border otherhwise things get misaligned
         foreground.setScaleType(ImageView.ScaleType.FIT_CENTER);
         foreground.setBorderColor(Color.TRANSPARENT);
         foreground.setBorderWidth(padding);

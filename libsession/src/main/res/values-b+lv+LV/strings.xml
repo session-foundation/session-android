@@ -748,7 +748,6 @@
     <string name="updateError">Nevar atjaunināt</string>
     <string name="updateErrorDescription">{app_name} neizdevās atjaunot. Lūdzu, dodieties uz {session_download_url} un instalējiet jauno versiju manuāli, tad sazinieties ar mūsu Palīdzības centru, lai informētu par šo problēmu.</string>
     <string name="updateNewVersion">Ir pieejama jauna {app_name} versija, pieskarieties, lai atjauninātu</string>
-    <string name="updateNewVersionDescription">Ir pieejama jauna {app_name} versija.</string>
     <string name="updateReleaseNotes">Iet uz izlaiduma piezīmēm</string>
     <string name="updateSession">{app_name} atjaunināšana</string>
     <string name="updateVersion">Versija {version}</string>

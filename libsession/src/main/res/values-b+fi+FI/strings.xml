@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Tallenna palautussalasanasi</string>
     <string name="recoveryPasswordDescription">Käytä palautussalasanaa ladataksesi tilisi uusiin laitteisiin.\n\nTiliäsi ei voida palauttaa ilman palautussalasanaa. Varmista, että se on tallennettu turvallisesti ja älä jaa sitä kenellekään.</string>
     <string name="recoveryPasswordEnter">Syötä palautussalasana</string>
-    <string name="recoveryPasswordErrorLoad">Virhe palautelauseen latauksessa.\n\nRatkaistaksesi tämän ongelman, voit viedä lokitiedot ja lähettää sen Session Help Deskiin.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Tarkista palautuslauseesi ja yritä uudelleen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Jotkin palautuslausekkeesi sanat ovat virheelliset. Tarkista ja yritä uudelleen.</string>
     <string name="recoveryPasswordErrorMessageShort">Syöttämäsi palautusavain on liian lyhyt. Tarkista ja yritä uudelleen.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">Päivitys epäonnistui</string>
     <string name="updateErrorDescription">{app_name} päivitys epäonnistui. Mene osoitteeseen {session_download_url} ja asenna uusi versio manuaalisesti. Ota yhteyttä tukipalveluumme ja ilmoita tästä ongelmasta.</string>
     <string name="updateNewVersion">Uusi versio {app_name} on saatavilla, napauta päivittääksesi</string>
-    <string name="updateNewVersionDescription">Uusi versio {app_name} on saatavilla.</string>
     <string name="updateReleaseNotes">Siirry julkaisutietoihin</string>
     <string name="updateSession">{app_name} Päivitys</string>
     <string name="updateVersion">Versio {version}</string>

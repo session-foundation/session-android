@@ -108,7 +108,7 @@ fun AlertDialog(
                         modifier = Modifier.align(Alignment.TopEnd)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_dialog_x),
+                            painter = painterResource(id = R.drawable.ic_x),
                             tint = LocalColors.current.text,
                             contentDescription = "back"
                         )

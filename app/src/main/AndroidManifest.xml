@@ -31,23 +31,18 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BROADCAST_STICKY" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
     <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Google may (potentially) insist we implement `ConnectionService` to request MANAGE_OWN_CALLS - see:
-           - https://developer.android.com/reference/android/Manifest.permission#MANAGE_OWN_CALLS
-           - https://developer.android.com/reference/android/telecom/ConnectionService
-    -->
-    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
     <uses-permission android:name="android.app.role.DIALER" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -77,8 +72,7 @@
         </intent>
     </queries>
 
-    <!-- The allowBackup="false" below is important to guard against potential malicious backups -->
-
+    <!-- Note: The allowBackup="false" below is important to guard against potential malicious backups -->
     <application
         android:name="org.thoughtcrime.securesms.ApplicationContext"
         android:allowBackup="false"
@@ -91,7 +85,6 @@
         tools:replace="android:allowBackup,android:label" >
 
         <!-- Disable all analytics -->
-
         <meta-data
             android:name="firebase_analytics_collection_deactivated"
             android:value="true" />
@@ -268,9 +261,9 @@
             android:launchMode="singleTask"
             android:theme="@style/NoAnimation.Theme.AppCompat.Light.DarkActionBar" />
         <activity
-            android:name="org.thoughtcrime.securesms.PassphrasePromptActivity"
+            android:name="org.thoughtcrime.securesms.ScreenLockActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:launchMode="singleTask"
+            android:launchMode="singleInstancePerTask"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:name="org.thoughtcrime.securesms.giph.ui.GiphyActivity"
@@ -311,7 +304,7 @@
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
             android:exported="true"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-        <activity android:name="org.thoughtcrime.securesms.calls.WebRtcCallActivity"
+        <activity android:name="org.thoughtcrime.securesms.webrtc.WebRtcCallActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:showForAllUsers="true"
@@ -323,11 +316,6 @@
         </activity>
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
 
-        <service
-            android:enabled="true"
-            android:name="org.thoughtcrime.securesms.service.WebRtcCallService"
-            android:foregroundServiceType="phoneCall"
-            android:exported="false" />
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
             android:enabled="true"
@@ -343,6 +331,11 @@
                 <action android:name="android.service.chooser.ChooserTargetService" />
             </intent-filter>
         </service>
+        <service
+            android:name="org.thoughtcrime.securesms.service.CallForegroundService"
+            android:foregroundServiceType="phoneCall"
+            android:exported="false" />
+
         <receiver
             android:name="org.thoughtcrime.securesms.notifications.MarkReadReceiver"
             android:enabled="true"
@@ -374,6 +367,9 @@
             </intent-filter>
         </receiver>
         <receiver android:name="org.thoughtcrime.securesms.service.ExpirationListener" />
+        <receiver android:name="org.thoughtcrime.securesms.webrtc.EndCallReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <provider
             android:name="org.thoughtcrime.securesms.providers.PartProvider"

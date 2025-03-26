@@ -729,7 +729,6 @@
     <string name="recoveryPasswordBannerTitle">Сачувај своју Recovery Password</string>
     <string name="recoveryPasswordDescription">Користите своју Recovery password да учитате свој налог на нове уређаје.\n\nВаш налог не може бити опорављен без ваше Recovery password. Обавезно га чувајте на сигурном месту и не делите га са никим.</string>
     <string name="recoveryPasswordEnter">Унесите вашe recovery password</string>
-    <string name="recoveryPasswordErrorLoad">Дошло је до грешке при покушају учитавања ваше лозинке за опоравак.\n\nИзвезите своје записе, а затим отпремите датотеку преко Session центра за помоћ како бисте помогли у решавању овог проблема.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Проверите вашу Recovery Password и покушајте поново.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Неки од речи у твојој Рекавери Лозинки су погрешне. Молимо провери и покушај поново.</string>
     <string name="recoveryPasswordErrorMessageShort">Унета фраза за опоравак није довољно дуга. Молимо проверите и покушајте поново.</string>
@@ -817,7 +816,6 @@
     <string name="updateError">Не могу ажурирати</string>
     <string name="updateErrorDescription">{app_name} није успео да се ажурира. Молимо идите на {session_download_url} и ручно инсталирајте нову верзију, затим контактирајте наш Центар за помоћ да нас обавестите о овом проблему.</string>
     <string name="updateNewVersion">Нова верзија {app_name} је доступна, тапните за ажурирање</string>
-    <string name="updateNewVersionDescription">Нова верзија {app_name} је доступна.</string>
     <string name="updateReleaseNotes">Идите на Напомене о издању</string>
     <string name="updateSession">Ажурирање {app_name}</string>
     <string name="updateVersion">Верзија {version}</string>

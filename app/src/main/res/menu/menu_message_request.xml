@@ -3,13 +3,13 @@
 
     <item
         android:id="@+id/menu_delete_message_request"
-        android:icon="@drawable/ic_delete_24"
+        android:icon="@drawable/ic_trash_2"
         android:contentDescription="@string/AccessibilityId_deleteButton"
         android:title="@string/delete"/>
 
     <item
         android:id="@+id/menu_block_message_request"
-        android:icon="@drawable/ic_baseline_block_24"
+        android:icon="@drawable/ic_ban"
         android:contentDescription="@string/AccessibilityId_blockButton"
         android:title="@string/block"/>
 

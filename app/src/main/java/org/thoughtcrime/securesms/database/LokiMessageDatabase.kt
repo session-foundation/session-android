@@ -57,7 +57,6 @@ class LokiMessageDatabase(context: Context, helper: SQLCipherOpenHelper) : Datab
 
         const val SMS_TYPE = 0
         const val MMS_TYPE = 1
-
     }
 
     fun getServerID(messageID: Long): Long? {

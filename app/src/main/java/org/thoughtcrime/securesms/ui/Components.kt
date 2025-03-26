@@ -309,7 +309,7 @@ fun PreviewItemButton() {
     PreviewTheme {
         ItemButton(
             textId = R.string.groupCreate,
-            icon = R.drawable.ic_group,
+            icon = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -321,7 +321,7 @@ fun PreviewLargeItemButton() {
     PreviewTheme {
         LargeItemButton(
             textId = R.string.groupCreate,
-            icon = R.drawable.ic_group,
+            icon = R.drawable.ic_users_group_custom,
             onClick = {}
         )
     }
@@ -440,7 +440,7 @@ private fun BaseAvatar(
         // image
         if (LocalInspectionMode.current) { // this part is used for previews only
             Image(
-                painterResource(id = R.drawable.ic_profile_default),
+                painterResource(id = R.drawable.ic_user_filled_custom),
                 colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
                 contentScale = ContentScale.Inside,
                 contentDescription = null,
@@ -580,10 +580,11 @@ fun Arc(
 @Composable
 fun RowScope.SessionShieldIcon() {
     Icon(
-        painter = painterResource(R.drawable.session_shield),
+        painter = painterResource(R.drawable.ic_recovery_password_custom),
         contentDescription = null,
         modifier = Modifier
             .align(Alignment.CenterVertically)
+            .size(16.dp)
             .wrapContentSize(unbounded = true)
     )
 }
@@ -627,7 +628,7 @@ fun SearchBar(
                     .background(backgroundColor, RoundedCornerShape(100))
             ) {
                 Image(
-                    painterResource(id = R.drawable.ic_search_24),
+                    painterResource(id = R.drawable.ic_search),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(
                         LocalColors.current.textSecondary

@@ -8,6 +8,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.truncateIdForDisplay
 
 /**
@@ -30,9 +31,9 @@ class GroupInviteException(
         }
     }
 
-    fun format(context: Context, storage: StorageProtocol): CharSequence {
+    fun format(context: Context, usernameUtils: UsernameUtils): CharSequence {
         val getInviteeName = { accountId: String ->
-            storage.getContactNameWithAccountID(accountId)
+            usernameUtils.getContactNameWithAccountID(accountId)
         }
 
         val first = inviteeAccountIds.first().let(getInviteeName)

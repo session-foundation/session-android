@@ -55,7 +55,7 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
 
   @Override
   public synchronized void didReceiveTypingStartedMessage(@NotNull Context context, long threadId, @NotNull Address author, int device) {
-    if (author.serialize().equals(preferences.getLocalNumber())) {
+    if (author.toString().equals(preferences.getLocalNumber())) {
       return;
     }
 
@@ -84,7 +84,7 @@ public class TypingStatusRepository implements SSKEnvironment.TypingIndicatorsPr
 
   @Override
   public synchronized void didReceiveTypingStoppedMessage(@NotNull Context context, long threadId, @NotNull Address author, int device, boolean isReplacedByIncomingMessage) {
-    if (author.serialize().equals(preferences.getLocalNumber())) {
+    if (author.toString().equals(preferences.getLocalNumber())) {
       return;
     }
 

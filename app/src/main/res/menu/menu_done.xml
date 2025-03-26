@@ -6,7 +6,8 @@
     <item
         android:title="@string/done"
         android:id="@+id/doneButton"
-        android:icon="?menu_accept_icon"
+        android:icon="@drawable/ic_check"
+        app:iconTint="?android:textColorPrimary"
         android:contentDescription="@string/AccessibilityId_done"
         app:showAsAction="always" />
 

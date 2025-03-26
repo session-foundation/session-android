@@ -722,7 +722,6 @@
     <string name="recoveryPasswordBannerTitle">保存您的恢复密码</string>
     <string name="recoveryPasswordDescription">使用您的恢复密码在新设备上加载您的帐户。\n\n没有您的恢复密码，您的帐户将无法恢复。请确保将它存储在安全的地方，并且不要与任何人分享。</string>
     <string name="recoveryPasswordEnter">输入您的恢复密码</string>
-    <string name="recoveryPasswordErrorLoad">加载恢复密码时出错。\n\n请导出您的日志，然后通过Session服务台上传文件来帮助解决这个问题。</string>
     <string name="recoveryPasswordErrorMessageGeneric">请检查您的恢复密码并重试。</string>
     <string name="recoveryPasswordErrorMessageIncorrect">你的恢复密码中的一些词语不正确。请检查后重试。</string>
     <string name="recoveryPasswordErrorMessageShort">您输入的恢复密码长度不够。请检查后重试。</string>
@@ -808,7 +807,6 @@
     <string name="updateError">无法更新</string>
     <string name="updateErrorDescription">{app_name}更新失败。请返回{session_download_url}并手动安装新版本，并联系帮助中心反馈此问题。</string>
     <string name="updateNewVersion">有新版本的{app_name}可用，点击更新</string>
-    <string name="updateNewVersionDescription">有新版本的{app_name}可用。</string>
     <string name="updateReleaseNotes">跳转到版本信息</string>
     <string name="updateSession">{app_name}更新</string>
     <string name="updateVersion">版本 {version}</string>

@@ -706,7 +706,6 @@
     <string name="recoveryPasswordBannerTitle">บันทึกรหัสผ่านการกู้คืนของคุณ</string>
     <string name="recoveryPasswordDescription">ใช้รหัสผ่านการกู้คืนของคุณเพื่อโหลดบัญชีของคุณบนอุปกรณ์ใหม่.\n\nบัญชีของคุณจะไม่สามารถกู้คืนได้หากไม่มีรหัสผ่านการกู้คืนของคุณ. ตรวจสอบให้แน่ใจว่ามีการเก็บไว้อย่างปลอดภัยและไม่แบ่งปันให้ใคร.</string>
     <string name="recoveryPasswordEnter">ป้อนรหัสผ่านสำหรับการกู้คืนของคุณ</string>
-    <string name="recoveryPasswordErrorLoad">เกิดข้อผิดพลาดขณะพยายามโหลดรหัสผ่านกู้คืนของคุณ.\n\nกรุณาส่งออกบันทึกของคุณ แล้วอัปโหลดไฟล์ผ่าน Help Desk ของ Session เพื่อช่วยแก้ไขปัญหานี้.</string>
     <string name="recoveryPasswordErrorMessageGeneric">โปรดตรวจสอบรหัสการกู้คืนของคุณและลองอีกครั้ง</string>
     <string name="recoveryPasswordErrorMessageIncorrect">บางคำในรหัสผ่านการกู้คืนของคุณไม่ถูกต้อง กรุณาตรวจสอบและลองอีกครั้ง</string>
     <string name="recoveryPasswordErrorMessageShort">รหัสผ่านกู้คืนที่ท่านใส่ยังไม่พอ กรุณาตรวจสอบแล้วลองใหม่อีกครั้ง</string>
@@ -792,7 +791,6 @@
     <string name="updateError">ไม่สามารถอัปเดตได้</string>
     <string name="updateErrorDescription">{app_name} การอัปเดตล้มเหลว กรุณาไปที่ {session_download_url} เพื่อติดตั้งเวอร์ชันใหม่ด้วยตัวเอง จากนั้นติดต่อศูนย์ช่วยเหลือของเราเพื่อแจ้งให้เราทราบเกี่ยวกับปัญหานี้</string>
     <string name="updateNewVersion">มีเวอร์ชั่นใหม่ของ {app_name} ที่พร้อมให้อัปเดต แตะเพื่ออัปเดต</string>
-    <string name="updateNewVersionDescription">มีเวอร์ชั่นใหม่ของ {app_name} พร้อมใช้งาน</string>
     <string name="updateReleaseNotes">ไปที่บันทึกประจำรุ่น</string>
     <string name="updateSession">การอัปเดต {app_name}</string>
     <string name="updateVersion">เวอร์ชัน {version}.</string>

@@ -30,7 +30,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
         title(getString(R.string.attachmentsAutoDownloadModalTitle))
 
         val explanation = Phrase.from(context, R.string.attachmentsAutoDownloadModalDescription)
-            .put(CONVERSATION_NAME_KEY, threadRecipient.toShortString())
+            .put(CONVERSATION_NAME_KEY, threadRecipient.name)
             .format()
         text(explanation)
 

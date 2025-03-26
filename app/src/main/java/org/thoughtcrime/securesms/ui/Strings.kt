@@ -54,7 +54,7 @@ fun GetString(duration: Duration) = GetString.FromMap(duration, ExpirationUtil::
 /**
  * Represents some text with an associated title.
  */
-data class TitledText(val title: GetString, val text: String) {
-    constructor(title: String, text: String): this(GetString(title), text)
-    constructor(@StringRes title: Int, text: String): this(GetString(title), text)
+data class TitledText(val title: GetString, val text: String?) {
+    constructor(title: String, text: String?): this(GetString(title), text)
+    constructor(@StringRes title: Int, text: String?): this(GetString(title), text)
 }

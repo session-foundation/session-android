@@ -612,7 +612,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
-        contentValues.put(ADDRESS, retrieved.from.serialize())
+        contentValues.put(ADDRESS, retrieved.from.toString())
         contentValues.put(MESSAGE_BOX, mailbox)
         contentValues.put(MESSAGE_TYPE, PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF)
         contentValues.put(THREAD_ID, threadId)
@@ -640,7 +640,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         var quoteAttachments: List<Attachment?>? = LinkedList()
         if (retrieved.quote != null) {
             contentValues.put(QUOTE_ID, retrieved.quote.id)
-            contentValues.put(QUOTE_AUTHOR, retrieved.quote.author.serialize())
+            contentValues.put(QUOTE_AUTHOR, retrieved.quote.author.toString())
             contentValues.put(QUOTE_MISSING, if (retrieved.quote.missing) 1 else 0)
             quoteAttachments = retrieved.quote.attachments
         }
@@ -752,7 +752,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresIn)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
-        contentValues.put(ADDRESS, message.recipient.address.serialize())
+        contentValues.put(ADDRESS, message.recipient.address.toString())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -764,7 +764,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
         val quoteAttachments: MutableList<Attachment?> = LinkedList()
         if (message.outgoingQuote != null) {
             contentValues.put(QUOTE_ID, message.outgoingQuote!!.id)
-            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote!!.author.serialize())
+            contentValues.put(QUOTE_AUTHOR, message.outgoingQuote!!.author.toString())
             contentValues.put(QUOTE_MISSING, if (message.outgoingQuote!!.missing) 1 else 0)
             quoteAttachments.addAll(message.outgoingQuote!!.attachments!!)
         }
@@ -1107,7 +1107,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             null,
             MESSAGE_REQUEST_RESPONSE + " = 1 AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
             arrayOf<String?>(
-                message!!.from.serialize(), threadId.toString()
+                message!!.from.toString(), threadId.toString()
             ),
             null,
             null,
@@ -1128,7 +1128,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             null,
             DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
             arrayOf<String?>(
-                message!!.sentTimeMillis.toString(), message.from.serialize(), threadId.toString()
+                message!!.sentTimeMillis.toString(), message.from.toString(), threadId.toString()
             ),
             null,
             null,
@@ -1150,7 +1150,7 @@ class MmsDatabase(context: Context, databaseHelper: SQLCipherOpenHelper) : Messa
             DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
             arrayOf<String?>(
                 message!!.sentTimeMillis.toString(),
-                message.recipient.address.serialize(),
+                message.recipient.address.toString(),
                 threadId.toString()
             ),
             null,

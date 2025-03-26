@@ -132,8 +132,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     if (restoredModel != null) {
       editorModel = restoredModel;
       restoredModel = null;
-    } else if (savedInstanceState != null) {
-      editorModel = new Data(savedInstanceState).readModel();
     }
 
     if (editorModel == null) {

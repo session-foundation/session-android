@@ -30,7 +30,7 @@
             android:clickable="false"
             android:contentDescription="@string/AccessibilityId_emojiSearch"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_search_24"
+            app:srcCompat="@drawable/ic_search"
             app:tint="?searchIconColor" />
 
     </FrameLayout>

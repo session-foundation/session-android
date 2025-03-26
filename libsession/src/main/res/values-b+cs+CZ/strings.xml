@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Selhalo povýšení {name} v {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Selhalo povýšení {name} a {count} dalších v {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Selhalo povýšení {name} a {other_name} v {group_name}</string>
+    <string name="adminPromotionNotSent">Povýšení nebylo odesláno</string>
     <string name="adminPromotionSent">Povýšení na správce odesláno</string>
+    <string name="adminPromotionStatusUnknown">Neznámý stav povýšení</string>
     <string name="adminRemove">Odebrat správce</string>
     <string name="adminRemoveAsAdmin">Odebrat jako správce</string>
     <string name="adminRemoveCommunityNone">V této komunitě nejsou žádní správci.</string>
@@ -263,6 +265,7 @@
     <string name="copied">Zkopírováno</string>
     <string name="copy">Kopírovat</string>
     <string name="create">Vytvořit</string>
+    <string name="creatingCall">Vytváření hovoru</string>
     <string name="cut">Vyjmout</string>
     <string name="databaseErrorGeneric"><b>Došlo k chybě databáze.\n\nExportujte své aplikační logy a sdílejte je pro účely diagnostiky. Pokud to nebude úspěšné, přeinstalujte {app_name} a obnovte svůj účet.\n\nVarování: To povede ke ztrátě všech zpráv, příloh a údajů účtu starších než dva týdny.</b></string>
     <string name="databaseErrorTimeout">Všimli jsme si, že spuštění aplikace {app_name} trvá dlouho.\n\nMůžete pokračovat v čekání, exportovat logy zařízení k řešení problémů nebo zkusit restartovat {app_name}.</string>
@@ -445,6 +448,7 @@
     <string name="groupInviteFailedMultiple">Nepodařilo se pozvat {name} a {count} další do {group_name}</string>
     <string name="groupInviteFailedTwo">Nepodařilo se pozvat {name} a {other_name} do {group_name}</string>
     <string name="groupInviteFailedUser">Nepodařilo se pozvat {name} do {group_name}</string>
+    <string name="groupInviteNotSent">Pozvánka nebyla odeslána</string>
     <string name="groupInviteReinvite"><b>{name}</b> vás pozval(a), abyste se znovu připojili k <b>{group_name}</b>, kde jste správcem.</string>
     <string name="groupInviteReinviteYou">Byli jste pozváni, abyste se znovu připojili k <b>{group_name}</b>, kde jste správcem.</string>
     <plurals name="groupInviteSending">
@@ -454,6 +458,7 @@
         <item quantity="other">Odeslání pozvánek</item>
     </plurals>
     <string name="groupInviteSent">Pozvánka odeslána</string>
+    <string name="groupInviteStatusUnknown">Neznámý stav pozvánky</string>
     <string name="groupInviteSuccessful">Pozvánka do skupiny byla úspěšná</string>
     <string name="groupInviteVersion">Uživatelé musí používat nejnovější verzi, aby mohli přijímat pozvánky</string>
     <string name="groupInviteYou"><b>Byli jste pozváni k připojení do skupiny.</b></string>
@@ -486,10 +491,12 @@
     <string name="groupNameUpdated">Název skupiny aktualizován.</string>
     <string name="groupNameVisible">Název skupiny je viditelný pro všechny členy skupiny.</string>
     <string name="groupNoMessages">Nemáte žádné zprávy od <b>{group_name}</b>. Pošlete zprávu pro zahájení konverzace!</string>
+    <string name="groupNotUpdatedWarning">Skupina nebyla aktualizována déle než 30 dní. Může dojít k problémům s odesíláním zpráv nebo zobrazováním informací o skupině.</string>
     <string name="groupOnlyAdmin">Jste jediný správce ve skupině <b>{group_name}</b>.\n\nČlenové skupiny a nastavení nelze změnit bez správce.</string>
     <string name="groupPendingRemoval">Čeká na odebrání</string>
     <string name="groupPromotedYou"><b>Byli jste povýšeni na správce.</b></string>
     <string name="groupPromotedYouMultiple"><b>Vy</b> a <b>{count} dalších</b> jste byli povýšeni na správce.</string>
+    <string name="groupPromotedYouTwo"><b>Vy</b> a <b>{other_name}</b> jste byli povýšeni na správce.</string>
     <string name="groupRemoveDescription">Chcete odstranit <b>{name}</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Chcete odstranit <b>{name}</b> a <b>{count} dalších</b> ze skupiny <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Chcete odstranit <b>{name}</b> a <b>{other_name}</b> ze skupiny <b>{group_name}</b>?</string>
@@ -515,6 +522,7 @@
     <string name="groupSetDisplayPicture">Nastavit zobrazovaný obrázek skupiny</string>
     <string name="groupUnknown">Neznámá skupina</string>
     <string name="groupUpdated">Skupina aktualizována</string>
+    <string name="handlingConnectionCandidates">Zpracování kandidátů na připojení</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Pomozte nám přeložit {app_name}</string>
     <string name="helpReportABug">Nahlásit chybu</string>
@@ -533,11 +541,28 @@
     <string name="incognitoKeyboardDescription">Požadovat anonymní režim, pokud je k dispozici. V závislosti na klávesnici, kterou používáte, může být tento požadavek ignorován.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Chybná zkratka</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Pozvání selhalo</item>
+        <item quantity="few">Pozvání selhala</item>
+        <item quantity="many">Pozvání selhala</item>
+        <item quantity="other">Pozvání selhala</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Pozvánka nemohla být odeslána. Chcete to zkusit znovu?</item>
+        <item quantity="few">Pozvánky nemohly být odeslány. Chcete to zkusit znovu?</item>
+        <item quantity="many">Pozvánky nemohly být odeslány. Chcete to zkusit znovu?</item>
+        <item quantity="other">Pozvánky nemohly být odeslány. Chcete to zkusit znovu?</item>
+    </plurals>
     <string name="join">Připojit</string>
     <string name="later">Později</string>
     <string name="learnMore">Zjistit více</string>
     <string name="leave">Opustit</string>
     <string name="leaving">Opouštění...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Tato skupina je nyní určena pouze pro čtení. Chcete-li pokračovat v konverzaci, vytvořte tuto skupinu znovu.</string>
+    <string name="legacyGroupAfterDeprecationMember">Tato skupina je nyní určena pouze pro čtení. Požádejte správce skupiny, aby tuto skupinu znovu vytvořil, abyste mohli pokračovat v chatu.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Skupiny byly aktualizovány! Znovu vytvořte tuto skupinu pro zvýšení spolehlivosti. Tato skupina se stane pouze pro čtení dne {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Skupiny byly aktualizovány! Požádejte správce skupiny o znovuvytvoření této skupiny, aby se zvýšila její spolehlivost. Tato skupina se stane pouze pro čtení dne {date}.</string>
+    <string name="legacyGroupChatHistory">Historie chatu se do nové skupiny nepřenese. Veškerou historii chatu ve staré skupině si můžete stále prohlížet.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> se připojil(a) ke skupině.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> a <b>{count} další</b> se připojili ke skupině.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Vy</b> a <b>{count} dalších</b> se připojilo ke skupině.</string>
@@ -617,6 +642,12 @@
         <item quantity="many">Máte %1$d nových zpráv.</item>
         <item quantity="other">Máte %1$d nových zpráv.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Ve skupině %1$s máte novou zprávu.</item>
+        <item quantity="few">Ve skupině %1$s máte %2$d nové zprávy.</item>
+        <item quantity="many">Ve skupině %1$s máte %2$d nových zpráv.</item>
+        <item quantity="other">Ve skupině %1$s máte %2$d nových zpráv.</item>
+    </plurals>
     <string name="messageReplyingTo">Odpovědět na</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> vás pozval(a) do skupiny <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Odesláním zprávy do této skupiny automaticky přijmete pozvánku do skupiny.</string>
@@ -646,6 +677,7 @@
     <string name="messages">Zprávy</string>
     <string name="minimize">Minimalizovat</string>
     <string name="next">Další</string>
+    <string name="nicknameDescription">Vyberte přezdívku pro <b>{name}</b>. Zobrazí se ve vašich konverzacích jeden na jednoho a ve skupinových.</string>
     <string name="nicknameEnter">Zadejte přezdívku</string>
     <string name="nicknameErrorShorter">Zadejte prosím kratší přezdívku</string>
     <string name="nicknameRemove">Odstranit přezdívku</string>
@@ -772,6 +804,18 @@
     <string name="profileDisplayPictureSizeError">Prosím vyberte menší soubor.</string>
     <string name="profileErrorUpdate">Nepodařilo se aktualizovat profil.</string>
     <string name="promote">Povýšit</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Povýšení selhalo</item>
+        <item quantity="few">Povýšení selhala</item>
+        <item quantity="many">Povýšení selhala</item>
+        <item quantity="other">Povýšení selhala</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Povýšení nebylo možné uplatnit. Chcete to zkusit znovu?</item>
+        <item quantity="few">Povýšení nebylo možné uplatnit. Chcete to zkusit znovu?</item>
+        <item quantity="many">Povýšení nebylo možné uplatnit. Chcete to zkusit znovu?</item>
+        <item quantity="other">Povýšení nebylo možné uplatnit. Chcete to zkusit znovu?</item>
+    </plurals>
     <string name="qrCode">QR kód</string>
     <string name="qrNotAccountId">Tento QR kód neobsahuje ID účtu</string>
     <string name="qrNotRecoveryPassword">Tento QR kód neobsahuje heslo pro obnovení</string>
@@ -784,12 +828,14 @@
     <string name="readReceipts">Potvrzení o přečtení</string>
     <string name="readReceiptsDescription">Zobrazit potvrzení o přečtení pro všechny zprávy, které posíláte a přijímáte.</string>
     <string name="received">Přijato:</string>
+    <string name="receivedAnswer">Přijatá odpověď</string>
+    <string name="receivingCallOffer">Přijímání nabídky hovoru</string>
+    <string name="receivingPreOffer">Přijímání předběžné nabídky</string>
     <string name="recommended">Doporučeno</string>
     <string name="recoveryPasswordBannerDescription">Uložte si heslo pro obnovení, abyste zajistili, že neztratíte přístup k účtu.</string>
     <string name="recoveryPasswordBannerTitle">Uložte si heslo pro obnovení</string>
     <string name="recoveryPasswordDescription">Použijte své heslo pro obnovení pro načtení účtu na nových zařízeních.\n\nBez hesla pro obnovení nelze obnovit účet. Ujistěte se, že je uložené na bezpečném místě – a nesdílejte ho s nikým.</string>
     <string name="recoveryPasswordEnter">Zadejte heslo pro obnovení</string>
-    <string name="recoveryPasswordErrorLoad">Došlo k chybě při pokusu o načtení vašeho hesla pro obnovení.\n\nPro vyřešení problému prosím exportujte své logy a soubor nahrajte pomocí Session Help Desku.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Zkontrolujte prosím své heslo pro obnovení a zkuste to znovu.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Některá ze slov ve vašem hesle pro obnovení jsou nesprávná. Zkontrolujte je a zkuste to znovu.</string>
     <string name="recoveryPasswordErrorMessageShort">Zadané heslo pro obnovení není dostatečně dlouhé. Prosím zkontrolujte ho a zkuste to znovu.</string>
@@ -803,6 +849,7 @@
     <string name="recoveryPasswordRestoreDescription">Zadejte heslo pro obnovení k načtení účtu. Pokud ho nemáte uložené, naleznete ho v nastavení aplikace.</string>
     <string name="recoveryPasswordView">Zobrazit heslo</string>
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo pro obnovení. Pokud ho někomu pošlete, bude mít plný přístup k vašemu účtu.</string>
+    <string name="recreateGroup">Znovu vytvořit skupinu</string>
     <string name="redo">Znovu</string>
     <string name="remove">Odstranit</string>
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
@@ -839,6 +886,8 @@
     <string name="selectAll">Vybrat vše</string>
     <string name="send">Odeslat</string>
     <string name="sending">Odesílání</string>
+    <string name="sendingCallOffer">Odesílání nabídky hovoru</string>
+    <string name="sendingConnectionCandidates">Odesílání kandidátů na připojení</string>
     <string name="sent">Odesláno:</string>
     <string name="sessionAppearance">Vzhled</string>
     <string name="sessionClearData">Vyčistit data</string>
@@ -857,6 +906,7 @@
     <string name="shareAccountIdDescription">Pozvěte své přátele ke komunikaci pomocí {app_name} sdílením svého ID účtu.</string>
     <string name="shareAccountIdDescriptionCopied">Sdílejte se svými přáteli tam, kde s nimi obvykle mluvíte — a pak konverzaci přesuňte sem.</string>
     <string name="shareExtensionDatabaseError">Při otevírání databáze se vyskytl problém. Prosím, restartujte aplikaci a zkuste to znovu.</string>
+    <string name="shareExtensionNoAccountError">Ups! Vypadá to, že ještě nemáte účet {app_name}.\n\nPřed sdílením si ho budete muset v aplikaci {app_name} vytvořit.</string>
     <string name="shareToSession">Sdílet do {app_name}</string>
     <string name="show">Zobrazit</string>
     <string name="showAll">Zobrazit všechny</string>
@@ -878,7 +928,6 @@
     <string name="updateError">Nelze aktualizovat</string>
     <string name="updateErrorDescription">{app_name} se nepodařilo aktualizovat. Přejděte prosím na {session_download_url} a nainstalujte novou verzi ručně, poté kontaktujte naše Centrum pomoci a dejte nám vědět o tomto problému.</string>
     <string name="updateNewVersion"><b>Je dostupná nová verze {app_name}, klikněte pro aktualizaci</b></string>
-    <string name="updateNewVersionDescription"><b>Je dostupná nová verze {app_name}.</b></string>
     <string name="updateReleaseNotes">Přejít na poznámky k vydání</string>
     <string name="updateSession">Aktualizace {app_name}</string>
     <string name="updateVersion">Verze {version}</string>

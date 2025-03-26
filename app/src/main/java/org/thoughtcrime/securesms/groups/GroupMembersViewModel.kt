@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
+import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 
 
@@ -16,8 +17,9 @@ class GroupMembersViewModel @AssistedInject constructor(
     @Assisted private val groupId: AccountId,
     @ApplicationContext context: Context,
     storage: StorageProtocol,
-    configFactory: ConfigFactoryProtocol
-) : BaseGroupMembersViewModel(groupId, context, storage, configFactory) {
+    configFactory: ConfigFactoryProtocol,
+    usernameUtils: UsernameUtils,
+) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory) {
 
     @AssistedFactory
     interface Factory {

@@ -1,6 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -9,8 +11,10 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
 import android.text.util.Linkify
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
@@ -35,6 +39,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.SearchUtil
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -123,7 +128,7 @@ class VisibleMessageContentView : ConstraintLayout {
                 val r = Rect()
                 binding.quoteView.root.getGlobalVisibleRect(r)
                 if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
-                    delegate?.scrollToMessageIfPossible(quote.id)
+                    delegate?.highlightMessageFromTimestamp(quote.id)
                 }
             }
         }
@@ -148,9 +153,13 @@ class VisibleMessageContentView : ConstraintLayout {
                 // When in a link preview ensure the bodyTextView can expand to the full width
                 binding.bodyTextView.maxWidth = binding.linkPreviewView.root.layoutParams.width
             }
+
             // AUDIO
             message is MmsMessageRecord && message.slideDeck.audioSlide != null -> {
-                hideBody = true
+
+                // Show any text message associated with the audio message (which may be a voice clip - but could also be a mp3 or such)
+                hideBody = false
+
                 // Audio attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.voiceMessageView.root.indexInAdapter = indexInAdapter
@@ -161,7 +170,7 @@ class VisibleMessageContentView : ConstraintLayout {
                     onContentClick.add { binding.voiceMessageView.root.togglePlayback() }
                     onContentDoubleTap = { binding.voiceMessageView.root.handleDoubleTap() }
                 } else {
-                    hideBody = true
+                    // If it's an audio message but we haven't downloaded it yet show it as pending
                     (message.slideDeck.audioSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.AUDIO,
@@ -172,24 +181,54 @@ class VisibleMessageContentView : ConstraintLayout {
                     }
                 }
             }
+
             // DOCUMENT
             message is MmsMessageRecord && message.slideDeck.documentSlide != null -> {
-                hideBody = true // TODO: check if this is still the logic we want
+                // Show any message that came with the attached document
+                hideBody = false
+                
                 // Document attachment
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
                     binding.documentView.root.bind(message, getTextColor(context, message))
+                    message.slideDeck.documentSlide?.let { slide ->
+                        if(!mediaInProgress) { // do not attempt to open a doc in progress of downloading
+                            onContentClick.add {
+                                // open the document when tapping it
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.setDataAndType(
+                                        PartAuthority.getAttachmentPublicUri(slide.uri),
+                                        slide.contentType
+                                    )
+
+                                    context.startActivity(intent)
+                                } catch (e: ActivityNotFoundException) {
+                                    Log.e("VisibleMessageContentView", "Error opening document", e)
+                                    Toast.makeText(
+                                        context,
+                                        R.string.attachmentsErrorOpen,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
                 } else {
-                    hideBody = true
+                    // If the document hasn't been downloaded yet then show it as pending
                     (message.slideDeck.documentSlide?.asAttachment() as? DatabaseAttachment)?.let { attachment ->
                         binding.pendingAttachmentView.root.bind(
                             PendingAttachmentView.AttachmentType.DOCUMENT,
                             getTextColor(context,message),
                             attachment
                             )
-                        onContentClick.add { binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment) }
+                        onContentClick.add {
+                            binding.pendingAttachmentView.root.showDownloadDialog(thread, attachment)
+                        }
                     }
                 }
             }
+
             // IMAGE / VIDEO
             message is MmsMessageRecord && !suppressThumbnails && message.slideDeck.asAttachments().isNotEmpty() -> {
                 if (mediaDownloaded || mediaInProgress || message.isOutgoing) {
@@ -201,7 +240,7 @@ class VisibleMessageContentView : ConstraintLayout {
                         isStart = isStartOfMessageCluster,
                         isEnd = isEndOfMessageCluster
                     )
-                    binding.albumThumbnailView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
+                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
                         horizontalBias = if (message.isOutgoing) 1f else 0f
                     }
                     onContentClick.add { event ->

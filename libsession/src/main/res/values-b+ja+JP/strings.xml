@@ -706,7 +706,6 @@
     <string name="recoveryPasswordBannerTitle">リカバリーパスワードを保存してください</string>
     <string name="recoveryPasswordDescription">リカバリパスワードを使用して、新しいデバイスでアカウントを読み込みます。\n\n リカバリパスワードがないとアカウントを復元できません。 安全な場所に保管し、他の人と共有しないでください。</string>
     <string name="recoveryPasswordEnter">リカバリーフレーズを入力してください</string>
-    <string name="recoveryPasswordErrorLoad">回復パスワードの読み込み中にエラーが発生しました。\n\nログをエクスポートしてから、Sessionのヘルプデスクにファイルをアップロードし、この問題の解決に役立ててください。</string>
     <string name="recoveryPasswordErrorMessageGeneric">リカバリーパスワードを確認してもう一度やり直してください</string>
     <string name="recoveryPasswordErrorMessageIncorrect">いくつかのリカバリパスワードの単語が間違っています。確認して再試行してください。</string>
     <string name="recoveryPasswordErrorMessageShort">入力したリカバリーパスワードが十分な長さではありません。確認して再試行してください。</string>
@@ -792,7 +791,6 @@
     <string name="updateError">更新できませんでした</string>
     <string name="updateErrorDescription">{app_name}の更新に失敗しました。{session_download_url}にアクセスして新しいバージョンを手動でインストールしてください。その後、この問題についてヘルプセンターにご連絡ください。</string>
     <string name="updateNewVersion">{app_name} のバージョンアップが利用可能です。タップすると更新します。</string>
-    <string name="updateNewVersionDescription">新バージョンの {app_name} が利用可能です</string>
     <string name="updateReleaseNotes">リリースノートを閲覧</string>
     <string name="updateSession">{app_name}アップデート</string>
     <string name="updateVersion">バージョン {version}</string>

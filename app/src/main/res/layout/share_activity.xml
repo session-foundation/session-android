@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                xmlns:wheel="http://schemas.android.com/apk/res-auto"
-                xmlns:tools="http://schemas.android.com/tools"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    xmlns:wheel="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -35,10 +35,12 @@
             <ImageView android:id="@+id/search_action"
                        android:layout_width="wrap_content"
                        android:layout_height="wrap_content"
-                       android:src="@drawable/ic_baseline_search_24"
-                       android:visibility="gone"
-                       android:layout_alignParentEnd="true"
-                       android:layout_centerVertical="true"/>
+                android:contentDescription="@string/AccessibilityId_search"
+                android:src="@drawable/ic_search"
+                android:visibility="gone"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                wheel:tint="?attr/colorControlNormal" />
 
         </RelativeLayout>
 

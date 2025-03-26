@@ -118,13 +118,13 @@ fun MessageReceiver.messageIsOutdated(message: Message, threadId: Long, openGrou
     val userPublicKey = storage.getUserPublicKey()!!
     val threadRecipient = storage.getRecipientForThread(threadId)
     val conversationVisibleInConfig = storage.conversationInConfig(
-        if (message.groupPublicKey == null) threadRecipient?.address?.serialize() else null,
+        if (message.groupPublicKey == null) threadRecipient?.address?.toString() else null,
         message.groupPublicKey,
         openGroupID,
         true
     )
     val canPerformChange = storage.canPerformConfigChange(
-        if (threadRecipient?.address?.serialize() == userPublicKey) SharedConfigMessage.Kind.USER_PROFILE.name else SharedConfigMessage.Kind.CONTACTS.name,
+        if (threadRecipient?.address?.toString() == userPublicKey) SharedConfigMessage.Kind.USER_PROFILE.name else SharedConfigMessage.Kind.CONTACTS.name,
         userPublicKey,
         message.sentTimestamp!!
     )
@@ -420,7 +420,7 @@ fun MessageReceiver.handleVisibleMessage(
             try {
                 MessagingModuleConfiguration.shared.groupManagerV2
                     .handleInviteResponse(
-                        AccountId(threadRecipient.address.serialize()),
+                        AccountId(threadRecipient.address.toString()),
                         AccountId(messageSender),
                         approved = true
                     )
@@ -469,8 +469,10 @@ fun MessageReceiver.handleVisibleMessage(
     }
     // Parse attachments if needed
     val attachments = proto.dataMessage.attachmentsList.map(Attachment::fromProto).filter { it.isValid() }
+
     // Cancel any typing indicators if needed
     cancelTypingIndicatorsIfNeeded(message.sender!!)
+
     // Parse reaction if needed
     val threadIsGroup = threadRecipient?.isGroupOrCommunityRecipient == true
     message.reaction?.let { reaction ->
@@ -489,7 +491,7 @@ fun MessageReceiver.handleVisibleMessage(
         message.hasMention = listOf(userPublicKey, userBlindedKey)
             .filterNotNull()
             .any { key ->
-                messageText?.contains("@$key") == true || key == (quoteModel?.author?.serialize() ?: "")
+                messageText?.contains("@$key") == true || key == (quoteModel?.author?.toString() ?: "")
             }
 
         // Persist the message
@@ -941,8 +943,8 @@ private fun MessageReceiver.handleClosedGroupNameChanged(message: LegacyGroupCon
     if (!isValidGroupUpdate(group, message.sentTimestamp!!, senderPublicKey)) {
         return
     }
-    val members = group.members.map { it.serialize() }
-    val admins = group.admins.map { it.serialize() }
+    val members = group.members.map { it.toString() }
+    val admins = group.admins.map { it.toString() }
     val name = kind.name
 
     // Only update the group in storage if it isn't invalidated by the config state
@@ -978,8 +980,8 @@ private fun MessageReceiver.handleClosedGroupMembersAdded(message: LegacyGroupCo
     if (!isValidGroupUpdate(group, message.sentTimestamp!!, senderPublicKey)) { return }
     val name = group.title
     // Check common group update logic
-    val members = group.members.map { it.serialize() }
-    val admins = group.admins.map { it.serialize() }
+    val members = group.members.map { it.toString() }
+    val admins = group.admins.map { it.toString() }
 
     val updateMembers = kind.members.map { it.toByteArray().toHexString() }
     val newMembers = members + updateMembers
@@ -1050,7 +1052,7 @@ private fun MessageReceiver.handleClosedGroupMembersRemoved(message: LegacyGroup
     }
     val name = group.title
     // Check common group update logic
-    val members = group.members.map { it.serialize() }
+    val members = group.members.map { it.toString() }
     val admins = group.admins.map { it.toString() }
     val removedMembers = kind.members.map { it.toByteArray().toHexString() }
     val zombies: Set<String> = storage.getZombieMembers(groupID)
@@ -1125,7 +1127,7 @@ private fun MessageReceiver.handleClosedGroupMemberLeft(message: LegacyGroupCont
     }
     val name = group.title
     // Check common group update logic
-    val members = group.members.map { it.serialize() }
+    val members = group.members.map { it.toString() }
     val admins = group.admins.map { it.toString() }
     if (!isValidGroupUpdate(group, message.sentTimestamp!!, senderPublicKey)) {
         return
@@ -1158,7 +1160,7 @@ private fun MessageReceiver.handleClosedGroupMemberLeft(message: LegacyGroupCont
 }
 
 private fun isValidGroupUpdate(group: GroupRecord, sentTimestamp: Long, senderPublicKey: String): Boolean {
-    val oldMembers = group.members.map { it.serialize() }
+    val oldMembers = group.members.map { it.toString() }
     // Check that the message isn't from before the group was created
     if (group.formationTimestamp > sentTimestamp) {
         Log.d("Loki", "Ignoring closed group update from before thread was created.")

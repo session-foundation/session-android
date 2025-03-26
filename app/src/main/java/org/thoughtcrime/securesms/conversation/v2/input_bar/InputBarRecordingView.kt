@@ -12,6 +12,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
+import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -19,10 +20,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarRecordingBinding
+import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.animateSizeChange
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toPx
-import java.util.Date
 
 // Constants for animation durations in milliseconds
 object VoiceRecorderConstants {
@@ -60,23 +61,23 @@ class InputBarRecordingView : RelativeLayout {
         binding = ViewInputBarRecordingBinding.inflate(LayoutInflater.from(context), this, true)
         binding.inputBarMiddleContentContainer.disableClipping()
         binding.inputBarCancelButton.setOnClickListener { hide() }
-
     }
 
     fun show(scope: CoroutineScope) {
         startTimestamp = Date().time
-        binding.recordButtonOverlayImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_microphone, context.theme))
+        binding.recordButtonOverlayImageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.ic_mic, context.theme))
         binding.inputBarCancelButton.alpha = 0.0f
         binding.inputBarMiddleContentContainer.alpha = 1.0f
         binding.lockView.alpha = 1.0f
         isVisible = true
-        alpha = 0.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 0.0f, 1.0f)
-        animation.duration = 250L
-        animation.addUpdateListener { animator ->
-            alpha = animator.animatedValue as Float
-        }
-        animation.start()
+
+        animate().cancel()
+        animate()
+            .alpha(1f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction(null)
+            .start()
+
         animateDotView()
         pulse()
         animateLockViewUp()
@@ -84,18 +85,17 @@ class InputBarRecordingView : RelativeLayout {
     }
 
     fun hide() {
-        alpha = 1.0f
-        val animation = ValueAnimator.ofObject(FloatEvaluator(), 1.0f, 0.0f)
-        animation.duration = VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS
-        animation.addUpdateListener { animator ->
-            alpha = animator.animatedValue as Float
-            if (animator.animatedFraction == 1.0f) {
+        animate().cancel()
+        animate()
+            .alpha(0f)
+            .setDuration(VoiceRecorderConstants.SHOW_HIDE_VOICE_UI_DURATION_MS)
+            .withEndAction {
                 isVisible = false
                 dotViewAnimation?.repeatCount = 0
                 pulseAnimation?.removeAllUpdateListeners()
             }
-        }
-        animation.start()
+            .start()
+
         delegate?.handleVoiceMessageUIHidden()
         stopTimer()
     }
@@ -104,9 +104,13 @@ class InputBarRecordingView : RelativeLayout {
         timerJob?.cancel()
         timerJob = scope.launch {
             while (isActive) {
-                val duration = (Date().time - startTimestamp) / 1000L
-                binding.recordingViewDurationTextView.text = android.text.format.DateUtils.formatElapsedTime(duration)
-                delay(500)
+                // Format the duration as minutes:seconds, using only the amount of digits for minutes as required
+                // (e.g., "3:21" rather than "03:21". Voice messages have a 5 minute maximum length so we never need
+                // more than a single digit to represent minutes.
+                val durationMS = (Date().time - startTimestamp)
+                binding.recordingViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
+
+                delay(500) // Update the voice message duration timer value every half a second
             }
         }
     }
@@ -182,7 +186,6 @@ class InputBarRecordingView : RelativeLayout {
 }
 
 interface InputBarRecordingViewDelegate {
-
     fun handleVoiceMessageUIHidden()
     fun sendVoiceMessage()
     fun cancelVoiceMessage()

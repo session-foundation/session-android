@@ -704,7 +704,6 @@
     <string name="recoveryPasswordBannerTitle">រក្សាទុកពាក្យសម្ងាត់ស្ដាររបស់អ្នក</string>
     <string name="recoveryPasswordDescription">ប្រើពាក្យសម្ងាត់ដើម្បីទាញយកគណនីរបស់អ្នកលើឧបករណ៍ថ្មីៗ.\n\nគណនីរបស់អ្នកមិនអាចទាញយកកនឡើងវិញដោយគ្មាន Recovery Password។ សូមរក្សាវានៅកន្លែងសុវត្ថិភាព ហើយកុំចែករំលែកវាជាមួយនរណាម្នាក់ទេ។</string>
     <string name="recoveryPasswordEnter">បញ្ចូល Recovery password របស់អ្នក</string>
-    <string name="recoveryPasswordErrorLoad">មានកំហុសមួយកើតឡើងនៅពេលព្យាយាមផ្ទុកពាក្យសម្ងាត់ដំណើរការ៖\n\nសូមបញ្ចូលកំណត់ហេតុរបស់អ្នក រួចផ្ញើឯកសារនៅតាមរយៈមជ្ឈមណ្ឌលជំនួយរបស់ Session ដើម្បីជួយដោះស្រាយបញ្ហានេះ។</string>
     <string name="recoveryPasswordErrorMessageGeneric">សូមពិនិត្យពាក្យសម្ងាត់ ស្តារអោយដូចដើម របស់អ្នក ហើយព្យាយាមម្តងទៀត។</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ពាក្យមួយចំនួនក្នុង Recovery Password របស់អ្នកមិនត្រឹមត្រូវទេ។ សូមពិនិត្យនិងព្យាយាមម្តងទៀត។</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
@@ -790,7 +789,6 @@
     <string name="updateError">មិនអាចធ្វើបច្ចុប្បន្នភាព</string>
     <string name="updateErrorDescription">{app_name} បានបរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាព។ សូមចូលទៅកាន់ {session_download_url} ហើយដំឡើងជំនាន់ថ្មីដោយដៃ បន្ទាប់មកទាក់ទងមជ្ឈមណ្ឌលជំនួយរបស់យើង ដើម្បីជំរាបព័ត៌មានអំពីបញ្ហានេះ។</string>
     <string name="updateNewVersion">កំណែថ្មីរបស់{app_name}អាចប្រើប្រាស់បានហើយ សូមចុចធ្វើបច្ចុប្បន្នភាព។</string>
-    <string name="updateNewVersionDescription">កំណែថ្មីរបស់ {app_name} ចេញហើយ។</string>
     <string name="updateReleaseNotes">ចូលទៅកាន់កំណត់ចេញថ្មី</string>
     <string name="updateSession">{app_name} ភើពុទ្ធ</string>
     <string name="updateVersion">កំណែ {version}</string>

@@ -16,14 +16,12 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel
+import org.session.libsession.utilities.UsernameUtils
 
 internal class PickDisplayNameViewModel(
     private val loadFailed: Boolean,
     private val prefs: TextSecurePreferences,
-    private val configFactory: ConfigFactory
+    private val usernameUtils: UsernameUtils,
 ): ViewModel() {
     private val isCreateAccount = !loadFailed
 
@@ -49,9 +47,7 @@ internal class PickDisplayNameViewModel(
                 viewModelScope.launch(Dispatchers.IO) {
                     if (loadFailed) {
                         prefs.setProfileName(displayName)
-                        configFactory.withMutableUserConfigs {
-                            it.userProfile.setName(displayName)
-                        }
+                        usernameUtils.saveCurrentUserName(displayName)
                         _events.emit(Event.LoadAccountComplete)
                     } else _events.emit(Event.CreateAccount(displayName))
                 }
@@ -88,11 +84,11 @@ internal class PickDisplayNameViewModel(
     class Factory @AssistedInject constructor(
         @Assisted private val loadFailed: Boolean,
         private val prefs: TextSecurePreferences,
-        private val configFactory: ConfigFactory
+        private val usernameUtils: UsernameUtils,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return PickDisplayNameViewModel(loadFailed, prefs, configFactory) as T
+            return PickDisplayNameViewModel(loadFailed, prefs, usernameUtils) as T
         }
     }
 }

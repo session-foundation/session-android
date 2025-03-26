@@ -102,7 +102,7 @@ public class PointerAttachment extends Attachment {
     return Optional.of(new PointerAttachment(pointer.get().getContentType(),
                                       AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
                                       pointer.get().asPointer().getSize().or(0),
-                                      pointer.get().asPointer().getFileName().orNull(),
+                                      pointer.get().asPointer().getFilename(),
                                       String.valueOf(pointer.get().asPointer().getId()),
                                       encodedKey, null,
                                       pointer.get().asPointer().getDigest().orNull(),
@@ -176,10 +176,11 @@ public class PointerAttachment extends Attachment {
    * @return Signal Attachment
    */
   public static Attachment forAttachment(org.session.libsession.messaging.messages.visible.Attachment attachment) {
-    return new PointerAttachment(attachment.getContentType(),
+    return new PointerAttachment(
+            attachment.getContentType(),
             AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
             attachment.getSizeInBytes(),
-            attachment.getFileName(),
+            attachment.getFilename(),
             null, Base64.encodeBytes(attachment.getKey()),
             null,
             attachment.getDigest(),
@@ -188,6 +189,7 @@ public class PointerAttachment extends Attachment {
             attachment.getSize() != null ? attachment.getSize().getWidth() : 0,
             attachment.getSize() != null ? attachment.getSize().getHeight() : 0,
             attachment.getCaption(),
-            attachment.getUrl());
+            attachment.getUrl()
+    );
   }
 }

@@ -14,8 +14,9 @@ import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 
 import network.loki.messenger.R;
-import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
+
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.components.emoji.EmojiTextView;
 import org.thoughtcrime.securesms.util.ResUtil;
 import org.session.libsession.utilities.CenterAlignedRelativeSizeSpan;
 
@@ -36,7 +37,7 @@ public class FromTextView extends EmojiTextView {
   }
 
   public void setText(Recipient recipient, boolean read) {
-    String fromString = recipient.toShortString();
+    String fromString = recipient.getName();
 
     int typeface;
 
@@ -74,8 +75,8 @@ public class FromTextView extends EmojiTextView {
 
     setText(builder);
 
-    if      (recipient.isBlocked()) setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_block_grey600_18dp, 0, 0, 0);
-    else if (recipient.isMuted())   setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_volume_off_grey600_18dp, 0, 0, 0);
+    if      (recipient.isBlocked()) setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_ban, 0, 0, 0);
+    else if (recipient.isMuted())   setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_volume_off, 0, 0, 0);
     else                            setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
   }
 

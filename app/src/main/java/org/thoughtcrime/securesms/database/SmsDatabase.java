@@ -460,7 +460,7 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-            message.isSecureMessage() || message.isGroup() || message.isCallInfo());
+            message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 
@@ -484,7 +484,7 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     ContentValues values = new ContentValues(6);
-    values.put(ADDRESS, message.getSender().serialize());
+    values.put(ADDRESS, message.getSender().toString());
     values.put(ADDRESS_DEVICE_ID,  message.getSenderDeviceId());
     // In open groups messages should be sorted by their server timestamp
     long receivedTimestamp = serverTimestamp;
@@ -583,7 +583,7 @@ public class SmsDatabase extends MessagingDatabase {
     Map<Address, Long> earlyReadReceipts     = earlyReadReceiptCache.remove(date);
 
     ContentValues contentValues = new ContentValues(6);
-    contentValues.put(ADDRESS, address.serialize());
+    contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessageBody());
     contentValues.put(DATE_RECEIVED, SnodeAPI.getNowWithOffset());
@@ -712,7 +712,7 @@ public class SmsDatabase extends MessagingDatabase {
   private boolean isDuplicate(IncomingTextMessage message, long threadId) {
     SQLiteDatabase database = databaseHelper.getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-                                             new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().serialize(), String.valueOf(threadId)},
+                                             new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().toString(), String.valueOf(threadId)},
                                              null, null, null, "1");
 
     try {
@@ -725,7 +725,7 @@ public class SmsDatabase extends MessagingDatabase {
   private boolean isDuplicate(OutgoingTextMessage message, long threadId) {
     SQLiteDatabase database = databaseHelper.getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
-            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().serialize(), String.valueOf(threadId)},
+            new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().toString(), String.valueOf(threadId)},
             null, null, null, "1");
 
     try {

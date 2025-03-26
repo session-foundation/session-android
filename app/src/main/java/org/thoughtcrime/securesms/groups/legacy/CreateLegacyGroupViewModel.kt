@@ -32,7 +32,7 @@ class CreateLegacyGroupViewModel @Inject constructor(
                 }
                 withContext(Dispatchers.Main) {
                     _recipients.value = recipients
-                        .filter { !it.isGroupRecipient && it.hasApprovedMe() && it.address.serialize() != textSecurePreferences.getLocalNumber() }
+                        .filter { !it.isGroupRecipient && it.hasApprovedMe() && it.address.toString() != textSecurePreferences.getLocalNumber() }
                 }
             }
         }
@@ -40,7 +40,7 @@ class CreateLegacyGroupViewModel @Inject constructor(
 
     fun filter(query: String): List<Recipient> {
         return _recipients.value?.filter {
-            it.address.serialize().contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
+            it.address.toString().contains(query, ignoreCase = true) || it.name.contains(query, ignoreCase = true)
         } ?: emptyList()
     }
 }

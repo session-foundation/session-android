@@ -29,11 +29,10 @@ import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -44,7 +43,7 @@ import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 
 @AndroidEntryPoint
-class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
+class EditLegacyGroupActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var groupConfigFactory: ConfigFactory
@@ -102,9 +101,6 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         setContentView(R.layout.activity_edit_closed_group)
-
-        supportActionBar!!.setHomeAsUpIndicator(
-                ThemeUtil.getThemedDrawableResId(this, R.attr.actionModeCloseDrawable))
 
         groupID = intent.getStringExtra(groupIDKey)!!
 
@@ -205,7 +201,7 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
     }
 
     private fun checkUserIsAdmin(userId: String?): Boolean{
-        return groupInfo.admins.any { it.serialize() == userId }
+        return groupInfo.admins.any { it.toString() == userId }
     }
 
     private fun handleIsEditingNameChanged() {
@@ -336,10 +332,10 @@ class EditLegacyGroupActivity : PassphraseRequiredActionBarActivity() {
                         MessageSender.explicitNameChange(groupPublicKey!!, name)
                     }
                     members.filterNot { it in originalMembers }.let { adds ->
-                        if (adds.isNotEmpty()) MessageSender.explicitAddMembers(groupPublicKey!!, adds.map { it.address.serialize() })
+                        if (adds.isNotEmpty()) MessageSender.explicitAddMembers(groupPublicKey!!, adds.map { it.address.toString() })
                     }
                     originalMembers.filterNot { it in members }.let { removes ->
-                        if (removes.isNotEmpty()) MessageSender.explicitRemoveMembers(groupPublicKey!!, removes.map { it.address.serialize() })
+                        if (removes.isNotEmpty()) MessageSender.explicitRemoveMembers(groupPublicKey!!, removes.map { it.address.toString() })
                     }
                 }
                 loaderContainer.fadeOut()

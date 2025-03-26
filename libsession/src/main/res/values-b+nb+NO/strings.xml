@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Lagre ditt gjenopprettingspassord</string>
     <string name="recoveryPasswordDescription">Bruk din Recovery password for å laste inn kontoen din på nye enheter.\n\nKontot kan ikke gjenopprettes uten din Recovery password. Sørg for at den er lagret et trygt og sikkert sted — og ikke del den med noen.</string>
     <string name="recoveryPasswordEnter">Angi ditt gjenopprettingspassord</string>
-    <string name="recoveryPasswordErrorLoad">En feil oppstod når vi prøvde å laste inn din gjenopprettingsnøkkel.\n\nVennligst eksporter loggene dine og last opp filen via Sessions Help Desk for å hjelpe med å løse problemet.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sjekk gjenopprettingspassordet ditt og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Noen av ordene i gjenopprettingspassordet ditt er feil. Vennligst sjekk og prøv igjen.</string>
     <string name="recoveryPasswordErrorMessageShort">Gjenopprettingspassordet du oppga er ikke langt nok. Vennligst sjekk og prøv igjen.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Kan ikke oppdatere</string>
     <string name="updateErrorDescription">{app_name} kunne ikke oppdateres. Gå til {session_download_url} og installer den nye versjonen manuelt, og kontakt vårt hjelpesenter for å informere oss om dette problemet.</string>
     <string name="updateNewVersion">En ny versjon av {app_name} er tilgjengelig, trykk for å oppdatere</string>
-    <string name="updateNewVersionDescription">En ny versjon av {app_name} er tilgjengelig.</string>
     <string name="updateReleaseNotes">Gå til utgivelsesmerknader</string>
     <string name="updateSession">{app_name}-oppdatering</string>
     <string name="updateVersion">Versjon {version}</string>

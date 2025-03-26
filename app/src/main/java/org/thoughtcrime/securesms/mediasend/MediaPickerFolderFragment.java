@@ -28,11 +28,13 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 
+import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
 
 /**
  * Allows the user to select a media folder to explore.
  */
+@AndroidEntryPoint
 public class MediaPickerFolderFragment extends Fragment implements MediaPickerFolderAdapter.EventListener {
 
   private static final String KEY_RECIPIENT_NAME = "recipient_name";
@@ -45,7 +47,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   public static @NonNull MediaPickerFolderFragment newInstance(@NonNull Recipient recipient) {
     String name = Optional.fromNullable(recipient.getName())
                           .or(Optional.fromNullable(recipient.getProfileName()))
-                          .or(recipient.toShortString());
+                          .or(recipient.getName());
 
     Bundle args = new Bundle();
     args.putString(KEY_RECIPIENT_NAME, name);
@@ -60,7 +62,7 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     recipientName = getArguments().getString(KEY_RECIPIENT_NAME);
-    viewModel     = new ViewModelProvider(requireActivity(), new MediaSendViewModel.Factory(requireActivity().getApplication(), new MediaRepository())).get(MediaSendViewModel.class);
+    viewModel = new ViewModelProvider(requireActivity()).get(MediaSendViewModel.class);
   }
 
   @Override

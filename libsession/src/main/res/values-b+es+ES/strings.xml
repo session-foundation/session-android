@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">Guarde su clave de recuperación</string>
     <string name="recoveryPasswordDescription">Usa tu contraseña de recuperación para cargar tu cuenta en nuevos dispositivos.\n\nTu cuenta no se puede recuperar sin tu contraseña de recuperación. Asegúrate de que esté guardada en un lugar seguro y no la compartas con nadie.</string>
     <string name="recoveryPasswordEnter">Ingrese su clave de recuperación</string>
-    <string name="recoveryPasswordErrorLoad">Ocurrió un error mientras intentábamos cargar tu contraseña de recuperación. \n\n Por favor exporta los logs, luego sube el archivo mediante Session\'s Help Desk para ayudarte a resolver este problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Por favor, comprueba tu clave de recuperación y vuelve a intentarlo.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algunas de las palabras en tu clave de recuperación son incorrectas. Por favor verifica e inténtalo de nuevo.</string>
     <string name="recoveryPasswordErrorMessageShort">La contraseña de recuperación que ingresaste no es lo suficientemente larga. Por favor verifica e intenta nuevamente.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">No se pudo actualizar</string>
     <string name="updateErrorDescription">{app_name} falló al actualizarse. Por favor ve a {session_download_url} e instala la nueva versión manualmente, después contacta con nuestro Centro de Ayuda para informarnos sobre este problema.</string>
     <string name="updateNewVersion">Hay una nueva versión de {app_name} disponible, toca para actualizar</string>
-    <string name="updateNewVersionDescription">Hay una nueva versión de {app_name} disponible.</string>
     <string name="updateReleaseNotes">Ir a las notas de versión</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

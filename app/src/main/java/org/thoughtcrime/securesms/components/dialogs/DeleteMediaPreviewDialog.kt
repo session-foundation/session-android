@@ -9,7 +9,6 @@ class DeleteMediaPreviewDialog {
         @JvmStatic
         fun show(context: Context, doDelete: Runnable) {
             context.showSessionDialog {
-                iconAttribute(R.attr.dialog_alert_icon)
                 title(context.resources.getString(R.string.delete))
                 text(R.string.deleteMessageDeviceOnly)
                 dangerButton(R.string.delete) { doDelete.run() }

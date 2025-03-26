@@ -7,21 +7,19 @@ import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.AppTextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.crypto.MnemonicCodec
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
-import javax.inject.Inject
 
 @HiltViewModel
 class RecoveryPasswordViewModel @Inject constructor(
@@ -31,12 +29,27 @@ class RecoveryPasswordViewModel @Inject constructor(
 
     val seed = MutableStateFlow<String?>(null)
     val mnemonic = seed.filterNotNull()
-        .map { MnemonicCodec { MnemonicUtilities.loadFileContents(application, it) }.encode(it, MnemonicCodec.Language.Configuration.english) }
+        .map {
+            MnemonicCodec {
+                MnemonicUtilities.loadFileContents(application, it)
+            }
+            .encode(it, MnemonicCodec.Language.Configuration.english)
+            .trim() // Remove any leading or trailing whitespace
+        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     fun copyMnemonic() {
         prefs.setHasViewedSeed(true)
-        ClipData.newPlainText("Seed", mnemonic.value)
+
+        // Ensure that our mnemonic words are separated by single spaces only without any excessive
+        // whitespace or control characters via:
+        //   - Replacing all control chars (\p{Cc}) or Unicode separators (\p{Z}) with a single space, then
+        //   - Trimming all leading & trailing spaces.
+        val normalisedMnemonic = mnemonic.value
+            .replace(Regex("[\\p{Cc}\\p{Z}]+"), " ")
+            .trim()
+
+        ClipData.newPlainText("Seed", normalisedMnemonic)
             .let(application.clipboard::setPrimaryClip)
     }
 

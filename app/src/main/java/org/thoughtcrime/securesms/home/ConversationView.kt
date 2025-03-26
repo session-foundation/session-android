@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.content.res.Resources
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
@@ -51,14 +52,9 @@ class ConversationView : LinearLayout {
     fun bind(thread: ThreadRecord, isTyping: Boolean) {
         this.thread = thread
         if (thread.isPinned) {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                0,
-                0,
-                R.drawable.ic_pin,
-                0
-            )
+            binding.iconPinned.isVisible = true
         } else {
-            binding.conversationViewDisplayNameTextView.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
+            binding.iconPinned.isVisible = false
         }
         binding.root.background = if (thread.unreadCount > 0) {
             ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
@@ -90,13 +86,12 @@ class ConversationView : LinearLayout {
         binding.unreadMentionTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize)
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
         val senderDisplayName = getTitle(thread.recipient)
-                ?: thread.recipient.address.toString()
         binding.conversationViewDisplayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), it) }
         val recipient = thread.recipient
         binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
-            R.drawable.ic_outline_notifications_off_24
+            R.drawable.ic_volume_off
         } else {
             R.drawable.ic_notifications_mentions
         }
@@ -118,15 +113,16 @@ class ConversationView : LinearLayout {
         }
         binding.typingIndicatorView.root.visibility = if (isTyping) View.VISIBLE else View.GONE
         binding.statusIndicatorImageView.visibility = View.VISIBLE
+        binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)) // tertiary in the current xml styling is actually what figma uses as secondary text color...
         when {
             !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = View.GONE
             thread.isFailed -> {
-                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_error)?.mutate()
-                drawable?.setTint(ThemeUtil.getThemedColor(context, R.attr.danger))
+                val drawable = ContextCompat.getDrawable(context, R.drawable.ic_triangle_alert)?.mutate()
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
+                binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, R.attr.danger))
             }
-            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dot_dot_dot)
-            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_filled_circle_check)
+            thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
+            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
         binding.profilePictureView.update(thread.recipient)
@@ -136,9 +132,9 @@ class ConversationView : LinearLayout {
         binding.profilePictureView.recycle()
     }
 
-    private fun getTitle(recipient: Recipient): String? = when {
+    private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
-        else -> recipient.toShortString() // Internally uses the Contact API
+        else -> recipient.name // Internally uses the Contact API
     }
     // endregion
 }

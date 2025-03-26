@@ -46,6 +46,7 @@ interface StorageProtocol {
     fun getUserPublicKey(): String?
     fun getUserED25519KeyPair(): KeyPair?
     fun getUserX25519KeyPair(): ECKeyPair
+    fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
     fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
     fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
@@ -209,8 +210,6 @@ interface StorageProtocol {
 
     // Contacts
     fun getContactWithAccountID(accountID: String): Contact?
-    fun getContactNameWithAccountID(accountID: String, groupId: AccountId? = null, contactContext: Contact.ContactContext = Contact.ContactContext.REGULAR): String
-    fun getContactNameWithAccountID(contact: Contact?, accountID: String, groupId: AccountId? = null, contactContext: Contact.ContactContext = Contact.ContactContext.REGULAR): String
     fun getAllContacts(): Set<Contact>
     fun setContact(contact: Contact)
     fun getRecipientForThread(threadId: Long): Recipient?

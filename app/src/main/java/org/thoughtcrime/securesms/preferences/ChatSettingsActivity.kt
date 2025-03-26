@@ -2,9 +2,9 @@ package org.thoughtcrime.securesms.preferences
 
 import android.os.Bundle
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.PassphraseRequiredActionBarActivity
+import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 
-class ChatSettingsActivity : PassphraseRequiredActionBarActivity() {
+class ChatSettingsActivity : ScreenLockActionBarActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)

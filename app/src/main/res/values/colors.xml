@@ -11,7 +11,6 @@
 
     <color name="call_action_button">#DD353535</color>
     <color name="call_action_button_highlighted">#FFFFFF</color>
-    <color name="call_action_foreground">#D8D8D8</color>
     <color name="call_action_foreground_highlighted">#171717</color>
 
     <array name="profile_picture_placeholder_colors">

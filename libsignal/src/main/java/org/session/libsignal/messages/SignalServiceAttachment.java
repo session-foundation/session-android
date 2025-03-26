@@ -41,7 +41,7 @@ public abstract class SignalServiceAttachment {
 
     private InputStream      inputStream;
     private String           contentType;
-    private String           fileName;
+    private String           filename;
     private long             length;
     private ProgressListener listener;
     private boolean          voiceNote;
@@ -66,8 +66,8 @@ public abstract class SignalServiceAttachment {
       return this;
     }
 
-    public Builder withFileName(String fileName) {
-      this.fileName = fileName;
+    public Builder withFileName(String filename) {
+      this.filename = filename;
       return this;
     }
 
@@ -101,7 +101,7 @@ public abstract class SignalServiceAttachment {
       if (contentType == null) throw new IllegalArgumentException("No content type specified!");
       if (length == 0)         throw new IllegalArgumentException("No length specified!");
 
-      return new SignalServiceAttachmentStream(inputStream, contentType, length, Optional.fromNullable(fileName), voiceNote, Optional.<byte[]>absent(), width, height, Optional.fromNullable(caption), listener);
+      return new SignalServiceAttachmentStream(inputStream, contentType, length, filename, voiceNote, Optional.<byte[]>absent(), width, height, Optional.fromNullable(caption), listener);
     }
   }
 

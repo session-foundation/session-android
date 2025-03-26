@@ -14,7 +14,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class Address private constructor(address: String) : Parcelable, Comparable<Address?> {
-    private val address: String = address.toLowerCase()
+    private val address: String = address.lowercase()
 
     constructor(`in`: Parcel) : this(`in`.readString()!!) {}
 
@@ -48,34 +48,17 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
         return address
     }
 
-    override fun toString(): String {
-        return address
-    }
-
-    fun serialize(): String {
-        return address
-    }
+    override fun toString(): String = address
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         return if (other == null || other !is Address) false else address == other.address
     }
 
-    override fun hashCode(): Int {
-        return address.hashCode()
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    override fun writeToParcel(dest: Parcel, flags: Int) {
-        dest.writeString(address)
-    }
-
-    override fun compareTo(other: Address?): Int {
-        return address.compareTo(other?.address!!)
-    }
+    override fun hashCode(): Int = address.hashCode()
+    override fun describeContents(): Int = 0
+    override fun writeToParcel(dest: Parcel, flags: Int) = dest.writeString(address)
+    override fun compareTo(other: Address?): Int = address.compareTo(other?.address!!)
 
     @VisibleForTesting
     class ExternalAddressFormatter internal constructor(localCountryCode: String, countryCode: Boolean) {
@@ -146,27 +129,18 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
 
     companion object {
         @JvmField val CREATOR: Parcelable.Creator<Address?> = object : Parcelable.Creator<Address?> {
-            override fun createFromParcel(`in`: Parcel): Address {
-                return Address(`in`)
-            }
-
-            override fun newArray(size: Int): Array<Address?> {
-                return arrayOfNulls(size)
-            }
+            override fun createFromParcel(`in`: Parcel): Address = Address(`in`)
+            override fun newArray(size: Int): Array<Address?> = arrayOfNulls(size)
         }
         val UNKNOWN = Address("Unknown")
         private val TAG = Address::class.java.simpleName
         private val cachedFormatter = AtomicReference<Pair<String, ExternalAddressFormatter>>()
 
         @JvmStatic
-        fun fromSerialized(serialized: String): Address {
-            return Address(serialized)
-        }
+        fun fromSerialized(serialized: String): Address = Address(serialized)
 
         @JvmStatic
-        fun fromExternal(context: Context, external: String?): Address {
-            return fromSerialized(external!!)
-        }
+        fun fromExternal(context: Context, external: String?): Address = fromSerialized(external!!)
 
         @JvmStatic
         fun fromSerializedList(serialized: String, delimiter: Char): List<Address> {
@@ -184,7 +158,7 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
             val set = addresses.toSet().sorted()
             val escapedAddresses: MutableList<String> = LinkedList()
             for (address in set) {
-                escapedAddresses.add(DelimiterUtil.escape(address.serialize(), delimiter))
+                escapedAddresses.add(DelimiterUtil.escape(address.toString(), delimiter))
             }
             return Util.join(escapedAddresses, delimiter.toString() + "")
         }
