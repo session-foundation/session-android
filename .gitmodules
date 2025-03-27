@@ -1,3 +1,0 @@
-[submodule "libsession-util/libsession-util"]
-	path = libsession-util/libsession-util
-	url = https://github.com/session-foundation/libsession-util.git

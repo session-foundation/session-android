@@ -9,7 +9,6 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
@@ -56,6 +55,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
@@ -67,6 +67,7 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -1041,7 +1042,7 @@ open class Storage @Inject constructor(
         return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             val info = configs.groupInfo
             GroupDisplayInfo(
-                id = info.id(),
+                id = AccountId(info.id()),
                 name = info.getName(),
                 profilePic = info.getProfilePic(),
                 expiryTimer = info.getExpiryTimer(),

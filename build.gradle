@@ -32,6 +32,13 @@ plugins {
 
 allprojects {
     repositories {
+        maven {
+            url uri("https://oxen.rocks/session-foundation/libsession-util-android/maven")
+            content {
+                includeGroup('org.sessionfoundation')
+            }
+        }
+
         google()
         mavenCentral()
         maven {

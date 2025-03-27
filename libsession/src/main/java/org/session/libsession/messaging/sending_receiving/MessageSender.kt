@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -46,7 +47,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import org.session.libsignal.utilities.hexEncodedPublicKey
@@ -430,7 +430,7 @@ object MessageSender {
 
     // Result Handling
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
-        val threadId = message.threadID!!
+        val threadId by lazy { requireNotNull(message.threadID) { "threadID for the message is null" } }
         if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(threadId, openGroupSentTimestamp)
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
@@ -473,9 +473,9 @@ object MessageSender {
                     }
                 }
                 val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-                val threadID = storage.getThreadId(Address.fromSerialized(encoded))
-                if (threadID != null && threadID >= 0) {
-                    storage.setOpenGroupServerMessageID(messageID, message.openGroupServerMessageID!!, threadID, !(message as VisibleMessage).isMediaMessage())
+                val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
+                if (communityThreadID != null && communityThreadID >= 0) {
+                    storage.setOpenGroupServerMessageID(messageID, message.openGroupServerMessageID!!, communityThreadID, !(message as VisibleMessage).isMediaMessage())
                 }
             }
 

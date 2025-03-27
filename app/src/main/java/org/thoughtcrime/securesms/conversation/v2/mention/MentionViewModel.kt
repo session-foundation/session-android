@@ -100,7 +100,7 @@ class MentionViewModel(
                             .map { it.toString() }
                     }
                     recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.toString()).map { it.accountIdString() }
+                        storage.getMembers(recipient.address.toString()).map { it.accountId() }
                     }
 
                     recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
@@ -128,7 +128,7 @@ class MentionViewModel(
                     configFactory.withGroupConfigs(AccountId(recipient.address.toString())) {
                         it.groupMembers.allWithStatus()
                             .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
-                            .mapTo(hashSetOf()) { (member, _) -> member.accountId.toString() }
+                            .mapTo(hashSetOf()) { (member, _) -> member.accountId() }
                     }
                 } else {
                     emptySet()

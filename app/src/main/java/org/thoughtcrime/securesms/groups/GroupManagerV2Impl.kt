@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -54,7 +55,6 @@ import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateM
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -120,7 +120,7 @@ class GroupManagerV2Impl @Inject constructor(
         }
 
         val adminKey = checkNotNull(group.adminKey) { "Admin key is null for new group creation." }
-        val groupId = group.groupAccountId
+        val groupId = AccountId(group.groupAccountId)
 
         val memberAsRecipients = members.map {
             Recipient.from(application, Address.fromSerialized(it.hexString), false)
@@ -267,7 +267,7 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             configs.rekey()
-            newMembers.map { configs.groupKeys.getSubAccountToken(it) }
+            newMembers.map { configs.groupKeys.getSubAccountToken(it.hexString) }
         }
 
         // Call un-revocate API on new members, in case they have been removed before
@@ -298,6 +298,8 @@ class GroupManagerV2Impl @Inject constructor(
 
                 configs.groupInfo.getName().orEmpty()
             }
+
+            Log.w(TAG, "Failed to invite members to group $group", e)
 
             throw GroupInviteException(
                 isPromotion = false,
@@ -450,7 +452,7 @@ class GroupManagerV2Impl @Inject constructor(
                             val allMembers = config.groupMembers.all()
                             allMembers.count { it.admin } == 1 &&
                                     allMembers.first { it.admin }
-                                        .accountIdString() == storage.getUserPublicKey()
+                                        .accountId() == storage.getUserPublicKey()
                         }
 
                         if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
@@ -678,9 +680,10 @@ class GroupManagerV2Impl @Inject constructor(
         withTimeout(20_000L) {
             // We must tell the poller to poll once, as we could have received this invitation
             // in the background where the poller isn't running
-            groupPollerManager.pollOnce(group.groupAccountId)
+            val groupId = AccountId(group.groupAccountId)
+            groupPollerManager.pollOnce(groupId)
 
-            groupPollerManager.watchGroupPollingState(group.groupAccountId)
+            groupPollerManager.watchGroupPollingState(groupId)
                 .filter { it.hadAtLeastOneSuccessfulPoll }
                 .first()
         }
@@ -696,12 +699,12 @@ class GroupManagerV2Impl @Inject constructor(
             // this will fail the first couple of times :)
             MessageSender.sendNonDurably(
                 responseMessage,
-                Destination.ClosedGroup(group.groupAccountId.hexString),
+                Destination.ClosedGroup(group.groupAccountId),
                 isSyncMessage = false
             )
         } else {
             // If we are invited as admin, we can just update the group info ourselves
-            configFactory.withMutableGroupConfigs(group.groupAccountId) { configs ->
+            configFactory.withMutableGroupConfigs(AccountId(group.groupAccountId)) { configs ->
                 configs.groupKeys.loadAdminKey(adminKey)
 
                 configs.groupMembers.get(key)?.let { member ->
@@ -830,7 +833,7 @@ class GroupManagerV2Impl @Inject constructor(
         val shouldAutoApprove =
             storage.getRecipientApproved(Address.fromSerialized(inviter.hexString))
         val closedGroupInfo = GroupInfo.ClosedGroupInfo(
-            groupAccountId = groupId,
+            groupAccountId = groupId.hexString,
             adminKey = authDataOrAdminSeed.takeIf { fromPromotion }?.let { GroupInfo.ClosedGroupInfo.adminKeyFromSeed(it) },
             authData = authDataOrAdminSeed.takeIf { !fromPromotion },
             priority = PRIORITY_VISIBLE,
