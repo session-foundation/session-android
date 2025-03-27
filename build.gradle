@@ -33,9 +33,9 @@ plugins {
 allprojects {
     repositories {
         maven {
-            url uri("https://jitpack.io")
+            url uri("https://oxen.rocks/session-foundation/libsession-util-android/maven")
             content {
-                includeGroup 'com.github.session-foundation'
+                includeGroup('org.sessionfoundation')
             }
         }
 
