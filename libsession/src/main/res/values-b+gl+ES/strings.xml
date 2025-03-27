@@ -709,7 +709,6 @@
     <string name="updateDownloading">Descargando actualización: {percent_loader}%</string>
     <string name="updateError">Non se pode actualizar</string>
     <string name="updateNewVersion">Hai dispoñible unha nova versión de {app_name}, toca para actualizar</string>
-    <string name="updateNewVersionDescription">Hai dispoñible unha nova versión de {app_name}.</string>
     <string name="updateReleaseNotes">Ir ás notas de lanzamento</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

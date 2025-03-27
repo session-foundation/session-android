@@ -800,7 +800,6 @@
     <string name="updateError">اپ ڈیٹ نہیں ہوسکتی</string>
     <string name="updateErrorDescription">{app_name} اپ ڈیٹ کرنے میں ناکام ہو گیا۔ براہ کرم {session_download_url} پر جائیں اور نئی ورژن کو دستی طور پر نصب کریں، پھر اس مسئلے کے بارے میں ہمیں مطلع کرنے کے لیے ہماری ہیلپ سینٹر سے رابطہ کریں۔</string>
     <string name="updateNewVersion">{app_name} کا ایک نیا ورژن دستیاب ہے، اپ ڈیٹ کے لیے ٹیپ کریں</string>
-    <string name="updateNewVersionDescription">{app_name} کا ایک نیا ورژن دستیاب ہے۔</string>
     <string name="updateReleaseNotes">ریلیز نوٹس پر جائیں</string>
     <string name="updateSession">{app_name} اپ ڈیٹ</string>
     <string name="updateVersion">ورژن {version}</string>

@@ -791,7 +791,6 @@
     <string name="updateError">更新できませんでした</string>
     <string name="updateErrorDescription">{app_name}の更新に失敗しました。{session_download_url}にアクセスして新しいバージョンを手動でインストールしてください。その後、この問題についてヘルプセンターにご連絡ください。</string>
     <string name="updateNewVersion">{app_name} のバージョンアップが利用可能です。タップすると更新します。</string>
-    <string name="updateNewVersionDescription">新バージョンの {app_name} が利用可能です</string>
     <string name="updateReleaseNotes">リリースノートを閲覧</string>
     <string name="updateSession">{app_name}アップデート</string>
     <string name="updateVersion">バージョン {version}</string>

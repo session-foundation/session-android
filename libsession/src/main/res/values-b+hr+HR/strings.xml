@@ -816,7 +816,6 @@
     <string name="updateError">Nije moguće ažurirati</string>
     <string name="updateErrorDescription">{app_name} nije uspio ažurirati. Molimo idite na {session_download_url} i instalirajte novu verziju ručno, zatim kontaktirajte naš Centar za pomoć kako biste nas obavijestili o ovom problemu.</string>
     <string name="updateNewVersion">Dostupna je nova verzija {app_name}, dodirnite za ažuriranje.</string>
-    <string name="updateNewVersionDescription">Dostupna je nova verzija {app_name}.</string>
     <string name="updateReleaseNotes">Idi na bilješke o izdanju</string>
     <string name="updateSession">Ažuriranje {app_name}</string>
     <string name="updateVersion">Verzija {version}</string>

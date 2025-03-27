@@ -804,7 +804,6 @@
     <string name="updateError">No se pudo actualizar</string>
     <string name="updateErrorDescription">{app_name} falló al actualizarse. Por favor ve a {session_download_url} e instala la nueva versión manualmente, después contacta con nuestro Centro de Ayuda para informarnos sobre este problema.</string>
     <string name="updateNewVersion">Hay una nueva versión de {app_name} disponible, toca para actualizar</string>
-    <string name="updateNewVersionDescription">Hay una nueva versión de {app_name} disponible.</string>
     <string name="updateReleaseNotes">Ir a las notas de versión</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

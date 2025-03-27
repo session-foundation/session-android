@@ -875,7 +875,6 @@
     <string name="updateError">Nie można zaktualizować</string>
     <string name="updateErrorDescription">Nie udało się zaktualizować aplikacji {app_name}. Przejdź do adresu {session_download_url} i zainstaluj nową wersję ręcznie, a następnie skontaktuj się z naszym centrum pomocy, aby poinformować nas o tym problemie.</string>
     <string name="updateNewVersion">Dostępna jest nowa wersja aplikacji {app_name}. Stuknij, aby zaktualizować</string>
-    <string name="updateNewVersionDescription">Dostępna jest nowa wersja aplikacji {app_name}.</string>
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>
     <string name="updateSession">Aktualizacja aplikacji {app_name}</string>
     <string name="updateVersion">Wersja {version}</string>

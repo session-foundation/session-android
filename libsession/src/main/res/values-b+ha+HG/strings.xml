@@ -803,7 +803,6 @@
     <string name="updateError">Ba za a iya sabunta ba</string>
     <string name="updateErrorDescription">{app_name} alhali tace wajen sabunta. Da fatan za a je zuwa {session_download_url} ku shigar da sabon sigar hannu, sannan a tuntuɓi Cibiyar Taimakonmu don sanar da wannan matsalar.</string>
     <string name="updateNewVersion">Sabon sigar {app_name} yana nan, danna don sabuntawa.</string>
-    <string name="updateNewVersionDescription">Sabuwar sigar {app_name} yana nan.</string>
     <string name="updateReleaseNotes">Je zuwa Bayanan Saki</string>
     <string name="updateSession">Sabon {app_name}</string>
     <string name="updateVersion">Siga {version}</string>

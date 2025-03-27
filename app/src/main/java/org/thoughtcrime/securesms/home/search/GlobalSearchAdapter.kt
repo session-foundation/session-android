@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.home.search
 
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,11 +11,13 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
+import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import java.security.InvalidParameterException
-import org.session.libsession.messaging.contacts.Contact as ContactModel
 
 class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -125,18 +128,39 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
         }
     }
 
-    sealed class Model {
-        data class Header(val title: GetString): Model() {
+    sealed interface Model {
+        data class Header(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SubHeader(val title: GetString): Model() {
+        data class SubHeader(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SavedMessages(val currentUserPublicKey: String): Model()
-        data class Contact(val contact: ContactModel, val name: String?, val isSelf: Boolean) : Model()
-        data class GroupConversation(val groupRecord: GroupRecord) : Model()
-        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model()
+        data class SavedMessages(val currentUserPublicKey: String): Model
+        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
+            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean):
+                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf)
+        }
+        data class GroupConversation(
+            val isLegacy: Boolean,
+            val groupId: String,
+            val title: String,
+            val legacyMembersString: String?,
+        ) : Model {
+            constructor(context: Context, groupRecord: GroupRecord):
+                    this(
+                        isLegacy = groupRecord.isLegacyGroup,
+                        groupId = groupRecord.encodedId,
+                        title = groupRecord.title,
+                        legacyMembersString = if (groupRecord.isLegacyGroup) {
+                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
+                            recipients.joinToString(transform = Recipient::getSearchName)
+                        } else {
+                            null
+                        }
+                    )
+        }
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model
     }
 }

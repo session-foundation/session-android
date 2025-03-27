@@ -821,7 +821,6 @@
     <string name="updateError">Không thể cập nhật</string>
     <string name="updateErrorDescription">{app_name} không thể cập nhật. Vui lòng truy cập {session_download_url} và cài đặt phiên bản mới thủ công, sau đó liên hệ Trung tâm trợ giúp của chúng tôi để thông báo về vấn đề này.</string>
     <string name="updateNewVersion">Một phiên bản mới của {app_name} đã có, chạm để cập nhật</string>
-    <string name="updateNewVersionDescription">Một phiên bản mới của {app_name} đã có.</string>
     <string name="updateReleaseNotes">Đi tới các ghi chú phát hành</string>
     <string name="updateSession">Cập nhật {app_name}</string>
     <string name="updateVersion">Phiên bản {version}</string>

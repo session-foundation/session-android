@@ -803,7 +803,6 @@
     <string name="updateError">Αδυναμία Ενημέρωσης</string>
     <string name="updateErrorDescription">Το {app_name} απέτυχε να ενημερωθεί. Παρακαλώ πηγαίνετε στο {session_download_url} και εγκαταστήστε τη νέα έκδοση χειροκίνητα, στη συνέχεια επικοινωνήστε με το Κέντρο Βοήθειας για να μας ενημερώσετε για αυτό το πρόβλημα.</string>
     <string name="updateNewVersion">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη, πατήστε για ενημέρωση</string>
-    <string name="updateNewVersionDescription">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη.</string>
     <string name="updateReleaseNotes">Μετάβαση στις Σημειώσεις Έκδοσης</string>
     <string name="updateSession">Ενημέρωση {app_name}</string>
     <string name="updateVersion">Έκδοση {version}</string>

@@ -2,15 +2,14 @@ package org.session.libsession.utilities
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
-import java.io.FileOutputStream
 import java.io.OutputStream
 
 object DownloadUtilities {

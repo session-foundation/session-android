@@ -803,7 +803,6 @@
     <string name="updateError">Ei saa uuendada</string>
     <string name="updateErrorDescription">{app_name} uuendamine ebaõnnestus. Palune avage {session_download_url} ja installige uus versioon käsitsi, seejärel võtke ühendust meie Klienditoega, et sellest probleemist teatada.</string>
     <string name="updateNewVersion">Uus versioon {app_name} on saadaval, uuendamiseks puuduta</string>
-    <string name="updateNewVersionDescription">Uus versioon {app_name} on saadaval.</string>
     <string name="updateReleaseNotes">Mine väljalaskemärkmete juurde</string>
     <string name="updateSession">{app_name} Uuendus</string>
     <string name="updateVersion">Versioon {version}</string>

@@ -804,7 +804,6 @@
     <string name="updateError">Güncəllənə bilmir</string>
     <string name="updateErrorDescription">{app_name} güncəllənmədi. Lütfən {session_download_url} ünvanına gedərək yeni versiyanı quraşdırın, daha sonra bu problemi bildirmək üçün Kömək Mərkəzimizə müraciət edin.</string>
     <string name="updateNewVersion">{app_name} üçün yeni versiyası mövcuddur, güncəlləmək üçün toxunun</string>
-    <string name="updateNewVersionDescription">{app_name} üçün yeni versiyası mövcuddur.</string>
     <string name="updateReleaseNotes">Buraxılış qeydlərinə get</string>
     <string name="updateSession">{app_name} güncəlləməsi</string>
     <string name="updateVersion">Versiya {version}</string>

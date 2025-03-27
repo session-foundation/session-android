@@ -804,7 +804,6 @@
     <string name="updateError">Impossibile aggiornare</string>
     <string name="updateErrorDescription">{app_name} non è riuscito ad aggiornarsi. Vai su {session_download_url} e installa manualmente la nuova versione, poi contatta il nostro centro assistenza per segnalarci il problema.</string>
     <string name="updateNewVersion">È disponibile una nuova versione di {app_name}, tocca per aggiornare</string>
-    <string name="updateNewVersionDescription">È disponibile una nuova versione di {app_name}.</string>
     <string name="updateReleaseNotes">Vai alle note di rilascio</string>
     <string name="updateSession">{app_name} ha un nuovo aggiornamento disponibile</string>
     <string name="updateVersion">Versione {version}</string>

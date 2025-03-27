@@ -817,7 +817,6 @@
     <string name="updateError">Nu se poate actualiza</string>
     <string name="updateErrorDescription">{app_name} nu a reușit să se actualizeze. Vă rugăm să accesați {session_download_url} și să instalați manual noua versiune, apoi contactați Centrul de Asistență pentru a ne informa despre această problemă.</string>
     <string name="updateNewVersion">Este disponibilă o nouă versiune de {app_name}, apăsați pentru actualizare</string>
-    <string name="updateNewVersionDescription">Este disponibilă o nouă versiune de {app_name}.</string>
     <string name="updateReleaseNotes">Mergi la Notele de lansare</string>
     <string name="updateSession">Actualizare {app_name}</string>
     <string name="updateVersion">Versiunea {version}</string>

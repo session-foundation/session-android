@@ -45,6 +45,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -67,6 +68,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
+import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -135,11 +137,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
             is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
                 putExtra(
                     ConversationActivityV2.ADDRESS,
-                    model.contact.accountID.let(Address::fromSerialized)
+                    model.contact.hexString.let(Address::fromSerialized)
                 )
             }
 
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
+            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
                 .let { Recipient.from(this, Address.fromSerialized(it), false) }
                 .let(threadDb::getThreadIdIfExistsFor)
                 .takeIf { it >= 0 }
@@ -352,13 +354,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .flatMap { (key, contacts) ->
                 listOf(
                     GlobalSearchAdapter.Model.SubHeader(key)
-                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) }
+                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
             }
     }
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
-        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) } +
-            threads.map(GlobalSearchAdapter.Model::GroupConversation)
+        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+            threads.map {
+                GlobalSearchAdapter.Model.GroupConversation(this@HomeActivity, it)
+            }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
@@ -379,10 +383,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
         binding.recyclerView.isVisible = !isShown
-        binding.emptyStateContainer.isVisible = (binding.recyclerView.adapter as HomeAdapter).itemCount == 0 && binding.recyclerView.isVisible
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isInvisible = !isShown
-        binding.newConversationButton.isVisible = !isShown
+        binding.conversationListContainer.isInvisible = isShown
     }
 
     private fun updateLegacyConfigView() {

@@ -803,7 +803,6 @@
     <string name="updateError">Не може да се актуализира</string>
     <string name="updateErrorDescription">{app_name} не успешна актуализация. Моля, отидете на {session_download_url} и инсталирайте новата версия, която ще намерите там. Моля свържете се с нашия отдел по поддръжка, за да ни уведомите за този проблем.</string>
     <string name="updateNewVersion">Налична е нова версия на {app_name}, докоснете за обновление.</string>
-    <string name="updateNewVersionDescription">Налична е нова версия на {app_name}.</string>
     <string name="updateReleaseNotes">Отворете бележките за изданието</string>
     <string name="updateSession">Актуализация на {app_name}</string>
     <string name="updateVersion">Версия {version}</string>

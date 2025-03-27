@@ -44,7 +44,7 @@ class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: 
             }
 
             val groupId = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
-            storage.updateProfilePicture(groupId, bytes)
+            storage.updateProfilePicture(groupId, bytes.copyToBytes())
             storage.updateTimestampUpdated(groupId, SnodeAPI.nowWithOffset)
             delegate?.handleJobSucceeded(this, dispatcherName)
         } catch (e: Exception) {

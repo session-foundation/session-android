@@ -829,7 +829,6 @@
     <string name="updateError">Posodobitev ni mogoča</string>
     <string name="updateErrorDescription">{app_name} posodobitev ni uspela. Obiščite {session_download_url} in ročno namestite novo različico ter nas obvestite o težavi prek centra za pomoč.</string>
     <string name="updateNewVersion">Na voljo je nova različica {app_name}, tapnite za posodobitev</string>
-    <string name="updateNewVersionDescription">Na voljo je nova različica {app_name}.</string>
     <string name="updateReleaseNotes">Pojdite na Opombe k izdaji</string>
     <string name="updateSession">Posodobitev {app_name}</string>
     <string name="updateVersion">Različica {version}</string>

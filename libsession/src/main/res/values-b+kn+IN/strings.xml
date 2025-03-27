@@ -803,7 +803,6 @@
     <string name="updateError">ನವೀಕರಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ</string>
     <string name="updateErrorDescription">{app_name} ನವೀಕರಿಸಲು ವಿಫಲವಾಗಿದೆ. ದಯವಿಟ್ಟು {session_download_url} ಗೆ ಹೋಗಿ ಮತ್ತು ಹೊಸ ಆವೃತ್ತಿಯನ್ನು ಕೈಯಾರೆ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ, ನಂತರ ಈ ಸಮಸ್ಯೆಯನ್ನು ನಮ್ಮ ಸಹಾಯ ಕೇಂದ್ರಕ್ಕೆ ತಿಳಿಸಿ.</string>
     <string name="updateNewVersion">{app_name} ನ ಹೊಸ ಆವೃತ್ತಿ ಲಭ್ಯವಿದೆ, ನವೀಕರಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
-    <string name="updateNewVersionDescription">{app_name} ನ ಹೊಸ ಆವೃತ್ತಿ ಲಭ್ಯವಿದೆ.</string>
     <string name="updateReleaseNotes">ರಿಲೀಸ್ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹೋಗಿ</string>
     <string name="updateSession">{app_name} ನವೀಕರಣ</string>
     <string name="updateVersion">ಆವೃತ್ತಿ {version}</string>

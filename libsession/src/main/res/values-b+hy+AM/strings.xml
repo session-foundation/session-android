@@ -803,7 +803,6 @@
     <string name="updateError">Հնարավոր չէ թարմացնել</string>
     <string name="updateErrorDescription">{app_name}-ը չի կարողացել թարմանալ: Խնդրում ենք անցեք {session_download_url} և ձեռքով տեղադրեք նոր տարբերակը, ապա դիմեք մեր Օգնության կենտրոնին՝ մեզ այս խնդրի մասին տեղեկացնելու համար։</string>
     <string name="updateNewVersion">Հասանելի է {app_name} նոր տարբերակը, սեղմեք թարմացնելու համար</string>
-    <string name="updateNewVersionDescription">Հասանելի է {app_name} նոր տարբերակը:</string>
     <string name="updateReleaseNotes">Կարդացեք թողարկման նշումները</string>
     <string name="updateSession">{app_name}-ի Թարմացում</string>
     <string name="updateVersion">Տարբերակ {version}</string>

@@ -48,7 +48,7 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
         is ContactModel -> {
             binding.searchResultTitle.text = getHighlight(
                 query,
-                model.contact.getSearchName()
+                model.name
             )
         }
         is Message -> {
@@ -69,13 +69,10 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
         is GroupConversation -> {
             binding.searchResultTitle.text = getHighlight(
                 query,
-                model.groupRecord.title
+                model.title
             )
 
-            val membersString = model.groupRecord.members.joinToString { address ->
-                Recipient.from(binding.root.context, address, false).getSearchName()
-            }
-            binding.searchResultSubtitle.text = getHighlight(query, membersString)
+            binding.searchResultSubtitle.text = getHighlight(query, model.legacyMembersString.orEmpty())
         }
         is Header,               // do nothing for header
         is SubHeader,            // do nothing for subheader
@@ -89,18 +86,15 @@ private fun getHighlight(query: String?, toSearch: String): Spannable? {
 
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
-    binding.searchResultSubtitle.isVisible = model.groupRecord.isLegacyGroup
+    binding.searchResultSubtitle.isVisible = model.isLegacy
     binding.searchResultTimestamp.isVisible = false
-    val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupRecord.encodedId), false)
+    val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupId), false)
     binding.searchResultProfilePicture.update(threadRecipient)
-    val nameString = model.groupRecord.title
+    val nameString = model.title
     binding.searchResultTitle.text = getHighlight(query, nameString)
 
-    val groupRecipients = model.groupRecord.members.map { Recipient.from(binding.root.context, it, false) }
-
-    val membersString = groupRecipients.joinToString(transform = Recipient::getSearchName)
-    if (model.groupRecord.isLegacyGroup) {
-        binding.searchResultSubtitle.text = getHighlight(query, membersString)
+    if (model.legacyMembersString != null) {
+        binding.searchResultSubtitle.text = getHighlight(query, model.legacyMembersString)
     }
 }
 
@@ -109,10 +103,10 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultSubtitle.isVisible = false
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
-    val recipient = Recipient.from(root.context, Address.fromSerialized(model.contact.accountID), false)
+    val recipient = Recipient.from(root.context, Address.fromSerialized(model.contact.hexString), false)
     searchResultProfilePicture.update(recipient)
     val nameString = if (model.isSelf) root.context.getString(R.string.noteToSelf)
-        else model.contact.getSearchName()
+        else model.name
     searchResultTitle.text = getHighlight(query, nameString)
 }
 

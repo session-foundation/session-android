@@ -808,7 +808,6 @@
     <string name="updateError">Kann nicht aktualisiert werden</string>
     <string name="updateErrorDescription">{app_name} konnte nicht aktualisiert werden. Bitte besuche {session_download_url} und installiere die neue Version manuell. Kontaktiere anschließend den Helpdesk, um uns über dieses Problem zu informieren.</string>
     <string name="updateNewVersion">Eine neue Version von {app_name} ist verfügbar. Tippe, um zu aktualisieren</string>
-    <string name="updateNewVersionDescription">Eine neue Version von {app_name} ist verfügbar.</string>
     <string name="updateReleaseNotes">Zu den Release-Notes gehen</string>
     <string name="updateSession">{app_name}-Update</string>
     <string name="updateVersion">Version {version}</string>

@@ -795,7 +795,6 @@
     <string name="updateError">अद्यावधिक गर्न सकिँदैन</string>
     <string name="updateErrorDescription">{app_name} अद्यावधिक गर्न असफल भयो। कृपया {session_download_url} मा जानुहोस् र नयाँ संस्करण म्यानुअली इन्स्टल गर्नुहोस्, त्यसपछि कृपया हाम्रो सहायता केन्द्रलाई यस समस्याबारे जानकारी दिनुहोस्।</string>
     <string name="updateNewVersion">{app_name} को नयाँ संस्करण उपलब्ध छ, अपडेट गर्न ट्याप गर्नुहोस्</string>
-    <string name="updateNewVersionDescription">{app_name} को नयाँ संस्करण उपलब्ध छ।</string>
     <string name="updateReleaseNotes">रिलीज नोट्स तिर जानुहोस्</string>
     <string name="updateSession">{app_name} अपडेट</string>
     <string name="updateVersion">संस्करण {version}</string>

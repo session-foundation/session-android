@@ -803,7 +803,6 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name}(e)k huts egin du eguneratzean. Mesedez joan {session_download_url} helbidera eta eskuz instalatu bertsio berria, ondoren jar zaitez harremanetan gure Laguntza Zentroarekin arazo honen berri emateko.</string>
     <string name="updateNewVersion">{app_name}(e)n bertsio berri bat erabilgarri dago, sakatu eguneratzeko</string>
-    <string name="updateNewVersionDescription">Bertsio berri bat erabilgarri dago {app_name}-erako.</string>
     <string name="updateReleaseNotes">Joan Azken Oharrak ikustera</string>
     <string name="updateSession">{app_name} Eguneraketa</string>
     <string name="updateVersion">Bertsioa {version}</string>

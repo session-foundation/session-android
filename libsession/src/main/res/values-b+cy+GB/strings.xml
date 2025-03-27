@@ -856,7 +856,6 @@
     <string name="updateError">Methu Diweddaru</string>
     <string name="updateErrorDescription">Methodd {app_name} i ddiweddaru. Ewch i {session_download_url} a gosodwch y fersiwn newydd â llaw, yna cysylltwch â\'n Canolfan Cymorth i\'n hysbysu am y broblem hon.</string>
     <string name="updateNewVersion">Mae fersiwn newydd o {app_name} ar gael. Tapiwch i ddiweddaru.</string>
-    <string name="updateNewVersionDescription">Mae fersiwn newydd o {app_name} ar gael.</string>
     <string name="updateReleaseNotes">Ewch i Nodiadau Rhyddhau</string>
     <string name="updateSession">Diweddariad {app_name}</string>
     <string name="updateVersion">Fersiwn {version}</string>

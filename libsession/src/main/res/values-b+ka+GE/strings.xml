@@ -803,7 +803,6 @@
     <string name="updateError">ვერ განახლდა</string>
     <string name="updateErrorDescription">{app_name} ვერ განახლდა. გთხოვთ გადადით {session_download_url} და ხელით დააყენეთ ახალი ვერსია, შემდეგ კი დაგვიკავშირდით დახმარების ცენტრში ამ პრობლემის შესახებ.</string>
     <string name="updateNewVersion">{app_name}-ის ახალი ვერსია ხელმისაწვდომია, დააჭირეთ განახლებისთვის</string>
-    <string name="updateNewVersionDescription">{app_name}-ის ახალი ვერსია ხელმისაწვდომია.</string>
     <string name="updateReleaseNotes">გადადით გამოშვების ჩანაწერებზე</string>
     <string name="updateSession">{app_name} განახლება</string>
     <string name="updateVersion">Ვერსია {version}</string>

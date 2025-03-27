@@ -791,7 +791,6 @@
     <string name="updateError">업데이트 불가능</string>
     <string name="updateErrorDescription">{app_name} 업데이트에 실패했습니다. {session_download_url}에서 새 버전을 수동으로 설치한 후, 이 문제를 알려주시기 위해 고객 지원 센터에 연락해 주세요.</string>
     <string name="updateNewVersion">새 버전의 {app_name}이 사용 가능합니다. 눌러서 업데이트 하세요.</string>
-    <string name="updateNewVersionDescription">새 버전의 {app_name}이 사용 가능합니다.</string>
     <string name="updateReleaseNotes">패치 노트 보기</string>
     <string name="updateSession">{app_name} 업데이트</string>
     <string name="updateVersion">버전 {version}</string>

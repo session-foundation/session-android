@@ -791,7 +791,6 @@
     <string name="updateError">ไม่สามารถอัปเดตได้</string>
     <string name="updateErrorDescription">{app_name} การอัปเดตล้มเหลว กรุณาไปที่ {session_download_url} เพื่อติดตั้งเวอร์ชันใหม่ด้วยตัวเอง จากนั้นติดต่อศูนย์ช่วยเหลือของเราเพื่อแจ้งให้เราทราบเกี่ยวกับปัญหานี้</string>
     <string name="updateNewVersion">มีเวอร์ชั่นใหม่ของ {app_name} ที่พร้อมให้อัปเดต แตะเพื่ออัปเดต</string>
-    <string name="updateNewVersionDescription">มีเวอร์ชั่นใหม่ของ {app_name} พร้อมใช้งาน</string>
     <string name="updateReleaseNotes">ไปที่บันทึกประจำรุ่น</string>
     <string name="updateSession">การอัปเดต {app_name}</string>
     <string name="updateVersion">เวอร์ชัน {version}.</string>

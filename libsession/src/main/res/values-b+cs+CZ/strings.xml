@@ -928,7 +928,6 @@
     <string name="updateError">Nelze aktualizovat</string>
     <string name="updateErrorDescription">{app_name} se nepodařilo aktualizovat. Přejděte prosím na {session_download_url} a nainstalujte novou verzi ručně, poté kontaktujte naše Centrum pomoci a dejte nám vědět o tomto problému.</string>
     <string name="updateNewVersion"><b>Je dostupná nová verze {app_name}, klikněte pro aktualizaci</b></string>
-    <string name="updateNewVersionDescription"><b>Je dostupná nová verze {app_name}.</b></string>
     <string name="updateReleaseNotes">Přejít na poznámky k vydání</string>
     <string name="updateSession">Aktualizace {app_name}</string>
     <string name="updateVersion">Verze {version}</string>

@@ -145,7 +145,7 @@ class MarkReadReceiver : BroadcastReceiver() {
         }
 
         private fun scheduleDeletion(
-            context: Context?,
+            context: Context,
             expirationInfo: ExpirationInfo,
             expiresIn: Long = expirationInfo.expiresIn
         ) {
@@ -156,7 +156,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             val expireStarted = expirationInfo.expireStarted
 
             if (expirationInfo.isDisappearAfterRead() && expireStarted == 0L || now < expireStarted) {
-                val db = DatabaseComponent.get(context!!).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
+                val db = DatabaseComponent.get(context).run { if (expirationInfo.isMms) mmsDatabase() else smsDatabase() }
                 db.markExpireStarted(expirationInfo.id, now)
             }
 

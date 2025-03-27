@@ -291,13 +291,13 @@
         android:clickable="true"
         android:visibility="gone">
 
-        <com.github.ybq.android.spinkit.SpinKitView
-            style="@style/SpinKitView.Large.ThreeBounce"
-            android:layout_width="wrap_content"
+        <ProgressBar
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginTop="8dp"
-            app:SpinKit_Color="@android:color/white" />
+            android:layout_gravity="center"
+            android:indeterminateTint="?colorAccent"
+            android:indeterminate="true"/>
 
     </FrameLayout>
 

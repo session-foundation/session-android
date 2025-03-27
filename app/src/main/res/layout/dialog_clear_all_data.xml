@@ -39,7 +39,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="@dimen/dialog_button_height"
         android:orientation="horizontal">
 
         <Button
@@ -58,14 +58,17 @@
             android:layout_weight="1"
             android:text="@string/cancel" />
 
-        <com.github.ybq.android.spinkit.SpinKitView
-            style="@style/SpinKitView.Small.ThreeBounce"
+        <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="0dp"
-            android:layout_height="@dimen/small_button_height"
+            android:layout_height="@dimen/large_spacing"
+            android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            app:SpinKit_Color="?colorAccent"
-            android:visibility="gone" />
+            android:indeterminateTint="?colorAccent"
+            android:indeterminate="true"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
 
     </LinearLayout>
 

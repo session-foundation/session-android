@@ -803,7 +803,6 @@
     <string name="updateError">Kan ikke opdatere</string>
     <string name="updateErrorDescription">{app_name} opdateringen mislykkedes. Gå venligst til {session_download_url} og installer den nye version manuelt, og kontakt derefter vores Hjælpecenter for at informere os om dette problem.</string>
     <string name="updateNewVersion">En ny version af {app_name} er tilgængelig, tryk for at opdatere</string>
-    <string name="updateNewVersionDescription">En ny version af {app_name} er tilgængelig.</string>
     <string name="updateReleaseNotes">Gå til udgivelsesnoter</string>
     <string name="updateSession">{app_name} Opdatering</string>
     <string name="updateVersion">Version {version}</string>

@@ -803,7 +803,6 @@
     <string name="updateError">تازه کولو ته نشي</string>
     <string name="updateErrorDescription">{app_name} تازه کولو کې ناکام شو. مهرباني وکړئ {session_download_url} ته لاړ شئ او نوی نسخو د لاسي نصبولو لپاره، بیا زموږ د مرستی مرکز سره اړیکه ونیسئ ترڅو موږ ته د دې ستونزې په اړه خبر راکړئ.</string>
     <string name="updateNewVersion">د {app_name} نوې نسخه شتون لري، ټایپ وکړئ ترڅو تازه کړئ.</string>
-    <string name="updateNewVersionDescription">د {app_name} نوې نسخه شتون لري.</string>
     <string name="updateReleaseNotes">د خوشې یادښتونو ته لاړ شئ</string>
     <string name="updateSession">{app_name} تازه</string>
     <string name="updateVersion">نسخه {version}</string>

@@ -31,6 +31,10 @@ public class JsonUtil {
     return fromJson(new String(serialized), clazz);
   }
 
+  public static <T> T fromJson(ByteArraySlice serialized, Class<T> clazz) throws IOException {
+    return objectMapper.readValue(serialized.getData(), serialized.getOffset(), serialized.getLen(), clazz);
+  }
+
   public static <T> T fromJson(String serialized, TypeReference<T> typeReference) throws IOException {
     return objectMapper.readValue(serialized, typeReference);
   }

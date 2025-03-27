@@ -124,13 +124,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
-        <com.github.ybq.android.spinkit.SpinKitView
+
+        <ProgressBar
             android:id="@+id/local_loading_view"
-            style="@style/SpinKitView.Large.ThreeBounce"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:SpinKit_Color="?android:textColorPrimary"
+            android:layout_width="@dimen/large_spacing"
+            android:layout_height="@dimen/large_spacing"
             android:layout_gravity="center"
+            android:indeterminateTint="?android:textColorPrimary"
+            android:indeterminate="true"
             tools:visibility="visible"
             android:visibility="gone" />
 

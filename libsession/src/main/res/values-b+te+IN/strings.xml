@@ -804,7 +804,6 @@
     <string name="updateError">నవీకరించలేం</string>
     <string name="updateErrorDescription">{app_name} నవీకరించడం విఫలమయింది. దయచేసి {session_download_url}కి వెళ్ళి 새로운 వెర్షన్‌ను మాన్యువల్‌గా ఇన్స్టాల్ చేయండి, ఆపై ఈ సమస్య గురించి తెలియజేయడానికి మా సహాయ కేంద్రాన్ని సంప్రదించండి.</string>
     <string name="updateNewVersion">{app_name} యొక్క కొత్త సంస్కరణ అందుబాటులో ఉంది, నవీకరణ కొరకు తట్టండి</string>
-    <string name="updateNewVersionDescription">{app_name} యొక్క కొత్త సంస్కరణ అందుబాటులో ఉంది.</string>
     <string name="updateReleaseNotes">రిలీజ్ నోట్స్‌కి వెళ్ళండి</string>
     <string name="updateSession">{app_name} నవీకరణ</string>
     <string name="updateVersion">Sanskarana {version}</string>
