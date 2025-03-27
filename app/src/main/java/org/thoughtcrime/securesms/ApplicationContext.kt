@@ -63,24 +63,20 @@ import org.session.libsession.utilities.Toaster
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
-import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.signal.aesgcmprovider.AesGcmProvider
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
-import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.model.EmojiSearchData
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.AppComponent
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
-import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager.startPolling
@@ -108,11 +104,8 @@ import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.PeerConnectionFactory.InitializationOptions
-import java.io.IOException
 import java.security.Security
-import java.util.Arrays
 import java.util.Timer
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import kotlin.concurrent.Volatile
 
@@ -183,7 +176,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject lateinit var messageNotifierLazy: Lazy<MessageNotifier>
     @Inject lateinit var apiDB: LokiAPIDatabase
-    @Inject lateinit var emojiSearchDb: EmojiSearchDatabase
     @Inject lateinit var webRtcCallBridge: WebRtcCallBridge
     @Inject lateinit var legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2
     @Inject lateinit var legacyGroupDeprecationManager: LegacyGroupDeprecationManager
@@ -300,8 +292,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         initializeWebRtc()
         initializeBlobProvider()
         resubmitProfilePictureIfNeeded()
-        loadEmojiSearchIndexIfNeeded()
-        refresh()
 
         val networkConstraint = NetworkConstraint.Factory(this).create()
         isConnectedToNetwork = { networkConstraint.isMet }
@@ -463,29 +453,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private fun resubmitProfilePictureIfNeeded() {
         resubmitProfilePictureIfNeeded(this)
     }
-
-    private fun loadEmojiSearchIndexIfNeeded() {
-        Executors.newSingleThreadExecutor().execute {
-            if (emojiSearchDb.query("face", 1).isEmpty()) {
-                try {
-                    assets.open("emoji/emoji_search_index.json").use { inputStream ->
-                        val searchIndex = Arrays.asList(
-                            *JsonUtil.fromJson(
-                                inputStream,
-                                Array<EmojiSearchData>::class.java
-                            )
-                        )
-                        emojiSearchDb.setSearchIndex(searchIndex)
-                    }
-                } catch (e: IOException) {
-                    Log.e(
-                        "Loki",
-                        "Failed to load emoji search index"
-                    )
-                }
-            }
-        }
-    } // endregion
+    // endregion
 
     companion object {
         const val PREFERENCES_NAME: String = "SecureSMS-Preferences"

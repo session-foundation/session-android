@@ -8,6 +8,7 @@
     <dimen name="medium_font_size">16sp</dimen>
     <dimen name="large_font_size">20sp</dimen>
     <dimen name="very_large_font_size">26sp</dimen>
+    <dimen name="emoji_reaction_picker_size">26sp</dimen>
 
     <!-- Need to be temporary added until the theming is properly centralised in Compose -->
     <dimen name="medium2_font_size">18sp</dimen>

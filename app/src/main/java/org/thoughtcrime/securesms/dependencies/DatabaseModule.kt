@@ -15,7 +15,6 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.DraftDatabase
-import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -148,10 +147,6 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideReactionDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = ReactionDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideEmojiSearchDatabase(@ApplicationContext context: Context, openHelper: SQLCipherOpenHelper) = EmojiSearchDatabase(context, openHelper)
 
     @Provides
     @Singleton
