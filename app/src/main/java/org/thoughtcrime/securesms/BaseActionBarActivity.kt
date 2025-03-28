@@ -19,6 +19,7 @@ import org.thoughtcrime.securesms.conversation.v2.WindowUtil
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
 import org.thoughtcrime.securesms.util.themeState
+import kotlin.math.max
 
 abstract class BaseActionBarActivity : AppCompatActivity() {
     var currentThemeState: ThemeState? = null
@@ -81,7 +82,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable edge-to-edge
+        // Enable edge-to-edge - needed for sdk35 and above
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
 
@@ -91,16 +92,27 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setHomeButtonEnabled(true)
         }
 
-        // Apply insets to your views
+        // Apply insets to your views - Needed for sdk35 and above
         val rootView = findViewById<View>(android.R.id.content)
         ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Get system bars insets
+            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            // Get IME (keyboard) insets
+            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+
+            // Update view padding to account for system bars
             view.updatePadding(
-                left = insets.left,
-                top = insets.top,
-                right = insets.right,
-                bottom = insets.bottom
+                left = systemBarsInsets.left,
+                top = systemBarsInsets.top,
+                right = systemBarsInsets.right,
+                bottom = max(systemBarsInsets.bottom, imeInsets.bottom) // set either the padding for the inset or for the keyboard
             )
+
+            // Ensure child views are adjusted for keyboard
+            //ViewCompat.dispatchApplyWindowInsets(view)
+
+            // Consume the insets
             WindowInsetsCompat.CONSUMED
         }
     }
