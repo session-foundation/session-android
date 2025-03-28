@@ -29,9 +29,6 @@ object DownloadUtilities {
                     downloadFile(outputStream, url)
                     return  // return on success
                 } catch (e: HTTP.HTTPRequestFailedException) {
-                    if (e.statusCode == 404) {
-                        throw NonRetryableException("404 response trying to download file: $url", e)
-                    }
                     exception = e
                 } catch (e: Exception) {
                     exception = e

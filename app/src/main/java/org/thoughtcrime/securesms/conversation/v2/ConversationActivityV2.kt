@@ -363,7 +363,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     onDeselect(message, position, it)
                 }
             },
-            onAttachmentNeedsDownload = viewModel::onAttachmentDownloadRequest,
+            downloadPendingAttachment = viewModel::downloadPendingAttachment,
+            retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             lifecycleCoroutineScope = lifecycleScope
         )

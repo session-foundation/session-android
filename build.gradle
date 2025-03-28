@@ -54,12 +54,6 @@ allprojects {
             }
         }
         maven {
-            url "https://raw.github.com/signalapp/maven/master/circular-progress-button/releases/"
-            content {
-                includeGroupByRegex "com\\.github\\.dmytrodanylyk\\.circular-progress-button\\.*"
-            }
-        }
-        maven {
             url "https://raw.github.com/signalapp/maven/master/sqlcipher/release/"
             content {
                 includeGroupByRegex "org\\.signal.*"
@@ -79,7 +73,7 @@ allprojects {
 
     project.ext {
         androidMinimumSdkVersion = 26
-        androidTargetSdkVersion  = 34
-        androidCompileSdkVersion = 34
+        androidTargetSdkVersion  = 35
+        androidCompileSdkVersion = 35
     }
 }

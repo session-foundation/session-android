@@ -10,12 +10,14 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -49,6 +51,7 @@ import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.getAccentColor
 
+
 class PathActivity : ScreenLockActionBarActivity() {
     private lateinit var binding: ActivityPathBinding
     private val broadcastReceivers = mutableListOf<BroadcastReceiver>()
@@ -81,6 +84,20 @@ class PathActivity : ScreenLockActionBarActivity() {
                         update(true)
                     }
             }
+        }
+
+        binding.pathScroll.doOnLayout {
+            val child: View = binding.pathScroll.getChildAt(0)
+            val isScrollable: Boolean = child.height > binding.pathScroll.height
+            val params = binding.pathRowsContainer.layoutParams as FrameLayout.LayoutParams
+
+            if(isScrollable){
+                params.gravity = Gravity.CENTER_HORIZONTAL
+            } else {
+                params.gravity = Gravity.CENTER
+            }
+
+            binding.pathRowsContainer.layoutParams = params
         }
     }
 

@@ -22,7 +22,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import network.loki.messenger.R
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.UriAttachment
 import org.session.libsession.utilities.MediaTypes
 import org.thoughtcrime.securesms.util.FilenameUtils
@@ -58,7 +58,7 @@ class AudioSlide : Slide {
                     uri,
                     null,        // thumbnailUri
                     contentType,
-                    AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED,
+                    AttachmentState.DOWNLOADING.value,
                     dataSize,
                     0,           // width
                     0,           // height
@@ -72,7 +72,7 @@ class AudioSlide : Slide {
     constructor(context: Context, attachment: Attachment) : super(context, attachment)
 
     override fun hasPlaceholder() = true
-    override fun hasImage()       = true
+    override fun hasImage()       = false
     override fun hasAudio()       = true
 
     // Legacy voice messages don't have filenames at all - so should we come across one we must synthesize a filename using the delivery date obtained from the attachment

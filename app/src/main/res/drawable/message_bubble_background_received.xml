@@ -4,7 +4,7 @@
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="@dimen/message_corner_radius"/>
-            <solid android:color="@color/white" />
+            <solid android:color="?message_received_background_color" />
         </shape>
     </item>
 </layer-list>

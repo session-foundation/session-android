@@ -27,12 +27,27 @@
         android:layout_margin="@dimen/large_spacing"
         android:clipChildren="false">
 
-        <LinearLayout
-            android:id="@+id/pathRowsContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_centerInParent="true" />
+        <ScrollView
+            android:id="@+id/pathScroll"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:paddingBottom="@dimen/large_spacing">
+
+            <LinearLayout
+                android:id="@+id/pathRowsContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical" />
+
+        </ScrollView>
+
+        <View
+            android:id="@+id/gradientView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/fade_gradient" />
 
         <ProgressBar
             android:id="@+id/spinner"

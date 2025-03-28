@@ -6,8 +6,8 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="#F00"
-    android:paddingTop="12dp"
-    android:paddingHorizontal="12dp"
+    android:paddingHorizontal="@dimen/message_spacing"
+    android:paddingTop="@dimen/message_spacing"
     app:quote_mode="regular">
 
     <View

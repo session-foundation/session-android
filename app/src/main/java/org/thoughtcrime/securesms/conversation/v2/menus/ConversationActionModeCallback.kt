@@ -2,13 +2,17 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 
 import android.content.Context
 import android.view.ActionMode
+import android.view.ContextThemeWrapper
+import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.ConversationAdapter
@@ -16,6 +20,8 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import androidx.core.view.size
+import androidx.core.view.get
 
 class ConversationActionModeCallback(
     private val adapter: ConversationAdapter,
@@ -26,9 +32,19 @@ class ConversationActionModeCallback(
     var delegate: ConversationActionModeCallbackDelegate? = null
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-        val inflater = mode.menuInflater
+        val themedContext = ContextThemeWrapper(context, context.theme)
+        val inflater = MenuInflater(themedContext)
         inflater.inflate(R.menu.menu_conversation_item_action, menu)
         updateActionModeMenu(menu)
+
+        // tint icons manually as it seems the xml color is ignored, in spite of the context theme wrapper
+        val tintColor = context.getColorFromAttr(android.R.attr.textColorPrimary)
+
+        for (i in 0 until menu.size) {
+            val menuItem = menu[i]
+            menuItem.icon?.setTint(tintColor)
+        }
+
         return true
     }
 

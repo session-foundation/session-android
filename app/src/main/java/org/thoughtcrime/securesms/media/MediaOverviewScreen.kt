@@ -124,7 +124,7 @@ fun MediaOverviewScreen(
         topBar = {
             MediaOverviewTopAppBar(
                 selectionMode = selectionMode,
-                title = viewModel.title.collectAsState().value,
+                title = stringResource(R.string.conversationsSettingsAllMedia),
                 onBackClicked = viewModel::onBackClicked,
                 onSaveClicked = { showingSaveAttachmentWarning = true },
                 onDeleteClicked = { showingDeleteConfirmation = true },

@@ -14,9 +14,9 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.DecodedAudio
 import org.session.libsession.utilities.DownloadUtilities
 import org.session.libsession.utilities.InputStreamMediaDataSource
-import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
@@ -76,8 +76,15 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         val threadID = storage.getThreadIdForMms(databaseMessageID)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
-            if (exception is NonRetryableException ||
-                exception == Error.NoAttachment
+            if(exception is HTTP.HTTPRequestFailedException && exception.statusCode == 404){
+                attachment?.let { id ->
+                    Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, databaseMessageID)
+                } ?: run {
+                    Log.d("AttachmentDownloadJob", "Setting attachment state = failed, don't have attachment")
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, AttachmentId(attachmentID,0), databaseMessageID)
+                }
+            } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
                     || exception == Error.NoSender
                     || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
@@ -123,14 +130,16 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         }
 
         var tempFile: File? = null
+        var attachment: DatabaseAttachment? = null
+
         try {
-            val attachment = messageDataProvider.getDatabaseAttachment(attachmentID)
+            attachment = messageDataProvider.getDatabaseAttachment(attachmentID)
                 ?: return handleFailure(Error.NoAttachment, null)
             if (attachment.hasData()) {
                 handleFailure(Error.DuplicateData, attachment.attachmentId)
                 return
             }
-            messageDataProvider.setAttachmentState(AttachmentState.STARTED, attachment.attachmentId, this.databaseMessageID)
+            messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.databaseMessageID)
             tempFile = createTempFile()
             val openGroup = storage.getOpenGroup(threadID)
             if (openGroup == null) {
@@ -171,7 +180,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
         } catch (e: Exception) {
             Log.e("AttachmentDownloadJob", "Error processing attachment download", e)
             tempFile?.delete()
-            return handleFailure(e,null)
+            return handleFailure(e,attachment?.attachmentId)
         }
     }
 

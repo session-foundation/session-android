@@ -1,15 +1,13 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent.ACTION_UP
 import androidx.activity.viewModels
-import androidx.annotation.DrawableRes
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,12 +52,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.bumptech.glide.integration.compose.placeholder
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -67,6 +65,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
@@ -87,9 +86,12 @@ import org.thoughtcrime.securesms.ui.theme.blackAlpha40
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
+import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.push
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageDetailActivity : ScreenLockActionBarActivity() {
+class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher {
 
     @Inject
     lateinit var storage: StorageProtocol
@@ -128,6 +130,14 @@ class MessageDetailActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    override fun dispatchIntent(body: (Context) -> Intent?) {
+        body(this)?.let { push(it, false) }
+    }
+
+    override fun showDialog(dialogFragment: DialogFragment, tag: String?) {
+        dialogFragment.show(supportFragmentManager, tag)
+    }
+
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
@@ -144,7 +154,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity() {
             onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
             onClickImage = { viewModel.onClickImage(it) },
-            onAttachmentNeedsDownload = viewModel::onAttachmentNeedsDownload,
+            retryFailedAttachments = viewModel::retryFailedAttachments
         )
     }
 
@@ -167,7 +177,7 @@ fun MessageDetails(
     onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
     onClickImage: (Int) -> Unit = {},
-    onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit = { _ -> }
+    retryFailedAttachments: (List<DatabaseAttachment>) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -180,12 +190,20 @@ fun MessageDetails(
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
             ) {
                 AndroidView(
-                    factory = {
-                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(it)).mainContainerConstraint.apply {
+                    factory = { context ->
+                        // Inflate the view once
+                        ViewVisibleMessageContentBinding.inflate(LayoutInflater.from(context)).root
+                    },
+                    update = { view ->
+                        // Rebind the view whenever state changes.
+                        // Retrieve the binding from the view
+                        val binding = ViewVisibleMessageContentBinding.bind(view)
+                        binding.mainContainerConstraint.apply {
                             bind(
                                 message,
                                 thread = state.thread!!,
-                                onAttachmentNeedsDownload = onAttachmentNeedsDownload,
+                                downloadPendingAttachment = {}, // the view shouldn't handle this from the details activity
+                                retryFailedAttachments = retryFailedAttachments,
                                 suppressThumbnails = true
                             )
 
@@ -349,7 +367,6 @@ fun CellButtons(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
     if (attachments.isEmpty()) return
@@ -378,7 +395,6 @@ fun Carousel(attachments: List<Attachment>, onClick: (Int) -> Unit) {
 }
 
 @OptIn(
-    ExperimentalFoundationApi::class,
     ExperimentalGlideComposeApi::class
 )
 @Composable
@@ -397,7 +413,8 @@ private fun CarouselPager(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .clickable { onClick(i) },
-                model = attachments[i].uri,
+                model = if(attachments[i].uri != null) DecryptableStreamUriLoader.DecryptableUri(attachments[i].uri!!)
+                else null,
                 contentDescription = attachments[i].fileName ?: stringResource(id = R.string.image)
             )
         }
@@ -454,7 +471,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -462,7 +480,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     ),
                     Attachment(
                         fileDetails = listOf(
@@ -470,7 +489,8 @@ fun PreviewMessageDetails(
                         ),
                         fileName = "Screen Shot 2023-07-06 at 11.35.50 am.png",
                         uri = Uri.parse(""),
-                        hasImage = true
+                        hasImage = true,
+                        isDownloaded = true
                     )
 
                 ),
@@ -484,7 +504,9 @@ fun PreviewMessageDetails(
                 received = TitledText(R.string.received, "6:12 AM Tue, 09/08/2022"),
                 error = TitledText(R.string.error, "Message failed to send"),
                 senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
-            )
+
+            ),
+            retryFailedAttachments = {}
         )
     }
 }

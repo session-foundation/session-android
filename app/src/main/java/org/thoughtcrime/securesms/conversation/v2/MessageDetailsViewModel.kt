@@ -5,23 +5,21 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.Date
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import kotlin.text.Typography.ellipsis
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
+import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
@@ -30,8 +28,10 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
 import org.thoughtcrime.securesms.database.AttachmentDatabase
+import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
@@ -40,6 +40,12 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.util.observeChanges
+import java.util.Date
+import java.util.Locale
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.text.Typography.ellipsis
 
 @HiltViewModel
 class MessageDetailsViewModel @Inject constructor(
@@ -50,7 +56,9 @@ class MessageDetailsViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val context: ApplicationContext
+    private val context: ApplicationContext,
+    private val messageDataProvider: MessageDataProvider,
+    private val storage: Storage
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -61,6 +69,13 @@ class MessageDetailsViewModel @Inject constructor(
     private val event = Channel<Event>()
     val eventFlow = event.receiveAsFlow()
 
+    private val attachmentDownloadHandler = AttachmentDownloadHandler(
+        storage = storage,
+        messageDataProvider = messageDataProvider,
+        scope = viewModelScope,
+    )
+
+    @OptIn(FlowPreview::class)
     var timestamp: Long = 0L
         set(value) {
             job?.cancel()
@@ -73,75 +88,93 @@ class MessageDetailsViewModel @Inject constructor(
                 return
             }
 
-            val mmsRecord = messageRecord as? MmsMessageRecord
-
+            // listen to conversation and attachments changes
             job = viewModelScope.launch {
-                repository.changes(messageRecord.threadId)
-                    .filter { mmsSmsDatabase.getMessageForTimestamp(value) == null }
-                    .collect { event.send(Event.Finish) }
-            }
-
-            viewModelScope.launch {
-                state.value = messageRecord.run {
-                    val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
-
-                    val conversation = threadDb.getRecipientForThreadId(threadId)!!
-                    val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
-                                                  deprecationManager.isDeprecated
-
-
-                    val errorString = lokiMessageDatabase.getErrorMessage(id)
-
-                    var status: MessageStatus? = null
-                    // create a 'failed to send' status if appropriate
-                    if(messageRecord.isFailed){
-                        status = MessageStatus(
-                            title = context.getString(R.string.messageStatusFailedToSend),
-                            icon = R.drawable.ic_triangle_alert,
-                            errorStatus = true
-                        )
+                (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+                    .debounce(200L)
+                    .onStart { emit(Unit) }
+                    .collect{
+                        val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
+                        if(updatedRecord == null) event.send(Event.Finish)
+                        else {
+                            createStateFromRecord(updatedRecord)
+                        }
                     }
-
-                    val sender = if(messageRecord.isOutgoing){
-                        Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
-                    } else individualRecipient
-
-                    MessageDetailsState(
-                        attachments = slides.map(::Attachment),
-                        record = messageRecord,
-
-                        // Set the "Sent" message info TitledText appropriately
-                        sent = if (messageRecord.isSending && errorString == null) {
-                            val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
-                            TitledText(sendingWithEllipsisString, null)
-                        } else if (messageRecord.isSent && errorString == null) {
-                            dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
-                        } else {
-                            null // Not sending or sent? Don't display anything for the "Sent" element.
-                        },
-
-                        // Set the "Received" message info TitledText appropriately
-                        received = if (messageRecord.isIncoming && errorString == null) {
-                            dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
-                        } else {
-                            null // Not incoming? Then don't display anything for the "Received" element.
-                        },
-
-                        error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
-                        status = status,
-                        senderInfo = sender.run {
-                            TitledText(
-                                if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
-                                address.toString()
-                            )
-                        },
-                        sender = sender,
-                        thread = conversation,
-                        readOnly = isDeprecatedLegacyGroup
-                    )
-                }
             }
         }
+
+    private suspend fun createStateFromRecord(messageRecord: MessageRecord){
+        val mmsRecord = messageRecord as? MmsMessageRecord
+
+        withContext(Dispatchers.Default){
+            state.value = messageRecord.run {
+                val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
+
+                val conversation = threadDb.getRecipientForThreadId(threadId)!!
+                val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
+                        deprecationManager.isDeprecated
+
+
+                val errorString = lokiMessageDatabase.getErrorMessage(id)
+
+                var status: MessageStatus? = null
+                // create a 'failed to send' status if appropriate
+                if(messageRecord.isFailed){
+                    status = MessageStatus(
+                        title = context.getString(R.string.messageStatusFailedToSend),
+                        icon = R.drawable.ic_triangle_alert,
+                        errorStatus = true
+                    )
+                }
+
+                val sender = if(messageRecord.isOutgoing){
+                    Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                } else individualRecipient
+
+                val attachments = slides.map(::Attachment)
+
+                // we don't want to display image attachments in the carousel if their state isn't done
+                val imageAttachments = attachments.filter { it.isDownloaded && it.hasImage }
+
+                MessageDetailsState(
+                    //todo: ATTACHMENT We should sort out the equals in DatabaseAttachment which is the reason the StateFlow think the objects are the same in spite of the transferState of an attachment being different. That way we could remove the timestamp below
+                    timestamp = System.currentTimeMillis(), // used as a trick to force the state as  being marked aas different each time
+                    attachments = attachments,
+                    imageAttachments = imageAttachments,
+                    record = messageRecord,
+
+                    // Set the "Sent" message info TitledText appropriately
+                    sent = if (messageRecord.isSending && errorString == null) {
+                        val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
+                        TitledText(sendingWithEllipsisString, null)
+                    } else if (messageRecord.isSent && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                    } else {
+                        null // Not sending or sent? Don't display anything for the "Sent" element.
+                    },
+
+                    // Set the "Received" message info TitledText appropriately
+                    received = if (messageRecord.isIncoming && errorString == null) {
+                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                    } else {
+                        null // Not incoming? Then don't display anything for the "Received" element.
+                    },
+
+                    error = errorString?.let { TitledText(context.getString(R.string.theError) + ":", it) },
+                    status = status,
+                    senderInfo = sender.run {
+                        TitledText(
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                            address.toString()
+                        )
+                    },
+                    sender = sender,
+                    thread = conversation,
+                    readOnly = isDeprecatedLegacyGroup
+                )
+            }
+        }
+    }
 
     private val Slide.details: List<TitledText>
         get() = listOfNotNull(
@@ -162,27 +195,27 @@ class MessageDetailsViewModel @Inject constructor(
             ?.takeIf { it > 0 }
             ?.let {
                 String.format(
+                    Locale.getDefault(),
                     "%01d:%02d",
                     TimeUnit.MILLISECONDS.toMinutes(it),
                     TimeUnit.MILLISECONDS.toSeconds(it) % 60
                 )
             }
 
-    fun Attachment(slide: Slide): Attachment = Attachment(slide.details, slide.filename, slide.uri, hasImage = (slide is ImageSlide))
+    fun Attachment(slide: Slide): Attachment = Attachment(
+        fileDetails = slide.details,
+        fileName = slide.filename,
+        uri = slide.thumbnailUri,
+        hasImage = slide.hasImage(),
+        isDownloaded = slide.isDone
+    )
 
     fun onClickImage(index: Int) {
         val state = state.value
         val mmsRecord = state.mmsRecord ?: return
         val slide = mmsRecord.slideDeck.slides[index] ?: return
         // only open to downloaded images
-        if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
-            // Restart download here (on IO thread)
-            (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                onAttachmentNeedsDownload(attachment)
-            }
-        }
-
-        if (slide.isInProgress) return
+        if (slide.isInProgress || slide.isFailed) return
 
         viewModelScope.launch {
             MediaPreviewArgs(slide, state.mmsRecord, state.thread)
@@ -191,16 +224,15 @@ class MessageDetailsViewModel @Inject constructor(
         }
     }
 
-    fun onAttachmentNeedsDownload(attachment: DatabaseAttachment) {
-        viewModelScope.launch(Dispatchers.IO) {
-            JobQueue.shared.add(AttachmentDownloadJob(attachment.attachmentId.rowId, attachment.mmsId))
-        }
+    fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
+        attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 }
 
 data class MessageDetailsState(
+    val timestamp: Long = 0L,
     val attachments: List<Attachment> = emptyList(),
-    val imageAttachments: List<Attachment> = attachments.filter { it.hasImage },
+    val imageAttachments: List<Attachment> = emptyList(),
     val nonImageAttachmentFileDetails: List<TitledText>? = attachments.firstOrNull { !it.hasImage }?.fileDetails,
     val record: MessageRecord? = null,
     val mmsRecord: MmsMessageRecord? = record as? MmsMessageRecord,
@@ -222,7 +254,8 @@ data class Attachment(
     val fileDetails: List<TitledText>,
     val fileName: String?,
     val uri: Uri?,
-    val hasImage: Boolean
+    val hasImage: Boolean,
+    val isDownloaded: Boolean
 )
 
 data class MessageStatus(

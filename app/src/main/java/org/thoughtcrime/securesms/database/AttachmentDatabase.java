@@ -25,34 +25,21 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Pair;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+
 import com.bumptech.glide.Glide;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import kotlin.jvm.Synchronized;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress;
+import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState;
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment;
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachmentAudioExtras;
 import org.session.libsession.utilities.MediaTypes;
@@ -72,9 +59,28 @@ import org.thoughtcrime.securesms.mms.MmsException;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.util.BitmapDecodingException;
 import org.thoughtcrime.securesms.util.BitmapUtil;
-import org.thoughtcrime.securesms.util.MediaUtil.ThumbnailData;
 import org.thoughtcrime.securesms.util.MediaUtil;
+import org.thoughtcrime.securesms.util.MediaUtil.ThumbnailData;
 import org.thoughtcrime.securesms.video.EncryptedMediaDataSource;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+
+import kotlin.jvm.Synchronized;
 
 public class AttachmentDatabase extends Database {
   
@@ -194,7 +200,7 @@ public class AttachmentDatabase extends Database {
   {
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     ContentValues  values   = new ContentValues();
-    values.put(TRANSFER_STATE, AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED);
+    values.put(TRANSFER_STATE, AttachmentState.FAILED.getValue());
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
     notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(mmsId));
@@ -253,12 +259,36 @@ public class AttachmentDatabase extends Database {
 
     Cursor cursor = null;
     try {
-      cursor = database.query(TABLE_NAME, PROJECTION, TRANSFER_STATE + " = ?", new String[] {String.valueOf(AttachmentTransferProgress.TRANSFER_PROGRESS_STARTED)}, null, null, null);
+      cursor = database.query(TABLE_NAME, PROJECTION, TRANSFER_STATE + " = ?", new String[] {String.valueOf(AttachmentState.DOWNLOADING.getValue())}, null, null, null);
       while (cursor != null && cursor.moveToNext()) {
         attachments.addAll(getAttachment(cursor));
       }
     } finally {
       if (cursor != null) cursor.close();
+    }
+
+    return attachments;
+  }
+
+  public @NonNull List<DatabaseAttachment> getAllAttachments() {
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    Cursor cursor = null;
+    List<DatabaseAttachment> attachments = new ArrayList<>();
+
+    try {
+      // Query all rows in the attachment table.
+      cursor = database.query(TABLE_NAME, PROJECTION, null, null, null, null, null);
+
+      while (cursor != null && cursor.moveToNext()) {
+        List<DatabaseAttachment> list = getAttachment(cursor);
+        if (list != null && !list.isEmpty()) {
+          attachments.addAll(list);
+        }
+      }
+    } finally {
+      if (cursor != null) {
+        cursor.close();
+      }
     }
 
     return attachments;
@@ -430,7 +460,7 @@ public class AttachmentDatabase extends Database {
       values.put(DATA_RANDOM, dataInfo.random);
     }
 
-    values.put(TRANSFER_STATE, AttachmentTransferProgress.TRANSFER_PROGRESS_DONE);
+    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
     values.put(CONTENT_LOCATION, (String)null);
     values.put(CONTENT_DISPOSITION, (String)null);
     values.put(DIGEST, (byte[])null);
@@ -453,7 +483,7 @@ public class AttachmentDatabase extends Database {
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     ContentValues  values   = new ContentValues();
 
-    values.put(TRANSFER_STATE, AttachmentTransferProgress.TRANSFER_PROGRESS_DONE);
+    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
     values.put(CONTENT_LOCATION, attachment.getLocation());
     values.put(DIGEST, attachment.getDigest());
     values.put(CONTENT_DISPOSITION, attachment.getKey());
@@ -469,7 +499,7 @@ public class AttachmentDatabase extends Database {
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
     ContentValues  values   = new ContentValues();
 
-    values.put(TRANSFER_STATE, AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED);
+    values.put(TRANSFER_STATE, AttachmentState.FAILED.getValue());
 
     database.update(TABLE_NAME, values, PART_ID_WHERE, id.toStrings());
   }
@@ -568,7 +598,7 @@ public class AttachmentDatabase extends Database {
     ContentValues  values   = new ContentValues(1);
     SQLiteDatabase database = databaseHelper.getWritableDatabase();
 
-    values.put(TRANSFER_STATE, AttachmentTransferProgress.TRANSFER_PROGRESS_DONE);
+    values.put(TRANSFER_STATE, AttachmentState.DONE.getValue());
     database.update(TABLE_NAME, values, PART_ID_WHERE, ((DatabaseAttachment)attachment).getAttachmentId().toStrings());
 
     notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(messageId));
