@@ -1540,16 +1540,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         emojiPickerVisible = true
         ViewUtil.hideKeyboard(this, messageView)
-        binding.reactionsShade.isVisible = true
         binding.scrollToBottomButton.isVisible = false
         binding.conversationRecyclerView.suppressLayout(true)
         reactionDelegate.setOnActionSelectedListener(ReactionsToolbarListener(message))
         reactionDelegate.setOnHideListener(object: ConversationReactionOverlay.OnHideListener {
             override fun startHide() {
                 emojiPickerVisible = false
-                binding.reactionsShade.let {
-                    ViewUtil.fadeOut(it, resources.getInteger(R.integer.reaction_scrubber_hide_duration), View.GONE)
-                }
                 showScrollToBottomButtonIfApplicable()
             }
 

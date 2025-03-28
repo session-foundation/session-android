@@ -39,6 +39,8 @@
     <color name="transparent_white_87">#dfffffff</color>
     <color name="transparent_black_90">#90000000</color>
 
+    <color name="conversation_overlay_scrim">#df5e5e5e</color>
+
     <color name="transparent_white_15">#26ffffff</color>
     <color name="transparent_white_30">#30ffffff</color>
     <color name="transparent_white_40">#40ffffff</color>
@@ -61,9 +63,6 @@
     <color name="inverse_primary">@color/core_white</color>
 
     <color name="button_primary_ripple">@color/transparent_black_15</color>
-
-    <color name="reactions_screen_dark_shade_color">@color/transparent_black_70</color>
-    <color name="reactions_screen_light_shade_color">#df5e5e5e</color>
 
     <color name="signal_background_primary">@color/core_grey_95</color>
 

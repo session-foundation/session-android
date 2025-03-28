@@ -46,16 +46,10 @@ class LoadAccountActivity : BaseActionBarActivity() {
             }
         }
 
-
-
         setComposeContent {
             val state by viewModel.stateFlow.collectAsState()
             LoadAccountScreen(state, viewModel.qrErrors, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
         }
-
-
-
-
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
