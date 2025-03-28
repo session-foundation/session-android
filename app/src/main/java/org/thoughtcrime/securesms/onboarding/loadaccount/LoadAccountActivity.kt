@@ -1,9 +1,14 @@
 package org.thoughtcrime.securesms.onboarding.loadaccount
 
 import android.os.Bundle
+import android.view.View
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -41,10 +46,16 @@ class LoadAccountActivity : BaseActionBarActivity() {
             }
         }
 
+
+
         setComposeContent {
             val state by viewModel.stateFlow.collectAsState()
             LoadAccountScreen(state, viewModel.qrErrors, viewModel::onChange, viewModel::onContinue, viewModel::onScanQrCode)
         }
+
+
+
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
