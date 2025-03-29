@@ -437,7 +437,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     }
 
     notifyListeners();
-    EventBus.getDefault().post(new ProfilePictureModifiedEvent(this));
   }
 
   public synchronized boolean isProfileSharing() {

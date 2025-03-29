@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.attachments
 import android.content.Context
 import android.text.TextUtils
 import com.google.protobuf.ByteString
-import org.greenrobot.eventbus.EventBus
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
@@ -30,7 +29,6 @@ import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.events.PartProgressEvent
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -345,7 +343,6 @@ class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) 
                     .withWidth(attachment.width)
                     .withHeight(attachment.height)
                     .withCaption(attachment.caption)
-                    .withListener { total: Long, progress: Long -> EventBus.getDefault().postSticky(PartProgressEvent(attachment, total, progress)) }
                     .build()
         } catch (ioe: IOException) {
             Log.w("Loki", "Couldn't open attachment", ioe)
@@ -365,9 +362,8 @@ fun SessionServiceAttachmentPointer.toSignalPointer(): SignalServiceAttachmentPo
 
 fun DatabaseAttachment.toAttachmentStream(context: Context): SessionServiceAttachmentStream {
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
-    val listener = SignalServiceAttachment.ProgressListener { total: Long, progress: Long -> EventBus.getDefault().postSticky(PartProgressEvent(this, total, progress))}
 
-    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
+    var attachmentStream = SessionServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
     attachmentStream.attachmentId = this.attachmentId.rowId
     attachmentStream.isAudio = MediaUtil.isAudio(this)
     attachmentStream.isGif = MediaUtil.isGif(this)
@@ -409,9 +405,8 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
 
 fun DatabaseAttachment.toSignalAttachmentStream(context: Context): SignalServiceAttachmentStream {
     val stream = PartAuthority.getAttachmentStream(context, this.dataUri!!)
-    val listener = SignalServiceAttachment.ProgressListener { total: Long, progress: Long -> EventBus.getDefault().postSticky(PartProgressEvent(this, total, progress))}
 
-    return SignalServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption), listener)
+    return SignalServiceAttachmentStream(stream, this.contentType, this.size, this.filename, this.isVoiceNote, Optional.absent(), this.width, this.height, Optional.fromNullable(this.caption))
 }
 
 fun DatabaseAttachment.shouldHaveImageSize(): Boolean {
