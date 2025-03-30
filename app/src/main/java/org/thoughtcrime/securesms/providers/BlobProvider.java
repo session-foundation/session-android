@@ -173,21 +173,20 @@ public class BlobProvider {
   }
 
   @WorkerThread
-  private synchronized @NonNull Uri writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
+  @NonNull
+  private static Uri writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
     AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
     String           directory        = getDirectory(blobSpec.getStorageType());
     File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
     OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
 
-    SignalExecutors.UNBOUNDED.execute(() -> {
-      try {
-        Util.copy(blobSpec.getData(), outputStream);
-      } catch (IOException e) {
-        if (errorListener != null) {
-          errorListener.onError(e);
-        }
+    try {
+      Util.copy(blobSpec.getData(), outputStream);
+    } catch (IOException e) {
+      if (errorListener != null) {
+        errorListener.onError(e);
       }
-    });
+    }
 
     return buildUri(blobSpec);
   }
