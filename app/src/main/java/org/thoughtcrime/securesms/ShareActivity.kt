@@ -297,7 +297,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
                     .withMimeType(mimeType!!)
                     .withFileName(fileName!!)
                     .createForMultipleSessionsOnDisk(context, BlobProvider.ErrorListener { e: IOException? -> Log.w(TAG, "Failed to write to disk.", e) })
-            } catch (ioe: IOException) {
+                    .get()
+            } catch (ioe: Exception) {
                 Log.w(TAG, ioe)
                 return null
             }

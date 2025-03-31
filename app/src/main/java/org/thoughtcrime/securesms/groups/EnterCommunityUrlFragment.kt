@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.groups
 
+import android.content.Context.INPUT_METHOD_SERVICE
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -82,7 +83,7 @@ class EnterCommunityUrlFragment : Fragment() {
 
     // region Convenience
     private fun joinCommunityIfPossible() {
-        val inputMethodManager = requireContext().getSystemService(BaseActionBarActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+        val inputMethodManager = requireContext().getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.communityUrlEditText.windowToken, 0)
         val communityUrl = binding.communityUrlEditText.text.trim().toString().lowercase(Locale.US)
         delegate?.handleCommunityUrlEntered(communityUrl)

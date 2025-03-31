@@ -99,7 +99,6 @@ object ProfilePictureUtilities {
             pad.outputStreamFactory,
             pad.contentType,
             pad.dataLength,
-            null
         )
         val b = Buffer()
         drb.writeTo(b)

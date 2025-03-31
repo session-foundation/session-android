@@ -333,7 +333,7 @@ class ConversationReactionOverlay : FrameLayout {
 
     private fun updateSystemUiOnShow(activity: Activity) {
         val window = activity.window
-        val barColor = ContextCompat.getColor(context, R.color.reactions_screen_dark_shade_color)
+        val barColor = ContextCompat.getColor(context, R.color.conversation_overlay_scrim)
         originalStatusBarColor = window.statusBarColor
         WindowUtil.setStatusBarColor(window, barColor)
         originalNavigationBarColor = window.navigationBarColor

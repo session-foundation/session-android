@@ -1,7 +1,5 @@
 package org.session.libsignal.streams;
 
-import org.session.libsignal.messages.SignalServiceAttachment.ProgressListener;
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,20 +13,17 @@ public class DigestingRequestBody extends RequestBody {
   private final OutputStreamFactory outputStreamFactory;
   private final String              contentType;
   private final long                contentLength;
-  private final ProgressListener    progressListener;
 
   private byte[] digest;
 
   public DigestingRequestBody(InputStream inputStream,
                               OutputStreamFactory outputStreamFactory,
-                              String contentType, long contentLength,
-                              ProgressListener progressListener)
+                              String contentType, long contentLength)
   {
     this.inputStream         = inputStream;
     this.outputStreamFactory = outputStreamFactory;
     this.contentType         = contentType;
     this.contentLength       = contentLength;
-    this.progressListener    = progressListener;
   }
 
   @Override
@@ -47,10 +42,6 @@ public class DigestingRequestBody extends RequestBody {
     while ((read = inputStream.read(buffer, 0, buffer.length)) != -1) {
       outputStream.write(buffer, 0, read);
       total += read;
-
-      if (progressListener != null) {
-        progressListener.onAttachmentProgress(contentLength, total);
-      }
     }
 
     outputStream.flush();

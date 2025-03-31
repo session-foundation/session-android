@@ -16,9 +16,9 @@ import kotlin.math.round
 /**
  * Represents a local SignalServiceAttachment to be sent.
  */
-class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType: String?, val length: Long, val filename: String, val voiceNote: Boolean, val preview: Optional<ByteArray?>, val width: Int, val height: Int, val caption: Optional<String?>, val listener: SAttachment.ProgressListener?) : SessionServiceAttachment(contentType) {
+class SessionServiceAttachmentStream(val inputStream: InputStream?, contentType: String?, val length: Long, val filename: String, val voiceNote: Boolean, val preview: Optional<ByteArray?>, val width: Int, val height: Int, val caption: Optional<String?>) : SessionServiceAttachment(contentType) {
 
-    constructor(inputStream: InputStream?, contentType: String?, length: Long, filename: String, voiceNote: Boolean, listener: SAttachment.ProgressListener?) : this(inputStream, contentType, length, filename, voiceNote, Optional.absent<ByteArray?>(), 0, 0, Optional.absent<String?>(), listener) {}
+    constructor(inputStream: InputStream?, contentType: String?, length: Long, filename: String, voiceNote: Boolean) : this(inputStream, contentType, length, filename, voiceNote, Optional.absent<ByteArray?>(), 0, 0, Optional.absent<String?>()) {}
 
     // Though now required, `digest` may be null for pre-existing records or from
     // messages received from other clients

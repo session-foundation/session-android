@@ -6,7 +6,6 @@
 
 package org.session.libsignal.utilities;
 
-import org.session.libsignal.messages.SignalServiceAttachment.ProgressListener;
 import org.session.libsignal.streams.OutputStreamFactory;
 
 import java.io.InputStream;
@@ -17,16 +16,14 @@ public class PushAttachmentData {
   private final InputStream         data;
   private final long                dataSize;
   private final OutputStreamFactory outputStreamFactory;
-  private final ProgressListener    listener;
 
   public PushAttachmentData(String contentType, InputStream data, long dataSize,
-                            OutputStreamFactory outputStreamFactory, ProgressListener listener)
+                            OutputStreamFactory outputStreamFactory)
   {
     this.contentType         = contentType;
     this.data                = data;
     this.dataSize            = dataSize;
     this.outputStreamFactory = outputStreamFactory;
-    this.listener            = listener;
   }
 
   public String getContentType() {
@@ -43,9 +40,5 @@ public class PushAttachmentData {
 
   public OutputStreamFactory getOutputStreamFactory() {
     return outputStreamFactory;
-  }
-
-  public ProgressListener getListener() {
-    return listener;
   }
 }
