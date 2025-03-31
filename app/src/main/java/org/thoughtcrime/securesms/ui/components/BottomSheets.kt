@@ -102,7 +102,7 @@ fun <T> ActionSheet(
 }
 
 @Composable
-private fun ActionSheetItem(
+fun ActionSheetItem(
     leadingIcon: Int,
     text: String,
     qaTag: String?,
