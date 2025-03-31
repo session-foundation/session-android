@@ -74,7 +74,7 @@ class SelectContactsToInviteToGroupActivity : ScreenLockActionBarActivity(), Loa
 
     private fun update(members: List<String>) {
         this.members = members
-        binding.searchContactsRecyclerView.visibility = if (members.isEmpty()) View.GONE else View.VISIBLE
+        binding.recyclerView.visibility = if (members.isEmpty()) View.GONE else View.VISIBLE
         binding.emptyStateContainer.visibility = if (members.isEmpty()) View.VISIBLE else View.GONE
         invalidateOptionsMenu()
     }
