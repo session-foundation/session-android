@@ -17,8 +17,8 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
+import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
 
 import android.content.ContentValues;
@@ -26,14 +26,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.session.libsession.messaging.contacts.Contact;
-import org.session.libsession.messaging.jobs.BatchMessageReceiveJob;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
@@ -61,9 +63,8 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
+
 import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -619,53 +620,6 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
     notifyConversationListListeners();
     SessionMetaProtocol.clearReceivedMessages();
-  }
-
-  // Remove contact from database
-  public void deleteContactZZ(String address) {
-    long threadId = getThreadIdIfExistsFor(address);
-
-    // Mark contact as untrusted and delete.
-    // Note: You would think simple deletion would be enough but it isn't - hard to say what's getting cached.
-    SessionContactDatabase scd = DatabaseComponent.get(context).sessionContactDatabase();
-    Contact contact = scd.getContactWithAccountID(address);
-    if (contact == null) {
-      Log.w("ACL", "Could not get contact with ID: " + address);
-    } else {
-      Log.w("ACL", "Found contact with address: " + address);
-      scd.setContactIsTrusted(contact, false, threadId);
-    }
-
-    scd.deleteContact(address);
-    scd.notifyRecipientListeners();
-
-
-
-    // Disable recipient approved / approvedMe / autodownload then delete the recipient
-    RecipientDatabase rd = DatabaseComponent.get(context).recipientDatabase();
-    Recipient r = getRecipientForThreadId(threadId);
-
-    // Disable recipient status'
-    rd.setApproved(r, false);
-    rd.setApprovedMe(r, false);
-    rd.setAutoDownloadAttachments(r, false);
-
-    Recipient.removeCached(r.getAddress());
-
-    // Delete the recipient from the database
-    rd.deleteRecipient(address);
-
-    DatabaseComponent.get(context).threadDatabase().getApprovedConversationList();
-
-
-    // Unblock the recipient in the storage
-    MessagingModuleConfiguration.getShared()
-      .getStorage()
-      .setBlocked(Collections.singletonList(r), false, false); // Final false indicates this is not from a config update
-
-    deleteConversation(threadId);
-
-    addressCache.entrySet().removeIf(entry -> entry.getValue().toString().equals(address));
   }
 
   public long getThreadIdIfExistsFor(String address) {

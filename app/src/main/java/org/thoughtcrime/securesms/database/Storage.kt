@@ -1289,12 +1289,11 @@ open class Storage @Inject constructor(
         scd.notifyRecipientListeners()
 
         // Disable recipient approved / approvedMe / auto-download flags then delete the recipient
-        val rd = get(context).recipientDatabase()
         val r: Recipient? = threadDatabase.getRecipientForThreadId(threadId)
         r?.let {
             Recipient.removeCached(r.address)
             setBlocked(listOf(r),false,false)
-            rd.deleteRecipient(r.address.toString())
+            recipientDatabase.deleteRecipient(r.address.toString())
 
             // Careful: Call the versions in this Storage class, which will call through to the RecipientDatabase versions amongst other things
             setRecipientApproved(r, false)

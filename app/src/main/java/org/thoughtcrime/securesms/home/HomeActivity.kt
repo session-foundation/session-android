@@ -119,36 +119,33 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    // The search adapter has to be lazy so we get a chance to set up the threadDB, which we use to delete contacts
-    private val globalSearchAdapter by lazy {
-        GlobalSearchAdapter(context = this) { model ->
-            when (model) {
-                is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                    model.messageResult.run {
-                        putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                        putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
-                    }
+    private val globalSearchAdapter = GlobalSearchAdapter(context = this) { model ->
+        when (model) {
+            is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
+                model.messageResult.run {
+                    putExtra(ConversationActivityV2.THREAD_ID, threadId)
+                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
+                    putExtra(ConversationActivityV2.SCROLL_MESSAGE_AUTHOR, messageRecipient.address)
                 }
-                is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                    putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-                }
-                is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                    putExtra(
-                        ConversationActivityV2.ADDRESS,
-                        model.contact.hexString.let(Address::fromSerialized)
-                    )
-                }
-
-                is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                    .let(threadDb::getThreadIdIfExistsFor)
-                    .takeIf { it >= 0 }
-                    ?.let {
-                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                    }
-                else -> Log.d("Loki", "callback with model: $model")
             }
+            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
+            }
+            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                putExtra(
+                    ConversationActivityV2.ADDRESS,
+                    model.contact.hexString.let(Address::fromSerialized)
+                )
+            }
+
+            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                .let(threadDb::getThreadIdIfExistsFor)
+                .takeIf { it >= 0 }
+                ?.let {
+                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                }
+            else -> Log.d("Loki", "callback with model: $model")
         }
     }
 
@@ -537,7 +534,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
-    fun blockConversation(thread: ThreadRecord) {
+    private fun blockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
