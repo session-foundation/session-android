@@ -1283,15 +1283,7 @@ open class Storage @Inject constructor(
         threadDatabase.notifyConversationListListeners()
 
         // also handle the contact removal from the config's point of view
-        configFactory.withMutableUserConfigs {
-            it.contacts.upsertContact(accountId) {
-                // if the contact wasn't approved before but is approved now, make sure it's visible
-                if(approved && !this.approved) this.priority = PRIORITY_VISIBLE
-
-                // update approval
-                this.approved = approved
-            }
-        }
+        configFactory.removeContact(accountId)
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
