@@ -47,7 +47,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
 
         adapter.setHasStableIds(true)
         adapter.glide = glide
-        binding.searchContactsRecyclerView.adapter = adapter
+        binding.recyclerView.adapter = adapter
 
         binding.clearAllMessageRequestsButton.setOnClickListener { deleteAll() }
     }

@@ -26,7 +26,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import java.security.InvalidParameterException
-import org.session.libsession.messaging.contacts.Contact as ContactModel
 
 class GlobalSearchAdapter(
     val context: Context,

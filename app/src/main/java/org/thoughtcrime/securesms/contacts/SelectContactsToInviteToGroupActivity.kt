@@ -47,8 +47,8 @@ class SelectContactsToInviteToGroupActivity : ScreenLockActionBarActivity(), Loa
             binding.emptyStateMessageTextView.text = emptyStateText
         }
 
-        binding.searchContactsRecyclerView.adapter = selectContactsAdapter
-        binding.searchContactsRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.recyclerView.adapter = selectContactsAdapter
+        binding.recyclerView.layoutManager = LinearLayoutManager(this)
 
         LoaderManager.getInstance(this).initLoader(0, null, this)
     }
