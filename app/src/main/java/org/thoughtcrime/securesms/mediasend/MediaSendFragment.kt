@@ -17,18 +17,18 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
-import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
 import androidx.core.os.BundleCompat
+import androidx.core.os.ParcelCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import network.loki.messenger.databinding.MediasendFragmentBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isEnterSendsEnabled
@@ -40,15 +40,11 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.SettableFuture
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.components.ComposeText
-import org.thoughtcrime.securesms.components.ControllableViewPager
-import org.thoughtcrime.securesms.components.InputAwareLayout
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardHiddenListener
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener
 import org.thoughtcrime.securesms.imageeditor.model.EditorModel
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
-import org.thoughtcrime.securesms.mediasend.MediaSendViewModel
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.PushCharacterCalculator
@@ -56,7 +52,6 @@ import org.thoughtcrime.securesms.util.Stopwatch
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.Locale
-import java.util.concurrent.ExecutionException
 
 /**
  * Allows the user to edit and caption a set of media items before choosing to send them.
@@ -64,35 +59,24 @@ import java.util.concurrent.ExecutionException
 @AndroidEntryPoint
 class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
     OnKeyboardShownListener, OnKeyboardHiddenListener {
-    private var hud: InputAwareLayout? = null
-    private var captionAndRail: View? = null
-    private var sendButton: ImageButton? = null
-    private var composeText: ComposeText? = null
-    private var composeContainer: ViewGroup? = null
-    private var playbackControlsContainer: ViewGroup? = null
-    private var charactersLeft: TextView? = null
-    private var closeButton: View? = null
-    private var loader: View? = null
+    private var binding: MediasendFragmentBinding? = null
 
-    private var fragmentPager: ControllableViewPager? = null
     private var fragmentPagerAdapter: MediaSendFragmentPagerAdapter? = null
-    private var mediaRail: RecyclerView? = null
     private var mediaRailAdapter: MediaRailAdapter? = null
 
     private var visibleHeight = 0
     private var viewModel: MediaSendViewModel? = null
-    private var controller: Controller? = null
 
     private val visibleBounds = Rect()
 
     private val characterCalculator = PushCharacterCalculator()
 
+    private val controller: Controller
+        get() = (parentFragment as? Controller) ?: requireActivity() as Controller
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        check(requireActivity() is Controller) { "Parent activity must implement controller interface." }
-
-        controller = requireActivity() as Controller
         viewModel = ViewModelProvider(requireActivity()).get(
             MediaSendViewModel::class.java
         )
@@ -102,8 +86,8 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.mediasend_fragment, container, false)
+    ): View {
+        return MediasendFragmentBinding.inflate(inflater, container, false).root
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,83 +96,76 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        hud = view.findViewById(R.id.mediasend_hud)
-        captionAndRail = view.findViewById(R.id.mediasend_caption_and_rail)
-        sendButton = view.findViewById(R.id.mediasend_send_button)
-        composeText = view.findViewById(R.id.mediasend_compose_text)
-        composeContainer = view.findViewById(R.id.mediasend_compose_container)
-        fragmentPager = view.findViewById(R.id.mediasend_pager)
-        mediaRail = view.findViewById(R.id.mediasend_media_rail)
-        playbackControlsContainer = view.findViewById(R.id.mediasend_playback_controls_container)
-        charactersLeft = view.findViewById(R.id.mediasend_characters_left)
-        closeButton = view.findViewById(R.id.mediasend_close_button)
-        loader = view.findViewById(R.id.loader)
+        val binding = MediasendFragmentBinding.bind(view).also {
+            this.binding = it
+        }
 
-        val sendButtonBkg = view.findViewById<View>(R.id.mediasend_send_button_bkg)
-
-        sendButton!!.setOnClickListener(View.OnClickListener { v: View? ->
-            if (hud!!.isKeyboardOpen()) {
-                hud!!.hideSoftkey(composeText, null)
+        binding.mediasendSendButton.setOnClickListener { v: View? ->
+            if (binding.mediasendHud.isKeyboardOpen) {
+                binding.mediasendHud.hideSoftkey(binding.mediasendComposeText, null)
             }
-            processMedia(fragmentPagerAdapter!!.allMedia, fragmentPagerAdapter!!.savedState)
-        })
+
+            fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState) }
+        }
 
         val composeKeyPressedListener = ComposeKeyPressedListener()
 
-        composeText!!.setOnKeyListener(composeKeyPressedListener)
-        composeText!!.addTextChangedListener(composeKeyPressedListener)
-        composeText!!.setOnClickListener(composeKeyPressedListener)
-        composeText!!.setOnFocusChangeListener(composeKeyPressedListener)
+        binding.mediasendComposeText.setOnKeyListener(composeKeyPressedListener)
+        binding.mediasendComposeText.addTextChangedListener(composeKeyPressedListener)
+        binding.mediasendComposeText.setOnClickListener(composeKeyPressedListener)
+        binding.mediasendComposeText.setOnFocusChangeListener(composeKeyPressedListener)
 
-        composeText!!.requestFocus()
+        binding.mediasendComposeText.requestFocus()
 
         fragmentPagerAdapter = MediaSendFragmentPagerAdapter(childFragmentManager)
-        fragmentPager!!.setAdapter(fragmentPagerAdapter)
+        binding.mediasendPager.setAdapter(fragmentPagerAdapter)
 
         val pageChangeListener = FragmentPageChangeListener()
-        fragmentPager!!.addOnPageChangeListener(pageChangeListener)
-        fragmentPager!!.post(Runnable { pageChangeListener.onPageSelected(fragmentPager!!.currentItem) })
+        binding.mediasendPager.addOnPageChangeListener(pageChangeListener)
+        binding.mediasendPager.post(Runnable { pageChangeListener.onPageSelected(binding.mediasendPager.currentItem) })
 
         mediaRailAdapter = MediaRailAdapter(Glide.with(this), this, true)
-        mediaRail!!.setLayoutManager(
+        binding.mediasendMediaRail.setLayoutManager(
             LinearLayoutManager(
                 requireContext(),
                 LinearLayoutManager.HORIZONTAL,
                 false
             )
         )
-        mediaRail!!.setAdapter(mediaRailAdapter)
+        binding.mediasendMediaRail.setAdapter(mediaRailAdapter)
 
-        hud!!.getRootView().viewTreeObserver.addOnGlobalLayoutListener(this)
-        hud!!.addOnKeyboardShownListener(this)
-        hud!!.addOnKeyboardHiddenListener(this)
+        binding.mediasendHud.getRootView().viewTreeObserver.addOnGlobalLayoutListener(this)
+        binding.mediasendHud.addOnKeyboardShownListener(this)
+        binding.mediasendHud.addOnKeyboardHiddenListener(this)
 
-        composeText!!.append(viewModel!!.body)
+        binding.mediasendComposeText.append(viewModel?.body)
 
-        val recipient = Recipient.from(
-            requireContext(),
-            arguments!!.getParcelable(KEY_ADDRESS)!!, false
-        )
-        val displayName = Optional.fromNullable(recipient.name)
-            .or(
-                Optional.fromNullable(recipient.profileName)
-                    .or(recipient.address.toString())
-            )
-        composeText!!.setHint(getString(R.string.message), null)
-        composeText!!.setOnEditorActionListener(OnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
+        binding.mediasendComposeText.setHint(getString(R.string.message), null)
+        binding.mediasendComposeText.setOnEditorActionListener { v: TextView?, actionId: Int, event: KeyEvent? ->
             val isSend = actionId == EditorInfo.IME_ACTION_SEND
-            if (isSend) sendButton!!.performClick()
+            if (isSend) binding.mediasendSendButton.performClick()
             isSend
-        })
+        }
 
-        closeButton!!.setOnClickListener(View.OnClickListener { v: View? -> requireActivity().onBackPressed() })
+        binding.mediasendCloseButton.setOnClickListener { requireActivity().onBackPressed() }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        binding = null
     }
 
     override fun onStart() {
         super.onStart()
 
-        fragmentPagerAdapter!!.restoreState(viewModel!!.drawState)
-        viewModel!!.onImageEditorStarted()
+        val viewModel = viewModel
+        val adapter = fragmentPagerAdapter
+
+        if (viewModel != null && adapter != null) {
+            adapter.restoreState(viewModel.drawState)
+            viewModel.onImageEditorStarted()
+        }
 
         requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN)
@@ -200,125 +177,147 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
     override fun onStop() {
         super.onStop()
-        fragmentPagerAdapter!!.saveAllState()
-        viewModel!!.saveDrawState(fragmentPagerAdapter!!.savedState)
+
+        val viewModel = viewModel
+        val adapter = fragmentPagerAdapter
+
+        if (viewModel != null && adapter != null) {
+            adapter.saveAllState()
+            viewModel.saveDrawState(adapter.savedState)
+        }
     }
 
     override fun onGlobalLayout() {
-        hud!!.rootView.getWindowVisibleDisplayFrame(visibleBounds)
+        val hud = binding?.mediasendHud ?: return
+
+        hud.rootView.getWindowVisibleDisplayFrame(visibleBounds)
 
         val currentVisibleHeight = visibleBounds.height()
 
         if (currentVisibleHeight != visibleHeight) {
-            hud!!.layoutParams.height = currentVisibleHeight
-            hud!!.layout(
+            hud.layoutParams.height = currentVisibleHeight
+            hud.layout(
                 visibleBounds.left,
                 visibleBounds.top,
                 visibleBounds.right,
                 visibleBounds.bottom
             )
-            hud!!.requestLayout()
+            hud.requestLayout()
 
             visibleHeight = currentVisibleHeight
         }
     }
 
     override fun onRailItemClicked(distanceFromActive: Int) {
-        viewModel!!.onPageChanged(fragmentPager!!.currentItem + distanceFromActive)
+        val currentItem = binding?.mediasendPager?.currentItem ?: return
+        viewModel?.onPageChanged(currentItem + distanceFromActive)
     }
 
     override fun onRailItemDeleteClicked(distanceFromActive: Int) {
-        viewModel!!.onMediaItemRemoved(
+        val currentItem = binding?.mediasendPager?.currentItem ?: return
+
+        viewModel?.onMediaItemRemoved(
             requireContext(),
-            fragmentPager!!.currentItem + distanceFromActive
+            currentItem + distanceFromActive
         )
     }
 
     override fun onKeyboardShown() {
-        if (composeText!!.hasFocus()) {
-            mediaRail!!.visibility = View.VISIBLE
-            composeContainer!!.visibility = View.VISIBLE
+        val binding = binding ?: return
+
+        if (binding.mediasendComposeText.hasFocus()) {
+            binding.mediasendMediaRail.visibility = View.VISIBLE
+            binding.mediasendComposeContainer.visibility = View.VISIBLE
         } else {
-            mediaRail!!.visibility = View.GONE
-            composeContainer!!.visibility = View.VISIBLE
+            binding.mediasendMediaRail.visibility = View.GONE
+            binding.mediasendComposeContainer.visibility = View.VISIBLE
         }
     }
 
     override fun onKeyboardHidden() {
-        composeContainer!!.visibility = View.VISIBLE
-        mediaRail!!.visibility = View.VISIBLE
-    }
-
-    fun onTouchEventsNeeded(needed: Boolean) {
-        if (fragmentPager != null) {
-            fragmentPager!!.isEnabled = !needed
+        binding?.apply {
+            mediasendComposeContainer.visibility = View.VISIBLE
+            mediasendMediaRail.visibility = View.VISIBLE
         }
     }
 
+    fun onTouchEventsNeeded(needed: Boolean) {
+        binding?.mediasendPager?.isEnabled = !needed
+    }
+
     fun handleBackPress(): Boolean {
-        if (hud!!.isInputOpen) {
-            hud!!.hideCurrentInput(composeText)
+        val hud = binding?.mediasendHud ?: return false
+        val composeText = binding?.mediasendComposeText ?: return false
+
+        if (hud.isInputOpen) {
+            hud.hideCurrentInput(composeText)
             return true
         }
         return false
     }
 
     private fun initViewModel() {
-        viewModel!!.getSelectedMedia().observe(
-            this
-        ) { media: List<Media?>? ->
-            if (isEmpty(media)) {
-                controller!!.onNoMediaAvailable()
-                return@observe
-            }
-            fragmentPagerAdapter!!.setMedia(media!!)
-
-            mediaRail!!.visibility = View.VISIBLE
-            mediaRailAdapter!!.setMedia(media)
+        val viewModel = requireNotNull(viewModel) {
+            "ViewModel is not initialized"
         }
 
-        viewModel!!.getPosition().observe(this) { position: Int? ->
-            if (position == null || position < 0) return@observe
-            fragmentPager!!.setCurrentItem(position, true)
-            mediaRailAdapter!!.setActivePosition(position)
-            mediaRail!!.smoothScrollToPosition(position)
+        viewModel.getSelectedMedia().observe(
+            this
+        ) { media: List<Media?>? ->
+            if (media.isNullOrEmpty()) {
+                controller.onNoMediaAvailable()
+                return@observe
+            }
 
-            val playbackControls = fragmentPagerAdapter!!.getPlaybackControls(position)
+            fragmentPagerAdapter?.setMedia(media)
+
+            binding?.mediasendMediaRail?.visibility = View.VISIBLE
+            mediaRailAdapter?.setMedia(media)
+        }
+
+        viewModel.getPosition().observe(this) { position: Int? ->
+            if (position == null || position < 0) return@observe
+            binding?.mediasendPager?.setCurrentItem(position, true)
+            mediaRailAdapter?.setActivePosition(position)
+            binding?.mediasendMediaRail?.smoothScrollToPosition(position)
+
+            val playbackControls = fragmentPagerAdapter?.getPlaybackControls(position)
             if (playbackControls != null) {
                 val params = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
                 playbackControls.layoutParams = params
-                playbackControlsContainer!!.removeAllViews()
-                playbackControlsContainer!!.addView(playbackControls)
+                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
+                binding?.mediasendPlaybackControlsContainer?.addView(playbackControls)
             } else {
-                playbackControlsContainer!!.removeAllViews()
+                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
             }
         }
 
-        viewModel!!.getBucketId().observe(this) { bucketId: String? ->
+        viewModel.getBucketId().observe(this) { bucketId: String? ->
             if (bucketId == null) return@observe
-            mediaRailAdapter!!.setAddButtonListener { controller!!.onAddMediaClicked(bucketId) }
+            mediaRailAdapter!!.setAddButtonListener { controller.onAddMediaClicked(bucketId) }
         }
     }
 
 
     private fun presentCharactersRemaining() {
-        val messageBody = composeText!!.textTrimmed
+        val binding = binding ?: return
+        val messageBody = binding.mediasendComposeText.textTrimmed
         val characterState = characterCalculator.calculateCharacters(messageBody)
 
         if (characterState.charactersRemaining <= 15 || characterState.messagesSpent > 1) {
-            charactersLeft!!.text = String.format(
+            binding.mediasendCharactersLeft.text = String.format(
                 Locale.getDefault(),
                 "%d/%d (%d)",
                 characterState.charactersRemaining,
                 characterState.maxTotalMessageSize,
                 characterState.messagesSpent
             )
-            charactersLeft!!.visibility = View.VISIBLE
+            binding.mediasendCharactersLeft.visibility = View.VISIBLE
         } else {
-            charactersLeft!!.visibility = View.GONE
+            binding.mediasendCharactersLeft.visibility = View.GONE
         }
     }
 
@@ -344,7 +343,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             override fun onPreExecute() {
                 renderTimer = Stopwatch("ProcessMedia")
                 progressTimer = Runnable {
-                    loader!!.visibility = View.VISIBLE
+                    binding?.loader?.visibility = View.VISIBLE
                 }
                 runOnMainDelayed(progressTimer!!, 250)
             }
@@ -400,16 +399,20 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             }
 
             override fun onPostExecute(media: List<Media>) {
-                controller!!.onSendClicked(media, composeText!!.textTrimmed)
+                val binding = binding
+                if (binding != null) {
+                    controller.onSendClicked(media, binding.mediasendComposeText.textTrimmed)
+                    binding.loader.visibility = View.GONE
+                }
+                
                 cancelRunnableOnMain(progressTimer!!)
-                loader!!.visibility = View.GONE
                 renderTimer!!.stop(TAG)
             }
         }.execute()
     }
 
     fun onRequestFullScreen(fullScreen: Boolean) {
-        captionAndRail!!.visibility =
+        binding?.mediasendCaptionAndRail?.visibility =
             if (fullScreen) View.GONE else View.VISIBLE
     }
 
@@ -427,13 +430,13 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             if (event.action == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_ENTER) {
                     if (isEnterSendsEnabled(requireContext())) {
-                        sendButton!!.dispatchKeyEvent(
+                        binding?.mediasendSendButton?.dispatchKeyEvent(
                             KeyEvent(
                                 KeyEvent.ACTION_DOWN,
                                 KeyEvent.KEYCODE_ENTER
                             )
                         )
-                        sendButton!!.dispatchKeyEvent(
+                        binding?.mediasendSendButton?.dispatchKeyEvent(
                             KeyEvent(
                                 KeyEvent.ACTION_UP,
                                 KeyEvent.KEYCODE_ENTER
@@ -447,11 +450,12 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         }
 
         override fun onClick(v: View) {
-            hud!!.showSoftkey(composeText)
+            val binding = binding ?: return
+            binding.mediasendHud.showSoftkey(binding.mediasendComposeText)
         }
 
         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
-            beforeLength = composeText!!.textTrimmed.length
+            beforeLength = binding?.mediasendComposeText?.textTrimmed?.length ?: return
         }
 
         override fun afterTextChanged(s: Editable) {
