@@ -9,7 +9,6 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
@@ -57,6 +56,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.ProfileKeyUtil
@@ -68,6 +68,7 @@ import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
 import org.session.libsession.utilities.recipients.getType
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
@@ -230,6 +231,14 @@ open class Storage @Inject constructor(
     override fun getUserX25519KeyPair(): ECKeyPair { return lokiAPIDatabase.getUserX25519KeyPair() }
 
     override fun getUserED25519KeyPair(): KeyPair? { return KeyPairUtilities.getUserED25519KeyPair(context) }
+
+    override fun getUserBlindedAccountId(serverPublicKey: String): AccountId? {
+        val userKeyPair = getUserED25519KeyPair() ?: return null
+        return AccountId(
+            IdPrefix.BLINDED,
+            SodiumUtilities.blindedKeyPair(serverPublicKey, userKeyPair)!!.publicKey.asBytes
+        )
+    }
 
     override fun getUserProfile(): Profile {
         val displayName = usernameUtils.getCurrentUsername()
@@ -982,7 +991,7 @@ open class Storage @Inject constructor(
         return lokiAPIDatabase.getLatestClosedGroupEncryptionKeyPair(groupPublicKey)
     }
 
-    override fun getAllClosedGroupPublicKeys(): Set<String> {
+    override fun getAllLegacyGroupPublicKeys(): Set<String> {
         return lokiAPIDatabase.getAllClosedGroupPublicKeys()
     }
 
@@ -1036,7 +1045,7 @@ open class Storage @Inject constructor(
         return configFactory.withGroupConfigs(AccountId(groupAccountId)) { configs ->
             val info = configs.groupInfo
             GroupDisplayInfo(
-                id = info.id(),
+                id = AccountId(info.id()),
                 name = info.getName(),
                 profilePic = info.getProfilePic(),
                 expiryTimer = info.getExpiryTimer(),
@@ -1362,10 +1371,10 @@ open class Storage @Inject constructor(
         }
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
+        val currentUserKey = getUserPublicKey()
         val  removedContacts = getAllContacts().filter { localContact ->
-            moreContacts.firstOrNull {
-                it.id == localContact.accountID
-            } == null
+            localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
             getThreadId(fromSerialized(it.accountID))?.let(::deleteConversation)

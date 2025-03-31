@@ -744,7 +744,6 @@
     <string name="recoveryPasswordBannerTitle">Įrašyti jūsų atkūrimo slaptažodį</string>
     <string name="recoveryPasswordDescription">Naudokite savo atkūrimo slaptažodį, kad įkeltumėte savo paskyrą į naujus įrenginius.\n\nJūsų paskyra negali būti atkurta be jūsų atkūrimo slaptažodžio. Įsitikinkite, kad jis yra saugomas saugioje vietoje — ir nesidalinkite juo su niekuo.</string>
     <string name="recoveryPasswordEnter">Įveskite savo atkūrimo slaptažodį</string>
-    <string name="recoveryPasswordErrorLoad">Įkeliant jūsų atkūrimo slaptažodį įvyko klaida.\n\nPrašome eksportuoti savo žurnalus ir įkelkite failą per \"Session\" pagalbos tarnybą, kad galėtume išspręsti šią problemą.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Patikrinkite atkūrimo slaptažodį ir bandykite dar kartą.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Kai kurie jūsų atkūrimo slaptažodžio žodžiai neteisingi. Prašome patikrinti ir bandykite dar kartą.</string>
     <string name="recoveryPasswordErrorMessageShort">Įvestas atkūrimo slaptažodis yra per trumpas. Prašome patikrinti ir bandyti dar kartą.</string>
@@ -833,7 +832,6 @@
     <string name="updateError">Nepavyksta atnaujinti</string>
     <string name="updateErrorDescription">Nepavyko atnaujinti {app_name}. Prašome eiti į {session_download_url} ir rankiniu būdu įdiegti naują versiją, tada susisiekite su mūsų Pagalbos Centru, kad praneštumėte apie šią problemą.</string>
     <string name="updateNewVersion">Yra prieinama nauja {app_name} versija, bakstelėkite, norėdami atnaujinti</string>
-    <string name="updateNewVersionDescription">Yra prieinama nauja {app_name} versija.</string>
     <string name="updateReleaseNotes">Pereiti į laidos informaciją</string>
     <string name="updateSession">{app_name} atnaujinimas</string>
     <string name="updateVersion">Versija {version}</string>

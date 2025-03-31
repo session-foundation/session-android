@@ -118,10 +118,6 @@ public abstract class MessageRecord extends DisplayRecord {
     return false;
   }
 
-  public boolean isUpdate() {
-    return isExpirationTimerUpdate() || isCallLog() || isDataExtractionNotification();
-  }
-
   /**
    * @return Decoded group update message. Only valid if the message is a group update message.
    */

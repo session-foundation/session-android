@@ -12,4 +12,5 @@ interface TokenFetcher {
     val token: StateFlow<String?>
 
     fun onNewToken(token: String)
+    suspend fun resetToken()
 }

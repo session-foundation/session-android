@@ -706,7 +706,6 @@
     <string name="recoveryPasswordBannerTitle">保存您的恢復密碼</string>
     <string name="recoveryPasswordDescription">請使用您的恢復密碼在新裝置上載入您的帳戶。\n\n若沒有恢復密碼將無法恢復您的帳戶。請確保將其儲存於安全的地方—且不要與任何人分享。</string>
     <string name="recoveryPasswordEnter">輸入您的恢復密碼</string>
-    <string name="recoveryPasswordErrorLoad">載入您的恢復密碼時發生錯誤。\n\n請匯出您的日誌，然後透過 Session 的協助台上傳檔案以解決此問題。</string>
     <string name="recoveryPasswordErrorMessageGeneric">請檢查您的恢復密碼，再試一次。</string>
     <string name="recoveryPasswordErrorMessageIncorrect">您復原密碼中的某些詞不正確。請檢查並重試。</string>
     <string name="recoveryPasswordErrorMessageShort">你輸入的恢復密碼不夠長。請檢查並重試。</string>
@@ -792,7 +791,6 @@
     <string name="updateError">無法更新</string>
     <string name="updateErrorDescription">{app_name} 更新失敗。請前往 {session_download_url} 手動安裝新版本，然後聯繫我們的幫助中心通知我們這個問題。</string>
     <string name="updateNewVersion">有新版本的 {app_name}，輕觸更新</string>
-    <string name="updateNewVersionDescription">有新版本的 {app_name}。</string>
     <string name="updateReleaseNotes">前往發行紀錄</string>
     <string name="updateSession">{app_name} 更新</string>
     <string name="updateVersion">版本： {version}</string>

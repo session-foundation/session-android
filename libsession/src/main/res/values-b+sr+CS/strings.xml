@@ -729,7 +729,6 @@
     <string name="recoveryPasswordBannerTitle">Sačuvajte svoju recovery password</string>
     <string name="recoveryPasswordDescription">Koristite svoj recovery password da učitate svoj nalog na novim uređajima.\n\nVaš nalog se ne može oporaviti bez recovery password-a. Uverite se da je čuvan na sigurnom i ne delite ga ni sa kim.</string>
     <string name="recoveryPasswordEnter">Unesite vašu lozinku za oporavak</string>
-    <string name="recoveryPasswordErrorLoad">Došlo je do greške prilikom učitavanja vaše recovery password.\n\nMolimo izvezite svoje logove, zatim pošaljite fajl putem Session-ovog Help Desk-a da biste pomogli u rešavanju ovog problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Molimo proverite lozinku za oporavak i pokušajte ponovo.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Neke reči u vašoj Recovery Password su netačne. Proverite i pokušajte ponovo.</string>
     <string name="recoveryPasswordErrorMessageShort">Uneta Recovery Password nije dovoljno dugačka. Molimo proverite i pokušajte ponovo.</string>
@@ -817,7 +816,6 @@
     <string name="updateError">Nije moguće ažurirati</string>
     <string name="updateErrorDescription">{app_name} nije uspeo da se ažurira. Molimo idite na {session_download_url} i instalirajte novu verziju ručno, zatim kontaktirajte naš centar za pomoć i obavestite nas o ovom problemu.</string>
     <string name="updateNewVersion">Nova verzija {app_name} je dostupna, dodirnite da ažurirate</string>
-    <string name="updateNewVersionDescription">Nova verzija {app_name} je dostupna.</string>
     <string name="updateReleaseNotes">Idite na napomene o verziji</string>
     <string name="updateSession">{app_name} Ažuriranje</string>
     <string name="updateVersion">Verzija {version}</string>

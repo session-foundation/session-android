@@ -57,6 +57,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
             val attachment = messageDataProvider.getScaledSignalAttachmentStream(attachmentID)
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
             val openGroup = storage.getOpenGroup(threadID.toLong())
+
             if (openGroup != null) {
                 val keyAndResult = upload(attachment, openGroup.server, false) {
                     OpenGroupApi.upload(it, openGroup.room, openGroup.server)
@@ -114,20 +115,25 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         delegate?.handleJobSucceeded(this, dispatcherName)
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
-        if (attachment.contentType.startsWith("audio/")) {
-            // process the duration
+
+        // Outgoing voice messages do not have their final duration set because older Android versions (API 28 and below)
+        // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim"
+        // voice message duration as the final duration as we know that it'll be correct..
+        if (attachment.contentType.startsWith("audio/") && !attachment.voiceNote) {
+            // ..but for outgoing audio files we do process the duration to the best of our ability.
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->
-                    val durationMs = (DecodedAudio.create(mediaDataSource).totalDuration / 1000.0).toLong()
+                    val durationMS = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
                     messageDataProvider.getDatabaseAttachment(attachmentID)?.attachmentId?.let { attachmentId ->
-                        messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMs, threadID.toLong())
+                        messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMS, threadID.toLong())
                     }
                 }
             } catch (e: Exception) {
                 Log.e("Loki", "Couldn't process audio attachment", e)
             }
         }
+
         val storage = MessagingModuleConfiguration.shared.storage
         storage.getMessageSendJob(messageSendJobID)?.let {
             val destination = it.destination as? Destination.OpenGroup ?: return@let

@@ -26,7 +26,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.os.AsyncTask
-import android.os.Build
 import android.text.TextUtils
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -67,6 +66,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
 
@@ -106,11 +106,13 @@ class DefaultMessageNotifier : MessageNotifier {
             val activeNotifications = notifications.activeNotifications
 
             for (activeNotification in activeNotifications) {
-                notifications.cancel(activeNotification.id)
+                if(activeNotification.id != WEBRTC_NOTIFICATION) {
+                    notifications.cancel(activeNotification.id)
+                }
             }
         } catch (e: Throwable) {
             // XXX Appears to be a ROM bug, see #6043
-            Log.w(TAG, e)
+            Log.w(TAG, "cancel notification error: $e")
             notifications.cancelAll()
         }
         return hasNotifications
@@ -133,7 +135,9 @@ class DefaultMessageNotifier : MessageNotifier {
                     }
 
                     if (!validNotification) {
-                        notifications.cancel(notification.id)
+                        if(notification.id != WEBRTC_NOTIFICATION) {
+                            notifications.cancel(notification.id)
+                        }
                     }
                 }
             }
@@ -253,7 +257,9 @@ class DefaultMessageNotifier : MessageNotifier {
         Log.i(TAG, "sendSingleThreadNotification()  signal: $signal  bundled: $bundled")
 
         if (notificationState.notifications.isEmpty()) {
-            if (!bundled) cancelActiveNotifications(context)
+            if (!bundled) {
+                cancelActiveNotifications(context)
+            }
             Log.i(TAG, "Empty notification state. Skipping.")
             return
         }
@@ -263,15 +269,6 @@ class DefaultMessageNotifier : MessageNotifier {
         val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
         val messageIdTag = notifications[0].timestamp.toString()
-
-        val notificationManager = ServiceUtil.getNotificationManager(context)
-        for (notification in notificationManager.activeNotifications) {
-            if ((Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && notification.isAppGroup == bundled)
-                && (messageIdTag == notification.notification.extras.getString(LATEST_MESSAGE_ID_TAG))
-            ) {
-                return
-            }
-        }
 
         val timestamp = notifications[0].timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)
@@ -522,7 +519,11 @@ class DefaultMessageNotifier : MessageNotifier {
                 cache[threadId] = blindedPublicKey
             }
             if (threadRecipients == null || !threadRecipients.isMuted) {
-                if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                if(record.isIncomingCall || record.isOutgoingCall){
+                    // do nothing here as we do not want to display a notification for incoming and outgoing calls,
+                    // they will instead be handled independently by the pre offer
+                }
+                else if (threadRecipients != null && threadRecipients.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
                     // check if mentioned here
                     var isQuoteMentioned = false
                     if (record is MmsMessageRecord) {

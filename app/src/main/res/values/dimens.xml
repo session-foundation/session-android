@@ -44,6 +44,7 @@
     <!-- Distances -->
     <dimen name="very_small_spacing">4dp</dimen>
     <dimen name="small_spacing">8dp</dimen>
+    <dimen name="message_spacing">12dp</dimen>
     <dimen name="medium_spacing">16dp</dimen>
     <dimen name="large_spacing">24dp</dimen>
     <dimen name="very_large_spacing">35dp</dimen>

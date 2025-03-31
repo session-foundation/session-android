@@ -651,7 +651,7 @@
     <string name="onboardingBubbleSessionIsEngineered">{app_name} được thiết kế để bảo vệ quyền riêng tư của bạn.</string>
     <string name="onboardingBubbleWelcomeToSession">Chào mừng tới {app_name} {emoji}</string>
     <string name="onboardingHitThePlusButton">Nhấn nút cộng để bắt đầu cuộc trò chuyện, tạo nhóm hoặc tham gia cộng đồng chính thức!</string>
-    <string name="onboardingMessageNotificationExplanation">\"Có hai cách {app_name} có thể thông báo cho bạn về tin nhắn mới.</string>
+    <string name="onboardingMessageNotificationExplanation">Có hai cách {app_name} có thể thông báo cho bạn về tin nhắn mới.</string>
     <string name="onboardingPrivacy">Chính sách Bảo mật</string>
     <string name="onboardingTos">Điều Khoản Dịch Vụ</string>
     <string name="onboardingTosPrivacy">Bằng cách sử dụng dịch vụ này, bạn đồng ý với <b>Điều khoản Dịch vụ</b> và <b>Chính sách Bảo mật</b> của chúng tôi</string>
@@ -736,7 +736,6 @@
     <string name="recoveryPasswordBannerTitle">Lưu mật khẩu phục hồi của bạn</string>
     <string name="recoveryPasswordDescription">Dùng mật khẩu khôi phục của bạn để tải tài khoản của bạn trên các thiết bị mới.\n\nTài khoản của bạn không thể được khôi phục nếu không có mật khẩu khôi phục của bạn. Hãy chắc chắn rằng nó được lưu trữ ở một nơi an toàn và bảo mật  — và đừng chia sẻ nó với bất kỳ ai.</string>
     <string name="recoveryPasswordEnter">Nhập mật khẩu khôi phục của bạn</string>
-    <string name="recoveryPasswordErrorLoad">Đã xảy ra lỗi khi cố gắng tải mật khẩu khôi phục của bạn.\n\nVui lòng xuất nhật ký của bạn, sau đó tải tệp lên Trung tâm Hỗ trợ của Session để giúp giải quyết vấn đề này.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Vui lòng kiểm tra mật khẩu khôi phục của bạn và thử lại.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Một số từ trong Mật khẩu Khôi phục của bạn không đúng. Vui lòng kiểm tra lại và thử lại.</string>
     <string name="recoveryPasswordErrorMessageShort">Mật khẩu Khôi phục bạn nhập chưa đủ dài. Vui lòng kiểm tra và thử lại.</string>
@@ -822,7 +821,6 @@
     <string name="updateError">Không thể cập nhật</string>
     <string name="updateErrorDescription">{app_name} không thể cập nhật. Vui lòng truy cập {session_download_url} và cài đặt phiên bản mới thủ công, sau đó liên hệ Trung tâm trợ giúp của chúng tôi để thông báo về vấn đề này.</string>
     <string name="updateNewVersion">Một phiên bản mới của {app_name} đã có, chạm để cập nhật</string>
-    <string name="updateNewVersionDescription">Một phiên bản mới của {app_name} đã có.</string>
     <string name="updateReleaseNotes">Đi tới các ghi chú phát hành</string>
     <string name="updateSession">Cập nhật {app_name}</string>
     <string name="updateVersion">Phiên bản {version}</string>

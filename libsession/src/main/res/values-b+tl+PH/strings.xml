@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">I-save ang iyong recovery password</string>
     <string name="recoveryPasswordDescription">Gamitin ang iyong recovery password upang i-load ang iyong account sa mga bagong devices.\n\nHindi mo maaaring ma-recover ang iyong account kung wala ang iyong recovery password. Siguraduhin na itago ito sa isang ligtas at sigurado na lugar — at huwag itong ipamahagi sa iba.</string>
     <string name="recoveryPasswordEnter">Ilagay ang recovery password mo</string>
-    <string name="recoveryPasswordErrorLoad">Nagkaroon ng error habang sinusubukan i-load ang iyong recovery password.\n\nMangyaring i-export ang iyong mga log, pagkatapos ay i-upload ang file sa pamamagitan ng Help Desk ng Session para makatulong na malutas ang isyung ito.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Pakicheck ang iyong recovery password at subukang muli.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Ang ilan sa mga salita sa iyong Recovery Password ay mali. Pakicheck at subukang muli.</string>
     <string name="recoveryPasswordErrorMessageShort">Ang Recovery Password na inilagay mo ay hindi sapat ang haba. Pakisuri at subukang muli.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">Hindi Ma-update</string>
     <string name="updateErrorDescription">Nabigo ang {app_name} na mag-update. Pumunta sa {session_download_url} at i-install ang bagong bersyon nang manu-manong, pagkatapos ay makipag-ugnayan sa aming Help Center upang ipaalam sa amin ang tungkol sa problemang ito.</string>
     <string name="updateNewVersion">May bagong bersyon ng {app_name} na available, tapikin para i-update</string>
-    <string name="updateNewVersionDescription">May bagong bersyon ng {app_name} na available.</string>
     <string name="updateReleaseNotes">Pumunta sa Mga Tala sa Paglabas</string>
     <string name="updateSession">Pag-update ng {app_name}</string>
     <string name="updateVersion">Bersyon {version}</string>

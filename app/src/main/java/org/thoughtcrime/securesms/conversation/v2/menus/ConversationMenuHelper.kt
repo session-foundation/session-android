@@ -24,7 +24,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
@@ -43,8 +42,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
-import org.thoughtcrime.securesms.calls.WebRtcCallActivity
 import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -56,12 +56,13 @@ import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.media.MediaOverviewActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
-import org.thoughtcrime.securesms.service.WebRtcCallService
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.BitmapUtil
+import java.io.IOException
 
 object ConversationMenuHelper {
 
@@ -239,7 +240,7 @@ object ConversationMenuHelper {
                 button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
                     val intent = Intent(context, PrivacySettingsActivity::class.java)
                     // allow the screen to auto scroll to the appropriate toggle
-                    intent.putExtra(PrivacySettingsActivity.SCROLL_KEY, CALL_NOTIFICATIONS_ENABLED)
+                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
                     context.startActivity(intent)
                 }
                 cancelButton()
@@ -261,11 +262,11 @@ object ConversationMenuHelper {
             return
         }
 
-        WebRtcCallService.createCall(context, thread)
-            .let(context::startService)
-
-        Intent(context, WebRtcCallActivity::class.java)
-            .apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+        WebRtcCallActivity.getCallActivityIntent(context)
+            .apply {
+                action = ACTION_START_CALL
+                putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
+            }
             .let(context::startActivity)
     }
 

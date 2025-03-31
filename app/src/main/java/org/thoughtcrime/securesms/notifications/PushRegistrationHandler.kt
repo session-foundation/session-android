@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -23,7 +24,6 @@ import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -73,7 +73,8 @@ constructor(
                 getGroupSubscriptions(
                     token = token
                 ) + mapOf(
-                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, 0)
+                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, listOf(
+                        Namespace.DEFAULT()))
                 )
             }
                 .scan<Map<SubscriptionKey, Subscription>, Pair<Map<SubscriptionKey, Subscription>, Map<SubscriptionKey, Subscription>>?>(
@@ -103,7 +104,7 @@ constructor(
                                 pushRegistry.register(
                                     token = key.token,
                                     swarmAuth = subscription.auth,
-                                    namespaces = listOf(subscription.namespace)
+                                    namespaces = subscription.namespaces.toList()
                                 )
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to register for push notification", e)
@@ -135,14 +136,25 @@ constructor(
     ): Map<SubscriptionKey, Subscription> {
         return buildMap {
             val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+                .filter { it.shouldPoll }
+
+            val namespaces = listOf(
+                Namespace.GROUP_MESSAGES(),
+                Namespace.GROUP_INFO(),
+                Namespace.GROUP_MEMBERS(),
+                Namespace.GROUP_KEYS(),
+                Namespace.REVOKED_GROUP_MESSAGES(),
+            )
+
             for (group in groups) {
                 val adminKey = group.adminKey
+                val groupId = AccountId(group.groupAccountId)
                 if (adminKey != null && adminKey.isNotEmpty()) {
                     put(
-                        SubscriptionKey(group.groupAccountId, token),
+                        SubscriptionKey(groupId, token),
                         Subscription(
-                            auth = OwnedSwarmAuth.ofClosedGroup(group.groupAccountId, adminKey),
-                            namespace = Namespace.GROUPS()
+                            auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
+                            namespaces = namespaces
                         )
                     )
                     continue
@@ -150,16 +162,16 @@ constructor(
 
                 val authData = group.authData
                 if (authData != null && authData.isNotEmpty()) {
-                    val subscription = configFactory.getGroupAuth(group.groupAccountId)
+                    val subscription = configFactory.getGroupAuth(groupId)
                         ?.let {
                             Subscription(
                                 auth = it,
-                                namespace = Namespace.GROUPS()
+                                namespaces = namespaces
                             )
                         }
 
                     if (subscription != null) {
-                        put(SubscriptionKey(group.groupAccountId, token), subscription)
+                        put(SubscriptionKey(groupId, token), subscription)
                     }
                 }
             }
@@ -167,5 +179,5 @@ constructor(
     }
 
     private data class SubscriptionKey(val accountId: AccountId, val token: String)
-    private data class Subscription(val auth: SwarmAuth, val namespace: Int)
+    private data class Subscription(val auth: SwarmAuth, val namespaces: List<Int>)
 }

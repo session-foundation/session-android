@@ -165,6 +165,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
+import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -190,11 +191,14 @@ import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.drawToBitmap
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -220,7 +224,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener {
+    ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -359,7 +363,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     onDeselect(message, position, it)
                 }
             },
-            onAttachmentNeedsDownload = viewModel::onAttachmentDownloadRequest,
+            downloadPendingAttachment = viewModel::downloadPendingAttachment,
+            retryFailedAttachments = viewModel::retryFailedAttachments,
             glide = glide,
             lifecycleCoroutineScope = lifecycleScope
         )
@@ -374,10 +379,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private val glide by lazy { Glide.with(this) }
     private val lockViewHitMargin by lazy { toPx(40, resources) }
-    private val gifButton by lazy { InputBarButton(this, R.drawable.ic_gif, hasOpaqueBackground = true) }
-    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file, hasOpaqueBackground = true) }
-    private val libraryButton by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
-    private val cameraButton by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
+
+    private val gifButton      by lazy { InputBarButton(this, R.drawable.ic_gif,    hasOpaqueBackground = true) }
+    private val documentButton by lazy { InputBarButton(this, R.drawable.ic_file,   hasOpaqueBackground = true) }
+    private val libraryButton  by lazy { InputBarButton(this, R.drawable.ic_images, hasOpaqueBackground = true) }
+    private val cameraButton   by lazy { InputBarButton(this, R.drawable.ic_camera, hasOpaqueBackground = true) }
+
     private val messageToScrollTimestamp = AtomicLong(-1)
     private val messageToScrollAuthor = AtomicReference<Address?>(null)
     private val firstLoad = AtomicBoolean(true)
@@ -515,9 +522,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
         }
 
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.conversationHeader.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
+        }
+
         updateUnreadCountIndicator()
         updatePlaceholder()
         setUpBlockedBanner()
+        setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
         setUpMessageRequests()
@@ -785,19 +798,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // GIF button
         binding.gifButtonContainer.addView(gifButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         gifButton.onUp = { showGIFPicker() }
-        gifButton.snIsEnabled = false
         // Document button
         binding.documentButtonContainer.addView(documentButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         documentButton.onUp = { showDocumentPicker() }
-        documentButton.snIsEnabled = false
         // Library button
         binding.libraryButtonContainer.addView(libraryButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         libraryButton.onUp = { pickFromLibrary() }
-        libraryButton.snIsEnabled = false
         // Camera button
         binding.cameraButtonContainer.addView(cameraButton, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         cameraButton.onUp = { showCamera() }
-        cameraButton.snIsEnabled = false
     }
 
     // called from onCreate
@@ -871,9 +880,18 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // called from onCreate
     private fun setUpBlockedBanner() {
         val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
-        binding.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
-        binding.blockedBanner.isVisible = recipient.isBlocked
-        binding.blockedBanner.setOnClickListener { viewModel.unblock() }
+        binding.conversationHeader.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
+        binding.conversationHeader.blockedBanner.isVisible = recipient.isBlocked
+        binding.conversationHeader.blockedBanner.setOnClickListener { unblock() }
+    }
+
+    private fun setUpExpiredGroupBanner() {
+        lifecycleScope.launch {
+            viewModel.showExpiredGroupBanner
+                .collectLatest {
+                    binding.conversationHeader.groupExpiredBanner.isVisible = it
+                }
+        }
     }
 
     private fun setUpOutdatedClientBanner() {
@@ -882,13 +900,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val shouldShowLegacy = ExpirationConfiguration.isNewConfigEnabled &&
                 legacyRecipient != null
 
-        binding.outdatedDisappearingBanner.isVisible = shouldShowLegacy
+        binding.conversationHeader.outdatedDisappearingBanner.isVisible = shouldShowLegacy
         if (shouldShowLegacy) {
 
             val txt = Phrase.from(this, R.string.disappearingMessagesLegacy)
                 .put(NAME_KEY, legacyRecipient!!.name)
                 .format()
-            binding.outdatedDisappearingBannerTextView.text = txt
+            binding.conversationHeader.outdatedDisappearingBannerTextView.text = txt
         }
     }
 
@@ -897,11 +915,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             viewModel.legacyGroupBanner
                 .collectLatest { banner ->
                     if (banner == null) {
-                        binding.outdatedGroupBanner.isVisible = false
-                        binding.outdatedGroupBanner.text = null
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = false
+                        binding.conversationHeader.outdatedGroupBanner.text = null
                     } else {
-                        binding.outdatedGroupBanner.isVisible = true
-                        binding.outdatedGroupBanner.text = SpannableStringBuilder(banner)
+                        binding.conversationHeader.outdatedGroupBanner.isVisible = true
+                        binding.conversationHeader.outdatedGroupBanner.text = SpannableStringBuilder(banner)
                             .apply {
                                 // Append a space as a placeholder
                                 append(" ")
@@ -924,7 +942,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                                 )
                             }
 
-                        binding.outdatedGroupBanner.setOnClickListener {
+                        binding.conversationHeader.outdatedGroupBanner.setOnClickListener {
                             showOpenUrlDialog("https://getsession.org/groups")
                         }
                     }
@@ -998,13 +1016,27 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 viewModel.uiState.collect { state ->
                     binding.inputBar.run {
                         isVisible = state.showInput
-                        showMediaControls = state.enableInputMediaControls
+                        allowAttachMultimediaButtons = state.enableAttachMediaControls
                     }
 
                     // show or hide loading indicator
                     binding.loader.isVisible = state.showLoader
 
                     updatePlaceholder()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.callBanner.collect { callBanner ->
+                    when (callBanner) {
+                        null -> binding.conversationHeader.callInProgress.fadeOut()
+                        else -> {
+                            binding.conversationHeader.callInProgress.text = callBanner
+                            binding.conversationHeader.callInProgress.fadeIn()
+                        }
+                    }
                 }
             }
         }
@@ -1072,7 +1104,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         runOnUiThread {
             val threadRecipient = viewModel.recipient ?: return@runOnUiThread
             if (threadRecipient.isContactRecipient) {
-                binding.blockedBanner.isVisible = threadRecipient.isBlocked
+                binding.conversationHeader.blockedBanner.isVisible = threadRecipient.isBlocked
             }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
@@ -1089,15 +1121,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun setUpMessageRequests() {
-        binding.acceptMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.acceptMessageRequestButton.setOnClickListener {
             viewModel.acceptMessageRequest()
         }
 
-        binding.messageRequestBlock.setOnClickListener {
+        binding.messageRequestBar.messageRequestBlock.setOnClickListener {
             block(deleteThread = true)
         }
 
-        binding.declineMessageRequestButton.setOnClickListener {
+        binding.messageRequestBar.declineMessageRequestButton.setOnClickListener {
             fun doDecline() {
                 viewModel.declineMessageRequest()
                 finish()
@@ -1117,12 +1149,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .map { it.messageRequestState }
                     .distinctUntilChanged()
                     .collectLatest { state ->
-                        binding.messageRequestBar.isVisible = state is MessageRequestUiState.Visible
+                        binding.messageRequestBar.root.isVisible = state is MessageRequestUiState.Visible
 
                         if (state is MessageRequestUiState.Visible) {
-                            binding.sendAcceptsTextView.setText(state.acceptButtonText)
-                            binding.messageRequestBlock.isVisible = state.blockButtonText != null
-                            binding.messageRequestBlock.text = state.blockButtonText
+                            binding.messageRequestBar.sendAcceptsTextView.setText(state.acceptButtonText)
+                            binding.messageRequestBar.messageRequestBlock.isVisible = state.blockButtonText != null
+                            binding.messageRequestBar.messageRequestBlock.text = state.blockButtonText
                         }
                     }
             }
@@ -1130,7 +1162,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun inputBarEditTextContentChanged(newContent: CharSequence) {
-        val inputBarText = binding.inputBar.text // TODO check if we should be referencing newContent here instead
+        val inputBarText = binding.inputBar.text
         if (textSecurePreferences.isLinkPreviewsEnabled()) {
             linkPreviewViewModel.onTextChanged(this, inputBarText, 0, 0)
         }
@@ -1166,8 +1198,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             animation.start()
         }
         isShowingAttachmentOptions = !isShowingAttachmentOptions
+
+        // Note: These custom buttons exist invisibly in the layout even when the attachments bar is not
+        // expanded so they MUST be disabled in such circumstances.
         val allButtons = listOf( cameraButton, libraryButton, documentButton, gifButton )
-        allButtons.forEach { it.snIsEnabled = isShowingAttachmentOptions }
+        allButtons.forEach { it.isEnabled = isShowingAttachmentOptions }
     }
 
     override fun showVoiceMessageUI() {
@@ -1816,7 +1851,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             currentTargetedScrollOffsetPx = if (targetMessagePosition > 0) nonFirstMessageOffsetPx else 0
             linearSmoothScroller.targetPosition = targetMessagePosition
             (binding.conversationRecyclerView.layoutManager as? LinearLayoutManager)?.startSmoothScroll(linearSmoothScroller)
-            
+
         } ?: Log.i(TAG, "Could not find message with timestamp: $timestamp")
     }
 
@@ -1931,10 +1966,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun sendAttachments(
         attachments: List<Attachment>,
         body: String?,
-        quotedMessage: MessageRecord? = binding.inputBar?.quote,
+        quotedMessage: MessageRecord? = binding.inputBar.quote,
         linkPreview: LinkPreview? = null
     ): Pair<Address, Long>? {
-        val recipient = viewModel.recipient ?: return null
+        if (viewModel.recipient == null) {
+            Log.w(TAG, "Cannot send attachments to a null recipient")
+            return null
+        }
+        val recipient = viewModel.recipient!!
         val sentTimestamp = SnodeAPI.nowWithOffset
         viewModel.beforeSendingAttachments()
 
@@ -2520,6 +2559,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onSearchMoveDownPressed() {
         this.searchViewModel.onMoveDown()
+    }
+
+    override fun onNicknameSaved() {
+        adapter.notifyDataSetChanged()
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {

@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">ستاسو د بیا رغونې شفر وساتئ</string>
     <string name="recoveryPasswordDescription">د خپل حساب د بارولو لپاره خپل بیا رغونه Password وکاروئ.\n\nپرته له خپل بیا رغونه Password څخه ستاسو حساب بیا رغول نشي. ډاډ ترلاسه کړئ چې دا خوندي او خوند ځای کې ساتل شوی دی - او دا له هیچا سره شریک نه کړئ.</string>
     <string name="recoveryPasswordEnter">ستاسو recovery password ولیکئ</string>
-    <string name="recoveryPasswordErrorLoad">ستاسو د بیا رغونې پټنوم لوډ کولو هڅه کې تېروتنه رامنځته شوه.\n\nمهرباني وکړئ خپل لوګونه صادر کړئ، بیا فایل د Session د مرستې ډیسټاپ له لارې اپلوډ کړئ ترڅو دا ستونزه حل شي.</string>
     <string name="recoveryPasswordErrorMessageGeneric">مهرباني وکړئ خپل ریکوری پاسورډ وګورئ او بیا هڅه وکړئ.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ځینې ستاسو د بیا رغونې پټنوم کلمې ناسمې دي. مهرباني وکړئ بیا یې وګورئ او هڅه وکړئ.</string>
     <string name="recoveryPasswordErrorMessageShort">هغه بیا رغونه پاسورډ تاسې داخل کړی نه ډیر اوږد دی. مهرباني وکړئ چک کړئ او بیا هڅه وکړئ.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">تازه کولو ته نشي</string>
     <string name="updateErrorDescription">{app_name} تازه کولو کې ناکام شو. مهرباني وکړئ {session_download_url} ته لاړ شئ او نوی نسخو د لاسي نصبولو لپاره، بیا زموږ د مرستی مرکز سره اړیکه ونیسئ ترڅو موږ ته د دې ستونزې په اړه خبر راکړئ.</string>
     <string name="updateNewVersion">د {app_name} نوې نسخه شتون لري، ټایپ وکړئ ترڅو تازه کړئ.</string>
-    <string name="updateNewVersionDescription">د {app_name} نوې نسخه شتون لري.</string>
     <string name="updateReleaseNotes">د خوشې یادښتونو ته لاړ شئ</string>
     <string name="updateSession">{app_name} تازه</string>
     <string name="updateVersion">نسخه {version}</string>

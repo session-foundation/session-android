@@ -716,7 +716,6 @@
     <string name="recoveryPasswordBannerTitle">Ruaje fjalëkalimin e rikuperimit</string>
     <string name="recoveryPasswordDescription">Përdorni fjalëkalimin e rikuperimit për të ngarkuar llogarinë tuaj në pajisje të reja.\n\nLlogaria juaj nuk mund të rikuperohet pa fjalëkalimin tuaj të rikuperimit. Sigurohuni që ta keni ruajtur në një vend të sigurt dhe mos e ndani me askënd.</string>
     <string name="recoveryPasswordEnter">Jepni fjalëkalimin e rikthimit tuaj</string>
-    <string name="recoveryPasswordErrorLoad">Ndodhi një gabim gjatë ngarkimit të fjalëkalimit tuaj të rimëkëmbjes.\n\nJu lutemi eksportoni logjet tuaja, pastaj ngarkoni skedarin përmes Zyrës së Ndihmës të Session për të ndihmuar në zgjidhjen e kësaj çështje.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Ju lutemi kontrolloni fjalëkalimin tuaj të rikuperimit dhe provoni përsëri.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Disa fjalë në fjalëkalimin tuaj për rikuperim janë të pasakta. Ju lutem kontrolloni dhe provoni përsëri.</string>
     <string name="recoveryPasswordErrorMessageShort">Fjalëkalimi i Rimëkëmbjes që keni futur nuk është mjaftueshëm i gjatë. Ju lutem kontrolloni dhe provoni përsëri.</string>
@@ -803,7 +802,6 @@
     <string name="updateError">Nuk mund të përditësohet</string>
     <string name="updateErrorDescription">{app_name} nuk arriti të përditësohej. Ju lutemi shkoni te {session_download_url} dhe instaloni versionin e ri manualisht, pastaj kontaktoni qendrën tonë të ndihmës për të na informuar për këtë problem.</string>
     <string name="updateNewVersion">Është gati një version i ri i {app_name}, prekeni që të përditësohet</string>
-    <string name="updateNewVersionDescription">Është gati një version i ri i {app_name}.</string>
     <string name="updateReleaseNotes">Kalo te Shënime Versioni</string>
     <string name="updateSession">Përditësimi i {app_name}</string>
     <string name="updateVersion">Versioni {version}</string>

@@ -550,7 +550,7 @@
     <string name="messageEmpty">הודעה זו ריקה.</string>
     <string name="messageErrorDelivery">מסירת ההודעה נכשלה</string>
     <string name="messageErrorLimit">הגעת למגבלת ההודעות</string>
-    <string name="messageErrorOld">התקבלה הודעה מוצפנת ע\"י שימוש בגרסה ישנה של {app_name} שאינה נתמכת יותר. אנא בקש מהשולח לעדכן אל הגרסה העדכנית ביותר ולשלוח מחדש את ההודעה.</string>
+    <string name="messageErrorOld">התקבלה הודעה מוצפנת ע״י שימוש בגרסה ישנה של {app_name} שאינה נתמכת יותר. אנא בקש מהשולח לעדכן אל הגרסה העדכנית ביותר ולשלוח מחדש את ההודעה.</string>
     <string name="messageErrorOriginal">הודעה מקורית לא נמצאה</string>
     <string name="messageInfo">פרטי הודעה</string>
     <string name="messageMarkRead">סמן כנקרא</string>
@@ -741,7 +741,6 @@
     <string name="recoveryPasswordBannerTitle">שמור את סיסמת השחזור שלך</string>
     <string name="recoveryPasswordDescription">השתמש בסיסמת שחזור שלך לטעינת חשבונך על מכשירים חדשים.\n\nלא ניתן לשחזר שלך חשבון ללא סיסמת השחזור שלך. ודא שהיא שמורה במקום בטוח ומאובטח - אל תשתף אותה עם אחרים.</string>
     <string name="recoveryPasswordEnter">Enter your recovery password</string>
-    <string name="recoveryPasswordErrorLoad">אירעה שגיאה בניסיון לטעון את סיסמת השחזור שלך.\n\nאנא ייצא את היומנים שלך, ואז העלה את הקובץ דרך שירות הלקוחות של Session כדי לעזור בפתרון הבעיה.</string>
     <string name="recoveryPasswordErrorMessageGeneric">בדוק את סיסמת השחזור שלך ונסה שוב.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">חלק מהמילים בסיסמת השחזור שלך שגויות. בדוק ונסה שוב.</string>
     <string name="recoveryPasswordErrorMessageShort">הסיסמה שהזנת קצרה מדי. אנא בדוק ונסה שוב.</string>
@@ -830,7 +829,6 @@
     <string name="updateError">לא ניתן לבצע עדכון</string>
     <string name="updateErrorDescription">לא ניתן היה לעדכן את {app_name}. נא לעבור אל {session_download_url} ולהתקין את הגרסה החדשה ידנית, ואז לפנות למרכז העזרה שלנו כדי לעדכן אותנו על בעיה זו.</string>
     <string name="updateNewVersion">גרסה חדשה של {app_name} זמינה, הקש כדי לעדכן</string>
-    <string name="updateNewVersionDescription">גרסה חדשה של {app_name} זמינה.</string>
     <string name="updateReleaseNotes">לך אל הערות שחרור</string>
     <string name="updateSession">עדכון {app_name}</string>
     <string name="updateVersion">גרסה {version}</string>

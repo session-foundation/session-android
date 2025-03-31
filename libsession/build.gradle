@@ -8,9 +8,8 @@ plugins {
 }
 
 android {
-    compileSdkVersion androidCompileSdkVersion
-
     defaultConfig {
+        compileSdk androidCompileSdkVersion
         minSdkVersion androidMinimumSdkVersion
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -35,12 +34,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     namespace 'org.session.libsession'
@@ -48,12 +47,13 @@ android {
 
 dependencies {
     implementation project(":libsignal")
-    implementation project(":libsession-util")
     implementation project(":liblazysodium")
 
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     ksp("com.google.dagger:hilt-compiler:$daggerHiltVersion")
     ksp("androidx.hilt:hilt-compiler:$jetpackHiltVersion")
+
+    api 'org.sessionfoundation:libsession-util-android:1.0.2'
 
     implementation "net.java.dev.jna:jna:5.12.1@aar"
     implementation "androidx.core:core-ktx:$coreVersion"

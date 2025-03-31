@@ -11,10 +11,10 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.core.view.children
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import network.loki.messenger.databinding.AlbumThumbnailViewBinding
-import org.session.libsession.messaging.sending_receiving.attachments.AttachmentTransferProgress
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.recipients.Recipient
@@ -22,7 +22,6 @@ import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.components.CornerMask
 import org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailView
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 
@@ -50,7 +49,7 @@ class AlbumThumbnailView : RelativeLayout {
 
     // region Interaction
 
-    fun calculateHitObject(event: MotionEvent, mms: MmsMessageRecord, threadRecipient: Recipient, onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit) {
+    fun calculateHitObject(event: MotionEvent, mms: MmsMessageRecord, threadRecipient: Recipient, downloadPendingAttachment: (DatabaseAttachment) -> Unit) {
         val rawXInt = event.rawX.toInt()
         val rawYInt = event.rawY.toInt()
         val eventRect = Rect(rawXInt, rawYInt, rawXInt, rawYInt)
@@ -62,10 +61,10 @@ class AlbumThumbnailView : RelativeLayout {
                 // hit intersects with this particular child
                 val slide = slides.getOrNull(index) ?: return@forEach
                 // only open to downloaded images
-                if (slide.transferState == AttachmentTransferProgress.TRANSFER_PROGRESS_FAILED) {
+                if (slide.isFailed) {
                     // Restart download here (on IO thread)
                     (slide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-                        onAttachmentNeedsDownload(attachment)
+                        downloadPendingAttachment(attachment)
                     }
                 }
                 if (slide.isInProgress) return@forEach

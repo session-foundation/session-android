@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">ඔබේ ප්‍රතිසාධන මුරපදය සුරකින්න</string>
     <string name="recoveryPasswordDescription">ඔබගේ ගිණුම නැවත ආරම්භ කිරීමට නැවත ආරම්භ කරන්න පරිශීලන මුරපදය භාවිතා කරන්න.\n\nඔබගේ පරිශීලන මුරපදය නැත්තහොත් ඔබේ ගිණුම නැවත ලබා ගැනීමට නොහැක. ආරක්ෂිත සහ ආරක්ෂිත ස්ථානයක එය ගබඩා කර ඇති බවට වග බලා ගන්න — එය කිසිවෙකුට හුවමාරු නොකරන්න.</string>
     <string name="recoveryPasswordEnter">ඔබගේ ප්‍රතිසාධන මුරපදය ඇතුළත් කරන්න</string>
-    <string name="recoveryPasswordErrorLoad">ඔබගේ ප්‍රතිසාධක විසර්ජන(Recovery password) පෙරළන්න ට උත්සාහ කරන විට දෝෂයක් සිදුවිය.\n\nකරුණාකර ඔබගේ ලඝු සටහන් අයාත කරන්න. එවිට Session \'s Help Desk මගින් මෙම ගැටලුවට පිළිතුරක් ලැබෙනු ඇත.</string>
     <string name="recoveryPasswordErrorMessageGeneric">කරුණාකර ඔබේ ප්‍රතිසාධන මුරපදය පරීක්ෂා කර නැවත උත්සාහ කරන්න.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">ඔබගේ ප්රතිසාධන මුරපදයේ පදවල් කිහිපයක් වැරටිය. කරුණාකර නැවත පරීක්ෂා කර උත්සාහ කරන්න.</string>
     <string name="recoveryPasswordErrorMessageShort">ඔබ ඇතුළත් කළ ප්‍රතිසාධන මුරපදය ප්‍රමාණවත් ලෙස දිග නැහැ. කරුණාකර පිරික්සා නැවත උත්සාහ කරන්න.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">යාවත්කාල කළ නොහැකිය</string>
     <string name="updateErrorDescription">{app_name} යාවත්කාලීන කිරීමට අසාර්ථක විය. කරුණාකර {session_download_url} වෙත ගොස් අනුමාන නව අනුවාදය මැනුවල්ව ස්ථාපනය කර, පසුව මෙම ගැටලුව සම්බන්ධයෙන් අපගේ උදව් මධ්‍යස්ථානය අමතන්න.</string>
     <string name="updateNewVersion">{app_name} නව අනුවාදය දැනට ලබා ගත හැක, යාවත්කාලීන කිරීමට තෝරන්න</string>
-    <string name="updateNewVersionDescription">නව අනුවාදයක් {app_name} ලාබා ගත හැක.</string>
     <string name="updateReleaseNotes">නිකුතු සටහන් වෙත යන්න</string>
     <string name="updateSession">{app_name} උත්සවය</string>
     <string name="updateVersion">අනුවාදය {version}</string>

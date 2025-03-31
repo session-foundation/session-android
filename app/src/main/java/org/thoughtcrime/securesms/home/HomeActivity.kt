@@ -45,6 +45,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -67,6 +68,7 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
+import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -75,9 +77,12 @@ import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.disableClipping
+import org.thoughtcrime.securesms.util.fadeIn
+import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.push
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.start
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import javax.inject.Inject
 
 // Intent extra keys so we know where we came from
@@ -137,16 +142,25 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         model.contact.accountID.let(Address::fromSerialized)
                     )
                 }
-
-                is GlobalSearchAdapter.Model.GroupConversation -> model.groupRecord.encodedId
-                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                    .let(threadDb::getThreadIdIfExistsFor)
-                    .takeIf { it >= 0 }
-                    ?.let {
-                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                    }
-                else -> Log.d("Loki", "callback with model: $model")
             }
+            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
+                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
+            }
+            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
+                putExtra(
+                    ConversationActivityV2.ADDRESS,
+                    model.contact.hexString.let(Address::fromSerialized)
+                )
+            }
+
+            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                .let(threadDb::getThreadIdIfExistsFor)
+                .takeIf { it >= 0 }
+                ?.let {
+                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                }
+            else -> Log.d("Loki", "callback with model: $model")
         }
     }
 
@@ -167,8 +181,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up toolbar buttons
         binding.profileButton.setOnClickListener { openSettings() }
         binding.searchViewContainer.setOnClickListener {
-            globalSearchViewModel.refresh()
-            binding.globalSearchInputLayout.requestFocus()
+            homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
         // Set up seed reminder view
@@ -177,6 +190,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 if (!textSecurePreferences.getHasViewedSeed()) SeedReminder { start<RecoveryPasswordActivity>() }
             }
         }
+
         // Set up recycler view
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
@@ -187,6 +201,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.configOutdatedView.setOnClickListener {
             textSecurePreferences.setHasLegacyConfig(false)
             updateLegacyConfigView()
+        }
+
+        // in case a phone call is in progress, this banner is visible and should bring the user back to the call
+        binding.callInProgress.setOnClickListener {
+            startActivity(WebRtcCallActivity.getCallActivityIntent(this))
         }
 
         // Set up empty state view
@@ -246,11 +265,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
 
-            // monitor the global search VM query
+            // sync view -> viewModel
             launch {
-                binding.globalSearchInputLayout.query
+                binding.globalSearchInputLayout.query()
                     .collect(globalSearchViewModel::setQuery)
             }
+
             // Get group results and display them
             launch {
                 globalSearchViewModel.result.map { result ->
@@ -289,6 +309,31 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                homeViewModel.callBanner.collect { callBanner ->
+                    when (callBanner) {
+                        null -> binding.callInProgress.fadeOut()
+                        else -> {
+                            binding.callInProgress.text = callBanner
+                            binding.callInProgress.fadeIn()
+                        }
+                    }
+                }
+            }
+        }
+
+        // Set up search layout
+        lifecycleScope.launch {
+            homeViewModel.isSearchOpen.collect { open ->
+                setSearchShown(open)
+            }
+        }
+    }
+
+    override fun onCancelClicked() {
+        homeViewModel.onCancelSearchClicked()
     }
 
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {
@@ -321,13 +366,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .flatMap { (key, contacts) ->
                 listOf(
                     GlobalSearchAdapter.Model.SubHeader(key)
-                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) }
+                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
             }
     }
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
-        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.nickname ?: it.name, it.accountID == publicKey) } +
-            threads.map(GlobalSearchAdapter.Model::GroupConversation)
+        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+            threads.map {
+                GlobalSearchAdapter.Model.GroupConversation(this@HomeActivity, it)
+            }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
         val unreadThreadMap = messages
@@ -339,18 +386,18 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    override fun onInputFocusChanged(hasFocus: Boolean) {
-        setSearchShown(hasFocus || binding.globalSearchInputLayout.query.value.isNotEmpty())
-    }
-
     private fun setSearchShown(isShown: Boolean) {
+        // Request focus immediately so the user can start typing
+        if (isShown) {
+            binding.globalSearchInputLayout.requestFocus()
+        }
+
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
         binding.searchContactsRecyclerView.isVisible = !isShown
-        binding.emptyStateContainer.isVisible = (binding.searchContactsRecyclerView.adapter as HomeAdapter).itemCount == 0 && binding.searchContactsRecyclerView.isVisible
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isInvisible = !isShown
-        binding.newConversationButton.isVisible = !isShown
+        binding.conversationListContainer.isInvisible = isShown
     }
 
     private fun updateLegacyConfigView() {
@@ -366,11 +413,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.profileButton.update()
         if (textSecurePreferences.getHasViewedSeed()) {
             binding.seedReminderView.isVisible = false
-        }
-
-        // refresh search on resume, in case we a conversation was deleted
-        if (binding.globalSearchRecycler.isVisible){
-            globalSearchViewModel.refresh()
         }
 
         updateLegacyConfigView()
@@ -418,8 +460,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Interaction
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (binding.globalSearchRecycler.isVisible) binding.globalSearchInputLayout.clearSearch(true)
-        else super.onBackPressed()
+        if (homeViewModel.isSearchOpen.value && binding.globalSearchInputLayout.handleBackPressed()) {
+            return
+        }
+
+        if (!homeViewModel.onBackPressed()) {
+            super.onBackPressed()
+        }
     }
 
     override fun onConversationClick(thread: ThreadRecord) {

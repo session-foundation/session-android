@@ -74,53 +74,31 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"/>
 
-    <com.github.ybq.android.spinkit.SpinKitView
-        android:id="@+id/remote_loading_view"
-        style="@style/SpinKitView.ThreeBounce"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:foregroundGravity="center"
-        android:visibility="gone"
-        app:SpinKit_Color="@color/core_white"
-        app:layout_constraintEnd_toEndOf="@+id/contactAvatar"
-        app:layout_constraintStart_toStartOf="@+id/contactAvatar"
-        app:layout_constraintTop_toBottomOf="@id/contactAvatar"
-        tools:visibility="visible" />
-
-    <TextView
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/remote_loading_view"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:text="@string/callsReconnecting"
-        android:id="@+id/reconnecting_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <TextView
-        android:id="@+id/sessionCallText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/callsSessionCall"
-        android:textColor="?android:textColorPrimary"
-        android:textSize="11sp"
         app:layout_constraintBottom_toTopOf="@+id/controlGroupBarrier"
-        android:layout_marginBottom="@dimen/small_spacing"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        />
+        android:layout_marginBottom="@dimen/normal_padding"
+        android:gravity="center"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/callTime"
-        android:textSize="@dimen/medium_font_size"
-        android:textColor="?android:textColorPrimary"
-        tools:text="@tools:sample/date/hhmmss"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/sessionCallText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        <TextView
+            android:id="@+id/callTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
+            style="@style/TextAppearance.Session.ConversationSettings.Title"
+            tools:text="Connecting..." />
+
+        <TextView
+            tools:text="@string/callsReconnecting"
+            android:id="@+id/callSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/floating_renderer_container"
@@ -146,13 +124,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
-        <com.github.ybq.android.spinkit.SpinKitView
+
+        <ProgressBar
             android:id="@+id/local_loading_view"
-            style="@style/SpinKitView.Large.ThreeBounce"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:SpinKit_Color="?android:textColorPrimary"
+            android:layout_width="@dimen/large_spacing"
+            android:layout_height="@dimen/large_spacing"
             android:layout_gravity="center"
+            android:indeterminateTint="?android:textColorPrimary"
+            android:indeterminate="true"
             tools:visibility="visible"
             android:visibility="gone" />
 
@@ -279,7 +258,7 @@
         android:id="@+id/controlGroup"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:constraint_referenced_ids="enableCameraButton,endCallButton,switchCameraButton,speakerPhoneButton,microphoneButton"
+        app:constraint_referenced_ids="enableCameraButton,switchCameraButton,speakerPhoneButton,microphoneButton"
         />
 
     <androidx.constraintlayout.widget.Group

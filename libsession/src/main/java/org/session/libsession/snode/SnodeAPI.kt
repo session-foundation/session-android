@@ -16,6 +16,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
@@ -60,6 +61,8 @@ object SnodeAPI {
         get() = SnodeModule.shared.broadcaster
 
     private var snodeFailureCount: MutableMap<Snode, Int> = mutableMapOf()
+
+    // the  list of "generic" nodes we use to make non swarm specific api calls
     internal var snodePool: Set<Snode>
         get() = database.getSnodePool()
         set(newValue) { database.setSnodePool(newValue) }
@@ -94,6 +97,9 @@ object SnodeAPI {
     private const val snodeFailureThreshold = 3
     private const val useOnionRequests = true
 
+    const val KEY_BODY = "body"
+    const val KEY_CODE = "code"
+    const val KEY_RESULTS = "results"
     private const val KEY_IP = "public_ip"
     private const val KEY_PORT = "storage_port"
     private const val KEY_X25519 = "pubkey_x25519"
@@ -241,7 +247,7 @@ object SnodeAPI {
         val validationCount = 3
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
-        val onsName = onsName.toLowerCase(Locale.US)
+        val onsName = onsName.lowercase(Locale.US)
         val nameAsData = onsName.toByteArray()
         val nameHash = ByteArray(GenericHash.BYTES)
         if (!sodium.cryptoGenericHash(nameHash, nameHash.size, nameAsData, nameAsData.size.toLong())) {
@@ -301,6 +307,7 @@ object SnodeAPI {
         }
     }.unwrap()
 
+    // the list of snodes that represent the swarm for that pubkey
     fun getSwarm(publicKey: String): Promise<Set<Snode>, Exception> =
         database.getSwarm(publicKey)?.takeIf { it.size >= minimumSwarmSnodeCount }?.let(Promise.Companion::of)
             ?: getRandomSnode().bind {
@@ -575,14 +582,14 @@ object SnodeAPI {
             parameters,
             publicKey
         ).success { rawResponses ->
-            rawResponses["results"].let { it as List<RawResponse> }
+            rawResponses[KEY_RESULTS].let { it as List<RawResponse> }
                 .asSequence()
-                .filter { it["code"] as? Int != 200 }
+                .filter { it[KEY_CODE] as? Int != 200 }
                 .forEach { response ->
                     Log.w("Loki", "response code was not 200")
                     handleSnodeError(
-                        response["code"] as? Int ?: 0,
-                        response["body"] as? Map<*, *>,
+                        response[KEY_CODE] as? Int ?: 0,
+                        response[KEY_BODY] as? Map<*, *>,
                         snode,
                         publicKey
                     )
@@ -657,14 +664,14 @@ object SnodeAPI {
                         // back through the request's callback.
                         for ((req, resp) in batch.zip(responses.results)) {
                             val result = runCatching {
-                                check(resp.code == 200) {
-                                    "Error calling \"${req.request.method}\" with code = ${resp.code}, msg = ${resp.body}"
+                                if (!resp.isSuccessful) {
+                                    throw BatchResponse.Error(resp)
                                 }
 
                                 JsonUtil.fromJson(resp.body, req.responseType)
                             }
 
-                            runCatching{
+                            runCatching {
                                 req.callback.send(result)
                             }
                         }
@@ -899,7 +906,7 @@ object SnodeAPI {
             val deletedMessages = swarms.mapValuesNotNull { (hexSnodePublicKey, rawJSON) ->
                 (rawJSON as? Map<String, Any>)?.let { json ->
                     val isFailed = json["failed"] as? Boolean ?: false
-                    val statusCode = json["code"] as? String
+                    val statusCode = json[KEY_CODE] as? String
                     val reason = json["reason"] as? String
 
                     if (isFailed) {
@@ -1070,7 +1077,7 @@ object SnodeAPI {
             val json = rawJSON as? Map<String, Any> ?: return@mapValuesNotNull null
             if (json["failed"] as? Boolean == true) {
                 val reason = json["reason"] as? String
-                val statusCode = json["code"] as? String
+                val statusCode = json[KEY_CODE] as? String
                 Log.e("Loki", "Failed to delete all messages from: $hexSnodePublicKey due to error: $reason ($statusCode).")
                 false
             } else {

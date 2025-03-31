@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">আপনার Recovery password সংরক্ষণ করুন</string>
     <string name="recoveryPasswordDescription">নতুন ডিভাইসে আপনার অ্যাকাউন্ট লোড করতে আপনার রিকভারি পাসওয়ার্ড ব্যবহার করুন।\n\nআপনার রিকভারি পাসওয়ার্ড ছাড়া আপনার অ্যাকাউন্ট পুনরুদ্ধার করা যাবে না। নিশ্চিত করুন এটি নিরাপদ এবং সুরক্ষিত জায়গায় সংরক্ষণ করা হয়েছে এবং এটি কারও সাথে শেয়ার করবেন না।</string>
     <string name="recoveryPasswordEnter">আপনার recovery password লিখুন</string>
-    <string name="recoveryPasswordErrorLoad">আপনার রিকভারি পাসওয়ার্ড লোড করার সময় একটি ত্রুটি ঘটেছে।\n\nসমস্যাটি সমাধান করতে অনুগ্রহ করে আপনার লগগুলি রপ্তানি করুন এবং Session-এর সাহায্য ডেস্কের মাধ্যমে ফাইলটি আপলোড করুন।</string>
     <string name="recoveryPasswordErrorMessageGeneric">আপনার পুনরুদ্ধার পাসওয়ার্ড যাচাই করুন এবং আবার চেষ্টা করুন।</string>
     <string name="recoveryPasswordErrorMessageIncorrect">আপনার রিকভারী পাসওয়ার্ডের কিছু শব্দ ভুল আছে। দয়া করে পরীক্ষা করে আবার চেষ্টা করুন।</string>
     <string name="recoveryPasswordErrorMessageShort">আপনার প্রবেশ করা রিকভারি পাসওয়ার্ড যথেষ্ট দীর্ঘ নয়। দয়া করে চেক করুন এবং পুনরায় চেষ্টা করুন।</string>
@@ -804,7 +803,6 @@
     <string name="updateError">আপডেট করা সম্ভব নয়</string>
     <string name="updateErrorDescription">{app_name} আপডেট করতে ব্যর্থ হয়েছে। অনুগ্রহ করে {session_download_url} এ যান এবং নতুন ভার্সন নিজে নিজে ইনস্টল করুন, এরপর আমাদের সাহায্য কেন্দ্রের সাথে যোগাযোগ করুন এই সমস্যা সম্পর্কে আমাদের জানাতে।</string>
     <string name="updateNewVersion">{app_name} এর একটি নতুন সংস্করণ উপলব্ধ, আপডেট করতে ট্যাপ করুন</string>
-    <string name="updateNewVersionDescription">{app_name} এর একটি নতুন সংস্করণ উপলব্ধ।</string>
     <string name="updateReleaseNotes">রিলিজ নোটে যান</string>
     <string name="updateSession">{app_name} আপডেট</string>
     <string name="updateVersion">ভার্সন {version}</string>

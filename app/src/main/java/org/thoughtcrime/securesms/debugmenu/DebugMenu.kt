@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.BuildConfig
@@ -52,6 +53,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DropDown
+import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -157,6 +159,7 @@ fun DebugMenu(
             Column(
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.spacing)
+                    .padding(bottom = LocalDimensions.current.spacing)
                     .verticalScroll(rememberScrollState())
             ) {
                 // Info pane
@@ -209,6 +212,12 @@ fun DebugMenu(
                             sendCommand(DebugMenuViewModel.Commands.HideNoteToSelf(it))
                         }
                     )
+
+                    SlimOutlineButton(
+                        "Clear All Trusted Downloads",
+                    ) {
+                        sendCommand(ClearTrustedDownloads)
+                    }
                 }
 
                 // Group deprecation state

@@ -63,6 +63,11 @@ sha256sum session-$SESSION_VERSION-universal.apk
 grep universal.apk signature.asc
 ```
 
+## Testing
+### BrowserStack
+
+This project is tested with BrowserStack.
+
 ## License
 
 Copyright 2011 Whisper Systems

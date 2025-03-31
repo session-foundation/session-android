@@ -730,7 +730,6 @@
     <string name="recoveryPasswordBannerTitle">Salvează parola de recuperare</string>
     <string name="recoveryPasswordDescription">Folosește parola de recuperare pentru a încărca contul pe dispozitive noi.\n\nContul nu poate fi recuperat fără parola de recuperare. Asigurați-vă că este stocată într-un loc sigur și securizat – și nu o împărtășiți nimănui.</string>
     <string name="recoveryPasswordEnter">Introduceți parola de recuperare</string>
-    <string name="recoveryPasswordErrorLoad">A apărut o eroare la încărcarea parolei de recuperare.\n\nTe rugăm să exporți jurnalele, apoi să încarci fișierul prin intermediul Biroului de asistență Session pentru a ajuta la soluționarea acestei probleme.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Vă rugăm să verificați parola de recuperare și să încercați din nou.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Unele din cuvintele din Parola de Recuperare sunt incorecte. Te rugăm să verifici și să încerci din nou.</string>
     <string name="recoveryPasswordErrorMessageShort">Parola de Recuperare introdusă nu este suficient de lungă. Te rugăm să verifici și să încerci din nou.</string>
@@ -818,7 +817,6 @@
     <string name="updateError">Nu se poate actualiza</string>
     <string name="updateErrorDescription">{app_name} nu a reușit să se actualizeze. Vă rugăm să accesați {session_download_url} și să instalați manual noua versiune, apoi contactați Centrul de Asistență pentru a ne informa despre această problemă.</string>
     <string name="updateNewVersion">Este disponibilă o nouă versiune de {app_name}, apăsați pentru actualizare</string>
-    <string name="updateNewVersionDescription">Este disponibilă o nouă versiune de {app_name}.</string>
     <string name="updateReleaseNotes">Mergi la Notele de lansare</string>
     <string name="updateSession">Actualizare {app_name}</string>
     <string name="updateVersion">Versiunea {version}</string>

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,13 +26,22 @@ class HuaweiTokenFetcher @Inject constructor(
         this.token.value = token
     }
 
+    override suspend fun resetToken() {
+        withContext(Dispatchers.Default) {
+            HmsInstanceId.getInstance(context).deleteToken(APP_ID, TOKEN_SCOPE)
+        }
+    }
+
     init {
         GlobalScope.launch {
-            val instanceId = HmsInstanceId.getInstance(context)
-            withContext(Dispatchers.Default) {
-                instanceId.getToken(APP_ID, TOKEN_SCOPE)
+            try {
+                val instanceId = HmsInstanceId.getInstance(context)
+                withContext(Dispatchers.Default) {
+                    instanceId.getToken(APP_ID, TOKEN_SCOPE)
+                }
+            } catch (e: Exception) {
+                Log.e("HuaweiTokenFetcher", "Failed to fetch token", e)
             }
         }
-
     }
 }

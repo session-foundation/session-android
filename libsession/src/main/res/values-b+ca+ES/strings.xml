@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Desa la teva contrasenya de recuperació</string>
     <string name="recoveryPasswordDescription">Utilitza la teva contrasenya de recuperació per carregar el teu compte en nous dispositius.\n\n No es pot recuperar el teu compte sense la teva contrasenya de recuperació. Assegura\'t que està emmagatzemada en un lloc segur i no la comparteixis amb ningú.</string>
     <string name="recoveryPasswordEnter">Introdueix la teva contrasenya de recuperació</string>
-    <string name="recoveryPasswordErrorLoad">S\'ha produït un error en intentar carregar la vostra contrasenya de recuperació.\n\nExporteu els vostres registres, després pengeu el fitxer a través del servei d\'assistència de Session per ajudar a resoldre aquest problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Si us plau, comprova la teva contrasenya de recuperació i torna-ho a intentar.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algunes de les paraules de la vostra contrasenya de recuperació són incorrectes. Comproveu-ho i torneu-ho a provar.</string>
     <string name="recoveryPasswordErrorMessageShort">La contrasenya de recuperació que heu introduït no és prou llarga. Comproveu-ho i torneu-ho a provar.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">No es pot actualitzar</string>
     <string name="updateErrorDescription">Ha fallat l\'actualització de {app_name}. Aneu a {session_download_url} i instal·leu la nova versió manualment, llavors contacteu amb el nostre Centre de Suport per a informar sobre aquest problema.</string>
     <string name="updateNewVersion">Hi ha disponible una nova versió de {app_name}. Toqueu per actualitzar-lo</string>
-    <string name="updateNewVersionDescription">Hi ha disponible una nova versió de {app_name}</string>
     <string name="updateReleaseNotes">Vés a les notes de versió</string>
     <string name="updateSession">Actualització de {app_name}</string>
     <string name="updateVersion">Versió {version}</string>

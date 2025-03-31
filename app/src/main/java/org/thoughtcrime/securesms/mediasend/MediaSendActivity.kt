@@ -160,8 +160,13 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     }
 
     override fun onMediaSelected(media: Media) {
-        viewModel.onSingleMediaSelected(this, media)
-        navigateToMediaSend(recipient!!)
+        try {
+            viewModel.onSingleMediaSelected(this, media)
+            navigateToMediaSend(recipient!!)
+        } catch (e: Exception){
+            Log.e(TAG, "Error selecting media", e)
+            Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onAddMediaClicked(bucketId: String) {

@@ -25,6 +25,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
 import javax.inject.Inject
 
@@ -36,6 +37,9 @@ class ClearAllDataDialog : DialogFragment() {
 
     @Inject
     lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var clearDataUtils: ClearDataUtils
 
     private enum class Steps {
         INFO_PROMPT,
@@ -123,13 +127,15 @@ class ClearAllDataDialog : DialogFragment() {
     }
 
     private suspend fun performDeleteLocalDataOnlyStep() {
-        ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
-            withContext(Main) {
-                if (success) {
-                    dismissAllowingStateLoss()
-                } else {
-                    Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-                }
+        val result = runCatching {
+            clearDataUtils.clearAllDataAndRestart()
+        }
+
+        withContext(Main) {
+            if (result.isSuccess) {
+                dismissAllowingStateLoss()
+            } else {
+                Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -160,15 +166,7 @@ class ClearAllDataDialog : DialogFragment() {
                     }
                     else if (deletionResultMap.values.all { it }) {
                         // ..otherwise if the network data deletion was successful proceed to delete the local data as well.
-                        ApplicationContext.getInstance(context).clearAllDataAndRestart().let { success ->
-                            withContext(Main) {
-                                if (success) {
-                                    dismissAllowingStateLoss()
-                                } else {
-                                    Toast.makeText(ApplicationContext.getInstance(requireContext()), R.string.errorUnknown, Toast.LENGTH_LONG).show()
-                                }
-                            }
-                        }
+                        performDeleteLocalDataOnlyStep()
                     }
                 }
             }

@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.webrtc.data
 
+import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.webrtc.data.State.Companion.CAN_DECLINE_STATES
 import org.thoughtcrime.securesms.webrtc.data.State.Companion.CAN_HANGUP_STATES
@@ -83,6 +86,7 @@ sealed class Event(vararg val expectedStates: State, val outputState: State) {
             outputState = State.Disconnected
         )
 
+    object IgnoreCall : Event(*State.ALL_STATES, outputState = State.Disconnected)
     object Error : Event(*State.ALL_STATES, outputState = State.Disconnected)
     object DeclineCall : Event(*CAN_DECLINE_STATES, outputState = State.Disconnected)
     object Hangup : Event(*CAN_HANGUP_STATES, outputState = State.Disconnected)
@@ -90,8 +94,9 @@ sealed class Event(vararg val expectedStates: State, val outputState: State) {
 }
 
 open class StateProcessor(initialState: State) {
-    private var _currentState: State = initialState
-    val currentState get() = _currentState
+    private var _currentStateFlow: MutableStateFlow<State> = MutableStateFlow(initialState)
+    val currentStateFlow: StateFlow<State> get() = _currentStateFlow
+    val currentState get() = _currentStateFlow.value
 
     open fun processEvent(event: Event, sideEffect: () -> Unit = {}): Boolean {
         if (currentState in event.expectedStates) {
@@ -99,7 +104,7 @@ open class StateProcessor(initialState: State) {
                 "Loki-Call",
                 "succeeded transitioning from ${currentState::class.simpleName} to ${event.outputState::class.simpleName} with ${event::class.simpleName}"
             )
-            _currentState = event.outputState
+            _currentStateFlow.value = event.outputState
             sideEffect()
             return true
         }

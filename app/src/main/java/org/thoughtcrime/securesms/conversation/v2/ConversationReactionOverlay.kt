@@ -41,6 +41,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocal
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
@@ -278,11 +279,6 @@ class ConversationReactionOverlay : FrameLayout {
             (width - scrubberWidth - scrubberHorizontalMargin).toFloat()
         }
 
-        val isDeprecatedLegacyGroup =
-            recipient?.isLegacyGroupRecipient == true &&
-                deprecationManager.isDeprecated
-        foregroundView.isVisible = !isDeprecatedLegacyGroup
-        backgroundView.isVisible = !isDeprecatedLegacyGroup
         foregroundView.x = scrubberX
         foregroundView.y = reactionBarBackgroundY + reactionBarHeight / 2f - foregroundView.height / 2f
         backgroundView.x = scrubberX
@@ -554,7 +550,8 @@ class ConversationReactionOverlay : FrameLayout {
         val items: MutableList<ActionItem> = ArrayList()
 
         // Prepare
-        val containsControlMessage = message.isUpdate
+        val containsControlMessage = message.isControlMessage
+        
         val hasText = !message.body.isEmpty()
         val openGroup = lokiThreadDatabase.getOpenGroupChat(message.threadId)
         val userPublicKey = textSecurePreferences.getLocalNumber()!!
@@ -563,7 +560,7 @@ class ConversationReactionOverlay : FrameLayout {
                 deprecationManager.isDeprecated
 
         // control messages and "marked as deleted" messages can only delete
-        val isDeleteOnly = message.isDeleted || message.isControlMessage
+        val isDeleteOnly = message.isDeleted || containsControlMessage
 
         // Select message
         if(!isDeleteOnly && !isDeprecatedLegacyGroup) {
@@ -638,8 +635,8 @@ class ConversationReactionOverlay : FrameLayout {
         }
 
         // deleted messages have  no emoji reactions
-        backgroundView.isVisible = !isDeleteOnly
-        foregroundView.isVisible = !isDeleteOnly
+        backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
+        foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         return items
     }
 

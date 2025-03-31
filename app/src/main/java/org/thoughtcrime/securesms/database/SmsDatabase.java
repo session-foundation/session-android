@@ -460,7 +460,7 @@ public class SmsDatabase extends MessagingDatabase {
     }
 
     boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-            message.isSecureMessage() || message.isGroup() || message.isCallInfo());
+            message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 

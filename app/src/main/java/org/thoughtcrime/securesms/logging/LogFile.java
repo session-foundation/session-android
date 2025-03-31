@@ -129,25 +129,37 @@ class LogFile {
 
     String readEntry() throws IOException {
       try {
+        // Read the IV and length
         Util.readFully(inputStream, ivBuffer);
         Util.readFully(inputStream, intBuffer);
-
-        int    length     = Conversions.byteArrayToInt(intBuffer);
-        byte[] ciphertext = ciphertextBuffer.get(length);
-
-        Util.readFully(inputStream, ciphertext, length);
-
-        try {
-          synchronized (CIPHER_LOCK) {
-            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secret, "AES"), new IvParameterSpec(ivBuffer));
-            byte[] plaintext = cipher.doFinal(ciphertext, 0, length);
-            return new String(plaintext);
-          }
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
-          throw new AssertionError(e);
-        }
       } catch (EOFException e) {
+        // End of file reached before a full header could be read.
         return null;
+      }
+
+      int length = Conversions.byteArrayToInt(intBuffer);
+      byte[] ciphertext = ciphertextBuffer.get(length);
+
+      try {
+        Util.readFully(inputStream, ciphertext, length);
+      } catch (EOFException e) {
+        // Incomplete ciphertext – likely due to a partially written record.
+        return null;
+      }
+
+      try {
+        synchronized (CIPHER_LOCK) {
+          cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secret, "AES"), new IvParameterSpec(ivBuffer));
+          byte[] plaintext = cipher.doFinal(ciphertext, 0, length);
+          return new String(plaintext);
+        }
+      } catch (BadPaddingException e) {
+        // Bad padding likely indicates a corrupted or incomplete entry.
+        // Instead of throwing an error, treat this as the end of the log.
+        return null;
+      } catch (InvalidKeyException | InvalidAlgorithmParameterException
+               | IllegalBlockSizeException e) {
+        throw new AssertionError(e);
       }
     }
   }

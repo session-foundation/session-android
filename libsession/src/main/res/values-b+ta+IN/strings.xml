@@ -718,7 +718,6 @@
     <string name="recoveryPasswordBannerTitle">உங்கள் Recovery Password சேமிக்கவும்</string>
     <string name="recoveryPasswordDescription">உங்கள் விளம்பரச் சொந்தக் குறியீட்டை பயன்படுத்தி உங்கள் கணக்கை புதிய சாதனங்களில் ஏற்றுக. \n\n உங்கள் விளம்பரச் சொந்தக் குறியீடு இல்லாமல் உங்கள் கணக்கை மீட்டெடுக்க முடியாது. அது பாதுகாப்பான மற்றும் பாதுகாப்பான இடத்தில் சேமிக்கப்படுவதை உறுதிசெய்க - மற்றும் அதைப் பிறரிடம் பகிர வேண்டாம்.</string>
     <string name="recoveryPasswordEnter">உங்கள் recovery password ஐ உள்ளிடவும்</string>
-    <string name="recoveryPasswordErrorLoad">உங்கள் Recovery Password ஐ ஏற்றுவதில் பிழை ஏற்பட்டது.\n\nதயவுசெய்து உங்கள் பதிவசைகளை ஏற்றுமதி செய்யவும், பின்னர் இந்த பிரச்சினையை தீர்க்க Session இன் உதவிப்பணிக்குழுவின் மூலமாக கோப்பை பதிவேற்றுக.</string>
     <string name="recoveryPasswordErrorMessageGeneric">உங்கள் மீட்பு கடவுச்சொல்லைச் சரிபார்த்து மறுபடியும் முயற்சிக்கவும்.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">உங்கள் மீட்பு கடவுச்சொல்லின் சில வார்த்தைகள் தவறாக உள்ளன. தயவுசெய்து சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
     <string name="recoveryPasswordErrorMessageShort">நீங்கள் உள்ளிட்ட மீட்பு கடவுச்சொல் போதுமான நீளமாக இல்லை. தயவுசெய்து சரிபார்த்து மீண்டும் முயற்சிக்கவும்.</string>
@@ -805,7 +804,6 @@
     <string name="updateError">புதுப்பிக்க முடியாது</string>
     <string name="updateErrorDescription">{app_name} புதுப்பிக்கப்படவில்லை. தயவு செய்து {session_download_url} சென்று புதிய பதிப்பை ஹேண்ட் முறையில் நிறுவி, இந்த சிக்கலை எங்களுக்கு தெரிவிக்கவும்.</string>
     <string name="updateNewVersion">{app_name} இன் புதிய பதிப்பு கிடைக்கிறது, புதுப்பிக்கத் தட்டவும்</string>
-    <string name="updateNewVersionDescription">{app_name} இன் புதிய பதிப்பு கிடைக்கிறது.</string>
     <string name="updateReleaseNotes">வெளியீட்டுக் குறிப்புகளுக்குச் செல்லவும்</string>
     <string name="updateSession">{app_name} அப்டேட்</string>
     <string name="updateVersion">பதிப்பு: {version}</string>

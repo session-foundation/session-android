@@ -108,8 +108,8 @@ object DateUtils : android.text.format.DateUtils() {
         return SimpleDateFormat(dateFormatPattern, locale)
     }
 
-    fun getShortDateFormatter(): DateTimeFormatter {
-        return DateTimeFormatter.ofPattern("d MMM yyyy")
+    fun getMediumDateTimeFormatter(): DateTimeFormatter {
+        return DateTimeFormatter.ofPattern("h:mm a, d MMM yyyy")
     }
 
     // Method to get the String for a relative day in a locale-aware fashion, including using the

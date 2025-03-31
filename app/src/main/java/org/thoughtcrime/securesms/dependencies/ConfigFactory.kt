@@ -238,16 +238,30 @@ class ConfigFactory @Inject constructor(
         }
     }
 
-    private fun <T> doWithMutableGroupConfigs(
-        groupId: AccountId,
-        recreateConfigInstances: Boolean,
-        cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
-        if (recreateConfigInstances) {
-            synchronized(groupConfigs) {
-                groupConfigs.remove(groupId)
-            }?.second?.dumpIfNeeded(clock)
+    override fun createGroupConfigs(groupId: AccountId, adminKey: ByteArray): MutableGroupConfigs {
+        return GroupConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            groupAccountId = groupId,
+            groupAdminKey = adminKey,
+            configDatabase = configDatabase
+        )
+    }
+
+    override fun saveGroupConfigs(groupId: AccountId, groupConfigs: MutableGroupConfigs) {
+        check(groupConfigs is GroupConfigsImpl) {
+            "The group configs must be the same instance as the one created by createGroupConfigs"
         }
 
+        groupConfigs.dumpIfNeeded(clock)
+
+        synchronized(groupConfigs) {
+            this.groupConfigs[groupId] = ReentrantReadWriteLock() to groupConfigs
+        }
+    }
+
+    private fun <T> doWithMutableGroupConfigs(
+        groupId: AccountId,
+        cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
         val (result, changed) = lock.write {
             cb(configs)
@@ -266,10 +280,9 @@ class ConfigFactory @Inject constructor(
 
     override fun <T> withMutableGroupConfigs(
         groupId: AccountId,
-        recreateConfigInstances: Boolean,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return doWithMutableGroupConfigs(recreateConfigInstances = recreateConfigInstances, groupId = groupId) {
+        return doWithMutableGroupConfigs(groupId = groupId) {
             cb(it) to it.dumpIfNeeded(clock)
         }
     }
@@ -312,7 +325,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        val changed = doWithMutableGroupConfigs(groupId, false) { configs ->
+        val changed = doWithMutableGroupConfigs(groupId) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -382,7 +395,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableGroupConfigs(groupId, false) { configs ->
+        doWithMutableGroupConfigs(groupId) { configs ->
             members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hash) }
             info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hash) }
             keysPush?.let { (hash, timestamp) ->

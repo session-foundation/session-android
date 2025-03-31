@@ -63,8 +63,8 @@
             android:id="@+id/senderNameTextView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="12dp"
+            android:layout_marginStart="@dimen/message_spacing"
+            android:layout_marginEnd="@dimen/message_spacing"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="?android:textColorPrimary"
@@ -134,15 +134,15 @@
 
             <ImageView
                 android:id="@+id/messageStatusImageView"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="@dimen/message_spacing"
+                android:layout_height="@dimen/message_spacing"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_circle_check" />
 
             <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView
                 android:id="@+id/expirationTimerView"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="@dimen/message_spacing"
+                android:layout_height="@dimen/message_spacing"
                 android:layout_gravity="center"
                 android:tint="?message_status_color" />
 

@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
@@ -123,6 +124,10 @@ class VisibleMessageView : FrameLayout {
     var onLongPress: (() -> Unit)? = null
     val messageContentView: VisibleMessageContentView get() = binding.messageContentView.root
 
+    // Prevent button spam
+    val MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS = 500L
+    var lastClickTimestampMS = 0L
+
     companion object {
         const val swipeToReplyThreshold = 64.0f // dp
         const val longPressMovementThreshold = 10.0f // dp
@@ -162,7 +167,8 @@ class VisibleMessageView : FrameLayout {
         senderAccountID: String,
         lastSeen: Long,
         delegate: VisibleMessageViewDelegate? = null,
-        onAttachmentNeedsDownload: (DatabaseAttachment) -> Unit
+        downloadPendingAttachment: (DatabaseAttachment) -> Unit,
+        retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     ) {
         clipToPadding = false
         clipChildren = false
@@ -295,7 +301,8 @@ class VisibleMessageView : FrameLayout {
             glide,
             thread,
             searchQuery,
-            onAttachmentNeedsDownload
+            downloadPendingAttachment = downloadPendingAttachment,
+            retryFailedAttachments = retryFailedAttachments
         )
         binding.messageContentView.root.delegate = delegate
         onDoubleTap = { binding.messageContentView.root.onContentDoubleTap?.invoke() }
@@ -397,14 +404,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isUpdate || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+        previous == null || previous.isControlMessage || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
             current.recipient.address != previous.recipient.address
         } else {
             current.isOutgoing != previous.isOutgoing
         }
 
     private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isUpdate || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+        next == null || next.isControlMessage || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing
@@ -613,14 +620,21 @@ class VisibleMessageView : FrameLayout {
         onLongPress?.invoke()
     }
 
-    fun onContentClick(event: MotionEvent) {
-        binding.messageContentView.root.onContentClick(event)
-    }
+    private fun clickedTooFast() = (SystemClock.elapsedRealtime() - lastClickTimestampMS < MINIMUM_DURATION_BETWEEN_CLICKS_ON_SAME_VIEW_MS)
 
+    // Note: `onPress` is called BEFORE `onContentClick` is called, so we only filter here rather than
+    // in both places otherwise `onContentClick` will instantly fail the button spam test.
     private fun onPress(event: MotionEvent) {
+        // Don't process the press if it's too soon after the last one..
+        if (clickedTooFast()) return
+
+        // ..otherwise take note of the time and process the event.
+        lastClickTimestampMS = SystemClock.elapsedRealtime()
         onPress?.invoke(event)
         pressCallback = null
     }
+
+    fun onContentClick(event: MotionEvent) = binding.messageContentView.root.onContentClick(event)
 
     private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
         UserDetailsBottomSheet().apply {

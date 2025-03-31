@@ -2,14 +2,14 @@ package org.session.libsession.utilities
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import java.io.File
-import java.io.FileOutputStream
 import java.io.OutputStream
 
 object DownloadUtilities {
@@ -18,20 +18,25 @@ object DownloadUtilities {
      * Blocks the calling thread.
      */
     suspend fun downloadFile(destination: File, url: String) {
-        val outputStream = FileOutputStream(destination) // Throws
         var remainingAttempts = 2
         var exception: Exception? = null
-        while (remainingAttempts > 0) {
-            remainingAttempts -= 1
-            try {
-                downloadFile(outputStream, url)
-                exception = null
-                break
-            } catch (e: Exception) {
-                exception = e
+
+        destination.outputStream().use { outputStream ->
+            while (remainingAttempts > 0) {
+                remainingAttempts -= 1
+
+                try {
+                    downloadFile(outputStream, url)
+                    return  // return on success
+                } catch (e: HTTP.HTTPRequestFailedException) {
+                    exception = e
+                } catch (e: Exception) {
+                    exception = e
+                }
             }
         }
-        if (exception != null) { throw exception }
+
+        throw exception ?: NonRetryableException("Couldn't download file: $url")
     }
 
     /**

@@ -1,58 +1,64 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
+import androidx.hilt.work.HiltWorker
 import androidx.work.Constraints
+import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.Worker
 import androidx.work.WorkerParameters
-import kotlinx.coroutines.GlobalScope
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.all
-import nl.komponents.kovenant.functional.bind
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.recover
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.groups.GroupPollerManager
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
-class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Worker(context, params) {
-    enum class Targets {
-        DMS, CLOSED_GROUPS, OPEN_GROUPS
+@HiltWorker
+class BackgroundPollWorker @AssistedInject constructor(
+    @Assisted val context: Context,
+    @Assisted params: WorkerParameters,
+    private val storage: StorageProtocol,
+    private val deprecationManager: LegacyGroupDeprecationManager,
+    private val lokiThreadDatabase: LokiThreadDatabase,
+    private val groupPollerManager: GroupPollerManager,
+) : CoroutineWorker(context, params) {
+    enum class Target {
+        ONE_TO_ONE,
+        LEGACY_GROUPS,
+        GROUPS,
+        OPEN_GROUPS
     }
 
     companion object {
-        const val TAG = "BackgroundPollWorker"
-        const val INITIAL_SCHEDULE_TIME = "INITIAL_SCHEDULE_TIME"
-        const val REQUEST_TARGETS = "REQUEST_TARGETS"
+        private const val TAG = "BackgroundPollWorker"
+        private const val REQUEST_TARGETS = "REQUEST_TARGETS"
 
-        @JvmStatic
-        fun schedulePeriodic(context: Context) = schedulePeriodic(context, targets = Targets.values())
-
-        @JvmStatic
-        fun schedulePeriodic(context: Context, targets: Array<Targets>) {
+        fun schedulePeriodic(context: Context, targets: Collection<Target> = Target.entries) {
             Log.v(TAG, "Scheduling periodic work.")
-            val durationMinutes: Long = 15
-            val builder = PeriodicWorkRequestBuilder<BackgroundPollWorker>(durationMinutes, TimeUnit.MINUTES)
+            val interval = 15.minutes
+            val builder = PeriodicWorkRequestBuilder<BackgroundPollWorker>(interval.inWholeSeconds, TimeUnit.SECONDS)
             builder.setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                .setInitialDelay(interval.inWholeSeconds, TimeUnit.SECONDS)
 
             val dataBuilder = Data.Builder()
-            dataBuilder.putLong(INITIAL_SCHEDULE_TIME, System.currentTimeMillis() + (durationMinutes * 60 * 1000))
             dataBuilder.putStringArray(REQUEST_TARGETS, targets.map { it.name }.toTypedArray())
             builder.setInputData(dataBuilder.build())
 
@@ -64,8 +70,12 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
             )
         }
 
-        @JvmStatic
-        fun scheduleOnce(context: Context, targets: Array<Targets> = Targets.values()) {
+        fun cancelPeriodic(context: Context) {
+            Log.v(TAG, "Cancelling periodic work.")
+            WorkManager.getInstance(context).cancelUniqueWork(TAG)
+        }
+
+        fun scheduleOnce(context: Context, targets: Collection<Target> = Target.entries) {
             Log.v(TAG, "Scheduling single run.")
             val builder = OneTimeWorkRequestBuilder<BackgroundPollWorker>()
             builder.setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
@@ -79,99 +89,85 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
         }
     }
 
-    override fun doWork(): Result {
-        if (TextSecurePreferences.getLocalNumber(context) == null) {
+    override suspend fun doWork(): Result {
+        val userAuth = storage.userAuth
+        if (userAuth == null) {
             Log.v(TAG, "User not registered yet.")
             return Result.failure()
         }
 
-        // If this is a scheduled run and it is happening before the initial scheduled time (as
-        // periodic background tasks run immediately when scheduled) then don't actually do anything
-        // because this might slow requests on initial startup or triggered by PNs
-        val initialScheduleTime = inputData.getLong(INITIAL_SCHEDULE_TIME, -1)
-
-        if (initialScheduleTime != -1L && System.currentTimeMillis() < (initialScheduleTime - (60 * 1000))) {
-            Log.v(TAG, "Skipping initial run.")
-            return Result.success()
-        }
-
         // Retrieve the desired targets (defaulting to all if not provided or empty)
-        val requestTargets: List<Targets> = (inputData.getStringArray(REQUEST_TARGETS) ?: emptyArray())
-            .map {
-                try { Targets.valueOf(it) }
-                catch(e: Exception) { null }
-            }
-            .filterNotNull()
-            .ifEmpty { Targets.values().toList() }
+        val requestTargets: List<Target> = (inputData.getStringArray(REQUEST_TARGETS) ?: emptyArray())
+            .map { enumValueOf<Target>(it) }
 
         try {
             Log.v(TAG, "Performing background poll for ${requestTargets.joinToString { it.name }}.")
-            val promises = mutableListOf<Promise<Unit, Exception>>()
+            supervisorScope {
+                val tasks = mutableListOf<Deferred<*>>()
 
-            // DMs
-            var dmsPromise: Promise<Unit, Exception> = Promise.ofSuccess(Unit)
+                // DMs
+                if (requestTargets.contains(Target.ONE_TO_ONE)) {
+                    tasks += async {
+                        Log.d(TAG, "Polling messages.")
+                        val params = SnodeAPI.getMessages(userAuth).await().map { (envelope, serverHash) ->
+                            MessageReceiveParameters(envelope.toByteArray(), serverHash, null)
+                        }
 
-            if (requestTargets.contains(Targets.DMS)) {
-                val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
-                dmsPromise = SnodeAPI.getMessages(userAuth).bind { envelopes ->
-                    val params = envelopes.map { (envelope, serverHash) ->
                         // FIXME: Using a job here seems like a bad idea...
-                        MessageReceiveParameters(envelope.toByteArray(), serverHash, null)
-                    }
-
-                    GlobalScope.asyncPromise {
                         BatchMessageReceiveJob(params).executeAsync("background")
                     }
                 }
-                promises.add(dmsPromise)
-            }
 
-            // Closed groups
-            if (requestTargets.contains(Targets.CLOSED_GROUPS)) {
-                val closedGroupPoller = LegacyClosedGroupPollerV2(
-                    MessagingModuleConfiguration.shared.storage,
-                    MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.deprecationManager
-                ) // Intentionally don't use shared
-                val storage = MessagingModuleConfiguration.shared.storage
-                val allGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
-                allGroupPublicKeys.iterator().forEach { closedGroupPoller.poll(it) }
-            }
+                // Legacy groups
+                if (requestTargets.contains(Target.LEGACY_GROUPS)) {
+                    val poller = LegacyClosedGroupPollerV2(storage, deprecationManager)
 
-            // Open Groups
-            var ogPollError: Exception? = null
-
-            if (requestTargets.contains(Targets.OPEN_GROUPS)) {
-                val threadDB = DatabaseComponent.get(context).lokiThreadDatabase()
-                val openGroups = threadDB.getAllOpenGroups()
-                val openGroupServers = openGroups.map { it.value.server }.toSet()
-
-                for (server in openGroupServers) {
-                    val poller = OpenGroupPoller(server, null)
-                    poller.hasStarted = true
-
-                    // If one of the open group pollers fails we don't want it to cancel the DM
-                    // poller so just hold on to the error for later
-                    promises.add(
-                        poller.poll().recover {
-                            if (dmsPromise.isDone()) {
-                                throw it
+                    storage.getAllLegacyGroupPublicKeys()
+                        .mapTo(tasks) { key ->
+                            async {
+                                Log.d(TAG, "Polling legacy group ${key.substring(0, 8)}...")
+                                poller.poll(key)
                             }
-
-                            ogPollError = it
                         }
-                    )
                 }
-            }
 
-            // Wait until all the promises are resolved
-            all(promises).get()
+                // Open groups
+                if (requestTargets.contains(Target.OPEN_GROUPS)) {
+                    lokiThreadDatabase.getAllOpenGroups()
+                        .mapTo(hashSetOf()) { it.value.server }
+                        .mapTo(tasks) { server ->
+                            async {
+                                Log.d(TAG, "Polling open group server $server.")
+                                OpenGroupPoller(server, null)
+                                    .apply { hasStarted = true }
+                                    .poll()
+                                    .await()
+                            }
+                        }
+                }
 
-            // If the Open Group pollers threw an exception then re-throw it here (now that
-            // the DM promise has completed)
-            val localOgPollException = ogPollError
+                // Close group
+                if (requestTargets.contains(Target.GROUPS)) {
+                    tasks += async {
+                        Log.d(TAG, "Polling all groups.")
+                        groupPollerManager.pollAllGroupsOnce()
+                    }
+                }
 
-            if (localOgPollException != null) {
-                throw localOgPollException
+                val caughtException = tasks
+                    .fold(null) { acc: Throwable?, result ->
+                        try {
+                            result.await()
+                            acc
+                        } catch (ec: Exception) {
+                            Log.e(TAG, "Failed to poll group due to error.", ec)
+                            acc?.also { it.addSuppressed(ec) } ?: ec
+                        }
+                    }
+
+                if (caughtException != null) {
+                    throw caughtException
+                }
             }
 
             return Result.success()
@@ -181,13 +177,4 @@ class BackgroundPollWorker(val context: Context, params: WorkerParameters) : Wor
         }
     }
 
-     class BootBroadcastReceiver: BroadcastReceiver() {
-
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-                Log.v(TAG, "Boot broadcast caught.")
-                schedulePeriodic(context)
-            }
-        }
-    }
 }

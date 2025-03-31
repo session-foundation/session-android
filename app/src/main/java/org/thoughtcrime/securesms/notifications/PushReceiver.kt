@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.notifications
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -10,8 +12,11 @@ import androidx.core.content.ContextCompat.getString
 import com.goterl.lazysodium.interfaces.AEAD
 import com.goterl.lazysodium.utils.Key
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
@@ -20,23 +25,27 @@ import org.session.libsession.messaging.sending_receiving.notifications.PushNoti
 import org.session.libsession.messaging.utilities.MessageWrapper
 import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
+import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
 import org.session.libsession.utilities.bencode.BencodeString
+import org.session.libsession.utilities.getGroup
 import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.Namespace
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
 
 class PushReceiver @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val configFactory: ConfigFactory
+    private val configFactory: ConfigFactory,
+    private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -45,6 +54,7 @@ class PushReceiver @Inject constructor(
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
+        Log.d("", "Push data received: $dataMap")
         addMessageReceiveJob(dataMap?.asPushData())
     }
 
@@ -56,32 +66,85 @@ class PushReceiver @Inject constructor(
         addMessageReceiveJob(PushData(data = data, metadata = null))
     }
 
-    private fun addMessageReceiveJob(pushData: PushData?){
-        // send a generic notification if we have no data
-        if (pushData?.data == null) {
-            sendGenericNotification()
-            return
-        }
-
+    private fun addMessageReceiveJob(pushData: PushData?) {
         try {
+            val namespace = pushData?.metadata?.namespace
             val params = when {
-                pushData.metadata?.namespace == Namespace.CLOSED_GROUP_MESSAGES() -> {
+                namespace == Namespace.GROUP_MESSAGES() ||
+                        namespace == Namespace.REVOKED_GROUP_MESSAGES() ||
+                        namespace == Namespace.GROUP_INFO() ||
+                        namespace == Namespace.GROUP_MEMBERS() ||
+                        namespace == Namespace.GROUP_KEYS() -> {
                     val groupId = AccountId(requireNotNull(pushData.metadata.account) {
                         "Received a closed group message push notification without an account ID"
                     })
 
-                    val envelop = checkNotNull(tryDecryptGroupMessage(groupId, pushData.data)) {
-                        "Unable to decrypt closed group message"
+                    if (configFactory.getGroup(groupId)?.shouldPoll != true) {
+                        Log.d(TAG, "Received a push notification for a group that isn't active")
+                        return
                     }
 
-                    MessageReceiveParameters(
-                        data = envelop.toByteArray(),
-                        serverHash = pushData.metadata.msg_hash,
-                        closedGroup = Destination.ClosedGroup(groupId.hexString)
-                    )
+                    // send a generic notification if we have no data
+                    if (pushData.data == null) {
+                        sendGenericNotification()
+                        return
+                    }
+
+                    if (namespace == Namespace.GROUP_MESSAGES()) {
+                        val envelope = checkNotNull(tryDecryptGroupEnvelope(groupId, pushData.data)) {
+                            "Unable to decrypt closed group message"
+                        }
+
+                        MessageReceiveParameters(
+                            data = envelope.toByteArray(),
+                            serverHash = pushData.metadata.msg_hash,
+                            closedGroup = Destination.ClosedGroup(groupId.hexString)
+                        )
+                    } else if (namespace == Namespace.REVOKED_GROUP_MESSAGES()) {
+                        GlobalScope.launch {
+                            groupRevokedMessageHandler.handleRevokeMessage(groupId, listOf(pushData.data))
+                        }
+
+                        null
+                    } else  {
+                        val hash = requireNotNull(pushData.metadata.msg_hash) {
+                            "Received a closed group config push notification without a message hash"
+                        }
+
+                        // If we receive group config messages from notification, try to merge
+                        // them directly
+                        val configMessage = listOf(
+                            ConfigMessage(
+                                hash = hash,
+                                data = pushData.data,
+                                timestamp = pushData.metadata.timestampSeconds
+                            )
+                        )
+
+                        configFactory.mergeGroupConfigMessages(
+                            groupId = groupId,
+                            keys = configMessage.takeIf { namespace == Namespace.GROUP_KEYS() }
+                                .orEmpty(),
+                            members = configMessage.takeIf { namespace == Namespace.GROUP_MEMBERS() }
+                                .orEmpty(),
+                            info = configMessage.takeIf { namespace == Namespace.GROUP_INFO() }
+                                .orEmpty(),
+                        )
+
+                        null
+                    }
                 }
 
-                pushData.metadata?.namespace == 0 || pushData.metadata == null -> {
+                namespace == Namespace.DEFAULT() || pushData?.metadata == null -> {
+                    if (pushData?.data == null) {
+                        Log.d(TAG, "Push data is null")
+                        if(pushData?.metadata?.data_too_long != true) {
+                            Log.d(TAG, "Sending a generic notification (data_too_long was false)")
+                            sendGenericNotification()
+                        }
+                        return
+                    }
+
                     val envelopeAsData = MessageWrapper.unwrap(pushData.data).toByteArray()
                     MessageReceiveParameters(
                         data = envelopeAsData,
@@ -90,34 +153,37 @@ class PushReceiver @Inject constructor(
                 }
 
                 else -> {
-                    Log.w(TAG, "Received a push notification with an unknown namespace: ${pushData.metadata.namespace}")
+                    Log.w(TAG, "Received a push notification with an unknown namespace: $namespace")
                     return
                 }
             }
 
-            JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
+            if (params != null) {
+                JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
+            }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to unwrap data for message due to error.", e)
         }
 
     }
-    
 
-    private fun tryDecryptGroupMessage(groupId: AccountId, data: ByteArray): Envelope? {
-        val (envelopBytes, sender) = checkNotNull(configFactory.withGroupConfigs(groupId) { it.groupKeys.decrypt(data) }) {
+    private fun tryDecryptGroupEnvelope(groupId: AccountId, data: ByteArray): Envelope? {
+        val (envelopBytes, sender) = checkNotNull(configFactory.withGroupConfigs(groupId) {
+            it.groupKeys.decrypt(
+                data
+            )
+        }) {
             "Failed to decrypt group message"
         }
 
-        Log.d(TAG, "Successfully decrypted group message from ${sender.hexString}")
+        Log.d(TAG, "Successfully decrypted group message from $sender")
         return Envelope.parseFrom(envelopBytes)
             .toBuilder()
-            .setSource(sender.hexString)
+            .setSource(sender)
             .build()
     }
 
     private fun sendGenericNotification() {
-        Log.d(TAG, "Failed to decode data for message.")
-
         // no need to do anything if notification permissions are not granted
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -137,6 +203,7 @@ class PushReceiver @Inject constructor(
 
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
+            .setContentIntent(PendingIntent.getActivity(context, 0, Intent(context, HomeActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
 
         NotificationManagerCompat.from(context).notify(11111, builder.build())
     }
@@ -171,7 +238,7 @@ class PushReceiver @Inject constructor(
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
 
-        val metadataJson = (expectedList[0] as? BencodeString)?.value ?: error("no metadata")
+        val metadataJson = (expectedList.getOrNull(0) as? BencodeString)?.value ?: error("no metadata")
         val metadata: PushNotificationMetadata = json.decodeFromString(String(metadataJson))
 
         return PushData(

@@ -13,18 +13,20 @@ import androidx.core.view.get
 import androidx.core.view.size
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import java.security.InvalidParameterException
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.contacts.Contact as ContactModel
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.ThemeUtil
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
+import java.security.InvalidParameterException
+import org.session.libsession.messaging.contacts.Contact as ContactModel
 
 class GlobalSearchAdapter(
     val context: Context,
@@ -171,7 +173,7 @@ class GlobalSearchAdapter(
                         true
                     }
                     R.id.action_delete -> {
-                        MessagingModuleConfiguration.shared.storage.deleteContactWithAccountId(model.contact.accountID)
+                        MessagingModuleConfiguration.shared.storage.deleteContactWithAccountId(model.contact.hexString)
                         removeItem(model)
                         true
                     }
@@ -204,18 +206,40 @@ class GlobalSearchAdapter(
         }
     }
 
-    sealed class Model {
-        data class Header(val title: GetString): Model() {
+    sealed interface Model {
+        data class Header(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SubHeader(val title: GetString): Model() {
+        data class SubHeader(val title: GetString): Model {
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SavedMessages(val currentUserPublicKey: String): Model() // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
-        data class Contact(val contact: ContactModel, val name: String?, val isSelf: Boolean) : Model()
-        data class GroupConversation(val groupRecord: GroupRecord) : Model()
-        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model()
+
+        data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
+        data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
+            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean):
+                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf)
+        }
+        data class GroupConversation(
+            val isLegacy: Boolean,
+            val groupId: String,
+            val title: String,
+            val legacyMembersString: String?,
+        ) : Model {
+            constructor(context: Context, groupRecord: GroupRecord):
+                    this(
+                        isLegacy = groupRecord.isLegacyGroup,
+                        groupId = groupRecord.encodedId,
+                        title = groupRecord.title,
+                        legacyMembersString = if (groupRecord.isLegacyGroup) {
+                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
+                            recipients.joinToString(transform = Recipient::getSearchName)
+                        } else {
+                            null
+                        }
+                    )
+        }
+        data class Message(val messageResult: MessageResult, val unread: Int, val isSelf: Boolean) : Model
     }
 }

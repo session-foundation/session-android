@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Gorde zure Recovery Password</string>
     <string name="recoveryPasswordDescription">Erabili zure berreskurapen pasahitza zure kontua kargatzeko gailu berrietan.\n\nZure kontua ezin da berreskuratu berreskurapen pasahitzik gabe. Ziurtatu leku seguru batean gordeta dagoela eta ez partekatu inorekin.</string>
     <string name="recoveryPasswordEnter">Sartu zure berreskuratze pasahitza</string>
-    <string name="recoveryPasswordErrorLoad">Errore bat gertatu da zure berreskuratze pasahitza kargatzean.\n\nMesedez esportatu zure erregistroak, eta igo fitxategia Session-en Laguntza Mahaiaren bidez arazo hau konpontzeko.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Mesedez, egiaztatu zure berreskurapen pasahitza eta saiatu berriro.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Zure berreskurapen pasahitzean hitz batzuk okerrak dira. Mesedez, egiaztatu eta saiatu berriro.</string>
     <string name="recoveryPasswordErrorMessageShort">Sartu duzun Berreskuratze Pasahitza ez da nahikoa luzea. Mesedez, egiaztatu eta saiatu berriro.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name}(e)k huts egin du eguneratzean. Mesedez joan {session_download_url} helbidera eta eskuz instalatu bertsio berria, ondoren jar zaitez harremanetan gure Laguntza Zentroarekin arazo honen berri emateko.</string>
     <string name="updateNewVersion">{app_name}(e)n bertsio berri bat erabilgarri dago, sakatu eguneratzeko</string>
-    <string name="updateNewVersionDescription">Bertsio berri bat erabilgarri dago {app_name}-erako.</string>
     <string name="updateReleaseNotes">Joan Azken Oharrak ikustera</string>
     <string name="updateSession">{app_name} Eguneraketa</string>
     <string name="updateVersion">Bertsioa {version}</string>

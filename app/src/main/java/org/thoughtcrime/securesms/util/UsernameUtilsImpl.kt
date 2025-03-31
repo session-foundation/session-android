@@ -46,6 +46,9 @@ class UsernameUtilsImpl(
                 configFactory.withGroupConfigs(groupId) { it.groupMembers.getOrNull(accountID)?.name }
             } else null
 
-        return userName ?: truncateIdForDisplay(accountID)
+        // if the username is actually set to the user's accountId, truncate it
+        val validatedUsername = if(userName == accountID) truncateIdForDisplay(accountID) else userName
+
+        return validatedUsername ?: truncateIdForDisplay(accountID)
     }
 }

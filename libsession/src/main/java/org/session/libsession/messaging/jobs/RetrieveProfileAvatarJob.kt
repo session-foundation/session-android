@@ -10,7 +10,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfi
 import org.session.libsession.utilities.Util.copy
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.streams.ProfileCipherInputStream
+import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.io.File
@@ -91,12 +93,24 @@ class RetrieveProfileAvatarJob(
             }
 
             storage.setProfilePicture(recipient, profileAvatar, profileKey)
-        } catch (e: Exception) {
-            Log.e("Loki", "Failed to download profile avatar", e)
-            if (failureCount + 1 >= maxFailureCount) {
+        }
+        catch (e: NonRetryableException){
+            Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)
+            errorUrls += profileAvatar
+            return delegate.handleJobFailedPermanently(this, dispatcherName, e)
+        }
+        catch (e: Exception) {
+            if(e is HTTP.HTTPRequestFailedException && e.statusCode == 404){
+                Log.e("Loki", "Failed to download profile avatar from non-retryable error", e)
                 errorUrls += profileAvatar
+                return delegate.handleJobFailedPermanently(this, dispatcherName, e)
+            } else {
+                Log.e("Loki", "Failed to download profile avatar", e)
+                if (failureCount + 1 >= maxFailureCount) {
+                    errorUrls += profileAvatar
+                }
+                return delegate.handleJobFailed(this, dispatcherName, e)
             }
-            return delegate.handleJobFailed(this, dispatcherName, e)
         } finally {
             downloadDestination.delete()
         }

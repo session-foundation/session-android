@@ -68,8 +68,7 @@ class VoiceMessageView @JvmOverloads constructor(
             return
         }
 
-        val player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
-        this.player = player
+        this.player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
 
         // This sets the final duration of the uploaded voice message
         (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->

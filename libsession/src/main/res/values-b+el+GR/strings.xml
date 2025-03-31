@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Αποθηκεύστε τον κωδικό σας ανάκτησης</string>
     <string name="recoveryPasswordDescription">Χρησιμοποιήστε τον κωδικό ανάκτησης για να φορτώσετε τον λογαριασμό σας σε νέες συσκευές.\n\nΟ λογαριασμός σας δεν μπορεί να ανακτηθεί χωρίς τον κωδικό ανάκτησης. Βεβαιωθείτε ότι τον αποθηκεύσατε σε ασφαλές μέρος — και μην τον μοιραστείτε με κανέναν.</string>
     <string name="recoveryPasswordEnter">Εισαγάγετε τον κωδικό σας ανάκτησης</string>
-    <string name="recoveryPasswordErrorLoad">Προέκυψε ένα σφάλμα προσπαθώντας να φορτώσετε τον κωδικό αποκατάστασης.\n\nΠαρακαλούμε εξάγετε τα αρχεία καταγραφής σας και ανεβάστε το αρχείο μέσω του Κέντρου Υποστήριξης της Session για να βοηθήσετε στην επίλυση αυτού του προβλήματος.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Παρακαλώ ελέγξτε τον κωδικό πρόσβασης για ανάκτηση και προσπαθήστε ξανά.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Κάποιες από τις λέξεις στον Κωδικό Ανάκτησης σας είναι λανθασμένες. Παρακαλώ ελέγξτε και προσπαθήστε ξανά.</string>
     <string name="recoveryPasswordErrorMessageShort">Ο κωδικός ανάκτησης που εισαγάγατε δεν είναι αρκετά μεγάλος. Παρακαλώ ελέγξτε και δοκιμάστε ξανά.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Αδυναμία Ενημέρωσης</string>
     <string name="updateErrorDescription">Το {app_name} απέτυχε να ενημερωθεί. Παρακαλώ πηγαίνετε στο {session_download_url} και εγκαταστήστε τη νέα έκδοση χειροκίνητα, στη συνέχεια επικοινωνήστε με το Κέντρο Βοήθειας για να μας ενημερώσετε για αυτό το πρόβλημα.</string>
     <string name="updateNewVersion">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη, πατήστε για ενημέρωση</string>
-    <string name="updateNewVersionDescription">Μια νέα έκδοση της εφαρμογής {app_name} είναι διαθέσιμη.</string>
     <string name="updateReleaseNotes">Μετάβαση στις Σημειώσεις Έκδοσης</string>
     <string name="updateSession">Ενημέρωση {app_name}</string>
     <string name="updateVersion">Έκδοση {version}</string>

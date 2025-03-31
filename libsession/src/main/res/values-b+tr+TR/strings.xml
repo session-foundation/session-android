@@ -735,7 +735,6 @@
     <string name="recoveryPasswordBannerTitle">Kurtarma şifrenizi kaydedin</string>
     <string name="recoveryPasswordDescription">Hesabınızı yeni cihazlarda yüklemek için kurtarma şifrenizi kullanın.\n\nKurtarma şifreniz olmadan hesabınız geri yüklenemez. Güvende olduğundan emin olun ve kimseyle paylaşmayın.</string>
     <string name="recoveryPasswordEnter">Kurtarma parolanızı girin</string>
-    <string name="recoveryPasswordErrorLoad">Kurtarma şifreni yüklemeye çalışırken bir sorun meydana geldi.\n\nLütfen kayıtları (logları) dışa aktarın, ardından Session\'un Yardım Merkezi üzerinden dışa aktarılmış dosyayı yükleyerek sorunun çözümlenmesine yardımcı olun.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Lütfen kurtarma parolanızı kontrol edin ve tekrar deneyin.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Kurtarma Şifrenizdeki bazı kelimeler yanlış. Lütfen kontrol edip tekrar deneyin.</string>
     <string name="recoveryPasswordErrorMessageShort">Girdiğiniz Kurtarma Şifresi yeterince uzun değil. Lütfen kontrol edin ve tekrar deneyin.</string>
@@ -823,7 +822,6 @@
     <string name="updateError">Güncellenemiyor</string>
     <string name="updateErrorDescription">{app_name} güncellenirken bir sorun meydana geldi. Lütfen {session_download_url} bağlantısını ziyaret edip yeni sürümü manuel olarak yükleyin, ve Yardım Merkezi üzerinden bu sorunu bize bildirin.</string>
     <string name="updateNewVersion">{app_name} yeni bir sürümü mevcut, güncellemek için dokunun</string>
-    <string name="updateNewVersionDescription">{app_name} yeni bir sürümü mevcut.</string>
     <string name="updateReleaseNotes">Sürüm Notlarına Git</string>
     <string name="updateSession">{app_name} Güncellemesi</string>
     <string name="updateVersion">Sürüm {version}</string>

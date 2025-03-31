@@ -12,6 +12,7 @@ import android.text.TextUtils
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
@@ -37,6 +38,11 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
                 prefs.setPushEnabled(newValue as Boolean)
                 true
             }
+
+        fcmPreference.summary = when (BuildConfig.FLAVOR) {
+            "huawei" -> getString(R.string.notificationsFastModeDescriptionHuawei)
+            else -> getString(R.string.notificationsFastModeDescription)
+        }
 
         prefs.setNotificationRingtone(
             NotificationChannels.getMessageRingtone(requireContext()).toString()
@@ -160,7 +166,7 @@ class NotificationsPreferenceFragment : CorrectedPreferenceFragment() {
             // update notification
             object : AsyncTask<Void?, Void?, Void?>() {
                 override fun doInBackground(vararg params: Void?): Void? {
-                    ApplicationContext.getInstance(activity).messageNotifier.updateNotification(
+                    ApplicationContext.getInstance(requireContext()).messageNotifier.updateNotification(
                         activity!!
                     )
                     return null

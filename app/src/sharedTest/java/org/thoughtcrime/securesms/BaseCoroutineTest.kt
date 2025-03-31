@@ -1,15 +1,11 @@
 package org.thoughtcrime.securesms
 
-import kotlinx.coroutines.test.TestCoroutineScope
-import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Rule
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
 
 open class BaseCoroutineTest {
 
-    @get:Rule
-    var coroutinesTestRule = CoroutineTestRule()
-
-    protected fun runBlockingTest(test: suspend TestCoroutineScope.() -> Unit) =
-        coroutinesTestRule.runBlockingTest { test() }
-
+    protected fun runBlockingTest(test: suspend TestScope.() -> Unit) = runTest {
+        test()
+    }
 }

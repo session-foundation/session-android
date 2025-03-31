@@ -62,7 +62,7 @@ class DisappearingMessagesViewModel(
             val isAdmin = when {
                 recipient.isGroupV2Recipient -> {
                     // Handle the new closed group functionality
-                    storage.getMembers(recipient.address.toString()).any { it.accountIdString() == textSecurePreferences.getLocalNumber() && it.admin }
+                    storage.getMembers(recipient.address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
                 }
                 recipient.isLegacyGroupRecipient -> {
                     val groupRecord = groupDb.getGroup(recipient.address.toGroupString()).orNull()

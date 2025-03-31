@@ -738,7 +738,6 @@
     <string name="recoveryPasswordBannerTitle">Sla je herstelwachtwoord op</string>
     <string name="recoveryPasswordDescription">Gebruik uw herstelwachtwoord om uw account op nieuwe apparaten te laden.\n\nUw account kan niet worden hersteld zonder uw herstelwachtwoord. Zorg ervoor dat het ergens veilig is opgeslagen – en deel het niet met anderen.</string>
     <string name="recoveryPasswordEnter">Voer je herstel wachtwoord in</string>
-    <string name="recoveryPasswordErrorLoad">Er is een fout opgetreden bij het laden van uw herstelwachtwoord.\n\nGelieve je logboeken te exporteren en vervolgens het bestand te uploaden via de Sessie-Helpdesk om ons te helpen dit probleem op te lossen.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Controleer je herstelwachtwoord en probeer het opnieuw.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Sommige woorden in je Recovery Password zijn onjuist. Controleer ze en probeer opnieuw.</string>
     <string name="recoveryPasswordErrorMessageShort">Het herstelwachtwoord dat je hebt ingevoerd is niet lang genoeg. Controleer en probeer het opnieuw.</string>
@@ -825,7 +824,6 @@
     <string name="updateError">Kan niet bijwerken</string>
     <string name="updateErrorDescription">{app_name} kon niet worden bijgewerkt. Ga naar {session_download_url} en installeer handmatig de nieuwe versie, neem vervolgens contact op met ons Help Center om dit probleem te laten weten.</string>
     <string name="updateNewVersion">Er is een nieuwe versie van {app_name} beschikbaar, tik om bij te werken</string>
-    <string name="updateNewVersionDescription">Er is een nieuwe versie van {app_name} beschikbaar.</string>
     <string name="updateReleaseNotes">Ga naar Release Opmerkingen</string>
     <string name="updateSession">{app_name} Bijwerken</string>
     <string name="updateVersion">Versie {version}</string>

@@ -714,7 +714,6 @@
     <string name="recoveryPasswordBannerTitle">اپنا Recovery password محفوظ کریں</string>
     <string name="recoveryPasswordDescription">اپنے اکاؤنٹ کو نئے آلات پر لوڈ کرنے کے لیے اپنی بازیابی کا پاس ورڈ استعمال کریں۔\n\nآپ کا اکاؤنٹ آپ کے بازیابی کے پاس ورڈ کے بغیر بازیافت نہیں ہو سکتا۔ یقینی بنائیں کہ یہ کہیں محفوظ اور محفوظ رکھا گیا ہے — اور کسی کے ساتھ اسے شیئر نہ کریں۔</string>
     <string name="recoveryPasswordEnter">اپنا بازیابی پاس ورڈ درج کریں</string>
-    <string name="recoveryPasswordErrorLoad">آپ کے بازیافت پاسورڈ کو لوڈ کرنے کی کوشش کے دوران ایک خرابی پیش آئی۔\n\nبراہ کرم اپنے لاگز کو برآمد کریں، پھر مسئلہ حل کرنے میں مدد کے لیے فائل کو سیشن کی ہیلپ ڈیسک کے ذریعے اپلوڈ کریں۔</string>
     <string name="recoveryPasswordErrorMessageGeneric">براہ کرم اپنے recovery password کو چیک کریں اور دوبارہ کوشش کریں۔</string>
     <string name="recoveryPasswordErrorMessageIncorrect">آپ کے بازیافت پاس ورڈ کے کچھ الفاظ غلط ہیں۔ براہ کرم چیک کریں اور دوبارہ کوشش کریں۔</string>
     <string name="recoveryPasswordErrorMessageShort">آپ کا داخل کردہ بازیابی پاس ورڈ کافی لمبا نہیں ہے۔ براہ کرم چیک کریں اور دوبارہ کوشش کریں۔</string>
@@ -801,7 +800,6 @@
     <string name="updateError">اپ ڈیٹ نہیں ہوسکتی</string>
     <string name="updateErrorDescription">{app_name} اپ ڈیٹ کرنے میں ناکام ہو گیا۔ براہ کرم {session_download_url} پر جائیں اور نئی ورژن کو دستی طور پر نصب کریں، پھر اس مسئلے کے بارے میں ہمیں مطلع کرنے کے لیے ہماری ہیلپ سینٹر سے رابطہ کریں۔</string>
     <string name="updateNewVersion">{app_name} کا ایک نیا ورژن دستیاب ہے، اپ ڈیٹ کے لیے ٹیپ کریں</string>
-    <string name="updateNewVersionDescription">{app_name} کا ایک نیا ورژن دستیاب ہے۔</string>
     <string name="updateReleaseNotes">ریلیز نوٹس پر جائیں</string>
     <string name="updateSession">{app_name} اپ ڈیٹ</string>
     <string name="updateVersion">ورژن {version}</string>

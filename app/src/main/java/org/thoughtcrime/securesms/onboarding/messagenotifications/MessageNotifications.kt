@@ -19,6 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
@@ -76,7 +77,8 @@ internal fun MessageNotificationsScreen(
 
         NotificationRadioButton(
             R.string.notificationsFastMode,
-            R.string.notificationsFastModeDescription,
+            if(BuildConfig.FLAVOR == "huawei") R.string.notificationsFastModeDescriptionHuawei
+            else R.string.notificationsFastModeDescription,
             modifier = Modifier.contentDescription(R.string.AccessibilityId_notificationsFastMode),
             tag = R.string.recommended,
             checked = state.pushEnabled,

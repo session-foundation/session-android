@@ -22,7 +22,7 @@ class FirebasePushService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
-        Log.d(TAG, "Received a push notification.")
+        Log.d(TAG, "Received a firebase push notification: $message")
         pushReceiver.onPushDataReceived(message.data)
     }
 }

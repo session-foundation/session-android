@@ -7,7 +7,7 @@
         android:title="@string/set"
         android:id="@+id/applyButton"
         android:icon="@drawable/ic_check"
-        app:iconTint="?colorControlNormal"
+        app:iconTint="?android:textColorPrimary"
         app:showAsAction="always|withText"/>
 
 </menu>

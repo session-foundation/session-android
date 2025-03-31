@@ -31,13 +31,12 @@
         tools:visibility="visible"
         tools:listitem="@layout/view_user"/>
 
-    <com.github.ybq.android.spinkit.SpinKitView
-        style="@style/SpinKitView.Large.ThreeBounce"
+    <ProgressBar
         android:id="@+id/loader"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        app:SpinKit_Color="?android:textColorPrimary" />
-
+        android:indeterminateTint="?colorAccent"
+        android:indeterminate="true"/>
 
 </FrameLayout>

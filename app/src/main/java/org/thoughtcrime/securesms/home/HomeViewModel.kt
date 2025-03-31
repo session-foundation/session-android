@@ -1,18 +1,22 @@
 package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
+import android.content.Context
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -22,11 +26,14 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onErrorResume
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.UsernameUtils
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -34,15 +41,20 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.observeChanges
+import org.thoughtcrime.securesms.webrtc.CallManager
+import org.thoughtcrime.securesms.webrtc.data.State
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext
+    private val context: Context,
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
     private val prefs: TextSecurePreferences,
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
+    private val callManager: CallManager,
     private val usernameUtils: UsernameUtils
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
@@ -50,6 +62,19 @@ class HomeViewModel @Inject constructor(
             extraBufferCapacity = 1,
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
+
+    private val mutableIsSearchOpen = MutableStateFlow(false)
+
+    val isSearchOpen: StateFlow<Boolean> get() = mutableIsSearchOpen
+
+    val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
+        // a call is in progress if it isn't idle nor disconnected
+        if(it !is State.Idle && it !is State.Disconnected){
+            // call is started, we need to differentiate between in progress vs incoming
+            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            else context.getString(R.string.callsIncomingUnknown)
+        } else null // null when the call isn't in progress / incoming
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
 
     /**
      * A [StateFlow] that emits the list of threads and the typing status of each thread.
@@ -79,9 +104,11 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }
-        )
-    }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+        ) as? Data?
+    }.catch { err ->
+        Log.e("HomeViewModel", "Error loading conversation list", err)
+        emit(null)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private fun hasHiddenMessageRequests() = TextSecurePreferences.events
         .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
@@ -127,6 +154,23 @@ class HomeViewModel @Inject constructor(
         .onStart { emit(Unit) }
 
     fun tryReload() = manualReloadTrigger.tryEmit(Unit)
+
+    fun onSearchClicked() {
+        mutableIsSearchOpen.value = true
+    }
+
+    fun onCancelSearchClicked() {
+        mutableIsSearchOpen.value = false
+    }
+
+    fun onBackPressed(): Boolean {
+        if (mutableIsSearchOpen.value) {
+            mutableIsSearchOpen.value = false
+            return true
+        }
+
+        return false
+    }
 
     data class Data(
         val items: List<Item>,

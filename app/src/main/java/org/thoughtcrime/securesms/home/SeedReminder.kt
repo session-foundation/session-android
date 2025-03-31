@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.components.SlimPrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions

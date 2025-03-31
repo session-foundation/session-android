@@ -3,7 +3,6 @@ package org.session.libsession.database
 import android.content.Context
 import android.net.Uri
 import com.goterl.lazysodium.utils.KeyPair
-import network.loki.messenger.libsession_util.util.GroupDisplayInfo
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
@@ -29,6 +28,7 @@ import org.session.libsession.messaging.sending_receiving.link_preview.LinkPrevi
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
@@ -46,6 +46,7 @@ interface StorageProtocol {
     fun getUserPublicKey(): String?
     fun getUserED25519KeyPair(): KeyPair?
     fun getUserX25519KeyPair(): ECKeyPair
+    fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
     fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
     fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
@@ -144,7 +145,7 @@ interface StorageProtocol {
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
     fun setZombieMembers(groupID: String, members: List<Address>)
-    fun getAllClosedGroupPublicKeys(): Set<String>
+    fun getAllLegacyGroupPublicKeys(): Set<String>
     fun getAllActiveClosedGroupPublicKeys(): Set<String>
     fun addClosedGroupPublicKey(groupPublicKey: String)
     fun removeClosedGroupPublicKey(groupPublicKey: String)

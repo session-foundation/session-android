@@ -235,9 +235,8 @@ public class IncomingTextMessage implements Parcelable {
 
   public boolean hasMention() { return hasMention; }
 
-  public boolean isCallInfo() {
-    int callMessageTypeLength = CallMessageType.values().length;
-    return callType >= 0 && callType < callMessageTypeLength;
+  public boolean isUnreadCallMessage() {
+    return callType == CallMessageType.CALL_MISSED.ordinal() || callType == CallMessageType.CALL_FIRST_MISSED.ordinal();
   }
 
   @Nullable

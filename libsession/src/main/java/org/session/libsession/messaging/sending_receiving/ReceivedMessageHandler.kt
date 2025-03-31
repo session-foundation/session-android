@@ -227,7 +227,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
     TextSecurePreferences.setHasLegacyConfig(context, true)
     if (!firstTimeSync) return
 
-    val allClosedGroupPublicKeys = storage.getAllClosedGroupPublicKeys()
+    val allClosedGroupPublicKeys = storage.getAllLegacyGroupPublicKeys()
     for (closedGroup in message.closedGroups) {
         if (allClosedGroupPublicKeys.contains(closedGroup.publicKey)) {
             // just handle the closed group encryption key pairs to avoid sync'd devices getting out of sync
@@ -636,7 +636,7 @@ private fun MessageReceiver.handleGroupUpdated(message: GroupUpdated, closedGrou
     }
 
     // Update profile if needed
-    if (message.profile != null) {
+    if (message.profile != null && !message.isSenderSelf) {
         val profile = message.profile
         val recipient = Recipient.from(MessagingModuleConfiguration.shared.context, Address.fromSerialized(message.sender!!), false)
         val profileManager = SSKEnvironment.shared.profileManager

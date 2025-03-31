@@ -406,7 +406,7 @@ private fun MemberActionSheet(
                 )
             }
 
-            if (BuildConfig.DEBUG && member.canResendInvite) {
+            if (member.canResendInvite) {
                 this += ActionSheetItemData(
                     title = "Resend invitation",
                     iconRes = R.drawable.ic_mail,

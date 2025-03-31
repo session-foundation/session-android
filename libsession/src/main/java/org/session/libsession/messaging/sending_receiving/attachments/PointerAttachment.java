@@ -100,24 +100,24 @@ public class PointerAttachment extends Attachment {
     }
 
     return Optional.of(new PointerAttachment(pointer.get().getContentType(),
-                                      AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
-                                      pointer.get().asPointer().getSize().or(0),
-                                      pointer.get().asPointer().getFilename(),
-                                      String.valueOf(pointer.get().asPointer().getId()),
-                                      encodedKey, null,
-                                      pointer.get().asPointer().getDigest().orNull(),
-                                      fastPreflightId,
-                                      pointer.get().asPointer().getVoiceNote(),
-                                      pointer.get().asPointer().getWidth(),
-                                      pointer.get().asPointer().getHeight(),
-                                      pointer.get().asPointer().getCaption().orNull(),
-                                      pointer.get().asPointer().getUrl()));
+            AttachmentState.PENDING.getValue(),
+            pointer.get().asPointer().getSize().or(0),
+            pointer.get().asPointer().getFilename(),
+            String.valueOf(pointer.get().asPointer().getId()),
+            encodedKey, null,
+            pointer.get().asPointer().getDigest().orNull(),
+            fastPreflightId,
+            pointer.get().asPointer().getVoiceNote(),
+            pointer.get().asPointer().getWidth(),
+            pointer.get().asPointer().getHeight(),
+            pointer.get().asPointer().getCaption().orNull(),
+            pointer.get().asPointer().getUrl()));
 
   }
 
   public static Optional<Attachment> forPointer(SignalServiceProtos.AttachmentPointer pointer) {
     return Optional.of(new PointerAttachment(pointer.getContentType(),
-            AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
+            AttachmentState.PENDING.getValue(),
             (long)pointer.getSize(),
             pointer.getFileName(),
             String.valueOf(pointer != null ? pointer.getId() : 0),
@@ -136,26 +136,26 @@ public class PointerAttachment extends Attachment {
     SignalServiceProtos.AttachmentPointer thumbnail = pointer.getThumbnail();
 
     return Optional.of(new PointerAttachment(pointer.getContentType(),
-                                             AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
-                                             thumbnail != null ? (long)thumbnail.getSize() : 0,
-                                             thumbnail.getFileName(),
-                                             String.valueOf(thumbnail != null ? thumbnail.getId() : 0),
-                                             thumbnail != null && thumbnail.getKey() != null ? Base64.encodeBytes(thumbnail.getKey().toByteArray()) : null,
-                                             null,
-                                             thumbnail != null ? thumbnail.getDigest().toByteArray() : null,
-                                             null,
-                                             false,
-                                             thumbnail != null ? thumbnail.getWidth() : 0,
-                                             thumbnail != null ? thumbnail.getHeight() : 0,
-                                             thumbnail != null ? thumbnail.getCaption() : null,
-                                             thumbnail != null ? thumbnail.getUrl() : ""));
+            AttachmentState.PENDING.getValue(),
+            thumbnail != null ? (long)thumbnail.getSize() : 0,
+            thumbnail.getFileName(),
+            String.valueOf(thumbnail != null ? thumbnail.getId() : 0),
+            thumbnail != null && thumbnail.getKey() != null ? Base64.encodeBytes(thumbnail.getKey().toByteArray()) : null,
+            null,
+            thumbnail != null ? thumbnail.getDigest().toByteArray() : null,
+            null,
+            false,
+            thumbnail != null ? thumbnail.getWidth() : 0,
+            thumbnail != null ? thumbnail.getHeight() : 0,
+            thumbnail != null ? thumbnail.getCaption() : null,
+            thumbnail != null ? thumbnail.getUrl() : ""));
   }
 
   public static Optional<Attachment> forPointer(SignalServiceDataMessage.Quote.QuotedAttachment pointer) {
     SignalServiceAttachment thumbnail = pointer.getThumbnail();
 
     return Optional.of(new PointerAttachment(pointer.getContentType(),
-            AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
+            AttachmentState.PENDING.getValue(),
             thumbnail != null ? thumbnail.asPointer().getSize().or(0) : 0,
             pointer.getFileName(),
             String.valueOf(thumbnail != null ? thumbnail.asPointer().getId() : 0),
@@ -178,7 +178,7 @@ public class PointerAttachment extends Attachment {
   public static Attachment forAttachment(org.session.libsession.messaging.messages.visible.Attachment attachment) {
     return new PointerAttachment(
             attachment.getContentType(),
-            AttachmentTransferProgress.TRANSFER_PROGRESS_PENDING,
+            AttachmentState.PENDING.getValue(),
             attachment.getSizeInBytes(),
             attachment.getFilename(),
             null, Base64.encodeBytes(attachment.getKey()),

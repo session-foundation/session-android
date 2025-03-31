@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Stoor jou herstel wagwoord</string>
     <string name="recoveryPasswordDescription">Gebruik jou herstelwagwoord om jou rekening op nuwe toestelle te laai.\n\nJou rekening kan nie herstel word sonder jou herstelwagwoord nie. Maak seker jy stoor dit iewers veilig en moenie dit met enigiemand deel nie.</string>
     <string name="recoveryPasswordEnter">Voer jou herstel wagwoord in</string>
-    <string name="recoveryPasswordErrorLoad">‘n Fout het voorgekom tydens die laai van jou herstel wagwoord.\n\nExporteer asseblief jou logboeke, en laai dan die lêer op deur Session se Hulptoonbank om te help om hierdie probleem op te los.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Gaan jou herstel wagwoord na en probeer weer.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Sommige van die woorde in jou herstel wagwoord is verkeerd. Kontroleer en probeer weer.</string>
     <string name="recoveryPasswordErrorMessageShort">Die Herwinningswagwoord wat jy ingevoer het, is nie lank genoeg nie. Gaan dit asseblief na en probeer weer.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Kan nie Opdateer nie</string>
     <string name="updateErrorDescription">{app_name} kon nie opdateer nie. Gaan asseblief na {session_download_url} en installeer die nuwe weergawe handmatig, en kontak dan ons Hulp Sentrum om ons van hierdie probleem in kennis te stel.</string>
     <string name="updateNewVersion">n Nuwe weergawe van {app_name} is beskikbaar tik om op te dateer</string>
-    <string name="updateNewVersionDescription">n Nuwe weergawe van {app_name} is beskikbaar</string>
     <string name="updateReleaseNotes">Gaan na Vrylating notules</string>
     <string name="updateSession">{app_name} Opdateer</string>
     <string name="updateVersion">Weergawe {version}</string>

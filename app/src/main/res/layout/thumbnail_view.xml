@@ -17,24 +17,6 @@
         android:scaleType="center"
         android:contentDescription="@string/AccessibilityId_mediaMessage" />
 
-    <org.thoughtcrime.securesms.conversation.v2.utilities.ThumbnailProgressBar
-        android:id="@+id/thumbnail_load_indicator"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/accent_line_thickness"
-        android:layout_gravity="bottom"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
-    <ImageView
-        tools:visibility="visible"
-        android:src="@drawable/ic_download_circle_filled_48"
-        android:id="@+id/thumbnail_download_icon"
-        android:layout_width="@dimen/medium_button_height"
-        android:layout_height="@dimen/medium_button_height"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        />
-
     <FrameLayout
         android:id="@+id/play_overlay"
         android:layout_width="48dp"

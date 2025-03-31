@@ -21,6 +21,7 @@
     <attr name="onInvertedBackgroundPrimary" format="reference|color"/>
     <attr name="warning" format="reference|color"/>
     <attr name="danger" format="reference|color"/>
+    <attr name="disabled" format="reference|color"/>
     <attr name="backgroundSecondary" format="reference|color"/>
     <attr name="prominentButtonColor" format="reference|color"/>
     <attr name="textColorAlert" format="reference|color"/>

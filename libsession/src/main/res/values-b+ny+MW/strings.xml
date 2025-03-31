@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Save your recovery password</string>
     <string name="recoveryPasswordDescription">Gwiritsani ntchito chinsinsi chobwezeretsanso akaunti yanu pazida zatsopano.\n\n Akaunti yanu siyingathe kubwezeretsedwa popanda chinsinsicho. Onetsetsani kuti yatero pamtendere ndi chitetezo - ndipo musagawane aliyense.</string>
     <string name="recoveryPasswordEnter">Lemberani mawu achinsinsi a kubwereranso</string>
-    <string name="recoveryPasswordErrorLoad">Panachitika vuto loyesa kutsegula achinsinsi anu obwezeretsa.\n\nChonde tumizani ma logs anu, ndiye kukweza fayilo kupyolera mu Session\'s Help Desk kuti athandize kuthetsa vutoli.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Chonde onani chinsinsi chanu chobwezera ndikuyesanso.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Some of the words in your Recovery Password are incorrect. Please check and try again.</string>
     <string name="recoveryPasswordErrorMessageShort">Password Yobwezeretsa yomwe mwalowetsa siyonse bwino. Chonde fufuzani ndikuyesanso.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name} walephera kusintha. Chonde pitani ku {session_download_url} ndikuyika mtundu watsopano pamanja, kenako lemberani Thandizo lathu kuti mutidziwitse za vutoli.</string>
     <string name="updateNewVersion">Mtundu watsopano wa {app_name} upezeka, dinani kuti muzitha kusintha</string>
-    <string name="updateNewVersionDescription">Mtundu watsopano wa {app_name} ulipezeka.</string>
     <string name="updateReleaseNotes">Pitani ku Zolemba Zogwira Ntchito</string>
     <string name="updateSession">{app_name} Kusintha</string>
     <string name="updateVersion">Mtundu {version}</string>

@@ -733,7 +733,6 @@
     <string name="recoveryPasswordBannerTitle">Simpan kata sandi pemulihan Anda</string>
     <string name="recoveryPasswordDescription">Gunakan kata sandi pemulihan Anda untuk memuat akun Anda di perangkat baru. \n\nAkun Anda tidak dapat dipulihkan tanpa kata sandi pemulihan Anda. Pastikan disimpan di tempat yang aman dan terlindungi — dan jangan bagikan kepada siapa pun.</string>
     <string name="recoveryPasswordEnter">Masukkan kata sandi pemulihan Anda</string>
-    <string name="recoveryPasswordErrorLoad">Terjadi kesalahan saat mencoba memuat kata sandi pemulihan Anda.\n\nSilakan ekspor log Anda, lalu unggah file melalui Help Desk Session untuk membantu menyelesaikan masalah ini.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Silakan periksa kata sandi pemulihan Anda dan coba lagi.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Beberapa kata dalam Kata Sandi Pemulihan Anda salah. Silakan periksa dan coba lagi.</string>
     <string name="recoveryPasswordErrorMessageShort">Kata Sandi Pemulihan yang Anda masukkan tidak cukup panjang. Silakan periksa dan coba lagi.</string>
@@ -819,7 +818,6 @@
     <string name="updateError">Pembeharuan Gagal</string>
     <string name="updateErrorDescription">{app_name} gagal diperbarui. Silahkan pergi ke {session_download_url} dan instal versi terbaru secara manual, kemudian hubungi Pusat Bantuan kami untuk memberitahu terkait masalah ini.</string>
     <string name="updateNewVersion">Versi terbaru dari {app_name} telah tersedia, ketuk untuk memperbarui</string>
-    <string name="updateNewVersionDescription">Versi baru {app_name} telah tersedia.</string>
     <string name="updateReleaseNotes">Lihat Catatan Rilis</string>
     <string name="updateSession">Pembaruan {app_name}</string>
     <string name="updateVersion">Versi {version}</string>

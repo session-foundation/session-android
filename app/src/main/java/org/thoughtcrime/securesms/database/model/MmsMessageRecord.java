@@ -11,6 +11,7 @@ import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -68,5 +69,18 @@ public abstract class MmsMessageRecord extends MessageRecord {
   }
   public @NonNull List<LinkPreview> getLinkPreviews() {
     return linkPreviews;
+  }
+
+  public boolean hasAttachmentUri() {
+    boolean hasData = false;
+
+    for (Slide slide : slideDeck.getSlides()) {
+      if (slide.getUri() != null || slide.getThumbnailUri() != null) {
+        hasData = true;
+        break;
+      }
+    }
+
+    return hasData;
   }
 }

@@ -717,7 +717,6 @@
     <string name="recoveryPasswordBannerTitle">Konservu vian riparan pasvorton</string>
     <string name="recoveryPasswordDescription">Uzu vian recuđer passvorton por ŝarĝi vian konton sur novaj aparatoj.\n\nVia konto ne povas esti rekuperita sen via recuđer passvorto. Certigu, ke ĝi estas stokita ien sekura kaj ne dividas ĝin kun iu ajn.</string>
     <string name="recoveryPasswordEnter">Enigu vian riparan pasvorton</string>
-    <string name="recoveryPasswordErrorLoad">Eraro okazis dum provado ŝarĝi vian savopasvorton.\n\nBonvolu eksporti viajn protokolojn, tiam alŝutu la dosieron tra la helpfono de Session por helpi solvi ĉi tiun problemon.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Bonvolu kontroli vian riparan pasvorton kaj reprovu.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Iuj vortoj en via Ripara Pasvorto estas malĝustaj. Bonvolu kontroli kaj provi denove.</string>
     <string name="recoveryPasswordErrorMessageShort">La ripara pasvorto, kiun vi enmetis, ne estas sufiĉe longa. Bonvolu kontroli kaj reprovi.</string>
@@ -804,7 +803,6 @@
     <string name="updateError">Neaktualebligas</string>
     <string name="updateErrorDescription">{app_name} malsukcesis ĝisdatigi. Bonvolu iri al {session_download_url} kaj instali la novan version permane, poste kontaktu nian HelpoCentron por sciigi nin pri tiu ĉi problemo.</string>
     <string name="updateNewVersion">Nova versio de {app_name} disponeblas, tuŝu por ĝisdatigi</string>
-    <string name="updateNewVersionDescription">Nova versio de {app_name} disponeblas.</string>
     <string name="updateReleaseNotes">Iri al eldonaj notoj</string>
     <string name="updateSession">Ĝisdatigo de {app_name}</string>
     <string name="updateVersion">Versio {version}</string>

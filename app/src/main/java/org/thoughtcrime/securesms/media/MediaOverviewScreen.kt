@@ -38,6 +38,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -123,7 +124,7 @@ fun MediaOverviewScreen(
         topBar = {
             MediaOverviewTopAppBar(
                 selectionMode = selectionMode,
-                title = viewModel.title.collectAsState().value,
+                title = stringResource(R.string.conversationsSettingsAllMedia),
                 onBackClicked = viewModel::onBackClicked,
                 onSaveClicked = { showingSaveAttachmentWarning = true },
                 onDeleteClicked = { showingDeleteConfirmation = true },
@@ -246,9 +247,8 @@ private fun DeleteConfirmationDialog(
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = context.resources.getQuantityString(
-            R.plurals.deleteMessage, numSelected
-        ),
+        title = stringResource(R.string.delete),
+        text = stringResource(R.string.deleteMessageDeviceOnly),
         buttons = listOf(
             DialogButtonModel(GetString(R.string.delete), color = LocalColors.current.danger, onClick = onAccepted),
             DialogButtonModel(GetString(android.R.string.cancel), dismissOnClick = true)
