@@ -430,6 +430,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
             mode.title = getString(R.string.displayNameEnter)
             mode.menuInflater.inflate(R.menu.menu_apply, menu)
+
+            menu.findItem(R.id.applyButton)?.let { menuItem ->
+                val themeColor = getColorFromAttr(android.R.attr.textColorPrimary)
+                menuItem.icon?.setTint(themeColor)
+            }
+
             this@SettingsActivity.displayNameEditActionMode = mode
             return true
         }
