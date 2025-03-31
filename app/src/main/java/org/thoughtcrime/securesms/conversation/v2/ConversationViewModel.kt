@@ -464,7 +464,7 @@ class ConversationViewModel(
     }
 
     fun deleteThread() = viewModelScope.launch {
-        repository.deleteThread(threadId) //this one?!?!?!
+        repository.deleteThread(threadId)
     }
 
     fun handleMessagesDeletion(messages: Set<MessageRecord>){

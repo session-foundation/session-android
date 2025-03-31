@@ -230,7 +230,7 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  public void deleteThread(long threadId) {
+  private void deleteThread(long threadId) {
     Recipient recipient = getRecipientForThreadId(threadId);
     SQLiteDatabase db = databaseHelper.getWritableDatabase();
     int numberRemoved = db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});

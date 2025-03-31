@@ -1272,38 +1272,26 @@ open class Storage @Inject constructor(
     }
 
     override fun deleteContactWithAccountId(accountId: String) {
+        sessionContactDatabase.deleteContact(accountId)
+        Recipient.removeCached(fromSerialized(accountId))
+        recipientDatabase.deleteRecipient(accountId)
+
         val threadId: Long = threadDatabase.getThreadIdIfExistsFor(accountId)
-
-        // Mark contact as untrusted and delete.
-        // Note: You would think simple deletion would be enough but it isn't - hard to say what's getting cached.
-        val scd = get(context).sessionContactDatabase()
-        val contact = scd.getContactWithAccountID(accountId)
-        if (contact == null) {
-            Log.w("ACL", "Could not get contact with ID: $accountId")
-        } else {
-            Log.w("ACL", "Found contact with address: $accountId")
-            scd.setContactIsTrusted(contact, false, threadId)
-        }
-
-        scd.deleteContact(accountId)
-        scd.notifyRecipientListeners()
-
-        // Disable recipient approved / approvedMe / auto-download flags then delete the recipient
-        val r: Recipient? = threadDatabase.getRecipientForThreadId(threadId)
-        r?.let {
-            Recipient.removeCached(r.address)
-            setBlocked(listOf(r),false,false)
-            recipientDatabase.deleteRecipient(r.address.toString())
-
-            // Careful: Call the versions in this Storage class, which will call through to the RecipientDatabase versions amongst other things
-            setRecipientApproved(r, false)
-            setRecipientApprovedMe(r, false)
-            setAutoDownloadAttachments(r, false)
-
-        }
-
-        // Delete the recipient from the database
         deleteConversation(threadId)
+
+        notifyRecipientListeners()
+        threadDatabase.notifyConversationListListeners()
+
+        // also handle the contact removal from the config's point of view
+        configFactory.withMutableUserConfigs {
+            it.contacts.upsertContact(accountId) {
+                // if the contact wasn't approved before but is approved now, make sure it's visible
+                if(approved && !this.approved) this.priority = PRIORITY_VISIBLE
+
+                // update approval
+                this.approved = approved
+            }
+        }
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
