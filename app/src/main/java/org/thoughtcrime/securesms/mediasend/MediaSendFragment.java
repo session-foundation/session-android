@@ -369,7 +369,8 @@ public class MediaSendFragment extends Fragment implements ViewTreeObserver.OnGl
               Uri uri = BlobProvider.getInstance()
                                     .forData(baos.toByteArray())
                                     .withMimeType(MediaTypes.IMAGE_JPEG)
-                                    .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e));
+                                    .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Failed to write to disk.", e))
+                      .get();
 
               Media updated = new Media(uri, media.getFilename(), MediaTypes.IMAGE_JPEG, media.getDate(), bitmap.getWidth(), bitmap.getHeight(), baos.size(), media.getBucketId(), media.getCaption());
 

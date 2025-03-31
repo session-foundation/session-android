@@ -25,6 +25,10 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Future;
+
+import kotlin.Pair;
+import kotlin.Result;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -174,21 +178,26 @@ public class BlobProvider {
 
   @WorkerThread
   @NonNull
-  private static Uri writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
+  private static Future<Uri> writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
     AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
     String           directory        = getDirectory(blobSpec.getStorageType());
     File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
     OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
 
-    try {
-      Util.copy(blobSpec.getData(), outputStream);
-    } catch (IOException e) {
-      if (errorListener != null) {
-        errorListener.onError(e);
-      }
-    }
+    final Uri uri = buildUri(blobSpec);
 
-    return buildUri(blobSpec);
+    return SignalExecutors.UNBOUNDED.submit(() -> {
+      try {
+        Util.copy(blobSpec.getData(), outputStream);
+        return uri;
+      } catch (IOException e) {
+        if (errorListener != null) {
+          errorListener.onError(e);
+        }
+
+        throw e;
+      }
+    });
   }
 
   private synchronized @NonNull Uri writeBlobSpecToMemory(@NonNull BlobSpec blobSpec, @NonNull byte[] data) {
@@ -257,7 +266,7 @@ public class BlobProvider {
      * period from one {@link Application#onCreate()} to the next.
      */
     @WorkerThread
-    public Uri createForSingleSessionOnDisk(@NonNull Context context, @Nullable ErrorListener errorListener) throws IOException {
+    public Future<Uri> createForSingleSessionOnDisk(@NonNull Context context, @Nullable ErrorListener errorListener) throws IOException {
       return writeBlobSpecToDisk(context, buildBlobSpec(StorageType.SINGLE_SESSION_DISK), errorListener);
     }
 
@@ -266,7 +275,7 @@ public class BlobProvider {
      * eventually call {@link BlobProvider#delete(Context, Uri)} when the blob is no longer in use.
      */
     @WorkerThread
-    public Uri createForMultipleSessionsOnDisk(@NonNull Context context, @Nullable ErrorListener errorListener) throws IOException {
+    public Future<Uri> createForMultipleSessionsOnDisk(@NonNull Context context, @Nullable ErrorListener errorListener) throws IOException {
       return writeBlobSpecToDisk(context, buildBlobSpec(StorageType.MULTI_SESSION_DISK), errorListener);
     }
   }
