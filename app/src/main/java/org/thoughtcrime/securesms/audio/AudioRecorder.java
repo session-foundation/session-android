@@ -52,13 +52,13 @@ public class AudioRecorder {
 
         ParcelFileDescriptor fds[] = ParcelFileDescriptor.createPipe();
 
-        audioCodec = new AudioCodec();
-        audioCodec.start(new ParcelFileDescriptor.AutoCloseOutputStream(fds[1]));
-
         blobWritingTask = BlobProvider.getInstance()
                                  .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
                                  .withMimeType(MediaTypes.AUDIO_AAC)
                                  .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Error during recording", e));
+
+        audioCodec = new AudioCodec();
+        audioCodec.start(new ParcelFileDescriptor.AutoCloseOutputStream(fds[1]));
 
         callback.onAudioMessageRecordingFinished();
       } catch (IOException e) {
