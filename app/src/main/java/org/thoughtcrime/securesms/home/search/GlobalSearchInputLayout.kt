@@ -12,13 +12,9 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.databinding.ViewGlobalSearchInputBinding
-import org.thoughtcrime.securesms.util.addTextChangedListener
+import org.thoughtcrime.securesms.util.SimpleTextWatcher
 
 class GlobalSearchInputLayout @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null
