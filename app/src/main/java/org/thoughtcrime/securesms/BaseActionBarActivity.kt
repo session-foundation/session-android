@@ -109,11 +109,8 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
                 bottom = max(systemBarsInsets.bottom, imeInsets.bottom) // set either the padding for the inset or for the keyboard
             )
 
-            // Ensure child views are adjusted for keyboard
-            //ViewCompat.dispatchApplyWindowInsets(view)
-
             // Consume the insets
-            WindowInsetsCompat.CONSUMED
+            windowInsets
         }
     }
 
