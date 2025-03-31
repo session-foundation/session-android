@@ -49,6 +49,8 @@
     <!--Settings Page -->
     <string name="AccessibilityId_conversationsBlockedContacts">Blocked contacts</string>
     <string name="AccessibilityId_shareAccountId">Account ID</string>
+    <string name="AccessibilityId_imageButton">Image button</string>
+    <string name="AccessibilityId_cameraButton">Camera button</string>
     <!--Message requests-->
     <string name="AccessibilityId_clearAll">Clear all</string>
     <string name="AccessibilityId_messageRequestsNonePending">No pending message requests</string>
