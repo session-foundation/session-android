@@ -1271,7 +1271,13 @@ open class Storage @Inject constructor(
         setRecipientHash(recipient, recipientHash)
     }
 
-    override fun deleteContactWithAccountId(accountId: String) {
+    override fun deleteContactAndSyncConfig(accountId: String) {
+        deleteContact(accountId)
+        // also handle the contact removal from the config's point of view
+        configFactory.removeContact(accountId)
+    }
+
+    private fun deleteContact(accountId: String){
         sessionContactDatabase.deleteContact(accountId)
         Recipient.removeCached(fromSerialized(accountId))
         recipientDatabase.deleteRecipient(accountId)
@@ -1280,10 +1286,6 @@ open class Storage @Inject constructor(
         deleteConversation(threadId)
 
         notifyRecipientListeners()
-        threadDatabase.notifyConversationListListeners()
-
-        // also handle the contact removal from the config's point of view
-        configFactory.removeContact(accountId)
     }
 
     override fun getRecipientForThread(threadId: Long): Recipient? {
@@ -1298,8 +1300,8 @@ open class Storage @Inject constructor(
         return recipientDatabase.isAutoDownloadFlagSet(recipient)
     }
 
-    override fun addLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
-        val mappingDb = blindedIdMappingDatabase
+    override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
+        val mappingDb = blindedIdMappingDatabase // <<
         val moreContacts = contacts.filter { contact ->
             val id = AccountId(contact.id)
             id.prefix?.isBlinded() == false || mappingDb.getBlindedIdMapping(contact.id).none { it.accountId != null }
@@ -1351,12 +1353,12 @@ open class Storage @Inject constructor(
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
-        val  removedContacts = getAllContacts().filter { localContact ->
+        val removedContacts = getAllContacts().filter { localContact ->
             localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
-            getThreadId(fromSerialized(it.accountID))?.let(::deleteConversation)
+            deleteContact(it.accountID)
         }
     }
 

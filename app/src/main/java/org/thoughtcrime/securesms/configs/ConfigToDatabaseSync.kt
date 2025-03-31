@@ -222,7 +222,7 @@ class ConfigToDatabaseSync @Inject constructor(
     private data class UpdateContacts(val contacts: List<Contact>)
 
     private fun updateContacts(contacts: UpdateContacts, messageTimestamp: Long?) {
-        storage.addLibSessionContacts(contacts.contacts, messageTimestamp)
+        storage.syncLibSessionContacts(contacts.contacts, messageTimestamp)
     }
 
     private data class UpdateUserGroupsInfo(

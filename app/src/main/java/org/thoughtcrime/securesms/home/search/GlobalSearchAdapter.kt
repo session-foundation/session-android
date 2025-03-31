@@ -172,7 +172,7 @@ class GlobalSearchAdapter(
                         true
                     }
                     R.id.action_delete -> {
-                        MessagingModuleConfiguration.shared.storage.deleteContactWithAccountId(model.contact.hexString)
+                        MessagingModuleConfiguration.shared.storage.deleteContactAndSyncConfig(model.contact.hexString)
                         removeItem(model)
                         true
                     }
