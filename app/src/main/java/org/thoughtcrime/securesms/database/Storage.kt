@@ -1301,7 +1301,7 @@ open class Storage @Inject constructor(
     }
 
     override fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?) {
-        val mappingDb = blindedIdMappingDatabase // <<
+        val mappingDb = blindedIdMappingDatabase
         val moreContacts = contacts.filter { contact ->
             val id = AccountId(contact.id)
             id.prefix?.isBlinded() == false || mappingDb.getBlindedIdMapping(contact.id).none { it.accountId != null }
