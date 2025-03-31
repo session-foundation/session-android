@@ -44,7 +44,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -152,13 +151,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         },
         onContactLongPressed = { model ->
-            onSearchContactLongPress(model.contact.hexString)
+            onSearchContactLongPress(model.contact.hexString, model.name)
         }
     )
 
-    private fun onSearchContactLongPress(accountId: String) {
+    private fun onSearchContactLongPress(accountId: String, contactName: String) {
         val bottomSheet = SearchContactActionBottomSheet(
             accountId = accountId,
+            contactName = contactName,
             blockContact = homeViewModel::blockContact,
             deleteContact = homeViewModel::deleteContact
         )

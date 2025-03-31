@@ -9,18 +9,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
+import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheetItem
 import org.thoughtcrime.securesms.ui.createThemedComposeView
 
 @AndroidEntryPoint
 class SearchContactActionBottomSheet(
     private val accountId: String,
-    private val blockContact: (String) -> Unit,
-    private val deleteContact: (String) -> Unit,
+    private val contactName: String,
+    private val blockContact: (String, String) -> Unit,
+    private val deleteContact: (String, String) -> Unit,
 
-): BottomSheetDialogFragment() {
+    ): BottomSheetDialogFragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,7 +39,7 @@ class SearchContactActionBottomSheet(
                 leadingIcon = R.drawable.ic_ban,
                 qaTag = stringResource(R.string.AccessibilityId_block),
                 onClick = {
-                    blockContact(accountId)
+                    showBlockConfirmation()
                     dismiss()
                 }
             )
@@ -45,10 +49,39 @@ class SearchContactActionBottomSheet(
                 leadingIcon = R.drawable.ic_trash_2,
                 qaTag = stringResource(R.string.AccessibilityId_delete),
                 onClick = {
-                    deleteContact(accountId)
+                    showDeleteConfirmation()
                     dismiss()
                 }
             )
+        }
+    }
+
+    private fun showBlockConfirmation() {
+        showSessionDialog {
+            title(R.string.block)
+            text(
+                Phrase.from(context, R.string.blockDescription)
+                .put(NAME_KEY, contactName)
+                .format())
+            dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
+                blockContact(accountId, contactName)
+            }
+            cancelButton()
+        }
+    }
+
+    private fun showDeleteConfirmation() {
+        showSessionDialog {
+            title(R.string.contactDelete)
+            text(
+                Phrase.from(context, R.string.contactDeleteDescription)
+                    .put(NAME_KEY, contactName)
+                    .put(NAME_KEY, contactName)
+                    .format())
+            dangerButton(R.string.delete, R.string.AccessibilityId_delete) {
+                deleteContact(accountId, contactName)
+            }
+            cancelButton()
         }
     }
 
