@@ -33,7 +33,6 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -45,7 +44,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -68,7 +66,6 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter
 import org.thoughtcrime.securesms.home.search.GlobalSearchInputLayout
 import org.thoughtcrime.securesms.home.search.GlobalSearchResult
 import org.thoughtcrime.securesms.home.search.GlobalSearchViewModel
-import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
@@ -139,28 +136,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
                     putExtra(
                         ConversationActivityV2.ADDRESS,
-                        model.contact.accountID.let(Address::fromSerialized)
+                        model.contact.hexString.let(Address::fromSerialized)
                     )
                 }
-            }
-            is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(model.currentUserPublicKey))
-            }
-            is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                putExtra(
-                    ConversationActivityV2.ADDRESS,
-                    model.contact.hexString.let(Address::fromSerialized)
-                )
-            }
 
-            is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                .let(threadDb::getThreadIdIfExistsFor)
-                .takeIf { it >= 0 }
-                ?.let {
-                    push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
-                }
-            else -> Log.d("Loki", "callback with model: $model")
+                is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
+                    .let { Recipient.from(this, Address.fromSerialized(it), false) }
+                    .let(threadDb::getThreadIdIfExistsFor)
+                    .takeIf { it >= 0 }
+                    ?.let {
+                        push<ConversationActivityV2> { putExtra(ConversationActivityV2.THREAD_ID, it) }
+                    }
+                else -> Log.d("Loki", "callback with model: $model")
+            }
         }
     }
 
