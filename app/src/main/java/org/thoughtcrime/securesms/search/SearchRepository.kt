@@ -20,6 +20,7 @@ import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
 import org.thoughtcrime.securesms.util.Stopwatch
@@ -33,6 +34,7 @@ class SearchRepository(
     private val groupDatabase: GroupDatabase,
     private val contactDatabase: SessionContactDatabase,
     private val contactAccessor: ContactAccessor,
+    private val configFactory: ConfigFactory,
     private val executor: Executor
 ) {
     private val context: Context = context.applicationContext
