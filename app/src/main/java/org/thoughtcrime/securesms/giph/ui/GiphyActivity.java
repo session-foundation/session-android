@@ -112,7 +112,8 @@ public class GiphyActivity extends ScreenLockActionBarActivity
           return BlobProvider.getInstance()
                              .forData(data)
                              .withMimeType(MediaTypes.IMAGE_GIF)
-                             .createForSingleSessionOnDisk(GiphyActivity.this, e -> Log.w(TAG, "Failed to write to disk.", e));
+                             .createForSingleSessionOnDisk(GiphyActivity.this, e -> Log.w(TAG, "Failed to write to disk.", e))
+                  .get();
         } catch (InterruptedException | ExecutionException | IOException e) {
           Log.w(TAG, e);
           return null;

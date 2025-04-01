@@ -44,17 +44,12 @@ object Util {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun copy(`in`: InputStream, out: OutputStream?): Long {
-        val buffer = ByteArray(8192)
-        var read: Int
-        var total: Long = 0
-        while (`in`.read(buffer).also { read = it } != -1) {
-            out?.write(buffer, 0, read)
-            total += read.toLong()
+    fun copy(src: InputStream, dst: OutputStream): Long {
+        return src.use {
+            dst.use {
+                src.copyTo(dst)
+            }
         }
-        `in`.close()
-        out?.close()
-        return total
     }
 
     @JvmStatic

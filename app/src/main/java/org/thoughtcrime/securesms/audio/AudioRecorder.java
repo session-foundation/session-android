@@ -6,7 +6,10 @@ import android.os.ParcelFileDescriptor;
 import android.util.Pair;
 import androidx.annotation.NonNull;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.ListenableFuture;
@@ -25,7 +28,7 @@ public class AudioRecorder {
   private final Context context;
 
   private AudioCodec audioCodec;
-  private Uri        captureUri;
+  private Future<Uri> blobWritingTask;
 
   // Simple interface that allows us to provide a callback method to our `startRecording` method
   public interface AudioMessageRecordingFinishedCallback {
@@ -49,7 +52,7 @@ public class AudioRecorder {
 
         ParcelFileDescriptor fds[] = ParcelFileDescriptor.createPipe();
 
-        captureUri = BlobProvider.getInstance()
+        blobWritingTask = BlobProvider.getInstance()
                                  .forData(new ParcelFileDescriptor.AutoCloseInputStream(fds[0]), 0)
                                  .withMimeType(MediaTypes.AUDIO_AAC)
                                  .createForSingleSessionOnDisk(context, e -> Log.w(TAG, "Error during recording", e));
@@ -70,14 +73,14 @@ public class AudioRecorder {
     final SettableFuture<Pair<Uri, Long>> future = new SettableFuture<>();
 
     executor.execute(() -> {
-      if (audioCodec == null) {
+      if (audioCodec == null || blobWritingTask == null) {
         sendToFuture(future, new IOException("MediaRecorder was never initialized successfully!"));
         return;
       }
 
       audioCodec.stop();
-
       try {
+        final Uri captureUri = blobWritingTask.get();
         long size = 0L;
         // Only obtain the media size if the voice message was at least our minimum allowed
         // duration (bypassing this work prevents the audio recording mechanism from getting into
@@ -86,13 +89,13 @@ public class AudioRecorder {
           size = MediaUtil.getMediaSize(context, captureUri);
         }
         sendToFuture(future, new Pair<>(captureUri, size));
-      } catch (IOException ioe) {
-        Log.w(TAG, ioe);
-        sendToFuture(future, ioe);
+      } catch (IOException | ExecutionException | InterruptedException e) {
+        Log.w(TAG, e);
+        sendToFuture(future, e);
       }
 
       audioCodec = null;
-      captureUri = null;
+      blobWritingTask = null;
     });
 
     return future;

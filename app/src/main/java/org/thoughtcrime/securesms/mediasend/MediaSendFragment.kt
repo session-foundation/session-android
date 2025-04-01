@@ -20,6 +20,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
+import androidx.core.os.BundleCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,6 +29,7 @@ import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isEnterSendsEnabled
 import org.session.libsession.utilities.Util.cancelRunnableOnMain
@@ -370,6 +372,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
                                         e
                                     )
                                 }
+                                .get()
 
                             val updated = Media(
                                 uri,
@@ -385,14 +388,8 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
                             updatedMedia.add(updated)
                             renderTimer!!.split("item")
-                        } catch (e: InterruptedException) {
-                            Log.w(TAG, "Failed to render image. Using base image.")
-                            updatedMedia.add(media)
-                        } catch (e: ExecutionException) {
-                            Log.w(TAG, "Failed to render image. Using base image.")
-                            updatedMedia.add(media)
-                        } catch (e: IOException) {
-                            Log.w(TAG, "Failed to render image. Using base image.")
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Failed to render image. Using base image.", e)
                             updatedMedia.add(media)
                         }
                     } else {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -81,6 +82,7 @@ fun BasicAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
+        windowInsets = WindowInsets(0, 0, 0, 0), // insets handled in BaseActionBarActivity for now
         title = {
             AppBarText(title = title, singleLine = singleLine)
         },
