@@ -21,8 +21,8 @@ import org.thoughtcrime.securesms.ui.createThemedComposeView
 class SearchContactActionBottomSheet(
     private val accountId: String,
     private val contactName: String,
-    private val blockContact: (String, String) -> Unit,
-    private val deleteContact: (String, String) -> Unit,
+    private val blockContact: (String) -> Unit,
+    private val deleteContact: (String) -> Unit,
 
     ): BottomSheetDialogFragment() {
 
@@ -64,7 +64,7 @@ class SearchContactActionBottomSheet(
                 .put(NAME_KEY, contactName)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
-                blockContact(accountId, contactName)
+                blockContact(accountId)
             }
             cancelButton()
         }
@@ -79,7 +79,7 @@ class SearchContactActionBottomSheet(
                     .put(NAME_KEY, contactName)
                     .format())
             dangerButton(R.string.delete, R.string.AccessibilityId_delete) {
-                deleteContact(accountId, contactName)
+                deleteContact(accountId)
             }
             cancelButton()
         }

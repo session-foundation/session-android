@@ -214,19 +214,14 @@ class HomeViewModel @Inject constructor(
 
     fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
-    fun blockContact(accountId: String, contactName: String) {
+    fun blockContact(accountId: String) {
         viewModelScope.launch {
             val recipient = Recipient.from(context, Address.fromSerialized(accountId), false)
             storage.setBlocked(listOf(recipient), isBlocked = true)
-
-            withContext(Dispatchers.Main){
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, contactName).format().toString()
-                Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
-            }
         }
     }
 
-    fun deleteContact(accountId: String, contactName: String) {
+    fun deleteContact(accountId: String) {
         viewModelScope.launch {
             storage.deleteContactAndSyncConfig(accountId)
         }
