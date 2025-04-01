@@ -184,16 +184,19 @@ class SearchRepository(
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
         val messages = searchDatabase.queryMessages(query)
+        val blockedContacts = getBlockedContacts()
         return if (messages != null)
-            CursorList(messages, MessageModelBuilder(context))
+            CursorList(messages, MessageModelBuilder(context, blockedContacts))
         else
             CursorList.emptyList()
     }
 
     private fun queryMessages(query: String, threadId: Long): CursorList<MessageResult?> {
         val messages = searchDatabase.queryMessages(query, threadId)
+        val blockedContacts = getBlockedContacts()
+
         return if (messages != null)
-            CursorList(messages, MessageModelBuilder(context))
+            CursorList(messages, MessageModelBuilder(context, blockedContacts))
         else
             CursorList.emptyList()
     }
@@ -252,15 +255,24 @@ class SearchRepository(
             return groupDatabase.getGroup(threadRecord.recipient.address.toGroupString()).get()
         }
     }
-
-    private class MessageModelBuilder(private val context: Context) : CursorList.ModelBuilder<MessageResult> {
-        override fun build(cursor: Cursor): MessageResult {
+    
+    private class MessageModelBuilder(
+        private val context: Context,
+        private val blockedContacts: Set<String>
+    ) : CursorList.ModelBuilder<MessageResult> {
+        override fun build(cursor: Cursor): MessageResult? {
             val conversationAddress =
-                fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
+                cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS))
             val messageAddress =
-                fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS)))
-            val conversationRecipient = Recipient.from(context, conversationAddress, false)
-            val messageRecipient = Recipient.from(context, messageAddress, false)
+                cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS))
+
+            // Skip messages to/from blocked contacts
+            if (conversationAddress in blockedContacts || messageAddress in blockedContacts) {
+                return null
+            }
+
+            val conversationRecipient = Recipient.from(context, fromSerialized(conversationAddress), false)
+            val messageRecipient = Recipient.from(context, fromSerialized(messageAddress), false)
             val body = cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.SNIPPET))
             val sentMs =
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
