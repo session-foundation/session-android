@@ -21,12 +21,21 @@ import android.widget.TextView
 import android.widget.TextView.OnEditorActionListener
 import androidx.core.os.BundleCompat
 import androidx.core.os.ParcelCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendFragmentBinding
 import org.session.libsession.utilities.Address
@@ -50,6 +59,9 @@ import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.PushCharacterCalculator
 import org.thoughtcrime.securesms.util.Stopwatch
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Locale
 
@@ -321,94 +333,98 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         }
     }
 
-    @SuppressLint("StaticFieldLeak")
     private fun processMedia(mediaList: List<Media>, savedState: Map<Uri, Any>) {
-        val futures: MutableMap<Media, ListenableFuture<Bitmap>> = HashMap()
+        val binding = binding ?: return // If the view is destroyed, this process should not continue
 
-        for (media in mediaList) {
-            val state = savedState[media.uri]
+        val context = requireContext().applicationContext
 
-            if (state is ImageEditorFragment.Data) {
-                val model = state.readModel()
-                if (model != null && model.isChanged) {
-                    futures[media] = render(requireContext(), model)
-                }
-            }
-        }
-
-        object : AsyncTask<Void?, Void?, List<Media>>() {
-            private var renderTimer: Stopwatch? = null
-            private var progressTimer: Runnable? = null
-
-            override fun onPreExecute() {
-                renderTimer = Stopwatch("ProcessMedia")
-                progressTimer = Runnable {
-                    binding?.loader?.visibility = View.VISIBLE
-                }
-                runOnMainDelayed(progressTimer!!, 250)
+        lifecycleScope.launch {
+            val delayedShowLoader = launch {
+                delay(250)
+                binding.loader.isVisible = true
             }
 
-            override fun doInBackground(vararg params: Void?): List<Media> {
-                val context = requireContext()
-                val updatedMedia: MutableList<Media> = ArrayList(mediaList.size)
-
-                for (media in mediaList) {
-                    if (futures.containsKey(media)) {
-                        try {
-                            val bitmap = futures[media]!!.get()
-                            val baos = ByteArrayOutputStream()
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
-
-                            val uri = BlobProvider.getInstance()
-                                .forData(baos.toByteArray())
-                                .withMimeType(MediaTypes.IMAGE_JPEG)
-                                .createForSingleSessionOnDisk(
-                                    context
-                                ) { e: IOException? ->
-                                    Log.w(
-                                        TAG,
-                                        "Failed to write to disk.",
-                                        e
-                                    )
-                                }
-                                .get()
-
-                            val updated = Media(
-                                uri,
-                                media.filename,
-                                MediaTypes.IMAGE_JPEG,
-                                media.date,
-                                bitmap.width,
-                                bitmap.height,
-                                baos.size().toLong(),
-                                media.bucketId,
-                                media.caption
-                            )
-
-                            updatedMedia.add(updated)
-                            renderTimer!!.split("item")
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Failed to render image. Using base image.", e)
-                            updatedMedia.add(media)
-                        }
-                    } else {
-                        updatedMedia.add(media)
+            val updatedMedia = supervisorScope {
+                // For each media, render the image in the background if necessary
+                val renderingTasks = mediaList
+                    .asSequence()
+                    .mapNotNull { media ->
+                        (savedState[media.uri] as? ImageEditorFragment.Data)
+                            ?.readModel()
+                            ?.takeIf { it.isChanged }
+                            ?.let { media to it }
                     }
+                    .associate { (media, model) ->
+                        media to async {
+                            runCatching {
+                                // While we render the bitmap in the background, make sure
+                                // we limit the number of parallel tasks to avoid overwhelming the memory,
+                                // as bitmaps are memory intensive.
+                                withContext(Dispatchers.Default.limitedParallelism(2)) {
+                                    val bitmap = model.render(context)
+                                    try {
+                                        // Compress the bitmap to JPEG
+                                        val jpegOut = requireNotNull(File.createTempFile("media_preview", ".jpg", context.cacheDir)) {
+                                            "Unable to create temporary file"
+                                        }
+
+                                        val (jpegSize, uri) = try {
+                                            FileOutputStream(jpegOut).use { out ->
+                                                bitmap.compress(
+                                                    Bitmap.CompressFormat.JPEG,
+                                                    80,
+                                                    out
+                                                )
+                                            }
+
+                                            // Once we have the JPEG file, save it as our blob
+                                            val jpegSize = jpegOut.length()
+                                            jpegSize to BlobProvider.getInstance()
+                                                .forData(FileInputStream(jpegOut), jpegSize)
+                                                .withMimeType(MediaTypes.IMAGE_JPEG)
+                                                .createForSingleSessionOnDisk(context, null)
+                                                .await()
+                                        } finally {
+                                            // Clean up the temporary file
+                                            jpegOut.delete()
+                                        }
+
+                                        Media(
+                                            uri,
+                                            media.filename,
+                                            MediaTypes.IMAGE_JPEG,
+                                            media.date,
+                                            bitmap.width,
+                                            bitmap.height,
+                                            jpegSize,
+                                            media.bucketId,
+                                            media.caption
+                                        )
+                                    } finally {
+                                        bitmap.recycle()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                // For each media, if there's a rendered version, use that or keep the original
+                mediaList.map { media ->
+                    renderingTasks[media]?.await()?.let { rendered ->
+                        if (rendered.isFailure) {
+                            Log.w(TAG, "Error rendering image", rendered.exceptionOrNull())
+                            media
+                        } else {
+                            rendered.getOrThrow()
+                        }
+                    } ?: media
                 }
-                return updatedMedia
             }
 
-            override fun onPostExecute(media: List<Media>) {
-                val binding = binding
-                if (binding != null) {
-                    controller.onSendClicked(media, binding.mediasendComposeText.textTrimmed)
-                    binding.loader.visibility = View.GONE
-                }
-                
-                cancelRunnableOnMain(progressTimer!!)
-                renderTimer!!.stop(TAG)
-            }
-        }.execute()
+            controller.onSendClicked(updatedMedia, binding.mediasendComposeText.textTrimmed)
+            delayedShowLoader.cancel()
+            binding.loader.isVisible = false
+        }
     }
 
     fun onRequestFullScreen(fullScreen: Boolean) {
@@ -486,14 +502,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             val fragment = MediaSendFragment()
             fragment.arguments = args
             return fragment
-        }
-
-        private fun render(context: Context, model: EditorModel): ListenableFuture<Bitmap> {
-            val future = SettableFuture<Bitmap>()
-
-            AsyncTask.THREAD_POOL_EXECUTOR.execute { future.set(model.render(context)) }
-
-            return future
         }
     }
 }
