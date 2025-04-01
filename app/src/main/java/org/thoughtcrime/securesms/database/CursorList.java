@@ -70,7 +70,12 @@ public class CursorList<T> implements List<T>, ObservableContent {
       @Override
       public T next() {
         cursor.moveToPosition(index++);
-        return modelBuilder.build(cursor);
+        T item = modelBuilder.build(cursor);
+        // Skip null items by recursively calling next
+        if (item == null && hasNext()) {
+          return next();
+        }
+        return item;
       }
     };
   }
@@ -78,9 +83,19 @@ public class CursorList<T> implements List<T>, ObservableContent {
   @Override
   public @NonNull Object[] toArray() {
     Object[] out = new Object[size()];
+    int validIndex = 0;
     for (int i = 0; i < cursor.getCount(); i++) {
       cursor.moveToPosition(i);
-      out[i] = modelBuilder.build(cursor);
+      T item = modelBuilder.build(cursor);
+      if (item != null) {
+        out[validIndex++] = item;
+      }
+    }
+    // If we had some null values, create a properly sized array
+    if (validIndex < out.length) {
+      Object[] resized = new Object[validIndex];
+      System.arraycopy(out, 0, resized, 0, validIndex);
+      return resized;
     }
     return out;
   }
@@ -113,7 +128,12 @@ public class CursorList<T> implements List<T>, ObservableContent {
   @Override
   public T get(int i) {
     cursor.moveToPosition(i);
-    return modelBuilder.build(cursor);
+    T item = modelBuilder.build(cursor);
+    // If null and we haven't reached the end, try the next position
+    if (item == null && i + 1 < cursor.getCount()) {
+      return get(i + 1);
+    }
+    return item;
   }
 
   @Override
@@ -198,7 +218,6 @@ public class CursorList<T> implements List<T>, ObservableContent {
   }
 
   public interface ModelBuilder<T> {
-    T build(@NonNull Cursor cursor);
+    @Nullable T build(@NonNull Cursor cursor);
   }
 }
-

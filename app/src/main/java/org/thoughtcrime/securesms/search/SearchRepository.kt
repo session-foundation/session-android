@@ -44,16 +44,13 @@ class SearchRepository(
         val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
 
         executor.execute {
-            val timer =
-                Stopwatch("FtsQuery")
+            val timer = Stopwatch("FtsQuery")
             timer.split("clean")
 
-            val contacts =
-                queryContacts(cleanQuery)
+            val contacts = queryContacts(cleanQuery)
             timer.split("Contacts")
 
-            val conversations =
-                queryConversations(cleanQuery, contacts.second)
+            val conversations = queryConversations(cleanQuery, contacts.second)
             timer.split("Conversations")
 
             val messages = queryMessages(cleanQuery)
@@ -85,15 +82,35 @@ class SearchRepository(
         }
     }
 
+    // Get set of blocked contact AccountIDs from the ConfigFactory
+    private fun getBlockedContacts(): Set<String> {
+        val blockedContacts = mutableSetOf<String>()
+        configFactory.withUserConfigs { userConfigs ->
+            userConfigs.contacts.all().forEach { contact ->
+                if (contact.blocked) {
+                    blockedContacts.add(contact.id)
+                }
+            }
+        }
+        return blockedContacts
+    }
+
     fun queryContacts(query: String): Pair<CursorList<Contact>, MutableList<String>> {
         val contacts = contactDatabase.queryContactsByName(query)
         val contactList: MutableList<Address> = ArrayList()
         val contactStrings: MutableList<String> = ArrayList()
+        val blockedContacts = getBlockedContacts()
 
         while (contacts.moveToNext()) {
             try {
                 val contact = contactDatabase.contactFromCursor(contacts)
                 val contactAccountId = contact.accountID
+
+                // Skip this contact if it's blocked
+                if (contactAccountId in blockedContacts) {
+                    continue
+                }
+
                 val address = fromSerialized(contactAccountId)
                 contactList.add(address)
                 contactStrings.add(contactAccountId)
@@ -104,17 +121,31 @@ class SearchRepository(
 
         contacts.close()
 
-        val addressThreads = threadDatabase.searchConversationAddresses(query)
+        // If we have no contacts (all were filtered out), return empty list
+        if (contactList.isEmpty()) {
+            return Pair(CursorList.emptyList(), contactStrings)
+        }
+
+        // Get the conversations that match these non-blocked contacts
         val individualRecipients = threadDatabase.getFilteredConversationList(contactList)
+
+        // Also search for conversations directly
+        val addressThreads = threadDatabase.searchConversationAddresses(query)
+
         if (individualRecipients == null && addressThreads == null) {
             return Pair(CursorList.emptyList(), contactStrings)
         }
-        val merged = MergeCursor(arrayOf(addressThreads, individualRecipients))
 
-        return Pair(
-            CursorList(merged, ContactModelBuilder(contactDatabase, threadDatabase)),
-            contactStrings
-        )
+        // Merge the cursors if both are available
+        val cursor = when {
+            individualRecipients != null && addressThreads != null ->
+                MergeCursor(arrayOf(addressThreads, individualRecipients))
+            individualRecipients != null -> individualRecipients
+            else -> addressThreads
+        }
+
+        val builder = ContactModelBuilder(contactDatabase, threadDatabase, blockedContacts)
+        return Pair(CursorList(cursor, builder), contactStrings)
     }
 
     private fun queryConversations(
@@ -191,14 +222,21 @@ class SearchRepository(
 
     private class ContactModelBuilder(
         private val contactDb: SessionContactDatabase,
-        private val threadDb: ThreadDatabase
+        private val threadDb: ThreadDatabase,
+        private val blockedContacts: Set<String>
     ) : CursorList.ModelBuilder<Contact> {
-        override fun build(cursor: Cursor): Contact {
+        override fun build(cursor: Cursor): Contact? {
             val threadRecord = threadDb.readerFor(cursor).current
-            var contact =
-                contactDb.getContactWithAccountID(threadRecord.recipient.address.toString())
+            val accountId = threadRecord.recipient.address.toString()
+
+            // Skip building contact if it's blocked
+            if (accountId in blockedContacts) {
+                return null
+            }
+
+            var contact = contactDb.getContactWithAccountID(accountId)
             if (contact == null) {
-                contact = Contact(threadRecord.recipient.address.toString())
+                contact = Contact(accountId)
                 contact.threadID = threadRecord.threadId
             }
             return contact
