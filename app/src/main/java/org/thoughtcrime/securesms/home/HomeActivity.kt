@@ -269,7 +269,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
                             addAll(result.groupedContacts)
                         }
                         else -> buildList {
-                            result.contactAndGroupList.takeUnless { it.isEmpty() }?.let {
+                            val conversations = result.contactAndGroupList.toMutableList()
+                            if(result.showNoteToSelf){
+                                conversations.add(GlobalSearchAdapter.Model.SavedMessages(publicKey))
+                            }
+
+                            conversations.takeUnless { it.isEmpty() }?.let {
                                 add(GlobalSearchAdapter.Model.Header(R.string.sessionConversations))
                                 addAll(it)
                             }
