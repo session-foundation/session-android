@@ -23,6 +23,7 @@
     <attr name="textColorAlert" format="reference|color"/>
     <attr name="elementBorderColor" format="reference|color"/>
     <attr name="conversation_background" format="reference|color"/>
+    <attr name="transparent" format="reference|color"/>
 
     <attr name="emoji_text_color" format="color" />
 
