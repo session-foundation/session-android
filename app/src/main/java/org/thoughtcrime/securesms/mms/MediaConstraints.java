@@ -72,6 +72,7 @@ public abstract class MediaConstraints {
 
     try {
       // XXX - This is loading everything into memory! We want the send path to be stream-like.
+      Log.d("MediaConstraints", "Resizing " + attachment.getDataUri() + " to " + this);
       BitmapUtil.ScaleResult scaleResult = BitmapUtil.createScaledBytes(context, new DecryptableUri(attachment.getDataUri()), this);
       return new MediaStream(new ByteArrayInputStream(scaleResult.getBitmap()), MediaTypes.IMAGE_JPEG, scaleResult.getWidth(), scaleResult.getHeight());
     } catch (BitmapDecodingException e) {

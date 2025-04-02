@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import kotlin.collections.CollectionsKt;
+
 class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
 
   private final List<Media>                         media;
@@ -83,7 +85,7 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
   }
 
   List<Media> getAllMedia() {
-    return media;
+    return CollectionsKt.toList(media);
   }
 
   void setMedia(@NonNull List<Media> media) {

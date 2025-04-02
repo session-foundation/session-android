@@ -562,7 +562,9 @@ public class AttachmentDatabase extends Database {
       throw new MmsException("No attachment data found!");
     }
 
+    Log.d("AttachmentDatabase", "Updating attachment data: " + dataInfo.file.getAbsolutePath() + " on id=#" + ((DatabaseAttachment) attachment).getAttachmentId());
     dataInfo = setAttachmentData(dataInfo.file, mediaStream.getStream());
+    Log.d("AttachmentDatabase", "Finished updating id=#" + ((DatabaseAttachment) attachment).getAttachmentId());
 
     ContentValues contentValues = new ContentValues();
     contentValues.put(SIZE, dataInfo.length);
@@ -706,6 +708,7 @@ public class AttachmentDatabase extends Database {
       throws MmsException
   {
     try {
+      Log.d("AttachmentDatabase", "Writing attachment data to: " + destination.getAbsolutePath());
       Pair<byte[], OutputStream> out    = ModernEncryptingPartOutputStream.createFor(attachmentSecret, destination, false);
       long                       length = Util.copy(in, out.second);
 

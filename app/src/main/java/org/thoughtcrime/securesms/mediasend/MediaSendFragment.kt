@@ -348,61 +348,77 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
                 // For each media, render the image in the background if necessary
                 val renderingTasks = mediaList
                     .asSequence()
-                    .mapNotNull { media ->
-                        (savedState[media.uri] as? ImageEditorFragment.Data)
+                    .map { media ->
+                        media to (savedState[media.uri] as? ImageEditorFragment.Data)
                             ?.readModel()
                             ?.takeIf { it.isChanged }
-                            ?.let { media to it }
                     }
                     .associate { (media, model) ->
-                        media to async {
+                        media.uri to async {
                             runCatching {
-                                // While we render the bitmap in the background, make sure
-                                // we limit the number of parallel tasks to avoid overwhelming the memory,
-                                // as bitmaps are memory intensive.
-                                withContext(Dispatchers.Default.limitedParallelism(2)) {
-                                    val bitmap = model.render(context)
-                                    try {
-                                        // Compress the bitmap to JPEG
-                                        val jpegOut = requireNotNull(File.createTempFile("media_preview", ".jpg", context.cacheDir)) {
-                                            "Unable to create temporary file"
-                                        }
-
-                                        val (jpegSize, uri) = try {
-                                            FileOutputStream(jpegOut).use { out ->
-                                                bitmap.compress(
-                                                    Bitmap.CompressFormat.JPEG,
-                                                    80,
-                                                    out
+                                if (model != null) {
+                                    // While we render the bitmap in the background, make sure
+                                    // we limit the number of parallel tasks to avoid overwhelming the memory,
+                                    // as bitmaps are memory intensive.
+                                    withContext(Dispatchers.Default.limitedParallelism(2)) {
+                                        val bitmap = model.render(context)
+                                        try {
+                                            // Compress the bitmap to JPEG
+                                            val jpegOut = requireNotNull(
+                                                File.createTempFile(
+                                                    "media_preview",
+                                                    ".jpg",
+                                                    context.cacheDir
                                                 )
+                                            ) {
+                                                "Unable to create temporary file"
                                             }
 
-                                            // Once we have the JPEG file, save it as our blob
-                                            val jpegSize = jpegOut.length()
-                                            jpegSize to BlobProvider.getInstance()
-                                                .forData(FileInputStream(jpegOut), jpegSize)
-                                                .withMimeType(MediaTypes.IMAGE_JPEG)
-                                                .createForSingleSessionOnDisk(context, null)
-                                                .await()
-                                        } finally {
-                                            // Clean up the temporary file
-                                            jpegOut.delete()
-                                        }
+                                            val (jpegSize, uri) = try {
+                                                FileOutputStream(jpegOut).use { out ->
+                                                    bitmap.compress(
+                                                        Bitmap.CompressFormat.JPEG,
+                                                        80,
+                                                        out
+                                                    )
+                                                }
 
-                                        Media(
-                                            uri,
-                                            media.filename,
-                                            MediaTypes.IMAGE_JPEG,
-                                            media.date,
-                                            bitmap.width,
-                                            bitmap.height,
-                                            jpegSize,
-                                            media.bucketId,
-                                            media.caption
-                                        )
-                                    } finally {
-                                        bitmap.recycle()
+                                                // Once we have the JPEG file, save it as our blob
+                                                val jpegSize = jpegOut.length()
+                                                jpegSize to BlobProvider.getInstance()
+                                                    .forData(FileInputStream(jpegOut), jpegSize)
+                                                    .withMimeType(MediaTypes.IMAGE_JPEG)
+                                                    .withFileName(media.fileName)
+                                                    .createForSingleSessionOnDisk(context, null)
+                                                    .await()
+                                            } finally {
+                                                // Clean up the temporary file
+                                                jpegOut.delete()
+                                            }
+
+                                            media.copy(
+                                                uri = uri,
+                                                mimeType = MediaTypes.IMAGE_JPEG,
+                                                width = bitmap.width,
+                                                height = bitmap.height,
+                                                size = jpegSize,
+                                            )
+                                        } finally {
+                                            bitmap.recycle()
+                                        }
                                     }
+                                } else {
+                                    // No changes to the original media, copy and return as is
+                                    val newUri = BlobProvider.getInstance()
+                                        .forData(requireNotNull(context.contentResolver.openInputStream(media.uri)) {
+                                            "Invalid URI"
+                                        }, media.size)
+                                        .withMimeType(media.mimeType)
+                                        .withFileName(media.fileName)
+                                        .createForSingleSessionOnDisk(context, null)
+                                        .await()
+
+                                    media.copy(uri = newUri)
                                 }
                             }
                         }
@@ -410,7 +426,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
                 // For each media, if there's a rendered version, use that or keep the original
                 mediaList.map { media ->
-                    renderingTasks[media]?.await()?.let { rendered ->
+                    renderingTasks[media.uri]?.await()?.let { rendered ->
                         if (rendered.isFailure) {
                             Log.w(TAG, "Error rendering image", rendered.exceptionOrNull())
                             media
