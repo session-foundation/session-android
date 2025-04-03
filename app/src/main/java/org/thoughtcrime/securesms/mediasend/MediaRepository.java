@@ -253,7 +253,7 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        return new Media(media.getUri(), media.getFileName(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
+        return new Media(media.getUri(), media.getFilename(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
     private Media getContentResolverPopulatedMedia(@NonNull Context context, @NonNull Media media) throws IOException {
         int  width  = media.getWidth();
@@ -278,7 +278,7 @@ class MediaRepository {
             height = dimens.second;
         }
 
-        return new Media(media.getUri(), media.getFileName(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
+        return new Media(media.getUri(), media.getFilename(), media.getMimeType(), media.getDate(), width, height, size, media.getBucketId(), media.getCaption());
     }
 
     private static class FolderResult {

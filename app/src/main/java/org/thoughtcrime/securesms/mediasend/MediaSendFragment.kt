@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.mediasend
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -18,9 +16,6 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
-import android.widget.TextView.OnEditorActionListener
-import androidx.core.os.BundleCompat
-import androidx.core.os.ParcelCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -38,31 +33,20 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendFragmentBinding
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isEnterSendsEnabled
-import org.session.libsession.utilities.Util.cancelRunnableOnMain
-import org.session.libsession.utilities.Util.isEmpty
-import org.session.libsession.utilities.Util.runOnMainDelayed
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.SettableFuture
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardHiddenListener
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener
-import org.thoughtcrime.securesms.imageeditor.model.EditorModel
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.PushCharacterCalculator
-import org.thoughtcrime.securesms.util.Stopwatch
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.IOException
 import java.util.Locale
 
 /**
@@ -388,7 +372,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
                                                 jpegSize to BlobProvider.getInstance()
                                                     .forData(FileInputStream(jpegOut), jpegSize)
                                                     .withMimeType(MediaTypes.IMAGE_JPEG)
-                                                    .withFileName(media.fileName)
+                                                    .withFileName(media.filename)
                                                     .createForSingleSessionOnDisk(context, null)
                                                     .await()
                                             } finally {
@@ -414,7 +398,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
                                             "Invalid URI"
                                         }, media.size)
                                         .withMimeType(media.mimeType)
-                                        .withFileName(media.fileName)
+                                        .withFileName(media.filename)
                                         .createForSingleSessionOnDisk(context, null)
                                         .await()
 
