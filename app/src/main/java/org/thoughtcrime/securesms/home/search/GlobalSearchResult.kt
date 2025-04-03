@@ -9,7 +9,8 @@ data class GlobalSearchResult(
     val query: String,
     val contacts: List<Contact> = emptyList(),
     val threads: List<GroupRecord> = emptyList(),
-    val messages: List<MessageResult> = emptyList()
+    val messages: List<MessageResult> = emptyList(),
+    val showNoteToSelf: Boolean = false
 ) {
     val isEmpty: Boolean
         get() = contacts.isEmpty() && threads.isEmpty() && messages.isEmpty()
