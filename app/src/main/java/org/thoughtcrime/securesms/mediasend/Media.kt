@@ -19,7 +19,31 @@ data class Media(
     val bucketId: String?,
     val caption: String?,
 ) : Parcelable {
+
+    // The equality check here is performed based only on the URI of the media.
+    // This behavior very opinionated and shouldn't really be in a generic equality check in the first place.
+    // However there are too much code working under this assumption and we can't simply change it to
+    // a generic solution.
+    //
+    // To later dev: once sufficient refactors are done, we can remove this equality
+    // check and rely on the data class default equality check instead.
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Media) return false
+
+        if (uri != other.uri) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return uri.hashCode()
+    }
+
+
     companion object {
         const val ALL_MEDIA_BUCKET_ID: String = "org.thoughtcrime.securesms.ALL_MEDIA"
     }
+
+
 }
