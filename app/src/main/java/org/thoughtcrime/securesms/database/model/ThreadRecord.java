@@ -27,23 +27,17 @@ import android.content.Context;
 import android.net.Uri;
 import android.text.SpannableString;
 import android.text.TextUtils;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import org.session.libsession.messaging.utilities.UpdateMessageBuilder;
-import org.session.libsession.messaging.utilities.UpdateMessageData;
 import com.squareup.phrase.Phrase;
-
+import kotlin.Pair;
+import network.loki.messenger.R;
+import org.session.libsession.messaging.utilities.UpdateMessageData;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.ui.UtilKt;
-
-import kotlin.Pair;
-import network.loki.messenger.R;
 
 /**
  * The message record model which represents thread heading messages.

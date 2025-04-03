@@ -1,10 +1,8 @@
 package org.thoughtcrime.securesms.home.search
 
 import android.content.Context
-import android.text.Editable
 import android.text.InputFilter
 import android.text.InputFilter.LengthFilter
-import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -14,14 +12,9 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.databinding.ViewGlobalSearchInputBinding
 import org.thoughtcrime.securesms.util.SimpleTextWatcher
-import org.thoughtcrime.securesms.util.addTextChangedListener
 
 class GlobalSearchInputLayout @JvmOverloads constructor(
         context: Context, attrs: AttributeSet? = null

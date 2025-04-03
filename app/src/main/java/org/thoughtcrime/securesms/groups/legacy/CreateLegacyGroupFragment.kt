@@ -69,13 +69,13 @@ class CreateLegacyGroupFragment : Fragment() {
             }
         }
         binding.createNewPrivateChatButton.setOnClickListener { delegate.onNewMessageSelected() }
-        binding.recyclerView.adapter = adapter
+        binding.createGroupRecyclerView.adapter = adapter
         val divider = ContextCompat.getDrawable(requireActivity(), R.drawable.conversation_menu_divider)!!.let {
             DividerItemDecoration(requireActivity(), RecyclerView.VERTICAL).apply {
                 setDrawable(it)
             }
         }
-        binding.recyclerView.addItemDecoration(divider)
+        binding.createGroupRecyclerView.addItemDecoration(divider)
         var isLoading = false
         binding.createClosedGroupButton.setOnClickListener {
             if (isLoading) return@setOnClickListener

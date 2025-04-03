@@ -63,6 +63,7 @@ interface ConfigFactoryProtocol {
 
     fun getGroupAuth(groupId: AccountId): SwarmAuth?
     fun removeGroup(groupId: AccountId)
+    fun removeContact(accountId: String)
 
     fun decryptForUser(encoded: ByteArray,
                        domain: String,

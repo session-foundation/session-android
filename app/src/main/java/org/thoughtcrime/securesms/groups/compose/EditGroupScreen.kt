@@ -376,6 +376,7 @@ private fun ConfirmRemovingMemberDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MemberActionSheet(
     member: GroupMemberState,
@@ -460,6 +461,85 @@ fun EditMemberItem(
         }
     }
 }
+
+@Preview
+@Composable
+private fun EditGroupPreviewSheet() {
+    PreviewTheme {
+        val oneMember = GroupMemberState(
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"),
+            name = "Test User",
+            status = GroupMember.Status.INVITE_SENT,
+            highlightStatus = false,
+            canPromote = true,
+            canRemove = true,
+            canResendInvite = false,
+            canResendPromotion = false,
+            showAsAdmin = false,
+            clickable = true,
+            statusLabel = "Invited"
+        )
+        val twoMember = GroupMemberState(
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235"),
+            name = "Test User 2",
+            status = GroupMember.Status.PROMOTION_FAILED,
+            highlightStatus = true,
+            canPromote = true,
+            canRemove = true,
+            canResendInvite = false,
+            canResendPromotion = false,
+            showAsAdmin = true,
+            clickable = true,
+            statusLabel = "Promotion failed"
+        )
+        val threeMember = GroupMemberState(
+            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1236"),
+            name = "Test User 3",
+            status = null,
+            highlightStatus = false,
+            canPromote = true,
+            canRemove = true,
+            canResendInvite = false,
+            canResendPromotion = false,
+            showAsAdmin = false,
+            clickable = true,
+            statusLabel = ""
+        )
+
+        val (editingName, setEditingName) = remember { mutableStateOf<String?>(null) }
+
+        EditGroup(
+            onBack = {},
+            onAddMemberClick = {},
+            onResendInviteClick = {},
+            onPromoteClick = {},
+            onRemoveClick = { _, _ -> },
+            onEditNameCancelClicked = {
+                setEditingName(null)
+            },
+            onEditNameConfirmed = {
+                setEditingName(null)
+            },
+            onEditNameClicked = {
+                setEditingName("Test Group")
+            },
+            editingName = editingName,
+            onEditingNameValueChanged = setEditingName,
+            members = listOf(oneMember, twoMember, threeMember),
+            canEditName = true,
+            groupName = "Test ",
+            showAddMembers = true,
+            onResendPromotionClick = {},
+            showingError = "Error",
+            onErrorDismissed = {},
+            onMemberClicked = {},
+            hideActionSheet = {},
+            clickedMember = oneMember,
+            showLoading = false,
+        )
+    }
+}
+
 
 @Preview
 @Composable

@@ -15,18 +15,26 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 
 
 /**
@@ -67,16 +75,16 @@ fun BaseBottomSheet(
 @Composable
 fun <T> ActionSheet(
     options: Collection<T>,
+    sheetState: SheetState = rememberModalBottomSheetState(),
     onDismissRequest: () -> Unit,
     onOptionClick: (T) -> Unit,
     optionTitle: (T) -> String,
     optionQaTag: (T) -> Int,
     optionIconRes: (T) -> Int,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-
     BaseBottomSheet(
         sheetState = sheetState,
+        dragHandle = null,
         onDismissRequest = onDismissRequest
     ){
         for (option in options) {
@@ -94,7 +102,7 @@ fun <T> ActionSheet(
 }
 
 @Composable
-private fun ActionSheetItem(
+fun ActionSheetItem(
     leadingIcon: Int,
     text: String,
     qaTag: String?,
@@ -139,17 +147,56 @@ data class ActionSheetItemData(
 /**
  * A convenience function to display a [ActionSheet] with a collection of [ActionSheetItemData].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionSheet(
     items: Collection<ActionSheetItemData>,
+    sheetState: SheetState = rememberModalBottomSheetState(),
     onDismissRequest: () -> Unit
 ) {
     ActionSheet(
         options = items,
+        sheetState = sheetState,
         onDismissRequest = onDismissRequest,
         onOptionClick = { it.onClick() },
         optionTitle = { it.title },
         optionIconRes = { it.iconRes },
         optionQaTag = { it.qaTag }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun ActionSheetPreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+){
+    PreviewTheme(colors) {
+        val sheetState: SheetState = rememberStandardBottomSheetState(
+            initialValue = SheetValue.PartiallyExpanded,
+        )
+
+        ActionSheet(
+            sheetState = sheetState,
+            items = listOf(
+                ActionSheetItemData(
+                    title = "Option 1",
+                    iconRes = R.drawable.ic_trash_2,
+                    onClick = {}
+                ),
+                ActionSheetItemData(
+                    title = "Option 2",
+                    iconRes = R.drawable.ic_pencil,
+                    onClick = {}
+                ),
+                ActionSheetItemData(
+                    title = "Option 3",
+                    iconRes = R.drawable.ic_arrow_down_to_line,
+                    onClick = {}
+                )
+            ),
+            onDismissRequest = {}
+        )
+
+    }
 }

@@ -30,7 +30,8 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class ProfilePictureView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
+    context: Context,
+    attrs: AttributeSet? = null
 ) : RelativeLayout(context, attrs) {
     private val TAG = "ProfilePictureView"
 
@@ -92,8 +93,7 @@ class ProfilePictureView @JvmOverloads constructor(
 
         if (isLegacyGroupRecipient || isGroupsV2Recipient) {
             val members = if (isLegacyGroupRecipient) {
-                groupDatabase
-                    .getGroupMemberAddresses(address.toGroupString(), true)
+                groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
             } else {
                 storage.getMembers(address.toString())
                     .map { Address.fromSerialized(it.accountId()) }
@@ -147,7 +147,6 @@ class ProfilePictureView @JvmOverloads constructor(
             glide.clear(binding.doubleModeImageView2)
             binding.doubleModeImageViewContainer.visibility = View.INVISIBLE
         }
-
     }
 
     private fun setProfilePictureIfNeeded(imageView: ImageView, publicKey: String, displayName: String?) {

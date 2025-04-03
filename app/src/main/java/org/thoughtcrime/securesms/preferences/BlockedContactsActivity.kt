@@ -32,7 +32,7 @@ class BlockedContactsActivity: ScreenLockActionBarActivity() {
         binding = ActivityBlockedContactsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.recyclerView.adapter = adapter
+        binding.contactsRecyclerView.adapter = adapter
 
         viewModel.subscribe(this)
             .observe(this) { state ->
