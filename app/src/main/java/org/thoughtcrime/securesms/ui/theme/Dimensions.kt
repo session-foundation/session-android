@@ -29,4 +29,7 @@ data class Dimensions(
     val iconLarge: Dp = 46.dp,
     val iconXLarge: Dp = 60.dp,
     val iconXXLarge: Dp = 80.dp,
+
+    val shapeSmall: Dp = 12.dp,
+    val shapeMedium: Dp = 16.dp,
 )

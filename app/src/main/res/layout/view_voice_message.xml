@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/mainVoiceMessageViewContainer"
     android:contentDescription="@string/AccessibilityId_messageVoice"
+    android:background="@drawable/message_bubble_background"
     android:layout_width="160dp"
     android:layout_height="36dp">
 

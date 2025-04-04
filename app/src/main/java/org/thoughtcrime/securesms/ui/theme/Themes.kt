@@ -47,7 +47,7 @@ fun SessionMaterialTheme(
 }
 
 /**
- * Apply a given [ThemeColors], and our typography and shapes as a Material 2 Compose Theme.
+ * Apply a given [ThemeColors], and our typography and shapes as a Material 3 Compose Theme.
  **/
 @Composable
 fun SessionMaterialTheme(
@@ -57,7 +57,7 @@ fun SessionMaterialTheme(
     MaterialTheme(
         colorScheme = colors.toMaterialColors(),
         typography = sessionTypography.asMaterialTypography(),
-        shapes = sessionShapes,
+        shapes = sessionShapes(),
     ) {
         CompositionLocalProvider(
             LocalColors provides colors,
@@ -72,9 +72,10 @@ fun SessionMaterialTheme(
 val pillShape = RoundedCornerShape(percent = 50)
 val buttonShape = pillShape
 
-val sessionShapes = Shapes(
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp)
+@Composable
+fun sessionShapes() = Shapes(
+    small = RoundedCornerShape(LocalDimensions.current.shapeSmall),
+    medium = RoundedCornerShape(LocalDimensions.current.shapeMedium)
 )
 
 /**

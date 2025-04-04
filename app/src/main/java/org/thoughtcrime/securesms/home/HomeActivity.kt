@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
@@ -389,8 +390,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.sessionToolbar.isVisible = !isShown
         binding.recyclerView.isVisible = !isShown
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
-        binding.globalSearchRecycler.isInvisible = !isShown
-        binding.conversationListContainer.isInvisible = isShown
+        binding.globalSearchRecycler.isVisible = isShown
+        binding.conversationListContainer.isVisible = !isShown
+        if(isShown){
+            binding.newConversationButton.animate().cancel()
+            binding.newConversationButton.isVisible = false
+        } else {
+            binding.newConversationButton.apply {
+                alpha = 0.0f
+                visibility = View.VISIBLE
+                animate().cancel()
+                animate().setStartDelay(350).setDuration(250L).alpha(1.0f).setListener(null).start()
+            }
+        }
     }
 
     private fun updateLegacyConfigView() {

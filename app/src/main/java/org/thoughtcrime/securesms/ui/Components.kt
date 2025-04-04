@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
@@ -133,11 +134,12 @@ fun LargeItemButtonWithDrawable(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
         textId, icon, modifier,
-        LocalType.current.h8, colors, onClick
+        LocalType.current.h8, colors, shape, onClick
     )
 }
 
@@ -148,6 +150,7 @@ fun ItemButtonWithDrawable(
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -164,6 +167,7 @@ fun ItemButtonWithDrawable(
         },
         textStyle = textStyle,
         colors = colors,
+        shape = shape,
         onClick = onClick
     )
 }
@@ -174,6 +178,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButton(
@@ -183,6 +188,7 @@ fun LargeItemButton(
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
+        shape = shape,
         onClick = onClick
     )
 }
@@ -193,6 +199,7 @@ fun LargeItemButton(
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButton(
@@ -202,6 +209,7 @@ fun LargeItemButton(
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
+        shape = shape,
         onClick = onClick
     )
 }
@@ -214,6 +222,7 @@ fun ItemButton(
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButton(
@@ -229,6 +238,7 @@ fun ItemButton(
         minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
+        shape = shape,
         onClick = onClick
     )
 }
@@ -244,6 +254,7 @@ fun ItemButton(
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     ItemButton(
@@ -259,6 +270,7 @@ fun ItemButton(
         minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
+        shape = shape,
         onClick = onClick
     )
 }
@@ -276,6 +288,7 @@ fun ItemButton(
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
     TextButton(
@@ -283,7 +296,7 @@ fun ItemButton(
         colors = colors,
         onClick = onClick,
         contentPadding = PaddingValues(),
-        shape = RectangleShape,
+        shape = shape,
     ) {
         Box(
             modifier = Modifier
@@ -344,6 +357,22 @@ fun Cell(
         content()
     }
 }
+
+@Composable
+fun getCellTopShape() = RoundedCornerShape(
+    topStart = LocalDimensions.current.shapeSmall,
+    topEnd = LocalDimensions.current.shapeSmall,
+    bottomEnd = 0.dp,
+    bottomStart = 0.dp
+)
+
+@Composable
+fun getCellBottomShape() = RoundedCornerShape(
+    topStart =  0.dp,
+    topEnd = 0.dp,
+    bottomEnd = LocalDimensions.current.shapeSmall,
+    bottomStart = LocalDimensions.current.shapeSmall
+)
 
 @Composable
 fun Modifier.contentDescription(text: GetString?): Modifier {

@@ -134,6 +134,7 @@ fun ActionAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
+        windowInsets = WindowInsets(0, 0, 0, 0), // insets handled in BaseActionBarActivity for now
         title = {
             if (!actionMode) {
                 AppBarText(title = title, singleLine = singleLine)

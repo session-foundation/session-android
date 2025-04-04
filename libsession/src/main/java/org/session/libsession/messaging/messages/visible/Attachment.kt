@@ -44,6 +44,7 @@ class Attachment {
             if (result.filename.isNullOrEmpty() && !result.contentType.isNullOrEmpty()) {
                 Log.d("", "*** GOT an empty filename")
                 //result.filename = generateFilenameFromReceivedTypeForLegacyClients(result.contentType!!)
+                //todo: Found this part with the code commented out... This 'if' is now doing nothing at all, is that normal? Shouldn't we indeed set a filename here or is that handled further down the line? (can't explore this now so I'm leaving a todo)
             }
 
             result.key = proto.key.toByteArray()

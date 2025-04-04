@@ -9,6 +9,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
+import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
@@ -16,13 +17,11 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
-import com.bumptech.glide.RequestManager
-import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.toPx
 import javax.inject.Inject
 
@@ -106,25 +105,25 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
                 attachments.audioSlide != null -> {
                     val isVoiceNote = attachments.isVoiceNote
                     if (isVoiceNote) {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.messageVoice)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.messageVoice))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_mic)
                     } else {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.audio)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.audio))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_volume_2)
                     }
                 }
                 attachments.documentSlide != null -> {
                     binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_file)
-                    binding.quoteViewBodyTextView.text = resources.getString(R.string.document)
+                    updateQuoteTextIfEmpty(resources.getString(R.string.document))
                 }
                 attachments.thumbnailSlide != null -> {
                     val slide = attachments.thumbnailSlide!!
 
                     if (MediaUtil.isVideo(slide.asAttachment())){
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.video)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.video))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_square_play)
                     } else {
-                        binding.quoteViewBodyTextView.text = resources.getString(R.string.image)
+                        updateQuoteTextIfEmpty(resources.getString(R.string.image))
                         binding.quoteViewAttachmentPreviewImageView.setImageResource(R.drawable.ic_image)
                     }
 
@@ -143,6 +142,12 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
                 }
             }
+        }
+    }
+
+    private fun updateQuoteTextIfEmpty(text: String){
+        if(binding.quoteViewBodyTextView.text.isNullOrEmpty()){
+            binding.quoteViewBodyTextView.text = text
         }
     }
     // endregion

@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Rect
 import android.text.Spannable
@@ -27,8 +28,6 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.session.libsession.messaging.jobs.AttachmentDownloadJob
-import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.ThemeUtil
@@ -81,6 +80,8 @@ class VisibleMessageContentView : ConstraintLayout {
         val color = if (message.isOutgoing) context.getAccentColor()
         else context.getColorFromAttr(R.attr.message_received_background_color)
         binding.contentParent.mainColor = color
+        binding.documentView.root.backgroundTintList = ColorStateList.valueOf(color)
+        binding.voiceMessageView.root.backgroundTintList = ColorStateList.valueOf(color)
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
         val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }
@@ -269,24 +270,30 @@ class VisibleMessageContentView : ConstraintLayout {
                 hideBody = false
 
                 if (overallAttachmentState == AttachmentState.DONE || message.isOutgoing) {
-                    if(suppressThumbnails) return // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
+                    if(!suppressThumbnails) { // suppress thumbnail should hide the image, but we still want to show the attachment control if the state demands it
 
-                    binding.attachmentControlView.root.isVisible = false
+                        binding.attachmentControlView.root.isVisible = false
 
-                    // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
-                    // bind after add view because views are inflated and calculated during bind
-                    binding.albumThumbnailView.root.isVisible = true
-                    binding.albumThumbnailView.root.bind(
-                        glideRequests = glide,
-                        message = message,
-                        isStart = isStartOfMessageCluster,
-                        isEnd = isEndOfMessageCluster
-                    )
-                    binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
-                        horizontalBias = if (message.isOutgoing) 1f else 0f
-                    }
-                    onContentClick.add { event ->
-                        binding.albumThumbnailView.root.calculateHitObject(event, message, thread, downloadPendingAttachment)
+                        // isStart and isEnd of cluster needed for calculating the mask for full bubble image groups
+                        // bind after add view because views are inflated and calculated during bind
+                        binding.albumThumbnailView.root.isVisible = true
+                        binding.albumThumbnailView.root.bind(
+                            glideRequests = glide,
+                            message = message,
+                            isStart = isStartOfMessageCluster,
+                            isEnd = isEndOfMessageCluster
+                        )
+                        binding.albumThumbnailView.root.modifyLayoutParams<LayoutParams> {
+                            horizontalBias = if (message.isOutgoing) 1f else 0f
+                        }
+                        onContentClick.add { event ->
+                            binding.albumThumbnailView.root.calculateHitObject(
+                                event,
+                                message,
+                                thread,
+                                downloadPendingAttachment
+                            )
+                        }
                     }
                 } else {
                     databaseAttachments?.let {

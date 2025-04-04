@@ -262,7 +262,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/Widget.Session.Button.Common.ProminentOutline"
-            android:contentDescription="@string/AccessibilityId_messageRequestsAccept"
+            android:contentDescription="@string/AccessibilityId_recreate_legacy_group"
             android:text="@string/recreateGroup" />
 
     </FrameLayout>

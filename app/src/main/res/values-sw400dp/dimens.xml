@@ -15,5 +15,5 @@
     <dimen name="album_3_cell_width_big">199dp</dimen>
     <dimen name="album_3_cell_size_small">99dp</dimen>
     <dimen name="album_5_cell_size_small">99dp</dimen>
-    <dimen name="max_text_width">300dp</dimen>
+    <dimen name="max_bubble_width">300dp</dimen>
 </resources>

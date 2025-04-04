@@ -2086,6 +2086,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 // Note: The only multi-attachment message type is when sending images - all others
                 // attempt send the attachment immediately upon file selection.
                 sendAttachments(attachmentManager.buildSlideDeck().asAttachments(), null)
+                //todo: The current system sends the document the moment it has been selected, without text (body is set to null above) - We will want to fix this and allow the user to add text with a document AND be able to confirm before sending
+                //todo: Simply setting body to getMessageBody() above isn't good enough as it doesn't give the user a chance to confirm their message before sending it.
             }
 
             override fun onFailure(e: ExecutionException?) {
