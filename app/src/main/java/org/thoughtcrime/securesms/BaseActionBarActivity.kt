@@ -82,35 +82,33 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Enable edge-to-edge - needed for sdk35 and above
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
-
         val actionBar = supportActionBar
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true)
             actionBar.setHomeButtonEnabled(true)
         }
 
-        // Apply insets to your views - Needed for sdk35 and above
-        val rootView = findViewById<View>(android.R.id.content)
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
-            // Get system bars insets
-            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+        if(VERSION.SDK_INT >= 35) {
+            // Enable edge-to-edge - needed for sdk35 and above
+            WindowCompat.setDecorFitsSystemWindows(window, false)
 
-            // Get IME (keyboard) insets
-            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+            // Apply insets to your views - Needed for sdk35 and above
+            val rootView = findViewById<View>(android.R.id.content)
+            ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
+                // Get system bars insets
+                val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            // Update view padding to account for system bars
-            view.updatePadding(
-                left = systemBarsInsets.left,
-                top = systemBarsInsets.top,
-                right = systemBarsInsets.right,
-                bottom = max(systemBarsInsets.bottom, imeInsets.bottom) // set either the padding for the inset or for the keyboard
-            )
+                // Update view padding to account for system bars
+                view.updatePadding(
+                    left = systemBarsInsets.left,
+                    top = systemBarsInsets.top,
+                    right = systemBarsInsets.right,
+                    bottom = systemBarsInsets.bottom
+                )
 
-            // Consume the insets
-            windowInsets
+                // Consume the insets
+                windowInsets
+            }
         }
     }
 
