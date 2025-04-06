@@ -54,6 +54,9 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     private var countButtonText: TextView? = null
     private var cameraButton: View? = null
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false // we want to handle window insets manually here for fullscreen fragments like the camera screen
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 

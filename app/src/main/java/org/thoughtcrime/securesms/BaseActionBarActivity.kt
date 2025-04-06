@@ -33,6 +33,9 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             return appContext.textSecurePreferences
         }
 
+    open val applyDefaultWindowInsets: Boolean
+        get() = true
+
     @get:StyleRes
     private val desiredTheme: Int
         get() {
@@ -88,13 +91,14 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setHomeButtonEnabled(true)
         }
 
-        if(VERSION.SDK_INT >= 35) {
+        if(VERSION.SDK_INT >= 35 && applyDefaultWindowInsets) {
             // Enable edge-to-edge - needed for sdk35 and above
             WindowCompat.setDecorFitsSystemWindows(window, false)
 
             // Apply insets to your views - Needed for sdk35 and above
             val rootView = findViewById<View>(android.R.id.content)
             ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
+                
                 // Get system bars insets
                 val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
 

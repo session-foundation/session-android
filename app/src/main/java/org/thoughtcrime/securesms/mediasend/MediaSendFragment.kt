@@ -162,9 +162,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             adapter.restoreState(viewModel.drawState)
             viewModel.onImageEditorStarted()
         }
-
-        requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
