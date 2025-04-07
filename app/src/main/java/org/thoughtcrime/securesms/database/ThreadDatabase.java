@@ -65,6 +65,7 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -402,18 +403,40 @@ public class ThreadDatabase extends Database {
 
   }
 
-  public Cursor searchConversationAddresses(String addressQuery) {
+  public Cursor searchConversationAddresses(String addressQuery, Set<String> excludeAddresses) {
     if (addressQuery == null || addressQuery.isEmpty()) {
       return null;
     }
 
     SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    String   selection      = TABLE_NAME + "." + ADDRESS + " LIKE ? AND " + TABLE_NAME + "." + MESSAGE_COUNT + " != 0";
-    String[] selectionArgs  = new String[]{addressQuery+"%"};
-    String query = createQuery(selection, 0);
-    Cursor cursor = db.rawQuery(query, selectionArgs);
+    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ? AND " +
+            TABLE_NAME + "." + MESSAGE_COUNT + " != 0");
+
+    List<String> selectionArgs = new ArrayList<>();
+    selectionArgs.add(addressQuery + "%");
+
+    // Add exclusion for blocked contacts
+    if (excludeAddresses != null && !excludeAddresses.isEmpty()) {
+      selection.append(" AND ").append(TABLE_NAME).append(".").append(ADDRESS).append(" NOT IN (");
+
+      int i = 0;
+      for (String excludeAddress : excludeAddresses) {
+        if (i > 0) {
+          selection.append(", ");
+        }
+        selection.append("?");
+        selectionArgs.add(excludeAddress);
+        i++;
+      }
+
+      selection.append(")");
+    }
+
+    String query = createQuery(selection.toString(), 0);
+    Cursor cursor = db.rawQuery(query, selectionArgs.toArray(new String[0]));
     return cursor;
   }
+
 
   public Cursor getFilteredConversationList(@Nullable List<Address> filter) {
     if (filter == null || filter.size() == 0)

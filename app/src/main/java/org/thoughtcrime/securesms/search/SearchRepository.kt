@@ -19,7 +19,6 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
@@ -44,13 +43,16 @@ class SearchRepository(
         val cleanQuery = sanitizeQuery(query).trim { it <= ' ' }
 
         executor.execute {
-            val timer = Stopwatch("FtsQuery")
+            val timer =
+                Stopwatch("FtsQuery")
             timer.split("clean")
 
-            val contacts = queryContacts(cleanQuery)
+            val contacts =
+                queryContacts(cleanQuery)
             timer.split("Contacts")
 
-            val conversations = queryConversations(cleanQuery, contacts.second)
+            val conversations =
+                queryConversations(cleanQuery, contacts.second)
             timer.split("Conversations")
 
             val messages = queryMessages(cleanQuery)
@@ -96,21 +98,15 @@ class SearchRepository(
     }
 
     fun queryContacts(query: String): Pair<CursorList<Contact>, MutableList<String>> {
-        val contacts = contactDatabase.queryContactsByName(query)
+        val blockedContacts = getBlockedContacts()
+        val contacts = contactDatabase.queryContactsByName(query, filterUsers = blockedContacts)
         val contactList: MutableList<Address> = ArrayList()
         val contactStrings: MutableList<String> = ArrayList()
-        val blockedContacts = getBlockedContacts()
 
         while (contacts.moveToNext()) {
             try {
                 val contact = contactDatabase.contactFromCursor(contacts)
                 val contactAccountId = contact.accountID
-
-                // Skip this contact if it's blocked
-                if (contactAccountId in blockedContacts) {
-                    continue
-                }
-
                 val address = fromSerialized(contactAccountId)
                 contactList.add(address)
                 contactStrings.add(contactAccountId)
@@ -121,31 +117,17 @@ class SearchRepository(
 
         contacts.close()
 
-        // If we have no contacts (all were filtered out), return empty list
-        if (contactList.isEmpty()) {
-            return Pair(CursorList.emptyList(), contactStrings)
-        }
-
-        // Get the conversations that match these non-blocked contacts
+        val addressThreads = threadDatabase.searchConversationAddresses(query, blockedContacts)// filtering threads by looking up the accountID itself
         val individualRecipients = threadDatabase.getFilteredConversationList(contactList)
-
-        // Also search for conversations directly
-        val addressThreads = threadDatabase.searchConversationAddresses(query)
-
         if (individualRecipients == null && addressThreads == null) {
             return Pair(CursorList.emptyList(), contactStrings)
         }
+        val merged = MergeCursor(arrayOf(addressThreads, individualRecipients))
 
-        // Merge the cursors if both are available
-        val cursor = when {
-            individualRecipients != null && addressThreads != null ->
-                MergeCursor(arrayOf(addressThreads, individualRecipients))
-            individualRecipients != null -> individualRecipients
-            else -> addressThreads
-        }
-
-        val builder = ContactModelBuilder(contactDatabase, threadDatabase, blockedContacts)
-        return Pair(CursorList(cursor, builder), contactStrings)
+        return Pair(
+            CursorList(merged, ContactModelBuilder(contactDatabase, threadDatabase)),
+            contactStrings
+        )
     }
 
     private fun queryConversations(
@@ -183,20 +165,19 @@ class SearchRepository(
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
-        val messages = searchDatabase.queryMessages(query)
         val blockedContacts = getBlockedContacts()
+        val messages = searchDatabase.queryMessages(query, blockedContacts)
         return if (messages != null)
-            CursorList(messages, MessageModelBuilder(context, blockedContacts))
+            CursorList(messages, MessageModelBuilder(context))
         else
             CursorList.emptyList()
     }
 
     private fun queryMessages(query: String, threadId: Long): CursorList<MessageResult?> {
-        val messages = searchDatabase.queryMessages(query, threadId)
         val blockedContacts = getBlockedContacts()
-
+        val messages = searchDatabase.queryMessages(query, threadId, blockedContacts)
         return if (messages != null)
-            CursorList(messages, MessageModelBuilder(context, blockedContacts))
+            CursorList(messages, MessageModelBuilder(context))
         else
             CursorList.emptyList()
     }
@@ -225,21 +206,14 @@ class SearchRepository(
 
     private class ContactModelBuilder(
         private val contactDb: SessionContactDatabase,
-        private val threadDb: ThreadDatabase,
-        private val blockedContacts: Set<String>
+        private val threadDb: ThreadDatabase
     ) : CursorList.ModelBuilder<Contact> {
-        override fun build(cursor: Cursor): Contact? {
+        override fun build(cursor: Cursor): Contact {
             val threadRecord = threadDb.readerFor(cursor).current
-            val accountId = threadRecord.recipient.address.toString()
-
-            // Skip building contact if it's blocked
-            if (accountId in blockedContacts) {
-                return null
-            }
-
-            var contact = contactDb.getContactWithAccountID(accountId)
+            var contact =
+                contactDb.getContactWithAccountID(threadRecord.recipient.address.toString())
             if (contact == null) {
-                contact = Contact(accountId)
+                contact = Contact(threadRecord.recipient.address.toString())
                 contact.threadID = threadRecord.threadId
             }
             return contact
@@ -255,24 +229,15 @@ class SearchRepository(
             return groupDatabase.getGroup(threadRecord.recipient.address.toGroupString()).get()
         }
     }
-    
-    private class MessageModelBuilder(
-        private val context: Context,
-        private val blockedContacts: Set<String>
-    ) : CursorList.ModelBuilder<MessageResult> {
-        override fun build(cursor: Cursor): MessageResult? {
+
+    private class MessageModelBuilder(private val context: Context) : CursorList.ModelBuilder<MessageResult> {
+        override fun build(cursor: Cursor): MessageResult {
             val conversationAddress =
-                cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS))
+                fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
-                cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS))
-
-            // Skip messages to/from blocked contacts
-            if (conversationAddress in blockedContacts || messageAddress in blockedContacts) {
-                return null
-            }
-
-            val conversationRecipient = Recipient.from(context, fromSerialized(conversationAddress), false)
-            val messageRecipient = Recipient.from(context, fromSerialized(messageAddress), false)
+                fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS)))
+            val conversationRecipient = Recipient.from(context, conversationAddress, false)
+            val messageRecipient = Recipient.from(context, messageAddress, false)
             val body = cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.SNIPPET))
             val sentMs =
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))
