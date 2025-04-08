@@ -215,7 +215,7 @@ class HomeViewModel @Inject constructor(
     fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun blockContact(accountId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             val recipient = Recipient.from(context, Address.fromSerialized(accountId), false)
             storage.setBlocked(listOf(recipient), isBlocked = true)
         }
