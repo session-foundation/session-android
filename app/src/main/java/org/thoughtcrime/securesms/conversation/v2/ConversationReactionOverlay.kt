@@ -76,8 +76,6 @@ class ConversationReactionOverlay : FrameLayout {
     private var downIsOurs = false
     private var selected = -1
     private var customEmojiIndex = 0
-    private var originalStatusBarColor = 0
-    private var originalNavigationBarColor = 0
     private lateinit var dropdownAnchor: View
     private lateinit var conversationItem: LinearLayout
     private lateinit var conversationBubble: View
@@ -163,7 +161,6 @@ class ConversationReactionOverlay : FrameLayout {
         conversationItem.scaleY = LONG_PRESS_SCALE_FACTOR
         visibility = INVISIBLE
         this.activity = activity
-        updateSystemUiOnShow(activity)
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
 
         job = scope.launch(Dispatchers.IO) {
@@ -331,18 +328,6 @@ class ConversationReactionOverlay : FrameLayout {
         return Math.max(reactionStartingPoint - reactionBarOffset - reactionBarHeight, spaceNeededBetweenTopOfScreenAndTopOfReactionBar)
     }
 
-    private fun updateSystemUiOnShow(activity: Activity) {
-        val window = activity.window
-        val barColor = ContextCompat.getColor(context, R.color.conversation_overlay_scrim)
-        originalStatusBarColor = window.statusBarColor
-        WindowUtil.setStatusBarColor(window, barColor)
-        originalNavigationBarColor = window.navigationBarColor
-        WindowUtil.setNavigationBarColor(window, barColor)
-        if (!ThemeUtil.isDarkTheme(context)) {
-            WindowUtil.clearLightStatusBar(window)
-            WindowUtil.clearLightNavigationBar(window)
-        }
-    }
 
     fun hide() {
         hideInternal(onHideListener)
@@ -704,12 +689,6 @@ class ConversationReactionOverlay : FrameLayout {
         } + conversationItemAnimator {
             setProperty(Y)
             setFloatValues(selectedConversationModel.bubbleY - statusBarHeight)
-        } + ValueAnimator.ofArgb(activity.window.statusBarColor, originalStatusBarColor).apply {
-            setDuration(duration)
-            addUpdateListener { animation: ValueAnimator -> WindowUtil.setStatusBarColor(activity.window, animation.animatedValue as Int) }
-        } + ValueAnimator.ofArgb(activity.window.statusBarColor, originalNavigationBarColor).apply {
-            setDuration(duration)
-            addUpdateListener { animation: ValueAnimator -> WindowUtil.setNavigationBarColor(activity.window, animation.animatedValue as Int) }
         }
     }
 

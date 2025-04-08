@@ -3,10 +3,14 @@ package org.thoughtcrime.securesms.conversation.start
 import android.app.Dialog
 import android.content.Intent
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -55,8 +59,19 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        FragmentNewConversationBinding.bind(view).newConversationFragmentContainer.verticalSpace =
-            (Resources.getSystem().displayMetrics.heightPixels * (1 - PEEK_RATIO)).toInt()
+        val emptySpace = (Resources.getSystem().displayMetrics.heightPixels * (1 - PEEK_RATIO)).toInt()
+
+        val binding = FragmentNewConversationBinding.bind(view)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            // From Android 15, given display metrics now include the window insets so we'll have to account for that space
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+                binding.newConversationFragmentContainer.verticalSpace = emptySpace + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+                insets
+            }
+        } else {
+            binding.newConversationFragmentContainer.verticalSpace = emptySpace
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =

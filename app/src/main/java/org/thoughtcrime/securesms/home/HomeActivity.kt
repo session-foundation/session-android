@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup.MarginLayoutParams
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -16,6 +17,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -346,7 +348,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
             )
 
-            WindowInsetsCompat.CONSUMED
+            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
+
+            binding.globalSearchRecycler.updatePadding(bottom = bottomInsets)
+            binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+
+            insets
         }
     }
 

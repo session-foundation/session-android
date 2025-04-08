@@ -12,6 +12,7 @@ import android.util.Size
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.Window
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
 import network.loki.messenger.R
@@ -22,10 +23,12 @@ import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.core.graphics.applyCanvas
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
 import kotlin.math.roundToInt
 

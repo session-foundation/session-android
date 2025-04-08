@@ -3,26 +3,27 @@ package org.thoughtcrime.securesms
 import android.app.ActivityManager.TaskDescription
 import android.content.res.Resources
 import android.graphics.BitmapFactory
-import android.os.Build.VERSION
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
-import org.thoughtcrime.securesms.conversation.v2.WindowUtil
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.themeState
-import kotlin.math.max
+
+private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+private val DefaultDarkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
 abstract class BaseActionBarActivity : AppCompatActivity() {
     var currentThemeState: ThemeState? = null
@@ -87,15 +88,16 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        val detectDarkMode = { _: Resources ->
+            ThemeUtil.isDarkTheme(this)
+        }
 
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT, detectDarkMode),
+            navigationBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+        )
         super.onCreate(savedInstanceState)
 
-        WindowCompat.getInsetsController(window, window.decorView).apply {
-            val isLightTheme = ThemeUtil.isLightTheme(this@BaseActionBarActivity)
-            isAppearanceLightNavigationBars = isLightTheme
-            isAppearanceLightStatusBars = isLightTheme
-        }
 
         val actionBar = supportActionBar
         if (actionBar != null) {
@@ -110,6 +112,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
         initializeScreenshotSecurity(true)
         val name = resources.getString(R.string.app_name)
         val icon = BitmapFactory.decodeResource(resources, R.drawable.ic_launcher_foreground)
@@ -119,12 +122,6 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             recreate()
         }
 
-        // apply lightStatusBar manually as API 26 does not update properly via applyTheme
-        // https://issuetracker.google.com/issues/65883460?pli=1
-        if (VERSION.SDK_INT >= 26 && VERSION.SDK_INT <= 27) WindowUtil.setLightStatusBarFromTheme(
-            this
-        )
-        if (VERSION.SDK_INT == 27) WindowUtil.setLightNavigationBarFromTheme(this)
     }
 
     override fun onPause() {
