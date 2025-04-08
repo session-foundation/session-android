@@ -15,7 +15,6 @@ import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
@@ -87,16 +86,15 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -1673,14 +1671,6 @@ open class Storage @Inject constructor(
 
             setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
-
-            // Also update the config about this contact
-            configFactory.withMutableUserConfigs {
-                it.contacts.upsertContact(sender.address.toString()) {
-                    approved = true
-                    approvedMe = true
-                }
-            }
 
             // only show the message if wasn't already approvedMe before
             if(!alreadyApprovedMe) {
