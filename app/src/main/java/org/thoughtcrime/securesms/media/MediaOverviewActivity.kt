@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.media
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.Window
 import androidx.activity.viewModels
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,13 +22,13 @@ class MediaOverviewActivity : ScreenLockActionBarActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE) // So that we don't have an action bar..
+
         super.onCreate(savedInstanceState)
 
         setComposeContent {
             MediaOverviewScreen(viewModel, onClose = this::finish)
         }
-
-        supportActionBar?.hide()
     }
 
     companion object {
