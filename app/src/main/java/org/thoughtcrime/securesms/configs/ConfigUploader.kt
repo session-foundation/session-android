@@ -361,17 +361,17 @@ class ConfigUploader @Inject constructor(
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
-                (configType to configPush) to pushConfig(
+                Triple(configType, configPush, pushConfig(
                     userAuth,
                     snode,
                     configPush,
                     configType.namespace
-                )
+                ))
             }
         }
 
         val pushResults =
-            pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
+            pushTasks.awaitAll().associate { (configType, push, result) -> configType to (push to result) }
 
         Log.d(TAG, "Pushed ${pushResults.size} user configs")
 
