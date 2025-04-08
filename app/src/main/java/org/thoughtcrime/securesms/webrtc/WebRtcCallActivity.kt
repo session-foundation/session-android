@@ -16,7 +16,6 @@ import android.view.View
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import androidx.activity.viewModels
-import androidx.annotation.StringRes
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -34,21 +33,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_DISCONNECTED
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_HANDLING_ICE
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_INCOMING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_OFFER_OUTGOING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_INCOMING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_PRE_OFFER_OUTGOING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_RECONNECTING
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_SENDING_ICE
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.NETWORK_FAILURE
-import org.thoughtcrime.securesms.webrtc.CallViewModel.State.RECIPIENT_UNAVAILABLE
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager.AudioDevice.SPEAKER_PHONE
 import java.time.Duration
 

@@ -8,6 +8,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
 class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
@@ -86,6 +87,15 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         notifyConversationListListeners()
     }
 
+    fun deleteContact(accountId: String) {
+        val database = databaseHelper.writableDatabase
+        val rowsAffected = database.delete(sessionContactTable, "$accountID = ?", arrayOf( accountId ))
+        if (rowsAffected == 0) {
+            Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
+        }
+        notifyConversationListListeners()
+    }
+
     fun contactFromCursor(cursor: Cursor): Contact {
         val contact = Contact(cursor.getString(accountID))
         contact.name = cursor.getStringOrNull(name)
@@ -99,12 +109,23 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         return contact
     }
 
-    fun queryContactsByName(constraint: String): Cursor {
+    fun queryContactsByName(constraint: String, excludeUserAddresses: Set<String> = emptySet()): Cursor {
+        val whereClause = StringBuilder("($name LIKE ? OR $nickname LIKE ?)")
+        val whereArgs = ArrayList<String>()
+        whereArgs.add("%$constraint%")
+        whereArgs.add("%$constraint%")
+
+        // filter out users is the list isn't empty
+        if (excludeUserAddresses.isNotEmpty()) {
+            whereClause.append(" AND $accountID NOT IN (")
+            whereClause.append(excludeUserAddresses.joinToString(", ") { "?" })
+            whereClause.append(")")
+
+            whereArgs.addAll(excludeUserAddresses)
+        }
+
         return databaseHelper.readableDatabase.query(
-            sessionContactTable, null, " $name LIKE ? OR $nickname LIKE ?", arrayOf(
-                "%$constraint%",
-                "%$constraint%"
-            ),
+            sessionContactTable, null, whereClause.toString(), whereArgs.toTypedArray(),
             null, null, null
         )
     }

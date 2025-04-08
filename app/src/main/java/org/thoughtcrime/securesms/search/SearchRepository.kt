@@ -19,7 +19,7 @@ import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
 import org.thoughtcrime.securesms.util.Stopwatch
@@ -33,6 +33,7 @@ class SearchRepository(
     private val groupDatabase: GroupDatabase,
     private val contactDatabase: SessionContactDatabase,
     private val contactAccessor: ContactAccessor,
+    private val configFactory: ConfigFactory,
     private val executor: Executor
 ) {
     private val context: Context = context.applicationContext
@@ -83,8 +84,22 @@ class SearchRepository(
         }
     }
 
+    // Get set of blocked contact AccountIDs from the ConfigFactory
+    private fun getBlockedContacts(): Set<String> {
+        val blockedContacts = mutableSetOf<String>()
+        configFactory.withUserConfigs { userConfigs ->
+            userConfigs.contacts.all().forEach { contact ->
+                if (contact.blocked) {
+                    blockedContacts.add(contact.id)
+                }
+            }
+        }
+        return blockedContacts
+    }
+
     fun queryContacts(query: String): Pair<CursorList<Contact>, MutableList<String>> {
-        val contacts = contactDatabase.queryContactsByName(query)
+        val blockedContacts = getBlockedContacts()
+        val contacts = contactDatabase.queryContactsByName(query, excludeUserAddresses = blockedContacts)
         val contactList: MutableList<Address> = ArrayList()
         val contactStrings: MutableList<String> = ArrayList()
 
@@ -102,7 +117,7 @@ class SearchRepository(
 
         contacts.close()
 
-        val addressThreads = threadDatabase.searchConversationAddresses(query)
+        val addressThreads = threadDatabase.searchConversationAddresses(query, blockedContacts)// filtering threads by looking up the accountID itself
         val individualRecipients = threadDatabase.getFilteredConversationList(contactList)
         if (individualRecipients == null && addressThreads == null) {
             return Pair(CursorList.emptyList(), contactStrings)
@@ -150,7 +165,8 @@ class SearchRepository(
     }
 
     private fun queryMessages(query: String): CursorList<MessageResult> {
-        val messages = searchDatabase.queryMessages(query)
+        val blockedContacts = getBlockedContacts()
+        val messages = searchDatabase.queryMessages(query, blockedContacts)
         return if (messages != null)
             CursorList(messages, MessageModelBuilder(context))
         else
@@ -158,7 +174,8 @@ class SearchRepository(
     }
 
     private fun queryMessages(query: String, threadId: Long): CursorList<MessageResult?> {
-        val messages = searchDatabase.queryMessages(query, threadId)
+        val blockedContacts = getBlockedContacts()
+        val messages = searchDatabase.queryMessages(query, threadId, blockedContacts)
         return if (messages != null)
             CursorList(messages, MessageModelBuilder(context))
         else

@@ -11,7 +11,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
@@ -19,7 +18,10 @@ import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
 import java.security.InvalidParameterException
 
-class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class GlobalSearchAdapter(
+    private val onContactClicked: (Model) -> Unit,
+    private val onContactLongPressed: (Model.Contact) -> Unit,
+): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
         const val HEADER_VIEW_TYPE = 0
@@ -40,10 +42,10 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
     }
 
     override fun getItemViewType(position: Int): Int =
-        when(data[position]) {
-             is Model.Header -> HEADER_VIEW_TYPE
-             is Model.SubHeader -> SUB_HEADER_VIEW_TYPE
-             else -> CONTENT_VIEW_TYPE
+        when (data[position]) {
+            is Model.Header -> HEADER_VIEW_TYPE
+            is Model.SubHeader -> SUB_HEADER_VIEW_TYPE
+            else -> CONTENT_VIEW_TYPE
         }
 
     override fun getItemCount(): Int = data.size
@@ -57,9 +59,10 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_subheader, parent, false)
             )
             else -> ContentView(
-                LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                modelCallback
-            )
+                        LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
+                        onContactClicked,
+                        onContactLongPressed
+                    )
         }
 
     override fun onBindViewHolder(
@@ -73,9 +76,9 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             return
         }
         when (holder) {
-            is HeaderView -> holder.bind(data[position] as Model.Header)
+            is HeaderView    -> holder.bind(data[position] as Model.Header)
             is SubHeaderView -> holder.bind(data[position] as Model.SubHeader)
-            is ContentView -> holder.bind(query.orEmpty(), data[position])
+            is ContentView   -> holder.bind(query.orEmpty(), data[position])
         }
     }
 
@@ -84,18 +87,14 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
     }
 
     class HeaderView(view: View) : RecyclerView.ViewHolder(view) {
-
         val binding = ViewGlobalSearchHeaderBinding.bind(view)
-
         fun bind(header: Model.Header) {
-            binding.searchHeader.setText(header.title.string(binding.root.context))
+            binding.searchHeader.text = header.title.string(binding.root.context)
         }
     }
 
     class SubHeaderView(view: View) : RecyclerView.ViewHolder(view) {
-
         val binding = ViewGlobalSearchSubheaderBinding.bind(view)
-
         fun bind(header: Model.SubHeader) {
             binding.searchHeader.text = header.title.string(binding.root.context)
         }
@@ -107,7 +106,11 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
         }
     }
 
-    class ContentView(view: View, private val modelCallback: (Model) -> Unit) : RecyclerView.ViewHolder(view) {
+    class ContentView(
+        view: View,
+        private val onContactClicked: (Model) -> Unit,
+        private val onContactLongPressed: (Model.Contact) -> Unit,
+    ) : RecyclerView.ViewHolder(view) {
 
         val binding = ViewGlobalSearchResultBinding.bind(view)
 
@@ -119,12 +122,20 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             binding.searchResultProfilePicture.recycle()
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
-                is Model.Contact -> bindModel(query, model)
-                is Model.Message -> bindModel(query, model)
-                is Model.SavedMessages -> bindModel(model)
+                is Model.Contact           -> bindModel(query, model)
+                is Model.Message           -> bindModel(query, model)
+                is Model.SavedMessages     -> bindModel(model)
                 else -> throw InvalidParameterException("Can't display as ContentView")
             }
-            binding.root.setOnClickListener { modelCallback(model) }
+            binding.root.setOnClickListener { onContactClicked(model) }
+
+            // Display the block / delete popup on long-press of a contact which isn't us
+            if (model is Model.Contact && !model.isSelf) {
+                binding.root.setOnLongClickListener {
+                    onContactLongPressed(model)
+                    true
+                }
+            }
         }
     }
 
@@ -137,7 +148,8 @@ class GlobalSearchAdapter(private val modelCallback: (Model)->Unit): RecyclerVie
             constructor(@StringRes title: Int): this(GetString(title))
             constructor(title: String): this(GetString(title))
         }
-        data class SavedMessages(val currentUserPublicKey: String): Model
+
+        data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
         data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
             constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean):
                     this(AccountId(contact.accountID), contact.getSearchName(), isSelf)

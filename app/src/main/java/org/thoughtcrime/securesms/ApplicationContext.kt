@@ -210,7 +210,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             .setWorkerFactory(workerFactory)
             .build()
 
-    override fun getSystemService(name: String): Any {
+    override fun getSystemService(name: String): Any? {
         if (MessagingModuleConfiguration.MESSAGING_MODULE_SERVICE == name) {
             return messagingModuleConfiguration!!
         }

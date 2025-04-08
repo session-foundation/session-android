@@ -17,25 +17,29 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
+import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
+import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+
 import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
-import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.GroupRecord;
@@ -60,7 +64,9 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import org.thoughtcrime.securesms.util.SessionMetaProtocol;
+
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,6 +85,7 @@ public class ThreadDatabase extends Database {
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
+  // Map of threadID -> Address
   private final Map<Long, Address> addressCache = new HashMap<>();
 
   public  static final String TABLE_NAME             = "thread";
@@ -397,18 +404,34 @@ public class ThreadDatabase extends Database {
 
   }
 
-  public Cursor searchConversationAddresses(String addressQuery) {
+  public Cursor searchConversationAddresses(String addressQuery, Set<String> excludeAddresses) {
     if (addressQuery == null || addressQuery.isEmpty()) {
       return null;
     }
 
     SQLiteDatabase db = databaseHelper.getReadableDatabase();
-    String   selection      = TABLE_NAME + "." + ADDRESS + " LIKE ? AND " + TABLE_NAME + "." + MESSAGE_COUNT + " != 0";
-    String[] selectionArgs  = new String[]{addressQuery+"%"};
-    String query = createQuery(selection, 0);
-    Cursor cursor = db.rawQuery(query, selectionArgs);
-    return cursor;
+    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ? AND " +
+            TABLE_NAME + "." + MESSAGE_COUNT + " != 0");
+
+    List<String> selectionArgs = new ArrayList<>();
+    selectionArgs.add(addressQuery + "%");
+
+    // Add exclusion for blocked contacts
+    if (excludeAddresses != null && !excludeAddresses.isEmpty()) {
+      selection.append(" AND ").append(TABLE_NAME).append(".").append(ADDRESS).append(" NOT IN (");
+
+      // Use the helper method to generate placeholders
+      selection.append(generatePlaceholders(excludeAddresses.size()));
+      selection.append(")");
+
+      // Add all exclusion addresses to selection args
+      selectionArgs.addAll(excludeAddresses);
+    }
+
+    String query = createQuery(selection.toString(), 0);
+    return db.rawQuery(query, selectionArgs.toArray(new String[0]));
   }
+
 
   public Cursor getFilteredConversationList(@Nullable List<Address> filter) {
     if (filter == null || filter.size() == 0)
@@ -605,6 +628,7 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  // Note: Deleting a conversation deliberately does NOT delete the contact - we merely delete the convo.
   public void deleteConversation(long threadId) {
     DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
     DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);

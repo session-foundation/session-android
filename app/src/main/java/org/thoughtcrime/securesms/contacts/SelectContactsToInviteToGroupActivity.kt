@@ -16,10 +16,12 @@ import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SelectContactsActivity : ScreenLockActionBarActivity(), LoaderManager.LoaderCallbacks<List<String>> {
+class SelectContactsToInviteToGroupActivity : ScreenLockActionBarActivity(), LoaderManager.LoaderCallbacks<List<String>> {
     private lateinit var binding: ActivitySelectContactsBinding
+
     private var members = listOf<String>()
         set(value) { field = value; selectContactsAdapter.members = value }
+
     private lateinit var usersToExclude: Set<String>
 
     private val selectContactsAdapter by lazy {
@@ -27,9 +29,9 @@ class SelectContactsActivity : ScreenLockActionBarActivity(), LoaderManager.Load
     }
 
     companion object {
-        val usersToExcludeKey = "usersToExcludeKey"
-        val emptyStateTextKey = "emptyStateTextKey"
-        val selectedContactsKey = "selectedContactsKey"
+        const val USERS_TO_EXCLUDE_KEY  = "usersToExcludeKey"
+        const val EMPTY_STATE_TEXT_KEY  = "emptyStateTextKey"
+        const val SELECTED_CONTACTS_KEY = "selectedContactsKey"
     }
 
     // region Lifecycle
@@ -39,8 +41,8 @@ class SelectContactsActivity : ScreenLockActionBarActivity(), LoaderManager.Load
         setContentView(binding.root)
         supportActionBar!!.title = resources.getString(R.string.membersInvite)
 
-        usersToExclude = intent.getStringArrayExtra(usersToExcludeKey)?.toSet() ?: setOf()
-        val emptyStateText = intent.getStringExtra(emptyStateTextKey)
+        usersToExclude = intent.getStringArrayExtra(USERS_TO_EXCLUDE_KEY)?.toSet() ?: setOf()
+        val emptyStateText = intent.getStringExtra(EMPTY_STATE_TEXT_KEY)
         if (emptyStateText != null) {
             binding.emptyStateMessageTextView.text = emptyStateText
         }
@@ -90,7 +92,7 @@ class SelectContactsActivity : ScreenLockActionBarActivity(), LoaderManager.Load
         val selectedMembers = selectContactsAdapter.selectedMembers
         val selectedContacts = selectedMembers.toTypedArray()
         val intent = Intent()
-        intent.putExtra(selectedContactsKey, selectedContacts)
+        intent.putExtra(SELECTED_CONTACTS_KEY, selectedContacts)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

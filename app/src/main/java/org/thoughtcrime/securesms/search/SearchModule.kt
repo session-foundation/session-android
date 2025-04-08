@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
 
 @Module
 @InstallIn(ViewModelComponent::class)
@@ -26,8 +27,12 @@ object SearchModule {
                                 searchDatabase: SearchDatabase,
                                 threadDatabase: ThreadDatabase,
                                 groupDatabase: GroupDatabase,
-                                contactDatabase: SessionContactDatabase) =
-            SearchRepository(context, searchDatabase, threadDatabase, groupDatabase, contactDatabase, ContactAccessor.getInstance(), SignalExecutors.SERIAL)
+                                contactDatabase: SessionContactDatabase,
+                                configFactory: ConfigFactory) =
+            SearchRepository(
+                context, searchDatabase, threadDatabase, groupDatabase, contactDatabase,
+                ContactAccessor.getInstance(), configFactory, SignalExecutors.SERIAL
+            )
 
 
 }

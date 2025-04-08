@@ -1,10 +1,10 @@
 package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
-import androidx.recyclerview.widget.RecyclerView
 import android.view.ViewGroup
-import org.session.libsession.utilities.Address
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 
 class SelectContactsAdapter(private val context: Context, private val glide: RequestManager) : RecyclerView.Adapter<SelectContactsAdapter.ViewHolder>() {
@@ -26,6 +26,7 @@ class SelectContactsAdapter(private val context: Context, private val glide: Req
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val member = members[position]
         viewHolder.view.setOnClickListener { onMemberClick(member) }
+
         val isSelected = selectedMembers.contains(member)
         viewHolder.view.bind(Recipient.from(
             context,
