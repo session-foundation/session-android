@@ -93,6 +93,7 @@
     <string name="AccessibilityId_mentions_list">Mentions list</string>
     <string name="AccessibilityId_outdated_group_banner">Legacy group banner</string>
     <string name="AccessibilityId_empty_conversation">Empty list</string>
+    <string name="AccessibilityId_recreate_legacy_group">Legacy Groups Recreate Button</string>
     <!--  Conversation icons -->
     <string name="AccessibilityId_messageRequestsAccept">Accept message request</string>
     <string name="AccessibilityId_messageRequestsBlock">Block message request</string>
