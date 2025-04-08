@@ -20,6 +20,7 @@ package org.thoughtcrime.securesms.database;
 import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
 import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
+import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -419,22 +420,16 @@ public class ThreadDatabase extends Database {
     if (excludeAddresses != null && !excludeAddresses.isEmpty()) {
       selection.append(" AND ").append(TABLE_NAME).append(".").append(ADDRESS).append(" NOT IN (");
 
-      int i = 0;
-      for (String excludeAddress : excludeAddresses) {
-        if (i > 0) {
-          selection.append(", ");
-        }
-        selection.append("?");
-        selectionArgs.add(excludeAddress);
-        i++;
-      }
-
+      // Use the helper method to generate placeholders
+      selection.append(generatePlaceholders(excludeAddresses.size()));
       selection.append(")");
+
+      // Add all exclusion addresses to selection args
+      selectionArgs.addAll(excludeAddresses);
     }
 
     String query = createQuery(selection.toString(), 0);
-    Cursor cursor = db.rawQuery(query, selectionArgs.toArray(new String[0]));
-    return cursor;
+    return db.rawQuery(query, selectionArgs.toArray(new String[0]));
   }
 
 

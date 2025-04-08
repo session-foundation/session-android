@@ -222,7 +222,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun deleteContact(accountId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             storage.deleteContactAndSyncConfig(accountId)
         }
     }

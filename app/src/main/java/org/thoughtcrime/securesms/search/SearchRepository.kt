@@ -99,7 +99,7 @@ class SearchRepository(
 
     fun queryContacts(query: String): Pair<CursorList<Contact>, MutableList<String>> {
         val blockedContacts = getBlockedContacts()
-        val contacts = contactDatabase.queryContactsByName(query, filterUsers = blockedContacts)
+        val contacts = contactDatabase.queryContactsByName(query, excludeUserAddresses = blockedContacts)
         val contactList: MutableList<Address> = ArrayList()
         val contactStrings: MutableList<String> = ArrayList()
 

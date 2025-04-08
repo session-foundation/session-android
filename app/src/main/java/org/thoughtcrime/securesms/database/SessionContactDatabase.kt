@@ -109,19 +109,19 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         return contact
     }
 
-    fun queryContactsByName(constraint: String, filterUsers: Set<String> = emptySet()): Cursor {
+    fun queryContactsByName(constraint: String, excludeUserAddresses: Set<String> = emptySet()): Cursor {
         val whereClause = StringBuilder("($name LIKE ? OR $nickname LIKE ?)")
         val whereArgs = ArrayList<String>()
         whereArgs.add("%$constraint%")
         whereArgs.add("%$constraint%")
 
         // filter out users is the list isn't empty
-        if (filterUsers.isNotEmpty()) {
+        if (excludeUserAddresses.isNotEmpty()) {
             whereClause.append(" AND $accountID NOT IN (")
-            whereClause.append(filterUsers.joinToString(", ") { "?" })
+            whereClause.append(excludeUserAddresses.joinToString(", ") { "?" })
             whereClause.append(")")
 
-            whereArgs.addAll(filterUsers)
+            whereArgs.addAll(excludeUserAddresses)
         }
 
         return databaseHelper.readableDatabase.query(

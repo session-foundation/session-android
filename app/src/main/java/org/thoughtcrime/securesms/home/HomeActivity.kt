@@ -90,7 +90,8 @@ private const val FROM_ONBOARDING = "HomeActivity_FROM_ONBOARDING"
 @AndroidEntryPoint
 class HomeActivity : ScreenLockActionBarActivity(),
     ConversationClickListener,
-    GlobalSearchInputLayout.GlobalSearchInputLayoutListener {
+    GlobalSearchInputLayout.GlobalSearchInputLayoutListener,
+    SearchContactActionBottomSheet.Callbacks{
 
     private val TAG = "HomeActivity"
 
@@ -120,7 +121,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         HomeAdapter(context = this, configFactory = configFactory, listener = this, ::showMessageRequests, ::hideMessageRequests)
     }
 
-    private val globalSearchAdapter = GlobalSearchAdapter(context = this,
+    private val globalSearchAdapter = GlobalSearchAdapter(
         onContactClicked = { model ->
             when (model) {
                 is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
@@ -156,12 +157,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     )
 
     private fun onSearchContactLongPress(accountId: String, contactName: String) {
-        val bottomSheet = SearchContactActionBottomSheet(
-            accountId = accountId,
-            contactName = contactName,
-            blockContact = homeViewModel::blockContact,
-            deleteContact = homeViewModel::deleteContact
-        )
+        val bottomSheet = SearchContactActionBottomSheet.newInstance(accountId, contactName)
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
@@ -340,6 +336,14 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     override fun onCancelClicked() {
         homeViewModel.onCancelSearchClicked()
+    }
+
+    override fun onBlockContact(accountId: String) {
+        homeViewModel.blockContact(accountId)
+    }
+
+    override fun onDeleteContact(accountId: String) {
+        homeViewModel.deleteContact(accountId)
     }
 
     private val GlobalSearchResult.groupedContacts: List<GlobalSearchAdapter.Model> get() {

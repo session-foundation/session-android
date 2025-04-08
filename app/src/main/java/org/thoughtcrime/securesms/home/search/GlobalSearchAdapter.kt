@@ -19,7 +19,6 @@ import org.thoughtcrime.securesms.ui.GetString
 import java.security.InvalidParameterException
 
 class GlobalSearchAdapter(
-    val context: Context,
     private val onContactClicked: (Model) -> Unit,
     private val onContactLongPressed: (Model.Contact) -> Unit,
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -61,7 +60,8 @@ class GlobalSearchAdapter(
             )
             else -> ContentView(
                         LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                        onContactClicked
+                        onContactClicked,
+                        onContactLongPressed
                     )
         }
 
@@ -106,8 +106,11 @@ class GlobalSearchAdapter(
         }
     }
 
-    // Note: We mark the ContentView as an inner class in order to access the context from the GlobalSearchAdapter
-    inner class ContentView(view: View, private val onContactClicked: (Model) -> Unit) : RecyclerView.ViewHolder(view) {
+    class ContentView(
+        view: View,
+        private val onContactClicked: (Model) -> Unit,
+        private val onContactLongPressed: (Model.Contact) -> Unit,
+    ) : RecyclerView.ViewHolder(view) {
 
         val binding = ViewGlobalSearchResultBinding.bind(view)
 

@@ -1,5 +1,7 @@
 package org.thoughtcrime.securesms.database;
 
+import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
+
 import android.content.Context;
 import android.database.Cursor;
 
@@ -202,19 +204,6 @@ public class SearchDatabase extends Database {
     Cursor cursor = db.rawQuery(messagesForThreadQuery, args.toArray(new String[0]));
     setNotifyConversationListListeners(cursor);
     return cursor;
-  }
-
-  // Helper method to generate SQL placeholders (?, ?, ?)
-  private String generatePlaceholders(int count) {
-    if (count <= 0) return "";
-
-    StringBuilder placeholders = new StringBuilder();
-    for (int i = 0; i < count; i++) {
-      if (i > 0) placeholders.append(", ");
-      placeholders.append("?");
-    }
-
-    return placeholders.toString();
   }
 
   private String adjustQuery(@NonNull String query) {
