@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.Util;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,6 +91,8 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
   @Override
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
+
+    ViewUtilitiesKt.applySafeInsetsPaddings(view);
 
     RecyclerView imageList = view.findViewById(R.id.mediapicker_item_list);
 

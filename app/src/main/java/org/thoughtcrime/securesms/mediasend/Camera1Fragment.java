@@ -41,6 +41,7 @@ import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.ServiceUtil;
 import org.thoughtcrime.securesms.util.Stopwatch;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import java.io.ByteArrayOutputStream;
 
@@ -99,6 +100,8 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     cameraPreview     = view.findViewById(R.id.camera_preview);
     controlsContainer = view.findViewById(R.id.camera_controls_container);
     cameraCloseButton = view.findViewById(R.id.camera_close_button);
+
+    ViewUtilitiesKt.applySafeInsetsPaddings(view.findViewById(R.id.camera_controls_safe_area));
 
     onOrientationChanged(getResources().getConfiguration().orientation);
 

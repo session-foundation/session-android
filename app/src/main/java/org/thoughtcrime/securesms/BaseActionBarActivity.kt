@@ -20,6 +20,7 @@ import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.conversation.v2.WindowUtil
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.themeState
 import kotlin.math.max
 
@@ -35,6 +36,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             return appContext.textSecurePreferences
         }
 
+    // Whether to apply default window insets to the decor view
     open val applyDefaultWindowInsets: Boolean
         get() = true
 
@@ -101,26 +103,8 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setHomeButtonEnabled(true)
         }
 
-
-        if(applyDefaultWindowInsets) {
-            // Apply insets to your views - Needed for sdk35 and above
-            val rootView = findViewById<View>(android.R.id.content)
-            ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
-                
-                // Get system bars insets
-                val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-
-                // Update view padding to account for system bars
-                view.updatePadding(
-                    left = systemBarsInsets.left,
-                    top = systemBarsInsets.top,
-                    right = systemBarsInsets.right,
-                    bottom = systemBarsInsets.bottom
-                )
-
-                // Consume the insets
-                windowInsets
-            }
+        if (applyDefaultWindowInsets) {
+            findViewById<View>(android.R.id.content)?.applySafeInsetsPaddings()
         }
     }
 

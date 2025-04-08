@@ -11,7 +11,6 @@ import android.view.animation.Animation
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import android.view.animation.ScaleAnimation
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
@@ -19,6 +18,7 @@ import androidx.fragment.app.FragmentManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import network.loki.messenger.databinding.MediasendActivityBinding
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -26,13 +26,13 @@ import org.session.libsession.utilities.Util.isEmpty
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.mediasend.MediaSendViewModel.CountButtonState
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.FilenameUtils.constructPhotoFilename
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.IOException
 
 /**
@@ -50,9 +50,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     private var recipient: Recipient? = null
     private val viewModel: MediaSendViewModel by viewModels()
 
-    private var countButton: View? = null
-    private var countButtonText: TextView? = null
-    private var cameraButton: View? = null
+    private lateinit var binding: MediasendActivityBinding
+
 
     override val applyDefaultWindowInsets: Boolean
         get() = false // we want to handle window insets manually here for fullscreen fragments like the camera screen
@@ -60,16 +59,18 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
 
-        setContentView(R.layout.mediasend_activity)
+        binding = MediasendActivityBinding.inflate(layoutInflater).also {
+            setContentView(it.root)
+        }
+
         setResult(RESULT_CANCELED)
 
         if (savedInstanceState != null) {
             return
         }
 
-        countButton = findViewById(R.id.mediasend_count_button)
-        countButtonText = findViewById(R.id.mediasend_count_button_text)
-        cameraButton = findViewById(R.id.mediasend_camera_button)
+        // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
+        binding.mediasendBottomBar.applySafeInsetsPaddings()
 
         recipient = Recipient.from(
             this, fromSerialized(
@@ -107,7 +108,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         initializeCameraButtonObserver()
         initializeErrorObserver()
 
-        cameraButton?.setOnClickListener { v: View? ->
+        binding.mediasendCameraButton.setOnClickListener { v: View? ->
             val maxSelection = MediaSendViewModel.MAX_SELECTED_FILES
             if (viewModel.getSelectedMedia().value != null && viewModel.getSelectedMedia().value!!.size >= maxSelection) {
                 Toast.makeText(this, getString(R.string.attachmentsErrorNumber), Toast.LENGTH_SHORT)
@@ -284,24 +285,24 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             this
         ) { buttonState: CountButtonState? ->
             if (buttonState == null) return@observe
-            countButtonText!!.text = buttonState.count.toString()
-            countButton!!.isEnabled = buttonState.isVisible
+            binding.mediasendCountButtonText.text = buttonState.count.toString()
+            binding.mediasendCountButton.isEnabled = buttonState.isVisible
             animateButtonVisibility(
-                countButton!!,
-                countButton!!.visibility,
+                binding.mediasendCountButton,
+                binding.mediasendCountButton.visibility,
                 if (buttonState.isVisible) View.VISIBLE else View.GONE
             )
             if (buttonState.count > 0) {
-                countButton!!.setOnClickListener { v: View? ->
+                binding.mediasendCountButton.setOnClickListener { v: View? ->
                     navigateToMediaSend(
                         recipient!!
                     )
                 }
                 if (buttonState.isVisible) {
-                    animateButtonTextChange(countButton!!)
+                    animateButtonTextChange(binding.mediasendCountButton)
                 }
             } else {
-                countButton!!.setOnClickListener(null)
+                binding.mediasendCountButton.setOnClickListener(null)
             }
         }
     }
@@ -312,8 +313,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         ) { visible: Boolean? ->
             if (visible == null) return@observe
             animateButtonVisibility(
-                cameraButton!!,
-                cameraButton!!.visibility,
+                binding.mediasendCameraButton,
+                binding.mediasendCameraButton.visibility,
                 if (visible) View.VISIBLE else View.GONE
             )
         }

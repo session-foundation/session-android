@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.PushCharacterCalculator
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -95,6 +96,8 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         val binding = MediasendFragmentBinding.bind(view).also {
             this.binding = it
         }
+
+        binding.mediasendSafeArea.applySafeInsetsPaddings()
 
         binding.mediasendSendButton.setOnClickListener { v: View? ->
             if (binding.mediasendHud.isKeyboardOpen) {

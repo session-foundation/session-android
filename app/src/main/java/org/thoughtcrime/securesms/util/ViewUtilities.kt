@@ -11,6 +11,7 @@ import android.graphics.Rect
 import android.util.Size
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
 import network.loki.messenger.R
@@ -20,6 +21,11 @@ import android.widget.EditText
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.core.graphics.applyCanvas
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.Type.InsetsType
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import org.session.libsignal.utilities.Log
 import kotlin.math.roundToInt
 
@@ -120,6 +126,68 @@ fun EditText.addTextChangedListener(listener: (String) -> Unit) {
             listener(text)
         }
     })
+}
+
+/**
+ * Applies the system insets to the view's paddings.
+ */
+@JvmOverloads
+fun View.applySafeInsetsPaddings(
+    @InsetsType
+    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    consumeInsets: Boolean = false,
+) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
+        // Get system bars insets
+        val systemBarsInsets = windowInsets.getInsets(typeMask)
+
+        // Update view padding to account for system bars
+        view.updatePadding(
+            left = systemBarsInsets.left,
+            top = systemBarsInsets.top,
+            right = systemBarsInsets.right,
+            bottom = systemBarsInsets.bottom
+        )
+
+        if (consumeInsets) {
+            WindowInsetsCompat.CONSUMED
+        } else {
+            // Return the insets unconsumed
+            windowInsets
+        }
+    }
+}
+
+/**
+ * Applies the system insets to the view's paddings.
+ */
+@JvmOverloads
+fun View.applySafeInsetsMargins(
+    @InsetsType
+    typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
+    consumeInsets: Boolean = false,
+) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
+        // Get system bars insets
+        val systemBarsInsets = windowInsets.getInsets(typeMask)
+
+        // Update view margins to account for system bars
+        val lp = view.layoutParams as? MarginLayoutParams
+        if (lp != null) {
+            lp.setMargins(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom)
+            view.layoutParams = lp
+
+            if (consumeInsets) {
+                WindowInsetsCompat.CONSUMED
+            } else {
+                // Return the insets unconsumed
+                windowInsets
+            }
+        } else {
+            Log.w("ViewUtils", "Cannot apply insets to view with no margins")
+            windowInsets
+        }
+    }
 }
 
 // Listener class that only accepts clicks at given interval to prevent button spam - can be used instead
