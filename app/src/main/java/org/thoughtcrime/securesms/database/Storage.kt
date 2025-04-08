@@ -1664,6 +1664,13 @@ open class Storage @Inject constructor(
                 smsDatabase.updateThreadId(blindedThreadId, threadId)
                 threadDatabase.deleteConversation(blindedThreadId)
             }
+
+            var alreadyApprovedMe: Boolean = false
+            configFactory.withUserConfigs {
+                // check is the person had not yet approvedMe
+                alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
+            }
+
             setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
 
@@ -1675,25 +1682,32 @@ open class Storage @Inject constructor(
                 }
             }
 
-            val message = IncomingMediaMessage(
-                sender.address,
-                response.sentTimestamp!!,
-                -1,
-                0,
-                0,
-                false,
-                false,
-                true,
-                false,
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent(),
-                Optional.absent()
-            )
-            mmsDatabase.insertSecureDecryptedMessageInbox(message, threadId, runThreadUpdate = true)
+            // only show the message if wasn't already approvedMe before
+            if(!alreadyApprovedMe) {
+                val message = IncomingMediaMessage(
+                    sender.address,
+                    response.sentTimestamp!!,
+                    -1,
+                    0,
+                    0,
+                    false,
+                    false,
+                    true,
+                    false,
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent(),
+                    Optional.absent()
+                )
+                mmsDatabase.insertSecureDecryptedMessageInbox(
+                    message,
+                    threadId,
+                    runThreadUpdate = true
+                )
+            }
         }
     }
 
