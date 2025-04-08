@@ -208,11 +208,15 @@ class ConfigUploader @Inject constructor(
         // Gather data to push
         groupConfigAccess { configs ->
             if (configs.groupMembers.needsPush()) {
-                membersPush = configs.groupMembers.push()
+                membersPush = runCatching { configs.groupMembers.push() }
+                    .onFailure { Log.w(TAG, "Error generating group members config push", it) }
+                    .getOrNull()
             }
 
             if (configs.groupInfo.needsPush()) {
-                infoPush = configs.groupInfo.push()
+                infoPush = runCatching { configs.groupInfo.push() }
+                    .onFailure { Log.w(TAG, "Error generating group info config push", it) }
+                    .getOrNull()
             }
 
             keysPush = configs.groupKeys.pendingConfig()
@@ -338,7 +342,12 @@ class ConfigUploader @Inject constructor(
                         return@mapNotNull null
                     }
 
-                    type to config.push()
+                    val configPush = runCatching { config.push() }
+                        .onFailure { Log.w(TAG, "Error generating $type config", it) }
+                        .getOrNull()
+                        ?: return@mapNotNull null
+
+                    type to configPush
                 }
         }
 
