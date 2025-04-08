@@ -118,7 +118,9 @@ public class BitmapUtil {
         do {
           totalAttempts++;
           ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          scaledBitmap.compress(format, quality, baos);
+          if (!scaledBitmap.compress(format, quality, baos)) {
+            Log.d(TAG, "Unable to compress image with quality " + quality);
+          }
           bytes = baos.toByteArray();
 
           Log.d(TAG, "iteration with quality " + quality + " size " + bytes.length + " bytes.");
@@ -144,7 +146,7 @@ public class BitmapUtil {
           }
         }
 
-        if (bytes.length <= 0) {
+        if (bytes.length == 0) {
           throw new BitmapDecodingException("Decoding failed. Bitmap has a length of " + bytes.length + " bytes.");
         }
 

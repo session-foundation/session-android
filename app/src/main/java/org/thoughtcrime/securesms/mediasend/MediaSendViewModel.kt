@@ -82,9 +82,9 @@ internal class MediaSendViewModel @Inject constructor(
                         if (filteredMedia.size > 0) {
                             val computedId: String = Stream.of(filteredMedia)
                                 .skip(1)
-                                .reduce(filteredMedia.get(0).bucketId.or(Media.ALL_MEDIA_BUCKET_ID),
+                                .reduce(filteredMedia.get(0).bucketId ?: Media.ALL_MEDIA_BUCKET_ID,
                                     { id: String?, m: Media ->
-                                        if (equals(id, m.bucketId.or(Media.ALL_MEDIA_BUCKET_ID))) {
+                                        if (equals(id, m.bucketId ?: Media.ALL_MEDIA_BUCKET_ID)) {
                                             return@reduce id
                                         } else {
                                             return@reduce Media.ALL_MEDIA_BUCKET_ID
@@ -118,7 +118,7 @@ internal class MediaSendViewModel @Inject constructor(
                             error.setValue(Error.ITEM_TOO_LARGE)
                             bucketId.setValue(Media.ALL_MEDIA_BUCKET_ID)
                         } else {
-                            bucketId.setValue(filteredMedia.get(0).bucketId.or(Media.ALL_MEDIA_BUCKET_ID))
+                            bucketId.setValue(filteredMedia.get(0).bucketId ?: Media.ALL_MEDIA_BUCKET_ID)
                         }
 
                         countButtonVisibility = CountButtonState.Visibility.FORCED_OFF

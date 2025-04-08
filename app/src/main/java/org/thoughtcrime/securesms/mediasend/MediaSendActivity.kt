@@ -254,8 +254,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
                     width,
                     height,
                     data.size.toLong(),
-                    Optional.of<String>(Media.ALL_MEDIA_BUCKET_ID),
-                    Optional.absent<String>()
+                    Media.ALL_MEDIA_BUCKET_ID,
+                    null
                 )
             } catch (e: Exception) {
                 return@run null

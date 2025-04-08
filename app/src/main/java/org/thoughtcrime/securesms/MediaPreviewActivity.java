@@ -429,9 +429,12 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     String mediaFilename = "";
     if (mediaItem.attachment != null) {
       mediaFilename = mediaItem.attachment.getFilename();
-    } else {
+    }
+
+    if(mediaFilename == null || mediaFilename.isEmpty()){
       mediaFilename = FilenameUtils.getFilenameFromUri(MediaPreviewActivity.this, mediaItem.uri, mediaItem.mimeType);
     }
+
     final String outputFilename = mediaFilename; // We need a `final` value for the saveTask, below
     Log.i(TAG, "About to save media as: " + outputFilename);
 

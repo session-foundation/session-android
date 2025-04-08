@@ -107,7 +107,6 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -197,7 +196,6 @@ import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
-import org.thoughtcrime.securesms.util.scrollAmount
 import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
@@ -825,7 +823,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.GIF    == mediaType ||
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
-                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+                val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
                 startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
                 return
             } else {
@@ -1908,7 +1906,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val recipient = viewModel.recipient ?: return
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
-        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, Optional.absent(), Optional.absent())
+        val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
         startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
@@ -2121,9 +2119,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 for (media in mediaList) {
                     val mediaFilename: String? = media.filename
                     when {
-                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption.orNull()))                            }
-                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull()))   }
-                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption.orNull())) }
+                        MediaUtil.isVideoType(media.mimeType) -> { slideDeck.addSlide(VideoSlide(this, media.uri, mediaFilename, 0, media.caption))                            }
+                        MediaUtil.isGif(media.mimeType)       -> { slideDeck.addSlide(GifSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption))   }
+                        MediaUtil.isImageType(media.mimeType) -> { slideDeck.addSlide(ImageSlide(this, media.uri, mediaFilename, 0, media.width, media.height, media.caption)) }
                         else -> {
                             Log.d(TAG, "Asked to send an unexpected media type: '" + media.mimeType + "'. Skipping.")
                         }
