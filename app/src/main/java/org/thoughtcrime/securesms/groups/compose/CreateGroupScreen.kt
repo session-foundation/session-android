@@ -2,11 +2,11 @@ package org.thoughtcrime.securesms.groups.compose
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -115,7 +114,8 @@ fun CreateGroup(
                 backgroundColor = LocalColors.current.backgroundSecondary,
                 onBack = onBack,
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0.dp), // Insets handled in the dialog
     ) { paddings ->
         Box(modifier = modifier.padding(paddings)) {
             Column(

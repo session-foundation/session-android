@@ -11,8 +11,11 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -154,6 +157,9 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     private val isFromOnboarding: Boolean get() = intent.getBooleanExtra(FROM_ONBOARDING, false)
     private val isNewAccount: Boolean get() = intent.getBooleanExtra(NEW_ACCOUNT, false)
+
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -322,6 +328,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.isSearchOpen.collect { open ->
                 setSearchShown(open)
             }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            // Apply status bar insets to the toolbar
+            binding.toolbar.updatePadding(
+                top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            )
+
+            WindowInsetsCompat.CONSUMED
         }
     }
 

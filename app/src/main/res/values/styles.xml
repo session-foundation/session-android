@@ -100,7 +100,11 @@
     <style name="Widget.Session.BottomSheetDialog" parent="Widget.Design.BottomSheet.Modal">
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.6</item>
-        <item name="android:background">@drawable/default_bottom_sheet_background</item>
+
+        <!--  Background and shapes are disabled to make ways for our own background handling  -->
+        <item name="android:background">@null</item>
+        <item name="shapeAppearance">@null</item>
+        <item name="shapeAppearanceOverlay">@null</item>
     </style>
 
     <style name="Widget.Session.AppBarLayout" parent="@style/Widget.Design.AppBarLayout">

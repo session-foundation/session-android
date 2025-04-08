@@ -7,6 +7,7 @@ import android.os.Build.VERSION
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -15,6 +16,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.conversation.v2.WindowUtil
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
@@ -83,7 +85,15 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+
         super.onCreate(savedInstanceState)
+
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            val isLightTheme = ThemeUtil.isLightTheme(this@BaseActionBarActivity)
+            isAppearanceLightNavigationBars = isLightTheme
+            isAppearanceLightStatusBars = isLightTheme
+        }
 
         val actionBar = supportActionBar
         if (actionBar != null) {
@@ -91,10 +101,8 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setHomeButtonEnabled(true)
         }
 
-        if(VERSION.SDK_INT >= 35 && applyDefaultWindowInsets) {
-            // Enable edge-to-edge - needed for sdk35 and above
-            WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        if(applyDefaultWindowInsets) {
             // Apply insets to your views - Needed for sdk35 and above
             val rootView = findViewById<View>(android.R.id.content)
             ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->

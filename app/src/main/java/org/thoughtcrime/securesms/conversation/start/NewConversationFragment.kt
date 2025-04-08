@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -15,9 +14,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import network.loki.messenger.databinding.FragmentNewConversationBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.modifyLayoutParams
 import org.thoughtcrime.securesms.conversation.start.home.StartConversationHomeFragment
 import org.thoughtcrime.securesms.conversation.start.invitefriend.InviteFriendFragment
 import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragment
@@ -34,10 +33,17 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         const val PEEK_RATIO = 0.94f
     }
 
-    private val defaultPeekHeight: Int by lazy { (Resources.getSystem().displayMetrics.heightPixels * PEEK_RATIO).toInt() }
-
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        replaceFragment(
+            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
+            fragmentKey = StartConversationHomeFragment::class.java.simpleName
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,21 +54,16 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        replaceFragment(
-            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
-            fragmentKey = StartConversationHomeFragment::class.java.simpleName
-        )
+
+        FragmentNewConversationBinding.bind(view).newConversationFragmentContainer.verticalSpace =
+            (Resources.getSystem().displayMetrics.heightPixels * (1 - PEEK_RATIO)).toInt()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet).apply {
-            setOnShowListener { _ ->
-                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.apply {
-                    modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
-                }?.let { BottomSheetBehavior.from(it) }?.apply {
-                    skipCollapsed = true
-                    state = BottomSheetBehavior.STATE_EXPANDED
-                }
+        BottomSheetDialog(requireContext()).apply {
+            behavior.apply {
+                skipCollapsed = true
+                state = BottomSheetBehavior.STATE_EXPANDED
             }
         }
 
