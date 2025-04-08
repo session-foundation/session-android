@@ -29,9 +29,9 @@ class SelectContactsToInviteToGroupActivity : ScreenLockActionBarActivity(), Loa
     }
 
     companion object {
-        val USERS_TO_EXCLUDE_KEY  = "usersToExcludeKey"
-        val EMPTY_STATE_TEXT_KEY  = "emptyStateTextKey"
-        val SELECTED_CONTACTS_KEY = "selectedContactsKey"
+        const val USERS_TO_EXCLUDE_KEY  = "usersToExcludeKey"
+        const val EMPTY_STATE_TEXT_KEY  = "emptyStateTextKey"
+        const val SELECTED_CONTACTS_KEY = "selectedContactsKey"
     }
 
     // region Lifecycle
