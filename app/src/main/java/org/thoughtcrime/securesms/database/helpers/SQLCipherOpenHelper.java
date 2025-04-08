@@ -14,6 +14,8 @@ import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+
+import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
@@ -102,7 +104,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private final Context        context;
   private final DatabaseSecret databaseSecret;
 
-  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
+  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, @NonNull TextSecurePreferences preferences) {
     super(
       context,
       DATABASE_NAME,
@@ -114,12 +116,27 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       new SQLiteDatabaseHook() {
         @Override
         public void preKey(SQLiteConnection connection) {
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+          boolean migratedToDisablingKDF = preferences.getMigratedToDisablingKDF();
+          Log.d(TAG, "Pre-keying database, migratedToDisablingKDF = " + migratedToDisablingKDF);
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true, migratedToDisablingKDF);
         }
 
         @Override
         public void postKey(SQLiteConnection connection) {
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true, preferences.getMigratedToDisablingKDF());
+
+          if (!preferences.getMigratedToDisablingKDF()) {
+            connection.executeRaw("SELECT COUNT(*) FROM sqlite_master;", null, null);
+
+            Log.d(TAG, "Rekeying database with new KDF settings, this = " + this);
+            // We need to rekey the database with the new KDF settings
+            connection.executeRaw("PRAGMA rekey = \"x'" + databaseSecret.asString() + "'\"", null, null);
+            connection.executeRaw("PRAGMA kdf_iter = '1'", null, null);
+            connection.executeRaw("PRAGMA key = \"x'" + databaseSecret.asString() + "'\"", null, null);
+            connection.executeRaw("SELECT COUNT(*) FROM sqlite_master", null, null);
+            preferences.setMigratedToDisablingKDF(true);
+            Log.d(TAG, "Rekeying complete");
+          }
 
           // if not vacuumed in a while, perform that operation
           long currentTime = System.currentTimeMillis();
@@ -140,10 +157,18 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     this.context        = context.getApplicationContext();
     this.databaseSecret = databaseSecret;
+
+    if (BuildConfig.DEBUG) {
+      Log.d(TAG, "Db password = " + databaseSecret.asString());
+    }
   }
 
-  private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4) {
-    if (useSQLCipher4) {
+  private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4, boolean disableKdf) {
+    if (disableKdf) {
+      Log.d(TAG, "Applying SQLCipher pragmas with KDF disabled");
+      connection.execute("PRAGMA kdf_iter = '1';", null, null);
+    } else if (useSQLCipher4) {
+      Log.d(TAG, "Applying with KDF enabled");
       connection.execute("PRAGMA kdf_iter = '256000';", null, null);
     }
     else {
@@ -154,13 +179,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
   }
 
-  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) {
+  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4, boolean disableKdf) {
     return SQLiteDatabase.openDatabase(path, databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, new SQLiteDatabaseHook() {
       @Override
-      public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
+      public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4, disableKdf); }
 
       @Override
-      public void postKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
+      public void postKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4, disableKdf); }
     });
   }
 
@@ -184,7 +209,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         // can remove the old database file (it won't be used anymore)
         if (oldDbFile.lastModified() <= newDbFile.lastModified()) {
           try {
-            SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
+            SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true, true);
             int version = newDb.getVersion();
             newDb.close();
 
@@ -215,7 +240,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       // Open the old database and extract it's version
-      SQLiteDatabase oldDb = SQLCipherOpenHelper.open(oldDbPath, databaseSecret, false);
+      SQLiteDatabase oldDb = SQLCipherOpenHelper.open(oldDbPath, databaseSecret, false, false);
       int oldDbVersion = oldDb.getVersion();
 
       // Export the old database to the new one (will have the default 'kdf_iter' and 'page_size' settings)
@@ -230,7 +255,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       // Open the newly migrated database (to ensure it works) and set it's version so we don't try
       // to run any of our custom migrations
-      SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
+      SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true, true);
       newDb.setVersion(oldDbVersion);
       newDb.close();
 
