@@ -13,6 +13,7 @@ import android.view.animation.OvershootInterpolator
 import android.view.animation.ScaleAnimation
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.core.view.ViewGroupCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.squareup.phrase.Phrase
@@ -61,6 +62,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
         binding = MediasendActivityBinding.inflate(layoutInflater).also {
             setContentView(it.root)
+            ViewGroupCompat.installCompatInsetsDispatch(it.root)
         }
 
         setResult(RESULT_CANCELED)

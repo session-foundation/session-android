@@ -166,9 +166,9 @@ fun View.applySafeInsetsPaddings(
  */
 @JvmOverloads
 fun View.applySafeInsetsMargins(
+    consumeInsets: Boolean = true,
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
-    consumeInsets: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets

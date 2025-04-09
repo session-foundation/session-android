@@ -63,14 +63,13 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
 
         val binding = FragmentNewConversationBinding.bind(view)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        binding.newConversationFragmentContainer.verticalSpace = emptySpace
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             // From Android 15, given display metrics now include the window insets so we'll have to account for that space
-            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
-                binding.newConversationFragmentContainer.verticalSpace = emptySpace + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
-                insets
-            }
-        } else {
-            binding.newConversationFragmentContainer.verticalSpace = emptySpace
+            binding.newConversationFragmentContainer.verticalSpace = emptySpace + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+
+            WindowInsetsCompat.CONSUMED // We don't actually need our view to have any insets as we are in a dialog
         }
     }
 

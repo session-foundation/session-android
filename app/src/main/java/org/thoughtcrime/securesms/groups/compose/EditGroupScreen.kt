@@ -171,7 +171,7 @@ fun EditGroup(
         },
         contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)) {
             GroupMinimumVersionBanner()
 
             // Group name title

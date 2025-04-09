@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -82,7 +83,7 @@ fun InviteContacts(
         contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
         Column(
-            modifier = Modifier.padding(paddings),
+            modifier = Modifier.padding(paddings).consumeWindowInsets(paddings),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
             GroupMinimumVersionBanner()
