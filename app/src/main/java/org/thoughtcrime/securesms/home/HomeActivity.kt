@@ -15,7 +15,6 @@ import androidx.activity.viewModels
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -174,8 +173,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         get() = false
 
     // region Lifecycle
-    override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
-        super.onCreate(savedInstanceState, isReady)
+    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+        super.onCreate(savedInstanceState, ready)
 
         // Set content view
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -342,7 +341,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
             // Apply status bar insets to the toolbar
             binding.toolbar.updatePadding(
                 top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
@@ -355,7 +354,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
             }
 
-            insets
+            // There shouldn't be anything else needing the insets so we'll consume all of them
+            WindowInsetsCompat.CONSUMED
         }
     }
 
