@@ -193,6 +193,10 @@ fun View.applySafeInsetsMargins(
     }
 }
 
+/**
+ * Applies the system insets to a RecyclerView or ScrollView. The inset will apply as margin
+ * at the top and padding at the bottom. For ScrollView, the bottom insets will be applied to the first child.
+ */
 @JvmOverloads
 fun applyCommonWindowInsetsOnViews(
     mainRecyclerView: RecyclerView? = null,
