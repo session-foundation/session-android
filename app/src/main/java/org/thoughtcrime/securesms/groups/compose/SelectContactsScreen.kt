@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -68,54 +69,61 @@ fun InviteContacts(
     onBack: () -> Unit,
     @StringRes okButtonResId: Int = R.string.ok
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)) {
-        BackAppBar(
-            title = stringResource(id = R.string.membersInvite),
-            onBack = onBack,
-        )
-
-        GroupMinimumVersionBanner()
-        SearchBar(
-            query = searchQuery,
-            onValueChanged = onSearchQueryChanged,
-            placeholder = stringResource(R.string.searchContacts),
-            modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
-                .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
-            backgroundColor = LocalColors.current.backgroundSecondary,
-        )
-
-        val scrollState = rememberLazyListState()
-
-        BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-            LazyColumn(
-                state = scrollState,
-                contentPadding = PaddingValues(bottom = bottomContentPadding),
-            ) {
-                multiSelectMemberList(
-                    contacts = contacts,
-                    onContactItemClicked = onContactItemClicked,
-                )
-            }
+    Scaffold(
+        topBar = {
+            BackAppBar(
+                title = stringResource(id = R.string.membersInvite),
+                onBack = onBack,
+            )
         }
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxWidth()
+    ) { paddings ->
+        Column(
+            modifier = Modifier.padding(paddings),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
         ) {
-            PrimaryOutlineButton(
-                onClick = onDoneClicked,
-                modifier = Modifier
-                    .padding(vertical = LocalDimensions.current.spacing)
-                    .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
-                    .qaTag(stringResource(R.string.AccessibilityId_selectContactConfirm)),
+            GroupMinimumVersionBanner()
+            SearchBar(
+                query = searchQuery,
+                onValueChanged = onSearchQueryChanged,
+                placeholder = stringResource(R.string.searchContacts),
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.smallSpacing)
+                    .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
+                backgroundColor = LocalColors.current.backgroundSecondary,
+            )
+
+            val scrollState = rememberLazyListState()
+
+            BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
+                LazyColumn(
+                    state = scrollState,
+                    contentPadding = PaddingValues(bottom = bottomContentPadding),
+                ) {
+                    multiSelectMemberList(
+                        contacts = contacts,
+                        onContactItemClicked = onContactItemClicked,
+                    )
+                }
+            }
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    stringResource(id = okButtonResId)
-                )
+                PrimaryOutlineButton(
+                    onClick = onDoneClicked,
+                    modifier = Modifier
+                        .padding(vertical = LocalDimensions.current.spacing)
+                        .defaultMinSize(minWidth = LocalDimensions.current.minButtonWidth)
+                        .qaTag(stringResource(R.string.AccessibilityId_selectContactConfirm)),
+                ) {
+                    Text(
+                        stringResource(id = okButtonResId)
+                    )
+                }
             }
         }
-    }
 
+    }
 }
 
 @Preview

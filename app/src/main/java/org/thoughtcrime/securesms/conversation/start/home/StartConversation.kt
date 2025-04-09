@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.conversation.start.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -51,7 +52,8 @@ internal fun StartConversationScreen(
         BasicAppBar(
             title = stringResource(R.string.conversationsStart),
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
-            actions = { AppBarCloseIcon(onClose = delegate::onDialogClosePressed) }
+            actions = { AppBarCloseIcon(onClose = delegate::onDialogClosePressed) },
+            windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         Surface(
             modifier = Modifier.nestedScroll(rememberNestedScrollInteropConnection()),

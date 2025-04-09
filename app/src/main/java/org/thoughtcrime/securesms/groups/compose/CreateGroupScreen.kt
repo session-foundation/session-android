@@ -113,9 +113,10 @@ fun CreateGroup(
                 title = stringResource(id = R.string.groupCreate),
                 backgroundColor = LocalColors.current.backgroundSecondary,
                 onBack = onBack,
+                windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled in the dialog
             )
         },
-        contentWindowInsets = WindowInsets(0.dp), // Insets handled in the dialog
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Insets handled in the dialog
     ) { paddings ->
         Box(modifier = modifier.padding(paddings)) {
             Column(

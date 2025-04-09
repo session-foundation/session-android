@@ -75,6 +75,7 @@ fun BasicAppBar(
     title: String,
     modifier: Modifier = Modifier,
     singleLine: Boolean = false,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     navigationIcon: @Composable () -> Unit = {},
@@ -82,7 +83,7 @@ fun BasicAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
-        windowInsets = WindowInsets(0, 0, 0, 0), // insets handled in BaseActionBarActivity for now
+        windowInsets = windowInsets,
         title = {
             AppBarText(title = title, singleLine = singleLine)
         },
@@ -102,6 +103,7 @@ fun BackAppBar(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
     actions: @Composable RowScope.() -> Unit = {},
@@ -109,6 +111,7 @@ fun BackAppBar(
     BasicAppBar(
         modifier = modifier,
         title = title,
+        windowInsets = windowInsets,
         navigationIcon = {
             AppBarBackIcon(onBack = onBack)
         },
