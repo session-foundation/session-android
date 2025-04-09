@@ -1,22 +1,21 @@
 package org.thoughtcrime.securesms.reactions;
 
-import static org.session.libsession.utilities.IdUtilKt.truncateIdForDisplay;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.session.libsignal.utilities.AccountId;
+import org.thoughtcrime.securesms.components.ProfilePictureView;
+import org.thoughtcrime.securesms.database.model.MessageId;
+
 import java.util.Collections;
 import java.util.List;
+
 import network.loki.messenger.R;
-import org.thoughtcrime.securesms.components.ProfilePictureView;
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
-import org.thoughtcrime.securesms.database.model.MessageId;
 
 final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
@@ -126,8 +125,8 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
       clearAll.setOnClickListener(isUserModerator ? (View.OnClickListener) v -> {
         callback.onClearAll(emoji.getBaseEmoji(), messageId);
       } : null);
-      EmojiImageView emojiView = itemView.findViewById(R.id.header_view_emoji);
-      emojiView.setImageEmoji(emoji.getDisplayEmoji());
+      TextView emojiView = itemView.findViewById(R.id.header_view_emoji);
+      emojiView.setText(emoji.getDisplayEmoji());
       TextView count = itemView.findViewById(R.id.header_view_emoji_count);
       count.setText(String.format(" •  %s", emoji.getCount()));
     }

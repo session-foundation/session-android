@@ -270,6 +270,8 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:$daggerHiltVersion")
     implementation "androidx.appcompat:appcompat:$appcompatVersion"
+    implementation "androidx.emoji2:emoji2:$emoji2Version"
+    implementation "androidx.emoji2:emoji2-emojipicker:$emoji2Version"
     implementation 'androidx.recyclerview:recyclerview:1.4.0'
     implementation "com.google.android.material:material:$materialVersion"
     implementation 'com.google.android.flexbox:flexbox:3.0.0'

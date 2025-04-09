@@ -5,10 +5,32 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.database.MessageDataProvider
-import org.session.libsession.database.StorageProtocol
 import org.thoughtcrime.securesms.ApplicationContext
-import org.thoughtcrime.securesms.database.*
+import org.thoughtcrime.securesms.database.AttachmentDatabase
+import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase
+import org.thoughtcrime.securesms.database.ConfigDatabase
+import org.thoughtcrime.securesms.database.DraftDatabase
+import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase
+import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.GroupMemberDatabase
+import org.thoughtcrime.securesms.database.GroupReceiptDatabase
+import org.thoughtcrime.securesms.database.LokiAPIDatabase
+import org.thoughtcrime.securesms.database.LokiBackupFilesDatabase
+import org.thoughtcrime.securesms.database.LokiMessageDatabase
+import org.thoughtcrime.securesms.database.LokiThreadDatabase
+import org.thoughtcrime.securesms.database.LokiUserDatabase
+import org.thoughtcrime.securesms.database.MediaDatabase
+import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.PushDatabase
+import org.thoughtcrime.securesms.database.ReactionDatabase
+import org.thoughtcrime.securesms.database.RecipientDatabase
+import org.thoughtcrime.securesms.database.SearchDatabase
+import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.SessionJobDatabase
+import org.thoughtcrime.securesms.database.SmsDatabase
+import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 
 @EntryPoint
@@ -43,7 +65,6 @@ interface DatabaseComponent {
     fun sessionJobDatabase(): SessionJobDatabase
     fun sessionContactDatabase(): SessionContactDatabase
     fun reactionDatabase(): ReactionDatabase
-    fun emojiSearchDatabase(): EmojiSearchDatabase
     fun storage(): Storage
     fun attachmentProvider(): MessageDataProvider
     fun blindedIdMappingDatabase(): BlindedIdMappingDatabase

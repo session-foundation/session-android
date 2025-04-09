@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.view.setPadding
 import com.google.android.flexbox.JustifyContent
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
@@ -18,8 +17,6 @@ import network.loki.messenger.databinding.ViewEmojiReactionsBinding
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.ThemeUtil
-import org.thoughtcrime.securesms.components.emoji.EmojiImageView
-import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
@@ -155,7 +152,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         val counters: MutableMap<String, Reaction> = LinkedHashMap()
 
         records.forEach {
-            val baseEmoji = EmojiUtil.getCanonicalRepresentation(it.emoji)
+            val baseEmoji = it.emoji
             val info = counters[baseEmoji]
 
             if (info == null) {
@@ -180,18 +177,16 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
 
     private fun buildPill(context: Context, parent: ViewGroup, reaction: Reaction, isCompact: Boolean): View {
         val root = LayoutInflater.from(context).inflate(R.layout.reactions_pill, parent, false)
-        val emojiView = root.findViewById<EmojiImageView>(R.id.reactions_pill_emoji)
+        val emojiView = root.findViewById<TextView>(R.id.reactions_pill_emoji)
         val countView = root.findViewById<TextView>(R.id.reactions_pill_count)
         val spacer = root.findViewById<View>(R.id.reactions_pill_spacer)
         if (isCompact) {
-            root.setPadding(0)
-            val layoutParams = root.layoutParams
-            layoutParams.height = overflowItemSize
-            layoutParams.width = overflowItemSize
-            root.layoutParams = layoutParams
+            val paddingV = ViewUtil.dpToPx(2)
+            val paddingH = ViewUtil.dpToPx(3)
+            root.setPadding(paddingH, paddingV, paddingH, paddingV)
         }
         if (reaction.emoji != null) {
-            emojiView.setImageEmoji(reaction.emoji)
+            emojiView.text = reaction.emoji
             if (reaction.count >= 1) {
                 countView.text = getFormattedNumber(reaction.count)
             } else {
@@ -203,6 +198,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             spacer.visibility = GONE
             countView.text = Phrase.from(context, R.string.andMore).put(COUNT_KEY, reaction.count.toInt()).format()
         }
+
         if (reaction.userWasSender && !isCompact) {
             root.background = ContextCompat.getDrawable(context, R.drawable.reaction_pill_background_selected)
             countView.setTextColor(ThemeUtil.getThemedColor(context, R.attr.reactionsPillSelectedTextColor))
