@@ -331,12 +331,23 @@ class VisibleMessageContentView : ConstraintLayout {
                 }
             }
         }
-        binding.contentParent.modifyLayoutParams<ConstraintLayout.LayoutParams> {
-            horizontalBias = if (message.isOutgoing) 1f else 0f
+
+        // handle bias for our views
+        val bias = if (message.isOutgoing) 1f else 0f
+        binding.contentParent.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
         }
 
-        binding.attachmentControlView.root.modifyLayoutParams<ConstraintLayout.LayoutParams> {
-            horizontalBias = if (message.isOutgoing) 1f else 0f
+        binding.documentView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
+        }
+
+        binding.voiceMessageView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
+        }
+
+        binding.attachmentControlView.root.modifyLayoutParams<LayoutParams> {
+            horizontalBias = bias
         }
     }
 
