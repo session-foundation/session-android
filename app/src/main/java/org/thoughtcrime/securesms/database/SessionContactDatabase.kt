@@ -55,8 +55,6 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
         val database = databaseHelper.readableDatabase
         return database.getAll(sessionContactTable, null, null) { cursor ->
             contactFromCursor(cursor)
-        }.filter { contact ->
-            contact.accountID.let(::AccountId).prefix == IdPrefix.STANDARD
         }.toSet()
     }
 

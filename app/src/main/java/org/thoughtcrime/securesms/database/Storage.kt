@@ -1351,12 +1351,16 @@ open class Storage @Inject constructor(
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
-        val removedContacts = getAllContacts().filter { localContact ->
-            localContact.accountID != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
-            moreContacts.none { it.id == localContact.accountID } // we don't want to remove contacts that are present in the config
+
+        //NOTE: I used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
+        // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
+        // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
+        val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
+            moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
         }
         removedContacts.forEach {
-            deleteContact(it.accountID)
+            deleteContact(it.address.toString())
         }
     }
 

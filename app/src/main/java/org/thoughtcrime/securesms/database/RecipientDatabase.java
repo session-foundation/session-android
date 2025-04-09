@@ -488,6 +488,29 @@ public class RecipientDatabase extends Database {
     return returnList;
   }
 
+  /**
+   * Returns a list of all recipients in the database.
+   *
+   * @return A list of all recipients
+   */
+  public List<Recipient> getAllRecipients() {
+    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+
+    Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, null,
+            null, null, null, null, null);
+
+    RecipientReader reader = new RecipientReader(context, cursor);
+    List<Recipient> returnList = new ArrayList<>();
+    Recipient current;
+
+    while ((current = reader.getNext()) != null) {
+      returnList.add(current);
+    }
+
+    reader.close();
+    return returnList;
+  }
+
   public void setDisappearingState(@NonNull Recipient recipient, @NonNull Recipient.DisappearingState disappearingState) {
     ContentValues values = new ContentValues();
     values.put(DISAPPEARING_STATE, disappearingState.getId());
