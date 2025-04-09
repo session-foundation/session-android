@@ -76,7 +76,6 @@ class QRCodeActivity : ScreenLockActionBarActivity() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Tabs(accountId: String, errors: Flow<String>, onScan: (String) -> Unit) {
     val pagerState = rememberPagerState { TITLES.size }

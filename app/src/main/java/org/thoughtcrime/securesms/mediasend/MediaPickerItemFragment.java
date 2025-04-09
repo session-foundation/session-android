@@ -120,8 +120,6 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
     super.onResume();
 
     viewModel.onItemPickerStarted();
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   }
 
   @Override

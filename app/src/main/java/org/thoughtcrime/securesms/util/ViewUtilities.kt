@@ -19,16 +19,16 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.getColorFromAttr
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.ScrollView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.core.graphics.applyCanvas
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
-import org.session.libsession.utilities.ThemeUtil
+import androidx.recyclerview.widget.RecyclerView
 import org.session.libsignal.utilities.Log
 import kotlin.math.roundToInt
 
@@ -138,7 +138,7 @@ fun EditText.addTextChangedListener(listener: (String) -> Unit) {
 fun View.applySafeInsetsPaddings(
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
-    consumeInsets: Boolean = false,
+    consumeInsets: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -168,7 +168,7 @@ fun View.applySafeInsetsPaddings(
 fun View.applySafeInsetsMargins(
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
-    consumeInsets: Boolean = false,
+    consumeInsets: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         // Get system bars insets
@@ -190,6 +190,52 @@ fun View.applySafeInsetsMargins(
             Log.w("ViewUtils", "Cannot apply insets to view with no margins")
             windowInsets
         }
+    }
+}
+
+@JvmOverloads
+fun applyCommonWindowInsetsOnViews(
+    mainRecyclerView: RecyclerView? = null,
+    mainScrollView: ScrollView? = null
+) {
+    if (mainRecyclerView != null && mainScrollView == null) {
+        mainRecyclerView.clipToPadding = false
+
+        ViewCompat.setOnApplyWindowInsetsListener(mainRecyclerView) { _, windowInsets ->
+            mainRecyclerView.updateLayoutParams<MarginLayoutParams> {
+                val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+                topMargin = insets.top
+                leftMargin = insets.left
+                rightMargin = insets.right
+            }
+
+            mainRecyclerView.updatePadding(
+                bottom = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()).bottom
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+    } else if (mainScrollView != null && mainRecyclerView == null) {
+        val firstChild = requireNotNull(mainScrollView.getChildAt(0)) {
+            "Given scrollView has no child to apply insets to"
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(mainScrollView) { _, windowInsets ->
+            mainScrollView.updateLayoutParams<MarginLayoutParams> {
+                val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+                topMargin = insets.top
+                leftMargin = insets.left
+                rightMargin = insets.right
+            }
+
+            firstChild.updatePadding(
+                bottom = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()).bottom
+            )
+
+            WindowInsetsCompat.CONSUMED
+        }
+    } else {
+        error("Either mainRecyclerView or mainScrollView must be non-null, but not both.")
     }
 }
 

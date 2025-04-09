@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.mediasend;
 
 import android.annotation.SuppressLint;
+
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -133,6 +136,10 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     });
 
     orderEnforcer.run(Stage.CAMERA_PROPERTIES_AVAILABLE, this::updatePreviewScale);
+
+    // Enter fullscreen mode
+    WindowCompat.getInsetsController(requireActivity().getWindow(), requireActivity().getWindow().getDecorView())
+            .hide(WindowInsetsCompat.Type.systemBars());
   }
 
   @Override
@@ -140,6 +147,10 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     super.onPause();
     camera.release();
     orderEnforcer.reset();
+
+    // Exit fullscreen mode
+    WindowCompat.getInsetsController(requireActivity().getWindow(), requireActivity().getWindow().getDecorView())
+            .show(WindowInsetsCompat.Type.systemBars());
   }
 
   @Override

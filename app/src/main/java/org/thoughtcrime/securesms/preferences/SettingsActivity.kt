@@ -113,6 +113,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
+import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
 import java.io.File
 import javax.inject.Inject
@@ -180,6 +181,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
     }
+
+     override val applyDefaultWindowInsets: Boolean
+         get() = false
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -254,6 +258,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 }
             }
         }
+
+        applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
     }
 
     override fun onStart() {

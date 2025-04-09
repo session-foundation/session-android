@@ -107,8 +107,6 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     super.onResume();
 
     viewModel.onFolderPickerStarted();
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   }
 
   @Override
