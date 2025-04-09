@@ -7,12 +7,14 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewGroupCompat
 import androidx.core.view.WindowCompat
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
@@ -104,6 +106,9 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setDisplayHomeAsUpEnabled(true)
             actionBar.setHomeButtonEnabled(true)
         }
+
+
+        ViewGroupCompat.installCompatInsetsDispatch(window.decorView)
 
         if (applyDefaultWindowInsets) {
             findViewById<View>(android.R.id.content)?.applySafeInsetsPaddings()
