@@ -8,8 +8,12 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+
+import com.google.common.io.Files;
 import com.squareup.phrase.Phrase;
 import java.io.File;
+import java.io.IOException;
+
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
@@ -19,6 +23,7 @@ import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.guava.Preconditions;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
@@ -116,28 +121,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       new SQLiteDatabaseHook() {
         @Override
         public void preKey(SQLiteConnection connection) {
-          boolean migratedToDisablingKDF = preferences.getMigratedToDisablingKDF();
-          Log.d(TAG, "Pre-keying database, migratedToDisablingKDF = " + migratedToDisablingKDF);
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true, migratedToDisablingKDF);
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
         }
 
         @Override
         public void postKey(SQLiteConnection connection) {
-          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true, preferences.getMigratedToDisablingKDF());
-
-          if (!preferences.getMigratedToDisablingKDF()) {
-            connection.executeRaw("SELECT COUNT(*) FROM sqlite_master;", null, null);
-
-            Log.d(TAG, "Rekeying database with new KDF settings, this = " + this);
-            // We need to rekey the database with the new KDF settings
-            connection.executeRaw("PRAGMA rekey = \"x'" + databaseSecret.asString() + "'\"", null, null);
-            connection.executeRaw("PRAGMA kdf_iter = '1'", null, null);
-            connection.executeRaw("PRAGMA key = \"x'" + databaseSecret.asString() + "'\"", null, null);
-            connection.executeRaw("SELECT COUNT(*) FROM sqlite_master", null, null);
-            preferences.setMigratedToDisablingKDF(true);
-            Log.d(TAG, "Rekeying complete");
-          }
-
           // if not vacuumed in a while, perform that operation
           long currentTime = System.currentTimeMillis();
           // 7 days
@@ -157,19 +145,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
     this.context        = context.getApplicationContext();
     this.databaseSecret = databaseSecret;
-
-    if (BuildConfig.DEBUG) {
-      Log.d(TAG, "Db password = " + databaseSecret.asString());
-    }
   }
 
-  private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4, boolean disableKdf) {
-    if (disableKdf) {
-      Log.d(TAG, "Applying SQLCipher pragmas with KDF disabled");
+  private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4) {
+    if (useSQLCipher4) {
       connection.execute("PRAGMA kdf_iter = '1';", null, null);
-    } else if (useSQLCipher4) {
-      Log.d(TAG, "Applying with KDF enabled");
-      connection.execute("PRAGMA kdf_iter = '256000';", null, null);
     }
     else {
       connection.execute("PRAGMA cipher_compatibility = 3;", null, null);
@@ -179,13 +159,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
   }
 
-  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4, boolean disableKdf) {
+  private static SQLiteDatabase open(String path, DatabaseSecret databaseSecret, boolean useSQLCipher4) {
     return SQLiteDatabase.openDatabase(path, databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, new SQLiteDatabaseHook() {
       @Override
-      public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4, disableKdf); }
+      public void preKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
 
       @Override
-      public void postKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4, disableKdf); }
+      public void postKey(SQLiteConnection connection) { SQLCipherOpenHelper.applySQLCipherPragmas(connection, useSQLCipher4); }
     });
   }
 
@@ -209,7 +189,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         // can remove the old database file (it won't be used anymore)
         if (oldDbFile.lastModified() <= newDbFile.lastModified()) {
           try {
-            SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true, true);
+            SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
             int version = newDb.getVersion();
             newDb.close();
 
@@ -240,7 +220,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       }
 
       // Open the old database and extract it's version
-      SQLiteDatabase oldDb = SQLCipherOpenHelper.open(oldDbPath, databaseSecret, false, false);
+      SQLiteDatabase oldDb = SQLCipherOpenHelper.open(oldDbPath, databaseSecret, false);
       int oldDbVersion = oldDb.getVersion();
 
       // Export the old database to the new one (will have the default 'kdf_iter' and 'page_size' settings)
@@ -255,12 +235,10 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       // Open the newly migrated database (to ensure it works) and set it's version so we don't try
       // to run any of our custom migrations
-      SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true, true);
+      SQLiteDatabase newDb = SQLCipherOpenHelper.open(newDbPath, databaseSecret, true);
       newDb.setVersion(oldDbVersion);
       newDb.close();
 
-      // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
-      // Remove the old database file since it will no longer be used
 //      //noinspection ResultOfMethodCallIgnored
 //      oldDbFile.delete();
     }
@@ -296,6 +274,56 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       // Throw the error (app will crash but there is nothing else we can do unfortunately)
       throw e;
+    }
+  }
+
+
+  public static void migrateSqlCipher4ToNewCipherSettingsIfNeeded(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, @NonNull TextSecurePreferences prefs) {
+    final File dbFile = new File(context.getDatabasePath(DATABASE_NAME).getPath());
+    if (!dbFile.exists()) {
+      // No need to migrate if the database hasn't be created yet. Our code will create it with
+      // correct settings.
+      Log.d(TAG, "No need to migrate to new cipher settings for new database");
+      prefs.setMigratedToDisablingKDF(true);
+      return;
+    }
+
+    // If the database exists, check if we have already migrated it
+    if (prefs.getMigratedToDisablingKDF()) {
+      Log.d(TAG, "Skipping migration to new cipher settings, already migrated");
+      return;
+    }
+
+    try {
+      SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
+        @Override
+        public void preKey(SQLiteConnection connection) {
+          // Old db cipher settings
+          connection.executeRaw("PRAGMA kdf_iter = 256000", null, null);
+          connection.executeRaw("PRAGMA cipher_page_size = 4096", null, null);
+        }
+
+        @Override
+        public void postKey(SQLiteConnection connection) {}
+      };
+
+      try (final SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, hook)) {
+        Log.d(TAG, "Migrate database with new KDF settings");
+
+        // Enable new db cipher settings
+        db.rawQuery("PRAGMA kdf_iter = 1");
+        db.rawQuery("PRAGMA cipher_page_size = 4096");
+        db.rawQuery(String.format("PRAGMA rekey = '%s'", databaseSecret.asString()));
+
+        // Make sure the db is actually opened
+        db.rawQuery("SELECT COUNT(*) FROM sqlite_master");
+
+        Log.d(TAG, "Migration complete");
+      }
+
+      prefs.setMigratedToDisablingKDF(true);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

@@ -58,6 +58,7 @@ object DatabaseModule {
     fun provideOpenHelper(@ApplicationContext context: Context, prefs: TextSecurePreferences): SQLCipherOpenHelper {
         val dbSecret = DatabaseSecretProvider(context).orCreateDatabaseSecret
         SQLCipherOpenHelper.migrateSqlCipher3To4IfNeeded(context, dbSecret)
+        SQLCipherOpenHelper.migrateSqlCipher4ToNewCipherSettingsIfNeeded(context, dbSecret, prefs)
         return SQLCipherOpenHelper(context, dbSecret, prefs)
     }
 
