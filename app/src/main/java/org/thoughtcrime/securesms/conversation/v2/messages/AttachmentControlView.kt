@@ -43,9 +43,7 @@ class AttachmentControlView: LinearLayout {
     // endregion
     @Inject lateinit var storage: StorageProtocol
 
-    val errorColor by lazy {
-        context.getColorFromAttr(R.attr.danger)
-    }
+    val separator = " • "
 
     // region Updating
     private fun getAttachmentData(attachmentType: AttachmentType, messageTotalAttachment: Int): Pair<Int, Int> {
@@ -78,16 +76,14 @@ class AttachmentControlView: LinearLayout {
                 val expiredColor = textColor.also { alpha = 0.7f }
 
                 binding.pendingDownloadIcon.setColorFilter(expiredColor)
-                binding.pendingDownloadSize.isVisible = false
 
-                binding.pendingDownloadTitle.apply {
+                binding.title.apply {
                     text = context.getString(R.string.attachmentsExpired)
                     setTextColor(expiredColor)
                     setTypeface(typeface, android.graphics.Typeface.ITALIC)
                 }
 
-                binding.separator.isVisible = false
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
                 binding.errorIcon.isVisible = false
             }
 
@@ -95,74 +91,46 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadTitle.apply{
-                    text = context.getString(R.string.downloading)
+                val title = "$totalSize$separator${context.getString(R.string.downloading)}"
+                binding.title.apply{
+                    text = title
                     setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
                 binding.errorIcon.isVisible = false
             }
 
             AttachmentState.FAILED -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadTitle.apply{
-                    text = context.getString(R.string.failedToDownload)
+                val title = "$totalSize$separator${context.getString(R.string.failedToDownload)}"
+                binding.title.apply{
+                    text = title
                     setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = true
+                binding.subtitle.isVisible = true
                 binding.errorIcon.isVisible = true
             }
 
             else -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadTitle.apply{
-                    text = Phrase.from(context, R.string.attachmentsTapToDownload)
+                val title = "$totalSize$separator${
+                    Phrase.from(context, R.string.attachmentsTapToDownload)
                         .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
                         .format()
+                }"
+                binding.title.apply{
+                    text = title
                     setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
                 binding.errorIcon.isVisible = false
             }
         }
