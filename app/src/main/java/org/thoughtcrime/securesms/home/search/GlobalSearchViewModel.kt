@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import network.loki.messenger.R
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -56,6 +57,8 @@ class GlobalSearchViewModel @Inject constructor(
         configFactory.configUpdateNotifications
     )
 
+    val noteToSelfString by lazy { application.getString(R.string.noteToSelf).lowercase() }
+
     val result = combine(
         _queryText,
         observeChangesAffectingSearch().onStart { emit(Unit) }
@@ -73,7 +76,14 @@ class GlobalSearchViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    searchRepository.suspendQuery(query).toGlobalSearchResult()
+                    val results = searchRepository.suspendQuery(query).toGlobalSearchResult()
+
+                    // show "Note to Self" is the user searches for parts of"Note to Self"
+                    if(noteToSelfString.contains(query.lowercase())){
+                        results.copy(showNoteToSelf = true)
+                    } else {
+                        results
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("GlobalSearchViewModel", "Error searching len = ${query.length}", e)

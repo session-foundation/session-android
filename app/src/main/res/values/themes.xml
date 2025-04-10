@@ -43,6 +43,7 @@
        <item name="onInvertedBackgroundPrimary">?colorPrimary</item>
        <item name="prominentButtonColor">?colorAccent</item>
        <item name="colorError">?danger</item>
+       <item name="transparent">@color/transparent</item>
 
        <item name="android:actionMenuTextAppearance">@style/MenuTextAppearance</item>
    </style>

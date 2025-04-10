@@ -562,7 +562,9 @@ public class AttachmentDatabase extends Database {
       throw new MmsException("No attachment data found!");
     }
 
-    dataInfo = setAttachmentData(dataInfo.file, mediaStream.getStream());
+    final File oldFile = dataInfo.file;
+
+    dataInfo = setAttachmentData(mediaStream.getStream());
 
     ContentValues contentValues = new ContentValues();
     contentValues.put(SIZE, dataInfo.length);
@@ -570,8 +572,17 @@ public class AttachmentDatabase extends Database {
     contentValues.put(WIDTH, mediaStream.getWidth());
     contentValues.put(HEIGHT, mediaStream.getHeight());
     contentValues.put(DATA_RANDOM, dataInfo.random);
+    contentValues.put(DATA, dataInfo.file.getAbsolutePath());
 
     database.update(TABLE_NAME, contentValues, PART_ID_WHERE, databaseAttachment.getAttachmentId().toStrings());
+
+    if (oldFile != null && oldFile.exists()) {
+        try {
+            oldFile.delete();
+        } catch (Exception e) {
+            Log.w(TAG, "Error deleting an old attachment file", e);
+        }
+    }
 
     return new DatabaseAttachment(databaseAttachment.getAttachmentId(),
                                   databaseAttachment.getMmsId(),
@@ -696,20 +707,12 @@ public class AttachmentDatabase extends Database {
     try {
       File partsDirectory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
       File dataFile       = File.createTempFile("part", ".mms", partsDirectory);
-      return setAttachmentData(dataFile, in);
-    } catch (IOException e) {
-      throw new MmsException(e);
-    }
-  }
 
-  private @NonNull DataInfo setAttachmentData(@NonNull File destination, @NonNull InputStream in)
-      throws MmsException
-  {
-    try {
-      Pair<byte[], OutputStream> out    = ModernEncryptingPartOutputStream.createFor(attachmentSecret, destination, false);
+      Log.d("AttachmentDatabase", "Writing attachment data to: " + dataFile.getAbsolutePath());
+      Pair<byte[], OutputStream> out    = ModernEncryptingPartOutputStream.createFor(attachmentSecret, dataFile, false);
       long                       length = Util.copy(in, out.second);
 
-      return new DataInfo(destination, length, out.first);
+      return new DataInfo(dataFile, length, out.first);
     } catch (IOException e) {
       throw new MmsException(e);
     }

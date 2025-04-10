@@ -287,6 +287,12 @@ class ConfigFactory @Inject constructor(
         }
     }
 
+    override fun removeContact(accountId: String) {
+        withMutableUserConfigs {
+            it.contacts.erase(accountId)
+        }
+    }
+
     override fun removeGroup(groupId: AccountId) {
         withMutableUserConfigs {
             it.userGroups.eraseClosedGroup(groupId.hexString)

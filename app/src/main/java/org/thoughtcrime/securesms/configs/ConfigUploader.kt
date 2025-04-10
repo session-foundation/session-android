@@ -208,11 +208,15 @@ class ConfigUploader @Inject constructor(
         // Gather data to push
         groupConfigAccess { configs ->
             if (configs.groupMembers.needsPush()) {
-                membersPush = configs.groupMembers.push()
+                membersPush = runCatching { configs.groupMembers.push() }
+                    .onFailure { Log.w(TAG, "Error generating group members config push", it) }
+                    .getOrNull()
             }
 
             if (configs.groupInfo.needsPush()) {
-                infoPush = configs.groupInfo.push()
+                infoPush = runCatching { configs.groupInfo.push() }
+                    .onFailure { Log.w(TAG, "Error generating group info config push", it) }
+                    .getOrNull()
             }
 
             keysPush = configs.groupKeys.pendingConfig()
@@ -338,7 +342,12 @@ class ConfigUploader @Inject constructor(
                         return@mapNotNull null
                     }
 
-                    type to config.push()
+                    val configPush = runCatching { config.push() }
+                        .onFailure { Log.w(TAG, "Error generating $type config", it) }
+                        .getOrNull()
+                        ?: return@mapNotNull null
+
+                    type to configPush
                 }
         }
 
@@ -352,17 +361,17 @@ class ConfigUploader @Inject constructor(
 
         val pushTasks = pushes.map { (configType, configPush) ->
             async {
-                (configType to configPush) to pushConfig(
+                Triple(configType, configPush, pushConfig(
                     userAuth,
                     snode,
                     configPush,
                     configType.namespace
-                )
+                ))
             }
         }
 
         val pushResults =
-            pushTasks.awaitAll().associate { it.first.first to (it.first.second to it.second) }
+            pushTasks.awaitAll().associate { (configType, push, result) -> configType to (push to result) }
 
         Log.d(TAG, "Pushed ${pushResults.size} user configs")
 

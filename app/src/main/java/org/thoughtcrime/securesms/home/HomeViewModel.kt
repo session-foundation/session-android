@@ -2,10 +2,12 @@ package org.thoughtcrime.securesms.home
 
 import android.content.ContentResolver
 import android.content.Context
+import android.widget.Toast
 import androidx.annotation.AttrRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +31,19 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onErrorResume
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigUpdateNotification
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -55,7 +64,8 @@ class HomeViewModel @Inject constructor(
     private val typingStatusRepository: TypingStatusRepository,
     private val configFactory: ConfigFactory,
     private val callManager: CallManager,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val storage: StorageProtocol
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -64,7 +74,6 @@ class HomeViewModel @Inject constructor(
     )
 
     private val mutableIsSearchOpen = MutableStateFlow(false)
-
     val isSearchOpen: StateFlow<Boolean> get() = mutableIsSearchOpen
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
@@ -204,6 +213,19 @@ class HomeViewModel @Inject constructor(
     }
 
     fun getCurrentUsername() = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+
+    fun blockContact(accountId: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val recipient = Recipient.from(context, Address.fromSerialized(accountId), false)
+            storage.setBlocked(listOf(recipient), isBlocked = true)
+        }
+    }
+
+    fun deleteContact(accountId: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            storage.deleteContactAndSyncConfig(accountId)
+        }
+    }
 
     companion object {
         private const val CHANGE_NOTIFICATION_DEBOUNCE_MILLS = 100L

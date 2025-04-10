@@ -33,7 +33,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.contacts.SelectContactsActivity
+import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -191,9 +191,9 @@ class EditLegacyGroupActivity : ScreenLockActionBarActivity() {
         when (requestCode) {
             addUsersRequestCode -> {
                 if (resultCode != RESULT_OK) return
-                if (data == null || data.extras == null || !data.hasExtra(SelectContactsActivity.selectedContactsKey)) return
+                if (data == null || data.extras == null || !data.hasExtra(SelectContactsToInviteToGroupActivity.SELECTED_CONTACTS_KEY)) return
 
-                val selectedContacts = data.extras!!.getStringArray(SelectContactsActivity.selectedContactsKey)!!.toSet()
+                val selectedContacts = data.extras!!.getStringArray(SelectContactsToInviteToGroupActivity.SELECTED_CONTACTS_KEY)!!.toSet()
                 members.addAll(selectedContacts)
                 updateMembers()
             }
@@ -249,9 +249,9 @@ class EditLegacyGroupActivity : ScreenLockActionBarActivity() {
     }
 
     private fun onAddMembersClick() {
-        val intent = Intent(this@EditLegacyGroupActivity, SelectContactsActivity::class.java)
-        intent.putExtra(SelectContactsActivity.usersToExcludeKey, allMembers.toTypedArray())
-        intent.putExtra(SelectContactsActivity.emptyStateTextKey, "No contacts to add")
+        val intent = Intent(this@EditLegacyGroupActivity, SelectContactsToInviteToGroupActivity::class.java)
+        intent.putExtra(SelectContactsToInviteToGroupActivity.USERS_TO_EXCLUDE_KEY, allMembers.toTypedArray())
+        intent.putExtra(SelectContactsToInviteToGroupActivity.EMPTY_STATE_TEXT_KEY, "No contacts to add")
         startActivityForResult(intent, addUsersRequestCode)
     }
 

@@ -7,4 +7,3 @@ object NonTranslatableStringConstants {
     const val GIF                  = "GIF"
     const val OXEN_FOUNDATION      = "Oxen Foundation"
 }
-

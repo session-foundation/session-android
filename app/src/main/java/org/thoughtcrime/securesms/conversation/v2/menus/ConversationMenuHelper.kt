@@ -42,9 +42,9 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
+import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
-import org.thoughtcrime.securesms.contacts.SelectContactsActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
@@ -516,7 +516,7 @@ object ConversationMenuHelper {
 
     private fun inviteContacts(context: Context, thread: Recipient) {
         if (!thread.isCommunityRecipient) { return }
-        val intent = Intent(context, SelectContactsActivity::class.java)
+        val intent = Intent(context, SelectContactsToInviteToGroupActivity::class.java)
         val activity = context as AppCompatActivity
         activity.startActivityForResult(intent, ConversationActivityV2.INVITE_CONTACTS)
     }
