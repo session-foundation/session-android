@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
-import android.content.res.ColorStateList
+import android.text.format.Formatter
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -14,9 +14,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
-import org.session.libsession.utilities.Util
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.findActivity
@@ -67,8 +66,7 @@ class AttachmentControlView: LinearLayout {
     ) {
         val (stringRes, iconRes) = getAttachmentData(attachmentType, allMessageAttachments.size)
 
-        val totalSize = Util.getPrettyFileSize(allMessageAttachments.sumOf { it.fileSize })
-
+        val totalSize = Formatter.formatFileSize(context, allMessageAttachments.sumOf { it.fileSize })
         binding.pendingDownloadIcon.setImageResource(iconRes)
 
         when(state){
@@ -91,7 +89,8 @@ class AttachmentControlView: LinearLayout {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
-                val title = "$totalSize$separator${context.getString(R.string.downloading)}"
+                val title = getFormattedTitle(totalSize, context.getString(R.string.downloading))
+
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
@@ -105,7 +104,7 @@ class AttachmentControlView: LinearLayout {
             AttachmentState.FAILED -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                val title = "$totalSize$separator${context.getString(R.string.failedToDownload)}"
+                val title = getFormattedTitle(totalSize, context.getString(R.string.failedToDownload))
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
@@ -119,11 +118,12 @@ class AttachmentControlView: LinearLayout {
             else -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                val title = "$totalSize$separator${
+                val title = getFormattedTitle(totalSize,
                     Phrase.from(context, R.string.attachmentsTapToDownload)
                         .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
                         .format()
-                }"
+                )
+
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
@@ -134,6 +134,10 @@ class AttachmentControlView: LinearLayout {
                 binding.errorIcon.isVisible = false
             }
         }
+    }
+
+    private fun getFormattedTitle(size: String, title: CharSequence): CharSequence {
+        return ViewUtil.safeRTLString(context, "$size$separator$title")
     }
     // endregion
 

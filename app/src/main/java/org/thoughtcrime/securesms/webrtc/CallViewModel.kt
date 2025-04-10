@@ -177,11 +177,7 @@ class CallViewModel @Inject constructor(
     private val MAX_CALL_STEPS: Int = 5
 
     private fun constructCallLabel(@StringRes label: Int, stepsCount: Int): String {
-        return if(ViewUtil.isLtr(context)) {
-            "${context.getString(label)} $stepsCount/$MAX_CALL_STEPS"
-        } else {
-            "$MAX_CALL_STEPS/$stepsCount ${context.getString(label)}"
-        }
+        return ViewUtil.safeRTLString(context, "${context.getString(label)} $stepsCount/$MAX_CALL_STEPS")
     }
 
 
