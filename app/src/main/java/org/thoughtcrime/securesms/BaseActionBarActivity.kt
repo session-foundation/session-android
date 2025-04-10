@@ -108,6 +108,8 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
         }
 
 
+        // Apply a fix that views not getting inset dispatch when the inset was consumed by siblings on API <= 29
+        // See: https://developer.android.com/develop/ui/views/layout/edge-to-edge#backward-compatible-dispatching
         ViewGroupCompat.installCompatInsetsDispatch(window.decorView)
 
         if (applyDefaultWindowInsets) {
