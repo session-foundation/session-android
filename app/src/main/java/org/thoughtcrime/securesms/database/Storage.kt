@@ -93,6 +93,7 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
 import java.security.MessageDigest
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
@@ -103,7 +104,7 @@ private const val TAG = "Storage"
 @Singleton
 open class Storage @Inject constructor(
     @ApplicationContext context: Context,
-    helper: SQLCipherOpenHelper,
+    helper: Provider<SQLCipherOpenHelper>,
     private val configFactory: ConfigFactory,
     private val jobDatabase: SessionJobDatabase,
     private val threadDatabase: ThreadDatabase,
@@ -589,7 +590,7 @@ open class Storage @Inject constructor(
 
     override fun getOpenGroup(threadId: Long): OpenGroup? {
         if (threadId.toInt() < 0) { return null }
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(LokiThreadDatabase.publicChatTable, "${LokiThreadDatabase.threadID} = ?", arrayOf( threadId.toString() )) { cursor ->
             val publicChatAsJson = cursor.getString(LokiThreadDatabase.publicChat)
             OpenGroup.fromJSON(publicChatAsJson)

@@ -16,6 +16,8 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.util.List;
 
+import javax.inject.Provider;
+
 public class MediaDatabase extends Database {
 
     private static final String BASE_MEDIA_QUERY = "SELECT " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + " AS " + AttachmentDatabase.ROW_ID + ", "
@@ -63,12 +65,12 @@ public class MediaDatabase extends Database {
                                                                                      AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'audio/%' AND " +
                                                                                      AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain'");
 
-  public MediaDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MediaDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public Cursor getGalleryMediaForThread(long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor cursor = database.rawQuery(GALLERY_MEDIA_QUERY, new String[]{threadId+""});
     setNotifyConversationListeners(cursor, threadId);
     return cursor;
@@ -83,7 +85,7 @@ public class MediaDatabase extends Database {
   }
 
   public Cursor getDocumentMediaForThread(long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor cursor = database.rawQuery(DOCUMENT_MEDIA_QUERY, new String[]{threadId+""});
     setNotifyConversationListeners(cursor, threadId);
     return cursor;

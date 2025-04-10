@@ -5,13 +5,14 @@ import androidx.core.content.contentValuesOf
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.EmojiSearchData
 import org.thoughtcrime.securesms.util.CursorUtil
+import javax.inject.Provider
 import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
  * Contains all info necessary for full-text search of emoji tags.
  */
-class EmojiSearchDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class EmojiSearchDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
   companion object {
     const val TABLE_NAME = "emoji_search"

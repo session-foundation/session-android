@@ -47,6 +47,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 import kotlin.Pair;
 
 public class MmsSmsDatabase extends Database {
@@ -92,7 +94,7 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.HAS_MENTION
   };
 
-  public MmsSmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public MmsSmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -683,7 +685,7 @@ public class MmsSmsDatabase extends Database {
     @SuppressWarnings("deprecation")
     String query      = outerQueryBuilder.buildQuery(projection, null, null, null, null, null, null);
 
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     return db.rawQuery(query, null);
   }
 

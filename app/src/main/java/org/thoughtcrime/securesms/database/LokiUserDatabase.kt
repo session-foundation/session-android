@@ -2,8 +2,9 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
-class LokiUserDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class LokiUserDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         // Shared

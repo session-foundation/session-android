@@ -9,8 +9,9 @@ import org.session.libsession.messaging.open_groups.GroupMemberRole
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.util.asSequence
 import java.util.EnumSet
+import javax.inject.Provider
 
-class GroupMemberDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class GroupMemberDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         const val TABLE_NAME = "group_member"

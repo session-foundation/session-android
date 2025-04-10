@@ -8,10 +8,11 @@ import androidx.sqlite.db.transaction
 import org.session.libsignal.protos.SignalServiceProtos.SharedConfigMessage
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
 typealias ConfigVariant = String
 
-class ConfigDatabase(context: Context, helper: SQLCipherOpenHelper): Database(context, helper) {
+class ConfigDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>): Database(context, helper) {
 
     companion object {
         private const val VARIANT = "variant"

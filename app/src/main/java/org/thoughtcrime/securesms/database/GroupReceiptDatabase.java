@@ -15,6 +15,8 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Provider;
+
 public class GroupReceiptDatabase extends Database {
 
   public  static final String TABLE_NAME = "group_receipts";
@@ -38,12 +40,12 @@ public class GroupReceiptDatabase extends Database {
       "CREATE INDEX IF NOT EXISTS group_receipt_mms_id_index ON " + TABLE_NAME + " (" + MMS_ID + ");",
   };
 
-  public GroupReceiptDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public GroupReceiptDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public void insert(List<Address> addresses, long mmsId, int status, long timestamp) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
 
     for (Address address : addresses) {
       ContentValues values = new ContentValues(4);
@@ -57,7 +59,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public void update(Address address, long mmsId, int status, long timestamp) {
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db     = getWritableDatabase();
     ContentValues  values = new ContentValues(2);
     values.put(STATUS, status);
     values.put(TIMESTAMP, timestamp);
@@ -67,7 +69,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public void setUnidentified(Address address, long mmsId, boolean unidentified) {
-    SQLiteDatabase db     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db     = getWritableDatabase();
     ContentValues  values = new ContentValues(1);
     values.put(UNIDENTIFIED, unidentified ? 1 : 0);
 
@@ -77,7 +79,7 @@ public class GroupReceiptDatabase extends Database {
   }
 
   public @NonNull List<GroupReceiptInfo> getGroupReceiptInfo(long mmsId) {
-    SQLiteDatabase         db      = databaseHelper.getReadableDatabase();
+    SQLiteDatabase         db      = getReadableDatabase();
     List<GroupReceiptInfo> results = new LinkedList<>();
 
     try (Cursor cursor = db.query(TABLE_NAME, null, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)}, null, null, null)) {
@@ -101,22 +103,22 @@ public class GroupReceiptDatabase extends Database {
       }
     }
     String idsAsString = queryBuilder.toString();
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, idsAsString, null);
   }
 
   void deleteRowsForMessage(long mmsId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)});
   }
 
   void deleteRowsForMessages(long[] mmsIds) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, MMS_ID + " IN (?)", new String[] {StringUtils.join(mmsIds, ',')});
   }
 
   void deleteAllRows() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, null, null);
   }
 
