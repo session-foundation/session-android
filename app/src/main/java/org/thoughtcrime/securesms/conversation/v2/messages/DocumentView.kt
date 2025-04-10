@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.text.format.Formatter
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -24,7 +25,7 @@ class DocumentView : LinearLayout {
         val document = message.slideDeck.documentSlide!!
         binding.documentTitleTextView.text = document.filename
         binding.documentTitleTextView.setTextColor(textColor)
-        binding.documentSize.text = Util.getPrettyFileSize(document.fileSize)
+        binding.documentSize.text = Formatter.formatFileSize(context, document.fileSize)
         binding.documentSize.setTextColor(textColor)
         binding.documentViewIconImageView.imageTintList = ColorStateList.valueOf(textColor)
         binding.documentViewProgress.indeterminateTintList = ColorStateList.valueOf(textColor)

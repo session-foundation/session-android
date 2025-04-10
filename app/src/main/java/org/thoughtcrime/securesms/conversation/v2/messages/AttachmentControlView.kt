@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
-import android.content.res.ColorStateList
+import android.text.format.Formatter
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
@@ -14,9 +14,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.StringSubstitutionConstants.FILE_TYPE_KEY
-import org.session.libsession.utilities.Util
-import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.conversation.v2.dialogs.AutoDownloadDialog
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.findActivity
@@ -43,9 +42,7 @@ class AttachmentControlView: LinearLayout {
     // endregion
     @Inject lateinit var storage: StorageProtocol
 
-    val errorColor by lazy {
-        context.getColorFromAttr(R.attr.danger)
-    }
+    val separator = " • "
 
     // region Updating
     private fun getAttachmentData(attachmentType: AttachmentType, messageTotalAttachment: Int): Pair<Int, Int> {
@@ -69,8 +66,7 @@ class AttachmentControlView: LinearLayout {
     ) {
         val (stringRes, iconRes) = getAttachmentData(attachmentType, allMessageAttachments.size)
 
-        val totalSize = Util.getPrettyFileSize(allMessageAttachments.sumOf { it.fileSize })
-
+        val totalSize = Formatter.formatFileSize(context, allMessageAttachments.sumOf { it.fileSize })
         binding.pendingDownloadIcon.setImageResource(iconRes)
 
         when(state){
@@ -78,90 +74,70 @@ class AttachmentControlView: LinearLayout {
                 val expiredColor = textColor.also { alpha = 0.7f }
 
                 binding.pendingDownloadIcon.setColorFilter(expiredColor)
-                binding.pendingDownloadSize.isVisible = false
 
-                binding.pendingDownloadTitle.apply {
+                binding.title.apply {
                     text = context.getString(R.string.attachmentsExpired)
                     setTextColor(expiredColor)
                     setTypeface(typeface, android.graphics.Typeface.ITALIC)
                 }
 
-                binding.separator.isVisible = false
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
 
             AttachmentState.DOWNLOADING -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
                 //todo: ATTACHMENT This will need to be tweaked to dynamically show the the downloaded amount
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(textColor)
-                    isVisible = true
-                }
+                val title = getFormattedTitle(totalSize, context.getString(R.string.downloading))
 
-                binding.pendingDownloadTitle.apply{
-                    text = context.getString(R.string.downloading)
+                binding.title.apply{
+                    text = title
                     setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
 
             AttachmentState.FAILED -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(errorColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadTitle.apply{
-                    text = context.getString(R.string.failedToDownload)
-                    setTextColor(errorColor)
+                val title = getFormattedTitle(totalSize, context.getString(R.string.failedToDownload))
+                binding.title.apply{
+                    text = title
+                    setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(errorColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = true
+                binding.subtitle.isVisible = true
+                binding.errorIcon.isVisible = true
             }
 
             else -> {
                 binding.pendingDownloadIcon.setColorFilter(textColor)
 
-                binding.pendingDownloadSize.apply {
-                    text = totalSize
-                    setTextColor(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadTitle.apply{
-                    text = Phrase.from(context, R.string.attachmentsTapToDownload)
+                val title = getFormattedTitle(totalSize,
+                    Phrase.from(context, R.string.attachmentsTapToDownload)
                         .put(FILE_TYPE_KEY, context.getString(stringRes).lowercase(Locale.ROOT))
                         .format()
+                )
+
+                binding.title.apply{
+                    text = title
                     setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
-                binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(textColor)
-                    isVisible = true
-                }
-
-                binding.pendingDownloadSubtitle.isVisible = false
+                binding.subtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
         }
+    }
+
+    private fun getFormattedTitle(size: String, title: CharSequence): CharSequence {
+        return ViewUtil.safeRTLString(context, "$size$separator$title")
     }
     // endregion
 
