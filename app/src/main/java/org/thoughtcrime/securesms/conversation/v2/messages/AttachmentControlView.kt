@@ -88,6 +88,7 @@ class AttachmentControlView: LinearLayout {
 
                 binding.separator.isVisible = false
                 binding.pendingDownloadSubtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
 
             AttachmentState.DOWNLOADING -> {
@@ -112,6 +113,7 @@ class AttachmentControlView: LinearLayout {
                 }
 
                 binding.pendingDownloadSubtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
 
             AttachmentState.FAILED -> {
@@ -119,22 +121,23 @@ class AttachmentControlView: LinearLayout {
 
                 binding.pendingDownloadSize.apply {
                     text = totalSize
-                    setTextColor(errorColor)
+                    setTextColor(textColor)
                     isVisible = true
                 }
 
                 binding.pendingDownloadTitle.apply{
                     text = context.getString(R.string.failedToDownload)
-                    setTextColor(errorColor)
+                    setTextColor(textColor)
                     setTypeface(typeface, android.graphics.Typeface.NORMAL)
                 }
 
                 binding.separator.apply {
-                    imageTintList = ColorStateList.valueOf(errorColor)
+                    imageTintList = ColorStateList.valueOf(textColor)
                     isVisible = true
                 }
 
                 binding.pendingDownloadSubtitle.isVisible = true
+                binding.errorIcon.isVisible = true
             }
 
             else -> {
@@ -160,6 +163,7 @@ class AttachmentControlView: LinearLayout {
                 }
 
                 binding.pendingDownloadSubtitle.isVisible = false
+                binding.errorIcon.isVisible = false
             }
         }
     }

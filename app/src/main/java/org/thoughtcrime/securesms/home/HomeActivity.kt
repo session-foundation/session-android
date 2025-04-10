@@ -637,17 +637,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
         if (!isMuted) {
             lifecycleScope.launch(Dispatchers.Default) {
                 recipientDatabase.setMuted(thread.recipient, 0)
-                withContext(Dispatchers.Main) {
-                    binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
-                }
             }
         } else {
             showMuteDialog(this) { until ->
                 lifecycleScope.launch(Dispatchers.Default) {
                     recipientDatabase.setMuted(thread.recipient, until)
-                    withContext(Dispatchers.Main) {
-                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
-                    }
                 }
             }
         }
@@ -656,9 +650,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun setNotifyType(thread: ThreadRecord, newNotifyType: Int) {
         lifecycleScope.launch(Dispatchers.Default) {
             recipientDatabase.setNotifyType(thread.recipient, newNotifyType)
-            withContext(Dispatchers.Main) {
-                binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
-            }
         }
     }
 
