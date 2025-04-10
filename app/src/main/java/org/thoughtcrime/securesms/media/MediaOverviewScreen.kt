@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BasicAlertDialog
@@ -121,7 +124,6 @@ fun MediaOverviewScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(appBarScrollBehavior.nestedScrollConnection),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Handled by the activity
         topBar = {
             MediaOverviewTopAppBar(
                 selectionMode = selectionMode,
@@ -133,7 +135,8 @@ fun MediaOverviewScreen(
                 numSelected = selectedItems.size,
                 appBarScrollBehavior = appBarScrollBehavior
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal)
     ) { paddings ->
         Column(
             modifier = Modifier

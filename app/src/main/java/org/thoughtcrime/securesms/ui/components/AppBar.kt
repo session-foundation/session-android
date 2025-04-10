@@ -126,6 +126,7 @@ fun BackAppBar(
 fun ActionAppBar(
     title: String,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     singleLine: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     backgroundColor: Color = LocalColors.current.background,
@@ -137,7 +138,7 @@ fun ActionAppBar(
 ) {
     CenterAlignedTopAppBar(
         modifier = modifier,
-        windowInsets = WindowInsets(0, 0, 0, 0), // insets handled in BaseActionBarActivity for now
+        windowInsets = windowInsets,
         title = {
             if (!actionMode) {
                 AppBarText(title = title, singleLine = singleLine)
