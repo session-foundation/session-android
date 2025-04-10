@@ -2,17 +2,16 @@ package org.thoughtcrime.securesms.media
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.FullComposeActivity
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MediaOverviewActivity : ScreenLockActionBarActivity() {
+class MediaOverviewActivity : FullComposeActivity() {
     @Inject
     lateinit var viewModelFactory: MediaOverviewViewModel.AssistedFactory
 
@@ -20,14 +19,9 @@ class MediaOverviewActivity : ScreenLockActionBarActivity() {
         viewModelFactory.create(IntentCompat.getParcelableExtra(intent, EXTRA_ADDRESS, Address::class.java)!!)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setComposeContent {
-            MediaOverviewScreen(viewModel, onClose = this::finish)
-        }
-
-        supportActionBar?.hide()
+    @Composable
+    override fun ComposeContent() {
+        MediaOverviewScreen(viewModel, onClose = this::finish)
     }
 
     companion object {

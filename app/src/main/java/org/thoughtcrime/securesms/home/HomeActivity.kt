@@ -8,12 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.ViewGroup.MarginLayoutParams
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
-import androidx.core.view.isInvisible
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -165,9 +169,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private val isFromOnboarding: Boolean get() = intent.getBooleanExtra(FROM_ONBOARDING, false)
     private val isNewAccount: Boolean get() = intent.getBooleanExtra(NEW_ACCOUNT, false)
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     // region Lifecycle
-    override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
-        super.onCreate(savedInstanceState, isReady)
+    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
+        super.onCreate(savedInstanceState, ready)
 
         // Set content view
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -332,6 +339,23 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.isSearchOpen.collect { open ->
                 setSearchShown(open)
             }
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
+            // Apply status bar insets to the toolbar
+            binding.toolbar.updatePadding(
+                top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            )
+
+            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
+
+            binding.globalSearchRecycler.updatePadding(bottom = bottomInsets)
+            binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+            }
+
+            // There shouldn't be anything else needing the insets so we'll consume all of them
+            WindowInsetsCompat.CONSUMED
         }
     }
 

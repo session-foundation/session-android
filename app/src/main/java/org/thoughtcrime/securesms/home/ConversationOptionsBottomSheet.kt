@@ -14,6 +14,7 @@ import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
 import org.session.libsession.utilities.getGroup
+import org.session.libsession.utilities.isGroupDestroyed
 import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -116,9 +117,10 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             when {
                 // groups and communities
                 recipient.isGroupOrCommunityRecipient -> {
-                    // if you are in a group V2 and have been kicked of that group,
+                    // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
                     // the button should read 'Delete' instead of 'Leave'
-                    if (configFactory.wasKickedFromGroupV2(recipient)) {
+                    if (configFactory.wasKickedFromGroupV2(recipient) ||
+                        configFactory.isGroupDestroyed(recipient)) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2

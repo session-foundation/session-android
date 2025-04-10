@@ -78,8 +78,6 @@
         <item name="colorControlNormal">?android:textColorPrimary</item>
         <item name="android:colorBackground">#121212</item>
         <item name="android:windowBackground">?android:colorBackground</item>
-        <item name="android:navigationBarColor">?android:colorBackground</item>
-        <item name="android:statusBarColor">@color/transparent</item>
 
         <item name="actionBarPopupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <item name="actionBarWidgetTheme">@null</item>
@@ -94,21 +92,17 @@
         <!-- in case we want to add customisation like no title -->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:statusBarColor">@color/black</item>
     </style>
 
     <style name="Theme.Session.BottomSheet" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="colorControlNormal">?android:textColorPrimary</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowAnimationStyle">@style/Animation.MaterialComponents.BottomSheetDialog</item>
         <item name="bottomSheetStyle">@style/Widget.Session.BottomSheetDialog</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 
     <style name="Base.Theme.TextSecure" parent="@style/Theme.Session.DayNight">
 
         <item name="windowActionModeOverlay">true</item>
-
-        <item name="android:navigationBarColor">@color/compose_view_background</item>
 
         <item name="conversation_list_item_subject_color">#ffdddddd</item>
 
@@ -147,33 +141,29 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <style name="Classic.Dark.BottomSheet" parent="Theme.MaterialComponents.BottomSheetDialog">
+    <style name="Classic.Dark.BottomSheet" parent="Theme.Session.BottomSheet">
         <item name="colorPrimary">@color/classic_dark_0</item>
-        <item name="bottomSheetStyle">@style/Widget.Session.BottomSheetDialog</item>
         <item name="dialog_border">@color/transparent_black_15</item>
         <item name="android:textColorPrimary">@color/classic_dark_6</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
         <item name="android:textColorTertiary">@color/classic_dark_5</item>
     </style>
-    <style name="Classic.Light.BottomSheet" parent="Theme.MaterialComponents.BottomSheetDialog">
+    <style name="Classic.Light.BottomSheet" parent="Theme.Session.BottomSheet">
         <item name="colorPrimary">@color/classic_light_5</item>
-        <item name="bottomSheetStyle">@style/Widget.Session.BottomSheetDialog</item>
         <item name="dialog_border">@color/transparent_black_15</item>
         <item name="android:textColorPrimary">@color/classic_light_0</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
         <item name="android:textColorTertiary">@color/classic_light_1</item>
     </style>
-    <style name="Ocean.Dark.BottomSheet" parent="Theme.MaterialComponents.BottomSheetDialog">
+    <style name="Ocean.Dark.BottomSheet" parent="Theme.Session.BottomSheet">
         <item name="colorPrimary">@color/ocean_dark_3</item>
-        <item name="bottomSheetStyle">@style/Widget.Session.BottomSheetDialog</item>
         <item name="dialog_border">@color/transparent_black_15</item>
         <item name="android:textColorPrimary">@color/ocean_dark_7</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
         <item name="android:textColorTertiary">@color/ocean_dark_5</item>
     </style>
-    <style name="Ocean.Light.BottomSheet" parent="Theme.MaterialComponents.BottomSheetDialog">
+    <style name="Ocean.Light.BottomSheet" parent="Theme.Session.BottomSheet">
         <item name="colorPrimary">@color/ocean_light_6</item>
-        <item name="bottomSheetStyle">@style/Widget.Session.BottomSheetDialog</item>
         <item name="dialog_border">@color/transparent_black_15</item>
         <item name="android:textColorPrimary">@color/ocean_light_1</item>
         <item name="android:textColorSecondary">?android:textColorPrimary</item>
@@ -228,7 +218,6 @@
         <item name="android:textColorHint">@color/gray27</item>
         <item name="textColorAlert">@color/classic_dark_6</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:navigationBarColor">@color/navigation_bar</item>
         <item name="bottomSheetDialogTheme">@style/Classic.Dark.BottomSheet</item>
         <item name="actionMenuTextColor">?android:textColorPrimary</item>
         <item name="popupTheme">?actionBarPopupTheme</item>
@@ -313,7 +302,6 @@
         <item name="android:textColorHint">@color/gray27</item>
         <item name="textColorAlert">@color/classic_light_0</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:navigationBarColor">@color/classic_light_navigation_bar</item>
         <item name="colorCellBackground">@color/classic_light_6</item>
         <item name="colorDividerBackground">@color/classic_light_3</item>
         <item name="android:colorControlHighlight">@color/classic_light_3</item>
@@ -340,7 +328,6 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
         <item name="isLightTheme">true</item>
         <item name="android:isLightTheme" tools:targetApi="Q">true</item>
-        <item name="android:statusBarColor">?colorPrimary</item>
 
         <!-- Home screen -->
         <item name="searchBackgroundColor">@color/classic_light_4</item>
@@ -406,7 +393,6 @@
         <item name="android:textColorHint">@color/ocean_dark_5</item>
         <item name="textColorAlert">@color/ocean_dark_7</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:navigationBarColor">@color/navigation_bar</item>
         <item name="colorCellBackground">@color/ocean_dark_3</item>
         <item name="colorDividerBackground">@color/ocean_dark_4</item>
         <item name="android:colorControlHighlight">@color/ocean_dark_4</item>
@@ -493,7 +479,6 @@
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textColorHint">@color/ocean_light_6</item>
         <item name="textColorAlert">@color/ocean_light_0</item>
-        <item name="android:navigationBarColor">@color/ocean_light_navigation_bar</item>
         <item name="android:windowBackground">?colorPrimary</item>
         <item name="colorCellBackground">@color/ocean_light_5</item>
         <item name="colorDividerBackground">@color/ocean_light_3</item>
@@ -521,7 +506,6 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="O_MR1">true</item>
         <item name="isLightTheme">true</item>
         <item name="android:isLightTheme" tools:targetApi="Q">true</item>
-        <item name="android:statusBarColor">?colorPrimary</item>
 
 
         <item name="searchBackgroundColor">@color/ocean_light_5</item>
@@ -587,7 +571,6 @@
         <item name="android:textColor">?android:textColorPrimary</item>
         <item name="android:textColorHint">@color/gray27</item>
         <item name="android:windowBackground">?colorPrimary</item>
-        <item name="android:navigationBarColor">@color/compose_view_background</item>
         <item name="bottomSheetDialogTheme">@style/Classic.Dark.BottomSheet</item>
         <item name="actionMenuTextColor">?android:textColorPrimary</item>
         <item name="popupTheme">?actionBarPopupTheme</item>

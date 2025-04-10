@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,7 +42,6 @@ fun GroupMembers(
     onBack: () -> Unit,
     members: List<GroupMemberState>,
 ) {
-
     Scaffold(
         topBar = {
             BackAppBar(
@@ -52,23 +50,21 @@ fun GroupMembers(
             )
         }
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues)) {
-            // List of members
-            LazyColumn(modifier = Modifier) {
-                items(members) { member ->
-                    // Each member's view
-                    MemberItem(
-                        accountId = member.accountId,
-                        title = member.name,
-                        subtitle = member.statusLabel,
-                        subtitleColor = if (member.highlightStatus) {
-                            LocalColors.current.danger
-                        } else {
-                            LocalColors.current.textSecondary
-                        },
-                        showAsAdmin = member.showAsAdmin
-                    )
-                }
+        // List of members
+        LazyColumn(modifier = Modifier.consumeWindowInsets(paddingValues), contentPadding = paddingValues) {
+            items(members) { member ->
+                // Each member's view
+                MemberItem(
+                    accountId = member.accountId,
+                    title = member.name,
+                    subtitle = member.statusLabel,
+                    subtitleColor = if (member.highlightStatus) {
+                        LocalColors.current.danger
+                    } else {
+                        LocalColors.current.textSecondary
+                    },
+                    showAsAdmin = member.showAsAdmin
+                )
             }
         }
     }

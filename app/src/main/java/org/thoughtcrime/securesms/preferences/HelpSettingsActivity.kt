@@ -20,6 +20,9 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 
 class HelpSettingsActivity: ScreenLockActionBarActivity() {
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         setContentView(R.layout.activity_fragment_wrapper)

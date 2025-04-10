@@ -1551,9 +1551,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             override fun onHide() {
                 binding.conversationRecyclerView.suppressLayout(false)
-
-                WindowUtil.setLightStatusBarFromTheme(this@ConversationActivityV2);
-                WindowUtil.setLightNavigationBarFromTheme(this@ConversationActivityV2);
             }
 
         })

@@ -1,6 +1,9 @@
 package org.thoughtcrime.securesms.mediasend;
 
 import android.annotation.SuppressLint;
+
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -41,6 +44,7 @@ import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.ServiceUtil;
 import org.thoughtcrime.securesms.util.Stopwatch;
 import org.session.libsession.utilities.TextSecurePreferences;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import java.io.ByteArrayOutputStream;
 
@@ -100,6 +104,8 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     controlsContainer = view.findViewById(R.id.camera_controls_container);
     cameraCloseButton = view.findViewById(R.id.camera_close_button);
 
+    ViewUtilitiesKt.applySafeInsetsPaddings(view.findViewById(R.id.camera_controls_safe_area));
+
     onOrientationChanged(getResources().getConfiguration().orientation);
 
     cameraPreview.setSurfaceTextureListener(this);
@@ -131,8 +137,9 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
 
     orderEnforcer.run(Stage.CAMERA_PROPERTIES_AVAILABLE, this::updatePreviewScale);
 
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+    // Enter fullscreen mode
+    WindowCompat.getInsetsController(requireActivity().getWindow(), requireActivity().getWindow().getDecorView())
+            .hide(WindowInsetsCompat.Type.systemBars());
   }
 
   @Override
@@ -140,6 +147,10 @@ public class Camera1Fragment extends Fragment implements TextureView.SurfaceText
     super.onPause();
     camera.release();
     orderEnforcer.reset();
+
+    // Exit fullscreen mode
+    WindowCompat.getInsetsController(requireActivity().getWindow(), requireActivity().getWindow().getDecorView())
+            .show(WindowInsetsCompat.Type.systemBars());
   }
 
   @Override

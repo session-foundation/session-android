@@ -2,14 +2,16 @@ package org.thoughtcrime.securesms.groups.compose
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,7 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -115,83 +116,84 @@ fun CreateGroup(
                 backgroundColor = LocalColors.current.backgroundSecondary,
                 onBack = onBack,
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
-        Box(modifier = modifier.padding(paddings)) {
-            Column(
-                modifier = modifier.padding(vertical = LocalDimensions.current.xsSpacing),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                GroupMinimumVersionBanner()
+        Column(
+            modifier = modifier.padding(paddings).consumeWindowInsets(paddings),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            GroupMinimumVersionBanner()
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                SessionOutlinedTextField(
-                    text = groupName,
-                    onChange = onGroupNameChanged,
-                    placeholder = stringResource(R.string.groupNameEnter),
-                    textStyle = LocalType.current.base,
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(stringResource(R.string.AccessibilityId_groupNameEnter)),
-                    error = groupNameError.takeIf { it.isNotBlank() },
-                    enabled = !showLoading,
-                    innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
-                    onContinue = focusManager::clearFocus
-                )
+            SessionOutlinedTextField(
+                text = groupName,
+                onChange = onGroupNameChanged,
+                placeholder = stringResource(R.string.groupNameEnter),
+                textStyle = LocalType.current.base,
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                    .qaTag(stringResource(R.string.AccessibilityId_groupNameEnter)),
+                error = groupNameError.takeIf { it.isNotBlank() },
+                enabled = !showLoading,
+                innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
+                onContinue = focusManager::clearFocus
+            )
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                SearchBar(
-                    query = contactSearchQuery,
-                    onValueChanged = onContactSearchQueryChanged,
-                    placeholder = stringResource(R.string.searchContacts),
-                    modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
-                    enabled = !showLoading
-                )
+            SearchBar(
+                query = contactSearchQuery,
+                onValueChanged = onContactSearchQueryChanged,
+                placeholder = stringResource(R.string.searchContacts),
+                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
+                    .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
+                enabled = !showLoading
+            )
 
-                Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
+            Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
-                BottomFadingEdgeBox(
-                    modifier = Modifier.weight(1f)
-                        .nestedScroll(rememberNestedScrollInteropConnection()),
-                    fadingColor = LocalColors.current.backgroundSecondary
-                ) { bottomContentPadding ->
-                    if(items.isEmpty()){
-                        Text(
-                            modifier = Modifier.fillMaxWidth()
-                                .padding(top = LocalDimensions.current.xsSpacing),
-                            text = stringResource(R.string.contactNone),
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+            BottomFadingEdgeBox(
+                modifier = Modifier.weight(1f)
+                    .nestedScroll(rememberNestedScrollInteropConnection()),
+                fadingColor = LocalColors.current.backgroundSecondary
+            ) { bottomContentPadding ->
+                if(items.isEmpty()){
+                    Text(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = LocalDimensions.current.xsSpacing),
+                        text = stringResource(R.string.contactNone),
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                    )
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(bottom = bottomContentPadding)
+                    ) {
+                        multiSelectMemberList(
+                            contacts = items,
+                            onContactItemClicked = onContactItemClicked,
+                            enabled = !showLoading
                         )
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(bottom = bottomContentPadding)
-                        ) {
-                            multiSelectMemberList(
-                                contacts = items,
-                                onContactItemClicked = onContactItemClicked,
-                                enabled = !showLoading
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-
-                PrimaryOutlineButton(
-                    onClick = onCreateClicked,
-                    modifier = Modifier
-                        .padding(horizontal = LocalDimensions.current.spacing)
-                        .widthIn(min = LocalDimensions.current.minButtonWidth)
-                        .qaTag(stringResource(R.string.AccessibilityId_groupCreate))
-                ) {
-                    LoadingArcOr(loading = showLoading) {
-                        Text(stringResource(R.string.create))
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            PrimaryOutlineButton(
+                onClick = onCreateClicked,
+                modifier = Modifier
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .widthIn(min = LocalDimensions.current.minButtonWidth)
+                    .qaTag(stringResource(R.string.AccessibilityId_groupCreate))
+            ) {
+                LoadingArcOr(loading = showLoading) {
+                    Text(stringResource(R.string.create))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
         }
 
     }

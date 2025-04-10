@@ -48,6 +48,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.util.Pair;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
@@ -144,18 +146,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     getSupportActionBar().show();
   };
   private final Runnable hideRunnable = () -> {
-    if (VERSION.SDK_INT >= 30) {
-      rootContainer.getWindowInsetsController().hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-      rootContainer.getWindowInsetsController().setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-    } else {
-      rootContainer.setSystemUiVisibility(
-              View.SYSTEM_UI_FLAG_LOW_PROFILE |
-                      View.SYSTEM_UI_FLAG_FULLSCREEN |
-                      View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
-                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                      View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-    }
+      WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+              .hide(WindowInsetsCompat.Type.systemBars());
   };
   private MediaItemAdapter adapter;
 
@@ -208,11 +200,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   }
 
   private void exitFullscreen() {
-    if (Build.VERSION.SDK_INT >= 30) {
-      rootContainer.getWindowInsetsController().show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-    } else {
-      rootContainer.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-    }
+    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+            .show(WindowInsetsCompat.Type.systemBars());
+
     isFullscreen = false;
     hideHandler.removeCallbacks(hideRunnable);
     hideHandler.postDelayed(showRunnable, UI_ANIMATION_DELAY);

@@ -3,11 +3,14 @@ package org.thoughtcrime.securesms.conversation.start
 import android.app.Dialog
 import android.content.Intent
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -15,9 +18,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
+import network.loki.messenger.databinding.FragmentNewConversationBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.modifyLayoutParams
 import org.thoughtcrime.securesms.conversation.start.home.StartConversationHomeFragment
 import org.thoughtcrime.securesms.conversation.start.invitefriend.InviteFriendFragment
 import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragment
@@ -34,10 +37,17 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         const val PEEK_RATIO = 0.94f
     }
 
-    private val defaultPeekHeight: Int by lazy { (Resources.getSystem().displayMetrics.heightPixels * PEEK_RATIO).toInt() }
-
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        replaceFragment(
+            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
+            fragmentKey = StartConversationHomeFragment::class.java.simpleName
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,21 +58,26 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        replaceFragment(
-            fragment = StartConversationHomeFragment().also { it.delegate.value = this },
-            fragmentKey = StartConversationHomeFragment::class.java.simpleName
-        )
+
+        val emptySpace = (Resources.getSystem().displayMetrics.heightPixels * (1 - PEEK_RATIO)).toInt()
+
+        val binding = FragmentNewConversationBinding.bind(view)
+
+        binding.newConversationFragmentContainer.verticalSpace = emptySpace
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            // From Android 15, given display metrics now include the window insets so we'll have to account for that space
+            binding.newConversationFragmentContainer.verticalSpace = emptySpace + insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+
+            WindowInsetsCompat.CONSUMED // We don't actually need our view to have any insets as we are in a dialog
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
-        BottomSheetDialog(requireContext(), R.style.Theme_Session_BottomSheet).apply {
-            setOnShowListener { _ ->
-                findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)?.apply {
-                    modifyLayoutParams<LayoutParams> { height = defaultPeekHeight }
-                }?.let { BottomSheetBehavior.from(it) }?.apply {
-                    skipCollapsed = true
-                    state = BottomSheetBehavior.STATE_EXPANDED
-                }
+        BottomSheetDialog(requireContext()).apply {
+            behavior.apply {
+                skipCollapsed = true
+                state = BottomSheetBehavior.STATE_EXPANDED
             }
         }
 

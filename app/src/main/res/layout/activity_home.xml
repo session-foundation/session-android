@@ -179,7 +179,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|center_horizontal"
-                android:layout_marginBottom="@dimen/new_conversation_button_bottom_offset"
                 app:rippleColor="@color/button_primary_ripple"
                 android:src="@drawable/ic_plus"
                 app:maxImageSize="32dp"
@@ -193,6 +192,7 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical"
             android:visibility="gone"
+            android:clipToPadding="false"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:itemCount="6"
             tools:listitem="@layout/view_global_search_result" />

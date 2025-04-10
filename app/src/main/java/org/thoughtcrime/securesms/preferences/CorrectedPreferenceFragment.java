@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.DialogFragment;
@@ -22,6 +23,8 @@ import androidx.preference.PreferenceScreen;
 import androidx.preference.PreferenceViewHolder;
 import androidx.recyclerview.widget.RecyclerView;
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
+
 import network.loki.messenger.R;
 
 public abstract class CorrectedPreferenceFragment extends PreferenceFragmentCompat {
@@ -43,11 +46,15 @@ public abstract class CorrectedPreferenceFragment extends PreferenceFragmentComp
   }
 
   @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
 
-    View lv = getView().findViewById(android.R.id.list);
-    if (lv != null) lv.setPadding(0, 0, 0, 0);
+    RecyclerView lv = getListView();
+    if (lv != null) {
+      lv.setPadding(0, 0, 0, 0);
+      ViewUtilitiesKt.applyCommonWindowInsetsOnViews(lv);
+    }
+
     setDivider(null);
   }
 

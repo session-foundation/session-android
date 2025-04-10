@@ -126,6 +126,12 @@ fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
     group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.kicked == true
 
 /**
+ * Shortcut to check if the a given group is destroyed
+ */
+fun ConfigFactoryProtocol.isGroupDestroyed(group: Recipient) =
+    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.destroyed == true
+
+/**
  * Wait until all user configs are pushed to the server.
  *
  * This function is not essential to the pushing of the configs, the config push will schedule

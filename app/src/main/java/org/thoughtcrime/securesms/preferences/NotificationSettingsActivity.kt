@@ -8,6 +8,9 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 @AndroidEntryPoint
 class NotificationSettingsActivity : ScreenLockActionBarActivity() {
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         setContentView(R.layout.activity_fragment_wrapper)

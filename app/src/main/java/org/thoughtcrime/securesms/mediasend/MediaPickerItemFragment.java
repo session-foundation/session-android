@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import org.session.libsession.utilities.Util;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,6 +92,8 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    ViewUtilitiesKt.applySafeInsetsPaddings(view);
+
     RecyclerView imageList = view.findViewById(R.id.mediapicker_item_list);
 
     adapter       = new MediaPickerItemAdapter(Glide.with(this), this, maxSelection);
@@ -117,8 +120,6 @@ public class MediaPickerItemFragment extends Fragment implements MediaPickerItem
     super.onResume();
 
     viewModel.onItemPickerStarted();
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   }
 
   @Override

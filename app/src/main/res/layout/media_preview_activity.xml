@@ -6,22 +6,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/media_preview_root"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
-    <com.google.android.material.appbar.AppBarLayout
-        style="@style/Widget.Session.AppBarLayout"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/search_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:stateListAnimator="@animator/appbar_elevation">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/search_toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/Widget.Session.ActionBar"/>
-
-    </com.google.android.material.appbar.AppBarLayout>
+        android:theme="@style/Widget.Session.ActionBar"/>
 
     <org.thoughtcrime.securesms.components.SafeViewPager
         android:id="@+id/media_pager"

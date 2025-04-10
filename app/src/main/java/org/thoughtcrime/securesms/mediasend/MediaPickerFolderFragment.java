@@ -27,6 +27,7 @@ import com.squareup.phrase.Phrase;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.util.ViewUtilitiesKt;
 
 import dagger.hilt.android.AndroidEntryPoint;
 import network.loki.messenger.R;
@@ -85,6 +86,8 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    ViewUtilitiesKt.applySafeInsetsPaddings(view);
+
     RecyclerView             list    = view.findViewById(R.id.mediapicker_folder_list);
     MediaPickerFolderAdapter adapter = new MediaPickerFolderAdapter(Glide.with(this), this);
 
@@ -104,8 +107,6 @@ public class MediaPickerFolderFragment extends Fragment implements MediaPickerFo
     super.onResume();
 
     viewModel.onFolderPickerStarted();
-    requireActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-    requireActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
   }
 
   @Override

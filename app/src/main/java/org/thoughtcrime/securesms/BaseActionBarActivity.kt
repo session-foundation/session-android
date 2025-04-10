@@ -3,23 +3,29 @@ package org.thoughtcrime.securesms
 import android.app.ActivityManager.TaskDescription
 import android.content.res.Resources
 import android.graphics.BitmapFactory
-import android.os.Build.VERSION
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
+import androidx.core.view.ViewGroupCompat
 import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.conversation.v2.WindowUtil
+import org.session.libsession.utilities.ThemeUtil
 import org.thoughtcrime.securesms.util.ThemeState
 import org.thoughtcrime.securesms.util.UiModeUtilities.isDayUiMode
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.themeState
-import kotlin.math.max
+
+private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+private val DefaultDarkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
 abstract class BaseActionBarActivity : AppCompatActivity() {
     var currentThemeState: ThemeState? = null
@@ -32,6 +38,10 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
                 applicationContext as ApplicationContext
             return appContext.textSecurePreferences
         }
+
+    // Whether to apply default window insets to the decor view
+    open val applyDefaultWindowInsets: Boolean
+        get() = true
 
     @get:StyleRes
     private val desiredTheme: Int
@@ -80,10 +90,15 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        val detectDarkMode = { _: Resources ->
+            ThemeUtil.isDarkTheme(this)
+        }
 
-        // Enable edge-to-edge - needed for sdk35 and above
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT, detectDarkMode),
+            navigationBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+        )
+        super.onCreate(savedInstanceState)
 
 
         val actionBar = supportActionBar
@@ -92,30 +107,19 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             actionBar.setHomeButtonEnabled(true)
         }
 
-        // Apply insets to your views - Needed for sdk35 and above
-        val rootView = findViewById<View>(android.R.id.content)
-        ViewCompat.setOnApplyWindowInsetsListener(rootView) { view, windowInsets ->
-            // Get system bars insets
-            val systemBarsInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            // Get IME (keyboard) insets
-            val imeInsets = windowInsets.getInsets(WindowInsetsCompat.Type.ime())
+        // Apply a fix that views not getting inset dispatch when the inset was consumed by siblings on API <= 29
+        // See: https://developer.android.com/develop/ui/views/layout/edge-to-edge#backward-compatible-dispatching
+        ViewGroupCompat.installCompatInsetsDispatch(window.decorView)
 
-            // Update view padding to account for system bars
-            view.updatePadding(
-                left = systemBarsInsets.left,
-                top = systemBarsInsets.top,
-                right = systemBarsInsets.right,
-                bottom = max(systemBarsInsets.bottom, imeInsets.bottom) // set either the padding for the inset or for the keyboard
-            )
-
-            // Consume the insets
-            windowInsets
+        if (applyDefaultWindowInsets) {
+            findViewById<View>(android.R.id.content)?.applySafeInsetsPaddings()
         }
     }
 
     override fun onResume() {
         super.onResume()
+
         initializeScreenshotSecurity(true)
         val name = resources.getString(R.string.app_name)
         val icon = BitmapFactory.decodeResource(resources, R.drawable.ic_launcher_foreground)
@@ -125,12 +129,6 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             recreate()
         }
 
-        // apply lightStatusBar manually as API 26 does not update properly via applyTheme
-        // https://issuetracker.google.com/issues/65883460?pli=1
-        if (VERSION.SDK_INT >= 26 && VERSION.SDK_INT <= 27) WindowUtil.setLightStatusBarFromTheme(
-            this
-        )
-        if (VERSION.SDK_INT == 27) WindowUtil.setLightNavigationBarFromTheme(this)
     }
 
     override fun onPause() {

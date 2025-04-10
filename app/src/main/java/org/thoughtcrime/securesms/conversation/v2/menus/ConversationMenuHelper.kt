@@ -400,7 +400,8 @@ object ConversationMenuHelper {
                     context = context,
                     groupName = group.title,
                     isAdmin = isGroupAdmin,
-                    isKicked = configFactory.wasKickedFromGroupV2(thread),
+                    isKicked = false,
+                    isDestroyed = false,
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -433,6 +434,7 @@ object ConversationMenuHelper {
                     groupName = name,
                     isAdmin = group.hasAdminKey(),
                     isKicked = configFactory.wasKickedFromGroupV2(thread),
+                    isDestroyed = group.destroyed,
                     threadID = threadID,
                     storage = storage,
                     doLeave = {
@@ -459,6 +461,7 @@ object ConversationMenuHelper {
         groupName: String,
         isAdmin: Boolean,
         isKicked: Boolean,
+        isDestroyed: Boolean,
         threadID: Long,
         storage: StorageProtocol,
         doLeave: suspend () -> Unit,
@@ -467,7 +470,7 @@ object ConversationMenuHelper {
         var message: CharSequence = ""
         var positiveButton = R.string.leave
 
-        if(isKicked){
+        if(isKicked || isDestroyed){
             message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
                 .put(GROUP_NAME_KEY, groupName)
                 .format()

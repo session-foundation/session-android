@@ -9,11 +9,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imeNestedScroll
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -160,122 +168,127 @@ fun EditGroup(
                 title = stringResource(id = R.string.groupEdit),
                 onBack = onBack,
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Horizontal),
     ) { paddingValues ->
-        Box {
-            Column(modifier = Modifier.padding(paddingValues)) {
-                GroupMinimumVersionBanner()
+        Column(modifier = Modifier.padding(paddingValues).consumeWindowInsets(paddingValues)) {
+            GroupMinimumVersionBanner()
 
-                // Group name title
-                Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
-                    if (showNameEditing) {
-                        GroupNameContainer {
-                            IconButton(
-                                modifier = Modifier.size(LocalDimensions.current.spacing),
-                                onClick = onEditNameCancelClicked
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_x),
-                                    contentDescription = stringResource(R.string.AccessibilityId_cancel),
-                                    tint = LocalColors.current.text,
-                                )
-                            }
-
-                            SessionOutlinedTextField(
-                                modifier = Modifier
-                                    .widthIn(
-                                        min = LocalDimensions.current.mediumSpacing,
-                                        max = maxNameWidth
-                                    )
-                                    .qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                                text = editingName.orEmpty(),
-                                onChange = onEditingNameValueChanged,
-                                textStyle = LocalType.current.h8,
-                                singleLine = true,
-                                innerPadding = PaddingValues(
-                                    horizontal = LocalDimensions.current.spacing,
-                                    vertical = LocalDimensions.current.smallSpacing
-                                )
-                            )
-
+            // Group name title
+            Crossfade(editingName != null, label = "Editable group name") { showNameEditing ->
+                if (showNameEditing) {
+                    GroupNameContainer {
                         IconButton(
                             modifier = Modifier.size(LocalDimensions.current.spacing),
-                            onClick = onEditNameConfirmed
+                            onClick = onEditNameCancelClicked
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_check),
-                                contentDescription = stringResource(R.string.AccessibilityId_confirm),
+                                painter = painterResource(R.drawable.ic_x),
+                                contentDescription = stringResource(R.string.AccessibilityId_cancel),
                                 tint = LocalColors.current.text,
                             )
                         }
-                    }
 
-
-                    } else {
-                        GroupNameContainer {
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = groupName,
-                                style = LocalType.current.h4,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .widthIn(max = maxNameWidth)
-                                    .padding(vertical = LocalDimensions.current.smallSpacing),
+                        SessionOutlinedTextField(
+                            modifier = Modifier
+                                .widthIn(
+                                    min = LocalDimensions.current.mediumSpacing,
+                                    max = maxNameWidth
+                                )
+                                .qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                            text = editingName.orEmpty(),
+                            onChange = onEditingNameValueChanged,
+                            textStyle = LocalType.current.h8,
+                            singleLine = true,
+                            innerPadding = PaddingValues(
+                                horizontal = LocalDimensions.current.spacing,
+                                vertical = LocalDimensions.current.smallSpacing
                             )
+                        )
 
-                        Box(modifier = Modifier.weight(1f)) {
-                            if (canEditName) {
-                                IconButton(
-                                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
-                                    onClick = onEditNameClicked
-                                ) {
-                                    Icon(
-                                        painterResource(R.drawable.ic_pencil),
-                                        contentDescription = stringResource(R.string.edit),
-                                        tint = LocalColors.current.text,
-                                    )
-                                }
+                    IconButton(
+                        modifier = Modifier.size(LocalDimensions.current.spacing),
+                        onClick = onEditNameConfirmed
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_check),
+                            contentDescription = stringResource(R.string.AccessibilityId_confirm),
+                            tint = LocalColors.current.text,
+                        )
+                    }
+                }
+
+
+                } else {
+                    GroupNameContainer {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = groupName,
+                            style = LocalType.current.h4,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .widthIn(max = maxNameWidth)
+                                .padding(vertical = LocalDimensions.current.smallSpacing),
+                        )
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (canEditName) {
+                            IconButton(
+                                modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_groupName)),
+                                onClick = onEditNameClicked
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_pencil),
+                                    contentDescription = stringResource(R.string.edit),
+                                    tint = LocalColors.current.text,
+                                )
                             }
                         }
                     }
                 }
             }
+        }
 
-                // Header & Add member button
-                Row(
-                    modifier = Modifier.padding(
-                        horizontal = LocalDimensions.current.smallSpacing,
-                        vertical = LocalDimensions.current.xxsSpacing
-                    ),
-                    verticalAlignment = CenterVertically
-                ) {
-                    Text(
-                        stringResource(R.string.groupMembers),
-                        modifier = Modifier.weight(1f),
-                        style = LocalType.current.large,
-                        color = LocalColors.current.text
+            // Header & Add member button
+            Row(
+                modifier = Modifier.padding(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxsSpacing
+                ),
+                verticalAlignment = CenterVertically
+            ) {
+                Text(
+                    stringResource(R.string.groupMembers),
+                    modifier = Modifier.weight(1f),
+                    style = LocalType.current.large,
+                    color = LocalColors.current.text
+                )
+
+                if (showAddMembers) {
+                    PrimaryOutlineButton(
+                        stringResource(R.string.membersInvite),
+                        onClick = onAddMemberClick,
+                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
                     )
+                }
+            }
 
-                    if (showAddMembers) {
-                        PrimaryOutlineButton(
-                            stringResource(R.string.membersInvite),
-                            onClick = onAddMemberClick,
-                            modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_membersInvite))
-                        )
-                    }
+
+            // List of members
+            LazyColumn(modifier = Modifier.weight(1f).imePadding()) {
+                items(members) { member ->
+                    // Each member's view
+                    EditMemberItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        member = member,
+                        onClick = { onMemberClicked(member) }
+                    )
                 }
 
-
-                // List of members
-                LazyColumn(modifier = Modifier) {
-                    items(members) { member ->
-                        // Each member's view
-                        EditMemberItem(
-                            modifier = Modifier.fillMaxWidth(),
-                            member = member,
-                            onClick = { onMemberClicked(member) }
-                        )
-                    }
+                item {
+                    Spacer(
+                        modifier = Modifier.windowInsetsBottomHeight(WindowInsets.systemBars)
+                    )
                 }
             }
         }
