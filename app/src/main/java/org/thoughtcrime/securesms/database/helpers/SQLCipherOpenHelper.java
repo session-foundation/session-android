@@ -104,7 +104,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int    DATABASE_VERSION         = lokiV48;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
-  public static final String  DATABASE_NAME            = "signal_v4.db";
+  public static final String  CIPHER4_OLD_DB_NAME      = "signal_v4.db";
+  public static final String  DATABASE_NAME            = "session.db";
 
   private final Context        context;
   private final DatabaseSecret databaseSecret;
@@ -126,6 +127,8 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
         @Override
         public void postKey(SQLiteConnection connection) {
+          SQLCipherOpenHelper.applySQLCipherPragmas(connection, true);
+
           // if not vacuumed in a while, perform that operation
           long currentTime = System.currentTimeMillis();
           // 7 days
@@ -149,11 +152,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
   private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4) {
     if (useSQLCipher4) {
-      connection.execute("PRAGMA kdf_iter = '1';", null, null);
+      connection.execute("PRAGMA kdf_iter = 1;", null, null);
     }
     else {
       connection.execute("PRAGMA cipher_compatibility = 3;", null, null);
-      connection.execute("PRAGMA kdf_iter = '1';", null, null);
+      connection.execute("PRAGMA kdf_iter = 1;", null, null);
     }
 
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
@@ -279,47 +282,56 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
 
   public static void migrateSqlCipher4ToNewCipherSettingsIfNeeded(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, @NonNull TextSecurePreferences prefs) {
-    final File dbFile = new File(context.getDatabasePath(DATABASE_NAME).getPath());
-    if (!dbFile.exists()) {
-      // No need to migrate if the database hasn't be created yet. Our code will create it with
-      // correct settings.
+    final File oldDbFile = new File(context.getDatabasePath(CIPHER4_OLD_DB_NAME).getPath());
+    if (!oldDbFile.exists()) {
+      // No need to migrate if the old database doesn't exist. Our code will create the new database with updated settings.
       Log.d(TAG, "No need to migrate to new cipher settings for new database");
       prefs.setMigratedToDisablingKDF(true);
       return;
     }
 
-    // If the database exists, check if we have already migrated it
     if (prefs.getMigratedToDisablingKDF()) {
       Log.d(TAG, "Skipping migration to new cipher settings, already migrated");
       return;
     }
 
+    final File newDbFile = new File(context.getDatabasePath(DATABASE_NAME).getPath());
+    if (newDbFile.exists()) {
+        // If we need to do migration but the new db exists - it means the migration could have been failed half way through last time.
+        // Delete the new db and try again.
+        final boolean _ignored = newDbFile.delete();
+    }
+
     try {
       SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
         @Override
-        public void preKey(SQLiteConnection connection) {
+        public void preKey(SQLiteConnection connection) {}
+
+        @Override
+        public void postKey(SQLiteConnection connection) {
           // Old db cipher settings
           connection.executeRaw("PRAGMA kdf_iter = 256000", null, null);
           connection.executeRaw("PRAGMA cipher_page_size = 4096", null, null);
         }
-
-        @Override
-        public void postKey(SQLiteConnection connection) {}
       };
 
-      try (final SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getAbsolutePath(), databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE, hook)) {
+      try (final SQLiteDatabase db = SQLiteDatabase.openDatabase(oldDbFile.getAbsolutePath(), databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY, hook)) {
         Log.d(TAG, "Migrate database with new KDF settings");
 
-        // Enable new db cipher settings
-        db.rawQuery("PRAGMA kdf_iter = 1");
-        db.rawQuery("PRAGMA cipher_page_size = 4096");
-        db.rawQuery(String.format("PRAGMA rekey = '%s'", databaseSecret.asString()));
+        // Attach new db and apply new settings
+        db.rawExecSQL("ATTACH DATABASE ? AS new_db KEY ?", newDbFile.getAbsolutePath(), databaseSecret.asString());
+        db.rawExecSQL("PRAGMA new_db.kdf_iter = 1");
+        db.rawExecSQL("PRAGMA new_db.cipher_page_size = 4096");
+        db.rawExecSQL("PRAGMA new_db.user_version = " + db.getVersion());
+        db.rawExecSQL("SELECT sqlcipher_export('new_db')");
+        db.rawExecSQL("DETACH DATABASE new_db");
 
-        // Make sure the db is actually opened
-        db.rawQuery("SELECT COUNT(*) FROM sqlite_master");
 
         Log.d(TAG, "Migration complete");
+        db.rawExecSQL("PRAGMA cipher_log_level = 'INFO'");
       }
+
+      Preconditions.checkState(newDbFile.exists(), "New database file must exist after migration");
 
       prefs.setMigratedToDisablingKDF(true);
     } catch (Exception e) {
