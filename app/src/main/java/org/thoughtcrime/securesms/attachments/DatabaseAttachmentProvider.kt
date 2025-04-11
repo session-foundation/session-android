@@ -34,8 +34,9 @@ import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.MediaUtil
 import java.io.IOException
 import java.io.InputStream
+import javax.inject.Provider
 
-class DatabaseAttachmentProvider(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper), MessageDataProvider {
+class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper), MessageDataProvider {
 
     override fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream? {
         val attachmentDatabase = DatabaseComponent.get(context).attachmentDatabase()

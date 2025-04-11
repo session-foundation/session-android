@@ -10,8 +10,9 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
-class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class SessionContactDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         const val sessionContactTable = "session_contact_database"
@@ -36,14 +37,14 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun getContactWithAccountID(accountID: String): Contact? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(sessionContactTable, "${Companion.accountID} = ?", arrayOf( accountID )) { cursor ->
             contactFromCursor(cursor)
         }
     }
 
     fun getContacts(accountIDs: Collection<String>): List<Contact> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(
             sessionContactTable,
             "$accountID IN (SELECT value FROM json_each(?))",
@@ -52,14 +53,14 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun getAllContacts(): Set<Contact> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.getAll(sessionContactTable, null, null) { cursor ->
             contactFromCursor(cursor)
         }.toSet()
     }
 
     fun setContactIsTrusted(contact: Contact, isTrusted: Boolean, threadID: Long) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(1)
         contentValues.put(Companion.isTrusted, if (isTrusted) 1 else 0)
         database.update(sessionContactTable, contentValues, "$accountID = ?", arrayOf( contact.accountID ))
@@ -70,7 +71,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun setContact(contact: Contact) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(8)
         contentValues.put(accountID, contact.accountID)
         contentValues.put(name, contact.name)
@@ -86,7 +87,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
     }
 
     fun deleteContact(accountId: String) {
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val rowsAffected = database.delete(sessionContactTable, "$accountID = ?", arrayOf( accountId ))
         if (rowsAffected == 0) {
             Log.w("SessionContactDatabase", "Failed to delete contact with id: $accountId")
@@ -122,7 +123,7 @@ class SessionContactDatabase(context: Context, helper: SQLCipherOpenHelper) : Da
             whereArgs.addAll(excludeUserAddresses)
         }
 
-        return databaseHelper.readableDatabase.query(
+        return readableDatabase.query(
             sessionContactTable, null, whereClause.toString(), whereArgs.toTypedArray(),
             null, null, null
         )

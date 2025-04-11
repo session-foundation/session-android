@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 /**
  * Contains all databases necessary for full-text search (FTS).
  */
@@ -127,12 +129,12 @@ public class SearchDatabase extends Database {
                   "ORDER BY " + MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC " +
                   "LIMIT 500";
 
-  public SearchDatabase(@NonNull Context context, @NonNull SQLCipherOpenHelper databaseHelper) {
+  public SearchDatabase(@NonNull Context context, @NonNull Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public Cursor queryMessages(@NonNull String query, @NonNull Set<String> blockedContacts) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     String prefixQuery = adjustQuery(query);
     int queryLimit = Math.min(query.length()*50, 500);
 
@@ -170,7 +172,7 @@ public class SearchDatabase extends Database {
   }
 
   public Cursor queryMessages(@NonNull String query, long threadId, @NonNull Set<String> blockedContacts) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     String prefixQuery = adjustQuery(query);
 
     // Build the blocked contacts filter clause if needed

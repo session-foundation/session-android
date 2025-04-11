@@ -11,11 +11,12 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.CursorUtil
+import javax.inject.Provider
 
 /**
  * Store reactions on messages.
  */
-class ReactionDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
   companion object {
     const val TABLE_NAME = "reaction"

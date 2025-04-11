@@ -23,6 +23,8 @@ import android.database.Cursor;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.sqlite.db.SupportSQLiteDatabase;
+import androidx.sqlite.db.SupportSQLiteOpenHelper;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
@@ -34,18 +36,20 @@ import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import java.util.Arrays;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 public abstract class Database {
 
   protected static final String ID_WHERE = "_id = ?";
   protected static final String ID_IN = "_id IN (?)";
 
-  protected       SQLCipherOpenHelper databaseHelper;
+  private final Provider<SQLCipherOpenHelper> databaseHelper;
   protected final Context             context;
   private   final WindowDebouncer     conversationListNotificationDebouncer;
   private   final Runnable            conversationListUpdater;
 
   @SuppressLint("WrongConstant")
-  public Database(Context context, SQLCipherOpenHelper databaseHelper) {
+  public Database(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     this.context = context;
     this.conversationListUpdater = () -> {
       context.getContentResolver().notifyChange(DatabaseContentProviders.ConversationList.CONTENT_URI, null);
@@ -111,16 +115,13 @@ public abstract class Database {
     context.getContentResolver().notifyChange(DatabaseContentProviders.Attachment.CONTENT_URI, null);
   }
 
-  public void reset(SQLCipherOpenHelper databaseHelper) {
-    this.databaseHelper = databaseHelper;
-  }
 
   protected SQLiteDatabase getReadableDatabase() {
-    return databaseHelper.getReadableDatabase();
+    return databaseHelper.get().getReadableDatabase();
   }
 
   protected SQLiteDatabase getWritableDatabase() {
-    return databaseHelper.getWritableDatabase();
+    return databaseHelper.get().getWritableDatabase();
   }
 
 }

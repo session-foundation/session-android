@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Provider;
+
 /**
  * @deprecated This database table management is only used for
  * legacy group management. It is not used in groupv2. For group v2 data, you generally need
@@ -100,12 +102,12 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
             "ADD COLUMN " + UPDATED + " INTEGER DEFAULT 0;";
   }
 
-  public GroupDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public GroupDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public Optional<GroupRecord> getGroup(String groupId) {
-    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
+    try (Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, GROUP_ID + " = ?",
                                                                     new String[] {groupId},
                                                                     null, null, null))
     {
@@ -128,7 +130,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
   public Reader getGroupsFilteredByTitle(String constraint) {
     @SuppressLint("Recycle")
-    Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, TITLE + " LIKE ?",
+    Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, TITLE + " LIKE ?",
                                                                                         new String[]{"%" + constraint + "%"},
                                                                                         null, null, null);
 
@@ -137,7 +139,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
   public Reader getGroups() {
     @SuppressLint("Recycle")
-    Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
+    Cursor cursor = getReadableDatabase().query(TABLE_NAME, null, null, null, null, null, null);
     return new Reader(cursor);
   }
 
@@ -169,7 +171,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       }
     }
 
-    return databaseHelper.getReadableDatabase().query(TABLE_NAME, null,
+    return getReadableDatabase().query(TABLE_NAME, null,
             queries.toString(),
             queriesValues,
             null, null, null);
@@ -243,7 +245,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(ADMINS, Address.toSerializedList(admins, ','));
     }
 
-    long threadId = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+    long threadId = getWritableDatabase().insert(TABLE_NAME, null, contentValues);
 
     Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
       recipient.setName(title);
@@ -257,7 +259,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   }
 
   public boolean delete(@NonNull String groupId) {
-    int result = databaseHelper.getWritableDatabase().delete(TABLE_NAME, GROUP_ID + " = ?", new String[]{groupId});
+    int result = getWritableDatabase().delete(TABLE_NAME, GROUP_ID + " = ?", new String[]{groupId});
 
     if (result > 0) {
       Recipient.removeCached(Address.fromSerialized(groupId));
@@ -280,7 +282,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
       contentValues.put(AVATAR_URL, avatar.getUrl());
     }
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues,
+    getWritableDatabase().update(TABLE_NAME, contentValues,
                                                 GROUP_ID + " = ?",
                                                 new String[] {groupId});
 
@@ -296,7 +298,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   public void updateTitle(String groupID, String newValue) {
     ContentValues contentValues = new ContentValues();
     contentValues.put(TITLE, newValue);
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
+    getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
                                                 new String[] {groupID});
 
     Recipient recipient = Recipient.from(context, Address.fromSerialized(groupID), false);
@@ -319,7 +321,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     contentValues.put(AVATAR, newValue);
     contentValues.put(AVATAR_ID, avatarId);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
+    getWritableDatabase().update(TABLE_NAME, contentValues, GROUP_ID +  " = ?",
                                                 new String[] {groupID});
 
     Recipient.applyCached(Address.fromSerialized(groupID), recipient -> recipient.setGroupAvatarId(avatarId == 0 ? null : avatarId));
@@ -328,7 +330,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
   @Override
   public void removeProfilePicture(String groupID) {
-    databaseHelper.getWritableDatabase()
+    getWritableDatabase()
             .execSQL("UPDATE " + TABLE_NAME +
                     " SET " + AVATAR + " = NULL, " +
                     AVATAR_ID + " = NULL, " +
@@ -346,7 +348,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   }
 
   public boolean hasDownloadedProfilePicture(String groupId) {
-    try (Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{AVATAR}, GROUP_ID + " = ?",
+    try (Cursor cursor = getReadableDatabase().query(TABLE_NAME, new String[]{AVATAR}, GROUP_ID + " = ?",
             new String[] {groupId},
             null, null, null))
     {
@@ -365,7 +367,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     contents.put(MEMBERS, Address.toSerializedList(members, ','));
     contents.put(ACTIVE, 1);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                 new String[] {groupId});
 
     Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
@@ -378,7 +380,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
 
     ContentValues contents = new ContentValues();
     contents.put(ZOMBIE_MEMBERS, Address.toSerializedList(members, ','));
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
             new String[] {groupId});
   }
 
@@ -389,21 +391,21 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     contents.put(ADMINS, Address.toSerializedList(admins, ','));
     contents.put(ACTIVE, 1);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
   }
 
   public void updateFormationTimestamp(String groupId, Long formationTimestamp) {
     ContentValues contents = new ContentValues();
     contents.put(TIMESTAMP, formationTimestamp);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
   }
 
   public void updateTimestampUpdated(String groupId, Long updatedTimestamp) {
     ContentValues contents = new ContentValues();
     contents.put(UPDATED, updatedTimestamp);
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?", new String[] {groupId});
   }
 
   public void removeMember(String groupId, Address source) {
@@ -413,7 +415,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     ContentValues contents = new ContentValues();
     contents.put(MEMBERS, Address.toSerializedList(currentMembers, ','));
 
-    databaseHelper.getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
+    getWritableDatabase().update(TABLE_NAME, contents, GROUP_ID + " = ?",
                                                 new String[] {groupId});
 
     Recipient.applyCached(Address.fromSerialized(groupId), recipient -> {
@@ -432,7 +434,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     if (zombieMembers) membersColumn = ZOMBIE_MEMBERS;
 
     try {
-      cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[] {membersColumn},
+      cursor = getReadableDatabase().query(TABLE_NAME, new String[] {membersColumn},
                                                           GROUP_ID + " = ?",
                                                           new String[] {groupId},
                                                           null, null, null);
@@ -460,14 +462,14 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
   }
 
   public void setActive(String groupId, boolean active) {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database = getWritableDatabase();
     ContentValues  values   = new ContentValues();
     values.put(ACTIVE, active ? 1 : 0);
     database.update(TABLE_NAME, values, GROUP_ID + " = ?", new String[] {groupId});
   }
 
   public boolean hasGroup(@NonNull String groupId) {
-    try (Cursor cursor = databaseHelper.getReadableDatabase().rawQuery(
+    try (Cursor cursor = getReadableDatabase().rawQuery(
             "SELECT 1 FROM " + TABLE_NAME + " WHERE " + GROUP_ID + " = ? LIMIT 1",
             new String[]{groupId}
     )) {
@@ -479,7 +481,7 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     String query = GROUP_ID+" = ?";
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(GROUP_ID, newEncodedGroupId);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, query, new String[]{legacyEncodedGroupId});
   }
 

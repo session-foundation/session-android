@@ -9,8 +9,9 @@ import org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX
 import org.session.libsession.utilities.GroupUtil.COMMUNITY_INBOX_PREFIX
 import org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
-class ExpirationConfigurationDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class ExpirationConfigurationDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         const val TABLE_NAME = "expiration_configuration"

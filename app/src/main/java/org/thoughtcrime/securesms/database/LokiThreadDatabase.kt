@@ -6,8 +6,9 @@ import android.database.Cursor
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.JsonUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Provider
 
-class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Database(context, helper) {
+class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {
         private val sessionResetTable = "loki_thread_session_reset_database"
@@ -22,7 +23,7 @@ class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun getAllOpenGroups(): Map<Long, OpenGroup> {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         var cursor: Cursor? = null
         val result = mutableMapOf<Long, OpenGroup>()
         try {
@@ -45,7 +46,7 @@ class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         if (threadID < 0) {
             return null
         }
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(publicChatTable, "${Companion.threadID} = ?", arrayOf(threadID.toString())) { cursor ->
             val json = cursor.getString(publicChat)
             OpenGroup.fromJSON(json)
@@ -53,7 +54,7 @@ class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     }
 
     fun getThreadId(openGroup: OpenGroup): Long? {
-        val database = databaseHelper.readableDatabase
+        val database = readableDatabase
         return database.get(publicChatTable, "$publicChat = ?", arrayOf(JsonUtil.toJson(openGroup.toJson()))) { cursor ->
             cursor.getLong(threadID)
         }
@@ -63,7 +64,7 @@ class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
         if (threadID < 0) {
             return
         }
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         val contentValues = ContentValues(2)
         contentValues.put(Companion.threadID, threadID)
         contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
@@ -73,7 +74,7 @@ class LokiThreadDatabase(context: Context, helper: SQLCipherOpenHelper) : Databa
     fun removeOpenGroupChat(threadID: Long) {
         if (threadID < 0) return
 
-        val database = databaseHelper.writableDatabase
+        val database = writableDatabase
         database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
     }
 

@@ -8,15 +8,22 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+
+import com.google.common.io.Files;
 import com.squareup.phrase.Phrase;
 import java.io.File;
+import java.io.IOException;
+
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
+
+import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
+import org.session.libsignal.utilities.guava.Preconditions;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
@@ -97,12 +104,13 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
   private static final int    DATABASE_VERSION         = lokiV48;
   private static final int    MIN_DATABASE_VERSION     = lokiV7;
   private static final String CIPHER3_DATABASE_NAME    = "signal.db";
-  public static final String  DATABASE_NAME            = "signal_v4.db";
+  public static final String  CIPHER4_OLD_DB_NAME      = "signal_v4.db";
+  public static final String  DATABASE_NAME            = "session.db";
 
   private final Context        context;
   private final DatabaseSecret databaseSecret;
 
-  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret) {
+  public SQLCipherOpenHelper(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, @NonNull TextSecurePreferences preferences) {
     super(
       context,
       DATABASE_NAME,
@@ -144,11 +152,11 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
   private static void applySQLCipherPragmas(SQLiteConnection connection, boolean useSQLCipher4) {
     if (useSQLCipher4) {
-      connection.execute("PRAGMA kdf_iter = '256000';", null, null);
+      connection.execute("PRAGMA kdf_iter = 1;", null, null);
     }
     else {
       connection.execute("PRAGMA cipher_compatibility = 3;", null, null);
-      connection.execute("PRAGMA kdf_iter = '1';", null, null);
+      connection.execute("PRAGMA kdf_iter = 1;", null, null);
     }
 
     connection.execute("PRAGMA cipher_page_size = 4096;", null, null);
@@ -234,8 +242,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
       newDb.setVersion(oldDbVersion);
       newDb.close();
 
-      // TODO: Delete 'CIPHER3_DATABASE_NAME' once enough time has past
-      // Remove the old database file since it will no longer be used
 //      //noinspection ResultOfMethodCallIgnored
 //      oldDbFile.delete();
     }
@@ -271,6 +277,65 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       // Throw the error (app will crash but there is nothing else we can do unfortunately)
       throw e;
+    }
+  }
+
+
+  public static void migrateSqlCipher4ToNewCipherSettingsIfNeeded(@NonNull Context context, @NonNull DatabaseSecret databaseSecret, @NonNull TextSecurePreferences prefs) {
+    final File oldDbFile = new File(context.getDatabasePath(CIPHER4_OLD_DB_NAME).getPath());
+    if (!oldDbFile.exists()) {
+      // No need to migrate if the old database doesn't exist. Our code will create the new database with updated settings.
+      Log.d(TAG, "No need to migrate to new cipher settings for new database");
+      prefs.setMigratedToDisablingKDF(true);
+      return;
+    }
+
+    if (prefs.getMigratedToDisablingKDF()) {
+      Log.d(TAG, "Skipping migration to new cipher settings, already migrated");
+      return;
+    }
+
+    final File newDbFile = new File(context.getDatabasePath(DATABASE_NAME).getPath());
+    if (newDbFile.exists()) {
+        // If we need to do migration but the new db exists - it means the migration could have been failed half way through last time.
+        // Delete the new db and try again.
+        final boolean _ignored = newDbFile.delete();
+    }
+
+    try {
+      SQLiteDatabaseHook hook = new SQLiteDatabaseHook() {
+        @Override
+        public void preKey(SQLiteConnection connection) {}
+
+        @Override
+        public void postKey(SQLiteConnection connection) {
+          // Old db cipher settings
+          connection.executeRaw("PRAGMA kdf_iter = 256000", null, null);
+          connection.executeRaw("PRAGMA cipher_page_size = 4096", null, null);
+        }
+      };
+
+      try (final SQLiteDatabase db = SQLiteDatabase.openDatabase(oldDbFile.getAbsolutePath(), databaseSecret.asString(), null, SQLiteDatabase.OPEN_READWRITE | SQLiteDatabase.CREATE_IF_NECESSARY, hook)) {
+        Log.d(TAG, "Migrate database with new KDF settings");
+
+        // Attach new db and apply new settings
+        db.rawExecSQL("ATTACH DATABASE ? AS new_db KEY ?", newDbFile.getAbsolutePath(), databaseSecret.asString());
+        db.rawExecSQL("PRAGMA new_db.kdf_iter = 1");
+        db.rawExecSQL("PRAGMA new_db.cipher_page_size = 4096");
+        db.rawExecSQL("PRAGMA new_db.user_version = " + db.getVersion());
+        db.rawExecSQL("SELECT sqlcipher_export('new_db')");
+        db.rawExecSQL("DETACH DATABASE new_db");
+
+
+        Log.d(TAG, "Migration complete");
+        db.rawExecSQL("PRAGMA cipher_log_level = 'INFO'");
+      }
+
+      Preconditions.checkState(newDbFile.exists(), "New database file must exist after migration");
+
+      prefs.setMigratedToDisablingKDF(true);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
