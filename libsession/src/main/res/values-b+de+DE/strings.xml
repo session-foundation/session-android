@@ -40,6 +40,15 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> und <b>{other_name}</b> wurden zu Admin befördert.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
+    <string name="appIcon">App-Symbol</string>
+    <string name="appIconAndNameDescription">Alternatives App-Symbol und -Name werden auf dem Startbildschirm und in der App-Übersicht angezeigt.</string>
+    <string name="appIconAndNameSelectionTitle">Symbol und Name</string>
+    <string name="appIconDescription">Alternatives App-Symbol wird auf dem Startbildschirm und in der App-Bibliothek angezeigt. Der App-Name erscheint weiterhin als \'{app_name}\'.</string>
+    <string name="appIconEnableIcon">Alternatives App-Symbol verwenden</string>
+    <string name="appIconEnableIconAndName">Alternatives App-Symbol und -Name verwenden</string>
+    <string name="appIconSelect">Alternatives App-Symbol auswählen</string>
+    <string name="appIconSelectionTitle">Symbol</string>
+    <string name="appNameMeetingSE">MeetingSE</string>
     <string name="appearanceAutoDarkMode">Automatischer Dunkler Modus</string>
     <string name="appearanceHideMenuBar">Menüleiste ausblenden</string>
     <string name="appearanceLanguage">Sprache</string>
@@ -254,6 +263,7 @@
     <string name="copied">Kopiert</string>
     <string name="copy">Kopieren</string>
     <string name="create">Erstellen</string>
+    <string name="creatingCall">Anruf wird erstellt</string>
     <string name="cut">Ausschneiden</string>
     <string name="databaseErrorGeneric">Ein Datenbankfehler ist aufgetreten.\n\nExportiere deine Protokolldateien, um sie für die Fehlerbehebung bereitzustellen. Wenn dies nicht erfolgreich ist, installiere {app_name} neu und stelle deinen Account wieder her.\n\nAchtung: Dies führt zum Verlust aller Nachrichten, Anhänge und sonstigen Daten, die älter als zwei Wochen sind.</string>
     <string name="databaseErrorTimeout">Wir haben bemerkt, dass {app_name} lange zum Starten braucht.\n\nDu kannst weiter warten, deine Geräteprotokolle zur Fehlerbehebung exportieren oder versuchen, {app_name} neu zu starten.</string>
@@ -281,6 +291,10 @@
         <item quantity="one">Nachricht löschen</item>
         <item quantity="other">Nachrichten löschen</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Bist du dir sicher, dass du diese Nachricht löschen willst?</item>
+        <item quantity="other">Bist du dir sicher, dass du diese Nachrichten löschen willst?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Nachricht gelöscht</item>
         <item quantity="other">Nachrichten gelöscht</item>
@@ -288,7 +302,7 @@
     <string name="deleteMessageDeletedGlobally">Diese Nachricht wurde gelöscht</string>
     <string name="deleteMessageDeletedLocally">Diese Nachricht wurde auf diesem Gerät gelöscht</string>
     <plurals name="deleteMessageDescriptionDevice">
-        <item quantity="one">Bist du sicher, du möchtest diese Nachrichten nur von diesem Gerät löschen?</item>
+        <item quantity="one">Möchtest du diese Nachricht wirklich nur von diesem Gerät löschen?</item>
         <item quantity="other">Möchtest du diese Nachrichten wirklich nur von diesem Gerät löschen?</item>
     </plurals>
     <string name="deleteMessageDescriptionEveryone">Möchtest du diese Nachricht wirklich für alle löschen?</string>
@@ -298,6 +312,10 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Die Nachricht konnte nicht gelöscht werden</item>
         <item quantity="other">Die Nachrichten konnten nicht gelöscht werden</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Diese Nachricht kann nicht für alle gelöscht werden</item>
+        <item quantity="other">Einige der ausgewählten Nachrichten können nicht für alle gelöscht werden</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Möchtest du diese Nachrichten wirklich für alle löschen?</string>
     <string name="deleting">Wird gelöscht</string>
@@ -379,6 +397,7 @@
     <string name="errorCopyAndQuit">Fehler kopieren und beenden</string>
     <string name="errorDatabase">Datenbankfehler</string>
     <string name="errorUnknown">Ein unbekannter Fehler ist aufgetreten.</string>
+    <string name="failedToDownload">Herunterladen fehlgeschlagen</string>
     <string name="failures">Fehler</string>
     <string name="file">Datei</string>
     <string name="files">Dateien</string>
@@ -435,6 +454,7 @@
     <string name="groupNameNew">Gruppenname lautet jetzt {group_name}.</string>
     <string name="groupNameUpdated">Gruppenname aktualisiert.</string>
     <string name="groupNoMessages">Du hast keine Nachrichten von <b>{group_name}</b>. Sende eine Nachricht, um das Gespräch zu beginnen!</string>
+    <string name="groupNotUpdatedWarning">Die Gruppe wurde in mehr als 30 Tagen nicht aktualisiert. Möglicherweise können Probleme beim Senden von Nachrichten oder beim Anzeigen von Gruppeninformationen auftreten.</string>
     <string name="groupOnlyAdmin">Du bist der einzige Admin in <b>{group_name}</b>.\n\nGruppenmitglieder und -einstellungen können ohne einen Admin nicht geändert werden.</string>
     <string name="groupPromotedYou"><b>Du</b> wurdest zum Admin befördert.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> und <b>{count} andere</b> wurden zu Admin befördert.</string>
@@ -458,6 +478,7 @@
     <string name="groupSetDisplayPicture">Gruppen-Anzeigebild festlegen</string>
     <string name="groupUnknown">Unbekannte Gruppe</string>
     <string name="groupUpdated">Gruppe aktualisiert</string>
+    <string name="handlingConnectionCandidates">Verbindungskandidaten werden verarbeitet</string>
     <string name="helpFAQ">Häufig gestellte Fragen (FAQ)</string>
     <string name="helpHelpUsTranslateSession">Hilf uns {app_name} zu übersetzen</string>
     <string name="helpReportABug">Melde einen Fehler</string>
@@ -476,11 +497,16 @@
     <string name="incognitoKeyboardDescription">Fordere den Inkognito-Modus an, wenn verfügbar. Abhängig von der Tastatur, die du verwendest, kann deine Tastatur diese Anfrage ignorieren.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ungültige Verknüpfung</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Einladung fehlgeschlagen</item>
+        <item quantity="other">Einladungen fehlgeschlagen</item>
+    </plurals>
     <string name="join">Beitreten</string>
     <string name="later">Später</string>
     <string name="learnMore">Mehr erfahren</string>
     <string name="leave">Verlassen</string>
     <string name="leaving">Verlassen...</string>
+    <string name="legacyGroupChatHistory">Der Chatverlauf wird nicht in die neue Gruppe übertragen. Du kannst immer noch den Chatverlauf in deiner alten Gruppe ansehen.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> ist der Gruppe beigetreten.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> und <b>{count} andere</b> sind der Gruppe beigetreten.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Du</b> und <b>{count} andere</b> sind der Gruppe beigetreten.</string>
@@ -599,6 +625,7 @@
     <string name="notificationsContentShowNoNameOrContent">Kein Name oder Inhalt</string>
     <string name="notificationsFastMode">Schnellmodus</string>
     <string name="notificationsFastModeDescription">Über die Benachrichtigungsserver von Google wirst du sofort und zuverlässig über neue Nachrichten benachrichtigt.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Du wirst zuverlässig und sofort über neue Nachrichten benachrichtigt, unter Verwendung der Benachrichtigungsserver von Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Über Apples Push-Mitteilungsdienst wirst du sofort und zuverlässig über neue Nachrichten benachrichtigt.</string>
     <string name="notificationsGoToDevice">Zu den Benachrichtigungseinstellungen des Geräts gehen</string>
     <string name="notificationsHeaderAllMessages">Benachrichtigungen - Alle</string>
@@ -672,20 +699,32 @@
     <string name="passwordSet">Passwort festlegen</string>
     <string name="passwordSetDescription">Dein Passwort wurde festgelegt. Bitte bewahre es sicher auf.</string>
     <string name="paste">Einfügen</string>
+    <string name="permissionChange">Berechtigungsänderung</string>
     <string name="permissionMusicAudioDenied">{app_name} benötigt Musik- und Audiozugriff, um Dateien, Musik und Audio zu senden, aber der Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Musik und Audio«.</string>
     <string name="permissionsAppleMusic">{app_name} benötigt Zugriff auf Apple Music, um Medienanhänge abzuspielen.</string>
     <string name="permissionsAutoUpdate">Automatische Aktualisierung</string>
     <string name="permissionsAutoUpdateDescription">Beim Start automatisch nach Aktualisierungen suchen</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Kamerazugriff ist erforderlich, um Videoanrufe zu tätigen. Aktiviere die \"Kamera\"-Berechtigung in den Einstellungen, um fortzufahren.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Kamerazugriff ist derzeit aktiviert. Um ihn zu deaktivieren, ändere die \"Kamera\"-Berechtigung in den Einstellungen.</string>
     <string name="permissionsCameraDenied">{app_name} benötigt Kamerazugriff, um Fotos und Videos aufzunehmen, aber der Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Speicher«.</string>
+    <string name="permissionsCameraDescriptionIos">Erlaube Zugriff auf die Kamera für Videoanrufe.</string>
     <string name="permissionsFaceId">Die Bildschirmsperrfunktion von {app_name} verwendet Face ID.</string>
     <string name="permissionsKeepInSystemTray">In der Systemleiste behalten</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} läuft im Hintergrund weiter, wenn du das Fenster schließt</string>
     <string name="permissionsLibrary">{app_name} benötigt Zugriff auf deine Fotomediathek, um fortzufahren. Du kannst den Zugriff in den iOS-Einstellungen aktivieren.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Zugriff auf lokales Netzwerk ist für Anrufe erforderlich. Aktiviere die \"Lokales Netzwerk\"-Berechtigung in den Einstellungen, um fortzufahren.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} benötigt Zugriff auf lokales Netzwerk, um Sprachanrufe und Videoanrufe zu tätigen.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Zugriff auf lokales Netzwerk ist derzeit aktiviert. Um ihn zu deaktivieren, ändere die \"Lokales Netzwerk\"-Berechtigung in den Einstellungen.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Erlaube Zugriff auf lokales Netzwerk, um Sprach- und Videoanrufe zu ermöglichen.</string>
+    <string name="permissionsLocalNetworkIos">Lokales Netzwerk</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} benötigt Zugriff auf das Mikrofon, um Anrufe zu tätigen und Audio-Nachrichten zu senden, aber dieser Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Mikrofon«.</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Mikrofonzugriff ist erforderlich, um Anrufe zu tätigen und Audionachrichten aufzunehmen. Aktiviere die \"Mikrofon\"-Berechtigung in den Einstellungen, um fortzufahren.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Du kannst das Mikrofon in den Datenschutzeinstellungen von {app_name} aktivieren</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} benötigt Mikrofonzugriff, um Anrufe zu tätigen und Audionachrichten aufzuzeichnen.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Mikrofonzugriff ist derzeit aktiviert. Um ihn zu deaktivieren, ändere die \"Mikrofon\"-Berechtigung in den Einstellungen.</string>
     <string name="permissionsMicrophoneDescription">Erlaube Zugriff auf das Mikrofon.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Erlaube Zugriff auf das Mikrofon für Sprachanrufe und Audionachrichten.</string>
     <string name="permissionsMusicAudio">{app_name} benötigt Musik- und Audiozugriff, um Dateien, Musik und Audiodateien zu senden.</string>
     <string name="permissionsRequired">Berechtigung erforderlich</string>
     <string name="permissionsStorageDenied">{app_name} benötigt Fotozugriff, um Fotos und Videos senden zu können, aber der Zugriff wurde dauerhaft verweigert. Bitte öffne die Einstellungen, wähle »Berechtigungen« und aktiviere »Fotos und Videos«.</string>
@@ -717,6 +756,8 @@
     <string name="readReceipts">Lesebestätigungen</string>
     <string name="readReceiptsDescription">Zeige Lesebestätigungen für alle Nachrichten, die du sendest und erhältst.</string>
     <string name="received">Empfangen:</string>
+    <string name="receivedAnswer">Antwort empfangen</string>
+    <string name="receivingCallOffer">Rufangebot wird empfangen</string>
     <string name="recommended">Empfohlen</string>
     <string name="recoveryPasswordBannerDescription">Speichere dein Wiederherstellungspasswort, damit du den Zugriff auf deinen Account nicht verlierst.</string>
     <string name="recoveryPasswordBannerTitle">Speichere dein Wiederherstellungspasswort</string>
@@ -735,6 +776,7 @@
     <string name="recoveryPasswordRestoreDescription">Gib dein Wiederherstellungspasswort ein, um deinen Account zu laden. Wenn du es nicht gespeichert hast, findest du es in deinen App-Einstellungen.</string>
     <string name="recoveryPasswordView">Passwort anzeigen</string>
     <string name="recoveryPasswordWarningSendDescription">Dies ist dein Wiederherstellungspasswort. Wenn du es jemandem sendest, wird diese Person vollen Zugriff auf deinen Account haben.</string>
+    <string name="recreateGroup">Gruppe neu erstellen</string>
     <string name="redo">Wiederholen</string>
     <string name="remove">Entfernen</string>
     <string name="removePasswordFail">Fehler beim Entfernen des Passworts</string>
@@ -769,6 +811,8 @@
     <string name="selectAll">Alle auswählen</string>
     <string name="send">Senden</string>
     <string name="sending">Wird gesendet ...</string>
+    <string name="sendingCallOffer">Rufangebot wird gesendet</string>
+    <string name="sendingConnectionCandidates">Verbindungskandidaten werden gesendet</string>
     <string name="sent">Gesendet:</string>
     <string name="sessionAppearance">Darstellung</string>
     <string name="sessionClearData">Daten löschen</string>
@@ -787,6 +831,7 @@
     <string name="shareAccountIdDescription">Lade deine Kontakte ein, mit dir auf {app_name} zu chatten, indem du deine Account-ID mit ihnen teilst.</string>
     <string name="shareAccountIdDescriptionCopied">Teile deine Account-ID mit Freunden und verlegt das Gespräch dann hierher.</string>
     <string name="shareExtensionDatabaseError">Ein Datenbankfehler ist aufgetreten. Bitte starte die App neu und versuche es erneut.</string>
+    <string name="shareExtensionNoAccountError">Ups! Sieht so aus, als hättest du noch kein {app_name} Konto.\n\nDu musst eines in der {app_name} App erstellen, bevor du teilen kannst.</string>
     <string name="shareToSession">Teilen auf {app_name}</string>
     <string name="show">Anzeigen</string>
     <string name="showAll">Alle anzeigen</string>
@@ -794,6 +839,7 @@
     <string name="stickers">Sticker</string>
     <string name="supportGoTo">Zum Helpdesk gehen</string>
     <string name="systemInformationDesktop">Systeminformation: {information}</string>
+    <string name="tapToRetry">Zum Wiederholen tippen</string>
     <string name="theContinue">Weiter</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fehler</string>

@@ -78,6 +78,7 @@
     <string name="appearanceZoomIn">Zoom In</string>
     <string name="appearanceZoomOut">Zoom Out</string>
     <string name="attachment">Attachment</string>
+    <string name="attachments">Attachments</string>
     <string name="attachmentsAdd">Add attachment</string>
     <string name="attachmentsAlbumUnnamed">Unnamed Album</string>
     <string name="attachmentsAutoDownload">Auto-download Attachments</string>
@@ -578,6 +579,7 @@
     <string name="lockAppStatus">Lock status</string>
     <string name="lockAppUnlock">Tap to unlock</string>
     <string name="lockAppUnlocked">{app_name} is unlocked</string>
+    <string name="manageMembers">Manage Members</string>
     <string name="max">Max</string>
     <string name="media">Media</string>
     <plurals name="members">
@@ -753,6 +755,7 @@
     <string name="permissionsAutoUpdate">Auto Update</string>
     <string name="permissionsAutoUpdateDescription">Automatically check for updates on startup.</string>
     <string name="permissionsCameraAccessRequiredCallsIos">Camera access is required to make video calls. Toggle the \"Camera\" permission in Settings to continue.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Camera access is currently enabled. To disable it, toggle the \"Camera\" permission in Settings.</string>
     <string name="permissionsCameraDenied">{app_name} needs camera access to take photos and videos, but it has been permanently denied. Tap Settings → Permissions, and turn \"Camera\" on.</string>
     <string name="permissionsCameraDescriptionIos">Allow access to camera for video calls.</string>
     <string name="permissionsFaceId">The screen lock feature on {app_name} uses Face ID.</string>
@@ -761,7 +764,7 @@
     <string name="permissionsLibrary">{app_name} needs photo library access to continue. You can enable access in the iOS settings.</string>
     <string name="permissionsLocalNetworkAccessRequiredCallsIos">Local Network access is required to facilitate calls. Toggle the \"Local Network\" permission in Settings to continue.</string>
     <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} needs access to local network to make voice and video calls.</string>
-    <string name="permissionsLocalNetworkChangeDescriptionIos">Local Network access is currently enabled. To disable it, toggle the “Local Network” permission in Settings.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Local Network access is currently enabled. To disable it, toggle the \"Local Network\" permission in Settings.</string>
     <string name="permissionsLocalNetworkDescriptionIos">Allow access to local network to facilitate voice and video calls.</string>
     <string name="permissionsLocalNetworkIos">Local Network</string>
     <string name="permissionsMicrophone">Microphone</string>
@@ -769,6 +772,7 @@
     <string name="permissionsMicrophoneAccessRequiredCallsIos">Microphone access is required to make calls and record audio messages. Toggle the \"Microphone\" permission in Settings to continue.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">You can enable microphone access in {app_name}\'s privacy settings</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} needs microphone access to make calls and record audio messages.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Microphone access is currently enabled. To disable it, toggle the \"Microphone\" permission in Settings.</string>
     <string name="permissionsMicrophoneDescription">Allow access to microphone.</string>
     <string name="permissionsMicrophoneDescriptionIos">Allow access to microphone for voice calls and audio messages.</string>
     <string name="permissionsMusicAudio">{app_name} needs music and audio access in order to send files, music and audio.</string>
@@ -882,6 +886,7 @@
     <string name="sessionRecoveryPassword">Recovery Password</string>
     <string name="sessionSettings">Settings</string>
     <string name="set">Set</string>
+    <string name="setCommunityDisplayPicture">Set Community Display Picture</string>
     <string name="settingsRestartDescription">You must restart {app_name} to apply your new settings.</string>
     <string name="share">Share</string>
     <string name="shareAccountIdDescription">Invite your friend to chat with you on {app_name} by sharing your Account ID with them.</string>
@@ -923,6 +928,8 @@
     <string name="video">Video</string>
     <string name="videoErrorPlay">Unable to play video.</string>
     <string name="view">View</string>
+    <string name="viewLess">View Less</string>
+    <string name="viewMore">View More</string>
     <string name="waitFewMinutes">This can take a few minutes.</string>
     <string name="waitOneMoment">One moment please...</string>
     <string name="warning">Warning</string>
