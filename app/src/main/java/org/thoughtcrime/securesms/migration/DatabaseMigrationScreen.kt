@@ -4,9 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -26,7 +30,9 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.preferences.ClearAllDataDialog
 import org.thoughtcrime.securesms.preferences.ShareLogsDialog
+import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -67,8 +73,9 @@ private fun DatabaseMigration(
                 .padding(LocalDimensions.current.smallSpacing),
             contentAlignment = Alignment.Center
         ) {
+            val scrollState = rememberScrollState()
             Column(
-                verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
+                modifier = Modifier.verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
@@ -89,23 +96,33 @@ private fun DatabaseMigration(
                             .toString()
 
                         Text(
+                            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
                             text = title,
-                            style = LocalType.current.h8,
-                            color = LocalColors.current.danger,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base,
+                            color = LocalColors.current.text,
                         )
 
-                        OutlineButton(text = stringResource(R.string.retry), onClick = onRetry)
-                        OutlineButton(text = stringResource(R.string.helpReportABugExportLogs), onClick = onExportLogs)
+                        Spacer(Modifier.size(LocalDimensions.current.spacing))
+
+                        PrimaryFillButton(text = stringResource(R.string.retry), onClick = onRetry)
+
+                        Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
+
                         OutlineButton(
-                            text = "Clear message data and recover from network",
+                            text = "Clear all local data and continue",
                             color = LocalColors.current.danger,
                             onClick = onClearData
                         )
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
                         OutlineButton(
                             text = "Clear all local data and log out",
                             color = LocalColors.current.danger,
                             onClick = onClearData
                         )
+
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                        OutlineButton(text = stringResource(R.string.helpReportABugExportLogs), onClick = onExportLogs)
                     }
 
                     is DatabaseMigrationManager.MigrationState.Migrating -> {
@@ -117,6 +134,8 @@ private fun DatabaseMigration(
                             style = LocalType.current.h7,
                             color = LocalColors.current.text,
                         )
+
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
 
                         Text(
                             text = currentStep.subtitle,

@@ -12,7 +12,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewGroupCompat
-import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
@@ -24,7 +23,6 @@ import org.thoughtcrime.securesms.util.themeState
 private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val DefaultDarkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
-@AndroidEntryPoint
 abstract class BaseActionBarActivity : AppCompatActivity() {
     private var currentThemeState: ThemeState? = null
 
