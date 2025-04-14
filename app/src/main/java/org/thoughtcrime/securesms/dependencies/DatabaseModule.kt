@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import javax.inject.Provider
 import javax.inject.Singleton
 
@@ -56,11 +57,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideOpenHelper(@ApplicationContext context: Context, prefs: TextSecurePreferences): SQLCipherOpenHelper {
-        val dbSecret = DatabaseSecretProvider(context).orCreateDatabaseSecret
-        SQLCipherOpenHelper.migrateSqlCipher3To4IfNeeded(context, dbSecret)
-        SQLCipherOpenHelper.migrateSqlCipher4ToNewCipherSettingsIfNeeded(context, dbSecret, prefs)
-        return SQLCipherOpenHelper(context, dbSecret, prefs)
+    fun provideOpenHelper(manager: DatabaseMigrationManager): SQLCipherOpenHelper {
+        return manager.openHelper
     }
 
     @Provides

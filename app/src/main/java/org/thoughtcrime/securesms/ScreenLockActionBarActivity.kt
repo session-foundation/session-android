@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.io.FileOutputStream
 import java.lang.Exception
@@ -23,12 +24,18 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocal
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isScreenLockEnabled
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
+import org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity
 import org.thoughtcrime.securesms.onboarding.landing.LandingActivity
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.FilenameUtils
+import javax.inject.Inject
 
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
+
+    private val migrationManager: DatabaseMigrationManager
+        get() = (applicationContext as ApplicationContext).migrationManager
 
     companion object {
         private val TAG = ScreenLockActionBarActivity::class.java.simpleName
@@ -39,6 +46,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
         private const val STATE_SCREEN_LOCKED     = 1
         private const val STATE_UPGRADE_DATABASE  = 2
         private const val STATE_WELCOME_SCREEN    = 3
+        private const val STATE_DATABASE_MIGRATE  = 4 // This is different from STATE_UPGRADE_DATABASE as it is used to migrate database in a whole rather than the internal db schema upgrades
 
         private fun getStateName(state: Int): String {
             return when (state) {
@@ -152,12 +160,15 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             STATE_SCREEN_LOCKED    -> getScreenUnlockIntent() // Note: This is a suspend function
             STATE_UPGRADE_DATABASE -> getUpgradeDatabaseIntent()
             STATE_WELCOME_SCREEN   -> getWelcomeIntent()
+            STATE_DATABASE_MIGRATE -> getRoutedIntent(DatabaseMigrationStateActivity::class.java, getConversationListIntent())
             else -> null
         }
     }
 
     private fun getApplicationState(locked: Boolean): Int {
-        return if (getLocalNumber(this) == null) {
+        return if (migrationManager.migrationState.value.shouldShowUI) {
+            STATE_DATABASE_MIGRATE
+        } else if (getLocalNumber(this) == null) {
             STATE_WELCOME_SCREEN
         } else if (locked) {
             STATE_SCREEN_LOCKED
@@ -167,6 +178,9 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             STATE_NORMAL
         }
     }
+
+    private val DatabaseMigrationManager.MigrationState.shouldShowUI: Boolean
+        get() = this is DatabaseMigrationManager.MigrationState.Migrating || this is DatabaseMigrationManager.MigrationState.Error
 
     private suspend fun getScreenUnlockIntent(): Intent {
         // If this is an attempt to externally share something while the app is locked then we need

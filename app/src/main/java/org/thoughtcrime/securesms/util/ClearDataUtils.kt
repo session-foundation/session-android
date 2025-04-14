@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.home.HomeActivity
 import javax.inject.Inject
 import androidx.core.content.edit
 import org.session.libsession.messaging.notifications.TokenFetcher
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 
 class ClearDataUtils @Inject constructor(
     private val application: Application,
@@ -29,6 +30,10 @@ class ClearDataUtils @Inject constructor(
             check(application.deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)) {
                 "Failed to delete database"
             }
+
+            // Also delete the other legacy databases but don't care about the result
+            application.deleteDatabase(DatabaseMigrationManager.CIPHER4_DB_NAME)
+            application.deleteDatabase(DatabaseMigrationManager.CIPHER3_DB_NAME)
 
             TextSecurePreferences.clearAll(application)
             application.getSharedPreferences(ApplicationContext.PREFERENCES_NAME, 0).edit(commit = true) { clear() }

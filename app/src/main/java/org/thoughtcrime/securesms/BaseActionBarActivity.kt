@@ -4,18 +4,15 @@ import android.app.ActivityManager.TaskDescription
 import android.content.res.Resources
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StyleRes
-import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewGroupCompat
-import androidx.core.view.WindowCompat
+import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
@@ -27,17 +24,15 @@ import org.thoughtcrime.securesms.util.themeState
 private val DefaultLightScrim = Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
 private val DefaultDarkScrim = Color.argb(0x80, 0x1b, 0x1b, 0x1b)
 
+@AndroidEntryPoint
 abstract class BaseActionBarActivity : AppCompatActivity() {
-    var currentThemeState: ThemeState? = null
+    private var currentThemeState: ThemeState? = null
 
     private var modifiedTheme: Resources.Theme? = null
 
+    // This can not be dep injected as it is required very early during activity creation
     private val preferences: TextSecurePreferences
-        get() {
-            val appContext =
-                applicationContext as ApplicationContext
-            return appContext.textSecurePreferences
-        }
+        get() = (applicationContext as ApplicationContext).textSecurePreferences
 
     // Whether to apply default window insets to the decor view
     open val applyDefaultWindowInsets: Boolean
@@ -153,5 +148,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
 
     companion object {
         private val TAG: String = BaseActionBarActivity::class.java.simpleName
+
+        private const val MIGRATION_DIALOG_TAG = "migration_dialog"
     }
 }

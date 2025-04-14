@@ -314,6 +314,7 @@
                 android:value="org.thoughtcrime.securesms.home.HomeActivity" />
         </activity>
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
+        <activity android:name="org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity" />
 
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
