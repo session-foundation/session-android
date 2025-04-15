@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -178,6 +179,9 @@ class DatabaseMigrationManager @Inject constructor(
 
             // Detach the new database
             db.rawExecSQL("DETACH DATABASE new_db")
+
+            Thread.sleep(3000L)
+            error("Migration failed")
         }
 
         check(newDb.exists()) { "New database was not created" }

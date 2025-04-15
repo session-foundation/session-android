@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,23 +32,31 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentManager
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.preferences.ClearAllDataDialog
 import org.thoughtcrime.securesms.preferences.ShareLogsDialog
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.util.ClearDataUtils
 
 
 @Composable
 fun DatabaseMigrationScreen(
     migrationManager: DatabaseMigrationManager,
+    clearDataUtils: ClearDataUtils,
     fm: FragmentManager,
 ) {
+    val scope = rememberCoroutineScope()
+
     DatabaseMigration(
         state = migrationManager.migrationState.collectAsState().value,
         onRetry = migrationManager::requestMigration,
@@ -51,6 +65,11 @@ fun DatabaseMigrationScreen(
         },
         onClearData = {
             ClearAllDataDialog().show(fm, "clear_data")
+        },
+        onClearDataWithoutLoggingOut = {
+            scope.launch {
+                clearDataUtils.clearAllDataWithoutLoggingOutAndRestart()
+            }
         }
     )
 }
@@ -63,7 +82,12 @@ private fun DatabaseMigration(
     onRetry: () -> Unit = {},
     onExportLogs: () -> Unit = {},
     onClearData: () -> Unit = {},
+    onClearDataWithoutLoggingOut: () -> Unit = {},
 ) {
+    // The lambda to call when the "confirm" button is clicked on the clear data warning dialog
+    // Null == no dialog is shown
+    var clearDataWarningDialogConfirmAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
     Surface(
         color = LocalColors.current.background,
     ) {
@@ -97,7 +121,7 @@ private fun DatabaseMigration(
 
                         Text(
                             modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
-                            text = title,
+                            text = "A database error occurred.",
                             textAlign = TextAlign.Center,
                             style = LocalType.current.base,
                             color = LocalColors.current.text,
@@ -105,24 +129,30 @@ private fun DatabaseMigration(
 
                         Spacer(Modifier.size(LocalDimensions.current.spacing))
 
-                        PrimaryFillButton(text = stringResource(R.string.retry), onClick = onRetry)
+                        Row {
+                            PrimaryFillButton(text = stringResource(R.string.retry), onClick = onRetry)
+
+                            Spacer(Modifier.size(LocalDimensions.current.smallSpacing))
+
+                            OutlineButton(text = stringResource(R.string.helpReportABugExportLogs), onClick = onExportLogs)
+                        }
 
                         Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
 
                         OutlineButton(
-                            text = "Clear all local data and continue",
+                            text = "Clear device and restore",
                             color = LocalColors.current.danger,
-                            onClick = onClearData
+                            onClick = { clearDataWarningDialogConfirmAction = onClearDataWithoutLoggingOut }
                         )
                         Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
                         OutlineButton(
-                            text = "Clear all local data and log out",
+                            text = "Clear device restart",
                             color = LocalColors.current.danger,
-                            onClick = onClearData
+                            onClick = { clearDataWarningDialogConfirmAction = onClearData }
                         )
 
                         Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-                        OutlineButton(text = stringResource(R.string.helpReportABugExportLogs), onClick = onExportLogs)
+
                     }
 
                     is DatabaseMigrationManager.MigrationState.Migrating -> {
@@ -144,7 +174,24 @@ private fun DatabaseMigration(
                         )
                     }
                 }
+            }
 
+            if (clearDataWarningDialogConfirmAction != null) {
+                AlertDialog(
+                    onDismissRequest = { clearDataWarningDialogConfirmAction = null },
+                    text = "Warning: data will be deleted",
+                    buttons = listOf(
+                        DialogButtonModel(
+                            text = GetString.FromResId(R.string.clearDevice),
+                            color = LocalColors.current.danger,
+                            onClick = { clearDataWarningDialogConfirmAction?.invoke() }
+                        ),
+                        DialogButtonModel(
+                            text = GetString.FromResId(R.string.cancel),
+                            onClick = { clearDataWarningDialogConfirmAction = null }
+                        )
+                    )
+                )
             }
         }
     }
