@@ -72,7 +72,7 @@ class ClearDataUtils @Inject constructor(
         }
 
         delay(200)
-        Runtime.getRuntime().exit(0)
+        restartApplication()
     }
 
     /**

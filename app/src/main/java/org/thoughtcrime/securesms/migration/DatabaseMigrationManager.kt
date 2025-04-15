@@ -180,8 +180,8 @@ class DatabaseMigrationManager @Inject constructor(
             // Detach the new database
             db.rawExecSQL("DETACH DATABASE new_db")
 
-            Thread.sleep(3000L)
-            error("Migration failed")
+            Thread.sleep(10000)
+            throw RuntimeException("Migration failed")
         }
 
         check(newDb.exists()) { "New database was not created" }

@@ -1,7 +1,7 @@
 package org.thoughtcrime.securesms.migration
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -38,9 +38,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.preferences.ClearAllDataDialog
 import org.thoughtcrime.securesms.preferences.ShareLogsDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -64,7 +64,9 @@ fun DatabaseMigrationScreen(
             ShareLogsDialog {}.show(fm, "share_log")
         },
         onClearData = {
-            ClearAllDataDialog().show(fm, "clear_data")
+            scope.launch {
+                clearDataUtils.clearAllDataAndRestart()
+            }
         },
         onClearDataWithoutLoggingOut = {
             scope.launch {
@@ -84,12 +86,12 @@ private fun DatabaseMigration(
     onClearData: () -> Unit = {},
     onClearDataWithoutLoggingOut: () -> Unit = {},
 ) {
-    // The lambda to call when the "confirm" button is clicked on the clear data warning dialog
-    // Null == no dialog is shown
-    var clearDataWarningDialogConfirmAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var showingClearDeviceRestoreWarning by remember { mutableStateOf(false) }
+    var showingClearDeviceRestartWarning by remember { mutableStateOf(false) }
 
     Surface(
         color = LocalColors.current.background,
+        modifier = Modifier.fillMaxSize(),
     ) {
         Box(
             modifier = Modifier
@@ -97,103 +99,137 @@ private fun DatabaseMigration(
                 .padding(LocalDimensions.current.smallSpacing),
             contentAlignment = Alignment.Center
         ) {
-            val scrollState = rememberScrollState()
-            Column(
-                modifier = Modifier.verticalScroll(scrollState),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.ic_launcher_foreground),
-                    modifier = Modifier.size(120.dp),
-                    contentDescription = null
-                )
+            AnimatedContent(
+                targetState = state,
+                contentKey = { st -> st.javaClass } // Only trigger animation when the type of state changes
+            ) { st ->
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier.verticalScroll(scrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                        modifier = Modifier.size(120.dp),
+                        contentDescription = null
+                    )
 
-                when (state) {
-                    is DatabaseMigrationManager.MigrationState.Completed,
-                    DatabaseMigrationManager.MigrationState.Idle -> {
-                    }
-
-                    is DatabaseMigrationManager.MigrationState.Error -> {
-                        val title = Phrase.from(LocalContext.current, R.string.databaseErrorGeneric)
-                            .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                            .format()
-                            .toString()
-
-                        Text(
-                            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
-                            text = "A database error occurred.",
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base,
-                            color = LocalColors.current.text,
-                        )
-
-                        Spacer(Modifier.size(LocalDimensions.current.spacing))
-
-                        Row {
-                            PrimaryFillButton(text = stringResource(R.string.retry), onClick = onRetry)
-
-                            Spacer(Modifier.size(LocalDimensions.current.smallSpacing))
-
-                            OutlineButton(text = stringResource(R.string.helpReportABugExportLogs), onClick = onExportLogs)
+                    when (st) {
+                        is DatabaseMigrationManager.MigrationState.Completed,
+                        DatabaseMigrationManager.MigrationState.Idle -> {
                         }
 
-                        Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
+                        is DatabaseMigrationManager.MigrationState.Error -> {
+                            val title =
+                                Phrase.from(LocalContext.current, R.string.databaseErrorGeneric)
+                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                    .format()
+                                    .toString()
 
-                        OutlineButton(
-                            text = "Clear device and restore",
-                            color = LocalColors.current.danger,
-                            onClick = { clearDataWarningDialogConfirmAction = onClearDataWithoutLoggingOut }
-                        )
-                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-                        OutlineButton(
-                            text = "Clear device restart",
-                            color = LocalColors.current.danger,
-                            onClick = { clearDataWarningDialogConfirmAction = onClearData }
-                        )
+                            Text(
+                                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                                text = title,
+                                textAlign = TextAlign.Center,
+                                style = LocalType.current.base,
+                                color = LocalColors.current.text,
+                            )
 
-                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                            Spacer(Modifier.size(LocalDimensions.current.spacing))
 
-                    }
+                            Row {
+                                PrimaryFillButton(
+                                    text = stringResource(R.string.retry),
+                                    onClick = onRetry
+                                )
 
-                    is DatabaseMigrationManager.MigrationState.Migrating -> {
-                        val currentStep = state.steps.lastOrNull { it.percentage < 100 }
-                            ?: state.steps.first()
+                                Spacer(Modifier.size(LocalDimensions.current.smallSpacing))
 
-                        Text(
-                            text = currentStep.title,
-                            style = LocalType.current.h7,
-                            color = LocalColors.current.text,
-                        )
+                                OutlineButton(
+                                    text = stringResource(R.string.helpReportABugExportLogs),
+                                    onClick = onExportLogs
+                                )
+                            }
 
-                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                            Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
 
-                        Text(
-                            text = currentStep.subtitle,
-                            style = LocalType.current.base,
-                            color = LocalColors.current.text,
-                        )
+                            OutlineButton(
+                                text = stringResource(R.string.clearDeviceRestore),
+                                color = LocalColors.current.danger,
+                                onClick = { showingClearDeviceRestoreWarning = true }
+                            )
+                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                            OutlineButton(
+                                text = stringResource(R.string.clearDeviceRestart),
+                                color = LocalColors.current.danger,
+                                onClick = { showingClearDeviceRestartWarning = true }
+                            )
+
+                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+
+                        }
+
+                        is DatabaseMigrationManager.MigrationState.Migrating -> {
+                            val currentStep = st.steps.lastOrNull { it.percentage < 100 }
+                                ?: st.steps.first()
+
+                            CircularProgressIndicator(color = LocalColors.current.text)
+
+                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+
+                            Text(
+                                text = currentStep.title,
+                                style = LocalType.current.h7,
+                                color = LocalColors.current.text,
+                            )
+
+                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+
+                            Text(
+                                text = currentStep.subtitle,
+                                style = LocalType.current.base,
+                                color = LocalColors.current.text,
+                            )
+                        }
                     }
                 }
             }
-
-            if (clearDataWarningDialogConfirmAction != null) {
-                AlertDialog(
-                    onDismissRequest = { clearDataWarningDialogConfirmAction = null },
-                    text = "Warning: data will be deleted",
-                    buttons = listOf(
-                        DialogButtonModel(
-                            text = GetString.FromResId(R.string.clearDevice),
-                            color = LocalColors.current.danger,
-                            onClick = { clearDataWarningDialogConfirmAction?.invoke() }
-                        ),
-                        DialogButtonModel(
-                            text = GetString.FromResId(R.string.cancel),
-                            onClick = { clearDataWarningDialogConfirmAction = null }
-                        )
-                    )
-                )
-            }
         }
+    }
+
+    if (showingClearDeviceRestartWarning) {
+        AlertDialog(
+            onDismissRequest = { showingClearDeviceRestartWarning = false },
+            text = stringResource(R.string.databaseErrorClearDataWarning),
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString.FromResId(R.string.clear),
+                    color = LocalColors.current.danger,
+                    onClick = onClearData
+                ),
+                DialogButtonModel(
+                    text = GetString.FromResId(R.string.cancel),
+                    onClick = { showingClearDeviceRestartWarning = false }
+                )
+            )
+        )
+    }
+
+    if (showingClearDeviceRestoreWarning) {
+        AlertDialog(
+            onDismissRequest = { showingClearDeviceRestoreWarning = false },
+            text = stringResource(R.string.databaseErrorRestoreDataWarning),
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString.FromResId(R.string.clear),
+                    color = LocalColors.current.danger,
+                    onClick = onClearDataWithoutLoggingOut
+                ),
+                DialogButtonModel(
+                    text = GetString.FromResId(R.string.cancel),
+                    onClick = { showingClearDeviceRestoreWarning = false }
+                )
+            )
+        )
     }
 }
 
