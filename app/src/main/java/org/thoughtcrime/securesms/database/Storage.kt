@@ -1517,7 +1517,7 @@ open class Storage @Inject constructor(
         if (recipient == null || !recipient.isLegacyGroupRecipient) return
 
         // ..but if this IS a legacy group recipient then we need to delete the group details.
-        // For groupv2 the deletion of config is handled in GroupManagerV2
+        // For group v2 the deletion of config is handled in GroupManagerV2
         configFactory.withMutableUserConfigs { configs ->
             val volatile = configs.convoInfoVolatile
             val groups = configs.userGroups
