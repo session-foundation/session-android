@@ -246,7 +246,6 @@
     <string name="copy">Kopēt</string>
     <string name="create">Izveidot</string>
     <string name="cut">Izgriezt</string>
-    <string name="databaseErrorGeneric">Notikusi datubāzes kļūda.\n\nEksportējiet savu lietotnes žurnālus, lai kopīgotu tos problēmu novēršanai. Ja tas nav veiksmīgs, pārinstalējiet {app_name} un atjaunojiet savu kontu.\n\nBrīdinājums: Tas izraisīs visu ziņu, pielikumu un konta datu zaudēšanu, kas vecāki par divām nedēļām.</string>
     <string name="databaseErrorTimeout">Mēs esam pamanījuši, ka {app_name} aizņem daudz laika, lai startētu.\n\nJūs varat turpināt gaidīt, eksportēt sava ierīces žurnālus, lai dalītos problēmas novēršanā, vai pamēģiniet restartēt {app_name}.</string>
     <string name="databaseErrorUpdate">Jūsu lietotnes datubāze nav saderīga ar šo {app_name} versiju. Pārsūtiet lietotni un atjaunojiet savu kontu, lai izveidotu jaunu datubāzi un turpinātu izmantot {app_name}.\n\nBrīdinājums: Tas rezultēsies visu ziņojumu un pielikumu, kas ir vecāki par divām nedēļām, zaudēšanā.</string>
     <string name="databaseOptimizing">Optimizē datu bāzi</string>
@@ -365,7 +364,6 @@
     <string name="groupCreate">Izveidot grupu</string>
     <string name="groupCreateErrorNoMembers">Lūdzu, izvēlies vismaz vienu citu grupas dalībnieku.</string>
     <string name="groupDelete">Dzēst grupu</string>
-    <string name="groupDeleteDescription">Vai esat pārliecināts, ka vēlaties dzēst <b>{group_name}?</b> Tas noņems visus dalībniekus un dzēsīs visu grupas saturu.</string>
     <string name="groupDescriptionEnter">Ievadiet grupas aprakstu</string>
     <string name="groupDisplayPictureUpdated">Grupas attēls atjaunots.</string>
     <string name="groupEdit">Rediģēt grupu</string>

@@ -128,7 +128,6 @@
     <string name="copy">ເສັກກີ້າບ</string>
     <string name="create">ລູດ</string>
     <string name="cut">ຕັດ</string>
-    <string name="databaseErrorGeneric">ມີຄວາມຜິດພາດຖານຂໍ້ມູນເກີດຂຶ້ນ.\n\nສົ່ງບັນທຶກແອັບຂອງທ່ານເພື່ອແບ່ງປັນສຳລັບການແກ້ໄຂບັນຫາ. ຖ້າບໍ່ສໍາເລັດ, ຕິດຕັ້ງໃໝ່ {app_name} ແລະ ໄດ້ຄືນມາສູ່ບັນຊີຂອງທ່ານ.\n\nເຕືອນ: ຜົນອັນນີ້ຈະງາມມີການສູນເສຍຂໍ້ຄວາມທັງໝົດ, ໄຟລ໌ແນບແລະຂໍ້ມູນບັນຊີຢ່າງເກົ່າສອງອາທິດ.</string>
     <string name="debugLog">ບັນທຶກການດັດແກ້</string>
     <string name="decline">ປະຕິເສດ</string>
     <string name="delete">ລຶບ</string>
@@ -175,7 +174,6 @@
     <string name="giphyWarningDescription">{app_name} ຊື່ທີ່ຊົງກັບ Giphy ເພື່ອໃຫ້ຜະລິດຕອບປະສົດຜ້ອນ. ເຈົ້າຈະບໍ່ມີການປ້ອງກັນ metadata ທີ່ສົມບູນເມື່ອສົ່ງ GIFs.</string>
     <string name="groupCreate">ເກີນໄວນຳເກາບພາຍ</string>
     <string name="groupDelete">ລຶບກຸ່ມ</string>
-    <string name="groupDeleteDescription">ເຈົ້າຢ່າງມັ້ນໃຈແທ້ຢານລລີ້າງ <b>{group_name}</b>ສົງຂໍ້ມູນຫາທັນສະຕິ່ນທນທັນທີ່?</string>
     <string name="groupDescriptionEnter">ປ້ອນລາຍລະອຽດກຸ່ມ</string>
     <string name="groupEdit">ແກ້ໄຂກຸ່ມ</string>
     <string name="groupErrorCreate">ບໍ່ສາມາດສ້າງກຸ່ມໄດ້. ກະລຸນາກວດກາເຊື່ອມຕໍ່ອິນເນັດຂອງທ່ານແລ້ວລອງໄໝ.</string>

@@ -255,7 +255,6 @@
     <string name="copy">Kopyala</string>
     <string name="create">Yarat</string>
     <string name="cut">Kəs</string>
-    <string name="databaseErrorGeneric">Bir databaza xətası baş verdi.\n\nProblemin aradan qaldırılması üçün tətbiq jurnalınızı paylaşmaq məqsədilə xaricə köçürün. Bu uğursuz olsa, {app_name} tətbiqini təkrar quraşdırıb hesabınızı bərpa edin.\n\nXəbərdarlıq: Bu, iki həftədən köhnə olan bütün mesajların, qoşmaların və hesab datasının itməsi ilə nəticələnəcək.</string>
     <string name="databaseErrorTimeout">{app_name} tətbiqinin başladılmasının çox vaxt apardığına fikir verdik.\n\nGözləməyə davam edə, problemin aradan qaldırılması üçün cihazınızın jurnallarını xaricə köçürə və ya {app_name}-u yenidən başlatmağa çalışa bilərsiniz.</string>
     <string name="databaseErrorUpdate">Tətbiqinizin databazası {app_name} tətbiqinin versiyası ilə uyumlu deyil. Yeni bir databaza yaratmaq və {app_name} istifadə etməyə davam etmək üçün tətbiqi yenidən quraşdırın və hesabınızı bərpa edin.\n\nXəbərdarlıq: Bu, iki həftədən köhnə olan bütün mesajların və qoşmaların itkisi ilə nəticələnəcək.</string>
     <string name="databaseOptimizing">Databaza optimallaşdırılır</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Qrup yarat</string>
     <string name="groupCreateErrorNoMembers">Lütfən ən azı bir qrup üzvü seçin.</string>
     <string name="groupDelete">Qrupu sil</string>
-    <string name="groupDeleteDescription"><b>{group_name}</b> qrupunu silmək istədiyinizə əminsiniz? Bu, bütün üzvləri çıxardacaq və bütün qrup məzmununu siləcək.</string>
     <string name="groupDescriptionEnter">Qrup açıqlamasını daxil edin</string>
     <string name="groupDisplayPictureUpdated">Qrupun ekran şəkli güncəlləndi.</string>
     <string name="groupEdit">Qrupa düzəliş et</string>

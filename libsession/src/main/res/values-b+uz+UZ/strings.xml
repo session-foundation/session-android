@@ -255,7 +255,6 @@
     <string name="copy">Nusxalash</string>
     <string name="create">Yaratish</string>
     <string name="cut">Kesish</string>
-    <string name="databaseErrorGeneric">Ma\'lumotlar bazasida xato yuz berdi.\n\nDastur loglaringizni eksport qiling va muammolarni hal qilish uchun ulashing. Agar bu muvaffaqiyatsiz bo\'lsa, {app_name} ni qayta o\'rnating va akkauntingizni tiklang.\n\nOgohlik: Bu barcha xabarlar, ilova va ikki haftadan eski akkaunt ma\'lumotlarini yo\'qotishga olib keladi.</string>
     <string name="databaseErrorTimeout">{app_name} ishga tushishiga koʻp vaqt ketayotganini aniqladik.\n\nKutishda davom etishingiz, muammolarni bartaraf etish uchun qurilma jurnallarini baham koʻrish uchun eksport qilishingiz yoki {app_name} ilovasini qayta ishga tushirishga urinib koʻrishingiz mumkin.</string>
     <string name="databaseErrorUpdate">Sizning ilova ma\'lumotlar bazasi ushbu {app_name} versiyasi bilan mos kelmaydi. Ilovani qayta o\'rnating va hisobingizni tiklang, yangi ma\'lumotlar bazasini yaratish va {app_name} dan foydalanishni davom ettirish uchun.\n\nOgohlantirish: bu ikki haftalikdan katta barcha xabarlar va ilovalarni yo\'qotishga olib keladi.</string>
     <string name="databaseOptimizing">Ma\'lumotlar bazasi optimallashtirilmoqda</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Guruh yaratish</string>
     <string name="groupCreateErrorNoMembers">Kamida bir guruh a’zosini tanlang.</string>
     <string name="groupDelete">Guruhni o\'chirish</string>
-    <string name="groupDeleteDescription">Haqiqatan ham <b>{group_name}</b> ni o\'chirmoqchimisiz? Bu barcha a\'zo va guruh kontentlarini o\'chiradi.</string>
     <string name="groupDescriptionEnter">Guruh tavsifini kiritish</string>
     <string name="groupDisplayPictureUpdated">Gruppa ko‘rsatgan rasm yangilandi.</string>
     <string name="groupEdit">Guruhni tahrirlash</string>

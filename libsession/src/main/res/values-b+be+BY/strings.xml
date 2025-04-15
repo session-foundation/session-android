@@ -256,7 +256,6 @@
     <string name="copy">Скапіяваць</string>
     <string name="create">Стварыць</string>
     <string name="cut">Выразаць</string>
-    <string name="databaseErrorGeneric">Адбылася памылка базы дадзеных.\n\nЭкспартаваць часопісы прыкладання для падзелу для ліквідацыі непаладак. Калі гэта не ўдасца, перавстанавіць {app_name} і аднавіць свой уліковы запіс.\n\nПапярэджанне: гэта прывядзе да страты ўсіх паведамленняў, укладанняў і дадзеных уліковага запісу, старэйшых за два тыдні.</string>
     <string name="databaseErrorTimeout">Мы заўважылі, што {app_name} патрабуе шмат часу для запуску.\n\nВы можаце працягваць чакаць, экспартаваць журналы вашай прылады для спагнання праблем, альбо паспрабаваць перазапусціць {app_name}.</string>
     <string name="databaseErrorUpdate">Ваша база даных прыкладання несумяшчальная з гэтай версіяй {app_name}. Пераўсталюйце прыкладанне і аднавіце ўліковы запіс, каб стварыць новую базу даных і працягнуць выкарыстанне {app_name}.\n\nУвага: гэта прывядзе да страты ўсіх паведамленняў і ўкладанняў старэйшых за два тыдні.</string>
     <string name="databaseOptimizing">Аптымізацыя базы даных</string>
@@ -397,7 +396,6 @@
     <string name="groupCreate">Стварыць групу</string>
     <string name="groupCreateErrorNoMembers">Калі ласка абярыце прынамсі аднаго ўдзельніка групы.</string>
     <string name="groupDelete">Выдаліць групу</string>
-    <string name="groupDeleteDescription">Вы ўпэўнены, што жадаеце выдаліць <b>{group_name}?</b> Гэта выдаліць усіх удзельнікаў і выдаліць увесь змесціва групы.</string>
     <string name="groupDescriptionEnter">Увядзіце апісанне групы</string>
     <string name="groupDisplayPictureUpdated">Фота групы абноўлена.</string>
     <string name="groupEdit">Рэдагаваць групу</string>

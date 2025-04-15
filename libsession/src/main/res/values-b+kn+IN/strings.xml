@@ -254,7 +254,6 @@
     <string name="copy">ನಕಲಿಸಿ</string>
     <string name="create">ರಚಿಸಿ</string>
     <string name="cut">ಕತ್ತರಿಸಿ</string>
-    <string name="databaseErrorGeneric">ಡೇಟಾಬೇಸ್ ದೋಷವಾಗಿದೆ.\n\nನಿಮ್ಮ ಅನ್ವಯಿಕ ಲಾಗ್‌ಗಳನ್ನು ರಫ್ತು ಮಾಡಿ ಹಾಗೂ ತಾಂತ್ರಿಕ ದೋಷ ನಿವಾರಣೆಗಾಗಿ ಹಂಚಿಕೆಗೆ ಒದಗಿಸಿ. ಇದು ಯಶಸ್ವಿಯಾಗದಿದ್ದರೆ, {app_name} ಅನ್ನು ಪುನಃಸ್ಥಾಪಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಹಿಂತಿರುಗಿಸಿ.\n\nಎಚ್ಚರಿಕೆ: ಇದರಿಂದ ಎರಡು ವಾರಕ್ಕಿಂತ ಹಳೆಯದಾದ ಎಲ್ಲಾ ಸಂದೇಶಗಳು, ಹೊಂದಿಕೆಗಳು, ಮತ್ತು ಖಾತೆ ಮಾಹಿತಿಗಳು ಕಳೆದುಹೋಗಲಿವೆ.</string>
     <string name="databaseErrorTimeout">ನಾವು ಗಮನಿಸಿದ್ದೇವೆ {app_name} ಆರಂಭಿಸಲು ಹೆಚ್ಚು ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತಿದೆ.\n\nನೀವು ನಿರೀಕ್ಷಿಸಬಹುದು, ನಿಮ್ಮ ಸಾಧನ ರೆಕಾರ್ಡುಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲು ದೋಷ ಪರಿಹಾರದೊಂದಿಗೆ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಬಹುದು ಅಥವಾ {app_name} ಪುನಃಪ್ರಾರಂಭಿಸಲು ಪ್ರಯತ್ನಿಸಬಹುದು.</string>
     <string name="databaseErrorUpdate">ನಿಮ್ಮ ಅಪ್ಲಿಕೇಶನ್ ಡೇಟಾಬೇಸ್ {app_name} ಆವೃತ್ತಿಯೊಂದಿಗೆ ಅನುರೂಪವಲ್ಲ. ಹೊಸ ಡೇಟಾಬೇಸ್ನನ್ನು ರಚಿಸಲು ಅಪ್ಲಿಕೇಶನನನ್ನು ಪುನಃಹುಹಾಯಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಪುನಃಸ್ಥಾಪಿಸಿ ಮತ್ತು {app_name} ಬಳಸಿದ್ದು ನಿರಂತರ ಪ್ರದರ್ಶಿಸಲು.\n\nಎಚ್ಚರಿಕೆ: ಇದು ಎರಡು ವಾರಗಳಿಗಿಂತ ಹೆಚ್ಚಿನ ವಯಸ್ಸಿನ ಎಲ್ಲಾ ಸಂದೇಶಗಳು ಮತ್ತು ಜೊತೆಯುಡುಕಳವನ್ನು ಕಳೆದುಹಾಕುತ್ತದೆ.</string>
     <string name="databaseOptimizing">ಡೇಟಾಬೇಸ್ ಆಪ್ಟಿಮೈಸಿಂಗ್</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">ಗುಂಪನ್ನು ರಚಿಸಿ</string>
     <string name="groupCreateErrorNoMembers">ದಯವಿಟ್ಟು ಕನಿಷ್ಠ ಒಂದು ಇತರೆ ಗುಂಪಿನ ಸದಸ್ಯರನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
     <string name="groupDelete">ಗುಂಪನ್ನು ಅಳಿಸಿ</string>
-    <string name="groupDeleteDescription">ನೀವು <b>{group_name}(\'</b> ಅನ್ನು ಅಳಿಸಲು ಖಚಿತವಾಗಿದ್ದೀರಾ? ಇದು ಎಲ್ಲಾ ಸದಸ್ಯರನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ ಮತ್ತು ಎಲ್ಲಾ ಗುಂಪಿನ ವಿಷಯವನ್ನು ಅಳಿಸುತ್ತದೆ.</string>
     <string name="groupDescriptionEnter">ಗುಂಪಿನ ವಿವರಣೆ ನಮೂದಿಸಿ</string>
     <string name="groupDisplayPictureUpdated">ಗುಂಪು ಪ್ರದರ್ಶನ ಚಿತ್ರವನ್ನು ನವೀಕರಿಸಲಾಗಿದೆ.</string>
     <string name="groupEdit">ಸಮೂಹ ತಿದ್ದು</string>

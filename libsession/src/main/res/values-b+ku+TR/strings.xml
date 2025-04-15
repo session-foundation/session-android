@@ -254,7 +254,6 @@
     <string name="copy">لەبەرگرتن</string>
     <string name="create">دروستکردن</string>
     <string name="cut">قطع کردن</string>
-    <string name="databaseErrorGeneric">هەڵەی داتاکان ڕوویدا.\n\nلۆگی کرداری بەکارهێنانەکانت بخەرە دەرەوە بۆ هاوبەشی هەڵەکە. ئەگەر ئەمە سەرکەوتوو نەبوو، {app_name} دووبارە دایبمەزرێنەوە و ئەکاونتەکەت ڕۆیشتنەوە.\n\nئاگاداری: ئەمە ئەنجامی بەسەرھەڵدەات له هەموو نامەکان، ھەڤپەیوەندەکان و داتاکانی ئەکاونت بەرە لە دوو هەفتە بچیت.</string>
     <string name="databaseErrorTimeout">دەبینین {app_name} بوونی دواخستنی درێژە. \n\nتۆ دەتوانیت بەردەوام ببهێنین، کۆگایەکانی ئامرازەکەت بەکەشێنی بۆ پشکنین، یان هەوڵبدە بە سەرەکی ={app_name}دوژخستنەوە.</string>
     <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی {app_name}. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی {app_name}.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
     <string name="databaseOptimizing">باشکردنی بنکەدراوە</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">گروپ دروست بکە</string>
     <string name="groupCreateErrorNoMembers">تکایە بەلایەنی کەسێکی تر لە گروپەوە هەڵبژێرە.</string>
     <string name="groupDelete">سڕینەوەی گروپ</string>
-    <string name="groupDeleteDescription">دڵنیایت لەوەی ببە تەواوی <b>{group_name}</b>? ئەمە هەموو ئەندامەکان لادەبات و هەموو ناوەراسەکانی ئەو گروپە بسڕنەوە.</string>
     <string name="groupDescriptionEnter">بەشایی گروپەکە بنووسە</string>
     <string name="groupDisplayPictureUpdated">وێنەی گروپ نوێکرایەوە.</string>
     <string name="groupEdit">دەستکاری گروپ</string>

@@ -256,7 +256,6 @@
     <string name="copy">Copiază</string>
     <string name="create">Creează</string>
     <string name="cut">Decupează</string>
-    <string name="databaseErrorGeneric">A apărut o eroare în baza de date.\n\nExportați jurnalele aplicației dvs. pentru a le partaja în scopuri de depanare. Dacă acest lucru nu reușește, reinstalați {app_name} și restaurați contul.\n\nAtenție: Acest lucru va duce la pierderea tuturor mesajelor, atașamentelor și datelor contului mai vechi de două săptămâni.</string>
     <string name="databaseErrorTimeout">Am observat că {app_name} durează mult timp să pornească.\n\nPuteți continua să așteptați, să exportați jurnalele dispozitivului pentru a le partaja pentru depanare sau să încercați să reporniți {app_name}.</string>
     <string name="databaseErrorUpdate">Baza de date a aplicației dumneavoastră este incompatibilă cu această versiune de {app_name}. Reinstalați aplicația și restaurați contul pentru a genera o nouă bază de date și a continua să folosiți {app_name}.\n\nAtenție: Aceasta va conduce la pierderea tuturor mesajelor și atașamentelor mai vechi de două săptămâni.</string>
     <string name="databaseOptimizing">Optimizare bază de date</string>
@@ -393,7 +392,6 @@
     <string name="groupCreate">Creează grup</string>
     <string name="groupCreateErrorNoMembers">Vă rugăm să alegeți cel puțin un alt membru al grupului.</string>
     <string name="groupDelete">Șterge grup</string>
-    <string name="groupDeleteDescription">Ești sigur/ă că vrei să ștergi grupul <b>{group_name}?</b> Această acțiune va elimina toți membrii și va șterge tot conținutul grupului.</string>
     <string name="groupDescriptionEnter">Introduceți o descriere a grupului</string>
     <string name="groupDisplayPictureUpdated">Imaginea afișată de grup a fost actualizată.</string>
     <string name="groupEdit">Editează grupul</string>

@@ -255,7 +255,6 @@
     <string name="copy">Kopî bike</string>
     <string name="create">Çêke</string>
     <string name="cut">Biqusîne</string>
-    <string name="databaseErrorGeneric">Çewtiya danegehê derket.\n\nLogên sepana xwe eksport bike ji bo parvekirina xebîtina girtinê. Heke ev bi ser neket, {app_name} naxwe heta tu hesabê xwe nûkirinê.\n\nHişyarî: Ev sêbabiê lêçûnê hemû peyam û adewlîyên zêdeyan êdî yên dua hefteyan.</string>
     <string name="databaseErrorTimeout">Em teswîr kirin {app_name} bimînte ye.\n\nHûn dikarin perê nîşan bibinine rewşa sernîşana hûn perê logoya ten do dike bibirûje, an berbijîhengê {app_name} dîsa baş.herşe cereyan bike.</string>
     <string name="databaseErrorUpdate">بنکەی زانیاری بەرنامەکەت ناگەلێرد بەم وه‌ شەپکنیکی {app_name}. بەخێربەستەوە بەرنامەکە و ئەژمێرت پاشەکەوتی بکەیت بۆ بەکاربردنی {app_name}.\n\nئاگاداری: ئەمە دوای دیترین مەکموو بەرەوکردنەکان و هاوبەشەکان بەکارە لأختە دەکاتە دوو هەفتە ئەگەری پەیامەکان.</string>
     <string name="databaseOptimizing">باشکردنی بنکەدراوە</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Komê Çêke</string>
     <string name="groupCreateErrorNoMembers">Ji kerema xwe bi kêmanî 1 yekê din bibijêre.</string>
     <string name="groupDelete">Komê jê bibe</string>
-    <string name="groupDeleteDescription">Tu piştrast î ku tu dixwazî jê bide <b>{group_name}</b>? Ev dê hemû endaman arekin û temamî naveroka komeyê paqij bike.</string>
     <string name="groupDescriptionEnter">Terîfekî komê binivîse</string>
     <string name="groupDisplayPictureUpdated">Wêneya grupa hate nûvekirin.</string>
     <string name="groupEdit">Komê Biguherîne</string>

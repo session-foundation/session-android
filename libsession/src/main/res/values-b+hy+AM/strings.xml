@@ -254,7 +254,6 @@
     <string name="copy">Պատճենել</string>
     <string name="create">Ստեղծել</string>
     <string name="cut">Կտրել</string>
-    <string name="databaseErrorGeneric">Տվյալների բազայի սխալ է տեղի ունեցել:\n\nԱրտահանեք ձեր ծրագրի տեղեկամատյանները՝ տրամադրելով դրանք troubleshooting-ի համար: Եթե դա չհաջողվի, վերատեղադրեք {app_name} և վերականգնեք ձեր հաշիվը:\n\nԶգուշացում: Սա կհանգեցնի բոլոր հաղորդագրությունների, կցորդների և հաշվետվությունների տվյալների կորստի, որոնք անցել են ավելի քան երկու շաբաթ անց:</string>
     <string name="databaseErrorTimeout">Մենք նկատել ենք, որ {app_name} շատ երկար է սկսում աշխատել։\n\nԴուք կարող եք շարունակել սպասել, արտահանել ձեր սարքի տեղեկամատյանները կիսելու համար հետաքրքրությունների համար, կամ փորձել վերագործարկել {app_name}-ը։</string>
     <string name="databaseErrorUpdate">Ձեր հավելվածի տվյալների բազան համադրված չէ այս {app_name} տարբերակի հետ։ Վերակայանացրեք հավելվածը և վերագործարկեք ձեր հաշիվը նոր տվյալների բազա ստեղծելու և {app_name} շարունակելու համար։\n\nԶգուշացում: Սա կհանգեցնի բոլոր հաղորդագրությունների և կցաթղթերի երկու շաբաթից ավելի հնության կորստին։</string>
     <string name="databaseOptimizing">Շտեմարանն օպտիմալացվում է</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Ստեղծել խումբ</string>
     <string name="groupCreateErrorNoMembers">Խնդրում ենք ընտրել խմբի առնվազն 1 անդամ:</string>
     <string name="groupDelete">Ջնջել խումբը</string>
-    <string name="groupDeleteDescription">Իսկապե՞ս ուզում եք ջնջել <b>{group_name}</b>-ը: Սա կջնջի խմբի բոլոր անդամներին և խմբի ամբողջ բովանդակությունը:</string>
     <string name="groupDescriptionEnter">Մուտքագրեք խմբի նկարագրությունը</string>
     <string name="groupDisplayPictureUpdated">Խմբի ցուցադրվող նկարն թարմացվել է:</string>
     <string name="groupEdit">Խմբագրել խումբը</string>

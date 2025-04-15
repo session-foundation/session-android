@@ -256,7 +256,6 @@
     <string name="copy">Kopiraj</string>
     <string name="create">Ustvari</string>
     <string name="cut">Odreži</string>
-    <string name="databaseErrorGeneric">Prišlo je do napake v podatkovni bazi.\n\nIzvozite dnevnike aplikacije, da jih delite za odpravljanje težav. Če to ni uspešno, znova namestite {app_name} in obnovite svoj račun.\n\nOpozorilo: To bo povzročilo izgubo vseh sporočil, prilog in podatkov računa, starejših od dveh tednov.</string>
     <string name="databaseErrorTimeout">Opažamo, da {app_name} potrebuje dolgo časa za zagon.\n\nLahko nadaljujete s čakanjem, izvozite dnevniške datoteke naprave za odpravljanje težav ali poskusite znova zagnati {app_name}.</string>
     <string name="databaseErrorUpdate">Vaša baza podatkov aplikacije ni združljiva s to različico {app_name}. Ponovno namestite aplikacijo in obnovite svoj račun, da ustvarite novo bazo podatkov in nadaljujete z uporabo {app_name}.\n\nOpozorilo: To bo povzročilo izgubo vseh sporočil in prilog, starejših od dveh tednov.</string>
     <string name="databaseOptimizing">Optimizacija podatkovne baze</string>
@@ -397,7 +396,6 @@
     <string name="groupCreate">Ustvari skupino</string>
     <string name="groupCreateErrorNoMembers">Prosimo, izberite vsaj enega dodatnega člana skupine.</string>
     <string name="groupDelete">Izbriši skupino</string>
-    <string name="groupDeleteDescription">Ali ste prepričani, da želite izbrisati <b>{group_name}</b>? To bo odstranilo vse člane in izbrisalo vsebine skupine.</string>
     <string name="groupDescriptionEnter">Vnesite opis skupine</string>
     <string name="groupDisplayPictureUpdated">Slika skupine je bila posodobljena.</string>
     <string name="groupEdit">Uredi skupino</string>

@@ -254,7 +254,6 @@
     <string name="copy">प्रतिलिपि गर्नुहोस्</string>
     <string name="create">सिर्जना गर्नुहोस्</string>
     <string name="cut">काट्नुहोस्</string>
-    <string name="databaseErrorGeneric">डेटाबेस त्रुटि भयो।\n\n आफ्ना एप्लिकेसन लगहरू निर्यात गर्नुहोस् troubleshooting को लागि साझा गर्न। यो असफल भएमा, {app_name} पुनर्स्थापना गर्नुहोस् र आफ्नो खाता पुनर्स्थापना गर्नुहोस्।\n\n चेतावनी:यसले दुई हप्तासम्म पुरानो सबै सन्देश, संलग्नकहरू, र खाता डाटामा नोक्सान हुनेछ।</string>
     <string name="databaseErrorTimeout">हामीले नोटिस गर्यौं कि {app_name} सुरु हुन धेरै समय लिइरहेको छ।\n\n तपाईं प्रतीक्षा जारी राख्न सक्नुहुन्छ, समस्या समाधानको लागि तपाईंको उपकरणको लक निकाल्न साझा गर्न सक्नुहुन्छ, वा {app_name} पुन: सुरु गर्न प्रयास गर्न सक्नुहुन्छ।</string>
     <string name="databaseErrorUpdate">तपाईंको एप डाटाबेस {app_name} को यो संस्करणसँग असंगत छ। एपलाई पुनः स्थापना गर्नुहोस् र आफ्नो खाता पुनर्स्थापना गर्नुहोस् नयाँ डाटाबेस सिर्जना गर्न र {app_name} प्रयोग गर्न जारी राख्न।\n\nचेतावनी: यसले दुई हप्ता भन्दा पुरानो सबै सन्देशहरू र अट्याचमेन्टहरूको हानि हुनेछ।</string>
     <string name="databaseOptimizing">डाटाबेस अनकुल पारिदै</string>
@@ -383,7 +382,6 @@
     <string name="groupCreate">समूह बनाउनुहोस्</string>
     <string name="groupCreateErrorNoMembers">कृपया कम्तिमा एउटा अर्को समूह सदस्य चयन गर्नुहोस्।</string>
     <string name="groupDelete">समूह मेटाउनुहोस्</string>
-    <string name="groupDeleteDescription">के तपाई पक्का हुनुहुन्छ कि तपाई <b>{group_name}</b> मेटाउन चाहनुहुन्छ? यसले सबै सदस्यहरू हटाउँछ र सबै समूह सामग्री मेटाउँछ।</string>
     <string name="groupDescriptionEnter">समूहको वर्णन प्रविष्ट गर्नुहोस्</string>
     <string name="groupDisplayPictureUpdated">समूह प्रदर्शित तस्वीर अद्यावधिक गरियो।</string>
     <string name="groupEdit">समूह सम्पादन गर्नुहोस्</string>

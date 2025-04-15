@@ -254,7 +254,6 @@
     <string name="copy">Kopiatu</string>
     <string name="create">Sortu</string>
     <string name="cut">Ebaki</string>
-    <string name="databaseErrorGeneric">Datu-base errorea gertatu da.\n\nAplikazioaren egunkariak esportatu arakatzean partekatzeko. Honek huts egiten badu, {app_name} berriro instalatu eta zure kontua berreskuratu.\n\nAbisua: Honek bi aste baino gehiagoko mezu, fitxategi eta kontu datu guztiak galduko ditu.</string>
     <string name="databaseErrorTimeout">{app_name} martxan jartzeko denbora gehiegi hartzen ari dela nabaritu dugu.\n\nJarrai itzazu itxaroten, esportatu zure gailu-erregistroak konpontzeko partekatzeko edo saiatu {app_name} berrabiarazten.</string>
     <string name="databaseErrorUpdate">Zure aplikazio-datubasea ez da bateragarria {app_name} bertsio honekin. Berrinstalatu aplikazioa eta leheneratu zure kontua datubase berri bat sortzeko eta {app_name} erabiltzen jarraitzeko.\n\nAbisua: Honek bi astetik gorako mezu eta eranskinen galera eragingo du.</string>
     <string name="databaseOptimizing">Datu Basea Optimizatzen</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Taldea sortu</string>
     <string name="groupCreateErrorNoMembers">Mesedez, hautatu beste talde kideren bat gutxienez.</string>
     <string name="groupDelete">Taldea Ezabatu</string>
-    <string name="groupDeleteDescription">Ziur zaude <b>{group_name}</b> taldea ezabatu nahi duzula? Honek kide guztiak kendu eta taldeko eduki guztiak ezabatuko ditu.</string>
     <string name="groupDescriptionEnter">Idatzi taldearen deskribapena</string>
     <string name="groupDisplayPictureUpdated">Taldearen erakus-irudia eguneratu da.</string>
     <string name="groupEdit">Taldea Editatu</string>

@@ -254,7 +254,6 @@
     <string name="copy">Chotsani</string>
     <string name="create">Yeretsani</string>
     <string name="cut">Dula</string>
-    <string name="databaseErrorGeneric">Pakhala vuto la danga la data.\n\nTumizani zolembera zanu za mapulogalamu kuti mugawane ndi kukonza. Ngati izi sizichitika bwino, bwelersani {app_name} ndikubwezeretsanso akaunti yanu.\n\nChenjezo: Izi zidzakhudza kutayika kwa mauthenga onse, zolemba zomata, ndi data ya akaunti ya milungu iwiri.</string>
     <string name="databaseErrorTimeout">Timazindikira {app_name} kutenga nthawi kuti ayambe.\n\nInu mungapitirize kudikira, kutulutsira chipangizo malipoti kuti azipeza mavuto, kapena yesani kuyambiranso {app_name}.</string>
     <string name="databaseErrorUpdate">Deta la pulogalamu yanu silikugwirizana ndi mtundu uwu wa {app_name}. Yikani pulogalamu yatsopanoyi ndikubwezerani akaunti yanu kuti mupange deta yatsopano ndikupitiriza kugwiritsa ntchito {app_name}.\n\nChenjezo: Izi zidzachititsa kuti mutaye mauthenga onse ndi zoyikapo zoposa masabata awo pafupifupi ziwiri.</string>
     <string name="databaseOptimizing">Kupanga bwino Database</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Pangani Gulu</string>
     <string name="groupCreateErrorNoMembers">Chonde sonkhanitsani limodzi la mamembala agulu ina.</string>
     <string name="groupDelete">Chotsani Gulu</string>
-    <string name="groupDeleteDescription">Mukutsimikiza kuti mukufuna kufufuta <b>{group_name}</b>? Izi zithandizira kuchotsa mamembala onse ndikuchotsa zonse zomwe zili m\'gulu.</string>
     <string name="groupDescriptionEnter">Lemberani mafotokozedwe amugulu</string>
     <string name="groupDisplayPictureUpdated">Chithunzi cha chiwonetsero chagulu chapangidwanso.</string>
     <string name="groupEdit">Sintha Gulu</string>
