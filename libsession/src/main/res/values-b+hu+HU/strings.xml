@@ -255,7 +255,6 @@
     <string name="copy">Másolás</string>
     <string name="create">Létrehozás</string>
     <string name="cut">Kivágás</string>
-    <string name="databaseErrorGeneric">Adatbázishiba történt.\n\nExportáld az alkalmazás naplóit, hogy megoszhasd azokat a hibaelhárításhoz. Ha ez nem sikerül, telepítsd újra a(z) {app_name}-t és állítsd vissza a fiókod.\n\nFigyelem: Ez az összes két hétnél régebbi üzenet, melléklet és fiókadat elvesztésével jár.</string>
     <string name="databaseErrorTimeout">Észrevettük, hogy {app_name} indítása sokáig tart.\n\nTovábbra is várhatsz, exportálhatod az eszköz naplóit a hibaelhárításhoz, vagy megpróbálhatod újraindítani {app_name}-t.</string>
     <string name="databaseErrorUpdate">Az alkalmazás adatbázisa nem kompatibilis a {app_name} jelenlegi verziójával. Telepítsd újra az alkalmazást, és állítsd vissza fiókját egy új adatbázis létrehozásához és a {app_name} további használathoz.\n\nFigyelmeztetés: Ez minden két hétnél régebbi üzenet és melléklet elvesztését eredményezi.</string>
     <string name="databaseOptimizing">Adatbázis optimalizálása</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Csoport létrehozása</string>
     <string name="groupCreateErrorNoMembers">Válassz legalább 1 csoporttagot.</string>
     <string name="groupDelete">Csoport törlése</string>
-    <string name="groupDeleteDescription">Biztos, hogy törölni szeretnéd a(z) <b>{group_name}</b> csoportot? Ezzel minden tag törölve lesz, és a csoport teljes tartalma törölve lesz.</string>
     <string name="groupDescriptionEnter">Adj meg egy csoportleírást</string>
     <string name="groupDisplayPictureUpdated">A csoport képe frissítve lett.</string>
     <string name="groupEdit">Csoport szerkesztése</string>

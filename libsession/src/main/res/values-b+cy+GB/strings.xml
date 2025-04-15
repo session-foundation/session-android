@@ -259,7 +259,6 @@
     <string name="copy">Copïo</string>
     <string name="create">Creu</string>
     <string name="cut">Torri</string>
-    <string name="databaseErrorGeneric">Mae gwall cronfa ddata wedi digwydd.\n\nAllforiwch gofnodion eich cais i\'w rhannu ar gyfer datrys problemau. Os yw hyn yn aflwyddiannus, ailosodwch {app_name} a adfer eich cyfrif.\n\nRhybudd: Bydd hyn yn arwain at golled o\'r holl negeseuon, atodiadau, a data cyfrif sydd ymhellach i ffwrdd na phythefnos.</string>
     <string name="databaseErrorTimeout">Rydym wedi sylwi bod {app_name} yn cymryd llawer o amser i ddechrau.\n\nGallwch barhau i aros, allforio logiau eich dyfais i\'w rhannu ar gyfer datrys problemau, neu geisio ailgychwyn {app_name}.</string>
     <string name="databaseErrorUpdate">Mae eich cronfa ddata ap yn anghydnaws â\'r fersiwn hon o {app_name}. Ailosodwch yr ap a darganfod eich cyfrif i greu cronfa ddata newydd a pharhau i ddefnyddio {app_name}.\n\nRhybudd: Bydd hyn yn arwain at golli’r holl negeseuon a’r atodiadau sy’n hŷn na phythefnos.</string>
     <string name="databaseOptimizing">Optimeiddio Cronfa Ddata</string>
@@ -408,7 +407,6 @@
     <string name="groupCreate">Creu Grŵp</string>
     <string name="groupCreateErrorNoMembers">Dewiswch o leiaf un aelod grŵp arall.</string>
     <string name="groupDelete">Dileu Grŵp</string>
-    <string name="groupDeleteDescription">Ydych chi\'n siŵr eich bod am ddileu <b>{group_name}</b>? Bydd hyn yn dileu\'r holl aelodau ac yn dileu\'r holl gynnwys grŵp.</string>
     <string name="groupDescriptionEnter">Rhowch ddisgrifiad y grŵp</string>
     <string name="groupDisplayPictureUpdated">Llun arddangos grŵp wedi\'i ddiweddaru.</string>
     <string name="groupEdit">Golygu Grŵp</string>

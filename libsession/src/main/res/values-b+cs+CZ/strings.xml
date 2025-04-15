@@ -164,7 +164,6 @@
     <string name="callsVoiceAndVideo">Hlasové a video hovory</string>
     <string name="callsVoiceAndVideoBeta">Hlasové a video hovory (Beta)</string>
     <string name="callsVoiceAndVideoModalDescription">Vaše IP adresa je při používání beta hovorů viditelná pro vašeho volacího partnera a server Oxen Foundation.</string>
-    <string name="callsVoiceAndVideoToggleDescription">Zapne hlasové a video hovory k ostatním uživatelům i od nich.</string>
     <string name="callsYouCalled">Volali jste {name}</string>
     <string name="callsYouMissedCallPermissions">Zmeškali jste hovor od <b>{name}</b>, protože jste neměli povoleny <b>Hlasové a video hovory</b> v nastavení ochrany soukromí.</string>
     <string name="cameraErrorNotFound">Nebyla nalezena žádná kamera</string>
@@ -267,7 +266,6 @@
     <string name="create">Vytvořit</string>
     <string name="creatingCall">Vytváření hovoru</string>
     <string name="cut">Vyjmout</string>
-    <string name="databaseErrorGeneric"><b>Došlo k chybě databáze.\n\nExportujte své aplikační logy a sdílejte je pro účely diagnostiky. Pokud to nebude úspěšné, přeinstalujte {app_name} a obnovte svůj účet.\n\nVarování: To povede ke ztrátě všech zpráv, příloh a údajů účtu starších než dva týdny.</b></string>
     <string name="databaseErrorTimeout">Všimli jsme si, že spuštění aplikace {app_name} trvá dlouho.\n\nMůžete pokračovat v čekání, exportovat logy zařízení k řešení problémů nebo zkusit restartovat {app_name}.</string>
     <string name="databaseErrorUpdate">Databáze vaší aplikace není kompatibilní s touto verzí {app_name}. Přeinstalujte aplikaci a obnovte svůj účet pro vytvoření nové databáze a pokračování v používání {app_name}.\n\nVarování: To povede ke ztrátě všech zpráv a příloh starších než dva týdny.</string>
     <string name="databaseOptimizing">Optimalizace databáze</string>
@@ -433,7 +431,6 @@
     <string name="groupCreate">Vytvořit skupinu</string>
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
     <string name="groupDelete">Smazat skupinu</string>
-    <string name="groupDeleteDescription">Jste si jisti, že chcete smazat <b>{group_name}</b>? Tímto odstraníte všechny členy a smažete veškerý obsah skupiny.</string>
     <string name="groupDeleteDescriptionMember">Opravdu chcete smazat <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">Skupina {group_name} byla smazána správcem skupiny. Nebudete moci posílat další zprávy.</string>
     <string name="groupDescriptionEnter">Zadejte popis skupiny</string>
@@ -560,8 +557,6 @@
     <string name="leaving">Opouštění...</string>
     <string name="legacyGroupAfterDeprecationAdmin">Tato skupina je nyní určena pouze pro čtení. Chcete-li pokračovat v konverzaci, vytvořte tuto skupinu znovu.</string>
     <string name="legacyGroupAfterDeprecationMember">Tato skupina je nyní určena pouze pro čtení. Požádejte správce skupiny, aby tuto skupinu znovu vytvořil, abyste mohli pokračovat v chatu.</string>
-    <string name="legacyGroupBeforeDeprecationAdmin">Skupiny byly aktualizovány! Znovu vytvořte tuto skupinu pro zvýšení spolehlivosti. Tato skupina se stane pouze pro čtení dne {date}.</string>
-    <string name="legacyGroupBeforeDeprecationMember">Skupiny byly aktualizovány! Požádejte správce skupiny o znovuvytvoření této skupiny, aby se zvýšila její spolehlivost. Tato skupina se stane pouze pro čtení dne {date}.</string>
     <string name="legacyGroupChatHistory">Historie chatu se do nové skupiny nepřenese. Veškerou historii chatu ve staré skupině si můžete stále prohlížet.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> se připojil(a) ke skupině.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> a <b>{count} další</b> se připojili ke skupině.</string>

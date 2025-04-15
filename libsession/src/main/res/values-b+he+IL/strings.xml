@@ -256,7 +256,6 @@
     <string name="copy">העתק</string>
     <string name="create">צור</string>
     <string name="cut">גזור</string>
-    <string name="databaseErrorGeneric">אירעה שגיאת מסד נתונים.\n\nייצא את יומני היישום שלך לשיתוף לצורך פתרון בעיות. אם זה לא יצליח, התקן מחדש את {app_name} ושחזר את חשבונך.\n\nאזהרה: פעולה זו תגרום לאובדן כל ההודעות, הקבצים המצורפים ונתוני חשבונות שאינם חדשים יותר משבועיים.</string>
     <string name="databaseErrorTimeout">שמנו לב ל-{app_name} לוקח הרבה זמן להתחיל.\n\nתוכל להמשיך להמתין, לייצא את יומני המכשיר שלך לשיתוף לצורך פתרון בעיות, או לנסות להפעיל מחדש את {app_name}.</string>
     <string name="databaseErrorUpdate">מאגר נתונים של האפליקציה שלך אינו תואם לגרסה זו של {app_name}. התקן מחדש את האפליקציה ושחזר את החשבון שלך כדי ליצור מאגר נתונים חדש ולהמשיך להשתמש ב-{app_name}.\n\nאזהרה: פעולה זו תשאיר את כל ההודעות והצרופות הישנות משבועיים.</string>
     <string name="databaseOptimizing">מעדכן מסד נתונים</string>
@@ -397,7 +396,6 @@
     <string name="groupCreate">צור קבוצה</string>
     <string name="groupCreateErrorNoMembers">אנא בחר לפחות חבר קבוצה אחד</string>
     <string name="groupDelete">מחק קבוצה</string>
-    <string name="groupDeleteDescription">האם אתה בטוח שברצונך למחוק את <b>{group_name}</b>? פעולה זו תסיר את כל החברים ותמחק את כל תוכן הקבוצה.</string>
     <string name="groupDescriptionEnter">הזן תיאור קבוצה</string>
     <string name="groupDisplayPictureUpdated">תמונת הקבוצה עודכנה.</string>
     <string name="groupEdit">ערוך קבוצה</string>

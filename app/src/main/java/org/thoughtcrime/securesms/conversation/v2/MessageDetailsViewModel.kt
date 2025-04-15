@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2
 
 import android.net.Uri
+import android.text.format.Formatter
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -180,7 +181,7 @@ class MessageDetailsViewModel @Inject constructor(
         get() = listOfNotNull(
             TitledText(R.string.attachmentsFileId, filename),
             TitledText(R.string.attachmentsFileType, asAttachment().contentType),
-            TitledText(R.string.attachmentsFileSize, Util.getPrettyFileSize(fileSize)),
+            TitledText(R.string.attachmentsFileSize, Formatter.formatFileSize(context, fileSize)),
             takeIf { it is ImageSlide }
                 ?.let(Slide::asAttachment)
                 ?.run { "${width}x$height" }
