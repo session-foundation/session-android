@@ -255,7 +255,6 @@
     <string name="copy">Copiar</string>
     <string name="create">Crear</string>
     <string name="cut">Cortar</string>
-    <string name="databaseErrorGeneric">Se produjo un error en la base de datos.\n\nExporta tus registros de aplicación para compartirlos y solucionar problemas. Si no tiene éxito, reinstala {app_name} y restaura tu cuenta.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes, adjuntos y datos de la cuenta mayores de dos semanas.</string>
     <string name="databaseErrorTimeout">Hemos notado que {app_name} está tardando mucho en arrancar.\n\nPuedes esperar, exportar los registros de tu dispositivo para compartirlos para la resolución de problemas, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">Tu base de datos de la app es incompatible con esta versión de {app_name}. Reinstala la app y restaura tu cuenta para generar una nueva base de datos y continuar usando {app_name}.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes y archivos adjuntos mayores a dos semanas.</string>
     <string name="databaseOptimizing">Optimizando base de datos</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Crear Grupo</string>
     <string name="groupCreateErrorNoMembers">Por favor, elige al menos un otro miembro del grupo.</string>
     <string name="groupDelete">Eliminar grupo</string>
-    <string name="groupDeleteDescription">¿Estás seguro de que quieres eliminar <b>{group_name}?</b> Esto eliminará a todos los miembros y todo el contenido del grupo.</string>
     <string name="groupDescriptionEnter">Introduce la descripción del grupo</string>
     <string name="groupDisplayPictureUpdated">Foto de grupo actualizada.</string>
     <string name="groupEdit">Editar grupo</string>

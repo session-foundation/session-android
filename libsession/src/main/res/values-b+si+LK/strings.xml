@@ -254,7 +254,6 @@
     <string name="copy">පිටපත්</string>
     <string name="create">සාදන්න</string>
     <string name="cut">කපන්න</string>
-    <string name="databaseErrorGeneric">දත්ත සමුදාීය දෝෂයක් සිදුවිය.\n\n නිරාකරණය සඳහා ඔබේ යෙදුම් ලොග් නිර්යාත කරන්න.මෙම අසාර්ථක නම් සිදු වුවහොත්,{app_name} යෙදුම නැවත ස්ථාපනය කර ඔබේ ගිනුම පිහිටුවන්න.\n\nඅවවාදය: මෙය සතියකට වැඩි පණිවුඩ, ඇමුණුම් සහ ගිනුම් දත්ත නැතිවීම කරටු සහිතව  අවසන් කරාවි</string>
     <string name="databaseErrorTimeout">අප සැකසූවානම් {app_name} ආරම්භ කිරීමට වැඩි කාලයක් ගත වන බව දැක ඇත.\n\nඔබට සිතියෙන්නේ, උපකරණ ලොග් දත්ත අපට යැවිය හැකි, නැවත {app_name} ආරම්භ කර බලන්න.</string>
     <string name="databaseErrorUpdate">ඔබගේ යෙදුම් දත්ත කේතය {app_name} මෙහෙයුම් එක්වී නොමැත. යෙදුම නැවත ස්ථාපනය කර ඔබේ ගිණුම ප්‍රතිස්ථාපනය කර යුත්සේ {app_name} භාවිතා කිරීමට නව දත්ත ගබඩායක් සෑදී යමි.\n\nඅවවාදයයි: මෙය සතියක පරණ මායිම් සහ සියළු පණිවිඩ හා සම්බන්ධතා දත්ත කාසිවී අහිමියාවක් ලැබේ.</string>
     <string name="databaseOptimizing">දත්ත සමුදාය ප්‍රශස්ත කිරීම</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">සමූහයක් සාදන්න</string>
     <string name="groupCreateErrorNoMembers">කරුණාකර අවම වශයෙන් එක් එක් කණ්ඩායම් සාමාජිකයෙකු තෝරන්න.</string>
     <string name="groupDelete">සමූහය මකන්න</string>
-    <string name="groupDeleteDescription">ඔබට <b>{group_name}</b> මැකීමට අවශ්‍ය බව විශ්වාසද? මෙම කණ්ඩායමේ සියලු සාමාජිකයින් ඉවත් කර, සමූහ තොරතුරු සියල්ල මකනු ඇත.</string>
     <string name="groupDescriptionEnter">සමූහ විස්තරයක් ඇතුළු කරන්න</string>
     <string name="groupDisplayPictureUpdated">කණ්ඩායම් පෙන්වීමේ රූපය යාවත්කාලීන කළා.</string>
     <string name="groupEdit">සමූහය සංස්කරණය</string>

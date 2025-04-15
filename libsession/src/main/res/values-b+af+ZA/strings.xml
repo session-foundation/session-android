@@ -254,7 +254,6 @@
     <string name="copy">Kopieer</string>
     <string name="create">Skep</string>
     <string name="cut">Sny</string>
-    <string name="databaseErrorGeneric">’n Databasisfout het voorgekom.\n\nVoer jou toepassingslogboeke uit om te deel vir foutsporing. Indien dit onsuksesvol is, herinstalleer {app_name} en herstel jou rekening.\n\nWaarskuwing: Dit sal lei tot die verlies van alle boodskappe, aanhegsels, en rekeningdata ouer as twee weke.</string>
     <string name="databaseErrorTimeout">Ons het opgemerk {app_name} neem lank om te begin.\n\nJy kan aanhou wag, jou toestel logs uitvoer om te deel vir foutsporing, of probeer om {app_name} te herbegin.</string>
     <string name="databaseErrorUpdate">Jou app databasis is onversoenbaar met hierdie weergawe van {app_name}. Herinstalleer die app en herstel jou rekening om \'n nuwe databasis te genereer en voort te gaan met die gebruik van {app_name}.\n\nWaarskuwing: Dit sal lei tot die verlies van alle boodskappe en aanhegsels ouer as twee weke.</string>
     <string name="databaseOptimizing">Optimalisering databasis</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Skep Groep</string>
     <string name="groupCreateErrorNoMembers">Kies ten minste een ander groep lid.</string>
     <string name="groupDelete">Skrap Groep</string>
-    <string name="groupDeleteDescription">Is jy seker jy wil <b>{group_name}</b> verwyder? Dit sal alle lede verwyder en alle groepinhoud skrap.</string>
     <string name="groupDescriptionEnter">Voer \'n groep beskrywing in</string>
     <string name="groupDisplayPictureUpdated">Groep vertoon prent opgedateer.</string>
     <string name="groupEdit">Wysig Groep</string>

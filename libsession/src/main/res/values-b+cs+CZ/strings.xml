@@ -266,7 +266,6 @@
     <string name="create">Vytvořit</string>
     <string name="creatingCall">Vytváření hovoru</string>
     <string name="cut">Vyjmout</string>
-    <string name="databaseErrorGeneric"><b>Došlo k chybě databáze.\n\nExportujte své aplikační logy a sdílejte je pro účely diagnostiky. Pokud to nebude úspěšné, přeinstalujte {app_name} a obnovte svůj účet.\n\nVarování: To povede ke ztrátě všech zpráv, příloh a údajů účtu starších než dva týdny.</b></string>
     <string name="databaseErrorTimeout">Všimli jsme si, že spuštění aplikace {app_name} trvá dlouho.\n\nMůžete pokračovat v čekání, exportovat logy zařízení k řešení problémů nebo zkusit restartovat {app_name}.</string>
     <string name="databaseErrorUpdate">Databáze vaší aplikace není kompatibilní s touto verzí {app_name}. Přeinstalujte aplikaci a obnovte svůj účet pro vytvoření nové databáze a pokračování v používání {app_name}.\n\nVarování: To povede ke ztrátě všech zpráv a příloh starších než dva týdny.</string>
     <string name="databaseOptimizing">Optimalizace databáze</string>
@@ -432,7 +431,6 @@
     <string name="groupCreate">Vytvořit skupinu</string>
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
     <string name="groupDelete">Smazat skupinu</string>
-    <string name="groupDeleteDescription">Jste si jisti, že chcete smazat <b>{group_name}</b>? Tímto odstraníte všechny členy a smažete veškerý obsah skupiny.</string>
     <string name="groupDeleteDescriptionMember">Opravdu chcete smazat <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">Skupina {group_name} byla smazána správcem skupiny. Nebudete moci posílat další zprávy.</string>
     <string name="groupDescriptionEnter">Zadejte popis skupiny</string>

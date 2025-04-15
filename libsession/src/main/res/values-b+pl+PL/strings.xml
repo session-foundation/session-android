@@ -264,7 +264,6 @@
     <string name="copy">Kopiuj</string>
     <string name="create">Utwórz</string>
     <string name="cut">Wytnij</string>
-    <string name="databaseErrorGeneric">Wystąpił błąd bazy danych.\n\nWyeksportuj dzienniki aplikacji, aby udostępnić je w celu rozwiązania problemu. Jeśli to się nie powiedzie, zainstaluj ponownie aplikację {app_name} i przywróć swoje konto.\n\nOstrzeżenie: spowoduje to utratę wszystkich wiadomości, załączników i danych konta starszych niż dwa tygodnie.</string>
     <string name="databaseErrorTimeout">Zauważyliśmy, że uruchomienie aplikacji {app_name} zajmuje dużo czasu.\n\n Możesz kontynuować oczekiwanie, wyeksportować dzienniki urządzenia do udostępnienia w celu rozwiązania problemów lub spróbować ponownie uruchomić aplikację {app_name}.</string>
     <string name="databaseErrorUpdate">Twoja baza danych aplikacji jest niezgodna z tą wersją aplikacji {app_name}. Aby wygenerować nową bazę danych i dalej korzystać z aplikacji {app_name}, zainstaluj aplikację ponownie i przywróć swoje konto.\n\nUwaga: spowoduje to utratę wszystkich wiadomości i załączników starszych niż dwa tygodnie.</string>
     <string name="databaseOptimizing">Optymalizacja bazy danych</string>
@@ -430,7 +429,6 @@
     <string name="groupCreate">Utwórz grupę</string>
     <string name="groupCreateErrorNoMembers">Wybierz co najmniej jednego innego członka grupy.</string>
     <string name="groupDelete">Usuń grupę</string>
-    <string name="groupDeleteDescription">Czy na pewno chcesz usunąć grupę <b>{group_name}</b>? Spowoduje to usunięcie wszystkich członków i całej zawartości grupy.</string>
     <string name="groupDeletedMemberDescription">{group_name} została usunięta przez administratora grupy. Nie będzie można wysyłać więcej wiadomości.</string>
     <string name="groupDescriptionEnter">Wprowadź opis grupy</string>
     <string name="groupDisplayPictureUpdated">Zaktualizowano zdjęcie profilowe grupy.</string>

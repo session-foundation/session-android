@@ -255,7 +255,6 @@
     <string name="copy">Nakili</string>
     <string name="create">Unda</string>
     <string name="cut">Kata</string>
-    <string name="databaseErrorGeneric">Kosa la database limetokea.\n\nToa logi za programu zako kushirikisha kwa utatuzi. Ikiwa hili halitafanikiwa, sakinisha tena {app_name} na urejeshe akaunti yako.\n\n Onyo: Hii itasababisha kupotea kwa ujumbe wote, viambatisho, na data ya akaunti iliyo zaidi ya wiki mbili.</string>
     <string name="databaseErrorTimeout">Tumeona {app_name} inachukua muda mrefu kuanza.\n\nUnaweza kuendelea kusubiri, kuhamisha kumbukumbu za kifaa chako kushiriki kwa kutatua shida, au jaribu kuanzisha {app_name} upya.</string>
     <string name="databaseErrorUpdate">Hifadhidata ya programu yako hailingani na toleo hili la {app_name}. Sakinusha programu na urejeshe akaunti yako ili kuunda hifadhidata mpya na uendelee kutumia {app_name}.\n\nOnyo: Hii itasababisha kupoteza ujumbe na viambatanisho vyote vilivyo zaidi ya wiki mbili.</string>
     <string name="databaseOptimizing">Kuhamisha Hifadhidata</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Unda Kikundi</string>
     <string name="groupCreateErrorNoMembers">Tafadhali chagua angalau mwanakikundi mmoja.</string>
     <string name="groupDelete">Futa Kundi</string>
-    <string name="groupDeleteDescription">Una uhakika unataka kufuta <b>{group_name}</b> kikundi hiki? Hii itapondoa wanakikundi na kushusha maudhui yote.</string>
     <string name="groupDescriptionEnter">Weka maelezo ya kikundi</string>
     <string name="groupDisplayPictureUpdated">Picha ya onyesho la kikundi imesasishwa.</string>
     <string name="groupEdit">Hariri Kundi</string>

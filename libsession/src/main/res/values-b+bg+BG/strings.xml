@@ -254,7 +254,6 @@
     <string name="copy">Копиране</string>
     <string name="create">Създай</string>
     <string name="cut">Изрязване</string>
-    <string name="databaseErrorGeneric">Възникна грешка в базата данни.\n\nЕкспортирайте логовете на приложението, за да ги споделите за отстраняване на проблемите. Ако това не успее, преинсталирайте {app_name} и възстановете акаунта си.\n\nПредупреждение: Това ще доведе до загуба на всички съобщения, прикачени файлове и данни за акаунта, по-стари от две седмици.</string>
     <string name="databaseErrorTimeout">Забелязахме, че стартирането на {app_name} отнема много време.\n\nМожете да продължите да чакате, да експортирате дневници на устройството си, за да ги споделите за отстраняване на неизправности, или да опитате да рестартирате {app_name}.</string>
     <string name="databaseErrorUpdate">Вашата база данни на приложението е несъвместима с тази версия на {app_name}. Инсталирайте повторно приложението и възстановете своя акаунт, за да генерирате нова база данни и да продължите да използвате {app_name}.\n\nВнимание: Това ще доведе до загуба на всички съобщения и прикачени файлове по-стари от две седмици.</string>
     <string name="databaseOptimizing">Опресняване на базата данни</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Създай група</string>
     <string name="groupCreateErrorNoMembers">Моля, изберете поне още един член на групата.</string>
     <string name="groupDelete">Изтрий групата</string>
-    <string name="groupDeleteDescription">Сигурен ли/ли сте, че искате да изтриете <b>{group_name}</b>? Това ще премахне всички членове и изтрие цялото съдържание на групата.</string>
     <string name="groupDescriptionEnter">Въведи описание на групата</string>
     <string name="groupDisplayPictureUpdated">Снимката на групата е обновена.</string>
     <string name="groupEdit">Редактирай групата</string>

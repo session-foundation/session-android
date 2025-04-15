@@ -255,7 +255,6 @@
     <string name="copy">कॉपी करें</string>
     <string name="create">बनाएं</string>
     <string name="cut">कट</string>
-    <string name="databaseErrorGeneric">डेटाबेस त्रुटि हुई है।\n\nसमस्या निवारण के लिए अपने एप्लिकेशन लॉग्स को साझा करने के लिए निर्यात करें। यदि यह असफल रहता है, तो {app_name} को पुनर्स्थापित करें और अपना खाता पुनः प्राप्त करें।\n\nचेतावनी: इससे सभी संदेशों, अनुलग्नकों, और खाते के डेटा का नुकसान होगा जो दो सप्ताह से अधिक पुराने हैं।</string>
     <string name="databaseErrorTimeout">हमने देखा कि {app_name} प्रारंभ होने में बहुत समय ले रहा है।\n\nआप प्रतीक्षा करना जारी रख सकते हैं, अपने डिवाइस लॉग को निर्यात कर सकते हैं ताकि समस्या निवारण के लिए साझा कर सकें, या {app_name} पुनरारंभ करने का प्रयास कर सकते हैं।</string>
     <string name="databaseErrorUpdate">{app_name} का यह संस्करण आपके ऐप डेटाबेस के साथ असंगत है। ऐप को पुन: स्थापित करें और अपना खाता पुनर्स्थापित करें ताकि नया डेटाबेस उत्पन्न हो सके और {app_name} का उपयोग जारी रख सकें।\n\nचेतावनी: इससे दो सप्ताह से पुराने सभी संदेश और संलग्नक खो जाएंगे।</string>
     <string name="databaseOptimizing">डाटाबेस का अनुकूलन</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">समूह बनाएँ</string>
     <string name="groupCreateErrorNoMembers">कृपया कम से कम एक ग्रुप सदस्य चुनें</string>
     <string name="groupDelete">ग्रुप डिलीट करें</string>
-    <string name="groupDeleteDescription">क्या आप वाकई <b>{group_name}</b> को हटाना चाहते हैं? इससे सभी सदस्य हटा दिए जाएंगे और समूह की सारी सामग्री हट जाएगी।</string>
     <string name="groupDescriptionEnter">ग्रुप विवरण दर्ज करें</string>
     <string name="groupDisplayPictureUpdated">समूह डिस्प्ले चित्र अपडेट किया गया।</string>
     <string name="groupEdit">समूह संपादित करें</string>

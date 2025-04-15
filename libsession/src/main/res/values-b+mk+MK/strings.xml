@@ -254,7 +254,6 @@
     <string name="copy">Копирај</string>
     <string name="create">Креирај</string>
     <string name="cut">Сечи</string>
-    <string name="databaseErrorGeneric">Настана грешка во базата на податоци.\n\nИзвенете ги вашите дневници на апликација за да ги споделите за решавање на проблемите. Ако ова не е успешно, повторно инсталирајте ја {app_name} и вратете го вашиот акаунт.\n\nПредупредување: Ова ќе резултира со губење на сите пораки, прилози и податочни записи постари од две недели.</string>
     <string name="databaseErrorTimeout">Забележавме дека {app_name} троши многу време за старт.\n\nМожете да продолжите да чекате, да ги извезете дневниците на вашиот уред за решавање на проблеми или да се обидете да го рестартирате {app_name}.</string>
     <string name="databaseErrorUpdate">Вашата база на податоци на апликацијата не е компатибилна со оваа верзија на {app_name}. Повторно инсталирајте ја апликацијата и вратете го вашиот профил за да генерирате нова база на податоци и да продолжите да го користите {app_name}.\n\nПредупредување: Ова ќе резултира со губење на сите пораки и прикачувања постари од две недели.</string>
     <string name="databaseOptimizing">Оптимизирање на базата на податоци</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Креирај Група</string>
     <string name="groupCreateErrorNoMembers">Ве молиме изберете барем еден друг член на група.</string>
     <string name="groupDelete">Избриши група</string>
-    <string name="groupDeleteDescription">Дали сте сигурни дека сакате да ја избришете <b>{group_name}</b>? Ова ќе ги отстрани сите членови и ќе ја избрише целата содржина на групата.</string>
     <string name="groupDescriptionEnter">Внесете опис на група</string>
     <string name="groupDisplayPictureUpdated">Сликовниот приказ на групата е ажуриран.</string>
     <string name="groupEdit">Уреди група</string>

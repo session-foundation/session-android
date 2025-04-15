@@ -254,7 +254,6 @@
     <string name="copy">Copiar</string>
     <string name="create">Crear</string>
     <string name="cut">Retalla</string>
-    <string name="databaseErrorGeneric">S\'ha produït un error de la base de dades.\n\nExporteu els registres de l\'aplicació per compartir-los per a la resolució de problemes. Si no té èxit, reinstal·leu {app_name} i restaureu el vostre compte.\n\nAdvertència: Això suposarà la pèrdua de tots els missatges, fitxers adjunts i dades del compte anteriors a dues setmanes.</string>
     <string name="databaseErrorTimeout">Hem notat que {app_name} està trigant molt a començar.\n\nPodeu continuar esperant, exportar els registres del dispositiu per compartir-los per solucionar problemes, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">La base de dades de la vostra aplicació no és compatible amb aquesta versió de {app_name}. Reinstal·leu l\'aplicació i restaureu el vostre compte per generar una nova base de dades i continuar utilitzant {app_name}.\n\nAvís: Això donarà lloc a la pèrdua de tots els missatges i adjunts anteriors a dues setmanes.</string>
     <string name="databaseOptimizing">Optimitzant la base de dades</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Creeu un grup</string>
     <string name="groupCreateErrorNoMembers">Com a mínim, trieu 1 membre per al grup, per favor.</string>
     <string name="groupDelete">Esborra el grup</string>
-    <string name="groupDeleteDescription">Esteu segur que voleu esborrar <b>{group_name}?</b> Això eliminarà tots els membres i suprimirà tot el contingut del grup.</string>
     <string name="groupDescriptionEnter">Introdueix una descripció del grup</string>
     <string name="groupDisplayPictureUpdated">La imatge de perfil del grup ha estat actualitzada.</string>
     <string name="groupEdit">Edita el grup</string>

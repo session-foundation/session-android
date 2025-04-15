@@ -254,7 +254,6 @@
     <string name="copy">복사</string>
     <string name="create">만들기</string>
     <string name="cut">잘라내기</string>
-    <string name="databaseErrorGeneric">데이터베이스 오류가 발생했습니다.\n\n문제 해결을 위해 애플리케이션 로그를 내보내서 공유하십시오. 실패할 경우, {app_name}을 다시 설치하고 계정을 복원하십시오.\n\n경고: 이 작업은 2주 이상 지난 모든 메시지, 첨부 파일 및 계정 데이터의 손실을 초래할 수 있습니다.</string>
     <string name="databaseErrorTimeout">{app_name} 이 오랜 시간동안 응답하지 않은 것으로 보입니다. \n\n계속 기다리거나, 기기의 로그를 내보내 도움을 요청하거나, {app_name} 을 재시작 해보세요.</string>
     <string name="databaseErrorUpdate">{app_name}의 이 버전은 앱 데이터베이스와 호환되지 않습니다. 앱을 재설치하고 계정을 복원하여 새 데이터베이스를 생성하고 {app_name}을 계속 사용하십시오.\n\n경고: 이렇게 하면 2주 이상 된 모든 메시지와 첨부 파일이 손실됩니다.</string>
     <string name="databaseOptimizing">데이터베이스 최적화</string>
@@ -383,7 +382,6 @@
     <string name="groupCreate">그룹 만들기</string>
     <string name="groupCreateErrorNoMembers">적어도 한 명의 추가 그룹 멤버를 선택해 주세요.</string>
     <string name="groupDelete">그룹 삭제하기</string>
-    <string name="groupDeleteDescription">Are you sure you want to delete <b>{group_name}</b>? This will remove all members and delete all group content.</string>
     <string name="groupDescriptionEnter">그룹 설명 입력</string>
     <string name="groupDisplayPictureUpdated">그룹 디스플레이 사진이 업데이트되었습니다.</string>
     <string name="groupEdit">그룹 편집</string>

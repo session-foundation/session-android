@@ -255,7 +255,6 @@
     <string name="copy">Kopyahin</string>
     <string name="create">Lumikha</string>
     <string name="cut">Putulin</string>
-    <string name="databaseErrorGeneric">Nagkaroon ng error sa database.\n\nI-export ang mga log ng iyong application upang ibahagi para sa troubleshooting. Kung hindi ito magtagumpay, i-reinstall ang {app_name} at i-restore ang iyong account.\n\nBabala: Magreresulta ito sa pagkawala ng lahat ng mensahe, attachment, at data ng account na mas luma sa dalawang linggo.</string>
     <string name="databaseErrorTimeout">Napansin namin na matagal magbukas ang {app_name}.\n\nMaaari kang maghintay, i-export ang logs ng iyong device para sa troubleshooting, o subukang i-restart ang {app_name}.</string>
     <string name="databaseErrorUpdate">Ang database ng iyong app ay hindi tugma sa bersyong ito ng {app_name}. I-reinstall ang app at ibalik ang iyong account upang makabuo ng bagong database at ipagpatuloy ang paggamit ng {app_name}.\n\nBabala: Magdudulot ito ng pagkawala ng lahat ng mensahe at attachment na mas matanda sa dalawang linggo.</string>
     <string name="databaseOptimizing">Ina-optimize ang Database</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Lumikha ng Grupo</string>
     <string name="groupCreateErrorNoMembers">Pakipili ng hindi bababa sa 1 miyembro ng grupo.</string>
     <string name="groupDelete">Alisin ang Grupo</string>
-    <string name="groupDeleteDescription">Sigurado ka bang gusto mong burahin ang <b>{group_name}</b>? Mababura nito ang lahat ng miyembro at group content.</string>
     <string name="groupDescriptionEnter">Maglagay ng paglalarawan ng grupo</string>
     <string name="groupDisplayPictureUpdated">Na-update ang group display picture.</string>
     <string name="groupEdit">I-edit ang Grupo</string>

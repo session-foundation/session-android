@@ -266,7 +266,6 @@
     <string name="copy">Скопировать</string>
     <string name="create">Создать</string>
     <string name="cut">Вырезать</string>
-    <string name="databaseErrorGeneric">Произошла ошибка базы данных.\n\nЭкспортируйте журналы вашего приложения для устранения неполадок. Если это не поможет, переустановите {app_name} и восстановите ваш аккаунт.\n\nПредупреждение: Это приведет к потере всех сообщений, вложений и данных аккаунта, которым больше двух недель.</string>
     <string name="databaseErrorTimeout">Мы заметили, что {app_name} занимает много времени для запуска.\n\nВы можете продолжить ждать, экспортировать журналы вашего устройства для устранения неполадок или попробовать перезапустить {app_name}.</string>
     <string name="databaseErrorUpdate">База данных вашего приложения несовместима с этой версией {app_name}. Переустановите приложение и восстановите свой аккаунт, чтобы создать новую базу данных и продолжить использовать {app_name}.\n\nВнимание: Это приведет к потере всех сообщений и вложений старше двух недель.</string>
     <string name="databaseOptimizing">Оптимизация базы данных</string>
@@ -432,7 +431,6 @@
     <string name="groupCreate">Создать группу</string>
     <string name="groupCreateErrorNoMembers">Пожалуйста, выберите как минимум одного участника группы.</string>
     <string name="groupDelete">Удалить группу</string>
-    <string name="groupDeleteDescription">Вы уверены, что хотите удалить группу <b>{group_name}?</b> Это удалит всех участников и всё содержимое группы.</string>
     <string name="groupDeleteDescriptionMember">Вы действительно хотите удалить группу <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} был удалён администратором группы. Вы больше не сможете отправлять сообщения в этой группе.</string>
     <string name="groupDescriptionEnter">Введите описание группы</string>

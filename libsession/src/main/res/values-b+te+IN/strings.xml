@@ -255,7 +255,6 @@
     <string name="copy">కాపీ చేయండి</string>
     <string name="create">సృష్టించు</string>
     <string name="cut">కట్ చేయడం</string>
-    <string name="databaseErrorGeneric">డేటాబేస్ లోపం జరిగింది.\n\nమీ అనువర్తనం లాగ్లను ఎగుమతి చేయండి మరియు సమస్య పరిష్కారం కోసం వాటిని పంచుకోండి. ఇది విజయవంతం కాకపోతే, {app_name} ను మళ్లీ ఇన్‌స్టాల్ చేసి మీ ఖాతాను పునరుద్ధరించండి.\n\nహెచ్చరిక: దీనివలన రెండు వారాల కంటే పాత సందేశాలు, జతల్ని మరియు ఖాతా డేటా అన్నీ కోల్పోతారు.</string>
     <string name="databaseErrorTimeout">మేము గమనించాము {app_name} ప్రారంభమవ్వడానికి చాలా సమయం పడుతోంది.\n\nమీరు వేచి ఉండవచ్చు, సమస్యను నిర్ధారించడానికి పరికరం లాగ్‌లను ఎగుమతి చేసి షేర్ చేయవచ్చు లేదా {app_name} రీస్టార్ట్ చేయవచ్చు.</string>
     <string name="databaseErrorUpdate">మీ యాప్ డేటాబేస్ {app_name} యొక్క ఈ వెర్షన్ తో అనుకూలంగా లేదు. యాప్‌ను పున సంస్థాపించి మీ ఖాతాను పునరుద్ధరించండి ఒక కొత్త డేటాబేస్ ను సృష్టించి {app_name} కొనసాగించడానికి.\n\nహెచ్చరిక: ఇది రెండు వారాల క్రితం ఉన్న అన్ని సందేశాలు మరియు అటాచ్మెంట్లు కోల్పోవడానికి అనుమతిస్తుంది.</string>
     <string name="databaseOptimizing">డేటాబేస్‌ను మెరుగ్గాచేయడం</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">సమూహం సృష్టించండి</string>
     <string name="groupCreateErrorNoMembers">దయచేసి కనీసం ఒక ఇతర సమూహ సభ్యుని ఎంచుకోండి.</string>
     <string name="groupDelete">సమూహాన్ని తొలగించు</string>
-    <string name="groupDeleteDescription">మీరు <b>{group_name}</b>ని తొలగించాలనుకుంటున్నారా? ఇది అన్ని సభ్యులను తొలగించి, అన్ని సమూహ విషయాన్ని తొలగిస్తుంది.</string>
     <string name="groupDescriptionEnter">సమూహ వివరణను ఎంటర్ చేయండి</string>
     <string name="groupDisplayPictureUpdated">సమూహ ప్రదర్శన చిత్రం నవీకరించబడింది.</string>
     <string name="groupEdit">సమూహాన్ని మార్చు</string>

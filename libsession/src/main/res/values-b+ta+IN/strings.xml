@@ -255,7 +255,6 @@
     <string name="copy">நகலெடு</string>
     <string name="create">உருவாக்கு</string>
     <string name="cut">பிரி</string>
-    <string name="databaseErrorGeneric">தரவுத்தொகுப்பில் பிழை ஏற்பட்டது.\n\nதரவுத்தொகுப்புகளை புக்கு தொடங்கும் பதிவு கொத்து கோப்புகளை ஈர்க. இது இயலாதபோது மீண்டும் {app_name} ஐ நிறுவி கணக்கை சீரமைக்கவும்.\n\nஎச்சரிக்கை: இது மூன்று வாரத்திற்கு முந்தைய அனைத்து தகவல்களையும், இணைப்புகளையும், கணக்கின் தகவல்களையும் இழக்கும்.</string>
     <string name="databaseErrorTimeout">{app_name} தொடங்க அதிக நேரம் ஆகிறதே எனக் காணப்படுகின்றது.\n\nநீங்கள் தொடர்ந்தும் காத்திருக்கலாம், உங்களின் சாதன பதிவு பட்டியலை வெளியிட்டு பகிரவும் அல்லது {app_name} புனரஇயக்க முயற்சிக்கவும்.</string>
     <string name="databaseErrorUpdate">உங்கள் பயன்பாட்டு தரவுத்தொகுப்பு இந்த {app_name} பதிப்புடன் இணக்கமில்லை. பயன்பாட்டை மறுதொன்று முடியும் மற்றும் உங்கள் கணக்கை மறுஆதிக்கவும் புதிய தரவுத்தொகுப்பை உருவாக்கி {app_name} பயன்பாட்டைப் பயன்படுத்தி தொடரவும்.\n\nபுரிந்து கொள்ளுங்கள்: இது இரண்டு வாரத்திற்கு முதலில் உள்ள அனைத்து செய்தி மற்றும் இணைப்புகளை இழக்கச் செய்யும்.</string>
     <string name="databaseOptimizing">தரவுத்தொகுப்பை மேம்படுத்துகிறது</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">குழுவை உருவாக்கு</string>
     <string name="groupCreateErrorNoMembers">முக்கியமாக ஒன்றைத் தேர்வுசெய்யவும்</string>
     <string name="groupDelete">குழுவை நீக்கு</string>
-    <string name="groupDeleteDescription">நீங்கள் நிச்சயமாக <b>{group_name}</b> ஐ நீக்க விரும்புகிறீர்களா? இது அனைத்து உறுப்பினர்களையும் அகற்றும் மற்றும் அனைத்து குழு உள்ளடக்கங்களை நீக்கும்.</string>
     <string name="groupDescriptionEnter">குழு விளக்கத்தை உள்ளிடவும்</string>
     <string name="groupDisplayPictureUpdated">குழுவின் காட்சி படம் புதுப்பிக்கப்பட்டது.</string>
     <string name="groupEdit">குழு திருத்தம்</string>

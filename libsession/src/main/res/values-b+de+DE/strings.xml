@@ -265,7 +265,6 @@
     <string name="create">Erstellen</string>
     <string name="creatingCall">Anruf wird erstellt</string>
     <string name="cut">Ausschneiden</string>
-    <string name="databaseErrorGeneric">Ein Datenbankfehler ist aufgetreten.\n\nExportiere deine Protokolldateien, um sie für die Fehlerbehebung bereitzustellen. Wenn dies nicht erfolgreich ist, installiere {app_name} neu und stelle deinen Account wieder her.\n\nAchtung: Dies führt zum Verlust aller Nachrichten, Anhänge und sonstigen Daten, die älter als zwei Wochen sind.</string>
     <string name="databaseErrorTimeout">Wir haben bemerkt, dass {app_name} lange zum Starten braucht.\n\nDu kannst weiter warten, deine Geräteprotokolle zur Fehlerbehebung exportieren oder versuchen, {app_name} neu zu starten.</string>
     <string name="databaseErrorUpdate">Deine App-Datenbank ist mit dieser Version von {app_name} nicht kompatibel. Installiere die App neu und stelle deinen Account wieder her, um eine neue Datenbank zu erstellen und {app_name} weiter zu verwenden.\n\nWarnung: Dadurch gehen alle Nachrichten und Anhänge verloren, die älter als zwei Wochen sind.</string>
     <string name="databaseOptimizing">Optimiere Datenbank</string>
@@ -411,7 +410,6 @@
     <string name="groupCreate">Gruppe erstellen</string>
     <string name="groupCreateErrorNoMembers">Bitte wähle mindestens ein anderes Gruppenmitglied.</string>
     <string name="groupDelete">Gruppe löschen</string>
-    <string name="groupDeleteDescription">Bist du sicher, dass du <b>{group_name}</b> löschen möchtest? Dadurch werden alle Mitglieder entfernt und alle Gruppendaten gelöscht.</string>
     <string name="groupDescriptionEnter">Gruppenbeschreibung eingeben</string>
     <string name="groupDisplayPictureUpdated">Gruppenprofilbild aktualisiert.</string>
     <string name="groupEdit">Gruppe bearbeiten</string>

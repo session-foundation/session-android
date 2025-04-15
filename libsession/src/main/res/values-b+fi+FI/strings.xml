@@ -255,7 +255,6 @@
     <string name="copy">Kopioi</string>
     <string name="create">Luo</string>
     <string name="cut">Leikkaa</string>
-    <string name="databaseErrorGeneric">Tapahtui tietokantavirhe.\n\nVie sovelluslokisi vianselvitystä varten. Jollei tämä onnistu, asenna {app_name} uudelleen ja palauta tilisi.\n\nVaroitus: Tämän seurauksena kaikki kahta viikkoa vanhemmat viestit, liitteet ja tilitiedot menetetään.</string>
     <string name="databaseErrorTimeout">Huomasimme, että {app_name} käynnistyy hitaasti.\n\nVoit jatkaa odottamista, viedä laitteesi lokit jaettavaksi vianmäärityksessä tai yrittää käynnistää {app_name} uudelleen.</string>
     <string name="databaseErrorUpdate">Sovellustietokanta ei ole yhteensopiva tämän {app_name} version kanssa. Asenna sovellus uudelleen ja palauta tilisi, jotta voit luoda uuden tietokannan ja jatkaa {app_name} käyttöä.\n\nVaroitus: Tämä johtaa yli kaksi viikkoa vanhojen viestien ja liitteiden menetykseen.</string>
     <string name="databaseOptimizing">Optimoidaan tietokanta</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Luo ryhmä</string>
     <string name="groupCreateErrorNoMembers">Valitse vähintään 1 ryhmän jäsen.</string>
     <string name="groupDelete">Poista ryhmä</string>
-    <string name="groupDeleteDescription">Haluatko varmasti poistaa <b>{group_name}</b>? Tämä poistaa kaikki jäsenet ja poistaa kaiken ryhmäsisällön.</string>
     <string name="groupDescriptionEnter">Syötä ryhmän kuvaus</string>
     <string name="groupDisplayPictureUpdated">Ryhmän näyttökuva on vaihdettu.</string>
     <string name="groupEdit">Muokkaa ryhmää</string>

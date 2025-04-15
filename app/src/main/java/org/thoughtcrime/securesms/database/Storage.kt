@@ -1508,15 +1508,16 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
-        val recipient = getRecipientForThread(threadID)
-
         // Delete the conversation
         threadDB.deleteConversation(threadID)
 
-        // If this wasn't a group recipient then there's nothing further we need to do..
-        if (recipient == null || !recipient.isGroupRecipient) return
+        val recipient = getRecipientForThread(threadID)
 
-        // ..but if this IS a group recipient then we need to delete the group details.
+        // If this wasn't a legacy group recipient then there's nothing further we need to do..
+        if (recipient == null || !recipient.isLegacyGroupRecipient) return
+
+        // ..but if this IS a legacy group recipient then we need to delete the group details.
+        // For group v2 the deletion of config is handled in GroupManagerV2
         configFactory.withMutableUserConfigs { configs ->
             val volatile = configs.convoInfoVolatile
             val groups = configs.userGroups

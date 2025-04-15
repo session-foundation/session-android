@@ -255,7 +255,6 @@
     <string name="copy">Kopa</string>
     <string name="create">Yenza</string>
     <string name="cut">Sika</string>
-    <string name="databaseErrorGeneric">Kufunyenwe impazamo kwisiseko sedatha.\n\nNceda thumela ii-log zenkqubo yakho ukuze uwabelane ngazo ngeengxaki. Ukuba oku kuphumelele, reinstall {app_name} kwaye ubuyisele iakhawunti yakho.\n\nIsilumkiso: oku kuya kubangela ukulahleka kwemiyalezo yonke, ii-attachements, kunye nedatha yeakhawunti endala ngokuphakama kweveki ezimbini.</string>
     <string name="databaseErrorTimeout">Siqaphele ukuba i-{app_name} ithatha ixesha elide ukuqala.\n\nUngaqhubeka ulinde, uthumele iingxelo zesixhobo sakho ukwabelana ngazo ukulungisa iingxaki, okanye uzame ukuqala ngokutsha {app_name}.</string>
     <string name="databaseErrorUpdate">I-database yakho yohlelo lwe-app ayinakuvisisana nohlobo lwangoku lwe {app_name}. Faka app kwakhona kwaye ubuyisele i-akhawunti yakho ukuphuhlisa database entsha kwaye uqhubeke usebenzisa {app_name}.\n\nIsilumkiso: Oku kuya kubangela ukulahleka kwemiyalezo yonke kunye nezinto ezihambelanayo ezindala kunokuba yiveki ezimbini.</string>
     <string name="databaseOptimizing">Ukuphucula iDatha</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Yenza iqela</string>
     <string name="groupCreateErrorNoMembers">Nceda ukhethe ubuncinane ilungu elinye leqela elinge</string>
     <string name="groupDelete">Sangula Iqela</string>
-    <string name="groupDeleteDescription">Uqinisekile ukuba ufuna ukucima <b>{group_name}?</b> Oku kuyakuchithela onke amalungu kunye nokucima yonke into yeqela.</string>
     <string name="groupDescriptionEnter">Ngena inkcazo yeqela</string>
     <string name="groupDisplayPictureUpdated">Umfanekiso wokubonisa weqela uhlaziyiwe.</string>
     <string name="groupEdit">Hlela Iqela</string>

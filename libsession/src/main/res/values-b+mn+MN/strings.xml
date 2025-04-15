@@ -255,7 +255,6 @@
     <string name="copy">Хуулах</string>
     <string name="create">Үүсгэх</string>
     <string name="cut">Таслах</string>
-    <string name="databaseErrorGeneric">Өгөгдлийн сангийн алдаа гарлаа.\n\nАлдааг олж засварлах зорилгоор аппликешны бүртгэлээ экспортлох. Хэрэв энэ амжилтгүй болвол {app_name}-г дахин суулгаад бүртгэлээ сэргээнэ үү.\n\nАнхааруулга: Энэ нь хоёр долоо хоногоос дээш настай бүх мессеж, хавсралт болон бүртгэлийн өгөгдөл алдагдах болно.</string>
     <string name="databaseErrorTimeout">{app_name} эхлүүлэх их хугацаа зарцуулагдаж байна.\n\nХүлээсээр байх, төхөөрөмжийн тэмдэглэлийг экспортлоход хуваалцаж асуудал шийдэх, эсвэл {app_name}-г дахин эхлүүлэх боломжтой.</string>
     <string name="databaseErrorUpdate">Таны програмын өгөгдлийн сан {app_name}-ийн энэ хувилбарт нийцэхгүй байна. Програмыг дахин суулгаж, профайлыг сэргээснээр шинэ өгөгдлийн сан үүсгэж, {app_name} ашиглах боломжтой болно.\n\nСануулга: Энэ нь хоёр долоо хоногоос дээш хугацаатай бүх мессежүүд болон хавсралтууд алдагдах болно.</string>
     <string name="databaseOptimizing">Мэдээллийн сантай оптимжуулалт хийх</string>
@@ -388,7 +387,6 @@
     <string name="groupCreate">Бүлэг үүсгэх</string>
     <string name="groupCreateErrorNoMembers">Дор хаяж нэг өөр бүлгийн гишүүн сонгоно уу.</string>
     <string name="groupDelete">Бүлгийг устгах</string>
-    <string name="groupDeleteDescription">Та <b>{group_name}</b>-г устгахыг хүсэж байгаадаа итгэлтэй байна уу? Энэ нь бүх гишүүдийг устгаж, бүлгийн бүх контентыг устгана.</string>
     <string name="groupDescriptionEnter">Бүлгийн тайлбар оруулна уу</string>
     <string name="groupDisplayPictureUpdated">Бүлгийн дэлгэцийн зураг шинэчлэгдсэн.</string>
     <string name="groupEdit">Бүлгийг засварлах</string>

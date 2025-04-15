@@ -258,7 +258,6 @@
     <string name="copy">Sao chép</string>
     <string name="create">Tạo</string>
     <string name="cut">Cắt</string>
-    <string name="databaseErrorGeneric">Một lỗi cơ sở dữ liệu đã xảy ra.\n\nXuất nhật ký ứng dụng của bạn để chia sẻ nhằm xử lý sự cố. Nếu không thành công, hãy cài đặt lại {app_name} và khôi phục tài khoản của bạn.\n\nCảnh báo: Điều này sẽ dẫn đến mất tất cả tin nhắn, tệp đính kèm và dữ liệu tài khoản cũ hơn hai tuần.</string>
     <string name="databaseErrorTimeout">Chúng tôi nhận thấy {app_name} mất nhiều thời gian để khởi động.\n\nBạn có thể tiếp tục chờ, xuất nhật ký thiết bị để chia sẻ hỗ trợ khắc phục sự cố, hoặc thử khởi động lại {app_name}.</string>
     <string name="databaseErrorUpdate">Cơ sở dữ liệu ứng dụng của bạn không tương thích với phiên bản {app_name} này. Cài đặt lại ứng dụng và khôi phục tài khoản của bạn để tạo một cơ sở dữ liệu mới và tiếp tục sử dụng {app_name}.\n\nCảnh báo: Điều này sẽ dẫn đến việc mất tất cả tin nhắn và tệp đính kèm cũ hơn hai tuần.</string>
     <string name="databaseOptimizing">Đang tối ưu hóa cơ sở dữ liệu</string>
@@ -400,7 +399,6 @@
     <string name="groupCreate">Tạo nhóm</string>
     <string name="groupCreateErrorNoMembers">Vui lòng chọn ít nhất một thành viên khác.</string>
     <string name="groupDelete">Xoá nhóm</string>
-    <string name="groupDeleteDescription">Bạn có chắc chắn rằng bạn muốn xóa <b>{group_name}</b>? Điều này sẽ loại bỏ tất cả các thành viên và xóa tất cả nội dung nhóm.</string>
     <string name="groupDeleteDescriptionMember">Bạn có chắc chắn rằng bạn muốn xóa <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} đã bị xóa bởi quản trị viên nhóm. Bạn sẽ không thể gửi thêm tin nhắn nào nữa.</string>
     <string name="groupDescriptionEnter">Nhập mô tả nhóm</string>

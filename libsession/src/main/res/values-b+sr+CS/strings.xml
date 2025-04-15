@@ -255,7 +255,6 @@
     <string name="copy">Kopiraj</string>
     <string name="create">Kreiraj</string>
     <string name="cut">Iseci</string>
-    <string name="databaseErrorGeneric">Došlo je do greške u bazi podataka.\n\nIzvezite logove aplikacije kako biste ih podelili za rešavanje problema. Ako to ne uspe, ponovo instalirajte {app_name} i povratite svoj nalog.\n\nUpozorenje: Ovo će rezultirati gubitkom svih poruka, priloga i podataka naloga starijih od dve nedelje.</string>
     <string name="databaseErrorTimeout">Primetili smo da aplikaciji {app_name} treba dugo vremena da se pokrene.\n\nMožete da nastavite da čekate, izvezete logove uređaja za deljenje radi rešavanja problema ili pokušate ponovo da pokrenete {app_name}.</string>
     <string name="databaseErrorUpdate">Baza podataka vaše aplikacije nije kompatibilna sa ovom verzijom {app_name}. Ponovo instalirajte aplikaciju i vratite vaš nalog kako biste generisali novu bazu podataka i nastavili sa korišćenjem {app_name}.\n\nUpozorenje: Ovo će rezultirati gubitkom wszystkich poruka i privitaka starijih od dve nedelje.</string>
     <string name="databaseOptimizing">Optimizacija baze podataka</string>
@@ -392,7 +391,6 @@
     <string name="groupCreate">Kreiraj grupu</string>
     <string name="groupCreateErrorNoMembers">Molimo izaberite najmanje jednog člana grupe.</string>
     <string name="groupDelete">Obrišite grupu</string>
-    <string name="groupDeleteDescription">Da li ste sigurni da želite da obrišete <b>{group_name}?</b> Time će biti uklonjeni svi članovi i izbrisana sav sadržaj grupe.</string>
     <string name="groupDescriptionEnter">Unesite opis grupe</string>
     <string name="groupDisplayPictureUpdated">Slika grupe je ažurirana.</string>
     <string name="groupEdit">Izmeni grupu</string>

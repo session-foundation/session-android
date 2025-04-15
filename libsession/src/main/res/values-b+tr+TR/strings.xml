@@ -255,7 +255,6 @@
     <string name="copy">Kopyala</string>
     <string name="create">Oluştur</string>
     <string name="cut">Kes</string>
-    <string name="databaseErrorGeneric">Veritabanı hatası oluştu.\n\nSorun giderme için uygulama günlüklerinizi dışa aktarın. Bu başarısız olursa, {app_name} uygulamasını yeniden yükleyin ve hesabınızı geri yükleyin.\n\nUyarı: Bu, iki haftadan eski olan tüm iletilerin, eklerin ve hesap verilerinin kaybolmasına neden olacaktır.</string>
     <string name="databaseErrorTimeout">{app_name} uygulamasının başlatılması uzun sürüyor fark ettik.\n\nBeklemeye devam edebilir, cihaz günlüklerinizi paylaşmak için dışa aktarabilir veya {app_name} yeniden başlatmayı deneyebilirsiniz.</string>
     <string name="databaseErrorUpdate">{app_name} uygulamanızın veritabanı bu sürüm ile uyumsuz. Uygulamayı yeniden yükleyin ve yeni bir veritabanı oluşturmak ve {app_name} kullanmaya devam etmek için hesabınızı geri yükleyin.\n\nUyarı: Bu, iki haftadan daha eski olan tüm ileti ve eklerin kaybolmasına neden olacaktır.</string>
     <string name="databaseOptimizing">Veritabanı En İyi Duruma Getiriliyor</string>
@@ -397,7 +396,6 @@
     <string name="groupCreate">Grup Oluştur</string>
     <string name="groupCreateErrorNoMembers">Lütfen en az 1 grup üyesi seçin.</string>
     <string name="groupDelete">Grubu Sil</string>
-    <string name="groupDeleteDescription"><b>{group_name}</b> adlı grubu silmek istediğinizden emin misiniz? Bu, tüm üyeleri kaldıracak ve tüm grup içeriğini silecektir.</string>
     <string name="groupDescriptionEnter">Grup açıklaması girin</string>
     <string name="groupDisplayPictureUpdated">Grup görüntü resmi güncellendi.</string>
     <string name="groupEdit">Grubu Düzenle</string>

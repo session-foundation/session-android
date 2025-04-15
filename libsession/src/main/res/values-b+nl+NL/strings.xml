@@ -260,7 +260,6 @@
     <string name="copy">Kopieer</string>
     <string name="create">Aanmaken</string>
     <string name="cut">Knippen</string>
-    <string name="databaseErrorGeneric">Er is een databasefout opgetreden.\n\nExporteer uw applicatielogs om te delen voor probleemoplossing. Als dit niet lukt, installeer {app_name} opnieuw en herstel uw account.\n\nWaarschuwing: Dit zorgt voor verlies van alle berichten, bijlagen en accountgegevens ouder dan twee weken.</string>
     <string name="databaseErrorTimeout">We hebben gemerkt dat {app_name} veel tijd nodig heeft om op te starten.\n\nU kunt doorgaan met wachten, uw apparaatlogs exporteren om te delen voor probleemoplossing, of proberen {app_name} opnieuw op te starten.</string>
     <string name="databaseErrorUpdate">Uw app-database is niet compatibel met deze versie van {app_name}. Installeer de app opnieuw en herstel uw account om een nieuwe database te genereren en {app_name} te blijven gebruiken.\n\nWaarschuwing: Dit leidt tot verlies van alle berichten en bijlagen ouder dan twee weken.</string>
     <string name="databaseOptimizing">Optimaliseer Database</string>
@@ -401,7 +400,6 @@
     <string name="groupCreate">Groep aanmaken</string>
     <string name="groupCreateErrorNoMembers">Kies ten minste één ander groepslid.</string>
     <string name="groupDelete">Verwijder groep</string>
-    <string name="groupDeleteDescription">Weet je zeker dat je <b>{group_name}</b> wilt verwijderen? Dit zal alle leden verwijderen en alle groepsinhoud wissen.</string>
     <string name="groupDeletedMemberDescription">{group_name} is verwijderd door een groepsbeheerder. U kunt geen berichten meer versturen.</string>
     <string name="groupDescriptionEnter">Voer een groepsbeschrijving in</string>
     <string name="groupDisplayPictureUpdated">Groepsafbeelding bijgewerkt.</string>
