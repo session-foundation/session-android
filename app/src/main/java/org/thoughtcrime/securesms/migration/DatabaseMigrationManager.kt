@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.migration
 
 import android.app.Application
+import android.os.SystemClock
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
@@ -69,6 +70,7 @@ class DatabaseMigrationManager @Inject constructor(
         try {
             for ((index, desc) in stepDescriptors.withIndex()) {
                 Log.d(TAG, "Starting migration step: ${desc.name}")
+                val stepStartedAt = SystemClock.elapsedRealtime()
                 try {
                     (desc.action)()
                 } catch (e: Exception) {
@@ -77,7 +79,7 @@ class DatabaseMigrationManager @Inject constructor(
                 }
 
                 steps[index] = steps[index].copy(percentage = 100)
-                Log.d(TAG, "Completed migration step: ${desc.name}")
+                Log.d(TAG, "Completed migration step: ${desc.name}, time taken = ${SystemClock.elapsedRealtime() - stepStartedAt}ms")
 
                 mutableMigrationState.value = MigrationState.Migrating(steps.toList())
             }
@@ -179,9 +181,6 @@ class DatabaseMigrationManager @Inject constructor(
 
             // Detach the new database
             db.rawExecSQL("DETACH DATABASE new_db")
-
-            Thread.sleep(10000)
-            throw RuntimeException("Migration failed")
         }
 
         check(newDb.exists()) { "New database was not created" }
