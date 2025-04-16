@@ -740,7 +740,7 @@ private fun handlePromotionMessage(message: GroupUpdated) {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
                 .handlePromotion(
-                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey),
+                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey.data),
                     groupName = promotion.name,
                     adminKeySeed = seed,
                     promoter = adminId,

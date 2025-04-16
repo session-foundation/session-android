@@ -147,7 +147,7 @@ constructor(
             )
 
             for (group in groups) {
-                val adminKey = group.adminKey
+                val adminKey = group.adminKey?.data
                 val groupId = AccountId(group.groupAccountId)
                 if (adminKey != null && adminKey.isNotEmpty()) {
                     put(
@@ -160,7 +160,7 @@ constructor(
                     continue
                 }
 
-                val authData = group.authData
+                val authData = group.authData?.data
                 if (authData != null && authData.isNotEmpty()) {
                     val subscription = configFactory.getGroupAuth(groupId)
                         ?.let {
