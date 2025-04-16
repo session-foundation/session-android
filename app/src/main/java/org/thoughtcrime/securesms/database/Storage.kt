@@ -1639,7 +1639,7 @@ open class Storage @Inject constructor(
                     profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDatabase.setHasSent(threadId, true)
+            
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
@@ -1674,7 +1674,6 @@ open class Storage @Inject constructor(
                 alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
             }
 
-            setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
 
             // only show the message if wasn't already approvedMe before
