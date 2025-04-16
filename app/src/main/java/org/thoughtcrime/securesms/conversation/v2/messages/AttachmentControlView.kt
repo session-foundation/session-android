@@ -1,10 +1,12 @@
 package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.content.Context
+import android.graphics.Typeface
 import android.text.format.Formatter
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -71,14 +73,14 @@ class AttachmentControlView: LinearLayout {
 
         when(state){
             AttachmentState.EXPIRED -> {
-                val expiredColor = textColor.also { alpha = 0.7f }
+                val expiredColor = ColorUtils.setAlphaComponent(textColor, (0.7f * 255).toInt())
 
                 binding.pendingDownloadIcon.setColorFilter(expiredColor)
 
                 binding.title.apply {
                     text = context.getString(R.string.attachmentsExpired)
                     setTextColor(expiredColor)
-                    setTypeface(typeface, android.graphics.Typeface.ITALIC)
+                    setTypeface(Typeface.defaultFromStyle(Typeface.ITALIC))
                 }
 
                 binding.subtitle.isVisible = false
@@ -94,7 +96,7 @@ class AttachmentControlView: LinearLayout {
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
-                    setTypeface(typeface, android.graphics.Typeface.NORMAL)
+                    setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL))
                 }
 
                 binding.subtitle.isVisible = false
@@ -108,7 +110,7 @@ class AttachmentControlView: LinearLayout {
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
-                    setTypeface(typeface, android.graphics.Typeface.NORMAL)
+                    setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL))
                 }
 
                 binding.subtitle.isVisible = true
@@ -127,7 +129,7 @@ class AttachmentControlView: LinearLayout {
                 binding.title.apply{
                     text = title
                     setTextColor(textColor)
-                    setTypeface(typeface, android.graphics.Typeface.NORMAL)
+                    setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL))
                 }
 
                 binding.subtitle.isVisible = false
