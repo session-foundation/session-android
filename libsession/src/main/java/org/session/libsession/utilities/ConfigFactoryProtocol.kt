@@ -101,7 +101,7 @@ class ConfigMessage(
 )
 
 data class ConfigPushResult(
-    val hash: String,
+    val hashes: List<String>,
     val timestamp: Long
 )
 

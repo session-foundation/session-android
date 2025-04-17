@@ -132,7 +132,7 @@ object FileServerApi {
         val signature = BlindKeyAPI.blindVersionSign(secretKey, timestamp)
 
         // The hex encoded version-blinded public key with a 07 prefix
-        val blindedPkHex = "07" + blindedKeys.pubKey.toHexString()
+        val blindedPkHex = "07" + blindedKeys.pubKey.data.toHexString()
 
         val request = Request(
             verb = HTTP.Verb.GET,

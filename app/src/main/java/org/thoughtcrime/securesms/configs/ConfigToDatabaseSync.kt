@@ -136,10 +136,10 @@ class ConfigToDatabaseSync @Inject constructor(
         // Update profile picture
         if (userProfile.userPic == UserPic.DEFAULT) {
             storage.clearUserPic(clearConfig = false)
-        } else if (userProfile.userPic.key.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
+        } else if (userProfile.userPic.key.data.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
             && preferences.getProfilePictureURL() != userProfile.userPic.url
         ) {
-            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key)
+            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key.data)
         }
 
         if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
@@ -355,7 +355,7 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Add the group to the user's set of public keys to poll for
                 storage.addClosedGroupPublicKey(group.accountId)
                 // Store the encryption key pair
-                val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey), DjbECPrivateKey(group.encSecKey))
+                val keyPair = ECKeyPair(DjbECPublicKey(group.encPubKey.data), DjbECPrivateKey(group.encSecKey.data))
                 storage.addClosedGroupEncryptionKeyPair(keyPair, group.accountId, clock.currentTimeMills())
                 // Notify the PN server
                 PushRegistryV1.subscribeGroup(group.accountId, publicKey = localUserPublicKey)

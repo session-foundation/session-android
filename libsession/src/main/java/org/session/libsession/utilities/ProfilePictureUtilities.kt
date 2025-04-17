@@ -5,6 +5,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.UserPic
 import okio.Buffer
 import org.session.libsession.avatars.AvatarHelper
@@ -73,7 +74,7 @@ object ProfilePictureUtilities {
                 // update config with new URL for reuploaded file
                 val profileKey = ProfileKeyUtil.getProfileKey(context)
                 MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
-                    it.userProfile.setPic(UserPic(url, profileKey))
+                    it.userProfile.setPic(UserPic(url, Bytes(profileKey)))
                 }
 
                 Log.d("Loki-Avatar", "Uploading Avatar Finished")

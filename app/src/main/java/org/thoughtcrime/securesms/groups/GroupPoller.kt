@@ -202,9 +202,9 @@ class GroupPoller(
                     configFactoryProtocol.getGroupAuth(groupId) ?: return@supervisorScope
                 val configHashesToExtends = configFactoryProtocol.withGroupConfigs(groupId) {
                     buildSet {
-                        addAll(it.groupKeys.currentHashes())
-                        addAll(it.groupInfo.currentHashes())
-                        addAll(it.groupMembers.currentHashes())
+                        addAll(it.groupKeys.activeHashes())
+                        addAll(it.groupInfo.activeHashes())
+                        addAll(it.groupMembers.activeHashes())
                     }
                 }
 

@@ -53,7 +53,7 @@ dependencies {
     ksp("com.google.dagger:hilt-compiler:$daggerHiltVersion")
     ksp("androidx.hilt:hilt-compiler:$jetpackHiltVersion")
 
-    api 'org.sessionfoundation:libsession-util-android:1.0.3'
+    api 'org.sessionfoundation:libsession-util-android:1.0.4'
 
     implementation "net.java.dev.jna:jna:5.12.1@aar"
     implementation "androidx.core:core-ktx:$coreVersion"

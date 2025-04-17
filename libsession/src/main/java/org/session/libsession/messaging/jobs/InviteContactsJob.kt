@@ -62,7 +62,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         val timestamp = SnodeAPI.nowWithOffset
                         val signature = SodiumUtilities.sign(
                             buildGroupInviteSignature(memberId, timestamp),
-                            adminKey
+                            adminKey.data
                         )
 
                         val groupInvite = GroupUpdateInviteMessage.newBuilder()
