@@ -1,12 +1,22 @@
 package org.thoughtcrime.securesms.migration
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -43,6 +53,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
+import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -59,7 +70,9 @@ fun DatabaseMigrationScreen(
 
     DatabaseMigration(
         state = migrationManager.migrationState.collectAsState().value,
-        onRetry = migrationManager::requestMigration,
+        onRetry = {
+            migrationManager.requestMigration(fromRetry = true)
+        },
         onExportLogs = {
             ShareLogsDialog {}.show(fm, "share_log")
         },
@@ -99,97 +112,95 @@ private fun DatabaseMigration(
                 .padding(LocalDimensions.current.smallSpacing),
             contentAlignment = Alignment.Center
         ) {
-            AnimatedContent(
-                targetState = state,
-                contentKey = { st -> st.javaClass } // Only trigger animation when the type of state changes
-            ) { st ->
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier.verticalScroll(scrollState),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_foreground),
-                        modifier = Modifier.size(120.dp),
-                        contentDescription = null
-                    )
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .animateContentSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                    modifier = Modifier.size(120.dp),
+                    contentDescription = null
+                )
 
-                    when (st) {
-                        is DatabaseMigrationManager.MigrationState.Completed,
-                        DatabaseMigrationManager.MigrationState.Idle -> {
-                        }
+                when (state) {
+                    is DatabaseMigrationManager.MigrationState.Completed,
+                    DatabaseMigrationManager.MigrationState.Idle -> {
+                    }
 
-                        is DatabaseMigrationManager.MigrationState.Error -> {
-                            val title =
-                                Phrase.from(LocalContext.current, R.string.databaseErrorGeneric)
-                                    .put(APP_NAME_KEY, stringResource(R.string.app_name))
-                                    .format()
-                                    .toString()
+                    is DatabaseMigrationManager.MigrationState.Error -> {
+                        val title =
+                            Phrase.from(LocalContext.current, R.string.databaseErrorGeneric)
+                                .put(APP_NAME_KEY, stringResource(R.string.app_name))
+                                .format()
+                                .toString()
 
-                            Text(
-                                modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
-                                text = title,
-                                textAlign = TextAlign.Center,
-                                style = LocalType.current.base,
-                                color = LocalColors.current.text,
+                        Text(
+                            modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing),
+                            text = title,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base,
+                            color = LocalColors.current.text,
+                        )
+
+                        Spacer(Modifier.size(LocalDimensions.current.spacing))
+
+                        Row {
+                            PrimaryFillButton(
+                                text = stringResource(R.string.retry),
+                                onClick = onRetry
                             )
 
-                            Spacer(Modifier.size(LocalDimensions.current.spacing))
-
-                            Row {
-                                PrimaryFillButton(
-                                    text = stringResource(R.string.retry),
-                                    onClick = onRetry
-                                )
-
-                                Spacer(Modifier.size(LocalDimensions.current.smallSpacing))
-
-                                OutlineButton(
-                                    text = stringResource(R.string.helpReportABugExportLogs),
-                                    onClick = onExportLogs
-                                )
-                            }
-
-                            Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
+                            Spacer(Modifier.size(LocalDimensions.current.smallSpacing))
 
                             OutlineButton(
-                                text = stringResource(R.string.clearDeviceRestore),
-                                color = LocalColors.current.danger,
-                                onClick = { showingClearDeviceRestoreWarning = true }
-                            )
-                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-                            OutlineButton(
-                                text = stringResource(R.string.clearDeviceRestart),
-                                color = LocalColors.current.danger,
-                                onClick = { showingClearDeviceRestartWarning = true }
-                            )
-
-                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-
-                        }
-
-                        is DatabaseMigrationManager.MigrationState.Migrating -> {
-                            val currentStep = st.steps.lastOrNull { it.percentage < 100 }
-                                ?: st.steps.first()
-
-                            CircularProgressIndicator(color = LocalColors.current.text)
-
-                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-
-                            Text(
-                                text = currentStep.title,
-                                style = LocalType.current.h7,
-                                color = LocalColors.current.text,
-                            )
-
-                            Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
-
-                            Text(
-                                text = currentStep.subtitle,
-                                style = LocalType.current.base,
-                                color = LocalColors.current.text,
+                                text = stringResource(R.string.helpReportABugExportLogs),
+                                onClick = onExportLogs
                             )
                         }
+
+                        Spacer(Modifier.size(LocalDimensions.current.mediumSpacing))
+
+                        OutlineButton(
+                            text = stringResource(R.string.clearDeviceRestore),
+                            color = LocalColors.current.danger,
+                            onClick = { showingClearDeviceRestoreWarning = true }
+                        )
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+                        OutlineButton(
+                            text = stringResource(R.string.clearDeviceRestart),
+                            color = LocalColors.current.danger,
+                            onClick = { showingClearDeviceRestartWarning = true }
+                        )
+
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+
+                    }
+
+                    is DatabaseMigrationManager.MigrationState.Migrating -> {
+                        val currentStep = state.steps.lastOrNull { it.percentage < 100 }
+                            ?: state.steps.first()
+
+                        Text(
+                            text = currentStep.title,
+                            style = LocalType.current.h7,
+                            color = LocalColors.current.text,
+                        )
+
+                        Spacer(Modifier.size(LocalDimensions.current.xsSpacing))
+
+                        Text(
+                            text = currentStep.subtitle,
+                            style = LocalType.current.base,
+                            color = LocalColors.current.text,
+                        )
+
+                        Spacer(Modifier.size(LocalDimensions.current.spacing))
+
+                        SmallCircularProgressIndicator(color = LocalColors.current.text)
                     }
                 }
             }

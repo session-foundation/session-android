@@ -321,7 +321,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         cleanupInvitationHandler.start()
 
         // Start our migration process as early as possible so we can show the user a progress UI
-        migrationManager.requestMigration()
+        migrationManager.requestMigration(fromRetry = false)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

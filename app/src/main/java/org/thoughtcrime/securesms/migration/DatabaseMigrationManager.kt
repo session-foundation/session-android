@@ -4,14 +4,17 @@ import android.app.Application
 import android.os.SystemClock
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SQLiteConnection
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
@@ -34,7 +37,19 @@ class DatabaseMigrationManager @Inject constructor(
 
     // Access to openHelper: it's guaranteed to be created after the migration is done.
     val openHelper: SQLCipherOpenHelper by lazy {
-        migrateDatabaseIfNeeded()
+        requestMigration(false)
+
+        // First perform a cheap check to see if the migration is done, if so we can skip the wait.
+        if (mutableMigrationState.value != MigrationState.Completed) {
+            // Wait until the migration is done. This is a semi-expensive call but it's necessary
+            // to block the callers from accessing the database until we have sorted out the migration
+            // process. Note that we don't pass in errors here as the callers of this function
+            // don't expect the exceptions at all so we have no choice but to block them.
+            runBlocking {
+                migrationState.first { it == MigrationState.Completed }
+            }
+        }
+
         SQLCipherOpenHelper(application, dbSecret)
     }
 
@@ -44,10 +59,15 @@ class DatabaseMigrationManager @Inject constructor(
         get() = mutableMigrationState
 
     @Synchronized
-    private fun migrateDatabaseIfNeeded() {
+    private fun migrateDatabaseIfNeeded(fromRetry: Boolean) {
         val currState = mutableMigrationState.value
         if (currState == MigrationState.Completed || currState is MigrationState.Migrating) {
             Log.w(TAG, "Already completed or in progress")
+            return
+        }
+
+        if (!fromRetry && currState is MigrationState.Error) {
+            Log.w(TAG, "Migration failed before, aborting as it's not an explicit retry")
             return
         }
 
@@ -72,7 +92,7 @@ class DatabaseMigrationManager @Inject constructor(
                 Log.d(TAG, "Starting migration step: ${desc.name}")
                 val stepStartedAt = SystemClock.elapsedRealtime()
                 try {
-                    (desc.action)()
+                    (desc.action)(fromRetry)
                 } catch (e: Exception) {
                     Log.d(TAG, "Error performing migration step: ${desc.name}", e)
                     throw e
@@ -91,7 +111,7 @@ class DatabaseMigrationManager @Inject constructor(
         }
     }
 
-    private fun migrateCipherSettings() {
+    private fun migrateCipherSettings(fromRetry: Boolean) {
         if (prefs.migratedToDisablingKDF) {
             Log.i(TAG, "Already migrated to latest cipher settings")
             return
@@ -152,7 +172,7 @@ class DatabaseMigrationManager @Inject constructor(
                 TAG,
                 "New database exists but we haven't done our migration, it's likely corrupted. Deleting."
             )
-            newDb.delete()
+            application.deleteDatabase(SQLCipherOpenHelper.DATABASE_NAME)
         }
 
         SQLiteDatabase.openDatabase(
@@ -181,15 +201,27 @@ class DatabaseMigrationManager @Inject constructor(
 
             // Detach the new database
             db.rawExecSQL("DETACH DATABASE new_db")
+
+            // Delay and fail at first
+//            if (BuildConfig.DEBUG && !fromRetry) {
+//                Thread.sleep(2000)
+//                throw RuntimeException("Fail")
+//            }
         }
 
         check(newDb.exists()) { "New database was not created" }
         prefs.migratedToDisablingKDF = true
     }
 
-    fun requestMigration() {
-        scope.launch {
-            migrateDatabaseIfNeeded()
+    fun requestMigration(fromRetry: Boolean) {
+        val dispatcher = if (fromRetry) {
+            Dispatchers.IO
+        } else {
+            Dispatchers.Default
+        }
+
+        scope.launch(dispatcher) {
+            migrateDatabaseIfNeeded(fromRetry)
         }
     }
 
@@ -202,7 +234,7 @@ class DatabaseMigrationManager @Inject constructor(
         @StringRes
         val subtitle: Int,
 
-        val action: () -> Unit,
+        val action: (fromRetry: Boolean) -> Unit,
     )
 
     data class ProgressStep(
