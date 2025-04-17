@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -26,6 +27,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberDatePickerState
@@ -39,14 +41,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.*
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ClearTrustedDownloads
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideDeprecationChangeDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideEnvironmentWarningDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.OverrideDeprecationState
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowDeprecationChangeDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -193,6 +201,37 @@ fun DebugMenu(
                 )
             }
 
+            DebugCell("Generate fake contacts") {
+                var prefix by remember { mutableStateOf("User-") }
+                var count by remember { mutableStateOf("2000") }
+
+                DebugRow("Prefix") {
+                    TextField(
+                        value = prefix,
+                        onValueChange = { prefix = it },
+                        modifier = Modifier.weight(2f)
+                    )
+                }
+
+                DebugRow("Count") {
+                    TextField(
+                        value = count,
+                        onValueChange = { value -> count = value.filter { it.isDigit() } },
+                        modifier = Modifier.weight(2f),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
+                }
+
+                SlimOutlineButton("Generate") {
+                    sendCommand(
+                        GenerateContacts(
+                            prefix = prefix,
+                            count = count.toInt(),
+                        )
+                    )
+                }
+            }
+
             // Flags
             DebugCell("Flags") {
                 DebugSwitchRow(
@@ -235,7 +274,10 @@ fun DebugMenu(
                     timePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
                     showingDeprecatingStartDatePicker = true
                 }) {
-                    Text(text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString())
+                    Text(
+                        text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault())
+                            .toLocalDate().toString()
+                    )
                 }
 
                 DebugRow(title = "Deprecating start time", modifier = Modifier.clickable {
@@ -243,7 +285,10 @@ fun DebugMenu(
                     timePickerState.applyFromZonedDateTime(uiState.deprecatingStartTime)
                     showingDeprecatingStartTimePicker = true
                 }) {
-                    Text(text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime().toString())
+                    Text(
+                        text = uiState.deprecatingStartTime.withZoneSameInstant(ZoneId.systemDefault())
+                            .toLocalTime().toString()
+                    )
                 }
 
                 DebugRow(title = "Deprecated date", modifier = Modifier.clickable {
@@ -251,7 +296,10 @@ fun DebugMenu(
                     timePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
                     showingDeprecatedDatePicker = true
                 }) {
-                    Text(text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().toString())
+                    Text(
+                        text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault())
+                            .toLocalDate().toString()
+                    )
                 }
 
                 DebugRow(title = "Deprecated time", modifier = Modifier.clickable {
@@ -259,7 +307,10 @@ fun DebugMenu(
                     timePickerState.applyFromZonedDateTime(uiState.deprecatedTime)
                     showingDeprecatedTimePicker = true
                 }) {
-                    Text(text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault()).toLocalTime().toString())
+                    Text(
+                        text = uiState.deprecatedTime.withZoneSameInstant(ZoneId.systemDefault())
+                            .toLocalTime().toString()
+                    )
                 }
             }
 
@@ -277,10 +328,18 @@ fun DebugMenu(
                 confirmButton = {
                     TextButton(onClick = {
                         if (showingDeprecatedDatePicker) {
-                            sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
+                            sendCommand(
+                                DebugMenuViewModel.Commands.OverrideDeprecatedTime(
+                                    getPickedTime()
+                                )
+                            )
                             showingDeprecatedDatePicker = false
                         } else {
-                            sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(getPickedTime()))
+                            sendCommand(
+                                DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(
+                                    getPickedTime()
+                                )
+                            )
                             showingDeprecatingStartDatePicker = false
                         }
                     }) {
@@ -311,10 +370,18 @@ fun DebugMenu(
                         text = GetString(R.string.ok),
                         onClick = {
                             if (showingDeprecatedTimePicker) {
-                                sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatedTime(getPickedTime()))
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.OverrideDeprecatedTime(
+                                        getPickedTime()
+                                    )
+                                )
                                 showingDeprecatedTimePicker = false
                             } else {
-                                sendCommand(DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(getPickedTime()))
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.OverrideDeprecatingStartTime(
+                                        getPickedTime()
+                                    )
+                                )
                                 showingDeprecatingStartTimePicker = false
                             }
                         }
@@ -340,9 +407,10 @@ private fun TimePickerState.applyFromZonedDateTime(time: ZonedDateTime) {
 }
 
 
-private val LegacyGroupDeprecationManager.DeprecationState?.displayName: String get() {
-    return this?.name ?: "No state override"
-}
+private val LegacyGroupDeprecationManager.DeprecationState?.displayName: String
+    get() {
+        return this?.name ?: "No state override"
+    }
 
 @Composable
 private fun DebugRow(
@@ -353,7 +421,7 @@ private fun DebugRow(
     Row(
         modifier = modifier.heightIn(min = LocalDimensions.current.minItemButtonHeight),
         verticalAlignment = Alignment.CenterVertically
-    ){
+    ) {
         Text(
             text = title,
             style = LocalType.current.base,
@@ -370,13 +438,13 @@ fun DebugSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
-){
+) {
     DebugRow(
         title = text,
         modifier = modifier
             .fillMaxWidth()
             .clickable { onCheckedChange(!checked) },
-    ){
+    ) {
         SessionSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange
@@ -391,7 +459,7 @@ fun SessionSwitch(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
-){
+) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
