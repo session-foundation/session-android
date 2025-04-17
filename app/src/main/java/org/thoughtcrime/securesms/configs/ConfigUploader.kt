@@ -303,8 +303,13 @@ class ConfigUploader @Inject constructor(
         push: ConfigPush,
         namespace: Int
     ): ConfigPushResult {
+        // Use a coroutineScope to push all messages concurrently, and if one of them fails the whole
+        // process will be cancelled. This is the requirement of pushing config: all messages have
+        // to be sent successfully for us to consider this process as success
         val responses = coroutineScope {
             val timestamp = clock.currentTimeMills()
+
+            Log.d(TAG, "Pushing ${push.messages.size} config messages")
 
             push.messages
                 .map { message ->
