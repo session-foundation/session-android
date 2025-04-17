@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 public class DraftDatabase extends Database {
 
   public static final String TABLE_NAME  = "drafts";
@@ -24,12 +26,12 @@ public class DraftDatabase extends Database {
           "CREATE INDEX IF NOT EXISTS draft_thread_index ON " + TABLE_NAME + " (" + THREAD_ID + ");",
   };
 
-  public DraftDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public DraftDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
   public void insertDrafts(long threadId, List<Draft> drafts) {
-    SQLiteDatabase db    = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db    = getWritableDatabase();
 
     for (Draft draft : drafts) {
       ContentValues values = new ContentValues(3);
@@ -42,12 +44,12 @@ public class DraftDatabase extends Database {
   }
 
   public void clearDrafts(long threadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
   }
 
   void clearDrafts(Set<Long> threadIds) {
-    SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db        = getWritableDatabase();
     StringBuilder  where     = new StringBuilder();
     List<String>   arguments = new LinkedList<>();
 
@@ -63,12 +65,12 @@ public class DraftDatabase extends Database {
   }
 
   void clearAllDrafts() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, null, null);
   }
 
   public List<Draft> getDrafts(long threadId) {
-    SQLiteDatabase db   = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db   = getReadableDatabase();
     List<Draft> results = new LinkedList<>();
     Cursor cursor       = null;
 

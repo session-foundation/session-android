@@ -7,11 +7,11 @@ import androidx.compose.runtime.Composable
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.FullComposeActivity
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MediaOverviewActivity : FullComposeActivity() {
+class MediaOverviewActivity : FullComposeScreenLockActivity() {
     @Inject
     lateinit var viewModelFactory: MediaOverviewViewModel.AssistedFactory
 

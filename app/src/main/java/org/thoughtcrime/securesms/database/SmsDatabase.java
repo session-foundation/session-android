@@ -59,6 +59,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Provider;
+
 /**
  * Database for storage of SMS messages.
  *
@@ -147,7 +149,7 @@ public class SmsDatabase extends MessagingDatabase {
   private static final EarlyReceiptCache earlyDeliveryReceiptCache = new EarlyReceiptCache();
   private static final EarlyReceiptCache earlyReadReceiptCache     = new EarlyReceiptCache();
 
-  public SmsDatabase(Context context, SQLCipherOpenHelper databaseHelper) {
+  public SmsDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
@@ -158,7 +160,7 @@ public class SmsDatabase extends MessagingDatabase {
   private void updateTypeBitmask(long id, long maskOff, long maskOn) {
     Log.i("MessageDatabase", "Updating ID: " + id + " to base type: " + maskOn);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME +
                " SET " + TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + " )" +
                " WHERE " + ID + " = ?", new String[] {id+""});
@@ -172,7 +174,7 @@ public class SmsDatabase extends MessagingDatabase {
   public long getThreadIdForMessage(long id) {
     String sql        = "SELECT " + THREAD_ID + " FROM " + TABLE_NAME + " WHERE " + ID + " = ?";
     String[] sqlArgs  = new String[] {id+""};
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
 
     Cursor cursor = null;
 
@@ -189,7 +191,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public int getMessageCountForThread(long threadId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     Cursor cursor     = null;
 
     try {
@@ -239,13 +241,13 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(UNIDENTIFIED, unidentified ? 1 : 0);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
   }
 
   @Override
   public void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     ContentValues contentValues = new ContentValues();
     contentValues.put(READ, 1);
     contentValues.put(BODY, displayedMessage);
@@ -263,7 +265,7 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues();
     contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
 
     long threadId = getThreadIdForMessage(id);
@@ -277,7 +279,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void markAsNotified(long id) {
-    SQLiteDatabase database      = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database      = getWritableDatabase();
     ContentValues  contentValues = new ContentValues();
 
     contentValues.put(NOTIFIED, 1);
@@ -286,7 +288,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public boolean isOutgoingMessage(long timestamp) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isOutgoing   = false;
 
@@ -308,7 +310,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public boolean isDeletedMessage(long timestamp) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isDeleted   = false;
 
@@ -335,7 +337,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void incrementReceiptCount(SyncMessageId messageId, boolean deliveryReceipt, boolean readReceipt) {
-    SQLiteDatabase database     = databaseHelper.getWritableDatabase();
+    SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        foundMessage = false;
 
@@ -388,7 +390,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private List<MarkedMessageInfo> setMessagesRead(String where, String[] arguments) {
-    SQLiteDatabase          database  = databaseHelper.getWritableDatabase();
+    SQLiteDatabase          database  = getWritableDatabase();
     List<MarkedMessageInfo> results   = new LinkedList<>();
     Cursor                  cursor    = null;
 
@@ -419,7 +421,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public void updateSentTimestamp(long messageId, long newTimestamp, long threadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
                     "WHERE " + ID + " = ?",
             new String[] {newTimestamp + "", messageId + ""});
@@ -433,7 +435,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private Pair<Long, Long> updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.execSQL("UPDATE " + TABLE_NAME + " SET " + BODY + " = ?, " +
                    TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + ") " +
                    "WHERE " + ID + " = ?",
@@ -512,7 +514,7 @@ public class SmsDatabase extends MessagingDatabase {
       Log.w(TAG, "Duplicate message (" + message.getSentTimestampMillis() + "), ignoring...");
       return Optional.absent();
     } else {
-      SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+      SQLiteDatabase db        = getWritableDatabase();
       long           messageId = db.insert(TABLE_NAME, null, values);
 
       if (runThreadUpdate) {
@@ -601,7 +603,7 @@ public class SmsDatabase extends MessagingDatabase {
       return -1;
     }
 
-    SQLiteDatabase db        = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db        = getWritableDatabase();
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
     if (insertListener != null) {
       insertListener.onComplete();
@@ -624,7 +626,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private Cursor rawQuery(@NonNull String where, @Nullable String[] arguments) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     return database.rawQuery("SELECT " + Util.join(MESSAGE_PROJECTION, ",") +
             " FROM " + SmsDatabase.TABLE_NAME +  " LEFT OUTER JOIN " + ReactionDatabase.TABLE_NAME +
             " ON (" + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID + " = " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + " AND " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.IS_MMS + " = 0)" +
@@ -653,7 +655,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public Cursor getMessageCursor(long messageId) {
-    SQLiteDatabase db = databaseHelper.getReadableDatabase();
+    SQLiteDatabase db = getReadableDatabase();
     Cursor cursor = db.query(TABLE_NAME, MESSAGE_PROJECTION, ID_WHERE, new String[] {messageId + ""}, null, null, null);
     setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId));
     return cursor;
@@ -664,7 +666,7 @@ public class SmsDatabase extends MessagingDatabase {
   @Override
   public boolean deleteMessage(long messageId) {
     Log.i("MessageDatabase", "Deleting: " + messageId);
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     long threadId = getThreadIdForMessage(messageId);
     db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
     notifyConversationListeners(threadId);
@@ -682,7 +684,7 @@ public class SmsDatabase extends MessagingDatabase {
       argValues[i] = (messageIds[i] + "");
     }
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(
       TABLE_NAME,
       ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
@@ -698,7 +700,7 @@ public class SmsDatabase extends MessagingDatabase {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(MmsSmsColumns.THREAD_ID, toId);
 
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, THREAD_ID + " = ?", new String[] {fromId + ""});
     notifyConversationListeners(toId);
     notifyConversationListListeners();
@@ -710,7 +712,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private boolean isDuplicate(IncomingTextMessage message, long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
                                              new String[]{String.valueOf(message.getSentTimestampMillis()), message.getSender().toString(), String.valueOf(threadId)},
                                              null, null, null, "1");
@@ -723,7 +725,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   private boolean isDuplicate(OutgoingTextMessage message, long threadId) {
-    SQLiteDatabase database = databaseHelper.getReadableDatabase();
+    SQLiteDatabase database = getReadableDatabase();
     Cursor         cursor   = database.query(TABLE_NAME, null, DATE_SENT + " = ? AND " + ADDRESS + " = ? AND " + THREAD_ID + " = ?",
             new String[]{String.valueOf(message.getSentTimestampMillis()), message.getRecipient().getAddress().toString(), String.valueOf(threadId)},
             null, null, null, "1");
@@ -736,24 +738,24 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   void deleteMessagesFrom(long threadId, String fromUser) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, THREAD_ID+" = ? AND "+ADDRESS+" = ?", new String[]{threadId+"", fromUser});
   }
 
   void deleteMessagesInThreadBeforeDate(long threadId, long date) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     String where      = THREAD_ID + " = ? AND " + DATE_SENT + " < " + date;
 
     db.delete(TABLE_NAME, where, new String[] {threadId + ""});
   }
 
   void deleteThread(long threadId) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
   }
 
   void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     String where      = "";
 
     for (long threadId : threadIds) {
@@ -766,20 +768,10 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   void deleteAllThreads() {
-    SQLiteDatabase db = databaseHelper.getWritableDatabase();
+    SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, null, null);
   }
 
-  SQLiteDatabase beginTransaction() {
-    SQLiteDatabase database = databaseHelper.getWritableDatabase();
-    database.beginTransaction();
-    return database;
-  }
-
-  void endTransaction(SQLiteDatabase database) {
-    database.setTransactionSuccessful();
-    database.endTransaction();
-  }
 
   /*package*/ SQLiteStatement createInsertStatement(SQLiteDatabase database) {
     return database.compileStatement("INSERT INTO " + TABLE_NAME + " (" + ADDRESS + ", " +

@@ -93,6 +93,7 @@ import org.thoughtcrime.securesms.jobmanager.impl.NetworkConstraint
 import org.thoughtcrime.securesms.logging.AndroidLogger
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.logging.UncaughtExceptionLogger
+import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
 import org.thoughtcrime.securesms.notifications.NotificationChannels
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
@@ -164,6 +165,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var destroyedGroupSync: DestroyedGroupSync
     @Inject lateinit var removeGroupMemberHandler: RemoveGroupMemberHandler // Exists here only to start upon app starts
     @Inject lateinit var snodeClock: SnodeClock
+    @Inject lateinit var migrationManager: DatabaseMigrationManager
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
@@ -317,6 +319,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         destroyedGroupSync.start()
         adminStateSync.start()
         cleanupInvitationHandler.start()
+
+        // Start our migration process as early as possible so we can show the user a progress UI
+        migrationManager.requestMigration(fromRetry = false)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {

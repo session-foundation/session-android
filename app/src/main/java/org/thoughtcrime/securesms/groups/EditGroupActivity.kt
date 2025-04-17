@@ -5,11 +5,11 @@ import android.content.Intent
 import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.FullComposeActivity
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.groups.compose.EditGroupScreen
 
 @AndroidEntryPoint
-class EditGroupActivity: FullComposeActivity() {
+class EditGroupActivity: FullComposeScreenLockActivity() {
 
     companion object {
         private const val EXTRA_GROUP_ID = "EditClosedGroupActivity_groupID"

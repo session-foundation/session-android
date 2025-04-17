@@ -11,6 +11,12 @@ import org.session.libsession.utilities.TextSecurePreferences;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
+@Singleton
 public class DatabaseSecretProvider {
 
   @SuppressWarnings("unused")
@@ -18,7 +24,8 @@ public class DatabaseSecretProvider {
 
   private final Context context;
 
-  public DatabaseSecretProvider(@NonNull Context context) {
+  @Inject
+  public DatabaseSecretProvider(@ApplicationContext @NonNull Context context) {
     this.context = context.getApplicationContext();
   }
 
