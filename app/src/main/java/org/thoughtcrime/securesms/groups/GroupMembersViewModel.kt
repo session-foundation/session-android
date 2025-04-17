@@ -10,6 +10,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 
 @HiltViewModel(assistedFactory = GroupMembersViewModel.Factory::class)
@@ -19,7 +20,8 @@ class GroupMembersViewModel @AssistedInject constructor(
     storage: StorageProtocol,
     configFactory: ConfigFactoryProtocol,
     usernameUtils: UsernameUtils,
-) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory) {
+    avatarUtils: AvatarUtils
+) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils) {
 
     @AssistedFactory
     interface Factory {

@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ButtonColors
@@ -41,7 +38,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -52,9 +48,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,16 +57,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.components.ProfilePictureView
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -453,105 +442,6 @@ fun Divider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
             .padding(horizontal = LocalDimensions.current.smallSpacing)
             .padding(start = startIndent),
         color = LocalColors.current.borders,
-    )
-}
-
-//TODO This component should be fully rebuilt in Compose at some point ~~
-@Composable
-private fun BaseAvatar(
-    modifier: Modifier = Modifier,
-    isAdmin: Boolean = false,
-    update: (ProfilePictureView)->Unit
-){
-    Box(
-        modifier = modifier
-    ) {
-        // image
-        if (LocalInspectionMode.current) { // this part is used for previews only
-            Image(
-                painterResource(id = R.drawable.ic_user_filled_custom),
-                colorFilter = ColorFilter.tint(LocalColors.current.textSecondary),
-                contentScale = ContentScale.Inside,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(LocalDimensions.current.iconLarge)
-                    .clip(CircleShape)
-                    .border(1.dp, LocalColors.current.borders, CircleShape)
-            )
-        } else {
-            AndroidView(
-                factory = {
-                    ProfilePictureView(it)
-                },
-                update = update
-            )
-        }
-
-        // badge
-        if (isAdmin) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_crown_custom),
-                contentDescription = null,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(1.dp, 1.dp) // used to make up for trasparent padding in icon
-                    .size(LocalDimensions.current.badgeSize)
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewAvatar() {
-    PreviewTheme {
-        Avatar(
-            modifier = Modifier.padding(20.dp),
-            isAdmin = true,
-            accountId = AccountId("05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1235")
-        )
-    }
-}
-
-@Composable
-fun Avatar(
-    recipient: Recipient,
-    modifier: Modifier = Modifier,
-    isAdmin: Boolean = false
-) {
-    BaseAvatar(
-        modifier = modifier,
-        isAdmin = isAdmin,
-        update = {
-            it.update(recipient)
-        }
-    )
-}
-
-@Composable
-fun Avatar(
-    userAddress: Address,
-    modifier: Modifier = Modifier,
-    isAdmin: Boolean = false
-) {
-    BaseAvatar(
-        modifier = modifier,
-        isAdmin = isAdmin,
-        update = {
-            it.update(userAddress)
-        }
-    )
-}
-
-@Composable
-fun Avatar(
-    accountId: AccountId,
-    modifier: Modifier = Modifier,
-    isAdmin: Boolean = false
-) {
-    Avatar(Address.fromSerialized(accountId.hexString),
-        modifier = modifier,
-        isAdmin = isAdmin
     )
 }
 

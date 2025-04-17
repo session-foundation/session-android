@@ -41,6 +41,8 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Date
 import java.util.Locale
@@ -55,11 +57,11 @@ class MessageDetailsViewModel @Inject constructor(
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
     private val messageDataProvider: MessageDataProvider,
-    private val storage: Storage
+    private val storage: Storage,
+    private val avatarUtils: AvatarUtils
 ) : ViewModel() {
 
     private var job: Job? = null
@@ -169,7 +171,7 @@ class MessageDetailsViewModel @Inject constructor(
                             address.toString()
                         )
                     },
-                    sender = sender,
+                    senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup
                 )
@@ -242,7 +244,7 @@ data class MessageDetailsState(
     val error: TitledText? = null,
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
-    val sender: Recipient? = null,
+    val senderAvatarData: AvatarUIData? = null,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
 ) {

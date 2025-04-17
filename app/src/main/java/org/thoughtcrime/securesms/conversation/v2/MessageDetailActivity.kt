@@ -56,7 +56,6 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
@@ -66,7 +65,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
-import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
@@ -75,6 +73,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -293,12 +292,12 @@ fun CellMetadata(
                 senderInfo?.let {
                     TitledView(state.fromTitle) {
                         Row {
-                            sender?.let {
+                            senderAvatarData?.let {
                                 Avatar(
-                                    recipient = it,
                                     modifier = Modifier
-                                        .align(Alignment.CenterVertically)
-                                        .size(46.dp)
+                                        .align(Alignment.CenterVertically),
+                                    size = LocalDimensions.current.iconLarge,
+                                    data = senderAvatarData
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }

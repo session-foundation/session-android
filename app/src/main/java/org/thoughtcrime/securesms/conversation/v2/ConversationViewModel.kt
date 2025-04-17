@@ -67,6 +67,8 @@ import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -92,7 +94,8 @@ class ConversationViewModel(
     private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
     private val expiredGroupManager: ExpiredGroupManager,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val avatarUtils: AvatarUtils
 
 ) : ViewModel() {
 
@@ -1119,6 +1122,11 @@ class ConversationViewModel(
 
     fun getUsername(accountId: String) = usernameUtils.getContactNameWithAccountID(accountId)
 
+    suspend fun getConversationAvatarData(): AvatarUIData? {
+        return if(recipient == null) null
+        else avatarUtils.getUIDataFromRecipient(recipient!!)
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1145,6 +1153,7 @@ class ConversationViewModel(
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
         private val expiredGroupManager: ExpiredGroupManager,
         private val usernameUtils: UsernameUtils,
+        private val avatarUtils: AvatarUtils,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1166,7 +1175,8 @@ class ConversationViewModel(
                 callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
                 expiredGroupManager = expiredGroupManager,
-                usernameUtils = usernameUtils
+                usernameUtils = usernameUtils,
+                avatarUtils = avatarUtils,
             ) as T
         }
     }

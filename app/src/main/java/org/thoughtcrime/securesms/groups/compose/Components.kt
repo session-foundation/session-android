@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,23 +17,40 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.util.AvatarBadge
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
@@ -57,6 +76,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 fun  MemberItem(
     accountId: AccountId,
     title: String,
+    avatarUIData: AvatarUIData,
     showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
     onClick: ((accountId: AccountId) -> Unit)? = null,
@@ -80,9 +100,9 @@ fun  MemberItem(
         verticalAlignment = CenterVertically,
     ) {
         Avatar(
-            accountId = accountId,
-            isAdmin = showAsAdmin,
-            modifier = Modifier.size(LocalDimensions.current.iconLarge)
+            size = LocalDimensions.current.iconLarge,
+            data = avatarUIData,
+            badge = if (showAsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
         )
 
         Column(
@@ -115,6 +135,7 @@ fun RadioMemberItem(
     enabled: Boolean,
     selected: Boolean,
     accountId: AccountId,
+    avatarUIData: AvatarUIData,
     title: String,
     onClick: (accountId: AccountId) -> Unit,
     showAsAdmin: Boolean,
@@ -124,6 +145,7 @@ fun RadioMemberItem(
 ) {
     MemberItem(
         accountId = accountId,
+        avatarUIData = avatarUIData,
         title = title,
         subtitle = subtitle,
         subtitleColor = subtitleColor,
@@ -156,6 +178,7 @@ fun LazyListScope.multiSelectMemberList(
                 enabled = enabled,
                 selected = contact.selected,
                 accountId = contact.accountID,
+                avatarUIData = contact.avatarUIData,
                 title = contact.name,
                 showAsAdmin = false,
                 onClick = { onContactItemClicked(contact.accountID) }
@@ -178,16 +201,124 @@ fun PreviewMemberList() {
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Person",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
+                        ),
                         selected = false,
                     ),
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Cow",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
+                        ),
                         selected = true,
                     )
                 ),
                 onContactItemClicked = {}
             )
+        }
+    }
+}
+
+@Composable
+fun AutoResizeText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = TextStyle.Default,
+    textAlign: TextAlign = TextAlign.Center,
+    minFontSize: TextUnit = 10.sp,
+    maxLines: Int = 1,
+    precision: TextUnit = 1.sp // Determines search precision
+) {
+    // Holds the best fitting font size
+    var textSize by remember { mutableStateOf(minFontSize) }
+    // A text measurer to compute layout metrics without directly rendering text on screen.
+    val textMeasurer = rememberTextMeasurer()
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        // Obtain density to convert between Dp and Sp.
+        val density = LocalDensity.current
+
+        // Option 5: Instead of a hardcoded maximum, derive one based on the container's dimensions.
+        // For instance, taking the smaller of the maxWidth or maxHeight as an upper bound.
+        val dynamicMaxFontSize = with(density) { min(maxWidth, maxHeight).toSp() }
+
+        LaunchedEffect(text, constraints, minFontSize, dynamicMaxFontSize) {
+            var low = minFontSize.value
+            var high = dynamicMaxFontSize.value
+            var bestSize = low
+            val precisionValue = precision.value
+
+            // Perform a binary search to find the maximum font size that fits.
+            while (high - low > precisionValue) {
+                val mid = (low + high) / 2f
+
+                // Measure the text layout at the current midpoint font size.
+                val layoutResult = textMeasurer.measure(
+                    text = text,
+                    style = style.copy(fontSize = mid.sp),
+                    constraints = constraints,
+                    maxLines = maxLines
+                )
+
+                if (layoutResult.didOverflowWidth || layoutResult.didOverflowHeight) {
+                    // If the text overflows, reduce the high bound.
+                    high = mid
+                } else {
+                    // If it fits, store this size and try a larger size.
+                    bestSize = mid
+                    low = mid
+                }
+            }
+            // Update the state to recompose the Text with the optimal font size.
+            textSize = bestSize.sp
+        }
+
+        // Render the text with the calculated maximum font size.
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                fontSize = textSize,
+                style = style,
+                textAlign = textAlign,
+                maxLines = maxLines,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewAutoTextSize() {
+    PreviewTheme {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
+        ) {
+            Box (
+                modifier = Modifier.size(200.dp).background(Color.DarkGray)
+            ){
+                AutoResizeText(text = "TO")
+            }
+
+            Box (
+                modifier = Modifier.size(20.dp).background(Color.DarkGray)
+            ){
+                AutoResizeText(text = "TO")
+            }
         }
     }
 }

@@ -25,6 +25,7 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 
 const val MAX_GROUP_NAME_BYTES = 100
@@ -37,7 +38,8 @@ class EditGroupViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
     private val usernameUtils: UsernameUtils,
-) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory) {
+    private val avatarUtils: AvatarUtils
+) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils) {
     // Input/Output state
     private val mutableEditingName = MutableStateFlow<String?>(null)
 

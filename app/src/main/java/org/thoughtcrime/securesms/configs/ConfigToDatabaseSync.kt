@@ -172,22 +172,28 @@ class ConfigToDatabaseSync @Inject constructor(
         val name: String?,
         val destroyed: Boolean,
         val deleteBefore: Long?,
-        val deleteAttachmentsBefore: Long?
+        val deleteAttachmentsBefore: Long?,
+        val profilePic: UserPic?
     ) {
         constructor(groupInfoConfig: ReadableGroupInfoConfig) : this(
             id = AccountId(groupInfoConfig.id()),
             name = groupInfoConfig.getName(),
             destroyed = groupInfoConfig.isDestroyed(),
             deleteBefore = groupInfoConfig.getDeleteBefore(),
-            deleteAttachmentsBefore = groupInfoConfig.getDeleteAttachmentsBefore()
+            deleteAttachmentsBefore = groupInfoConfig.getDeleteAttachmentsBefore(),
+            profilePic = groupInfoConfig.getProfilePic()
         )
     }
 
     private fun updateGroup(groupInfoConfig: UpdateGroupInfo) {
         val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
         val recipient = storage.getRecipientForThread(threadId) ?: return
-        recipientDatabase.setProfileName(recipient, groupInfoConfig.name)
         profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
+        profileManager.setProfilePicture(
+            context, recipient,
+            profilePictureURL = groupInfoConfig.profilePic?.url,
+            profileKey = groupInfoConfig.profilePic?.key
+        )
 
         // Also update the name in the user groups config
         configFactory.withMutableUserConfigs { configs ->

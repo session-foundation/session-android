@@ -1,7 +1,6 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -36,7 +35,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -90,13 +88,13 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
@@ -216,7 +214,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         binding.run {
-            profilePictureView.setOnClickListener {
+            userAvatar.setOnClickListener {
                 showAvatarDialog = true
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
@@ -234,38 +232,23 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             Buttons(recoveryHidden = recoveryHidden)
         }
 
+        binding.userAvatar.setThemedContent {
+            val avatarData by viewModel.avatarData.collectAsState()
+            if(avatarData == null) return@setThemedContent
+
+            Avatar(
+                size = LocalDimensions.current.iconXXLarge,
+                data = avatarData!!
+            )
+        }
+
         lifecycleScope.launch {
             viewModel.showLoader.collect {
                 binding.loader.isVisible = it
             }
         }
 
-        lifecycleScope.launch {
-            viewModel.refreshAvatar.collect {
-                binding.profilePictureView.recycle()
-                binding.profilePictureView.update()
-            }
-        }
-
-        lifecycleScope.launch {
-            viewModel.avatarData.collect {
-                if(it == null) return@collect
-
-                binding.profilePictureView.apply {
-                    publicKey = it.publicKey
-                    displayName = it.displayName
-                    update(it.recipient)
-                }
-            }
-        }
-
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        binding.profilePictureView.update()
     }
 
     override fun finish() {
@@ -731,7 +714,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     when(val s = state){
                         // user avatar
                         is UserAvatar -> {
-                            Avatar(userAddress = s.address)
+                            Avatar(
+                                size = LocalDimensions.current.iconXXLarge,
+                                data = s.data
+                            )
                         }
 
                         // temporary image

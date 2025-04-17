@@ -20,6 +20,7 @@ import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Singleton
 
 @Module
@@ -28,8 +29,10 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideMessageNotifier(): MessageNotifier {
-        return OptimizedMessageNotifier(DefaultMessageNotifier())
+    fun provideMessageNotifier(
+        avatarUtils: AvatarUtils
+    ): MessageNotifier {
+        return OptimizedMessageNotifier(DefaultMessageNotifier(avatarUtils))
     }
 }
 

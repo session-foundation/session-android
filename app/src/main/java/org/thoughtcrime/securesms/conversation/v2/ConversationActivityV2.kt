@@ -642,9 +642,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
-        viewModel.run {
-            binding.toolbarContent?.update(recipient ?: return, openGroup, expirationConfiguration)
-        }
+
+        //todo AVATAR Old code was force refreshing avatar here. Is it needed?
     }
 
     override fun onPause() {
@@ -781,13 +780,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         actionBar.title = ""
         actionBar.setDisplayHomeAsUpEnabled(true)
         actionBar.setHomeButtonEnabled(true)
-        binding.toolbarContent.bind(
-            this,
-            viewModel.threadId,
-            recipient,
-            viewModel.expirationConfiguration,
-            viewModel.openGroup
-        )
+        lifecycleScope.launch {
+            binding.toolbarContent.bind(
+                this@ConversationActivityV2,
+                recipient,
+                viewModel.getConversationAvatarData(),
+                viewModel.expirationConfiguration,
+                viewModel.openGroup
+            )
+        }
         maybeUpdateToolbar(recipient)
     }
 
@@ -1113,7 +1114,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun maybeUpdateToolbar(recipient: Recipient) {
-        binding.toolbarContent.update(recipient, viewModel.openGroup, viewModel.expirationConfiguration)
+        lifecycleScope.launch {
+            binding.toolbarContent.update(
+                recipient,
+                viewModel.getConversationAvatarData(),
+                viewModel.openGroup,
+                viewModel.expirationConfiguration
+            )
+        }
     }
 
     private fun updateSendAfterApprovalText() {

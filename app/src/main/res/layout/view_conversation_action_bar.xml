@@ -7,13 +7,10 @@
     android:orientation="horizontal"
     android:gravity="center_vertical">
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
-        android:id="@+id/profilePictureView"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/avatar"
         android:layout_width="@dimen/medium_profile_picture_size"
-        android:layout_height="@dimen/medium_profile_picture_size"
-        android:layout_marginTop="@dimen/medium_spacing"
-        android:layout_marginStart="@dimen/medium_spacing"
-        android:layout_marginBottom="@dimen/medium_spacing" />
+        android:layout_height="@dimen/medium_profile_picture_size" />
 
     <LinearLayout
         android:id="@+id/conversationTitleContainer"

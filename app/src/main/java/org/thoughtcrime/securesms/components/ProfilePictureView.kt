@@ -26,6 +26,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -54,6 +55,9 @@ class ProfilePictureView @JvmOverloads constructor(
     @Inject
     lateinit var usernameUtils: UsernameUtils
 
+    @Inject
+    lateinit var avatarUtils: AvatarUtils
+
     private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
@@ -65,9 +69,11 @@ class ProfilePictureView @JvmOverloads constructor(
         update(sender)
     }
 
-    private fun createUnknownRecipientDrawable(): Drawable {
+    private fun createUnknownRecipientDrawable(publicKey: String? = null): Drawable {
+        val color = if(publicKey.isNullOrEmpty()) ContactColors.UNKNOWN_COLOR.toConversationColor(context)
+        else avatarUtils.getColorFromKey(publicKey)
         return ResourceContactPhoto(R.drawable.ic_user_filled_custom)
-            .asDrawable(context, ContactColors.UNKNOWN_COLOR.toConversationColor(context), false, resourcePadding)
+            .asDrawable(context, color, false, resourcePadding)
     }
 
     fun update(recipient: Recipient) {
@@ -75,44 +81,68 @@ class ProfilePictureView @JvmOverloads constructor(
         recipient.run {
             update(
                 address = address,
-                isLegacyGroupRecipient = isLegacyGroupRecipient,
-                isCommunityInboxRecipient = isCommunityInboxRecipient,
-                isGroupsV2Recipient = isGroupV2Recipient
+                profileViewDataType = when {
+                    isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
+                        customGroupImage = profileAvatar
+                    )
+                    isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
+                    isCommunityRecipient -> ProfileViewDataType.Community
+                    isCommunityInboxRecipient -> ProfileViewDataType.CommunityInbox
+                    else -> ProfileViewDataType.OneOnOne
+                }
             )
         }
     }
 
     fun update(
         address: Address,
-        isLegacyGroupRecipient: Boolean = false,
-        isCommunityInboxRecipient: Boolean = false,
-        isGroupsV2Recipient: Boolean = false,
+        profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
         fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
             ?: usernameUtils.getContactNameWithAccountID(publicKey)
 
-        if (isLegacyGroupRecipient || isGroupsV2Recipient) {
-            val members = if (isLegacyGroupRecipient) {
-                groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
-            } else {
-                storage.getMembers(address.toString())
-                    .map { Address.fromSerialized(it.accountId()) }
-            }.sorted().take(2)
+        // group avatar
+        if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {
+            // if the group has a custom image, use that
+            // other wise make up a double avatar from the first two members
+            // if there is only one member then use that member + an unknown icon coloured based on the group id
 
-            if (members.size <= 1) {
-                publicKey = ""
+            // first check if we have a custom image
+            if((profileViewDataType as? ProfileViewDataType.GroupvV2)?.customGroupImage != null){
+                publicKey =  address.toString()
                 displayName = ""
-                additionalPublicKey = ""
-                additionalDisplayName = ""
-            } else {
-                val pk = members.getOrNull(0)?.toString() ?: ""
-                publicKey = pk
-                displayName = getUserDisplayName(pk)
-                val apk = members.getOrNull(1)?.toString() ?: ""
-                additionalPublicKey = apk
-                additionalDisplayName = getUserDisplayName(apk)
+                additionalPublicKey = null // we don't want a second image when there is a custom image set
+            } else { // otherwise apply the logic based on members
+
+                val members = if (profileViewDataType is ProfileViewDataType.LegacyGroup) {
+                    groupDatabase.getGroupMemberAddresses(address.toGroupString(), true)
+                } else {
+                    storage.getMembers(address.toString())
+                        .map { Address.fromSerialized(it.accountId()) }
+                }.sorted().take(2)
+
+                if (members.isEmpty()) {
+                    publicKey = ""
+                    displayName = ""
+                    additionalPublicKey = ""
+                    additionalDisplayName = ""
+                } else if (members.size == 1) {
+                    val pk = members.getOrNull(0)?.toString() ?: ""
+                    publicKey = pk
+                    displayName = getUserDisplayName(pk)
+                    additionalPublicKey =
+                        address.toString() // use the group address to later generate a colour based on the group id
+                    additionalDisplayName = ""
+                } else {
+                    val pk = members.getOrNull(0)?.toString() ?: ""
+                    publicKey = pk
+                    displayName = getUserDisplayName(pk)
+                    val apk = members.getOrNull(1)?.toString() ?: ""
+                    additionalPublicKey = apk
+                    additionalDisplayName = getUserDisplayName(apk)
+                }
             }
-        } else if(isCommunityInboxRecipient) {
+        } else if(profileViewDataType is ProfileViewDataType.CommunityInbox) {
             val publicKey = GroupUtil.getDecodedOpenGroupInboxAccountId(address.toString())
             this.publicKey = publicKey
             displayName = getUserDisplayName(publicKey)
@@ -168,7 +198,11 @@ class ProfilePictureView @JvmOverloads constructor(
 
             glide.clear(imageView)
 
-            val placeholder = PlaceholderAvatarPhoto(publicKey, displayName ?: truncateIdForDisplay(publicKey))
+            val placeholder = PlaceholderAvatarPhoto(
+                publicKey,
+                displayName ?: truncateIdForDisplay(publicKey),
+                avatarUtils.generateTextBitmap(128, publicKey, displayName)
+            )
 
             if (signalProfilePicture != null && avatar != "0" && avatar != "") {
                 glide.load(signalProfilePicture)
@@ -176,6 +210,11 @@ class ProfilePictureView @JvmOverloads constructor(
                     .centerCrop()
                     .error(glide.load(placeholder))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .circleCrop()
+                    .into(imageView)
+            } else if(recipient.isGroupRecipient) { // for groups, if we have an unknown it needs to display the unknown icon but with a bg colour based on the group's id
+                glide.load(createUnknownRecipientDrawable(publicKey))
+                    .centerCrop()
                     .circleCrop()
                     .into(imageView)
             } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
@@ -202,4 +241,14 @@ class ProfilePictureView @JvmOverloads constructor(
         profilePicturesCache.clear()
     }
     // endregion
+
+    sealed interface ProfileViewDataType{
+        data object OneOnOne: ProfileViewDataType
+        data object LegacyGroup: ProfileViewDataType
+        data object Community: ProfileViewDataType
+        data object CommunityInbox: ProfileViewDataType
+        data class GroupvV2(
+            val customGroupImage: String? = null
+        ): ProfileViewDataType
+    }
 }
