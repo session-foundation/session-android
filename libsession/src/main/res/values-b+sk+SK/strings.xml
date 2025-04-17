@@ -257,7 +257,6 @@
     <string name="copy">Kopírovať</string>
     <string name="create">Vytvoriť</string>
     <string name="cut">Vystrihnúť</string>
-    <string name="databaseErrorGeneric">Vyskytla sa chyba databázy.\n\nExportujte svoje denníky aplikácie, aby ste ich mohli zdieľať na riešenie problémov. Ak to nebude úspešné, preinštalujte {app_name} a obnovte váš účet.\n\nVarovanie: To povedie k strate všetkých správ, príloh a údajov účtu starších ako dva týždne.</string>
     <string name="databaseErrorTimeout">Všimli sme si, že {app_name} sa dlho spúšťa.\n\nMôžete pokračovať v čakaní, exportovať záznamy z vášho zariadenia kvôli riešeniu problémov alebo skúsiť reštartovať {app_name}.</string>
     <string name="databaseErrorUpdate">Vaša databáza aplikácie nie je kompatibilná s touto verziou {app_name}. Preinštalujte aplikáciu a obnovte svoj účet, aby sa vygenerovala nová databáza a mohli ste pokračovať v používaní {app_name}.\n\nUpozornenie: Týmto dôjde k strate všetkých správ a príloh starších ako dva týždne.</string>
     <string name="databaseOptimizing">Optimalizácia databázy</string>
@@ -398,7 +397,6 @@
     <string name="groupCreate">Vytvoriť skupinu</string>
     <string name="groupCreateErrorNoMembers">Prosím zvoľte aspoň 1 člena skupiny.</string>
     <string name="groupDelete">Vymazať skupinu</string>
-    <string name="groupDeleteDescription">Ste si istí, že chcete vymazať <b>{group_name}</b>? Tým sa odstránia všetci členovia a všetok obsah skupiny bude vymazaný.</string>
     <string name="groupDescriptionEnter">Zadajte popis skupiny</string>
     <string name="groupDisplayPictureUpdated">Obrázok skupiny bol aktualizovaný.</string>
     <string name="groupEdit">Upraviť skupinu</string>

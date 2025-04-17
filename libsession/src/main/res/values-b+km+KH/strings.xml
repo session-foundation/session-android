@@ -253,7 +253,6 @@
     <string name="copy">ចម្លង</string>
     <string name="create">បង្កើត</string>
     <string name="cut">កាត់</string>
-    <string name="databaseErrorGeneric">មានបញ្ហាមូលដ្ឋានទិន្នន័យបានកើតឡើង។\n\nនាំចេញការកំណត់ត្រាអនុវត្តរបស់អ្នកដើម្បីចែករំលែកសម្រាប់ដោះស្រាយបញ្ហា។ ប្រសិនបើការនេះមិនបានជោគជ័យទេ សូមធ្វើការដំឡើង {app_name}\n\nឡើងវិញ និងស្តារឡើងវិញគណនីរបស់អ្នក។ ព្រមាន៖ នេះនឹងធ្វើឲ្យពុះសារទាំងនោះ មាតិកាភ្ជាប់ខាងក្នុង និងទិន្នន័យគណនីដែលចាស់ជាងពីរ​សប្តាហ៍បាត់មួយរយៈពេលខ្លី។</string>
     <string name="databaseErrorTimeout">យើងគិតថា {app_name} ពុំអាចចាប់ផ្ដើមបានយ៉ាងចំហរមួយរយៈ \n\n អ្នកអាចរង់ចាំតទៅ ហៅទិន្នន័យឧបករណ៍របស់អ្នកដើម្បីជួយដោះស្រាយ បើទោះអញ្ចឹងក៏ដោយ សាកល្បងចាប់ផ្ដើម {app_name}។</string>
     <string name="databaseErrorUpdate">ឃ្លាំងទិន្នន័យរបស់កម្មវិធីរបស់អ្នកមិនអាចបើកជាមួយ {app_name} នេះទេ។ កញ្ចួញកម្មវិធីឡើងវិញ ហើយស្ដារគណនីរបស់អ្នកដើម្បីបង្កើតឃ្លាំងទិន្នន័យថ្មី និង​បន្តប្រើ {app_name}។\n\nការព្រមាន៖ នេះនឹងលុបបាត់ជាស្ថាពរ នូវសារទាំងអស់ និងឯកសារភ្ជាប់ដែលអាយុចាស់ជាងពីរសប្ដាហ៍។</string>
     <string name="databaseOptimizing">កំពុងធ្វើបច្ចុប្បន្នភាពមូលដ្ខានទិន្នន័យ</string>
@@ -382,7 +381,6 @@
     <string name="groupCreate">បង្កើតក្រុម</string>
     <string name="groupCreateErrorNoMembers">សូមជ្រើសរើសសមាជិកដែលបានចូលរួមយ៉ាងតិចបំផុតមួយ.</string>
     <string name="groupDelete">លុប​ក្រុម</string>
-    <string name="groupDeleteDescription">តើអ្នកប្រាកដទេថាអ្នកចង់លុប <b>{group_name}?</b> នេះនឹងលុបសមាជិកទាំងអស់ហើយនឹងលុបមាតិកាក្រុមទាំងមូល។</string>
     <string name="groupDescriptionEnter">បញ្ចូលការពិពណ៌នាក្រុម</string>
     <string name="groupDisplayPictureUpdated">រូបតំណាងក្រុមត្រូវបានធ្វើបច្ចុប្បន្នភាព។</string>
     <string name="groupEdit">កែក្រុម</string>

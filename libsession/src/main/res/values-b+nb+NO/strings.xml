@@ -254,7 +254,6 @@
     <string name="copy">Kopier</string>
     <string name="create">Opprett</string>
     <string name="cut">Klipp ut</string>
-    <string name="databaseErrorGeneric">En databasefeil ,å dele for feilsøking.\n\nHvis dette mislykkes, installer {app_name} på nytt og gjenopprett kontoen din.\n\nAdvarsel: Dette vil resultere i tap av alle meldinger, vedlegg og kontodata som er eldre enn to uker.</string>
     <string name="databaseErrorTimeout">Vi har lagt merke til at {app_name} tar lang tid å starte.\n\nDu kan vente videre, eksportere loggene på enheten din for å dele for feilsøking, eller prøve å starte {app_name} på nytt.</string>
     <string name="databaseErrorUpdate">App-databasen din er inkompatibel med denne versjonen av {app_name}. Installer appen på nytt og gjenopprett kontoen din for å generere en ny database og fortsette å bruke {app_name}.\n\nAdvarsel: Dette vil resultere i tap av alle meldinger og vedlegg eldre enn to uker.</string>
     <string name="databaseOptimizing">Optimaliserer databasen</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Opprett gruppe</string>
     <string name="groupCreateErrorNoMembers">Vennligst velg minst ett annet gruppemedlem.</string>
     <string name="groupDelete">Slette gruppe</string>
-    <string name="groupDeleteDescription">Er du sikker på at du vil slette <b>{group_name}</b>? Dette vil fjerne alle medlemmer og slette alt gruppearbeid.</string>
     <string name="groupDescriptionEnter">Skriv inn en gruppebeskrivelse</string>
     <string name="groupDisplayPictureUpdated">Gruppeprofilbildet oppdatert.</string>
     <string name="groupEdit">Rediger gruppe</string>

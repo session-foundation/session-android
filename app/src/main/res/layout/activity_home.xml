@@ -158,7 +158,7 @@
             android:id="@+id/conversationListContainer">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/searchContactsRecyclerView"
+                android:id="@+id/conversationsRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"

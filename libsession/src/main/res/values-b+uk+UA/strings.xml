@@ -264,7 +264,6 @@
     <string name="copy">Копіювати</string>
     <string name="create">Створити</string>
     <string name="cut">Вирізати</string>
-    <string name="databaseErrorGeneric">Сталася помилка бази даних.\n\nЕкспортуйте журнали програми, щоб надати спільний доступ для вирішення проблем. Якщо це не вдасться, перевстановіть {app_name} і відновіть обліковий запис.\n\nПопередження: це призведе до втрати всіх повідомлень, вкладених файлів і даних облікового запису, старіших понад два тижні.</string>
     <string name="databaseErrorTimeout">Ми помітили, що {app_name} довго запускається.\n\nВи можете продовжити чекати, експортувати журнали вашого пристрою для аналізу або спробувати перезапустити {app_name}.</string>
     <string name="databaseErrorUpdate">База даних вашого додатку несумісна з цією версією {app_name}. Перевстановіть додаток та відновіть свій обліковий запис, щоб створити нову базу даних і продовжувати користуватися {app_name}.\n\nУвага: Це призведе до втрати всіх повідомлень та вкладень, старших двох тижнів.</string>
     <string name="databaseOptimizing">Оптимізація бази даних</string>
@@ -417,7 +416,6 @@
     <string name="groupCreate">Створити групу</string>
     <string name="groupCreateErrorNoMembers">Будь ласка, виберіть принаймні 1 учасника групи.</string>
     <string name="groupDelete">Видалити групу</string>
-    <string name="groupDeleteDescription">Ви впевнені, що хочете видалити <b>{group_name}?</b> Це видалить усіх учасників і всю інформацію групи.</string>
     <string name="groupDeletedMemberDescription">{group_name} видалено адміністратором групи. Ви більше не зможете надсилати повідомлення.</string>
     <string name="groupDescriptionEnter">Введіть опис групи</string>
     <string name="groupDisplayPictureUpdated">Зображення групи для показу оновлено.</string>

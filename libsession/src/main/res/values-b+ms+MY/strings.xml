@@ -254,7 +254,6 @@
     <string name="copy">Salin</string>
     <string name="create">Buat</string>
     <string name="cut">Potong</string>
-    <string name="databaseErrorGeneric">Ralat pangkalan data berlaku.\n\nEksport log aplikasi anda untuk bahagian penyelesaian masalah. Jika ini tidak berjaya, pasang semula {app_name} dan kembalikan akaun anda.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej, lampiran, dan data akaun lebih lama daripada dua minggu.</string>
     <string name="databaseErrorTimeout">Kami perasan {app_name} mengambil masa yang lama untuk bermula.\n\nAnda boleh terus menunggu, eksport log peranti anda untuk perkongsian penyelesaian masalah atau cuba mulakan semula {app_name}.</string>
     <string name="databaseErrorUpdate">Pangkalan data aplikasi anda tidak serasi dengan versi {app_name} ini. Pasang semula aplikasi ini dan pulihkan akaun anda untuk menjana pangkalan data baru dan terus menggunakan {app_name}.\n\nAmaran: Ini akan menyebabkan kehilangan semua mesej dan lampiran yang lebih lama daripada dua minggu.</string>
     <string name="databaseOptimizing">Mengoptimumkan Pangkalan Data</string>
@@ -383,7 +382,6 @@
     <string name="groupCreate">Buat Kumpulan</string>
     <string name="groupCreateErrorNoMembers">Sila pilih sekurang-kurangnya satu ahli kumpulan lain.</string>
     <string name="groupDelete">Padam Kumpulan</string>
-    <string name="groupDeleteDescription">Adakah anda pasti mahu memadamkan <b>{group_name}</b>? Ini akan membuang semua ahli dan memadamkan semua kandungan kumpulan.</string>
     <string name="groupDescriptionEnter">Masukkan deskripsi kumpulan</string>
     <string name="groupDisplayPictureUpdated">Gambar paparan kumpulan diperbarui.</string>
     <string name="groupEdit">Edit Group</string>

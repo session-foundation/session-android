@@ -254,7 +254,6 @@
     <string name="copy">Kopeeri</string>
     <string name="create">Loo</string>
     <string name="cut">Lõika</string>
-    <string name="databaseErrorGeneric">Andmebaasi viga.\n\nEkspordi oma rakenduslogid, et jagada tõrkeotsinguteks. Kui see ei õnnestu, installige {app_name} uuesti ja taastage oma konto.\n\nHoiatus: Selle tulemusel kaotate kõik kaks nädalat vanemad sõnumid, manused ja kontoandmed.</string>
     <string name="databaseErrorTimeout">Oleme märganud, et {app_name} käivitamine võtab kaua aega.\n\nVõite jätkata ootamist, eksportida oma seadme logisid tõrkeotsingu eesmärgil jagamiseks või proovida {app_name}\'i taaskäivitamist.</string>
     <string name="databaseErrorUpdate">Teie rakenduse andmebaas ei ühildu selle {app_name} versiooniga. Installige rakendus uuesti ja taastage oma konto, et luua uus andmebaas ja jätkata {app_name} kasutamist.\n\nHoiatus: See kaotab kõik vanemad kui kaks nädalat sõnumid ja manused.</string>
     <string name="databaseOptimizing">Andmebaasi optimeerimine</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Loo grupp</string>
     <string name="groupCreateErrorNoMembers">Palun vali vähemalt 1 grupiliige.</string>
     <string name="groupDelete">Kustuta grupp</string>
-    <string name="groupDeleteDescription">Kas olete kindel, et soovite kustutada <b>{group_name}</b>? See eemaldab kõik liikmed ja kustutab kogu grupi sisu.</string>
     <string name="groupDescriptionEnter">Sisestage grupi kirjeldus</string>
     <string name="groupDisplayPictureUpdated">Grupi kuvapilt uuendatud.</string>
     <string name="groupEdit">Redigeeri gruppi</string>

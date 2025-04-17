@@ -200,7 +200,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.globalSearchInputLayout.listener = this
         homeAdapter.setHasStableIds(true)
         homeAdapter.glide = glide
-        binding.searchContactsRecyclerView.adapter = homeAdapter
+        binding.conversationsRecyclerView.adapter = homeAdapter
         binding.globalSearchRecycler.adapter = globalSearchAdapter
 
         binding.configOutdatedView.setOnClickListener {
@@ -237,7 +237,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 homeViewModel.data
                     .filterNotNull() // We don't actually want the null value here as it indicates a loading state (maybe we need a loading state?)
                     .collectLatest { data ->
-                        val manager = binding.searchContactsRecyclerView.layoutManager as LinearLayoutManager
+                        val manager = binding.conversationsRecyclerView.layoutManager as LinearLayoutManager
                         val firstPos = manager.findFirstCompletelyVisibleItemPosition()
                         val offsetTop = if(firstPos >= 0) {
                             manager.findViewByPosition(firstPos)?.let { view ->
@@ -429,7 +429,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         binding.searchToolbar.isVisible = isShown
         binding.sessionToolbar.isVisible = !isShown
-        binding.searchContactsRecyclerView.isVisible = !isShown
+        binding.conversationsRecyclerView.isVisible = !isShown
         binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
         binding.globalSearchRecycler.isVisible = isShown
         binding.conversationListContainer.isVisible = !isShown
@@ -437,6 +437,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             binding.newConversationButton.animate().cancel()
             binding.newConversationButton.isVisible = false
         } else {
+            updateEmptyState()
             binding.newConversationButton.apply {
                 alpha = 0.0f
                 visibility = View.VISIBLE
@@ -482,8 +483,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
     // region Updating
     private fun updateEmptyState() {
-        val threadCount = (binding.searchContactsRecyclerView.adapter)!!.itemCount
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.searchContactsRecyclerView.isVisible
+        val threadCount = binding.conversationsRecyclerView.adapter?.itemCount ?: 0
+        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.conversationsRecyclerView.isVisible
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -606,7 +607,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     storage.setBlocked(listOf(thread.recipient), true)
 
                     withContext(Dispatchers.Main) {
-                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
+                        binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
                 // Block confirmation toast added as per SS-64
@@ -625,7 +626,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 lifecycleScope.launch(Dispatchers.Default) {
                     storage.setBlocked(listOf(thread.recipient), false)
                     withContext(Dispatchers.Main) {
-                        binding.searchContactsRecyclerView.adapter!!.notifyDataSetChanged()
+                        binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
             }

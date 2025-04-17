@@ -254,7 +254,6 @@
     <string name="copy">拷貝</string>
     <string name="create">建立</string>
     <string name="cut">剪下</string>
-    <string name="databaseErrorGeneric">資料庫發生錯誤。\n\n導出你的應用程式日誌以便進行故障排除。如果這不成功，請重新安裝 {app_name} 並恢復您的帳戶。\n\n警告：這將導致兩週前的所有訊息、附件和帳戶數據丟失。</string>
     <string name="databaseErrorTimeout">我們注意到 {app_name} 啟動時間過長。\n\n您可以繼續等待，匯出您的設備日誌以便排除故障，或者嘗試重新啟動 {app_name}。</string>
     <string name="databaseErrorUpdate">您的應用程式資料庫與此版本的 {app_name} 不相容。重新安裝應用程式並恢復您的帳戶以生成新的資料庫並繼續使用 {app_name}。\n\n警告：這將導致丟失所有兩週前的訊息和附件。</string>
     <string name="databaseOptimizing">最佳化資料庫中</string>
@@ -383,7 +382,6 @@
     <string name="groupCreate">建立群組</string>
     <string name="groupCreateErrorNoMembers">請選擇至少一名群組成員。</string>
     <string name="groupDelete">刪除群組</string>
-    <string name="groupDeleteDescription">您確定要刪除 <b>{group_name}</b> 嗎？這將移除所有成員並刪除所有群組內容。</string>
     <string name="groupDescriptionEnter">輸入群組描述</string>
     <string name="groupDisplayPictureUpdated">群組顯示圖片已更新。</string>
     <string name="groupEdit">編輯群組</string>

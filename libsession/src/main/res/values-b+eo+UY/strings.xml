@@ -254,7 +254,6 @@
     <string name="copy">Kopii</string>
     <string name="create">Krei</string>
     <string name="cut">Eltondi</string>
-    <string name="databaseErrorGeneric">Okazis datumbaza eraro.\n\nEksportu viajn uzaddosierojn por kunhavigi por sensiligi. Se ĉi tio malsukcesas, re-instalu {app_name} kaj restaŭru vian konton.\n\nAverto: Ĉi tio rezultos en perdo de ĉiuj mesaĝoj, enmetaĵoj, kaj kontaj datumoj pli malnovaj ol du semajnoj.</string>
     <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi {app_name}.</string>
     <string name="databaseErrorUpdate">Via aplikaĵa datumbazo ne kongruas kun ĉi tiu versio de {app_name}. Reinstalu la aplikaĵon kaj restarigu vian konton por generi novan datumbazon kaj daŭrigi la uzadon de {app_name}.\n\nAverto: Ĉi tio rezultos en la perdo de ĉiuj mesaĝoj kaj aldonaĵoj pli aĝaj ol du semajnoj.</string>
     <string name="databaseOptimizing">Optimumigante Datumbazon</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Krei Grupon</string>
     <string name="groupCreateErrorNoMembers">Bonvolu elekti almenaŭ unu grupanon.</string>
     <string name="groupDelete">Forigi grupon</string>
-    <string name="groupDeleteDescription">Ĉu vi certas, ke vi volas forigi <b>{group_name}</b>? Ĉi tiu ago forigos ĉiujn membrojn kaj forigos ĉiujn enhavojn de la grupo.</string>
     <string name="groupDescriptionEnter">Enigu gruppriskribon</string>
     <string name="groupDisplayPictureUpdated">Grupa bildo ĝisdatigis.</string>
     <string name="groupEdit">Redakti Grupon</string>

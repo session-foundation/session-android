@@ -252,7 +252,6 @@
     <string name="copy">کاپی کریں</string>
     <string name="create">بنائیں</string>
     <string name="cut">کاٹیں</string>
-    <string name="databaseErrorGeneric">ڈیٹا بیس میں خرابی ہوئی ہے۔\n\nاپنی درخواست کے لاگز برآمد کریں تاکہ مسئلہ حل کرنے کے لیے شیئر کیے جا سکیں۔ اگر یہ ناکام رہتا ہے تو {app_name} کو دوبارہ انسٹال کریں اور اپنا اکاؤنٹ بحال کریں۔\n\nانتباہ: اس سے دو ہفتوں سے پرانے تمام پیغامات، منسلکات اور اکاؤنٹ کا ڈیٹا ضائع ہو جائے گا۔</string>
     <string name="databaseErrorTimeout">ہم نے دیکھا ہے کہ {app_name} کو شروع ہونے میں کافی وقت لگ رہا ہے۔\n\nآپ انتظار کرنا جاری رکھ سکتے ہیں، مسئلہ حل کرنے کے لیے اشتراک کرنے کے لیے اپنے آلے کے لاگز کو برآمد کر سکتے ہیں، یا {app_name} کو دوبارہ شروع کرنے کی کوشش کر سکتے ہیں۔</string>
     <string name="databaseErrorUpdate">آپ کا ایپ ڈیٹا بیس {app_name} کے اس ورژن سے مطابقت نہیں رکھتا ہے۔ ایپ کو دوبارہ انسٹال کریں اور نیا ڈیٹا بیس بنانے کے لیے اپنا اکاؤنٹ بحال کریں اور {app_name} کا استعمال جاری رکھیں۔\n\nانتباہ: اس کے نتیجے میں دو ہفتوں سے پرانے تمام پیغامات اور منسلکات ضائع ہو جائیں گے۔</string>
     <string name="databaseOptimizing">ڈیٹابیس کو بہتر بنانا</string>
@@ -385,7 +384,6 @@
     <string name="groupCreate">گروپ بنائیں</string>
     <string name="groupCreateErrorNoMembers">براہ کرم کم از کم ایک دوسرا گروپ ممبر منتخب کریں۔</string>
     <string name="groupDelete">گروپ حذف کریں</string>
-    <string name="groupDeleteDescription">کیا آپ واقعی <b>{group_name}</b> کو حذف کرنا چاہتے ہیں؟ یہ تمام اعضاء کو ہٹا دے گا اور تمام گروپ مواد کو حذف کر دے گا۔</string>
     <string name="groupDescriptionEnter">گروپ کی وضاحت درج کریں</string>
     <string name="groupDisplayPictureUpdated">گروپ ڈسپلے تصویر اپ ڈیٹ ہوگئ۔</string>
     <string name="groupEdit">گروپ ترمیم کریں</string>

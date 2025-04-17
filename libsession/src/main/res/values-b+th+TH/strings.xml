@@ -254,7 +254,6 @@
     <string name="copy">คัดลอก</string>
     <string name="create">Create</string>
     <string name="cut">ตัด</string>
-    <string name="databaseErrorGeneric">เกิดข้อผิดพลาดในฐานข้อมูล\n\nส่งออกล็อกแอปพลิเคชันของคุณเพื่อแบ่งปันแก้ไขปัญหา หากไม่สำเร็จ ให้ติดตั้ง {app_name} ใหม่และกู้คืนบัญชีของคุณ\n\nคำเตือน: การดำเนินการนี้จะส่งผลให้สูญเสียข้อความ ไฟล์แนบ และข้อมูลบัญชีที่มีอายุมากกว่าสองสัปดาห์</string>
     <string name="databaseErrorTimeout">เราได้สังเกตว่า {app_name} ใช้เวลานานในการเริ่มต้น\n\nคุณสามารถรอต่อไป ส่งออกบันทึกอุปกรณ์ของคุณเพื่อแบ่งปันเพื่อแก้ไขปัญหา หรือลองรีสตาร์ท {app_name}</string>
     <string name="databaseErrorUpdate">ฐานข้อมูลแอปของคุณไม่สามารถใช้งานร่วมกับเวอร์ชันนี้ของ {app_name} ติดตั้งใหม่และกู้คืนบัญชีเพื่อสร้างฐานข้อมูลใหม่และใช้งาน {app_name} ต่อไป \n\nคำเตือน: สิ่งนี้จะส่งผลให้สูญเสียข้อความและไฟล์แนบทั้งหมดที่มีอายุเกินสองสัปดาห์</string>
     <string name="databaseOptimizing">การเพิ่มประสิทธิภาพฐานข้อมูล</string>
@@ -383,7 +382,6 @@
     <string name="groupCreate">Create Group</string>
     <string name="groupCreateErrorNoMembers">โปรดเลือกสมาชิกกลุ่มอย่างน้อยหนึ่งคน</string>
     <string name="groupDelete">ลบกลุ่ม</string>
-    <string name="groupDeleteDescription">คุณแน่ใจหรือไม่ว่าต้องการลบ <b>{group_name}?</b> การกระทำนี้จะลบสมาชิกทั้งหมดและลบเนื้อหากลุ่มทั้งหมด</string>
     <string name="groupDescriptionEnter">ป้อนคำอธิบายกลุ่ม</string>
     <string name="groupDisplayPictureUpdated">รูปกลุ่มถูกอัปเดตแล้ว</string>
     <string name="groupEdit">แก้ไขกลุ่ม</string>

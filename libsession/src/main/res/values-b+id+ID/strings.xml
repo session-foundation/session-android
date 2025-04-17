@@ -258,7 +258,6 @@
     <string name="copy">Salin</string>
     <string name="create">Buat</string>
     <string name="cut">Potong</string>
-    <string name="databaseErrorGeneric">Terjadi kesalahan database.\n\nEkspor log aplikasi Anda untuk dibagikan sebagai solusi pemecahan masalah. Jika tidak berhasil, instal ulang {app_name} dan pulihkan akun Anda.\n\nPeringatan: Hal ini akan mengakibatkan hilangnya semua pesan, lampiran, dan data akun yang lebih lama dari dua minggu.</string>
     <string name="databaseErrorTimeout">Kami menyadari {app_name} membutuhkan waktu lama untuk memulai.\n\nAnda dapat terus menunggu, mengekspor log perangkat Anda untuk dibagikan dalam pemecahan masalah, atau mencoba memulai ulang {app_name}.</string>
     <string name="databaseErrorUpdate">Database aplikasi Anda tidak kompatibel dengan versi {app_name} ini. Instal ulang aplikasi dan pulihkan akun Anda untuk menghasilkan database baru dan terus menggunakan {app_name}.\n\nPeringatan: Ini akan menyebabkan hilangnya semua pesan dan lampiran yang lebih dari dua minggu.</string>
     <string name="databaseOptimizing">Mengoptimalkan Database</string>
@@ -400,7 +399,6 @@
     <string name="groupCreate">Buat Grup</string>
     <string name="groupCreateErrorNoMembers">Pilih setidaknya satu anggota grup lainnya.</string>
     <string name="groupDelete">Hapus Grup</string>
-    <string name="groupDeleteDescription">Apakah Anda yakin ingin menghapus <b>{group_name}?</b> Ini akan menghapus semua anggota dan menghapus semua konten grup.</string>
     <string name="groupDeletedMemberDescription">{group_name} telah dihapus oleh admin grup. Anda tidak akan dapat mengirim pesan lagi.</string>
     <string name="groupDescriptionEnter">Masukkan deskripsi grup</string>
     <string name="groupDisplayPictureUpdated">Gambar tampilan grup diperbarui.</string>

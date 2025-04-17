@@ -15,6 +15,8 @@
     <string name="accountIdYoursDescription">This is your Account ID. Other users can scan it to start a conversation with you.</string>
     <string name="actualSize">Actual Size</string>
     <string name="add">Add</string>
+    <string name="addAdmins">Add Admins</string>
+    <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="adminPromote">Promote Admins</string>
@@ -140,9 +142,11 @@
     <string name="banErrorFailed">Ban failed</string>
     <string name="banUnbanErrorFailed">Unban failed</string>
     <string name="banUnbanUser">Unban User</string>
+    <string name="banUnbanUserDescription">Enter the Account ID of the user you are unbanning</string>
     <string name="banUnbanUserUnbanned">User unbanned</string>
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">User banned</string>
+    <string name="banUserDescription">Enter the Account ID of the user you are banning</string>
     <string name="block">Block</string>
     <string name="blockBlockedDescription">Unblock this contact to send a message.</string>
     <string name="blockBlockedNone">No blocked contacts</string>
@@ -204,14 +208,22 @@
     <string name="clearDeviceAndNetworkConfirm">Are you sure you want to delete your data from the network? If you continue, you will not be able to restore your messages or contacts.</string>
     <string name="clearDeviceDescription">Are you sure you want to clear your device?</string>
     <string name="clearDeviceOnly">Clear device only</string>
+    <string name="clearDeviceRestart">Clear Device and Restart</string>
+    <string name="clearDeviceRestore">Clear Device and Restore</string>
     <string name="clearMessages">Clear All Messages</string>
     <string name="clearMessagesChatDescription">Are you sure you want to clear all messages from your conversation with <b>{name}</b> from your device?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Are you sure you want to clear all messages from your conversation with <b>{name}</b> on this device?</string>
     <string name="clearMessagesCommunity">Are you sure you want to clear all <b>{community_name}</b> messages from your device?</string>
+    <string name="clearMessagesCommunityUpdated">Are you sure you want to clear all messages from <b>{community_name}</b> on this device?</string>
     <string name="clearMessagesForEveryone">Clear for everyone</string>
     <string name="clearMessagesForMe">Clear for me</string>
     <string name="clearMessagesGroupAdminDescription">Are you sure you want to clear all <b>{group_name}</b> messages?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Are you sure you want to clear all messages from <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Are you sure you want to clear all <b>{group_name}</b> messages from your device?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Are you sure you want to clear all messages from <b>{group_name}</b> on this device?</string>
     <string name="clearMessagesNoteToSelfDescription">Are you sure you want to clear all Note to Self messages from your device?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Are you sure you want to clear all <b>Note to Self</b> messages on this device?</string>
+    <string name="clearOnThisDevice">Clear on this device</string>
     <string name="close">Close</string>
     <string name="closeWindow">Close Window</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
@@ -279,7 +291,9 @@
     <string name="create">Create</string>
     <string name="creatingCall">Creating Call</string>
     <string name="cut">Cut</string>
-    <string name="databaseErrorGeneric">A database error occurred.\n\nExport your application logs to share for troubleshooting. If this is unsuccessful, reinstall {app_name} and restore your account.\n\nWarning: This will result in loss of all messages, attachments, and account data older than two weeks.</string>
+    <string name="databaseErrorClearDataWarning">Are you sure you want to delete all messages, attachments, and account data from this device and create a new account?</string>
+    <string name="databaseErrorGeneric">A database error occurred.\n\nExport your application logs to share for troubleshooting. If this is unsuccessful, reinstall {app_name} and restore your account.</string>
+    <string name="databaseErrorRestoreDataWarning">Are you sure you want to delete all messages, attachments, and account data from this device and restore your account from the network?</string>
     <string name="databaseErrorTimeout">We\'ve noticed {app_name} is taking a long time to start.\n\nYou can continue to wait, export your device logs to share for troubleshooting, or try restarting {app_name}.</string>
     <string name="databaseErrorUpdate">Your app database is incompatible with this version of {app_name}. Reinstall the app and restore your account to generate a new database and continue using {app_name}.\n\nWarning: This will result in the loss of all messages and attachments older than two weeks.</string>
     <string name="databaseOptimizing">Optimizing Database</string>
@@ -301,6 +315,8 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Please wait while the group is created...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Failed to Update Group</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">You don’t have permission to delete others’ messages</string>
+    <string name="deleteContactDescription">Are you sure you want to delete <b>{name}</b> from your contacts?\n\nThis will delete your conversation, including all messages and attachments. Future messages from <b>{name}</b> will appear as a message request.</string>
+    <string name="deleteConversationDescription">Are you sure you want to delete your conversation with <b>{name}</b>?\nThis will permanently delete all messages and attachments.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Delete Message</item>
         <item quantity="other">Delete Messages</item>
@@ -421,6 +437,7 @@
     <string name="file">File</string>
     <string name="files">Files</string>
     <string name="followSystemSettings">Follow system settings</string>
+    <string name="forever">Forever</string>
     <string name="from">From:</string>
     <string name="fullScreenToggle">Toggle Full Screen</string>
     <string name="gif">GIF</string>
@@ -430,7 +447,7 @@
     <string name="groupCreate">Create Group</string>
     <string name="groupCreateErrorNoMembers">Please pick at least one other group member.</string>
     <string name="groupDelete">Delete Group</string>
-    <string name="groupDeleteDescription">Are you sure you want to delete <b>{group_name}</b>? This will remove all members and delete all group content.</string>
+    <string name="groupDeleteDescription">Are you sure you want to delete <b>{group_name}</b>?\n\nThis will remove all members and delete all group content.</string>
     <string name="groupDeleteDescriptionMember">Are you sure you want to delete <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} has been deleted by a group admin. You will not be able to send any more messages.</string>
     <string name="groupDescriptionEnter">Enter a group description</string>
@@ -526,6 +543,7 @@
     <string name="helpWedLoveYourFeedback">We\'d love your feedback</string>
     <string name="hide">Hide</string>
     <string name="hideMenuBarDescription">Toggle system menu bar visibility</string>
+    <string name="hideNoteToSelfDescription">Are you sure you want to hide <b>Note to Self</b> from your conversation list?</string>
     <string name="hideOthers">Hide Others</string>
     <string name="image">Image</string>
     <string name="images">images</string>
@@ -691,6 +709,7 @@
     <string name="notificationsMuteFor">Mute for {time_large}</string>
     <string name="notificationsMuteUnmute">Unmute</string>
     <string name="notificationsMuted">Muted</string>
+    <string name="notificationsMutedFor">Muted for {time_large}</string>
     <string name="notificationsSlowMode">Slow Mode</string>
     <string name="notificationsSlowModeDescription">{app_name} will occasionally check for new messages in the background.</string>
     <string name="notificationsSound">Sound</string>
@@ -897,6 +916,8 @@
     <string name="show">Show</string>
     <string name="showAll">Show All</string>
     <string name="showLess">Show Less</string>
+    <string name="showNoteToSelf">Show Note to Self</string>
+    <string name="showNoteToSelfDescription">Are you sure you want to show <b>Note to Self</b> in your conversation list?</string>
     <string name="stickers">Stickers</string>
     <string name="supportGoTo">Go to Support Page</string>
     <string name="systemInformationDesktop">System Information: {information}</string>
@@ -914,6 +935,9 @@
     <string name="updateDownloading">Downloading update: {percent_loader}%</string>
     <string name="updateError">Cannot Update</string>
     <string name="updateErrorDescription">{app_name} failed to update. Please go to {session_download_url} and install the new version manually, then contact our Help Center to let us know about this problem.</string>
+    <string name="updateGroupInformation">Update Group Information</string>
+    <string name="updateGroupInformationDescription">Group name and description are visible to all group members.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Please enter a shorter group description</string>
     <string name="updateNewVersion">A new version of {app_name} is available, tap to update</string>
     <string name="updateNewVersionDescription">A new version ({version}) of {app_name} is available.</string>
     <string name="updateReleaseNotes">Go to Release Notes</string>

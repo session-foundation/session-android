@@ -126,6 +126,7 @@ android {
             isDefault true
             minifyEnabled false
             enableUnitTestCoverage true
+            signingConfig signingConfigs.debug
         }
     }
 
@@ -145,6 +146,15 @@ android {
                 keyAlias SESSION_HUAWEI_KEY_ALIAS
                 keyPassword SESSION_HUAWEI_KEY_PASSWORD
             }
+        }
+
+        debug {
+            // This keystore is for debug builds only and it should never be used to
+            // sign the release apk.
+            storeFile new File(rootProject.projectDir, "etc/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
         }
     }
 

@@ -258,7 +258,6 @@
     <string name="copy">复制</string>
     <string name="create">创建</string>
     <string name="cut">剪切</string>
-    <string name="databaseErrorGeneric">发生数据库错误。\n\n导出应用日志并分享给我们以进行故障排除。如果不成功，请重新安装{app_name}并恢复您的账户。\n\n警告：这将导致两周前的所有消息、附件和账户数据丢失。</string>
     <string name="databaseErrorTimeout">我们注意到{app_name}启动时间过长。\n\n您可以选择继续等待，导出设备日志以分享故障排除，或尝试重新启动{app_name}。</string>
     <string name="databaseErrorUpdate">您的应用数据库与此版本的{app_name}不兼容。请重新安装应用并恢复您的账户以生成新的数据库并继续使用{app_name}。\n\n警告：该操作将导致两周前的所有消息和附件丢失。</string>
     <string name="databaseOptimizing">正在优化数据库</string>
@@ -393,7 +392,6 @@
     <string name="groupCreate">创建群组</string>
     <string name="groupCreateErrorNoMembers">请至少选择一名群组成员。</string>
     <string name="groupDelete">删除群组</string>
-    <string name="groupDeleteDescription">您确定要删除<b>{group_name}</b>吗？该操作将移除所有成员并删除所有群组内容。</string>
     <string name="groupDeletedMemberDescription">{group_name} 已被群组管理员删除。您将无法再发送任何信息。</string>
     <string name="groupDescriptionEnter">输入群组描述</string>
     <string name="groupDisplayPictureUpdated">群组头像已更新。</string>

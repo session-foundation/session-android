@@ -254,7 +254,6 @@
     <string name="copy">কপি করুন</string>
     <string name="create">তৈরি করুন</string>
     <string name="cut">কাটুন</string>
-    <string name="databaseErrorGeneric">একটি ডাটাবেস ত্রুটি ঘটেছে।\n\nআপনার অ্যাপ্লিকেশন লগগুলি রপ্তানি করুন, সমস্যার সমাধানের জন্য শেয়ার করুন। এটি ব্যর্থ হলে, {app_name} পুনঃইনস্টল করুন এবং আপনার অ্যাকাউন্ট পুনরুদ্ধার করুন।\n\nসতর্কতা: এটি সমস্ত মেসেজ, সংযুক্তি এবং দুই সপ্তাহের পুরানো অ্যাকাউন্ট ডেটার ক্ষতি করবে।</string>
     <string name="databaseErrorTimeout">We\'ve noticed {app_name} is taking a long time to start.\n\nYou can continue to wait, export your device logs to share for troubleshooting, or try restarting {app_name}.</string>
     <string name="databaseErrorUpdate">আপনার অ্যাপ্লিকেশন ডাটাবেস {app_name} এর এই সংস্করণের সাথে অসঙ্গতিপূর্ণ। অ্যাপ পুনরায় ইনস্টল করুন এবং আপনার অ্যাকাউন্ট পুনরুদ্ধার করুন একটি নতুন ডাটাবেস তৈরি করতে এবং {app_name} ব্যবহার করতে থাকুন।\n\nসতর্কতা: এর ফলে আপনার সমস্ত বার্তা এবং সংযুক্তিগুলি দুই সপ্তাহের বেশি পুরানো হারিয়ে যাবে।</string>
     <string name="databaseOptimizing">ডাটাবেস অপ্টিমাইজ করা হচ্ছে</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">গ্রুপ তৈরি করুন</string>
     <string name="groupCreateErrorNoMembers">দয়া করে অন্তত একজন অতিরিক্ত সদস্য নির্বাচন করুন।</string>
     <string name="groupDelete">গ্রুপ মুছে ফেলুন</string>
-    <string name="groupDeleteDescription">আপনি কি নিশ্চিত যে আপনি <b>{group_name}</b> মুছে ফেলতে চান? এটি সমস্ত সদস্যকে সরিয়ে দেবে এবং সমস্ত গ্রুপ কন্টেন্ট মুছে দেবে।</string>
     <string name="groupDescriptionEnter">গ্রুপ বিবরণ লিখুন</string>
     <string name="groupDisplayPictureUpdated">গ্রুপ ডিসপ্লে পিকচার আপডেট হয়েছে।</string>
     <string name="groupEdit">গ্রুপ সম্পাদনা করুন</string>

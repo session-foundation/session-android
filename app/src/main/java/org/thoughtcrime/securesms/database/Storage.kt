@@ -1353,10 +1353,11 @@ open class Storage @Inject constructor(
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
         val currentUserKey = getUserPublicKey()
 
-        //NOTE: I used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
+        //NOTE: We used to cycle through all Contact here instead or all Recipients, but turns out a Contact isn't saved until we have a name, nickname or avatar
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            localContact.is1on1 && // only for conversations
             localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
         }
@@ -1509,15 +1510,16 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
-        val recipient = getRecipientForThread(threadID)
-
         // Delete the conversation
         threadDB.deleteConversation(threadID)
 
-        // If this wasn't a group recipient then there's nothing further we need to do..
-        if (recipient == null || !recipient.isGroupRecipient) return
+        val recipient = getRecipientForThread(threadID)
 
-        // ..but if this IS a group recipient then we need to delete the group details.
+        // If this wasn't a legacy group recipient then there's nothing further we need to do..
+        if (recipient == null || !recipient.isLegacyGroupRecipient) return
+
+        // ..but if this IS a legacy group recipient then we need to delete the group details.
+        // For group v2 the deletion of config is handled in GroupManagerV2
         configFactory.withMutableUserConfigs { configs ->
             val volatile = configs.convoInfoVolatile
             val groups = configs.userGroups
@@ -1639,7 +1641,7 @@ open class Storage @Inject constructor(
                     profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
-            threadDatabase.setHasSent(threadId, true)
+            
             val mappingDb = blindedIdMappingDatabase
             val mappings = mutableMapOf<String, BlindedIdMapping>()
             threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
@@ -1674,7 +1676,6 @@ open class Storage @Inject constructor(
                 alreadyApprovedMe = it.contacts.get(sender.address.toString())?.approvedMe ?: false
             }
 
-            setRecipientApproved(sender, true)
             setRecipientApprovedMe(sender, true)
 
             // only show the message if wasn't already approvedMe before

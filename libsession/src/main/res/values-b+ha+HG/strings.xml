@@ -254,7 +254,6 @@
     <string name="copy">Kwafi</string>
     <string name="create">Ƙirƙiri</string>
     <string name="cut">Yanke</string>
-    <string name="databaseErrorGeneric">An sami kuskuren bayanai.\n\nFitar da bayanan aikace-aikacen ku don rabawa don warware matsala. Idan wannan bai yi nasara ba, sake sanya {app_name} kuma dawo da asusunku.\n\nGargadi: Wannan zai haifar da asarar duk saƙonni, haɗe-haɗe, da bayanan asusu sama da sati biyu.</string>
     <string name="databaseErrorTimeout">Mun lura cewa {app_name} yana ɗaukar dogon lokaci don farawa.\n\nZa ku iya ci gaba da jira, fitar da log ɗin na\'urarku don rabawa don magance matsaloli, ko sake farawa {app_name}.</string>
     <string name="databaseErrorUpdate">Bayanan aikace-aikacen ku ba su dace da wannan sigar {app_name}. Sake shigar da aikace-aikacen kuma dawo da asusunka don samar da sabon database kuma ci gaba da amfani da {app_name}.\n\nGargadi: Wannan zai haifar da rasa duk sakonni da fayiloli fiye da makonni biyu.</string>
     <string name="databaseOptimizing">Ƙarƙare Bayanai</string>
@@ -387,7 +386,6 @@
     <string name="groupCreate">Ƙirƙiri Rukuni</string>
     <string name="groupCreateErrorNoMembers">Zaɓi aƙalla memba guda ɗaya na ƙungiya.</string>
     <string name="groupDelete">Goge Group</string>
-    <string name="groupDeleteDescription">Kana tabbata kana so ka share <b>{group_name}?</b>? Wannan zai cire dukan mambobi kuma ya goge duk abubuwan da aka ƙunsa.</string>
     <string name="groupDescriptionEnter">Shigar da bayanin ƙungiya</string>
     <string name="groupDisplayPictureUpdated">An sabunta hoton nuni na rukuni.</string>
     <string name="groupEdit">Gyara Group</string>
