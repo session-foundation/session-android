@@ -73,7 +73,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                 }
                 .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
                 .collect { update ->
-                    val adminKey = configFactory.getGroup(update.groupId)?.adminKey
+                    val adminKey = configFactory.getGroup(update.groupId)?.adminKey?.data
                     if (adminKey != null) {
                         groupScope.launch(update.groupId, "Handle possible group removals") {
                             try {

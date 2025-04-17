@@ -188,7 +188,7 @@ class Poller(
         val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
 
         configFactory.withUserConfigs {
-            hashesToExtend += it.userProfile.currentHashes()
+            hashesToExtend += it.userProfile.activeHashes()
         }
 
         requests += SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
@@ -260,7 +260,7 @@ class Poller(
                 .entries
                 .map { type ->
                     val config = configs.getConfig(type)
-                    hashesToExtend += config.currentHashes()
+                    hashesToExtend += config.activeHashes()
                     type.namespace to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,

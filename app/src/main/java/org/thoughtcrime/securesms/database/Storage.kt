@@ -8,6 +8,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
@@ -880,8 +881,8 @@ open class Storage @Inject constructor(
                 name = name,
                 members = members,
                 priority = PRIORITY_VISIBLE,
-                encPubKey = (encryptionKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = encryptionKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
                 disappearingTimer = expirationTimer.toLong(),
                 joinedAtSecs = (formationTimestamp / 1000L)
             )
@@ -912,8 +913,8 @@ open class Storage @Inject constructor(
             val groupInfo = userGroups.getOrConstructLegacyGroupInfo(groupPublicKey).copy(
                 name = name,
                 members = membersMap,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize(),
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize()),
                 priority = if (isPinned(threadID)) PRIORITY_PINNED else PRIORITY_VISIBLE,
                 disappearingTimer = getExpirationConfiguration(threadID)?.expiryMode?.expirySeconds ?: 0L,
                 joinedAtSecs = (existingGroup.formationTimestamp / 1000L)
@@ -1323,8 +1324,8 @@ open class Storage @Inject constructor(
 
             if (contact.profilePicture != UserPic.DEFAULT) {
                 val (url, key) = contact.profilePicture
-                if (key.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
-                profileManager.setProfilePicture(context, recipient, url, key)
+                if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
+                profileManager.setProfilePicture(context, recipient, url, key.data)
                 profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)

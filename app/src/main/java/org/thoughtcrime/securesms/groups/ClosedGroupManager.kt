@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.groups
 
 import android.content.Context
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
@@ -49,8 +50,8 @@ object ClosedGroupManager {
                 members = latestMemberMap,
                 name = group.title,
                 priority = if (storage.isPinned(threadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-                encPubKey = (latestKeyPair.publicKey as DjbECPublicKey).publicKey,  // 'serialize()' inserts an extra byte
-                encSecKey = latestKeyPair.privateKey.serialize()
+                encPubKey = Bytes((latestKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
+                encSecKey = Bytes(latestKeyPair.privateKey.serialize())
             )
             groups.set(toSet)
         }
