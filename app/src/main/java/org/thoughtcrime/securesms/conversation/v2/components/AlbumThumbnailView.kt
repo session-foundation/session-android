@@ -83,7 +83,7 @@ class AlbumThumbnailView : RelativeLayout {
 
     fun bind(glideRequests: RequestManager, message: MmsMessageRecord,
              isStart: Boolean, isEnd: Boolean) {
-        slides = message.slideDeck.thumbnailSlides
+        slides = message.slideDeck.thumbnailSlides.filter { it.isDone }
         if (slides.isEmpty()) {
             // this should never be encountered because it's checked by parent
             return

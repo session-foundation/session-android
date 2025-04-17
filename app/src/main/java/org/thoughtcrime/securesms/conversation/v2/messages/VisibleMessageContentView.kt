@@ -84,10 +84,17 @@ class VisibleMessageContentView : ConstraintLayout {
         binding.voiceMessageView.root.backgroundTintList = ColorStateList.valueOf(color)
         binding.contentParent.cornerRadius = resources.getDimension(R.dimen.message_corner_radius)
 
-        val mediaDownloaded = message is MmsMessageRecord && message.slideDeck.asAttachments().all { it.isDone }
+        // we considered all media downloaded if all are done, barring potential 404s.
+        // Meaning if the one or all attachments are 404 we consider the overall attachment expired
+        // But in the case of random errors where one image in a set of many somehow reaches a 404 state
+        // we still want the rest of the images to show up as downloaded
+        val hasExpired = haveAttachmentsExpired(message)
+        val mediaDownloaded = !hasExpired && // it is not done if ALL attachments have expired
+                message is MmsMessageRecord &&
+                // we filter out potential expiry in the set, which would be rare errors, and consider the rest
+                message.slideDeck.asAttachments().filter { it.transferState != AttachmentState.EXPIRED.value }.all { it.isDone }
         val mediaInProgress = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isInProgress }
         val hasFailed = message is MmsMessageRecord && message.slideDeck.asAttachments().any { it.isFailed }
-        val hasExpired = haveAttachmentsExpired(message)
         val overallAttachmentState = when {
             mediaDownloaded -> AttachmentState.DONE
             hasExpired -> AttachmentState.EXPIRED
@@ -396,7 +403,7 @@ class VisibleMessageContentView : ConstraintLayout {
     // expired attachments are for Mms records only
     message is MmsMessageRecord &&
             // with a state marked as expired
-            (message.slideDeck.asAttachments().any { it.transferState == AttachmentState.EXPIRED.value } ||
+            (message.slideDeck.asAttachments().all { it.transferState == AttachmentState.EXPIRED.value } ||
             // with a state marked as downloaded yet without a URI attached
             (!message.hasAttachmentUri() && message.slideDeck.asAttachments().all { it.isDone }))
 
