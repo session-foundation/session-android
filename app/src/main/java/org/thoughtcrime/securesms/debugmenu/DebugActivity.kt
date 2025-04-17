@@ -1,21 +1,17 @@
 package org.thoughtcrime.securesms.debugmenu
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
-import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.FullComposeActivity
 
 
 @AndroidEntryPoint
-class DebugActivity : AppCompatActivity() {
+class DebugActivity : FullComposeActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setComposeContent {
-            DebugMenuScreen(
-                onClose = { finish() }
-            )
-        }
+    @Composable
+    override fun ComposeContent() {
+        DebugMenuScreen(
+            onClose = { finish() }
+        )
     }
 }
