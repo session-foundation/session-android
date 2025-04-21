@@ -503,7 +503,7 @@
     <string name="groupNameUpdated">Group name updated.</string>
     <string name="groupNameVisible">Group name is visible to all group members.</string>
     <string name="groupNoMessages">You have no messages from <b>{group_name}</b>. Send a message to start the conversation!</string>
-    <string name="groupNotUpdatedWarning">Group has not been updated in over 30 days. You may experience issues sending messages or viewing Group information.</string>
+    <string name="groupNotUpdatedWarning">This group has not been updated in over 30 days. You may experience issues sending messages or viewing group information.</string>
     <string name="groupOnlyAdmin">You are the only admin in <b>{group_name}</b>.\n\nGroup members and settings cannot be changed without an admin.</string>
     <string name="groupPendingRemoval">Pending removal</string>
     <string name="groupPromotedYou"><b>You</b> were promoted to Admin.</string>

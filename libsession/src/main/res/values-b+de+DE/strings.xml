@@ -452,7 +452,6 @@
     <string name="groupNameNew">Gruppenname lautet jetzt {group_name}.</string>
     <string name="groupNameUpdated">Gruppenname aktualisiert.</string>
     <string name="groupNoMessages">Du hast keine Nachrichten von <b>{group_name}</b>. Sende eine Nachricht, um das Gespräch zu beginnen!</string>
-    <string name="groupNotUpdatedWarning">Die Gruppe wurde in mehr als 30 Tagen nicht aktualisiert. Möglicherweise können Probleme beim Senden von Nachrichten oder beim Anzeigen von Gruppeninformationen auftreten.</string>
     <string name="groupOnlyAdmin">Du bist der einzige Admin in <b>{group_name}</b>.\n\nGruppenmitglieder und -einstellungen können ohne einen Admin nicht geändert werden.</string>
     <string name="groupPromotedYou"><b>Du</b> wurdest zum Admin befördert.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> und <b>{count} andere</b> wurden zu Admin befördert.</string>

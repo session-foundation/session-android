@@ -488,7 +488,6 @@
     <string name="groupNameUpdated">Название группы обновлено.</string>
     <string name="groupNameVisible">Название группы видно всем участникам группы.</string>
     <string name="groupNoMessages">У вас нет сообщений от <b>{group_name}</b>. Отправьте сообщение, чтобы начать беседу!</string>
-    <string name="groupNotUpdatedWarning">Группа не обновлялась более 30 дней. Вы можете столкнуться с проблемами при отправке сообщений или просмотре информации группы.</string>
     <string name="groupOnlyAdmin">Вы единственный администратор в <b>{group_name}</b>.\n\nУчастники группы и настройки не могут быть изменены без администратора.</string>
     <string name="groupPendingRemoval">Ожидание удаления</string>
     <string name="groupPromotedYou"><b>Вы</b> назначены администратором.</string>

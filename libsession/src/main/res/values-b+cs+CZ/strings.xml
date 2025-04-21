@@ -488,7 +488,6 @@
     <string name="groupNameUpdated">Název skupiny aktualizován.</string>
     <string name="groupNameVisible">Název skupiny je viditelný pro všechny členy skupiny.</string>
     <string name="groupNoMessages">Nemáte žádné zprávy od <b>{group_name}</b>. Pošlete zprávu pro zahájení konverzace!</string>
-    <string name="groupNotUpdatedWarning">Skupina nebyla aktualizována déle než 30 dní. Může dojít k problémům s odesíláním zpráv nebo zobrazováním informací o skupině.</string>
     <string name="groupOnlyAdmin">Jste jediný správce ve skupině <b>{group_name}</b>.\n\nČlenové skupiny a nastavení nelze změnit bez správce.</string>
     <string name="groupPendingRemoval">Čeká na odebrání</string>
     <string name="groupPromotedYou"><b>Byli jste povýšeni na správce.</b></string>
