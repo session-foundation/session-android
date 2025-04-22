@@ -703,7 +703,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                     OpenGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
-                        threadDb.deleteConversation(threadID)
+                        storage.deleteConversation(threadID)
                     }
                 }
 

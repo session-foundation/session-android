@@ -87,11 +87,13 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.groups.GroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.SessionMetaProtocol
+import org.thoughtcrime.securesms.util.SessionMetaProtocol.clearReceivedMessages
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Provider
@@ -193,36 +195,6 @@ open class Storage @Inject constructor(
                     configs.convoInfoVolatile.getOrConstructOneToOne(address.toString())
                 }
             }
-        }
-    }
-
-    override fun threadDeleted(address: Address, threadId: Long) {
-        configFactory.withMutableUserConfigs { configs ->
-            if (address.isGroupOrCommunity) {
-                if (address.isLegacyGroup) {
-                    val accountId = GroupUtil.doubleDecodeGroupId(address.toString())
-                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
-                    configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (address.isCommunity) {
-                    // these should be removed in the group leave / handling new configs
-                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (address.isGroupV2) {
-                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
-                }
-            } else {
-                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(address.toString())
-                if (getUserPublicKey() != address.toString()) {
-                    configs.contacts.upsertContact(address.toString()) {
-                        priority = PRIORITY_HIDDEN
-                    }
-                } else {
-                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-                }
-            }
-
-            Unit
         }
     }
 
@@ -1017,10 +989,6 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.removeAllClosedGroupEncryptionKeyPairs(groupPublicKey)
     }
 
-    override fun removeClosedGroupThread(threadID: Long) {
-        threadDatabase.deleteConversation(threadID)
-    }
-
     override fun updateFormationTimestamp(groupID: String, formationTimestamp: Long) {
         groupDatabase
             .updateFormationTimestamp(groupID, formationTimestamp)
@@ -1511,29 +1479,50 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
-        // Delete the conversation
-        threadDB.deleteConversation(threadID)
+        // Delete the conversation and its messages
+        smsDatabase.deleteThread(threadID)
+        mmsDatabase.deleteThread(threadID)
+        get(context).draftDatabase().clearDrafts(threadID)
+        lokiMessageDatabase.deleteThread(threadID)
+        threadDB.deleteThread(threadID)
+        notifyConversationListeners(threadID)
+        notifyConversationListListeners()
+        clearReceivedMessages()
 
         val recipient = getRecipientForThread(threadID)
+        if (recipient == null) return
 
-        // If this wasn't a legacy group recipient then there's nothing further we need to do..
-        if (recipient == null || !recipient.isLegacyGroupRecipient) return
-
-        // ..but if this IS a legacy group recipient then we need to delete the group details.
-        // For group v2 the deletion of config is handled in GroupManagerV2
         configFactory.withMutableUserConfigs { configs ->
-            val volatile = configs.convoInfoVolatile
-            val groups = configs.userGroups
-            val groupID = recipient.address.toGroupString()
-            val closedGroup = getGroup(groupID)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-            if (closedGroup != null) {
-                groupDB.delete(groupID)
-                volatile.eraseLegacyClosedGroup(groupPublicKey)
-                groups.eraseLegacyGroup(groupPublicKey)
+            if (recipient.address.isGroupOrCommunity) {
+                if (recipient.address.isLegacyGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
+                    groupDB.delete(recipient.address.toString())
+                    configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
+                    configs.userGroups.eraseLegacyGroup(accountId)
+                } else if (recipient.address.isCommunity) {
+                    // these should be removed in the group leave / handling new configs
+                    Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
+                } else if (recipient.address.isGroupV2) {
+                    Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
+                }
             } else {
-                Log.w("Loki-DBG", "Failed to find a closed group for ${groupPublicKey.take(4)}")
+                // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
+                if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(recipient.address.toString())
+
+                if (getUserPublicKey() != recipient.address.toString()) {
+                    // only update the priority if the contact exists in our config
+                    // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
+                    configs.contacts.get(recipient.address.toString())?.let{
+                        it.priority = PRIORITY_HIDDEN
+                        configs.contacts.set(it)
+                    }
+                } else {
+                    configs.userProfile.setNtsPriority(PRIORITY_HIDDEN)
+                }
             }
+
+            Unit
         }
     }
 
@@ -1668,7 +1657,7 @@ open class Storage @Inject constructor(
                 val blindedThreadId = threadDatabase.getOrCreateThreadIdFor(Recipient.from(context, fromSerialized(mapping.key), false))
                 mmsDatabase.updateThreadId(blindedThreadId, threadId)
                 smsDatabase.updateThreadId(blindedThreadId, threadId)
-                threadDatabase.deleteConversation(blindedThreadId)
+                deleteConversation(blindedThreadId)
             }
 
             var alreadyApprovedMe: Boolean = false

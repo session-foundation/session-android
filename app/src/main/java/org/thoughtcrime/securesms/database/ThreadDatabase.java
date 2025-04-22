@@ -82,7 +82,6 @@ public class ThreadDatabase extends Database {
 
   public interface ConversationThreadUpdateListener {
     void threadCreated(@NonNull Address address, long threadId);
-    void threadDeleted(@NonNull Address address, long threadId);
   }
 
   private static final String TAG = ThreadDatabase.class.getSimpleName();
@@ -234,15 +233,11 @@ public class ThreadDatabase extends Database {
     notifyConversationListListeners();
   }
 
-  private void deleteThread(long threadId) {
-    Recipient recipient = getRecipientForThreadId(threadId);
+  public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
-    int numberRemoved = db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
+    db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
     addressCache.remove(threadId);
     notifyConversationListListeners();
-    if (updateListener != null && numberRemoved > 0 && recipient != null) {
-      updateListener.threadDeleted(recipient.getAddress(), threadId);
-    }
   }
 
   private void deleteThreads(Set<Long> threadIds) {
@@ -628,18 +623,6 @@ public class ThreadDatabase extends Database {
 
       return 0;
     }
-  }
-
-  // Note: Deleting a conversation deliberately does NOT delete the contact - we merely delete the convo.
-  public void deleteConversation(long threadId) {
-    DatabaseComponent.get(context).smsDatabase().deleteThread(threadId);
-    DatabaseComponent.get(context).mmsDatabase().deleteThread(threadId);
-    DatabaseComponent.get(context).draftDatabase().clearDrafts(threadId);
-    DatabaseComponent.get(context).lokiMessageDatabase().deleteThread(threadId);
-    deleteThread(threadId);
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
-    SessionMetaProtocol.clearReceivedMessages();
   }
 
   public long getThreadIdIfExistsFor(String address) {
