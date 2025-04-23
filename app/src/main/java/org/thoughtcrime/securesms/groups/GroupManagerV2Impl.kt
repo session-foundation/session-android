@@ -646,7 +646,10 @@ class GroupManagerV2Impl @Inject constructor(
             if (approved) {
                 approveGroupInvite(group, groupInviteMessageHash)
             } else {
-                configFactory.withMutableUserConfigs { it.userGroups.eraseClosedGroup(groupId.hexString) }
+                configFactory.withMutableUserConfigs {
+                    it.userGroups.eraseClosedGroup(groupId.hexString)
+                    it.convoInfoVolatile.eraseClosedGroup(groupId.hexString)
+                }
                 storage.deleteConversation(threadId)
 
                 if (groupInviteMessageHash != null) {

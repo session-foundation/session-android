@@ -76,7 +76,7 @@ public class GroupManager {
 
     long threadId = threadDatabase.getThreadIdIfExistsFor(groupRecipient);
     if (threadId != -1L) {
-      threadDatabase.deleteConversation(threadId);
+      DatabaseComponent.get(context).storage().deleteConversation(threadId);
     }
 
     return groupDatabase.delete(groupId);
