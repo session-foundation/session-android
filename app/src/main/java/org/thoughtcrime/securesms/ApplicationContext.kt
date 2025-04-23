@@ -443,9 +443,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private class ProviderInitializationException : RuntimeException()
 
     private fun setUpPollingIfNeeded() {
-        val userPublicKey = textSecurePreferences!!.getLocalNumber() ?: return
+        val userPublicKey = textSecurePreferences.getLocalNumber() ?: return
         if (poller == null) {
-            poller = Poller(configFactory!!, storage!!, lokiAPIDatabase!!)
+            poller = Poller(configFactory, storage, lokiAPIDatabase, prefs)
         }
     }
 
@@ -454,7 +454,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         if (poller != null) {
             poller!!.startIfNeeded()
         }
-        legacyClosedGroupPollerV2!!.start()
+        legacyClosedGroupPollerV2.start()
     }
 
     fun retrieveUserProfile() {

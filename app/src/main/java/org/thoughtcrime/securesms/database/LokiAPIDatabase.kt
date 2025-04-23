@@ -299,6 +299,12 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
             .delete(lastMessageHashValueTable2, "${Companion.publicKey} = ?", arrayOf(publicKey))
     }
 
+    override fun clearLastMessageHashesByNamespaces(vararg namespaces: Int) {
+        // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
+        writableDatabase
+            .delete(lastMessageHashValueTable2, "$lastMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
+    }
+
     override fun clearAllLastMessageHashes() {
         val database = writableDatabase
         database.delete(lastMessageHashValueTable2, null, null)
@@ -333,6 +339,12 @@ class LokiAPIDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) :
     override fun clearReceivedMessageHashValues() {
         val database = writableDatabase
         database.delete(receivedMessageHashValuesTable, null, null)
+    }
+
+    override fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int) {
+        // Note that we don't use SQL parameter as the given namespaces are integer anyway so there's little chance of SQL injection
+        writableDatabase
+            .delete(receivedMessageHashValuesTable, "$receivedMessageHashNamespace IN (${namespaces.joinToString(",")})", null)
     }
 
     override fun getAuthToken(server: String): String? {

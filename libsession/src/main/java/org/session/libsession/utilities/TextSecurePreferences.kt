@@ -204,6 +204,7 @@ interface TextSecurePreferences {
 
     var migratedToGroupV2Config: Boolean
     var migratedToDisablingKDF: Boolean
+    var migratedToMultiPartConfig: Boolean
 
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
@@ -295,6 +296,7 @@ interface TextSecurePreferences {
         const val ENVIRONMENT = "debug_environment"
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
+        const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -1003,6 +1005,10 @@ class AppTextSecurePreferences @Inject constructor(
         set(value) = getDefaultSharedPreferences(context).edit(commit = true) {
             putBoolean(TextSecurePreferences.MIGRATED_TO_DISABLING_KDF, value)
         }
+
+    override var migratedToMultiPartConfig: Boolean
+        get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
+        set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)

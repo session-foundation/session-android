@@ -18,11 +18,13 @@ interface LokiAPIDatabaseProtocol {
     fun getLastMessageHashValue(snode: Snode, publicKey: String, namespace: Int): String?
     fun setLastMessageHashValue(snode: Snode, publicKey: String, newValue: String, namespace: Int)
     fun clearLastMessageHashes(publicKey: String)
+    fun clearLastMessageHashesByNamespaces(vararg namespaces: Int)
     fun clearAllLastMessageHashes()
     fun getReceivedMessageHashValues(publicKey: String, namespace: Int): Set<String>?
     fun setReceivedMessageHashValues(publicKey: String, newValue: Set<String>, namespace: Int)
     fun clearReceivedMessageHashValues(publicKey: String)
     fun clearReceivedMessageHashValues()
+    fun clearReceivedMessageHashValuesByNamespaces(vararg namespaces: Int)
     fun getAuthToken(server: String): String?
     fun setAuthToken(server: String, newValue: String?)
     fun setUserCount(room: String, server: String, newValue: Int)
