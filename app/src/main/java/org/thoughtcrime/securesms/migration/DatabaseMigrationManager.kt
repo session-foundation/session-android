@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import net.zetetic.database.sqlcipher.SQLiteConnection
 import net.zetetic.database.sqlcipher.SQLiteDatabase
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook
-import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
@@ -202,11 +201,11 @@ class DatabaseMigrationManager @Inject constructor(
             // Detach the new database
             db.rawExecSQL("DETACH DATABASE new_db")
 
-            // Delay and fail at first
-            if (BuildConfig.DEBUG && !fromRetry) {
-                Thread.sleep(2000)
-                throw RuntimeException("Fail")
-            }
+//            // Delay and fail at first
+//            if (BuildConfig.DEBUG && !fromRetry) {
+//                Thread.sleep(2000)
+//                throw RuntimeException("Fail")
+//            }
         }
 
         check(newDb.exists()) { "New database was not created" }
