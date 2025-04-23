@@ -14,6 +14,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.HomeActivity
 import javax.inject.Inject
 import androidx.core.content.edit
+import kotlinx.coroutines.CoroutineDispatcher
 import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsignal.utilities.hexEncodedPublicKey
@@ -31,8 +32,8 @@ class ClearDataUtils @Inject constructor(
 ) {
     // Method to clear the local data - returns true on success otherwise false
     @SuppressLint("ApplySharedPref")
-    suspend fun clearAllData() {
-        return withContext(Dispatchers.Default) {
+    suspend fun clearAllData(dispatcher: CoroutineDispatcher = Dispatchers.Default) {
+        return withContext(dispatcher) {
             // Should not proceed if there's a db but we can't delete it
             check(
                 !application.getDatabasePath(SQLCipherOpenHelper.DATABASE_NAME).exists() ||
@@ -58,21 +59,25 @@ class ClearDataUtils @Inject constructor(
         }
     }
 
-    suspend fun clearAllDataWithoutLoggingOutAndRestart() {
-        val keyPair = storage.getUserED25519KeyPair()
-        if (keyPair != null) {
-            val x25519KeyPair = storage.getUserX25519KeyPair()
-            val seed = IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED).decodeHex().toByteArray()
+    suspend fun clearAllDataWithoutLoggingOutAndRestart(dispatcher: CoroutineDispatcher = Dispatchers.Default) {
+        withContext(dispatcher) {
+            val keyPair = storage.getUserED25519KeyPair()
+            if (keyPair != null) {
+                val x25519KeyPair = storage.getUserX25519KeyPair()
+                val seed =
+                    IdentityKeyUtil.retrieve(application, IdentityKeyUtil.LOKI_SEED).decodeHex()
+                        .toByteArray()
 
-            clearAllData()
-            KeyPairUtilities.store(application, seed, keyPair, x25519KeyPair)
-            prefs.setLocalNumber(x25519KeyPair.hexEncodedPublicKey)
-        } else {
-            clearAllData()
+                clearAllData(Dispatchers.Unconfined)
+                KeyPairUtilities.store(application, seed, keyPair, x25519KeyPair)
+                prefs.setLocalNumber(x25519KeyPair.hexEncodedPublicKey)
+            } else {
+                clearAllData(Dispatchers.Unconfined)
+            }
+
+            delay(200)
+            restartApplication()
         }
-
-        delay(200)
-        restartApplication()
     }
 
     /**
@@ -80,10 +85,12 @@ class ClearDataUtils @Inject constructor(
      * @return true on success, false otherwise.
      */
     @SuppressLint("ApplySharedPref")
-    suspend fun clearAllDataAndRestart() {
-        clearAllData()
-        delay(200)
-        restartApplication()
+    suspend fun clearAllDataAndRestart(dispatcher: CoroutineDispatcher = Dispatchers.Default) {
+        withContext(dispatcher) {
+            clearAllData(Dispatchers.Unconfined)
+            delay(200)
+            restartApplication()
+        }
     }
 
     fun restartApplication() {

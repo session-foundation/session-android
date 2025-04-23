@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentManager
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -78,12 +79,12 @@ fun DatabaseMigrationScreen(
         },
         onClearData = {
             scope.launch {
-                clearDataUtils.clearAllDataAndRestart()
+                clearDataUtils.clearAllDataAndRestart(Dispatchers.IO)
             }
         },
         onClearDataWithoutLoggingOut = {
             scope.launch {
-                clearDataUtils.clearAllDataWithoutLoggingOutAndRestart()
+                clearDataUtils.clearAllDataWithoutLoggingOutAndRestart(Dispatchers.IO)
             }
         }
     )

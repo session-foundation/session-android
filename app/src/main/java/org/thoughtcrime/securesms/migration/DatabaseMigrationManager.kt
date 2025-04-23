@@ -203,10 +203,10 @@ class DatabaseMigrationManager @Inject constructor(
             db.rawExecSQL("DETACH DATABASE new_db")
 
             // Delay and fail at first
-//            if (BuildConfig.DEBUG && !fromRetry) {
-//                Thread.sleep(2000)
-//                throw RuntimeException("Fail")
-//            }
+            if (BuildConfig.DEBUG && !fromRetry) {
+                Thread.sleep(2000)
+                throw RuntimeException("Fail")
+            }
         }
 
         check(newDb.exists()) { "New database was not created" }

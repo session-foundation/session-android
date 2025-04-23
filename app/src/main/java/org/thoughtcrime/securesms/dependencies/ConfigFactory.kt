@@ -109,33 +109,59 @@ class ConfigFactory @Inject constructor(
     private fun ensureUserConfigsInitialized(): Pair<ReentrantReadWriteLock, UserConfigsImpl> {
         val userAccountId = requiresCurrentUserAccountId()
 
-        return synchronized(userConfigs) {
-            userConfigs.getOrPut(userAccountId) {
-                ReentrantReadWriteLock() to UserConfigsImpl(
-                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
-                    userAccountId = userAccountId,
-                    threadDb = threadDb,
-                    configDatabase = configDatabase,
-                    storage = storage.get(),
-                    textSecurePreferences = textSecurePreferences,
-                    usernameUtils = usernameUtils.get()
-
-                )
+        // Fast check and return if already initialized
+        synchronized(userConfigs) {
+            val instance = userConfigs[userAccountId]
+            if (instance != null) {
+                return instance
             }
+        }
+
+        // Once we reach here, we are going to create the config instance, but since we are
+        // not in the lock, there's a potential we could have created a duplicate instance. But it
+        // is not a problem in itself as we are going to take the lock and check
+        // again if another one already exists before setting it to use.
+        // This is to avoid having to do database operation inside the lock
+        val instance = ReentrantReadWriteLock() to UserConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            userAccountId = userAccountId,
+            threadDb = threadDb,
+            configDatabase = configDatabase,
+            storage = storage.get(),
+            textSecurePreferences = textSecurePreferences,
+            usernameUtils = usernameUtils.get()
+        )
+
+        return synchronized(userConfigs) {
+            userConfigs.getOrPut(userAccountId) { instance }
         }
     }
 
     private fun ensureGroupConfigsInitialized(groupId: AccountId): Pair<ReentrantReadWriteLock, GroupConfigsImpl> {
         val groupAdminKey = getGroup(groupId)?.adminKey
-        return synchronized(groupConfigs) {
-            groupConfigs.getOrPut(groupId) {
-                ReentrantReadWriteLock() to GroupConfigsImpl(
-                    userEd25519SecKey = requiresCurrentUserED25519SecKey(),
-                    groupAccountId = groupId,
-                    groupAdminKey = groupAdminKey?.data,
-                    configDatabase = configDatabase
-                )
+
+        // Fast check and return if already initialized
+        synchronized(groupConfigs) {
+            val instance = groupConfigs[groupId]
+            if (instance != null) {
+                return instance
             }
+        }
+
+        // Once we reach here, we are going to create the config instance, but since we are
+        // not in the lock, there's a potential we could have created a duplicate instance. But it
+        // is not a problem in itself as we are going to take the lock and check
+        // again if another one already exists before setting it to use.
+        // This is to avoid having to do database operation inside the lock
+        val instance = ReentrantReadWriteLock() to GroupConfigsImpl(
+            userEd25519SecKey = requiresCurrentUserED25519SecKey(),
+            groupAccountId = groupId,
+            groupAdminKey = groupAdminKey?.data,
+            configDatabase = configDatabase
+        )
+
+        return synchronized(groupConfigs) {
+            groupConfigs.getOrPut(groupId) { instance }
         }
     }
 
