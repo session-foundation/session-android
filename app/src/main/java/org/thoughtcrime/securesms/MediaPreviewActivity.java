@@ -25,7 +25,6 @@ import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build.VERSION;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,11 +38,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import android.widget.FrameLayout;
-import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -54,20 +51,12 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
 import com.squareup.phrase.Phrase;
-import dagger.hilt.android.AndroidEntryPoint;
-import java.io.IOException;
-import java.util.Locale;
-import java.util.WeakHashMap;
-
-import dagger.hilt.android.AndroidEntryPoint;
-import kotlin.Unit;
-import network.loki.messenger.R;
 
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager;
 import org.session.libsession.messaging.messages.control.DataExtractionNotification;
@@ -92,10 +81,19 @@ import org.thoughtcrime.securesms.permissions.Permissions;
 import org.thoughtcrime.securesms.util.AttachmentUtil;
 import org.thoughtcrime.securesms.util.DateUtils;
 import org.thoughtcrime.securesms.util.FilenameUtils;
-import org.thoughtcrime.securesms.util.SaveAttachmentTask.Attachment;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask;
+import org.thoughtcrime.securesms.util.SaveAttachmentTask.Attachment;
+
+import java.io.IOException;
+import java.util.Locale;
+import java.util.WeakHashMap;
 
 import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import kotlin.Unit;
+import network.loki.messenger.R;
+import network.loki.messenger.databinding.MediaPreviewActivityBinding;
 
 /**
  * Activity for displaying media attachments in-app
@@ -117,21 +115,13 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   public static final String OUTGOING_EXTRA       = "outgoing";
   public static final String LEFT_IS_RECENT_EXTRA = "left_is_recent";
 
-  private View                  rootContainer;
-  private ViewPager             mediaPager;
-  private View                  detailsContainer;
-  private TextView              caption;
-  private View                  captionContainer;
-  private RecyclerView          albumRail;
-  private MediaRailAdapter      albumRailAdapter;
-  private ViewGroup             playbackControlsContainer;
+  private MediaPreviewActivityBinding binding;
   private Uri                   initialMediaUri;
   private String                initialMediaType;
   private long                  initialMediaSize;
   private String                initialCaption;
   private Recipient             conversationRecipient;
   private boolean               leftIsRecent;
-  private GestureDetector       clickDetector;
   private MediaPreviewViewModel viewModel;
   private ViewPagerListener     viewPagerListener;
 
@@ -150,6 +140,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
               .hide(WindowInsetsCompat.Type.systemBars());
   };
   private MediaItemAdapter adapter;
+  private MediaRailAdapter albumRailAdapter;
 
   public static Intent getPreviewIntent(Context context, MediaPreviewArgs args) {
     return getPreviewIntent(context, args.getSlide(), args.getMmsRecord(), args.getThread());
@@ -176,8 +167,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   @Override
   protected void onCreate(Bundle bundle, boolean ready) {
     viewModel = new ViewModelProvider(this).get(MediaPreviewViewModel.class);
+    binding = MediaPreviewActivityBinding.inflate(getLayoutInflater());
 
-    setContentView(R.layout.media_preview_activity);
+    setContentView(binding.getRoot());
 
     initializeViews();
     initializeResources();
@@ -208,12 +200,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     hideHandler.postDelayed(showRunnable, UI_ANIMATION_DELAY);
   }
 
-  @Override
-  public boolean dispatchTouchEvent(MotionEvent ev) {
-    clickDetector.onTouchEvent(ev);
-    return super.dispatchTouchEvent(ev);
-  }
-
   @SuppressLint("MissingSuperCall")
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -227,7 +213,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   @Override
   public void onRailItemClicked(int distanceFromActive) {
-    mediaPager.setCurrentItem(mediaPager.getCurrentItem() + distanceFromActive);
+    binding.mediaPager.setCurrentItem(binding.mediaPager.getCurrentItem() + distanceFromActive);
   }
 
   @Override
@@ -276,25 +262,21 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   }
 
   private void initializeViews() {
-    rootContainer = findViewById(R.id.media_preview_root);
-    mediaPager = findViewById(R.id.media_pager);
-    mediaPager.setOffscreenPageLimit(1);
+    binding.mediaPager.setOffscreenPageLimit(1);
 
-    albumRail        = findViewById(R.id.media_preview_album_rail);
     albumRailAdapter = new MediaRailAdapter(Glide.with(this), this, false);
 
-    albumRail.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-    albumRail.setAdapter(albumRailAdapter);
-
-    detailsContainer          = findViewById(R.id.media_preview_details_container);
-    caption                   = findViewById(R.id.media_preview_caption);
-    captionContainer          = findViewById(R.id.media_preview_caption_container);
-    playbackControlsContainer = findViewById(R.id.media_preview_playback_controls_container);
+    binding.mediaPreviewAlbumRail.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+    binding.mediaPreviewAlbumRail.setAdapter(albumRailAdapter);
 
     setSupportActionBar(findViewById(R.id.search_toolbar));
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setHomeButtonEnabled(true);
+
+    binding.mediaPager.setOnClickListener((v) -> {
+      toggleFullscreen();
+    });
   }
 
   private void initializeResources() {
@@ -316,44 +298,33 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   private void initializeObservers() {
     viewModel.getPreviewData().observe(this, previewData -> {
-      if (previewData == null || mediaPager == null || mediaPager.getAdapter() == null) {
+      if (previewData == null || binding == null || binding.mediaPager.getAdapter() == null) {
         return;
       }
 
-      View playbackControls = ((MediaItemAdapter) mediaPager.getAdapter()).getPlaybackControls(mediaPager.getCurrentItem());
+      View playbackControls = ((MediaItemAdapter) binding.mediaPager.getAdapter()).getPlaybackControls(binding.mediaPager.getCurrentItem());
 
       if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null && playbackControls == null) {
-        detailsContainer.setVisibility(View.GONE);
+        binding.mediaPreviewDetailsContainer.setVisibility(View.GONE);
       } else {
-        detailsContainer.setVisibility(View.VISIBLE);
+        binding.mediaPreviewDetailsContainer.setVisibility(View.VISIBLE);
       }
 
-      albumRail.setVisibility(previewData.getAlbumThumbnails().isEmpty() ? View.GONE : View.VISIBLE);
+      binding.mediaPreviewAlbumRail.setVisibility(previewData.getAlbumThumbnails().isEmpty() ? View.GONE : View.VISIBLE);
       albumRailAdapter.setMedia(previewData.getAlbumThumbnails(), previewData.getActivePosition());
-      albumRail.smoothScrollToPosition(previewData.getActivePosition());
+      binding.mediaPreviewAlbumRail.smoothScrollToPosition(previewData.getActivePosition());
 
-      captionContainer.setVisibility(previewData.getCaption() == null ? View.GONE : View.VISIBLE);
-      caption.setText(previewData.getCaption());
+      binding.mediaPreviewCaptionContainer.setVisibility(previewData.getCaption() == null ? View.GONE : View.VISIBLE);
+      binding.mediaPreviewCaption.setText(previewData.getCaption());
 
       if (playbackControls != null) {
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         playbackControls.setLayoutParams(params);
 
-        playbackControlsContainer.removeAllViews();
-        playbackControlsContainer.addView(playbackControls);
+        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
+        binding.mediaPreviewPlaybackControlsContainer.addView(playbackControls);
       } else {
-        playbackControlsContainer.removeAllViews();
-      }
-    });
-
-    clickDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-      @Override
-      public boolean onSingleTapUp(MotionEvent e) {
-        if (e.getY() < detailsContainer.getTop()) {
-          detailsContainer.setVisibility(detailsContainer.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
-        }
-        toggleFullscreen();
-        return super.onSingleTapUp(e);
+        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
       }
     });
   }
@@ -371,21 +342,21 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       getSupportLoaderManager().restartLoader(0, null, this);
     } else {
       adapter = new SingleItemPagerAdapter(this, Glide.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize);
-      mediaPager.setAdapter(adapter);
+      binding.mediaPager.setAdapter(adapter);
 
       if (initialCaption != null) {
-        detailsContainer.setVisibility(View.VISIBLE);
-        captionContainer.setVisibility(View.VISIBLE);
-        caption.setText(initialCaption);
+        binding.mediaPreviewDetailsContainer.setVisibility(View.VISIBLE);
+        binding.mediaPreviewCaptionContainer.setVisibility(View.VISIBLE);
+        binding.mediaPreviewCaption.setText(initialCaption);
       }
     }
   }
 
   private int cleanupMedia() {
-    int restartItem = mediaPager.getCurrentItem();
+    int restartItem = binding.mediaPager.getCurrentItem();
 
-    mediaPager.removeAllViews();
-    mediaPager.setAdapter(null);
+    binding.mediaPager.removeAllViews();
+    binding.mediaPager.setAdapter(null);
 
     return restartItem;
   }
@@ -524,7 +495,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   private @Nullable MediaItem getCurrentMediaItem() {
     if (adapter == null) return null;
-    return adapter.getMediaItemFor(mediaPager.getCurrentItem());
+    return adapter.getMediaItemFor(binding.mediaPager.getCurrentItem());
   }
 
   public static boolean isContentTypeSupported(final String contentType) {
@@ -540,20 +511,33 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
     if (data == null) return;
 
-    mediaPager.removeOnPageChangeListener(viewPagerListener);
+    binding.mediaPager.removeOnPageChangeListener(viewPagerListener);
 
     adapter = new CursorPagerAdapter(this, Glide.with(this), getWindow(), data.first, data.second, leftIsRecent);
-    mediaPager.setAdapter(adapter);
+    binding.mediaPager.setAdapter(adapter);
+
+    final GestureDetector detector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+      @Override
+      public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
+        toggleFullscreen();
+        return super.onSingleTapConfirmed(e);
+      }
+    });
+
+    binding.observeTouchEventFrame.setOnTouchDispatchListener((view, event) -> {
+      detector.onTouchEvent(event);
+      return false;
+    });
 
     viewModel.setCursor(this, data.first, leftIsRecent);
 
     int item = restartItem >= 0  && restartItem < adapter.getCount() ? restartItem : Math.max(Math.min(data.second, adapter.getCount() - 1), 0);
 
     viewPagerListener = new ViewPagerListener();
-    mediaPager.addOnPageChangeListener(viewPagerListener);
+    binding.mediaPager.addOnPageChangeListener(viewPagerListener);
 
     try {
-      mediaPager.setCurrentItem(item);
+      binding.mediaPager.setCurrentItem(item);
     } catch (CursorIndexOutOfBoundsException e) {
       throw new RuntimeException("restartItem = " + restartItem + ", data.second = " + data.second + " leftIsRecent = " + leftIsRecent, e);
     }
