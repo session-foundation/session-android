@@ -407,8 +407,7 @@ public class ThreadDatabase extends Database {
     }
 
     SQLiteDatabase db = getReadableDatabase();
-    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ? AND " +
-            TABLE_NAME + "." + MESSAGE_COUNT + " != 0");
+    StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " LIKE ?");
 
     List<String> selectionArgs = new ArrayList<>();
     selectionArgs.add(addressQuery + "%");
@@ -439,22 +438,25 @@ public class ThreadDatabase extends Database {
     List<Cursor>        cursors              = new LinkedList<>();
 
     for (List<Address> addresses : partitionedAddresses) {
-      String   selection      = TABLE_NAME + "." + ADDRESS + " = ?";
-      String[] selectionArgs  = new String[addresses.size()];
+      StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " = ?");
+      String[] selectionArgs = new String[addresses.size()];
 
-      for (int i=0;i<addresses.size()-1;i++)
-        selection += (" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
-
+      for (int i = 0; i < addresses.size() - 1; i++)
+        selection.append("OR ")
+                .append(TABLE_NAME)
+                .append(".")
+                .append(ADDRESS)
+                .append(" = ?");
       int i= 0;
       for (Address address : addresses) {
         selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
       }
 
-      String query = createQuery(selection, 0);
+      String query = createQuery(selection.toString(), 0);
       cursors.add(db.rawQuery(query, selectionArgs));
     }
 
-    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[cursors.size()])) : cursors.get(0);
+    Cursor cursor = cursors.size() > 1 ? new MergeCursor(cursors.toArray(new Cursor[0])) : cursors.get(0);
     setNotifyConversationListListeners(cursor);
     return cursor;
   }

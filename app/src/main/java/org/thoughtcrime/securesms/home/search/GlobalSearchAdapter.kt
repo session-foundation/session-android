@@ -35,10 +35,18 @@ class GlobalSearchAdapter(
     fun setNewData(data: Pair<String, List<Model>>) = setNewData(data.first, data.second)
 
     fun setNewData(query: String, newData: List<Model>) {
-        val diffResult = DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData))
         this.query = query
-        data = newData
-        diffResult.dispatchUpdatesTo(this)
+
+        if (this.data.size > 500 || newData.size > 500) {
+            // For big data sets, we won't use DiffUtil to calculate the difference as it could be slow
+            this.data = newData
+            notifyDataSetChanged()
+        } else {
+            val diffResult =
+                DiffUtil.calculateDiff(GlobalSearchDiff(this.query, query, data, newData), false)
+            data = newData
+            diffResult.dispatchUpdatesTo(this)
+        }
     }
 
     override fun getItemViewType(position: Int): Int =

@@ -154,29 +154,6 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
     return groups;
   }
 
-  public Cursor getGroupsFilteredByMembers(List<String> members) {
-    if (members == null || members.isEmpty()) {
-      return null;
-    }
-
-    String[] queriesValues = new String[members.size()];
-
-    StringBuilder queries = new StringBuilder();
-    for (int i=0; i < members.size(); i++) {
-      boolean isEnd = i == (members.size() - 1);
-      queries.append(MEMBERS + " LIKE ?");
-      queriesValues[i] = "%"+members.get(i)+"%";
-      if (!isEnd) {
-        queries.append(" OR ");
-      }
-    }
-
-    return getReadableDatabase().query(TABLE_NAME, null,
-            queries.toString(),
-            queriesValues,
-            null, null, null);
-  }
-
   public @NonNull List<Recipient> getGroupMembers(String groupId, boolean includeSelf) {
     List<Address>   members     = getCurrentMembers(groupId, false);
     List<Recipient> recipients  = new LinkedList<>();

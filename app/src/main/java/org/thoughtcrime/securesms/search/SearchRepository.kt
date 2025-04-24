@@ -52,7 +52,7 @@ class SearchRepository(
             timer.split("Contacts")
 
             val conversations =
-                queryConversations(cleanQuery, contacts.second)
+                queryConversations(cleanQuery)
             timer.split("Conversations")
 
             val messages = queryMessages(cleanQuery)
@@ -62,7 +62,7 @@ class SearchRepository(
             callback(
                 SearchResult(
                     cleanQuery,
-                    contacts.first,
+                    contacts,
                     conversations,
                     messages
                 )
@@ -97,19 +97,22 @@ class SearchRepository(
         return blockedContacts
     }
 
-    fun queryContacts(query: String): Pair<CursorList<Contact>, MutableList<String>> {
+    fun queryContacts(query: String): CursorList<Contact> {
         val blockedContacts = getBlockedContacts()
         val contacts = contactDatabase.queryContactsByName(query, excludeUserAddresses = blockedContacts)
         val contactList: MutableList<Address> = ArrayList()
-        val contactStrings: MutableList<String> = ArrayList()
 
+        val excludeFromThreadsQuery by lazy { blockedContacts.toMutableSet() }
         while (contacts.moveToNext()) {
             try {
                 val contact = contactDatabase.contactFromCursor(contacts)
                 val contactAccountId = contact.accountID
                 val address = fromSerialized(contactAccountId)
                 contactList.add(address)
-                contactStrings.add(contactAccountId)
+
+                if (!blockedContacts.contains(contactAccountId)) {
+                    excludeFromThreadsQuery.add(contactAccountId)
+                }
             } catch (e: Exception) {
                 Log.e("Loki", "Error building Contact from cursor in query", e)
             }
@@ -117,47 +120,23 @@ class SearchRepository(
 
         contacts.close()
 
-        val addressThreads = threadDatabase.searchConversationAddresses(query, blockedContacts)// filtering threads by looking up the accountID itself
+        val addressThreads = threadDatabase.searchConversationAddresses(query, excludeFromThreadsQuery)// filtering threads by looking up the accountID itself
         val individualRecipients = threadDatabase.getFilteredConversationList(contactList)
         if (individualRecipients == null && addressThreads == null) {
-            return Pair(CursorList.emptyList(), contactStrings)
+            return CursorList.emptyList()
         }
         val merged = MergeCursor(arrayOf(addressThreads, individualRecipients))
 
-        return Pair(
-            CursorList(merged, ContactModelBuilder(contactDatabase, threadDatabase)),
-            contactStrings
-        )
+        return CursorList(merged, ContactModelBuilder(contactDatabase, threadDatabase))
     }
 
     private fun queryConversations(
         query: String,
-        matchingAddresses: MutableList<String>
     ): CursorList<GroupRecord> {
         val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val localUserNumber = getLocalNumber(context)
-        if (localUserNumber != null) {
-            matchingAddresses.remove(localUserNumber)
-        }
-        val addresses: MutableSet<Address> = HashSet(Stream.of(numbers).map { number: String? ->
-            fromExternal(
-                context,
-                number
-            )
-        }.toList())
+        val addresses = numbers.map { fromExternal(context, it) }
 
-        val membersGroupList = groupDatabase.getGroupsFilteredByMembers(matchingAddresses)
-        if (membersGroupList != null) {
-            val reader = GroupDatabase.Reader(membersGroupList)
-            while (membersGroupList.moveToNext()) {
-                val record = reader.current ?: continue
-
-                addresses.add(fromSerialized(record.encodedId))
-            }
-            membersGroupList.close()
-        }
-
-        val conversations = threadDatabase.getFilteredConversationList(ArrayList(addresses))
+        val conversations = threadDatabase.getFilteredConversationList(addresses)
         return if (conversations != null)
             CursorList(conversations, GroupModelBuilder(threadDatabase, groupDatabase))
         else
