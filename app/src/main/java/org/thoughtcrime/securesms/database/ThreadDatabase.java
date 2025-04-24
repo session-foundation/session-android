@@ -441,12 +441,10 @@ public class ThreadDatabase extends Database {
       StringBuilder selection = new StringBuilder(TABLE_NAME + "." + ADDRESS + " = ?");
       String[] selectionArgs = new String[addresses.size()];
 
-      for (int i = 0; i < addresses.size() - 1; i++)
-        selection.append("OR ")
-                .append(TABLE_NAME)
-                .append(".")
-                .append(ADDRESS)
-                .append(" = ?");
+      for (int i = 0; i < addresses.size() - 1; i++) {
+        selection.append("OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+      }
+
       int i= 0;
       for (Address address : addresses) {
         selectionArgs[i++] = DelimiterUtil.escape(address.toString(), ' ');
