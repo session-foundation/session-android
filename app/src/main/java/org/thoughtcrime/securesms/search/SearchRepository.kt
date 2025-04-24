@@ -85,7 +85,7 @@ class SearchRepository(
     }
 
     // Get set of blocked contact AccountIDs from the ConfigFactory
-    private fun getBlockedContacts(): Set<String> {
+    private fun getBlockedContacts(): MutableSet<String> {
         val blockedContacts = mutableSetOf<String>()
         configFactory.withUserConfigs { userConfigs ->
             userConfigs.contacts.all().forEach { contact ->
@@ -98,11 +98,10 @@ class SearchRepository(
     }
 
     fun queryContacts(query: String): CursorList<Contact> {
-        val blockedContacts = getBlockedContacts()
-        val contacts = contactDatabase.queryContactsByName(query, excludeUserAddresses = blockedContacts)
+        val excludingAddresses = getBlockedContacts()
+        val contacts = contactDatabase.queryContactsByName(query, excludeUserAddresses = excludingAddresses)
         val contactList: MutableList<Address> = ArrayList()
 
-        val excludeFromThreadsQuery by lazy { blockedContacts.toMutableSet() }
         while (contacts.moveToNext()) {
             try {
                 val contact = contactDatabase.contactFromCursor(contacts)
@@ -110,9 +109,9 @@ class SearchRepository(
                 val address = fromSerialized(contactAccountId)
                 contactList.add(address)
 
-                if (!blockedContacts.contains(contactAccountId)) {
-                    excludeFromThreadsQuery.add(contactAccountId)
-                }
+                // Add the address in this query to the excluded addresses so the next query
+                // won't get the same contact again
+                excludingAddresses.add(contactAccountId)
             } catch (e: Exception) {
                 Log.e("Loki", "Error building Contact from cursor in query", e)
             }
@@ -120,7 +119,7 @@ class SearchRepository(
 
         contacts.close()
 
-        val addressThreads = threadDatabase.searchConversationAddresses(query, excludeFromThreadsQuery)// filtering threads by looking up the accountID itself
+        val addressThreads = threadDatabase.searchConversationAddresses(query, excludingAddresses)// filtering threads by looking up the accountID itself
         val individualRecipients = threadDatabase.getFilteredConversationList(contactList)
         if (individualRecipients == null && addressThreads == null) {
             return CursorList.emptyList()
