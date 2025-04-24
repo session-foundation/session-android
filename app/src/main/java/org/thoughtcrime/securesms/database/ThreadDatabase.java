@@ -442,7 +442,7 @@ public class ThreadDatabase extends Database {
       String[] selectionArgs = new String[addresses.size()];
 
       for (int i = 0; i < addresses.size() - 1; i++) {
-        selection.append("OR " + TABLE_NAME + "." + ADDRESS + " = ?");
+        selection.append(" OR " + TABLE_NAME + "." + ADDRESS + " = ?");
       }
 
       int i= 0;
