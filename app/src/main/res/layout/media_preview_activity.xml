@@ -14,11 +14,19 @@
         android:layout_height="wrap_content"
         android:theme="@style/Widget.Session.ActionBar"/>
 
-    <org.thoughtcrime.securesms.components.SafeViewPager
-        android:id="@+id/media_pager"
+    <org.thoughtcrime.securesms.components.ObservableTouchEventFrameLayout
+        android:id="@+id/observe_touch_event_frame"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="true" />
+        android:layout_height="match_parent">
+
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/media_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="true" />
+
+    </org.thoughtcrime.securesms.components.ObservableTouchEventFrameLayout>
+
 
     <LinearLayout
         android:id="@+id/media_preview_details_container"
@@ -60,6 +68,7 @@
             android:layout_marginTop="8dp"
             android:layout_marginStart="12dp"
             android:layout_marginEnd="12dp"
+            android:layout_marginBottom="8dp"
             tools:layout_height="64dp"/>
 
         <FrameLayout
