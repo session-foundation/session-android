@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
@@ -54,7 +53,7 @@ import java.util.Locale
  * Allows the user to edit and caption a set of media items before choosing to send them.
  */
 @AndroidEntryPoint
-class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
+class MediaSendFragment : Fragment(), RailItemListener,
     OnKeyboardShownListener, OnKeyboardHiddenListener {
     private var binding: MediasendFragmentBinding? = null
 
@@ -100,10 +99,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         binding.mediasendSafeArea.applySafeInsetsPaddings()
 
         binding.mediasendSendButton.setOnClickListener { v: View? ->
-            if (binding.mediasendHud.isKeyboardOpen) {
-                binding.mediasendHud.hideSoftkey(binding.mediasendComposeText, null)
-            }
-
             fragmentPagerAdapter?.let { processMedia(it.allMedia, it.savedState) }
         }
 
@@ -111,7 +106,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
         binding.mediasendComposeText.setOnKeyListener(composeKeyPressedListener)
         binding.mediasendComposeText.addTextChangedListener(composeKeyPressedListener)
-        binding.mediasendComposeText.setOnClickListener(composeKeyPressedListener)
         binding.mediasendComposeText.setOnFocusChangeListener(composeKeyPressedListener)
 
         binding.mediasendComposeText.requestFocus()
@@ -121,7 +115,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
         val pageChangeListener = FragmentPageChangeListener()
         binding.mediasendPager.addOnPageChangeListener(pageChangeListener)
-        binding.mediasendPager.post(Runnable { pageChangeListener.onPageSelected(binding.mediasendPager.currentItem) })
+        binding.mediasendPager.post { pageChangeListener.onPageSelected(binding.mediasendPager.currentItem) }
 
         mediaRailAdapter = MediaRailAdapter(Glide.with(this), this, true)
         binding.mediasendMediaRail.setLayoutManager(
@@ -133,10 +127,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         )
         binding.mediasendMediaRail.setAdapter(mediaRailAdapter)
 
-        binding.mediasendHud.getRootView().viewTreeObserver.addOnGlobalLayoutListener(this)
-        binding.mediasendHud.addOnKeyboardShownListener(this)
-        binding.mediasendHud.addOnKeyboardHiddenListener(this)
-
         binding.mediasendComposeText.append(viewModel?.body)
 
         binding.mediasendComposeText.setHint(getString(R.string.message), null)
@@ -146,7 +136,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
             isSend
         }
 
-        binding.mediasendCloseButton.setOnClickListener { requireActivity().onBackPressed() }
+        binding.mediasendCloseButton.setOnClickListener { requireActivity().finish() }
     }
 
     override fun onDestroyView() {
@@ -183,26 +173,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         }
     }
 
-    override fun onGlobalLayout() {
-        val hud = binding?.mediasendHud ?: return
-
-        hud.rootView.getWindowVisibleDisplayFrame(visibleBounds)
-
-        val currentVisibleHeight = visibleBounds.height()
-
-        if (currentVisibleHeight != visibleHeight) {
-            hud.layoutParams.height = currentVisibleHeight
-            hud.layout(
-                visibleBounds.left,
-                visibleBounds.top,
-                visibleBounds.right,
-                visibleBounds.bottom
-            )
-            hud.requestLayout()
-
-            visibleHeight = currentVisibleHeight
-        }
-    }
 
     override fun onRailItemClicked(distanceFromActive: Int) {
         val currentItem = binding?.mediasendPager?.currentItem ?: return
@@ -239,17 +209,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
 
     fun onTouchEventsNeeded(needed: Boolean) {
         binding?.mediasendPager?.isEnabled = !needed
-    }
-
-    fun handleBackPress(): Boolean {
-        val hud = binding?.mediasendHud ?: return false
-        val composeText = binding?.mediasendComposeText ?: return false
-
-        if (hud.isInputOpen) {
-            hud.hideCurrentInput(composeText)
-            return true
-        }
-        return false
     }
 
     private fun initViewModel() {
@@ -438,7 +397,7 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
         }
     }
 
-    private inner class ComposeKeyPressedListener : View.OnKeyListener, View.OnClickListener,
+    private inner class ComposeKeyPressedListener : View.OnKeyListener,
         TextWatcher, OnFocusChangeListener {
         var beforeLength: Int = 0
 
@@ -463,11 +422,6 @@ class MediaSendFragment : Fragment(), OnGlobalLayoutListener, RailItemListener,
                 }
             }
             return false
-        }
-
-        override fun onClick(v: View) {
-            val binding = binding ?: return
-            binding.mediasendHud.showSoftkey(binding.mediasendComposeText)
         }
 
         override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {

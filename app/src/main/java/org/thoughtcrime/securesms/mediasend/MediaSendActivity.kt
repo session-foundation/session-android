@@ -123,7 +123,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
     override fun onBackPressed() {
         val sendFragment = supportFragmentManager.findFragmentByTag(TAG_SEND) as MediaSendFragment?
-        if (sendFragment == null || !sendFragment.isVisible || !sendFragment.handleBackPress()) {
+        if (sendFragment == null || !sendFragment.isVisible) {
             super.onBackPressed()
 
             if (intent.getBooleanExtra(
