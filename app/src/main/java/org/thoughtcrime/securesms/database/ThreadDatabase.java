@@ -35,7 +35,6 @@ import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.jetbrains.annotations.NotNull;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
@@ -63,7 +62,6 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
-import org.thoughtcrime.securesms.util.SessionMetaProtocol;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -461,41 +459,13 @@ public class ThreadDatabase extends Database {
 
   public Cursor getRecentConversationList(int limit) {
     SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", limit);
+    String         query = createQuery("", limit);
 
     return db.rawQuery(query, null);
   }
 
-  public long getLatestUnapprovedConversationTimestamp() {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor     = null;
-
-    try {
-      String where    = "SELECT " + THREAD_CREATION_DATE + " FROM " + TABLE_NAME +
-              " LEFT OUTER JOIN " + RecipientDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-              " LEFT OUTER JOIN " + GroupDatabase.TABLE_NAME +
-              " ON " + TABLE_NAME + "." + ADDRESS + " = " + GroupDatabase.TABLE_NAME + "." + GROUP_ID +
-              " WHERE " + MESSAGE_COUNT + " != 0 AND " + ARCHIVED + " = 0 AND " + HAS_SENT + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
-              RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0 AND " +
-              GroupDatabase.TABLE_NAME + "." + GROUP_ID + " IS NULL ORDER BY " + THREAD_CREATION_DATE + " DESC LIMIT 1";
-      cursor          = db.rawQuery(where, null);
-
-      if (cursor != null && cursor.moveToFirst())
-        return cursor.getLong(0);
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    return 0;
-  }
-
   public Cursor getConversationList() {
-    String where  = "(" + MESSAGE_COUNT + " != 0 OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
-            "AND " + ARCHIVED + " = 0 ";
-    return getConversationList(where);
+    return getConversationList(ARCHIVED + " = 0 ");
   }
 
   public Cursor getBlindedConversationList() {
@@ -511,7 +481,7 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getUnapprovedConversationList() {
-    String where  = "("+MESSAGE_COUNT + " != 0 OR "+ThreadDatabase.TABLE_NAME+"."+ThreadDatabase.ADDRESS+" LIKE '"+IdPrefix.GROUP.getValue()+"%')" +
+    String where  = "("+ThreadDatabase.TABLE_NAME+"."+ThreadDatabase.ADDRESS+" LIKE '"+IdPrefix.GROUP.getValue()+"%')" +
             " AND " + ARCHIVED + " = 0 AND " + HAS_SENT + " = 0 AND " +
             RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0 AND " +
             RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
@@ -531,7 +501,7 @@ public class ThreadDatabase extends Database {
 
   public Cursor getDirectShareList() {
     SQLiteDatabase db    = getReadableDatabase();
-    String         query = createQuery(MESSAGE_COUNT + " != 0", 0);
+    String         query = createQuery("", 0);
 
     return db.rawQuery(query, null);
   }
@@ -847,13 +817,6 @@ public class ThreadDatabase extends Database {
     }
 
     return query;
-  }
-
-  public void migrateEncodedGroup(long threadId, @NotNull String newEncodedGroupId) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(ADDRESS, newEncodedGroupId);
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {threadId+""});
   }
 
   public void notifyThreadUpdated(long threadId) {
