@@ -120,8 +120,6 @@ public final class ImageEditorView extends FrameLayout {
         editText.selectAll();
       }
       editText.requestFocus();
-
-      getModel().zoomTo(editorElement, Bounds.TOP / 2, true);
     }
   }
 
