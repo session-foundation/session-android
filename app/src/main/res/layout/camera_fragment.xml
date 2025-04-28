@@ -18,6 +18,7 @@
 
         <FrameLayout
             android:id="@+id/camera_controls_container"
+            android:layout_marginBottom="@dimen/large_spacing"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
@@ -25,7 +26,9 @@
             android:id="@+id/camera_close_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/small_spacing"
+            android:layout_marginStart="@dimen/medium_spacing"
+            android:layout_marginEnd="@dimen/medium_spacing"
+            android:layout_marginTop="@dimen/very_large_spacing"
             android:padding="@dimen/small_spacing"
             android:background="@drawable/circle_touch_highlight_background"
             android:clickable="true"
