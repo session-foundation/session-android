@@ -644,6 +644,8 @@
         <item quantity="other">You\'ve got %1$d new messages in %2$s.</item>
     </plurals>
     <string name="messageReplyingTo">Replying to</string>
+    <string name="messageRequestDisabledToastAttachments">You cannot send attachments until your Message Request is accepted</string>
+    <string name="messageRequestDisabledToastVoiceMessages">You cannot send voice messages until your Message Request is accepted</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> invited you to join <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Sending a message to this group will automatically accept the group invite.</string>
     <string name="messageRequestPending">Your message request is currently pending.</string>
