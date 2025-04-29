@@ -483,7 +483,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // region Updating
     private fun updateEmptyState() {
         val threadCount = binding.conversationsRecyclerView.adapter?.itemCount ?: 0
-        binding.emptyStateContainer.isVisible = threadCount == 0 && binding.conversationsRecyclerView.isVisible
+        binding.emptyStateContainer.isVisible = threadCount == 0
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
