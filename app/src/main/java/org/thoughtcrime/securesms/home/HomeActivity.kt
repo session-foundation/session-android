@@ -437,7 +437,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
             binding.newConversationButton.animate().cancel()
             binding.newConversationButton.isVisible = false
         } else {
-            updateEmptyState()
             binding.newConversationButton.apply {
                 alpha = 0.0f
                 visibility = View.VISIBLE
