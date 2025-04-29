@@ -416,11 +416,8 @@ class DefaultConversationRepository @Inject constructor(
                 )
             } else {
                 val message = MessageRequestResponse(true)
-                MessageSender.sendNonDurably(
-                    message = message,
-                    destination = Destination.from(recipient.address),
-                    isSyncMessage = recipient.isLocalNumber
-                ).await()
+
+                MessageSender.send(message = message, address = recipient.address)
 
                 // add a control message for our user
                 storage.insertMessageRequestResponseFromYou(threadId)

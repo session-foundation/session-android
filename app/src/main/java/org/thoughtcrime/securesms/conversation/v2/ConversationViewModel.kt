@@ -892,7 +892,7 @@ class ConversationViewModel(
             }
     }
 
-    fun acceptMessageRequest(): Job = viewModelScope.launch {
+    fun acceptMessageRequest() = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
         val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
@@ -972,17 +972,15 @@ class ConversationViewModel(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
-   fun implicitlyApproveRecipient(): Job? {
+   fun implicitlyApproveRecipient() {
        val recipient = recipient
 
        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
-            return acceptMessageRequest()
+            acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
             repository.setApproved(recipient, true)
         }
-
-       return null
     }
 
     fun onCommand(command: Commands) {
