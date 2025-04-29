@@ -15,6 +15,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -891,7 +892,7 @@ class ConversationViewModel(
             }
     }
 
-    fun acceptMessageRequest() = viewModelScope.launch {
+    fun acceptMessageRequest(): Job = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
         val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
@@ -971,23 +972,17 @@ class ConversationViewModel(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
-    fun beforeSendingTextOnlyMessage() {
-        implicitlyApproveRecipient()
-    }
+   fun implicitlyApproveRecipient(): Job? {
+       val recipient = recipient
 
-    fun beforeSendingAttachments() {
-        implicitlyApproveRecipient()
-    }
-
-    private fun implicitlyApproveRecipient() {
-        val recipient = recipient
-
-        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
-            acceptMessageRequest()
+       if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
+            return acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
             repository.setApproved(recipient, true)
         }
+
+       return null
     }
 
     fun onCommand(command: Commands) {
