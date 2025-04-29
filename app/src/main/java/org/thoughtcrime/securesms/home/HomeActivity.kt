@@ -9,7 +9,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.ViewGroup.MarginLayoutParams
-import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
@@ -421,29 +420,28 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun setSearchShown(isShown: Boolean) {
+    private fun setSearchShown(isSearchShown: Boolean) {
         // Request focus immediately so the user can start typing
-        if (isShown) {
+        if (isSearchShown) {
             binding.globalSearchInputLayout.requestFocus()
         }
 
-        binding.searchToolbar.isVisible = isShown
-        binding.sessionToolbar.isVisible = !isShown
-        binding.conversationsRecyclerView.isVisible = !isShown
-        binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isShown
-        binding.globalSearchRecycler.isVisible = isShown
-        binding.conversationListContainer.isVisible = !isShown
-        if(isShown){
-            binding.newConversationButton.animate().cancel()
-            binding.newConversationButton.isVisible = false
-        } else {
-            binding.newConversationButton.apply {
-                alpha = 0.0f
-                visibility = View.VISIBLE
-                animate().cancel()
-                animate().setStartDelay(350).setDuration(250L).alpha(1.0f).setListener(null).start()
-            }
+        binding.searchToolbar.isVisible = isSearchShown
+        binding.sessionToolbar.isVisible = !isSearchShown
+        binding.seedReminderView.isVisible = !TextSecurePreferences.getHasViewedSeed(this) && !isSearchShown
+        binding.globalSearchRecycler.isVisible = isSearchShown
+
+
+        // Show a fade in animation for the conversation list upon re-appearing
+        val shouldShowHomeAnimation = !isSearchShown && !binding.conversationListContainer.isVisible
+
+        binding.conversationListContainer.isVisible = !isSearchShown
+        if (shouldShowHomeAnimation) {
+            binding.conversationListContainer.animate().cancel()
+            binding.conversationListContainer.alpha = 0f
+            binding.conversationListContainer.animate().alpha(1f).start()
         }
+
     }
 
     private fun updateLegacyConfigView() {
