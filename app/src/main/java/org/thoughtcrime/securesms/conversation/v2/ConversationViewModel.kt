@@ -892,7 +892,7 @@ class ConversationViewModel(
             }
     }
 
-    fun acceptMessageRequest() = viewModelScope.launch {
+    fun acceptMessageRequest(): Job = viewModelScope.launch {
         val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for accept message request action")
         val currentState = _uiState.value.messageRequestState as? MessageRequestUiState.Visible
             ?: return@launch Log.w("Loki", "Current state was not visible for accept message request action")
@@ -972,15 +972,25 @@ class ConversationViewModel(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
-   fun implicitlyApproveRecipient() {
-       val recipient = recipient
+    /**
+     * Implicitly approve the recipient.
+     *
+     * @return The (kotlin coroutine) job of sending job message request, if one should be sent. The job
+     * instance is normally just for observing purpose. Note that the completion of this job
+     * does not mean the message is sent, it only means the the successful submission to the message
+     * send queue and they will be sent later. You will not be able to observe the completion
+     * of message sending through this method.
+     */
+    fun implicitlyApproveRecipient(): Job? {
+        val recipient = recipient
 
-       if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
-            acceptMessageRequest()
+        if (uiState.value.messageRequestState is MessageRequestUiState.Visible) {
+            return acceptMessageRequest()
         } else if (recipient?.isApproved == false) {
             // edge case for new outgoing thread on new recipient without sending approval messages
             repository.setApproved(recipient, true)
         }
+        return null
     }
 
     fun onCommand(command: Commands) {
