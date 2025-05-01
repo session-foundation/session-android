@@ -49,13 +49,13 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.GroupDatabase
-import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -84,7 +84,6 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
-    @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var usernameUtils: UsernameUtils
 
@@ -166,6 +165,7 @@ class VisibleMessageView : FrameLayout {
         groupId: AccountId? = null,
         senderAccountID: String,
         lastSeen: Long,
+        lastSentMessageId: MessageId?,
         delegate: VisibleMessageViewDelegate? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
@@ -271,7 +271,7 @@ class VisibleMessageView : FrameLayout {
         binding.dateBreakTextView.isVisible = showDateBreak
 
         // Update message status indicator
-        showStatusMessage(message)
+        showStatusMessage(message, lastSentMessageId)
 
         // Emoji Reactions
         if (!message.isDeleted && message.reactions.isNotEmpty()) {
@@ -312,7 +312,7 @@ class VisibleMessageView : FrameLayout {
     // Note: Although most commonly used to display the delivery status of a message, we also use the
     // message status area to display the disappearing messages state - so in this latter case we'll
     // be displaying either "Sent" or "Read" and the animating clock icon.
-    private fun showStatusMessage(message: MessageRecord) {
+    private fun showStatusMessage(message: MessageRecord, lastSentMessageId: MessageId?) {
         // We'll start by hiding everything and then only make visible what we need
         binding.messageStatusTextView.isVisible  = false
         binding.messageStatusImageView.isVisible = false
@@ -376,8 +376,7 @@ class VisibleMessageView : FrameLayout {
             } else {
                 // ..but if the message HAS been successfully sent or read then only display the delivery status
                 // text and image if this is the last sent message.
-                val lastSentTimestamp = lastSentTimestampCache.getTimestamp(message.threadId)
-                val isLastSent = lastSentTimestamp == message.timestamp
+                val isLastSent = lastSentMessageId != null && lastSentMessageId.id == message.id && lastSentMessageId.mms == message.isMms
                 binding.messageStatusTextView.isVisible  = isLastSent
                 binding.messageStatusImageView.isVisible = isLastSent
                 if (isLastSent) { binding.messageStatusImageView.bringToFront() }

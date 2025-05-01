@@ -23,7 +23,11 @@ public interface MmsSmsColumns {
   public static final String EXPIRES_IN               = "expires_in";
   public static final String EXPIRE_STARTED           = "expire_started";
   public static final String NOTIFIED                 = "notified";
+
+  // Not used but still in the database
+  @Deprecated(forRemoval = true)
   public static final String UNIDENTIFIED             = "unidentified";
+
   public static final String MESSAGE_REQUEST_RESPONSE = "message_request_response";
   public static final String REACTIONS_UNREAD         = "reactions_unread";
   public static final String REACTIONS_LAST_SEEN      = "reactions_last_seen";

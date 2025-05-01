@@ -677,38 +677,11 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun markAsSent(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getSentMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Failed to retrieve local message record in Storage.markAsSent - aborting.")
-            return
-        }
-
-        if (messageRecord.isMms) {
-            mmsDatabase.markAsSent(messageRecord.getId(), true)
+    override fun markAsSent(messageID: Long, isMms: Boolean) {
+        if (isMms) {
+            mmsDatabase.markAsSent(messageID, true)
         } else {
-            smsDatabase.markAsSent(messageRecord.getId(), true)
-        }
-    }
-
-    // Method that marks a message as sent in Communities (only!) - where the server modifies the
-    // message timestamp and as such we cannot use that to identify the local message.
-    override fun markAsSentToCommunity(threadId: Long, messageID: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Ensure we can find the local message..
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markAsSentToCommunity - aborting.")
-            return
-        }
-
-        // ..and mark as sent if found.
-        if (message.isMms) {
-            mmsDatabase.markAsSent(message.getId(), true)
-        } else {
-            smsDatabase.markAsSent(message.getId(), true)
+            smsDatabase.markAsSent(messageID, true)
         }
     }
 
@@ -738,42 +711,6 @@ open class Storage @Inject constructor(
             val smsDatabase = smsDatabase
             smsDatabase.markAsSending(messageRecord.getId())
             messageRecord.isPending
-        }
-    }
-
-    override fun markUnidentified(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Could not identify message with timestamp: $timestamp from author: $author")
-            return
-        }
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markUnidentified(messageRecord.getId(), true)
-        } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markUnidentified(messageRecord.getId(), true)
-        }
-    }
-
-    // Method that marks a message as unidentified in Communities (only!) - where the server
-    // modifies the message timestamp and as such we cannot use that to identify the local message.
-    override fun markUnidentifiedInCommunity(threadId: Long, messageId: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Check to ensure the message exists
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markUnidentifiedInCommunity - aborting.")
-            return
-        }
-
-        // Mark it as unidentified if we found the message successfully
-        if (message.isMms) {
-            mmsDatabase.markUnidentified(message.getId(), true)
-        } else {
-            smsDatabase.markUnidentified(message.getId(), true)
         }
     }
 
@@ -1577,7 +1514,6 @@ open class Storage @Inject constructor(
             false,
             false,
             false,
-            false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1677,7 +1613,6 @@ open class Storage @Inject constructor(
                     0,
                     0,
                     false,
-                    false,
                     true,
                     false,
                     Optional.absent(),
@@ -1709,7 +1644,6 @@ open class Storage @Inject constructor(
             -1,
             0,
             0,
-            false,
             false,
             true,
             false,

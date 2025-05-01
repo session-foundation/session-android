@@ -35,7 +35,6 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.UNKNOWN
@@ -48,7 +47,6 @@ import org.session.libsession.utilities.NetworkFailure
 import org.session.libsession.utilities.NetworkFailureList
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
@@ -329,15 +327,8 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         markAs(messageId, MmsSmsColumns.Types.BASE_SENT_FAILED_TYPE)
     }
 
-    override fun markAsSent(messageId: Long, secure: Boolean) {
-        markAs(messageId, MmsSmsColumns.Types.BASE_SENT_TYPE or if (secure) MmsSmsColumns.Types.PUSH_MESSAGE_BIT or MmsSmsColumns.Types.SECURE_MESSAGE_BIT else 0)
-    }
-
-    override fun markUnidentified(messageId: Long, unidentified: Boolean) {
-        val contentValues = ContentValues()
-        contentValues.put(UNIDENTIFIED, if (unidentified) 1 else 0)
-        val db = writableDatabase
-        db.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
+    override fun markAsSent(messageId: Long, isSent: Boolean) {
+        markAs(messageId, MmsSmsColumns.Types.BASE_SENT_TYPE or if (isSent) MmsSmsColumns.Types.PUSH_MESSAGE_BIT or MmsSmsColumns.Types.SECURE_MESSAGE_BIT else 0)
     }
 
     override fun markAsDeleted(messageId: Long, isOutgoing: Boolean, displayedMessage: String) {
@@ -632,7 +623,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         contentValues.put(SUBSCRIPTION_ID, retrieved.subscriptionId)
         contentValues.put(EXPIRES_IN, retrieved.expiresIn)
         contentValues.put(EXPIRE_STARTED, retrieved.expireStartedAt)
-        contentValues.put(UNIDENTIFIED, retrieved.isUnidentified)
         contentValues.put(HAS_MENTION, retrieved.hasMention())
         contentValues.put(MESSAGE_REQUEST_RESPONSE, retrieved.isMessageRequestResponse)
         if (!contentValues.containsKey(DATE_SENT)) {
@@ -1307,7 +1297,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                         message.outgoingQuote!!.missing,
                         SlideDeck(context, message.outgoingQuote!!.attachments!!)
                     ) else null,
-                    message.sharedContacts, message.linkPreviews, listOf(), false, false
+                    message.sharedContacts, message.linkPreviews, listOf(), false
                 )
             }
 
@@ -1368,7 +1358,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             val subscriptionId       = cursor.getInt(cursor.getColumnIndexOrThrow(SUBSCRIPTION_ID))
             val expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
-            val unidentified         = cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED)) == 1
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
 
             if (!isReadReceiptsEnabled(context)) {
@@ -1398,7 +1387,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                 addressDeviceId, dateSent, dateReceived, deliveryReceiptCount,
                 threadId, body, slideDeck!!, partCount, box, mismatches,
                 networkFailures, subscriptionId, expiresIn, expireStarted,
-                readReceiptCount, quote, contacts, previews, reactions, unidentified, hasMention
+                readReceiptCount, quote, contacts, previews, reactions, hasMention
             )
         }
 
@@ -1597,7 +1586,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             QUOTE_MISSING,
             SHARED_CONTACTS,
             LINK_PREVIEWS,
-            UNIDENTIFIED,
             HAS_MENTION,
             "json_group_array(json_object(" +
                     "'" + AttachmentDatabase.ROW_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.ROW_ID + ", " +

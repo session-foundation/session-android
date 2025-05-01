@@ -38,6 +38,7 @@ import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
@@ -68,7 +69,6 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.NORMALIZED_DATE_RECEIVED,
                                               MmsDatabase.MESSAGE_TYPE, MmsDatabase.MESSAGE_BOX,
                                               SmsDatabase.STATUS,
-                                              MmsSmsColumns.UNIDENTIFIED,
                                               MmsDatabase.PART_COUNT,
                                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY,
@@ -181,6 +181,25 @@ public class MmsSmsDatabase extends Database {
       }
     }
     Log.i(TAG, "Could not find last sent message from us in given thread - returning null.");
+    return null;
+  }
+
+  @Nullable
+  public MessageId getLastSentMessageID(long threadId) {
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId + " AND NOT " + MmsSmsColumns.IS_DELETED;
+
+    try (final Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
+      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
+        MessageRecord messageRecord;
+        while ((messageRecord = reader.getNext()) != null) {
+          if (messageRecord.isOutgoing()) {
+            return new MessageId(messageRecord.getId(), messageRecord.isMms());
+          }
+        }
+      }
+    }
+
     return null;
   }
 
@@ -508,7 +527,6 @@ public class MmsSmsDatabase extends Database {
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY, MmsDatabase.STATUS,
-                              MmsDatabase.UNIDENTIFIED,
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
@@ -537,7 +555,6 @@ public class MmsSmsDatabase extends Database {
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
                               MmsDatabase.MESSAGE_SIZE, MmsDatabase.EXPIRY, MmsDatabase.STATUS,
-                              MmsDatabase.UNIDENTIFIED,
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
@@ -593,7 +610,6 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsDatabase.EXPIRY);
     mmsColumnsPresent.add(MmsDatabase.NOTIFIED);
     mmsColumnsPresent.add(MmsDatabase.STATUS);
-    mmsColumnsPresent.add(MmsDatabase.UNIDENTIFIED);
     mmsColumnsPresent.add(MmsDatabase.NETWORK_FAILURE);
     mmsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
 
@@ -657,7 +673,6 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(SmsDatabase.DATE_SENT);
     smsColumnsPresent.add(SmsDatabase.DATE_RECEIVED);
     smsColumnsPresent.add(SmsDatabase.STATUS);
-    smsColumnsPresent.add(SmsDatabase.UNIDENTIFIED);
     smsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
     smsColumnsPresent.add(ReactionDatabase.ROW_ID);
     smsColumnsPresent.add(ReactionDatabase.MESSAGE_ID);

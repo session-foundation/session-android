@@ -79,7 +79,6 @@ object MessageSender {
 
     // Convenience
     fun sendNonDurably(message: Message, destination: Destination, isSyncMessage: Boolean): Promise<Unit, Exception> {
-        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(message.threadID!!, message.sentTimestamp!!)
         return if (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup || destination is Destination.OpenGroupInbox) {
             sendToOpenGroupDestination(destination, message)
         } else {
@@ -431,7 +430,6 @@ object MessageSender {
     // Result Handling
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
         val threadId by lazy { requireNotNull(message.threadID) { "threadID for the message is null" } }
-        if (message is VisibleMessage) MessagingModuleConfiguration.shared.lastSentTimestampCache.submitTimestamp(threadId, openGroupSentTimestamp)
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
         val timestamp = message.sentTimestamp!!
@@ -480,26 +478,7 @@ object MessageSender {
             }
 
             // Mark the message as sent.
-            // Note: When sending a message to a community the server modifies the message timestamp
-            // so when we go to look up the message in the local database by timestamp it fails and
-            // we're left with the message delivery status as "Sending" forever! As such, we use a
-            // pair of modified "markAsSentToCommunity" and "markUnidentifiedInCommunity" methods
-            // to retrieve the local message by thread & message ID rather than timestamp when
-            // handling community messages only so we can tick the delivery status over to 'Sent'.
-            // Fixed in: https://optf.atlassian.net/browse/SES-1567
-            if (messageIsAddressedToCommunity)
-            {
-                val messageId = message.id
-                if (messageId != null) {
-                    storage.markAsSentToCommunity(threadId, messageId)
-                    storage.markUnidentifiedInCommunity(threadId, messageId)
-                }
-            }
-            else
-            {
-                storage.markAsSent(timestamp, userPublicKey)
-                storage.markUnidentified(timestamp, userPublicKey)
-            }
+            storage.markAsSent(messageID = messageID, isMms = mms)
 
             // Start the disappearing messages timer if needed
             SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message, startDisappearAfterRead = true)

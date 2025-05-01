@@ -77,7 +77,6 @@ import java.util.UUID
 class ConversationViewModel(
     val threadId: Long,
     val edKeyPair: KeyPair?,
-    private val context: Context,
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
@@ -272,10 +271,13 @@ class ConversationViewModel(
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
         if(it !is State.Idle && it !is State.Disconnected && callManager.recipient?.address == recipient?.address){
             // call is started, we need to differentiate between in progress vs incoming
-            if(it is State.Connected) context.getString(R.string.callsInProgress)
-            else context.getString(R.string.callsIncomingUnknown)
+            if(it is State.Connected) application.getString(R.string.callsInProgress)
+            else application.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+
+    val lastSeenMessageId: Flow<MessageId?>
+        get() = repository.getLastSentMessageID(threadId)
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
@@ -1149,7 +1151,6 @@ class ConversationViewModel(
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ConversationViewModel(
-                context = context,
                 threadId = threadId,
                 edKeyPair = edKeyPair,
                 application = application,

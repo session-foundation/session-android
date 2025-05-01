@@ -110,7 +110,7 @@ public class SmsDatabase extends MessagingDatabase {
       PROTOCOL, READ, STATUS, TYPE,
       REPLY_PATH_PRESENT, SUBJECT, BODY, SERVICE_CENTER, DELIVERY_RECEIPT_COUNT,
       MISMATCHED_IDENTITIES, SUBSCRIPTION_ID, EXPIRES_IN, EXPIRE_STARTED,
-      NOTIFIED, READ_RECEIPT_COUNT, UNIDENTIFIED, HAS_MENTION,
+      NOTIFIED, READ_RECEIPT_COUNT, HAS_MENTION,
       "json_group_array(json_object(" +
               "'" + ReactionDatabase.ROW_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.ROW_ID + ", " +
               "'" + ReactionDatabase.MESSAGE_ID + "', " + ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.MESSAGE_ID + ", " +
@@ -213,8 +213,8 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   @Override
-  public void markAsSent(long id, boolean isSecure) {
-    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_TYPE | (isSecure ? Types.PUSH_MESSAGE_BIT | Types.SECURE_MESSAGE_BIT : 0));
+  public void markAsSent(long id, boolean isSent) {
+    updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SENT_TYPE | (isSent ? Types.PUSH_MESSAGE_BIT | Types.SECURE_MESSAGE_BIT : 0));
   }
 
   public void markAsSending(long id) {
@@ -234,15 +234,6 @@ public class SmsDatabase extends MessagingDatabase {
   @Override
   public void markAsSyncFailed(long id) {
     updateTypeBitmask(id, Types.BASE_TYPE_MASK, Types.BASE_SYNC_FAILED_TYPE);
-  }
-
-  @Override
-  public void markUnidentified(long id, boolean unidentified) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(UNIDENTIFIED, unidentified ? 1 : 0);
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
   }
 
   @Override
@@ -824,7 +815,7 @@ public class SmsDatabase extends MessagingDatabase {
                                   0, message.isSecureMessage() ? MmsSmsColumns.Types.getOutgoingEncryptedMessageType() : MmsSmsColumns.Types.getOutgoingSmsMessageType(),
                                   threadId, 0, new LinkedList<IdentityKeyMismatch>(),
                                   message.getExpiresIn(),
-                                  SnodeAPI.getNowWithOffset(), 0, false, Collections.emptyList(), false);
+                                  SnodeAPI.getNowWithOffset(), 0, Collections.emptyList(), false);
     }
   }
 
@@ -864,7 +855,6 @@ public class SmsDatabase extends MessagingDatabase {
       long    expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRES_IN));
       long    expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(SmsDatabase.EXPIRE_STARTED));
       String  body                 = cursor.getString(cursor.getColumnIndexOrThrow(SmsDatabase.BODY));
-      boolean unidentified         = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.UNIDENTIFIED)) == 1;
       boolean hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(SmsDatabase.HAS_MENTION)) == 1;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
@@ -879,7 +869,7 @@ public class SmsDatabase extends MessagingDatabase {
                                   recipient,
                                   dateSent, dateReceived, deliveryReceiptCount, type,
                                   threadId, status, mismatches,
-                                  expiresIn, expireStarted, readReceiptCount, unidentified, reactions, hasMention);
+                                  expiresIn, expireStarted, readReceiptCount, reactions, hasMention);
     }
 
     private List<IdentityKeyMismatch> getMismatches(String document) {

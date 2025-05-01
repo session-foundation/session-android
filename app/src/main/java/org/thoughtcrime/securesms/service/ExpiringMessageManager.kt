@@ -105,7 +105,6 @@ class ExpiringMessageManager @Inject constructor(
                 expiresInMillis, expireStartedAt, true,
                 false,
                 false,
-                false,
                 Optional.absent(),
                 groupInfo,
                 Optional.absent(),

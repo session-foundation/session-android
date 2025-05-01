@@ -211,7 +211,6 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
 
         threadId ?: return
         timestamp ?: return
-        MessagingModuleConfiguration.shared.lastSentTimestampCache.delete(threadId, timestamp)
     }
 
     override fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean) {
@@ -226,9 +225,6 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         // Perform online delete
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessages(messageIDs)
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHashes(messageIDs, mms = !isSms)
-
-        val threadId = messages.firstOrNull()?.threadId
-        threadId?.let{ MessagingModuleConfiguration.shared.lastSentTimestampCache.delete(it, messages.map { it.timestamp }) }
     }
 
     override fun markMessageAsDeleted(timestamp: Long, author: String, displayedMessage: String) {

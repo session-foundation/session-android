@@ -29,7 +29,6 @@ public class IncomingMediaMessage {
   private final long          expiresIn;
   private final long          expireStartedAt;
   private final boolean       expirationUpdate;
-  private final boolean       unidentified;
   private final boolean       messageRequestResponse;
   private final boolean       hasMention;
 
@@ -46,7 +45,6 @@ public class IncomingMediaMessage {
                               long expiresIn,
                               long expireStartedAt,
                               boolean expirationUpdate,
-                              boolean unidentified,
                               boolean messageRequestResponse,
                               boolean hasMention,
                               Optional<String> body,
@@ -67,7 +65,6 @@ public class IncomingMediaMessage {
     this.expirationUpdate           = expirationUpdate;
     this.dataExtractionNotification = dataExtractionNotification.orNull();
     this.quote                      = quote.orNull();
-    this.unidentified               = unidentified;
     this.messageRequestResponse     = messageRequestResponse;
     this.hasMention                 = hasMention;
 
@@ -98,7 +95,7 @@ public class IncomingMediaMessage {
                                           Optional<QuoteModel> quote,
                                           Optional<List<LinkPreview>> linkPreviews)
   {
-    return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt, false,
+    return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt,
             false, false, message.getHasMention(), Optional.fromNullable(message.getText()),
             group, Optional.fromNullable(attachments), quote, Optional.absent(), linkPreviews, Optional.absent());
   }
@@ -175,10 +172,6 @@ public class IncomingMediaMessage {
 
   public List<LinkPreview> getLinkPreviews() {
     return linkPreviews;
-  }
-
-  public boolean isUnidentified() {
-    return unidentified;
   }
 
   public boolean isMessageRequestResponse() {

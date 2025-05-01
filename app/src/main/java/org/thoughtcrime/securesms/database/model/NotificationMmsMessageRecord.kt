@@ -44,7 +44,7 @@ class NotificationMmsMessageRecord(
     id, "", conversationRecipient, individualRecipient,
     dateSent, dateReceived, threadId, SmsDatabase.Status.STATUS_NONE, deliveryReceiptCount, mailbox,
     emptyList(), emptyList(),
-    0, 0, slideDeck!!, readReceiptCount, null, emptyList(), emptyList(), false, emptyList(), hasMention
+    0, 0, slideDeck!!, readReceiptCount, null, emptyList(), emptyList(), emptyList(), hasMention
 ) {
     fun getMessageSize(): Long {
         return (messageSize + 1023) / 1024

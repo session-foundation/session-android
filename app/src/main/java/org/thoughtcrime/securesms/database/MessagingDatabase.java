@@ -45,7 +45,6 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markAsSyncFailed(long id);
 
-  public abstract void markUnidentified(long messageId, boolean unidentified);
 
   public abstract void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage);
 
