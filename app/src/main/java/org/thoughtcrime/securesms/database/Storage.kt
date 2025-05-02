@@ -1479,6 +1479,8 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
+        val recipientAddress = getRecipientForThread(threadID)?.address
+
         // Delete the conversation and its messages
         smsDatabase.deleteThread(threadID)
         mmsDatabase.deleteThread(threadID)
@@ -1489,31 +1491,30 @@ open class Storage @Inject constructor(
         notifyConversationListListeners()
         clearReceivedMessages()
 
-        val recipient = getRecipientForThread(threadID)
-        if (recipient == null) return
+        if (recipientAddress == null) return
 
         configFactory.withMutableUserConfigs { configs ->
-            if (recipient.address.isGroupOrCommunity) {
-                if (recipient.address.isLegacyGroup) {
-                    val accountId = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-                    groupDB.delete(recipient.address.toString())
+            if (recipientAddress.isGroupOrCommunity) {
+                if (recipientAddress.isLegacyGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
+                    groupDB.delete(recipientAddress.toString())
                     configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
                     configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (recipient.address.isCommunity) {
+                } else if (recipientAddress.isCommunity) {
                     // these should be removed in the group leave / handling new configs
                     Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (recipient.address.isGroupV2) {
+                } else if (recipientAddress.isGroupV2) {
                     Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
                 }
             } else {
                 // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(recipient.address.toString())
+                if (AccountId(recipientAddress.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(recipientAddress.toString())
 
-                if (getUserPublicKey() != recipient.address.toString()) {
+                if (getUserPublicKey() != recipientAddress.toString()) {
                     // only update the priority if the contact exists in our config
                     // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
-                    configs.contacts.get(recipient.address.toString())?.let{
+                    configs.contacts.get(recipientAddress.toString())?.let{
                         it.priority = PRIORITY_HIDDEN
                         configs.contacts.set(it)
                     }
