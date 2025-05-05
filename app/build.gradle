@@ -342,7 +342,6 @@ dependencies {
     implementation libs.kotlinx.serialization.json
     implementation libs.curve25519.java
     implementation project(":liblazysodium")
-    implementation libs.jna
     implementation libs.protobuf.java
     implementation libs.jackson.databind
     implementation libs.okhttp

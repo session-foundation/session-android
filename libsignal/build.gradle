@@ -1,6 +1,6 @@
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
 }
 
 android {
@@ -26,15 +26,15 @@ android {
 }
 
 dependencies {
-    implementation "androidx.annotation:annotation:1.5.0"
-    implementation "com.google.protobuf:protobuf-java:$protobufVersion"
-    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonDatabindVersion"
-    implementation "com.github.session-foundation.session-android-curve-25519:curve25519-java:$curve25519Version"
-    implementation "com.squareup.okhttp3:okhttp:$okhttpVersion"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
-    implementation "nl.komponents.kovenant:kovenant:$kovenantVersion"
-    testImplementation "junit:junit:$junitVersion"
-    testImplementation "org.assertj:assertj-core:3.11.1"
-    testImplementation "org.conscrypt:conscrypt-openjdk-uber:2.0.0"
+    implementation libs.androidx.annotation
+    implementation libs.protobuf.java
+    implementation libs.jackson.databind
+    implementation libs.curve25519.java
+    implementation libs.okhttp
+    implementation libs.kotlin.reflect
+    implementation libs.kotlinx.coroutines.android
+    implementation libs.kovenant
+    testImplementation libs.junit
+    testImplementation libs.assertj.core
+    testImplementation libs.conscrypt.openjdk.uber
 }
