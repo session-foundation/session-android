@@ -71,7 +71,6 @@ import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
-import org.thoughtcrime.securesms.database.LastSentTimestampCache
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.EmojiSearchData
@@ -151,7 +150,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var messageDataProvider: MessageDataProvider
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var configFactory: ConfigFactory
-    @Inject lateinit var lastSentTimestampCache: LastSentTimestampCache
     @Inject lateinit var versionDataFetcher: VersionDataFetcher
     @Inject lateinit var pushRegistrationHandler: PushRegistrationHandler
     @Inject lateinit var tokenFetcher: TokenFetcher
@@ -279,7 +277,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             device,
             messageDataProvider,
             configFactory,
-            lastSentTimestampCache,
             this,
             tokenFetcher,
             groupManagerV2,

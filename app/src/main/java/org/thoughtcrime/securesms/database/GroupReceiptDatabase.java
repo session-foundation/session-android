@@ -2,9 +2,6 @@ package org.thoughtcrime.securesms.database;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
-
-import androidx.annotation.NonNull;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
@@ -12,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.session.libsession.utilities.Address;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.inject.Provider;
@@ -26,6 +22,8 @@ public class GroupReceiptDatabase extends Database {
   private static final String ADDRESS      = "address";
   private static final String STATUS       = "status";
   private static final String TIMESTAMP    = "timestamp";
+
+  @Deprecated(forRemoval = true)
   private static final String UNIDENTIFIED = "unidentified";
 
   public static final int STATUS_UNKNOWN     = -1;
@@ -68,32 +66,6 @@ public class GroupReceiptDatabase extends Database {
               new String[] {String.valueOf(mmsId), address.toString(), String.valueOf(status)});
   }
 
-  public void setUnidentified(Address address, long mmsId, boolean unidentified) {
-    SQLiteDatabase db     = getWritableDatabase();
-    ContentValues  values = new ContentValues(1);
-    values.put(UNIDENTIFIED, unidentified ? 1 : 0);
-
-    db.update(TABLE_NAME, values, MMS_ID + " = ? AND " + ADDRESS + " = ?",
-              new String[] {String.valueOf(mmsId), address.toString()});
-
-  }
-
-  public @NonNull List<GroupReceiptInfo> getGroupReceiptInfo(long mmsId) {
-    SQLiteDatabase         db      = getReadableDatabase();
-    List<GroupReceiptInfo> results = new LinkedList<>();
-
-    try (Cursor cursor = db.query(TABLE_NAME, null, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)}, null, null, null)) {
-      while (cursor != null && cursor.moveToNext()) {
-        results.add(new GroupReceiptInfo(Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))),
-                                         cursor.getInt(cursor.getColumnIndexOrThrow(STATUS)),
-                                         cursor.getLong(cursor.getColumnIndexOrThrow(TIMESTAMP)),
-                                         cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED)) == 1));
-      }
-    }
-
-    return results;
-  }
-
   void deleteRowsForMessages(String[] mmsIds) {
     StringBuilder queryBuilder = new StringBuilder();
     for (int i = 0; i < mmsIds.length; i++) {
@@ -115,40 +87,5 @@ public class GroupReceiptDatabase extends Database {
   void deleteRowsForMessages(long[] mmsIds) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, MMS_ID + " IN (?)", new String[] {StringUtils.join(mmsIds, ',')});
-  }
-
-  void deleteAllRows() {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, null, null);
-  }
-
-  public static class GroupReceiptInfo {
-    private final Address address;
-    private final int     status;
-    private final long    timestamp;
-    private final boolean unidentified;
-
-    GroupReceiptInfo(Address address, int status, long timestamp, boolean unidentified) {
-      this.address      = address;
-      this.status       = status;
-      this.timestamp    = timestamp;
-      this.unidentified = unidentified;
-    }
-
-    public Address getAddress() {
-      return address;
-    }
-
-    public int getStatus() {
-      return status;
-    }
-
-    public long getTimestamp() {
-      return timestamp;
-    }
-
-    public boolean isUnidentified() {
-      return unidentified;
-    }
   }
 }

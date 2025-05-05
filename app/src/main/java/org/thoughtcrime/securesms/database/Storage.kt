@@ -677,38 +677,11 @@ open class Storage @Inject constructor(
         }
     }
 
-    override fun markAsSent(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getSentMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Failed to retrieve local message record in Storage.markAsSent - aborting.")
-            return
-        }
-
-        if (messageRecord.isMms) {
-            mmsDatabase.markAsSent(messageRecord.getId(), true)
+    override fun markAsSent(messageID: Long, isMms: Boolean) {
+        if (isMms) {
+            mmsDatabase.markAsSent(messageID, true)
         } else {
-            smsDatabase.markAsSent(messageRecord.getId(), true)
-        }
-    }
-
-    // Method that marks a message as sent in Communities (only!) - where the server modifies the
-    // message timestamp and as such we cannot use that to identify the local message.
-    override fun markAsSentToCommunity(threadId: Long, messageID: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Ensure we can find the local message..
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markAsSentToCommunity - aborting.")
-            return
-        }
-
-        // ..and mark as sent if found.
-        if (message.isMms) {
-            mmsDatabase.markAsSent(message.getId(), true)
-        } else {
-            smsDatabase.markAsSent(message.getId(), true)
+            smsDatabase.markAsSent(messageID, true)
         }
     }
 
@@ -738,42 +711,6 @@ open class Storage @Inject constructor(
             val smsDatabase = smsDatabase
             smsDatabase.markAsSending(messageRecord.getId())
             messageRecord.isPending
-        }
-    }
-
-    override fun markUnidentified(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author)
-        if (messageRecord == null) {
-            Log.w(TAG, "Could not identify message with timestamp: $timestamp from author: $author")
-            return
-        }
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markUnidentified(messageRecord.getId(), true)
-        } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markUnidentified(messageRecord.getId(), true)
-        }
-    }
-
-    // Method that marks a message as unidentified in Communities (only!) - where the server
-    // modifies the message timestamp and as such we cannot use that to identify the local message.
-    override fun markUnidentifiedInCommunity(threadId: Long, messageId: Long) {
-        val database = mmsSmsDatabase
-        val message = database.getLastSentMessageRecordFromSender(threadId, preferences.getLocalNumber())
-
-        // Check to ensure the message exists
-        if (message == null) {
-            Log.w(TAG, "Could not find local message in Storage.markUnidentifiedInCommunity - aborting.")
-            return
-        }
-
-        // Mark it as unidentified if we found the message successfully
-        if (message.isMms) {
-            mmsDatabase.markUnidentified(message.getId(), true)
-        } else {
-            smsDatabase.markUnidentified(message.getId(), true)
         }
     }
 
@@ -1479,6 +1416,8 @@ open class Storage @Inject constructor(
         val threadDB = threadDatabase
         val groupDB = groupDatabase
 
+        val recipientAddress = getRecipientForThread(threadID)?.address
+
         // Delete the conversation and its messages
         smsDatabase.deleteThread(threadID)
         mmsDatabase.deleteThread(threadID)
@@ -1489,31 +1428,30 @@ open class Storage @Inject constructor(
         notifyConversationListListeners()
         clearReceivedMessages()
 
-        val recipient = getRecipientForThread(threadID)
-        if (recipient == null) return
+        if (recipientAddress == null) return
 
         configFactory.withMutableUserConfigs { configs ->
-            if (recipient.address.isGroupOrCommunity) {
-                if (recipient.address.isLegacyGroup) {
-                    val accountId = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-                    groupDB.delete(recipient.address.toString())
+            if (recipientAddress.isGroupOrCommunity) {
+                if (recipientAddress.isLegacyGroup) {
+                    val accountId = GroupUtil.doubleDecodeGroupId(recipientAddress.toString())
+                    groupDB.delete(recipientAddress.toString())
                     configs.convoInfoVolatile.eraseLegacyClosedGroup(accountId)
                     configs.userGroups.eraseLegacyGroup(accountId)
-                } else if (recipient.address.isCommunity) {
+                } else if (recipientAddress.isCommunity) {
                     // these should be removed in the group leave / handling new configs
                     Log.w("Loki", "Thread delete called for open group address, expecting to be handled elsewhere")
-                } else if (recipient.address.isGroupV2) {
+                } else if (recipientAddress.isGroupV2) {
                     Log.w("Loki", "Thread delete called for closed group address, expecting to be handled elsewhere")
                 }
             } else {
                 // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(recipient.address.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
-                configs.convoInfoVolatile.eraseOneToOne(recipient.address.toString())
+                if (AccountId(recipientAddress.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                configs.convoInfoVolatile.eraseOneToOne(recipientAddress.toString())
 
-                if (getUserPublicKey() != recipient.address.toString()) {
+                if (getUserPublicKey() != recipientAddress.toString()) {
                     // only update the priority if the contact exists in our config
                     // (this helps for example when deleting a contact and we do not want to recreate one here only to mark it hidden)
-                    configs.contacts.get(recipient.address.toString())?.let{
+                    configs.contacts.get(recipientAddress.toString())?.let{
                         it.priority = PRIORITY_HIDDEN
                         configs.contacts.set(it)
                     }
@@ -1574,7 +1512,6 @@ open class Storage @Inject constructor(
             -1,
             expiresInMillis,
             expireStartedAt,
-            false,
             false,
             false,
             false,
@@ -1677,7 +1614,6 @@ open class Storage @Inject constructor(
                     0,
                     0,
                     false,
-                    false,
                     true,
                     false,
                     Optional.absent(),
@@ -1709,7 +1645,6 @@ open class Storage @Inject constructor(
             -1,
             0,
             0,
-            false,
             false,
             true,
             false,

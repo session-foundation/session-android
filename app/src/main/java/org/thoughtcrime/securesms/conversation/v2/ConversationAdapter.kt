@@ -28,6 +28,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 
@@ -57,6 +58,14 @@ class ConversationAdapter(
     private val contactCache = SparseArray<Contact>(100)
     private val contactLoadedCache = SparseBooleanArray(100)
     private val lastSeen = AtomicLong(originalLastSeen)
+
+    var lastSentMessageId: MessageId? = null
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
 
     private val groupId = if(conversation?.isGroupV2Recipient == true)
         AccountId(conversation.address.toString())
@@ -133,19 +142,20 @@ class ConversationAdapter(
                 val contact = contactCache[senderIdHash]
 
                 visibleMessageView.bind(
-                    message,
-                    messageBefore,
-                    getMessageAfter(position, cursor),
-                    glide,
-                    searchQuery,
-                    contact,
+                    message = message,
+                    previous = messageBefore,
+                    next = getMessageAfter(position, cursor),
+                    glide = glide,
+                    searchQuery = searchQuery,
+                    contact = contact,
                     // we pass in the groupId for groupV2 to use for determining the name of the members
-                    groupId,
-                    senderId,
-                    lastSeen.get(),
-                    visibleMessageViewDelegate,
-                    downloadPendingAttachment,
-                    retryFailedAttachments
+                    groupId = groupId,
+                    senderAccountID = senderId,
+                    lastSeen = lastSeen.get(),
+                    lastSentMessageId = lastSentMessageId,
+                    delegate = visibleMessageViewDelegate,
+                    downloadPendingAttachment = downloadPendingAttachment,
+                    retryFailedAttachments = retryFailedAttachments
                 )
 
                 if (!message.isDeleted) {

@@ -116,7 +116,7 @@ object MessageReceiver {
                         }
                         // Loop through all known group key pairs in reverse order (i.e. try the latest key pair first (which'll more than
                         // likely be the one we want) but try older ones in case that didn't work)
-                        var encryptionKeyPair = encryptionKeyPairs.removeLast()
+                        var encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
                         fun decrypt() {
                             try {
                                 val decryptionResult = MessageDecrypter.decrypt(envelopeContent.toByteArray(), encryptionKeyPair)
@@ -124,7 +124,7 @@ object MessageReceiver {
                                 sender = decryptionResult.second
                             } catch (e: Exception) {
                                 if (encryptionKeyPairs.isNotEmpty()) {
-                                    encryptionKeyPair = encryptionKeyPairs.removeLast()
+                                    encryptionKeyPair = encryptionKeyPairs.removeAt(encryptionKeyPairs.lastIndex)
                                     decrypt()
                                 } else {
                                     Log.e("Loki", "Failed to decrypt group message", e)

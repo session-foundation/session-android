@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
@@ -30,6 +31,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -40,9 +42,11 @@ import org.thoughtcrime.securesms.database.SessionJobDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.util.observeChanges
 import javax.inject.Inject
 
 interface ConversationRepository {
@@ -60,6 +64,7 @@ interface ConversationRepository {
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
     fun setApproved(recipient: Recipient, isApproved: Boolean)
     fun isGroupReadOnly(recipient: Recipient): Boolean
+    fun getLastSentMessageID(threadId: Long): Flow<MessageId?>
 
     suspend fun deleteCommunityMessagesRemotely(threadId: Long, messages: Set<MessageRecord>)
     suspend fun delete1on1MessagesRemotely(
@@ -182,6 +187,16 @@ class DefaultConversationRepository @Inject constructor(
         return configFactory.withUserConfigs { configs ->
             configs.userGroups.getClosedGroup(groupId)?.let { it.kicked || it.destroyed } == true
         }
+    }
+
+    override fun getLastSentMessageID(threadId: Long): Flow<MessageId?> {
+        return (contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(threadId)) as Flow<*>)
+            .onStart { emit(Unit) }
+            .map {
+                withContext(Dispatchers.Default) {
+                    mmsSmsDb.getLastSentMessageID(threadId)
+                }
+            }
     }
 
     // This assumes that recipient.isContactRecipient is true
@@ -416,11 +431,8 @@ class DefaultConversationRepository @Inject constructor(
                 )
             } else {
                 val message = MessageRequestResponse(true)
-                MessageSender.sendNonDurably(
-                    message = message,
-                    destination = Destination.from(recipient.address),
-                    isSyncMessage = recipient.isLocalNumber
-                ).await()
+
+                MessageSender.send(message = message, address = recipient.address)
 
                 // add a control message for our user
                 storage.insertMessageRequestResponseFromYou(threadId)
