@@ -62,7 +62,6 @@ fun AppDisguiseSettingsScreen(
         onBack = onBack,
         setOn = viewModel::setOn,
         isOn = viewModel.isOn.collectAsState().value,
-        showList = viewModel.showAlternativeIconList.collectAsState().value,
         items = viewModel.alternativeIcons.collectAsState().value,
         onItemSelected = viewModel::onIconSelected
     )
@@ -73,7 +72,6 @@ fun AppDisguiseSettingsScreen(
 private fun AppDisguiseSettings(
     items: List<AppDisguiseSettingsViewModel.IconAndName>,
     isOn: Boolean,
-    showList: Boolean,
     setOn: (Boolean) -> Unit,
     onItemSelected: (String) -> Unit,
     onBack: () -> Unit,
@@ -114,66 +112,63 @@ private fun AppDisguiseSettings(
                 }
             }
 
-            Crossfade(showList) { show ->
-                if (show) {
-                    BoxWithConstraints {
-                        // Calculate the number of columns based on the min width we want each column
-                        // to be.
-                        val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
-                        val numColumn =
-                            (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
-                        val numRows = ceil(items.size.toFloat() / numColumn).toInt()
+            BoxWithConstraints {
+                // Calculate the number of columns based on the min width we want each column
+                // to be.
+                val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
+                val numColumn =
+                    (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
+                val numRows = ceil(items.size.toFloat() / numColumn).toInt()
 
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing),
+                ) {
+                    Text(
+                        stringResource(R.string.appIconAndNameSelectionTitle),
+                        style = LocalType.current.large,
+                        color = LocalColors.current.textSecondary
+                    )
+
+                    Cell {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing),
+                            modifier = Modifier.padding(LocalDimensions.current.xsSpacing),
+                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
                         ) {
-                            Text(
-                                stringResource(R.string.appIconAndNameSelectionTitle),
-                                style = LocalType.current.large,
-                                color = LocalColors.current.textSecondary
-                            )
-
-                            Cell {
-                                Column(
-                                    modifier = Modifier.padding(LocalDimensions.current.xsSpacing),
-                                    verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+                            repeat(numRows) { row ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
                                 ) {
-                                    repeat(numRows) { row ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.Center,
-                                        ) {
-                                            for (index in row * numColumn..<min(
-                                                numColumn * (row + 1),
-                                                items.size
-                                            )) {
-                                                val item = items[index]
-                                                IconItem(
-                                                    icon = item.icon,
-                                                    name = item.name,
-                                                    selected = item.selected,
-                                                    onSelected = { onItemSelected(item.id) },
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            }
-                                        }
+                                    for (index in row * numColumn..<min(
+                                        numColumn * (row + 1),
+                                        items.size
+                                    )) {
+                                        val item = items[index]
+                                        IconItem(
+                                            icon = item.icon,
+                                            name = item.name,
+                                            selected = item.selected,
+                                            onSelected = { onItemSelected(item.id) },
+                                            modifier = Modifier.weight(1f)
+                                        )
                                     }
                                 }
                             }
-
-                            Text(
-                                stringResource(R.string.appIconAndNameDescription),
-                                modifier = Modifier.fillMaxWidth()
-                                                                .padding(top = LocalDimensions.current.smallSpacing),
-                                style = LocalType.current.base,
-                                color = LocalColors.current.textSecondary,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
+
+                    Text(
+                        stringResource(R.string.appIconAndNameDescription),
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = LocalDimensions.current.smallSpacing),
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
+
         }
     }
 }
@@ -279,7 +274,6 @@ private fun AppDisguiseSettingsPreview(
                 ),
             ),
             isOn = true,
-            showList = true,
             setOn = { },
             onItemSelected = { },
             onBack = { },
