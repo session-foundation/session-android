@@ -117,8 +117,11 @@ private fun AppDisguiseSettings(
             Crossfade(showList) { show ->
                 if (show) {
                     BoxWithConstraints {
+                        // Calculate the number of columns based on the min width we want each column
+                        // to be.
+                        val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
                         val numColumn =
-                            (constraints.maxWidth / LocalDensity.current.run { 95.dp.toPx() }).toInt()
+                            (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
                         val numRows = ceil(items.size.toFloat() / numColumn).toInt()
 
                         Column(
@@ -166,6 +169,7 @@ private fun AppDisguiseSettings(
     }
 }
 
+private const val ICON_ITEM_SIZE_DP = 90
 
 @Composable
 private fun IconItem(
@@ -198,7 +202,7 @@ private fun IconItem(
         Image(
             BitmapPainter(bitmap),
             modifier = Modifier
-                .size(90.dp)
+                .size(ICON_ITEM_SIZE_DP.dp)
                 .drawWithContent {
                     drawContent()
                     if (selected) {
