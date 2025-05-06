@@ -164,7 +164,8 @@ private fun AppDisguiseSettings(
 
                             Text(
                                 stringResource(R.string.appIconAndNameDescription),
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth()
+                                                                .padding(top = LocalDimensions.current.smallSpacing),
                                 style = LocalType.current.base,
                                 color = LocalColors.current.textSecondary,
                                 textAlign = TextAlign.Center
