@@ -22,14 +22,15 @@ class AppDisguiseSettingsViewModel @Inject constructor(
     // The contents of the selection items
     val alternativeIcons: StateFlow<List<IconAndName>> = combine(
         manager.allAppAliases,
-        manager.selectedAppAliasName
-    ) { aliases, selected ->
+        manager.selectedAppAliasName,
+        manager.isOn
+    ) { aliases, selected, on ->
         aliases.mapNotNull { alias ->
             IconAndName(
                 id = alias.activityAliasName,
                 icon = alias.appIcon ?: return@mapNotNull null,
                 name = alias.appName ?: return@mapNotNull null,
-                selected = alias.activityAliasName == selected
+                selected = on && alias.activityAliasName == selected
             )
         }
     }.stateIn(
