@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.preferences.appearance
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.SparseArray
@@ -129,6 +130,10 @@ class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickLis
             // system settings toggle
             systemSettingsSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.setNewFollowSystemSettings(isChecked) }
             systemSettingsSwitchHolder.setOnClickListener { systemSettingsSwitch.toggle() }
+
+            systemSettingsAppIcon.setOnClickListener {
+                startActivity(Intent(this@AppearanceSettingsActivity, AppDisguiseSettingsActivity::class.java))
+            }
         }
 
         lifecycleScope.launchWhenResumed {

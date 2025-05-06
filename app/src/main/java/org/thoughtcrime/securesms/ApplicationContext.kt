@@ -79,6 +79,7 @@ import org.thoughtcrime.securesms.dependencies.AppComponent
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
+import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
@@ -164,6 +165,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var removeGroupMemberHandler: RemoveGroupMemberHandler // Exists here only to start upon app starts
     @Inject lateinit var snodeClock: SnodeClock
     @Inject lateinit var migrationManager: DatabaseMigrationManager
+    @Inject lateinit var appDisguiseManager: AppDisguiseManager
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
