@@ -126,7 +126,7 @@ private fun AppDisguiseSettings(
 
                         Column(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing),
                         ) {
                             Text(
                                 stringResource(R.string.appIconAndNameSelectionTitle),
@@ -161,6 +161,14 @@ private fun AppDisguiseSettings(
                                     }
                                 }
                             }
+
+                            Text(
+                                stringResource(R.string.appIconAndNameDescription),
+                                modifier = Modifier.fillMaxWidth(),
+                                style = LocalType.current.base,
+                                color = LocalColors.current.textSecondary,
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 }
@@ -218,7 +226,7 @@ private fun IconItem(
             stringResource(name),
             textAlign = TextAlign.Center,
             style = LocalType.current.large,
-            color = textColor
+            color = textColor,
         )
     }
 }
