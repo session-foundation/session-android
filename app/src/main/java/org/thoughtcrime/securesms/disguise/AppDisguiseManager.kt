@@ -28,6 +28,9 @@ import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manage the app disguise feature, where you can observe the list of app aliases and selected alias.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class AppDisguiseManager @Inject constructor(
@@ -67,6 +70,9 @@ class AppDisguiseManager @Inject constructor(
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
+    /**
+     * The currently selected app alias name. This doesn't equate to if the app disguise is on or off.
+     */
     val selectedAppAliasName: StateFlow<String?> = prefChangeNotification
             .mapLatest { prefs.selectedActivityAliasName }
             .stateIn(
@@ -75,6 +81,9 @@ class AppDisguiseManager @Inject constructor(
                 initialValue = prefs.selectedActivityAliasName
             )
 
+    /**
+     * Whether the app disguise is on or off.
+     */
     val isOn: StateFlow<Boolean> = prefChangeNotification
             .mapLatest { prefs.isAppDiguiseOn }
             .stateIn(
