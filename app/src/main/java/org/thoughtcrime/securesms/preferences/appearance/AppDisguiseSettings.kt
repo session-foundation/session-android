@@ -4,6 +4,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -24,7 +25,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
@@ -194,10 +194,9 @@ private fun IconItem(
     }
 
     val textColor = LocalColors.current.text
-    val borderColor = LocalColors.current.textSecondary
+    val selectedBorderColor = LocalColors.current.textSecondary
     val density = LocalDensity.current
     val borderStroke = Stroke(density.run { 2.dp.toPx() })
-    val cornerRadius = CornerRadius(density.run { 4.dp.toPx() })
 
     Column(
         modifier = modifier
@@ -214,11 +213,20 @@ private fun IconItem(
                     if (selected) {
                         val scaleX = size.width / path.getBounds().width
                         scale(scaleX, scaleX, pivot = Offset.Zero) {
-                            drawPath(path, color = borderColor, style = borderStroke)
+                            drawPath(
+                                path = path,
+                                color = selectedBorderColor,
+                                style = borderStroke
+                            )
                         }
                     }
                 }
-                .selectable(selected, onClick = onSelected)
+                .selectable(
+                    selected = selected,
+                    onClick = onSelected,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                )
                 .padding(4.dp),
             contentDescription = null
         )
