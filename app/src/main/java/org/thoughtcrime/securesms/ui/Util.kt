@@ -13,10 +13,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.shouldShowRationale
 import com.squareup.phrase.Phrase
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
@@ -50,11 +46,6 @@ fun ComposeView.setThemedContent(content: @Composable () -> Unit) = setContent {
     SessionMaterialTheme {
         content()
     }
-}
-
-@ExperimentalPermissionsApi
-fun PermissionState.isPermanentlyDenied(): Boolean {
-    return !status.shouldShowRationale && !status.isGranted
 }
 
 fun Context.findActivity(): Activity {

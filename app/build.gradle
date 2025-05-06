@@ -1,13 +1,15 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'org.jetbrains.kotlin.plugin.serialization'
-    id 'org.jetbrains.kotlin.plugin.compose'
-    id 'com.google.devtools.ksp'
-    id 'com.google.dagger.hilt.android'
-    id 'kotlin-parcelize'
-    id 'kotlinx-serialization'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.kotlin.plugin.compose)
+    alias(libs.plugins.kotlin.plugin.parcelize)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.dependency.analysis)
 }
+
+def huaweiEnabled = project.properties['huawei'] != null
 
 apply plugin: 'witness'
 
@@ -58,7 +60,7 @@ android {
 
     splits {
         abi {
-            enable !project.hasProperty('huawei') // huawei builds do not need the split variants
+            enable !huaweiEnabled // huawei builds do not need the split variants
             reset()
             include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             universalApk true
@@ -139,12 +141,15 @@ android {
                 keyPassword SESSION_KEY_PASSWORD
             }
         }
-        huawei {
-            if (project.hasProperty('SESSION_HUAWEI_STORE_FILE')) {
-                storeFile file(SESSION_HUAWEI_STORE_FILE)
-                storePassword SESSION_HUAWEI_STORE_PASSWORD
-                keyAlias SESSION_HUAWEI_KEY_ALIAS
-                keyPassword SESSION_HUAWEI_KEY_PASSWORD
+
+        if (huaweiEnabled) {
+            huawei {
+                if (project.hasProperty('SESSION_HUAWEI_STORE_FILE')) {
+                    storeFile file(SESSION_HUAWEI_STORE_FILE)
+                    storePassword SESSION_HUAWEI_STORE_PASSWORD
+                    keyAlias SESSION_HUAWEI_KEY_ALIAS
+                    keyPassword SESSION_HUAWEI_KEY_PASSWORD
+                }
             }
         }
 
@@ -172,14 +177,16 @@ android {
             signingConfig signingConfigs.play
         }
 
-        huawei {
-            dimension "distribution"
-            ext.websiteUpdateUrl = "null"
-            buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
-            buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI"
-            buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
-            buildConfigField 'String', 'PUSH_KEY_SUFFIX', '\"_HUAWEI\"'
-            signingConfig signingConfigs.huawei
+        if (huaweiEnabled) {
+            huawei {
+                dimension "distribution"
+                ext.websiteUpdateUrl = "null"
+                buildConfigField "boolean", "PLAY_STORE_DISABLED", "true"
+                buildConfigField "org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI"
+                buildConfigField "String", "NOPLAY_UPDATE_URL", "$ext.websiteUpdateUrl"
+                buildConfigField 'String', 'PUSH_KEY_SUFFIX', '\"_HUAWEI\"'
+                signingConfig signingConfigs.huawei
+            }
         }
 
         website {
@@ -212,24 +219,9 @@ android {
         }
     }
 
-    def huaweiEnabled = project.properties['huawei'] != null
     lint {
         abortOnError true
         baseline file('lint-baseline.xml')
-    }
-
-    applicationVariants.configureEach { variant ->
-        if (variant.flavorName == 'huawei') {
-            variant.getPreBuildProvider().configure { task ->
-                task.doFirst {
-                    if (!huaweiEnabled) {
-                        def message = 'Huawei is not enabled. Please add -Phuawei command line arg. See BUILDING.md'
-                        logger.error(message)
-                        throw new GradleException(message)
-                    }
-                }
-            }
-        }
     }
 
     tasks.register('testPlayDebugUnitTestCoverageReport', JacocoReport) {
@@ -267,7 +259,7 @@ apply {
     from("ipToCode.gradle.kts")
 }
 
-preBuild.dependsOn ipToCode
+//preBuild.dependsOn ipToCode
 
 dependencies {
     implementation project(':content-descriptions')
@@ -283,25 +275,15 @@ dependencies {
     implementation libs.androidx.recyclerview
     implementation libs.material
     implementation libs.flexbox
-    implementation libs.androidx.legacy.support.v13
     implementation libs.androidx.cardview
-    implementation libs.androidx.preference.ktx
     implementation libs.androidx.legacy.preference.v14
-    implementation libs.androidx.gridlayout
     implementation libs.androidx.exifinterface
     implementation libs.androidx.constraintlayout
-    implementation libs.androidx.lifecycle.common.java8
-    implementation libs.androidx.lifecycle.runtime.ktx
-    implementation libs.androidx.lifecycle.livedata.ktx
     implementation libs.androidx.lifecycle.process
     implementation libs.androidx.lifecycle.viewmodel.compose
-    implementation libs.androidx.lifecycle.extensions
-    implementation libs.androidx.paging.runtime.ktx
-    implementation libs.androidx.activity.ktx
     implementation libs.androidx.activity.compose
     implementation libs.androidx.fragment.ktx
     implementation libs.androidx.core.ktx
-    implementation libs.androidx.work.runtime.ktx
 
     playImplementation (libs.firebase.messaging) {
         exclude group: 'com.google.firebase', module: 'firebase-core'
@@ -309,7 +291,7 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-measurement-connector'
     }
 
-    if (project.hasProperty('huawei')) huaweiImplementation libs.huawei.push
+    if (huaweiEnabled) huaweiImplementation libs.huawei.push
 
     implementation libs.androidx.media3.exoplayer
     implementation libs.androidx.media3.ui
@@ -317,11 +299,9 @@ dependencies {
     implementation libs.aesgcmprovider
     implementation libs.android
     implementation libs.shortcutbadger
-    implementation libs.httpclient.android
     implementation libs.photoview
     implementation libs.glide
     implementation libs.compose
-    implementation libs.roundedimageview
     implementation libs.eventbus
     implementation libs.android.image.cropper
     implementation (libs.subsampling.scale.image.view) {
@@ -340,7 +320,6 @@ dependencies {
     implementation project(":libsignal")
     implementation project(":libsession")
     implementation libs.kotlinx.serialization.json
-    implementation libs.curve25519.java
     implementation project(":liblazysodium")
     implementation libs.protobuf.java
     implementation libs.jackson.databind
@@ -350,11 +329,9 @@ dependencies {
     implementation libs.kotlinx.coroutines.android
     implementation libs.kovenant
     implementation libs.kovenant.android
-    implementation libs.rxbinding
     implementation libs.opencsv
     testImplementation libs.junit
     testImplementation libs.assertj.core
-    testImplementation libs.mockito.inline
     testImplementation libs.mockito.kotlin
     androidTestImplementation libs.mockito.android
     androidTestImplementation libs.mockito.kotlin
@@ -400,7 +377,6 @@ dependencies {
     implementation libs.androidx.compose.ui
     implementation libs.androidx.compose.animation
     implementation libs.androidx.compose.ui.tooling
-    implementation libs.androidx.compose.runtime.livedata
     implementation libs.androidx.compose.foundation.layout
     implementation libs.androidx.compose.material3
 
@@ -408,11 +384,8 @@ dependencies {
     debugImplementation libs.androidx.compose.ui.test.manifest
 
     // Navigation
-    implementation libs.androidx.navigation.fragment.ktx
-    implementation libs.androidx.navigation.ui.ktx
     implementation libs.androidx.navigation.compose
 
-    implementation libs.accompanist.themeadapter.appcompat
     implementation libs.accompanist.permissions
     implementation libs.accompanist.drawablepainter
 
