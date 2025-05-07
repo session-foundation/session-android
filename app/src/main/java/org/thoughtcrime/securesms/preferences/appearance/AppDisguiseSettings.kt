@@ -3,8 +3,8 @@ package org.thoughtcrime.securesms.preferences.appearance
 import android.graphics.drawable.AdaptiveIconDrawable
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -18,7 +18,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,9 +25,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -62,7 +63,6 @@ fun AppDisguiseSettingsScreen(
         onBack = onBack,
         setOn = viewModel::setOn,
         isOn = viewModel.isOn.collectAsState().value,
-        showList = viewModel.showAlternativeIconList.collectAsState().value,
         items = viewModel.alternativeIcons.collectAsState().value,
         onItemSelected = viewModel::onIconSelected
     )
@@ -73,7 +73,6 @@ fun AppDisguiseSettingsScreen(
 private fun AppDisguiseSettings(
     items: List<AppDisguiseSettingsViewModel.IconAndName>,
     isOn: Boolean,
-    showList: Boolean,
     setOn: (Boolean) -> Unit,
     onItemSelected: (String) -> Unit,
     onBack: () -> Unit,
@@ -114,66 +113,63 @@ private fun AppDisguiseSettings(
                 }
             }
 
-            Crossfade(showList) { show ->
-                if (show) {
-                    BoxWithConstraints {
-                        // Calculate the number of columns based on the min width we want each column
-                        // to be.
-                        val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
-                        val numColumn =
-                            (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
-                        val numRows = ceil(items.size.toFloat() / numColumn).toInt()
+            BoxWithConstraints {
+                // Calculate the number of columns based on the min width we want each column
+                // to be.
+                val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
+                val numColumn =
+                    (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
+                val numRows = ceil(items.size.toFloat() / numColumn).toInt()
 
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing),
+                ) {
+                    Text(
+                        stringResource(R.string.appIconAndNameSelectionTitle),
+                        style = LocalType.current.large,
+                        color = LocalColors.current.textSecondary
+                    )
+
+                    Cell {
                         Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing),
+                            modifier = Modifier.padding(LocalDimensions.current.xsSpacing),
+                            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
                         ) {
-                            Text(
-                                stringResource(R.string.appIconAndNameSelectionTitle),
-                                style = LocalType.current.large,
-                                color = LocalColors.current.textSecondary
-                            )
-
-                            Cell {
-                                Column(
-                                    modifier = Modifier.padding(LocalDimensions.current.xsSpacing),
-                                    verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+                            repeat(numRows) { row ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
                                 ) {
-                                    repeat(numRows) { row ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.Center,
-                                        ) {
-                                            for (index in row * numColumn..<min(
-                                                numColumn * (row + 1),
-                                                items.size
-                                            )) {
-                                                val item = items[index]
-                                                IconItem(
-                                                    icon = item.icon,
-                                                    name = item.name,
-                                                    selected = item.selected,
-                                                    onSelected = { onItemSelected(item.id) },
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            }
-                                        }
+                                    for (index in row * numColumn..<min(
+                                        numColumn * (row + 1),
+                                        items.size
+                                    )) {
+                                        val item = items[index]
+                                        IconItem(
+                                            icon = item.icon,
+                                            name = item.name,
+                                            selected = item.selected,
+                                            onSelected = { onItemSelected(item.id) },
+                                            modifier = Modifier.weight(1f)
+                                        )
                                     }
                                 }
                             }
-
-                            Text(
-                                stringResource(R.string.appIconAndNameDescription),
-                                modifier = Modifier.fillMaxWidth()
-                                                                .padding(top = LocalDimensions.current.smallSpacing),
-                                style = LocalType.current.base,
-                                color = LocalColors.current.textSecondary,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
+
+                    Text(
+                        stringResource(R.string.appIconAndNameDescription),
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = LocalDimensions.current.smallSpacing),
+                        style = LocalType.current.base,
+                        color = LocalColors.current.textSecondary,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
+
         }
     }
 }
@@ -191,16 +187,16 @@ private fun IconItem(
     val resources = LocalContext.current.resources
     val theme = LocalContext.current.theme
 
-    val bitmap = remember(icon, resources, theme) {
-        (ResourcesCompat.getDrawable(resources, icon, theme) as AdaptiveIconDrawable).toBitmap()
-            .asImageBitmap()
+    val (path, bitmap) = remember(icon, resources, theme) {
+        val drawable =
+            ResourcesCompat.getDrawable(resources, icon, theme) as AdaptiveIconDrawable
+        drawable.iconMask.asComposePath() to drawable.toBitmap().asImageBitmap()
     }
 
     val textColor = LocalColors.current.text
-    val borderColor = LocalColors.current.textSecondary
+    val selectedBorderColor = LocalColors.current.textSecondary
     val density = LocalDensity.current
     val borderStroke = Stroke(density.run { 2.dp.toPx() })
-    val cornerRadius = CornerRadius(density.run { 4.dp.toPx() })
 
     Column(
         modifier = modifier
@@ -215,10 +211,22 @@ private fun IconItem(
                 .drawWithContent {
                     drawContent()
                     if (selected) {
-                        drawRoundRect(borderColor, style = borderStroke, cornerRadius = cornerRadius)
+                        val scaleX = size.width / path.getBounds().width
+                        scale(scaleX, scaleX, pivot = Offset.Zero) {
+                            drawPath(
+                                path = path,
+                                color = selectedBorderColor,
+                                style = borderStroke
+                            )
+                        }
                     }
                 }
-                .selectable(selected, onClick = onSelected)
+                .selectable(
+                    selected = selected,
+                    onClick = onSelected,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                )
                 .padding(4.dp),
             contentDescription = null
         )
@@ -279,7 +287,6 @@ private fun AppDisguiseSettingsPreview(
                 ),
             ),
             isOn = true,
-            showList = true,
             setOn = { },
             onItemSelected = { },
             onBack = { },

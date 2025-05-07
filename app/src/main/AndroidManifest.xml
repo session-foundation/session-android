@@ -487,9 +487,23 @@
 
         <!-- Alternative icons -->
         <activity-alias
-            android:name=".Weather"
-            android:label="@string/appNameWeather"
-            android:icon="@mipmap/ic_launcher_weather"
+            android:name=".Calculator"
+            android:label="@string/appNameCalculator"
+            android:icon="@mipmap/ic_launcher_calculator"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Meetings"
+            android:label="@string/appNameMeetingSE"
+            android:icon="@mipmap/ic_launcher_meetings"
             android:enabled="false"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
             android:exported="true">
@@ -501,9 +515,9 @@
         </activity-alias>
 
         <activity-alias
-            android:name=".Stocks"
-            android:label="@string/appNameStocks"
-            android:icon="@mipmap/ic_launcher_stocks"
+            android:name=".Notes"
+            android:label="@string/appNameNotes"
+            android:icon="@mipmap/ic_launcher_notes"
             android:enabled="false"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
             android:exported="true">
@@ -529,9 +543,9 @@
         </activity-alias>
 
         <activity-alias
-            android:name=".Notes"
-            android:label="@string/appNameNotes"
-            android:icon="@mipmap/ic_launcher_notes"
+            android:name=".Stocks"
+            android:label="@string/appNameStocks"
+            android:icon="@mipmap/ic_launcher_stocks"
             android:enabled="false"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
             android:exported="true">
@@ -543,9 +557,9 @@
         </activity-alias>
 
         <activity-alias
-            android:name=".Meetings"
-            android:label="@string/appNameMeetingSE"
-            android:icon="@mipmap/ic_launcher_meetings"
+            android:name=".Weather"
+            android:label="@string/appNameWeather"
+            android:icon="@mipmap/ic_launcher_weather"
             android:enabled="false"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
             android:exported="true">
@@ -555,21 +569,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity-alias>
-
-        <activity-alias
-            android:name=".Calculator"
-            android:label="@string/appNameCalculator"
-            android:icon="@mipmap/ic_launcher_calculator"
-            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
-            android:enabled="false"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity-alias>
-
     </application>
 
 </manifest>

@@ -10,7 +10,8 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/medium_spacing">
 
         <TextView
             android:textColor="?android:textColorTertiary"
@@ -348,13 +349,15 @@
             android:layout_margin="@dimen/medium_spacing"
             android:layout_marginBottom="@dimen/massive_spacing"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:minHeight="50dp">
             <LinearLayout
                 android:id="@+id/system_settings_switch_holder"
                 android:background="?selectableItemBackground"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:addStatesFromChildren="true"
+                android:layout_gravity="center_vertical"
                 android:gravity="center">
                 <TextView
                     android:textColor="?android:textColorPrimary"
@@ -392,7 +395,8 @@
             android:layout_margin="@dimen/medium_spacing"
             android:layout_marginBottom="@dimen/massive_spacing"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:minHeight="50dp">
 
             <TextView
                 android:textColor="?android:textColorPrimary"
@@ -402,6 +406,7 @@
                 android:paddingVertical="@dimen/small_spacing"
                 app:drawableEndCompat="@drawable/ic_chevron_right"
                 app:drawableTint="?android:textColorPrimary"
+                android:layout_gravity="center_vertical"
                 android:text="@string/appIconSelect"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
