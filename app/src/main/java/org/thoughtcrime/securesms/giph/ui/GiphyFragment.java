@@ -36,7 +36,6 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
   private RecyclerView                     recyclerView;
   private View                             loadingProgress;
   private TextView                         noResultsView;
-  private GiphyAdapter.OnItemClickListener listener;
 
   protected String searchString;
 
@@ -90,10 +89,6 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
                       : new LinearLayoutManager(getActivity());
   }
 
-  public void setClickListener(GiphyAdapter.OnItemClickListener listener) {
-    this.listener = listener;
-  }
-
   public void setSearchString(@Nullable String searchString) {
     this.searchString = searchString;
     this.noResultsView.setVisibility(View.GONE);
@@ -102,7 +97,9 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
 
   @Override
   public void onClick(GiphyAdapter.GiphyViewHolder viewHolder) {
-    if (listener != null) listener.onClick(viewHolder);
+    if (getActivity() instanceof GiphyAdapter.OnItemClickListener) {
+      ((GiphyAdapter.OnItemClickListener) getActivity()).onClick(viewHolder);
+    }
   }
 
   private class GiphyScrollListener extends InfiniteScrollListener {
