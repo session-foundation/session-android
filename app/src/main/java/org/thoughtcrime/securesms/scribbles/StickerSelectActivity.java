@@ -18,20 +18,20 @@ package org.thoughtcrime.securesms.scribbles;
 
 import android.content.Intent;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
-import com.google.android.material.tabs.TabLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentStatePagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 import android.view.MenuItem;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.google.android.material.tabs.TabLayoutMediator;
+
 import network.loki.messenger.R;
+import network.loki.messenger.databinding.ScribbleSelectStickerActivityBinding;
 
 public class StickerSelectActivity extends FragmentActivity implements StickerSelectFragment.StickerSelectionListener {
-
-  private static final String TAG = StickerSelectActivity.class.getSimpleName();
 
   public static final String EXTRA_STICKER_FILE = "extra_sticker_file";
 
@@ -46,17 +46,19 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.scribble_select_sticker_activity);
 
-    ViewPager viewPager = (ViewPager) findViewById(R.id.camera_sticker_pager);
-    viewPager.setAdapter(new StickerPagerAdapter(getSupportFragmentManager(), this));
+    final ScribbleSelectStickerActivityBinding binding = ScribbleSelectStickerActivityBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
 
-    TabLayout tabLayout = (TabLayout) findViewById(R.id.camera_sticker_tabs);
-    tabLayout.setupWithViewPager(viewPager);
+    binding.cameraStickerPager.setAdapter(new StickerPagerAdapter(this, this));
 
-    for (int i=0;i<tabLayout.getTabCount();i++) {
-      tabLayout.getTabAt(i).setIcon(TAB_TITLES[i]);
-    }
+    new TabLayoutMediator(
+            binding.cameraStickerTabs,
+            binding.cameraStickerPager,
+            (tab, position) -> {
+                tab.setIcon(TAB_TITLES[position]);
+            }
+    ).attach();
   }
 
   @Override
@@ -76,12 +78,12 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
     finish();
   }
 
-  static class StickerPagerAdapter extends FragmentStatePagerAdapter {
+  static class StickerPagerAdapter extends FragmentStateAdapter {
 
     private final Fragment[] fragments;
 
-    StickerPagerAdapter(FragmentManager fm, StickerSelectFragment.StickerSelectionListener listener) {
-      super(fm);
+    StickerPagerAdapter(FragmentActivity activity, StickerSelectFragment.StickerSelectionListener listener) {
+      super(activity);
 
       this.fragments = new Fragment[] {
           StickerSelectFragment.newInstance("stickers/emoticons"),
@@ -96,13 +98,14 @@ public class StickerSelectActivity extends FragmentActivity implements StickerSe
       }
     }
 
+    @NonNull
     @Override
-    public Fragment getItem(int position) {
+    public Fragment createFragment(int position) {
       return fragments[position];
     }
 
     @Override
-    public int getCount() {
+    public int getItemCount() {
       return fragments.length;
     }
   }
