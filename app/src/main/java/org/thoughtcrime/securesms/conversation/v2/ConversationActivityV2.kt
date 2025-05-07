@@ -40,7 +40,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
@@ -190,6 +195,7 @@ import org.thoughtcrime.securesms.util.FilenameUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.PaddedImageSpan
 import org.thoughtcrime.securesms.util.SaveAttachmentTask
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.drawToBitmap
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -244,6 +250,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
+
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
 
     private val screenshotObserver by lazy {
         ScreenshotObserver(this, Handler(Looper.getMainLooper())) {
@@ -752,6 +761,36 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .lastSeenMessageId
                 .collectLatest { adapter.lastSentMessageId = it }
         }
+
+        // Apply insets on the recycler view or input bar depending on their visibility
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
+            val systemBarsInsets =
+                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+
+            val viewToApplyPaddings: View
+            val viewToResetPaddings: View
+
+            if (binding.inputBar.isGone) {
+                viewToApplyPaddings = binding.conversationRecyclerView
+                viewToResetPaddings = binding.inputBar
+            } else {
+                viewToApplyPaddings = binding.inputBar
+                viewToResetPaddings = binding.conversationRecyclerView
+            }
+
+            // Update view padding to account for system bars
+            viewToApplyPaddings.updatePadding(
+                left = systemBarsInsets.left,
+                top = systemBarsInsets.top,
+                right = systemBarsInsets.right,
+                bottom = systemBarsInsets.bottom
+            )
+            viewToResetPaddings.updatePadding(0, 0, 0, 0)
+
+            windowInsets.inset(systemBarsInsets)
+        }
+
+        binding.root.requestApplyInsets()
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
@@ -786,6 +825,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // called from onCreate
     private fun setUpToolBar() {
         setSupportActionBar(binding.toolbar)
+
+        binding.toolbar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
+
         val actionBar = supportActionBar ?: return
         val recipient = viewModel.recipient ?: return
         actionBar.title = ""
@@ -1028,6 +1070,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         isVisible = state.showInput
                         allowAttachMultimediaButtons = state.enableAttachMediaControls
                     }
+
+                    binding.root.requestApplyInsets()
 
                     // show or hide loading indicator
                     binding.loader.isVisible = state.showLoader
@@ -2555,6 +2599,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0)
         binding.inputBar.visibility = View.INVISIBLE
+        binding.root.requestApplyInsets()
 
     }
 
@@ -2562,6 +2607,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchClosed()
         binding.searchBottomBar.visibility = View.GONE
         binding.inputBar.visibility = View.VISIBLE
+        binding.root.requestApplyInsets()
         adapter.onSearchQueryUpdated(null)
         invalidateOptionsMenu()
     }

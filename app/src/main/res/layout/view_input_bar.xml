@@ -4,8 +4,7 @@
     android:id="@+id/inputBarLinearLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="?input_bar_background">
+    android:orientation="vertical">
 
     <View
         android:layout_width="match_parent"
