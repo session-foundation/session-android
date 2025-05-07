@@ -111,11 +111,8 @@ android {
         String sharedTestDir = 'src/sharedTest/java'
         test.java.srcDirs += sharedTestDir
         androidTest.java.srcDirs += sharedTestDir
-        main {
-            assets.srcDirs += "$buildDir/generated/binary"
-        }
+
         test {
-            resources.srcDirs += "$buildDir/generated/binary"
             resources.srcDirs += "$projectDir/src/main/assets"
         }
     }
@@ -255,11 +252,7 @@ android {
     }
 }
 
-apply {
-    from("ipToCode.gradle.kts")
-}
 
-//preBuild.dependsOn ipToCode
 
 dependencies {
     implementation project(':content-descriptions')
@@ -416,4 +409,13 @@ def autoResConfig() {
          .findAll { matcher -> matcher.find() }
          .collect { matcher -> matcher.group(1) }
          .sort()
+}
+
+apply from: file('ipToCode.gradle.kts')
+
+
+androidComponents {
+    onVariants {
+
+    }
 }

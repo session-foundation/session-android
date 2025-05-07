@@ -2,20 +2,20 @@ import java.io.File
 import java.io.DataOutputStream
 import java.io.FileOutputStream
 
-task("ipToCode") {
-    val inputFile = File("${projectDir}/geolite2_country_blocks_ipv4.csv")
+abstract class GenerateCountrBlocksTask : DefaultTask() {
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
 
-    val outputDir = "${buildDir}/generated/binary"
-    val outputFile = File(outputDir, "geolite2_country_blocks_ipv4.bin").apply { parentFile.mkdirs() }
+    @TaskAction
+    fun generate() {
+        val inputFile = File(projectDir, "geolite2_country_blocks_ipv4.csv")
+        check(inputFile.exists()) { "$inputFile does not exist and it is required" }
 
-    outputs.file(outputFile)
+        val outputDir = outputDir.get().asFile
 
-    doLast {
+        outputDir.mkdirs()
 
-        // Ensure the input file exists
-        if (!inputFile.exists()) {
-            throw IllegalArgumentException("Input file does not exist: ${inputFile.absolutePath}")
-        }
+        val outputFile = File(outputDir, "geolite2_country_blocks_ipv4.bin")
 
         // Create a DataOutputStream to write binary data
         DataOutputStream(FileOutputStream(outputFile)).use { out ->
