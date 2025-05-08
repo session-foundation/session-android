@@ -144,72 +144,72 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private var conversationListHandler: Handler? = null
     lateinit var persistentLogger: PersistentLogger
 
-    @Inject lateinit var workerFactory: HiltWorkerFactory
-    @Inject lateinit var lokiAPIDatabase: LokiAPIDatabase
-    @Inject lateinit var storage: Storage
-    @Inject lateinit var device: Device
-    @Inject lateinit var messageDataProvider: MessageDataProvider
-    @Inject lateinit var textSecurePreferences: TextSecurePreferences
-    @Inject lateinit var configFactory: ConfigFactory
-    @Inject lateinit var versionDataFetcher: VersionDataFetcher
-    @Inject lateinit var pushRegistrationHandler: PushRegistrationHandler
-    @Inject lateinit var tokenFetcher: TokenFetcher
-    @Inject lateinit var groupManagerV2: GroupManagerV2
-    @Inject lateinit var profileManager: ProfileManagerProtocol
-    @Inject lateinit var callMessageProcessor: CallMessageProcessor
+    @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
+    @Inject lateinit var lokiAPIDatabase: Lazy<LokiAPIDatabase>
+    @Inject lateinit var storage: Lazy<Storage>
+    @Inject lateinit var device: Lazy<Device>
+    @Inject lateinit var messageDataProvider: Lazy<MessageDataProvider>
+    @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
+    @Inject lateinit var configFactory: Lazy<ConfigFactory>
+    @Inject lateinit var versionDataFetcher: Lazy<VersionDataFetcher>
+    @Inject lateinit var pushRegistrationHandler: Lazy<PushRegistrationHandler>
+    @Inject lateinit var tokenFetcher: Lazy<TokenFetcher>
+    @Inject lateinit var groupManagerV2: Lazy<GroupManagerV2>
+    @Inject lateinit var profileManager: Lazy<ProfileManagerProtocol>
+    @Inject lateinit var callMessageProcessor: Lazy<CallMessageProcessor>
     private var messagingModuleConfiguration: MessagingModuleConfiguration? = null
 
-    @Inject lateinit var configUploader: ConfigUploader
-    @Inject lateinit var adminStateSync: AdminStateSync
-    @Inject lateinit var destroyedGroupSync: DestroyedGroupSync
-    @Inject lateinit var removeGroupMemberHandler: RemoveGroupMemberHandler // Exists here only to start upon app starts
-    @Inject lateinit var snodeClock: SnodeClock
-    @Inject lateinit var migrationManager: DatabaseMigrationManager
-    @Inject lateinit var appDisguiseManager: AppDisguiseManager
+    @Inject lateinit var configUploader: Lazy<ConfigUploader>
+    @Inject lateinit var adminStateSync: Lazy<AdminStateSync>
+    @Inject lateinit var destroyedGroupSync: Lazy<DestroyedGroupSync>
+    @Inject lateinit var removeGroupMemberHandler: Lazy<RemoveGroupMemberHandler> // Exists here only to start upon app starts
+    @Inject lateinit var snodeClock: Lazy<SnodeClock>
+    @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
+    @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var expiringMessageManager: ExpiringMessageManager
+    lateinit var expiringMessageManager: Lazy<ExpiringMessageManager>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var typingStatusRepository: TypingStatusRepository
+    lateinit var typingStatusRepository: Lazy<TypingStatusRepository>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var typingStatusSender: TypingStatusSender
+    lateinit var typingStatusSender: Lazy<TypingStatusSender>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
-    lateinit var readReceiptManager: ReadReceiptManager
+    lateinit var readReceiptManager: Lazy<ReadReceiptManager>
 
     @Inject lateinit var messageNotifierLazy: Lazy<MessageNotifier>
-    @Inject lateinit var apiDB: LokiAPIDatabase
-    @Inject lateinit var emojiSearchDb: EmojiSearchDatabase
-    @Inject lateinit var webRtcCallBridge: WebRtcCallBridge
-    @Inject lateinit var legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2
-    @Inject lateinit var legacyGroupDeprecationManager: LegacyGroupDeprecationManager
-    @Inject lateinit var cleanupInvitationHandler: CleanupInvitationHandler
-    @Inject lateinit var usernameUtils: UsernameUtils
+    @Inject lateinit var apiDB: Lazy<LokiAPIDatabase>
+    @Inject lateinit var emojiSearchDb: Lazy<EmojiSearchDatabase>
+    @Inject lateinit var webRtcCallBridge: Lazy<WebRtcCallBridge>
+    @Inject lateinit var legacyClosedGroupPollerV2: Lazy<LegacyClosedGroupPollerV2>
+    @Inject lateinit var legacyGroupDeprecationManager: Lazy<LegacyGroupDeprecationManager>
+    @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
+    @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
 
     @Inject
-    lateinit var backgroundPollManager: BackgroundPollManager // Exists here only to start upon app starts
+    lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var appVisibilityManager: AppVisibilityManager // Exists here only to start upon app starts
+    lateinit var appVisibilityManager: Lazy<AppVisibilityManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var groupPollerManager: GroupPollerManager // Exists here only to start upon app starts
+    lateinit var groupPollerManager: Lazy<GroupPollerManager> // Exists here only to start upon app starts
 
     @Inject
-    lateinit var expiredGroupManager: ExpiredGroupManager // Exists here only to start upon app starts
+    lateinit var expiredGroupManager: Lazy<ExpiredGroupManager> // Exists here only to start upon app starts
 
     @Volatile
     var isAppVisible: Boolean = false
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
-            .setWorkerFactory(workerFactory)
+            .setWorkerFactory(workerFactory.get())
             .build()
 
     override fun getSystemService(name: String): Any? {
@@ -275,18 +275,18 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
         messagingModuleConfiguration = MessagingModuleConfiguration(
             this,
-            storage,
-            device,
-            messageDataProvider,
-            configFactory,
+            storage.get(),
+            device.get(),
+            messageDataProvider.get(),
+            configFactory.get(),
             this,
-            tokenFetcher,
-            groupManagerV2,
-            snodeClock,
-            textSecurePreferences,
-            legacyClosedGroupPollerV2,
-            legacyGroupDeprecationManager,
-            usernameUtils
+            tokenFetcher.get(),
+            groupManagerV2.get(),
+            snodeClock.get(),
+            textSecurePreferences.get(),
+            legacyClosedGroupPollerV2.get(),
+            legacyGroupDeprecationManager.get(),
+            usernameUtils.get()
         )
 
         startKovenant()
@@ -297,11 +297,11 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         configureKovenant()
         broadcaster = Broadcaster(this)
-        val useTestNet = textSecurePreferences.getEnvironment() == Environment.TEST_NET
-        configure(apiDB, broadcaster!!, useTestNet)
+        val useTestNet = textSecurePreferences.get().getEnvironment() == Environment.TEST_NET
+        configure(apiDB.get(), broadcaster!!, useTestNet)
         configure(
-            typingStatusRepository, readReceiptManager, profileManager,
-            messageNotifier, expiringMessageManager
+            typingStatusRepository.get(), readReceiptManager.get(), profileManager.get(),
+            messageNotifier, expiringMessageManager.get()
         )
         initializeWebRtc()
         initializeBlobProvider()
@@ -312,15 +312,15 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         val networkConstraint = NetworkConstraint.Factory(this).create()
         isConnectedToNetwork = { networkConstraint.isMet }
 
-        snodeClock.start()
-        pushRegistrationHandler.run()
-        configUploader.start()
-        destroyedGroupSync.start()
-        adminStateSync.start()
-        cleanupInvitationHandler.start()
+        snodeClock.get().start()
+        pushRegistrationHandler.get().run()
+        configUploader.get().start()
+        destroyedGroupSync.get().start()
+        adminStateSync.get().start()
+        cleanupInvitationHandler.get().start()
 
         // Start our migration process as early as possible so we can show the user a progress UI
-        migrationManager.requestMigration(fromRetry = false)
+        migrationManager.get().requestMigration(fromRetry = false)
 
         // add our shortcut debug menu if we are not in a release build
         if (BuildConfig.BUILD_TYPE != "release") {
@@ -337,6 +337,46 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
             ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
         }
+
+
+        // Once we have done initialisation, access the lazy dependencies so we make sure
+        // they are initialised.
+        workerFactory.get()
+        lokiAPIDatabase.get()
+        storage.get()
+        device.get()
+        messageDataProvider.get()
+        textSecurePreferences.get()
+        configFactory.get()
+        versionDataFetcher.get()
+        pushRegistrationHandler.get()
+        tokenFetcher.get()
+        groupManagerV2.get()
+        profileManager.get()
+        callMessageProcessor.get()
+        configUploader.get()
+        adminStateSync.get()
+        destroyedGroupSync.get()
+        removeGroupMemberHandler.get()
+        snodeClock.get()
+        migrationManager.get()
+        appDisguiseManager.get()
+        expiringMessageManager.get()
+        typingStatusRepository.get()
+        typingStatusSender.get()
+        readReceiptManager.get()
+        messageNotifierLazy.get()
+        apiDB.get()
+        emojiSearchDb.get()
+        webRtcCallBridge.get()
+        legacyClosedGroupPollerV2.get()
+        legacyGroupDeprecationManager.get()
+        cleanupInvitationHandler.get()
+        usernameUtils.get()
+        backgroundPollManager.get()
+        appVisibilityManager.get()
+        groupPollerManager.get()
+        expiredGroupManager.get()
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -346,7 +386,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
         // If the user account hasn't been created or onboarding wasn't finished then don't start
         // the pollers
-        if (textSecurePreferences.getLocalNumber() == null) {
+        if (textSecurePreferences.get().getLocalNumber() == null) {
             return
         }
 
@@ -358,7 +398,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         }
 
         // fetch last version data
-        versionDataFetcher.startTimedVersionCheck()
+        versionDataFetcher.get().startTimedVersionCheck()
     }
 
     override fun onStop(owner: LifecycleOwner) {
@@ -369,14 +409,14 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         if (poller != null) {
             poller!!.stopIfNeeded()
         }
-        legacyClosedGroupPollerV2.stopAll()
-        versionDataFetcher.stopTimedVersionCheck()
+        legacyClosedGroupPollerV2.get().stopAll()
+        versionDataFetcher.get().stopTimedVersionCheck()
     }
 
     override fun onTerminate() {
         stopKovenant() // Loki
         stopPolling()
-        versionDataFetcher.stopTimedVersionCheck()
+        versionDataFetcher.get().stopTimedVersionCheck()
         super.onTerminate()
     }
 
@@ -442,9 +482,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private class ProviderInitializationException : RuntimeException()
 
     private fun setUpPollingIfNeeded() {
-        val userPublicKey = textSecurePreferences.getLocalNumber() ?: return
+        val userPublicKey = textSecurePreferences.get().getLocalNumber() ?: return
         if (poller == null) {
-            poller = Poller(configFactory, storage, lokiAPIDatabase, prefs)
+            poller = Poller(configFactory.get(), storage.get(), lokiAPIDatabase.get(), prefs)
         }
     }
 
@@ -453,7 +493,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         if (poller != null) {
             poller!!.startIfNeeded()
         }
-        legacyClosedGroupPollerV2.start()
+        legacyClosedGroupPollerV2.get().start()
     }
 
     fun retrieveUserProfile() {
@@ -469,7 +509,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     private fun loadEmojiSearchIndexIfNeeded() {
         Executors.newSingleThreadExecutor().execute {
-            if (emojiSearchDb.query("face", 1).isEmpty()) {
+            if (emojiSearchDb.get().query("face", 1).isEmpty()) {
                 try {
                     assets.open("emoji/emoji_search_index.json").use { inputStream ->
                         val searchIndex = Arrays.asList(
@@ -478,7 +518,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
                                 Array<EmojiSearchData>::class.java
                             )
                         )
-                        emojiSearchDb.setSearchIndex(searchIndex)
+                        emojiSearchDb.get().setSearchIndex(searchIndex)
                     }
                 } catch (e: IOException) {
                     Log.e(
