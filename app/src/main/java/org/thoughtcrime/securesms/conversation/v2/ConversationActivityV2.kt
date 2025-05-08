@@ -610,6 +610,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupMentionView()
         setupUiEventsObserver()
+        setupWindowInsets()
+    }
+
+    private fun setupWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val systemBarsInsets =
+                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+
+            binding.bottomSpacer.updateLayoutParams<LayoutParams> {
+                height = systemBarsInsets.bottom
+            }
+
+            windowInsets.inset(systemBarsInsets)
+        }
     }
 
     private fun setupUiEventsObserver() {
@@ -761,36 +775,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .lastSeenMessageId
                 .collectLatest { adapter.lastSentMessageId = it }
         }
-
-        // Apply insets on the recycler view or input bar depending on their visibility
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
-            val systemBarsInsets =
-                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
-
-            val viewToApplyPaddings: View
-            val viewToResetPaddings: View
-
-            if (binding.inputBar.isGone) {
-                viewToApplyPaddings = binding.conversationRecyclerView
-                viewToResetPaddings = binding.inputBar
-            } else {
-                viewToApplyPaddings = binding.inputBar
-                viewToResetPaddings = binding.conversationRecyclerView
-            }
-
-            // Update view padding to account for system bars
-            viewToApplyPaddings.updatePadding(
-                left = systemBarsInsets.left,
-                top = systemBarsInsets.top,
-                right = systemBarsInsets.right,
-                bottom = systemBarsInsets.bottom
-            )
-            viewToResetPaddings.updatePadding(0, 0, 0, 0)
-
-            windowInsets.inset(systemBarsInsets)
-        }
-
-        binding.root.requestApplyInsets()
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
