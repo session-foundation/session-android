@@ -206,6 +206,9 @@ interface TextSecurePreferences {
     var migratedToDisablingKDF: Boolean
     var migratedToMultiPartConfig: Boolean
 
+    var selectedActivityAliasName: String?
+    var isAppDiguiseOn: Boolean
+
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
 
@@ -1013,6 +1016,16 @@ class AppTextSecurePreferences @Inject constructor(
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)
     }
+
+    override var selectedActivityAliasName: String?
+        get() = getStringPreference("selected_activity_alias_name", null)
+        set(value) {
+            setStringPreference("selected_activity_alias_name", value)
+        }
+
+    override var isAppDiguiseOn: Boolean
+        get() = getBooleanPreference("is_app_diguise_on", false)
+        set(value) = setBooleanPreference("is_app_diguise_on", value)
 
     override fun setConfigurationMessageSynced(value: Boolean) {
         setBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, value)

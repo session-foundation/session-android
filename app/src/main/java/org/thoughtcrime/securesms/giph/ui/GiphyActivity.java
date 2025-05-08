@@ -12,11 +12,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.NonTranslatableStringConstants;
@@ -29,6 +32,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 import network.loki.messenger.R;
+import network.loki.messenger.databinding.GiphyActivityBinding;
 
 public class GiphyActivity extends ScreenLockActionBarActivity
     implements GiphyActivityToolbar.OnLayoutChangedListener,
@@ -46,11 +50,14 @@ public class GiphyActivity extends ScreenLockActionBarActivity
   private GiphyStickerFragment stickerFragment;
   private boolean              forMms;
 
+  private GiphyActivityBinding binding;
+
   private GiphyAdapter.GiphyViewHolder finishingImage;
 
   @Override
   public void onCreate(Bundle bundle, boolean ready) {
-    setContentView(R.layout.giphy_activity);
+    binding = GiphyActivityBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
 
     initializeToolbar();
     initializeResources();
@@ -69,19 +76,15 @@ public class GiphyActivity extends ScreenLockActionBarActivity
   }
 
   private void initializeResources() {
-    ViewPager viewPager = ViewUtil.findById(this, R.id.giphy_pager);
-    TabLayout tabLayout = ViewUtil.findById(this, R.id.tab_layout);
-
     this.gifFragment     = new GiphyGifFragment();
     this.stickerFragment = new GiphyStickerFragment();
     this.forMms          = getIntent().getBooleanExtra(EXTRA_IS_MMS, false);
 
-    gifFragment.setClickListener(this);
-    stickerFragment.setClickListener(this);
+    binding.giphyPager.setAdapter(new GiphyFragmentPagerAdapter(this));
 
-    viewPager.setAdapter(new GiphyFragmentPagerAdapter(this, getSupportFragmentManager(),
-                                                       gifFragment, stickerFragment));
-    tabLayout.setupWithViewPager(viewPager);
+    new TabLayoutMediator(binding.tabLayout, binding.giphyPager, (tab, position) -> {
+      tab.setText(position == 0 ? NonTranslatableStringConstants.GIF : getString(R.string.stickers));
+    }).attach();
   }
 
   @Override
@@ -137,38 +140,22 @@ public class GiphyActivity extends ScreenLockActionBarActivity
     }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
   }
 
-  private static class GiphyFragmentPagerAdapter extends FragmentPagerAdapter {
+  private class GiphyFragmentPagerAdapter extends FragmentStateAdapter {
 
-    private final Context              context;
-    private final GiphyGifFragment     gifFragment;
-    private final GiphyStickerFragment stickerFragment;
-
-    private GiphyFragmentPagerAdapter(@NonNull Context context,
-                                      @NonNull FragmentManager fragmentManager,
-                                      @NonNull GiphyGifFragment gifFragment,
-                                      @NonNull GiphyStickerFragment stickerFragment)
+    private GiphyFragmentPagerAdapter(@NonNull FragmentActivity activity)
     {
-      super(fragmentManager);
-      this.context         = context.getApplicationContext();
-      this.gifFragment     = gifFragment;
-      this.stickerFragment = stickerFragment;
+      super(activity);
+    }
+
+    @NonNull
+    @Override
+    public Fragment createFragment(int position) {
+      return position == 0 ? gifFragment : stickerFragment;
     }
 
     @Override
-    public Fragment getItem(int position) {
-      if (position == 0) return gifFragment;
-      else               return stickerFragment;
-    }
-
-    @Override
-    public int getCount() {
+    public int getItemCount() {
       return 2;
-    }
-
-    @Override
-    public CharSequence getPageTitle(int position) {
-      if (position == 0) return NonTranslatableStringConstants.GIF;
-      else               return context.getString(R.string.stickers);
     }
   }
 

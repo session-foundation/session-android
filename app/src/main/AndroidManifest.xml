@@ -315,6 +315,7 @@
         </activity>
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
         <activity android:name="org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity" />
+        <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppDisguiseSettingsActivity" />
 
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"
@@ -484,7 +485,90 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- Alternative icons -->
+        <activity-alias
+            android:name=".Calculator"
+            android:label="@string/appNameCalculator"
+            android:icon="@mipmap/ic_launcher_calculator"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
+        <activity-alias
+            android:name=".Meetings"
+            android:label="@string/appNameMeetingSE"
+            android:icon="@mipmap/ic_launcher_meetings"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Notes"
+            android:label="@string/appNameNotes"
+            android:icon="@mipmap/ic_launcher_notes"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".News"
+            android:label="@string/appNameNews"
+            android:icon="@mipmap/ic_launcher_news"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Stocks"
+            android:label="@string/appNameStocks"
+            android:icon="@mipmap/ic_launcher_stocks"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".Weather"
+            android:label="@string/appNameWeather"
+            android:icon="@mipmap/ic_launcher_weather"
+            android:enabled="false"
+            android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
     </application>
 
 </manifest>

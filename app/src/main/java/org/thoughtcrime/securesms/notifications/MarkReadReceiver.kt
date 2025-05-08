@@ -160,7 +160,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                 db.markExpireStarted(expirationInfo.id, now)
             }
 
-            ApplicationContext.getInstance(context).expiringMessageManager.scheduleDeletion(
+            ApplicationContext.getInstance(context).expiringMessageManager.get().scheduleDeletion(
                 expirationInfo.id,
                 expirationInfo.isMms,
                 now,

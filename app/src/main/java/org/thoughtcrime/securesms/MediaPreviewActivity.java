@@ -38,7 +38,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -51,8 +50,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
@@ -94,6 +93,7 @@ import dagger.hilt.android.AndroidEntryPoint;
 import kotlin.Unit;
 import network.loki.messenger.R;
 import network.loki.messenger.databinding.MediaPreviewActivityBinding;
+import network.loki.messenger.databinding.MediaViewPageBinding;
 
 /**
  * Activity for displaying media attachments in-app
@@ -341,7 +341,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     if (conversationRecipient != null) {
       getSupportLoaderManager().restartLoader(0, null, this);
     } else {
-      adapter = new SingleItemPagerAdapter(this, Glide.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize);
+      adapter = new SingleItemPagerAdapter(Glide.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize);
       binding.mediaPager.setAdapter(adapter);
 
       if (initialCaption != null) {
@@ -511,7 +511,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   public void onLoadFinished(@NonNull Loader<Pair<Cursor, Integer>> loader, @Nullable Pair<Cursor, Integer> data) {
     if (data == null) return;
 
-    binding.mediaPager.removeOnPageChangeListener(viewPagerListener);
+    binding.mediaPager.unregisterOnPageChangeCallback(viewPagerListener);
 
     adapter = new CursorPagerAdapter(this, Glide.with(this), getWindow(), data.first, data.second, leftIsRecent);
     binding.mediaPager.setAdapter(adapter);
@@ -531,10 +531,10 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
     viewModel.setCursor(this, data.first, leftIsRecent);
 
-    int item = restartItem >= 0  && restartItem < adapter.getCount() ? restartItem : Math.max(Math.min(data.second, adapter.getCount() - 1), 0);
+    int item = restartItem >= 0  && restartItem < adapter.getItemCount() ? restartItem : Math.max(Math.min(data.second, adapter.getItemCount() - 1), 0);
 
     viewPagerListener = new ViewPagerListener();
-    binding.mediaPager.addOnPageChangeListener(viewPagerListener);
+    binding.mediaPager.registerOnPageChangeCallback(viewPagerListener);
 
     try {
       binding.mediaPager.setCurrentItem(item);
@@ -548,7 +548,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   @Override
   public void onLoaderReset(@NonNull Loader<Pair<Cursor, Integer>> loader) { /* Do nothing */  }
 
-  private class ViewPagerListener implements ViewPager.OnPageChangeListener {
+  private class ViewPagerListener extends ViewPager2.OnPageChangeCallback {
 
     private int currentPage = -1;
 
@@ -596,9 +596,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     private final String        mediaType;
     private final long          size;
 
-    private final LayoutInflater inflater;
 
-    SingleItemPagerAdapter(@NonNull Context context, @NonNull RequestManager glideRequests,
+    SingleItemPagerAdapter(@NonNull RequestManager glideRequests,
                            @NonNull Window window, @NonNull Uri uri, @NonNull String mediaType,
                            long size)
     {
@@ -607,41 +606,30 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       this.uri           = uri;
       this.mediaType     = mediaType;
       this.size          = size;
-      this.inflater      = LayoutInflater.from(context);
+    }
+
+    @NonNull
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+      return new RecyclerView.ViewHolder(
+              MediaViewPageBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false).getRoot()
+      ) {};
     }
 
     @Override
-    public int getCount() {
-      return 1;
-    }
-
-    @Override
-    public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-      return view == object;
-    }
-
-    @Override
-    public @NonNull Object instantiateItem(@NonNull ViewGroup container, int position) {
-      View      itemView  = inflater.inflate(R.layout.media_view_page, container, false);
-      MediaView mediaView = itemView.findViewById(R.id.media_view);
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+      final MediaViewPageBinding binding = MediaViewPageBinding.bind(holder.itemView);
 
       try {
-        mediaView.set(glideRequests, window, uri, mediaType, size, true);
+        binding.mediaView.set(glideRequests, window, uri, mediaType, size, true);
       } catch (IOException e) {
         Log.w(TAG, e);
       }
-
-      container.addView(itemView);
-
-      return itemView;
     }
 
     @Override
-    public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
-      MediaView mediaView = ((FrameLayout)object).findViewById(R.id.media_view);
-      mediaView.cleanup();
-
-      container.removeView((FrameLayout)object);
+    public int getItemCount() {
+      return 1;
     }
 
     @Override
@@ -682,20 +670,16 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       this.leftIsRecent     = leftIsRecent;
     }
 
+    @NonNull
     @Override
-    public int getCount() {
-      return cursor.getCount();
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+      return new RecyclerView.ViewHolder(MediaViewPageBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false).getRoot()) {};
     }
 
     @Override
-    public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-      return view == object;
-    }
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+      final MediaViewPageBinding binding = MediaViewPageBinding.bind(holder.itemView);
 
-    @Override
-    public @NonNull Object instantiateItem(@NonNull ViewGroup container, int position) {
-      View      itemView       = LayoutInflater.from(context).inflate(R.layout.media_view_page, container, false);
-      MediaView mediaView      = itemView.findViewById(R.id.media_view);
       boolean   autoplay       = position == autoPlayPosition;
       int       cursorPosition = getCursorPosition(position);
 
@@ -707,25 +691,18 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
       try {
         //noinspection ConstantConditions
-        mediaView.set(glideRequests, window, mediaRecord.getAttachment().getDataUri(),
-                      mediaRecord.getAttachment().getContentType(), mediaRecord.getAttachment().getSize(), autoplay);
+        binding.mediaView.set(glideRequests, window, mediaRecord.getAttachment().getDataUri(),
+                mediaRecord.getAttachment().getContentType(), mediaRecord.getAttachment().getSize(), autoplay);
       } catch (IOException e) {
         Log.w(TAG, e);
       }
 
-      mediaViews.put(position, mediaView);
-      container.addView(itemView);
-
-      return itemView;
+      mediaViews.put(position, binding.mediaView);
     }
 
     @Override
-    public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
-      MediaView mediaView = ((FrameLayout)object).findViewById(R.id.media_view);
-      mediaView.cleanup();
-
-      mediaViews.remove(position);
-      container.removeView((FrameLayout)object);
+    public int getItemCount() {
+      return cursor.getCount();
     }
 
     public MediaItem getMediaItemFor(int position) {
@@ -786,7 +763,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     }
   }
 
-  abstract static class MediaItemAdapter extends PagerAdapter {
+  abstract static class MediaItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     abstract MediaItem getMediaItemFor(int position);
     abstract void pause(int position);
     @Nullable abstract View getPlaybackControls(int position);

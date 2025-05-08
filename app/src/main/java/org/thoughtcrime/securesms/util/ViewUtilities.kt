@@ -12,7 +12,6 @@ import android.util.Size
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
-import android.view.Window
 import androidx.annotation.ColorInt
 import androidx.annotation.DimenRes
 import network.loki.messenger.R
@@ -141,19 +140,17 @@ fun View.applySafeInsetsPaddings(
     consumeInsets: Boolean = true,
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
-        // Get system bars insets
-        val systemBarsInsets = windowInsets.getInsets(typeMask)
+        val insets = windowInsets.getInsets(typeMask)
 
-        // Update view padding to account for system bars
         view.updatePadding(
-            left = systemBarsInsets.left,
-            top = systemBarsInsets.top,
-            right = systemBarsInsets.right,
-            bottom = systemBarsInsets.bottom
+            left = insets.left,
+            top = insets.top,
+            right = insets.right,
+            bottom = insets.bottom
         )
 
         if (consumeInsets) {
-            WindowInsetsCompat.CONSUMED
+            windowInsets.inset(insets)
         } else {
             // Return the insets unconsumed
             windowInsets

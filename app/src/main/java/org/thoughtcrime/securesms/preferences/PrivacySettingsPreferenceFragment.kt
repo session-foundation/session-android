@@ -18,12 +18,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isPasswordDisabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockEnabled
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.components.SwitchPreferenceCompat
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.areNotificationsEnabled
 import org.thoughtcrime.securesms.util.IntentUtils
 
@@ -35,6 +35,9 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
 
     @Inject
     lateinit var textSecurePreferences: TextSecurePreferences
+
+    @Inject
+    lateinit var typingStatusRepository: TypingStatusRepository
 
     override fun onCreate(paramBundle: Bundle?) {
         super.onCreate(paramBundle)
@@ -168,7 +171,7 @@ class PrivacySettingsPreferenceFragment : CorrectedPreferenceFragment() {
         override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
             val enabled = newValue as Boolean
             if (!enabled) {
-                ApplicationContext.getInstance(requireContext()).typingStatusRepository.clear()
+                typingStatusRepository.clear()
             }
             return true
         }
