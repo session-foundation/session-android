@@ -350,7 +350,7 @@
             android:layout_marginBottom="@dimen/massive_spacing"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="50dp">
+            android:minHeight="56dp">
 
             <LinearLayout
                 android:id="@+id/system_settings_switch_holder"
@@ -359,12 +359,12 @@
                 android:layout_height="wrap_content"
                 android:addStatesFromChildren="true"
                 android:layout_gravity="center_vertical"
-                android:paddingVertical="@dimen/small_spacing"
                 android:gravity="center">
                 <TextView
                     android:textColor="?android:textColorPrimary"
                     android:textStyle="bold"
                     android:textSize="@dimen/medium_font_size"
+                    android:paddingVertical="@dimen/small_spacing"
                     android:paddingHorizontal="@dimen/large_spacing"
                     android:text="@string/followSystemSettings"
                     android:layout_width="0dp"
@@ -398,7 +398,7 @@
             android:layout_marginBottom="@dimen/massive_spacing"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:minHeight="50dp">
+            android:minHeight="56dp">
 
             <TextView
                 android:textColor="?android:textColorPrimary"
