@@ -105,26 +105,8 @@ class AppDisguiseManager @Inject constructor(
                 }
 
                 all.map { alias ->
-                    // Set the state to enabled or disabled based on the selected alias,
-                    // and also taking the default state into account. This is trying to
-                    // not change the state if the default is sufficient.
-                    val state = when {
-                        alias === enabledAlias && alias.defaultEnabled -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                        }
-
-                        alias === enabledAlias -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                        }
-
-                        alias.defaultEnabled -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                        }
-
-                        else -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                        }
-                    }
+                    val state = if (alias === enabledAlias) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                        else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
                     ComponentName(application, alias.activityAliasName) to state
                 }
