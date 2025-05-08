@@ -3,9 +3,11 @@ package org.thoughtcrime.securesms.preferences.appearance
 import android.content.Intent
 import android.os.Bundle
 import android.os.Parcelable
+import android.se.omapi.Session
 import android.util.SparseArray
 import android.view.View
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import androidx.core.view.children
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,6 +19,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DARK
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.ui.components.SessionSwitch
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ThemeState
 
 @AndroidEntryPoint
@@ -107,10 +111,6 @@ class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickLis
         }
     }
 
-    private fun updateFollowSystemToggle(followSystemSettings: Boolean) {
-        binding.systemSettingsSwitch.isChecked = followSystemSettings
-    }
-
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         binding = ActivityAppearanceSettingsBinding.inflate(layoutInflater)
@@ -128,8 +128,13 @@ class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickLis
                 it.setOnClickListener(this@AppearanceSettingsActivity)
             }
             // system settings toggle
-            systemSettingsSwitch.setOnCheckedChangeListener { _, isChecked -> viewModel.setNewFollowSystemSettings(isChecked) }
-            systemSettingsSwitchHolder.setOnClickListener { systemSettingsSwitch.toggle() }
+            systemSettingsSwitch.setThemedContent {
+                SessionSwitch(
+                    checked = viewModel.uiState.collectAsState().value.followSystem,
+                    onCheckedChange = viewModel::setNewFollowSystemSettings,
+                    enabled = true
+                )
+            }
 
             systemSettingsAppIcon.setOnClickListener {
                 startActivity(Intent(this@AppearanceSettingsActivity, AppDisguiseSettingsActivity::class.java))
@@ -138,10 +143,9 @@ class AppearanceSettingsActivity: ScreenLockActionBarActivity(), View.OnClickLis
 
         lifecycleScope.launchWhenResumed {
             viewModel.uiState.collectLatest { themeState ->
-                val (theme, accent, followSystem) = themeState
+                val (theme, accent) = themeState
                 updateSelectedTheme(theme)
                 updateSelectedAccent(accent)
-                updateFollowSystemToggle(followSystem)
                 if (currentTheme != null && currentTheme != themeState) {
                     recreate()
                 } else {

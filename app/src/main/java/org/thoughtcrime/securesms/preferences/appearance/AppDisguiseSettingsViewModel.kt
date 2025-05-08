@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -39,16 +40,42 @@ class AppDisguiseSettingsViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
-    fun onIconSelected(id: String) {
-        manager.setOn(true)
-        manager.setSelectedAliasName(id)
-    }
+    private val mutableConfirmDialogState = MutableStateFlow(ConfirmDialogState(null, false))
+    val confirmDialogState: StateFlow<ConfirmDialogState> get() = mutableConfirmDialogState
 
-    fun setOn(on: Boolean) {
-        manager.setOn(on)
+    fun onCommand(command: Command) {
+        when (command) {
+            is Command.IconSelectConfirmed -> {
+                mutableConfirmDialogState.value = ConfirmDialogState(null, false)
+                if (command.id == null) {
+                    manager.setOn(false)
+                } else {
+                    manager.setOn(true)
+                    manager.setSelectedAliasName(command.id)
+                }
+            }
 
-        if (manager.selectedAppAliasName.value == null) {
-            manager.setSelectedAliasName(alternativeIcons.value.firstOrNull()?.id)
+            Command.IconSelectDismissed -> {
+                mutableConfirmDialogState.value = ConfirmDialogState(null, false)
+            }
+
+            is Command.IconSelected -> {
+                if (!isOn.value || command.id != manager.selectedAppAliasName.value) {
+                    mutableConfirmDialogState.value = ConfirmDialogState(
+                        id = command.id,
+                        showDialog = true
+                    )
+                }
+            }
+
+            is Command.ToggleClicked -> {
+                if (isOn.value == command.on) return
+
+                mutableConfirmDialogState.value = ConfirmDialogState(
+                    id = if (command.on) manager.selectedAppAliasName.value ?: alternativeIcons.value.firstOrNull()?.id else null,
+                    showDialog = true
+                )
+            }
         }
     }
 
@@ -58,4 +85,13 @@ class AppDisguiseSettingsViewModel @Inject constructor(
         @StringRes val name: Int,
         val selected: Boolean,
     )
+
+    data class ConfirmDialogState(val id: String?, val showDialog: Boolean)
+
+    sealed interface Command {
+        data class IconSelected(val id: String) : Command
+        data class IconSelectConfirmed(val id: String?) : Command
+        data object IconSelectDismissed : Command
+        data class ToggleClicked(val on: Boolean) : Command
+    }
 }

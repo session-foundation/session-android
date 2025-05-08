@@ -109,34 +109,42 @@ class AppDisguiseManager @Inject constructor(
                     // and also taking the default state into account. This is trying to
                     // not change the state if the default is sufficient.
                     val state = when {
-                        alias === enabledAlias && alias.defaultEnabled -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                        }
+//                        alias === enabledAlias && alias.defaultEnabled -> {
+//                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+//                        }
 
                         alias === enabledAlias -> {
                             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                         }
 
-                        alias.defaultEnabled -> {
+                        else -> {
                             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                         }
 
-                        else -> {
-                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-                        }
+//                        else -> {
+//                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+//                        }
                     }
 
                     ComponentName(application, alias.activityAliasName) to state
                 }
             }.collectLatest { all ->
-                all.forEach { (name, state) ->
-                    Log.d(TAG, "Set state $name: $state")
-
-                    application.packageManager.setComponentEnabledSetting(
-                        name,
-                        state,
-                        PackageManager.DONT_KILL_APP
+                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                    application.packageManager.setComponentEnabledSettings(
+                        all.map { (name, state) ->
+                            PackageManager.ComponentEnabledSetting(
+                                name, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS
+                            )
+                        }
                     )
+                } else {
+                    all.forEach { (name, state) ->
+                        application.packageManager.setComponentEnabledSetting(
+                            name,
+                            state,
+                            PackageManager.DONT_KILL_APP
+                        )
+                    }
                 }
             }
         }

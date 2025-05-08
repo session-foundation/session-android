@@ -351,6 +351,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="50dp">
+
             <LinearLayout
                 android:id="@+id/system_settings_switch_holder"
                 android:background="?selectableItemBackground"
@@ -358,18 +359,19 @@
                 android:layout_height="wrap_content"
                 android:addStatesFromChildren="true"
                 android:layout_gravity="center_vertical"
+                android:paddingVertical="@dimen/small_spacing"
                 android:gravity="center">
                 <TextView
                     android:textColor="?android:textColorPrimary"
                     android:textStyle="bold"
                     android:textSize="@dimen/medium_font_size"
                     android:paddingHorizontal="@dimen/large_spacing"
-                    android:paddingVertical="@dimen/small_spacing"
                     android:text="@string/followSystemSettings"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"/>
-                <com.google.android.material.switchmaterial.SwitchMaterial
+
+                <androidx.compose.ui.platform.ComposeView
                     android:id="@+id/system_settings_switch"
                     android:paddingHorizontal="@dimen/large_spacing"
                     android:layout_width="wrap_content"
