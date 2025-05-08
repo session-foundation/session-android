@@ -63,7 +63,7 @@
         android:background="?input_bar_background"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
         app:layout_constraintVertical_bias="1"
         />
 
@@ -71,7 +71,7 @@
         android:id="@+id/searchBottomBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
         android:visibility="gone"/>
 
     <ViewStub
@@ -214,7 +214,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="-12dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/bottomSpacer" />
 
     <include
         android:id="@+id/conversation_header"
@@ -267,6 +267,14 @@
             android:text="@string/recreateGroup" />
 
     </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="?input_bar_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:id="@+id/bottomSpacer" />
 
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/dialog_open_url"
