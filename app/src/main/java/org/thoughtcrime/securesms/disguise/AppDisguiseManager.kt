@@ -109,21 +109,21 @@ class AppDisguiseManager @Inject constructor(
                     // and also taking the default state into account. This is trying to
                     // not change the state if the default is sufficient.
                     val state = when {
-//                        alias === enabledAlias && alias.defaultEnabled -> {
-//                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-//                        }
+                        alias === enabledAlias && alias.defaultEnabled -> {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        }
 
                         alias === enabledAlias -> {
                             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                         }
 
-                        else -> {
+                        alias.defaultEnabled -> {
                             PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                         }
 
-//                        else -> {
-//                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
-//                        }
+                        else -> {
+                            PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        }
                     }
 
                     ComponentName(application, alias.activityAliasName) to state
