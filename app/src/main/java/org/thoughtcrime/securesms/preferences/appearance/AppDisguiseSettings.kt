@@ -180,10 +180,10 @@ private fun AppDisguiseSettings(
     if (dialogState.showDialog) {
         AlertDialog(
             onDismissRequest = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectDismissed) },
-            text = "Changing the app icon and name requires Session to be closed. Notifications will continue to use the default Session icon and name.",
-            title = "Change App Icon and Name",
+            text = stringResource(R.string.appIconAndNameChangeConfirmation),
+            title = stringResource(R.string.appIconAndNameChange),
             buttons = listOf(
-                DialogButtonModel(text = GetString("Close App")) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
+                DialogButtonModel(text = GetString(R.string.closeApp)) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
                 DialogButtonModel(text = GetString(R.string.cancel), dismissOnClick = true)
             )
         )
