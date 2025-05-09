@@ -118,6 +118,7 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
+import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
 import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
@@ -189,6 +190,7 @@ import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
@@ -250,6 +252,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
+    @Inject lateinit var typingStatusRepository: TypingStatusRepository
+    @Inject lateinit var typingStatusSender: TypingStatusSender
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -610,6 +614,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupMentionView()
         setupUiEventsObserver()
+        setupWindowInsets()
+    }
+
+    private fun setupWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, windowInsets ->
+            val systemBarsInsets =
+                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
+
+            binding.bottomSpacer.updateLayoutParams<LayoutParams> {
+                height = systemBarsInsets.bottom
+            }
+
+            windowInsets.inset(systemBarsInsets)
+        }
     }
 
     private fun setupUiEventsObserver() {
@@ -761,36 +779,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .lastSeenMessageId
                 .collectLatest { adapter.lastSentMessageId = it }
         }
-
-        // Apply insets on the recycler view or input bar depending on their visibility
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, windowInsets ->
-            val systemBarsInsets =
-                windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime())
-
-            val viewToApplyPaddings: View
-            val viewToResetPaddings: View
-
-            if (binding.inputBar.isGone) {
-                viewToApplyPaddings = binding.conversationRecyclerView
-                viewToResetPaddings = binding.inputBar
-            } else {
-                viewToApplyPaddings = binding.inputBar
-                viewToResetPaddings = binding.conversationRecyclerView
-            }
-
-            // Update view padding to account for system bars
-            viewToApplyPaddings.updatePadding(
-                left = systemBarsInsets.left,
-                top = systemBarsInsets.top,
-                right = systemBarsInsets.right,
-                bottom = systemBarsInsets.bottom
-            )
-            viewToResetPaddings.updatePadding(0, 0, 0, 0)
-
-            windowInsets.inset(systemBarsInsets)
-        }
-
-        binding.root.requestApplyInsets()
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
@@ -903,7 +891,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpTypingObserver() {
-        ApplicationContext.getInstance(this).typingStatusRepository.getTypists(viewModel.threadId).observe(this) { state ->
+        typingStatusRepository.getTypists(viewModel.threadId).observe(this) { state ->
             val recipients = if (state != null) state.typists else listOf()
             // FIXME: Also checking isScrolledToBottom is a quick fix for an issue where the
             //        typing indicator overlays the recycler view when scrolled up
@@ -913,7 +901,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                ApplicationContext.getInstance(this).typingStatusSender.onTypingStarted(viewModel.threadId)
+                typingStatusSender.onTypingStarted(viewModel.threadId)
             }
         }
     }
@@ -2017,7 +2005,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             MessageSender.send(message, recipient.address)
         }
         // Send a typing stopped message
-        ApplicationContext.getInstance(this).typingStatusSender.onTypingStopped(viewModel.threadId)
+        typingStatusSender.onTypingStopped(viewModel.threadId)
         return Pair(recipient.address, sentTimestamp)
     }
 
@@ -2086,7 +2074,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
 
         // Send a typing stopped message
-        ApplicationContext.getInstance(this).typingStatusSender.onTypingStopped(viewModel.threadId)
+        typingStatusSender.onTypingStopped(viewModel.threadId)
         return Pair(recipient.address, sentTimestamp)
     }
 

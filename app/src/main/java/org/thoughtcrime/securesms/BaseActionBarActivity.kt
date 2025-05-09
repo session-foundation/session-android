@@ -30,7 +30,7 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
 
     // This can not be dep injected as it is required very early during activity creation
     private val preferences: TextSecurePreferences
-        get() = (applicationContext as ApplicationContext).textSecurePreferences
+        get() = (applicationContext as ApplicationContext).textSecurePreferences.get()
 
     // Whether to apply default window insets to the decor view
     open val applyDefaultWindowInsets: Boolean

@@ -32,7 +32,7 @@ import java.util.Locale
 abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
     private val migrationManager: DatabaseMigrationManager
-        get() = (applicationContext as ApplicationContext).migrationManager
+        get() = (applicationContext as ApplicationContext).migrationManager.get()
 
     companion object {
         private val TAG = ScreenLockActionBarActivity::class.java.simpleName

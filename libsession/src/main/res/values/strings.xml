@@ -50,6 +50,8 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
+    <string name="appIconAndNameChange">Change App Icon and Name</string>
+    <string name="appIconAndNameChangeConfirmation">Changing the app icon and name requires Session to be closed. Notifications will continue to use the default Session icon and name.</string>
     <string name="appIconAndNameDescription">Alternate app icon and name is displayed on home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Icon and name</string>
     <string name="appIconDescription">Alternate app icon is displayed on home screen and app library. App name will still appear as \'{app_name}\'.</string>
@@ -225,6 +227,7 @@
     <string name="clearMessagesNoteToSelfDescriptionUpdated">Are you sure you want to clear all <b>Note to Self</b> messages on this device?</string>
     <string name="clearOnThisDevice">Clear on this device</string>
     <string name="close">Close</string>
+    <string name="closeApp">Close App</string>
     <string name="closeWindow">Close Window</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
@@ -712,6 +715,7 @@
     <string name="notificationsMuteUnmute">Unmute</string>
     <string name="notificationsMuted">Muted</string>
     <string name="notificationsMutedFor">Muted for {time_large}</string>
+    <string name="notificationsMutedForTime">Muted until {date_time}</string>
     <string name="notificationsSlowMode">Slow Mode</string>
     <string name="notificationsSlowModeDescription">{app_name} will occasionally check for new messages in the background.</string>
     <string name="notificationsSound">Sound</string>
