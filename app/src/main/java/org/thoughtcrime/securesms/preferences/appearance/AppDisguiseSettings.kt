@@ -183,7 +183,10 @@ private fun AppDisguiseSettings(
             text = stringResource(R.string.appIconAndNameChangeConfirmation),
             title = stringResource(R.string.appIconAndNameChange),
             buttons = listOf(
-                DialogButtonModel(text = GetString(R.string.closeApp)) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
+                DialogButtonModel(
+                    text = GetString(R.string.closeApp),
+                    color = LocalColors.current.danger,
+                ) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
                 DialogButtonModel(text = GetString(R.string.cancel), dismissOnClick = true)
             )
         )
