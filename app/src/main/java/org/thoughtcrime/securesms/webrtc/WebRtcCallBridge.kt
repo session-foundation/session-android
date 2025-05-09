@@ -77,7 +77,7 @@ class WebRtcCallBridge @Inject constructor(
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_CALL_ID = "call_id"
 
-        private const val TIMEOUT_SECONDS = 30L
+        private const val TIMEOUT_SECONDS = 60L
         private const val RECONNECT_SECONDS = 5L
         private const val MAX_RECONNECTS = 5
 
