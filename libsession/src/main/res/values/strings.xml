@@ -4,6 +4,7 @@
     <string name="about">About</string>
     <string name="accept">Accept</string>
     <string name="accountIDCopy">Copy Account ID</string>
+    <string name="accountId">Account ID</string>
     <string name="accountIdCopied">Account ID Copied</string>
     <string name="accountIdCopyDescription">Copy your Account ID then share it with your friends so they can message you.</string>
     <string name="accountIdEnter">Enter Account ID</string>
@@ -16,7 +17,7 @@
     <string name="actualSize">Actual Size</string>
     <string name="add">Add</string>
     <string name="addAdmins">Add Admins</string>
-    <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma.</string>
+    <string name="addAdminsDescription">Enter the Account ID of the user you are promoting to admin.\n\nTo add multiple users, enter each Account ID separated by a comma. Up to 20 Account IDs can be specified at a time.</string>
     <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> and <b>{count} others</b> were promoted to Admin.</string>
     <string name="adminPromote">Promote Admins</string>
@@ -51,7 +52,7 @@
     <string name="anonymous">Anonymous</string>
     <string name="appIcon">App Icon</string>
     <string name="appIconAndNameChange">Change App Icon and Name</string>
-    <string name="appIconAndNameChangeConfirmation">Changing the app icon and name requires Session to be closed. Notifications will continue to use the default Session icon and name.</string>
+    <string name="appIconAndNameChangeConfirmation">Changing the app icon and name requires {app_name} to be closed. Notifications will continue to use the default {app_name} icon and name.</string>
     <string name="appIconAndNameDescription">Alternate app icon and name is displayed on home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Icon and name</string>
     <string name="appIconDescription">Alternate app icon is displayed on home screen and app library. App name will still appear as \'{app_name}\'.</string>

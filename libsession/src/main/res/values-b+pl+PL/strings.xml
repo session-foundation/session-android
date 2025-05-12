@@ -190,14 +190,22 @@
     <string name="clearDeviceAndNetworkConfirm">Czy na pewno chcesz usunąć swoje dane z sieci? Jeśli będziesz kontynuować, nie będziesz w stanie przywrócić wiadomości ani kontaktów.</string>
     <string name="clearDeviceDescription">Czy na pewno chcesz wyczyścić urządzenie?</string>
     <string name="clearDeviceOnly">Wyczyść tylko urządzenie</string>
+    <string name="clearDeviceRestart">Wyczyść urządzenie i uruchom ponownie</string>
+    <string name="clearDeviceRestore">Wyczyść urządzenie i przywróć</string>
     <string name="clearMessages">Wyczyść wszystkie wiadomości</string>
     <string name="clearMessagesChatDescription">Czy na pewno chcesz usunąć z urządzenia wszystkie wiadomości z konwersacji z użytkownikiem <b>{name}</b>?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Czy na pewno chcesz wyczyścić wszystkie wiadomości z konwersacji z <b>{name}</b> na tym urządzeniu?</string>
     <string name="clearMessagesCommunity">Czy na pewno chcesz wyczyścić z urządzenia wszystkie wiadomości ze społeczności <b>{community_name}</b>?</string>
+    <string name="clearMessagesCommunityUpdated">Czy na pewno chcesz wyczyścić wszystkie wiadomości z <b>{community_name}</b> na tym urządzeniu?</string>
     <string name="clearMessagesForEveryone">Wyczyść u wszystkich</string>
     <string name="clearMessagesForMe">Wyczyść u mnie</string>
     <string name="clearMessagesGroupAdminDescription">Czy na pewno chcesz usunąć wszystkie wiadomości z grupy <b>{group_name}</b>?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Czy na pewno chcesz wyczyścić wszystkie wiadomości z <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Czy na pewno chcesz usunąć z urządzenia wszystkie wiadomości z grupy <b>{group_name}</b>?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Czy na pewno chcesz wyczyścić wszystkie wiadomości z <b>{group_name}</b> na tym urządzeniu?</string>
     <string name="clearMessagesNoteToSelfDescription">Czy na pewno chcesz usunąć z urządzenia wszystkie swoje notatki?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Czy na pewno chcesz usunąć z urządzenia wszystkie <b>Moje notatki</b>?</string>
+    <string name="clearOnThisDevice">Wyczyść na tym urządzeniu</string>
     <string name="close">Zamknij</string>
     <string name="closeWindow">Zamknij okno</string>
     <string name="commitHashDesktop">Hash zatwierdzenia: {hash}</string>
@@ -264,6 +272,8 @@
     <string name="copy">Kopiuj</string>
     <string name="create">Utwórz</string>
     <string name="cut">Wytnij</string>
+    <string name="databaseErrorClearDataWarning">Czy na pewno chcesz usunąć wszystkie wiadomości, załączniki i dane konta z tego urządzenia i utworzyć nowe konto?</string>
+    <string name="databaseErrorRestoreDataWarning">Czy na pewno chcesz usunąć wszystkie wiadomości, załączniki i dane konta z tego urządzenia i przywrócić konto z sieci?</string>
     <string name="databaseErrorTimeout">Zauważyliśmy, że uruchomienie aplikacji {app_name} zajmuje dużo czasu.\n\n Możesz kontynuować oczekiwanie, wyeksportować dzienniki urządzenia do udostępnienia w celu rozwiązania problemów lub spróbować ponownie uruchomić aplikację {app_name}.</string>
     <string name="databaseErrorUpdate">Twoja baza danych aplikacji jest niezgodna z tą wersją aplikacji {app_name}. Aby wygenerować nową bazę danych i dalej korzystać z aplikacji {app_name}, zainstaluj aplikację ponownie i przywróć swoje konto.\n\nUwaga: spowoduje to utratę wszystkich wiadomości i załączników starszych niż dwa tygodnie.</string>
     <string name="databaseOptimizing">Optymalizacja bazy danych</string>
@@ -522,6 +532,7 @@
     <string name="helpWedLoveYourFeedback">Chcielibyśmy poznać Twoją opinię</string>
     <string name="hide">Ukryj</string>
     <string name="hideMenuBarDescription">Przełącz widoczność systemowego paska menu</string>
+    <string name="hideNoteToSelfDescription">Czy na pewno chcesz ukryć <b>Moje notatki</b> na liście konwersacji?</string>
     <string name="hideOthers">Ukryj pozostałe</string>
     <string name="image">Zdjęcie</string>
     <string name="incognitoKeyboard">Klawiatura w trybie prywatnym</string>
@@ -613,6 +624,8 @@
         <item quantity="other">Masz %1$d nowych wiadomości.</item>
     </plurals>
     <string name="messageReplyingTo">Odpowiadanie do</string>
+    <string name="messageRequestDisabledToastAttachments">Nie można wysyłać załączników, dopóki prośba o wiadomość nie zostanie zaakceptowana</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Nie można wysyłać wiadomości głosowych, dopóki prośba o wiadomość nie zostanie zaakceptowana</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> zaprasza Cię do grupy<b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Wysłanie wiadomości do tej grupy automatycznie zaakceptuje zaproszenie do grupy.</string>
     <string name="messageRequestPending">Twoja prośba o wiadomość czeka na akceptację.</string>
@@ -856,6 +869,8 @@
     <string name="show">Pokaż</string>
     <string name="showAll">Pokaż wszystko</string>
     <string name="showLess">Pokaż mniej</string>
+    <string name="showNoteToSelf">Pokaż moje notatki</string>
+    <string name="showNoteToSelfDescription">Czy na pewno chcesz wyświetlać <b>Moje notatki</b> na liście konwersacji?</string>
     <string name="stickers">Naklejki</string>
     <string name="supportGoTo">Przejdź do strony wsparcia technicznego</string>
     <string name="systemInformationDesktop">Informacja systemowa: {information}</string>

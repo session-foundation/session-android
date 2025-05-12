@@ -545,6 +545,8 @@
         <item quantity="other">%1$d új üzeneted érkezett.</item>
     </plurals>
     <string name="messageReplyingTo">Válasz erre</string>
+    <string name="messageRequestDisabledToastAttachments">Addig nem küldhet mellékleteket, amíg az üzenetkérelmét el nem fogadják</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Addig nem küldhet hangüzeneteket, amíg az üzenetkérelmét el nem fogadják</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> meghívott a <b>{group_name}</b> csoportba.</string>
     <string name="messageRequestGroupInviteDescription">Üzenet küldése ebbe a csoportba automatikusan elfogadja a csoportmeghívást.</string>
     <string name="messageRequestPending">Az üzenetkérésed jelenleg függőben van.</string>
