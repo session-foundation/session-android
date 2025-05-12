@@ -35,14 +35,12 @@ val abiPostFix = mapOf(
     "universal" to 5
 )
 
-fun getGitHash(): String {
-    val stdout = ByteArrayOutputStream()
-    exec {
+val getGitHash = providers
+    .exec {
         commandLine("git", "rev-parse", "--short", "HEAD")
-        standardOutput = stdout
     }
-    return stdout.toString().trim()
-}
+    .standardOutput
+    .asText
 
 android {
     namespace = "network.loki.messenger"
@@ -93,10 +91,9 @@ android {
         multiDexEnabled = true
 
         vectorDrawables.useSupportLibrary = true
-        setProperty("archivesBaseName", "session-$versionName")
 
         buildConfigField("long", "BUILD_TIMESTAMP", "${getLastCommitTimestamp()}L")
-        buildConfigField("String", "GIT_HASH", "\"${getGitHash()}\"")
+        buildConfigField("String", "GIT_HASH", "\"${getGitHash.get()}\"")
         buildConfigField("String", "CONTENT_PROXY_HOST", "\"contentproxy.signal.org\"")
         buildConfigField("int", "CONTENT_PROXY_PORT", "443")
         buildConfigField("String", "USER_AGENT", "\"OWA\"")
