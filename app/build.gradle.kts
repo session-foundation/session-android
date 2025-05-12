@@ -7,15 +7,14 @@ plugins {
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
     alias(libs.plugins.ksp)
-//    id("witness-plugin")
-    id("generate-ip-country-data")
     alias(libs.plugins.hilt.android)
-//    alias(libs.plugins.dependency.analysis)
+    alias(libs.plugins.dependency.analysis)
+    alias(libs.plugins.google.services)
+
+    id("generate-ip-country-data")
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
-
-//apply(plugin = "witness")
 
 configurations.configureEach {
     exclude(module = "commons-logging")
@@ -161,7 +160,6 @@ android {
         create("play") {
             isDefault = true
             dimension = "distribution"
-//            apply(plugin = "com.google.gms.google-services")
             ext["websiteUpdateUrl"] = "null"
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "false")
             buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
@@ -297,6 +295,8 @@ dependencies {
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
     implementation(libs.opencsv)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.rxbinding)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)
@@ -307,7 +307,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.testing)
     androidTestImplementation(libs.kotlinx.coroutines.testing)
     androidTestImplementation(libs.androidx.core)
-
     androidTestImplementation(libs.androidx.runner)
     androidTestImplementation(libs.androidx.rules)
 
