@@ -1,3 +1,4 @@
+import com.android.build.api.variant.FilterConfiguration
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -373,17 +374,13 @@ fun autoResConfig(): List<String> {
         .sorted()
 }
 
-//apply<GenerateIPCountryDataPlugin>()
-
-//applicationVariants.configureEach {
-//    outputs.forEach { output ->
-//        val abiName = output.filters.firstOrNull { it.filterType.name == "ABI" }?.identifier ?: "universal"
-//        val postFix = abiPostFix[abiName] ?: 0
-//
-//        val flavour = if (flavorName == "huawei") "-huawei" else ""
-//
-//        check(postFix < postFixSize) { "postFix is too large" }
-//        output.outputFileName = "session-${versionName}-${abiName}${flavour}.apk"
-//        output.versionCodeOverride = canonicalVersionCode * postFixSize + postFix
-//    }
-//}
+// Assign version code postfix to APKs based on ABI
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abiName = output.filters.firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier ?: "universal"
+            val versionCodeAdditions = checkNotNull(abiPostFix[abiName]) { "$abiName does not exist" }
+            output.versionCode.set(canonicalVersionCode * postFixSize + versionCodeAdditions)
+        }
+    }
+}
