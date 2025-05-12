@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.disguise
 
+import android.app.Activity
 import android.app.Application
+import android.app.Application.ActivityLifecycleCallbacks
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,6 +42,8 @@ class AppDisguiseManager @Inject constructor(
     private val prefs: TextSecurePreferences,
 ) {
     private val scope: CoroutineScope = GlobalScope
+
+    private var currentActivity: Activity? = null
 
     val allAppAliases: Flow<List<AppAlias>> = flow {
         emit(
@@ -108,11 +114,16 @@ class AppDisguiseManager @Inject constructor(
                     val state = if (alias === enabledAlias) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                         else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
 
-                    ComponentName(application, alias.activityAliasName) to state
+                    Triple(
+                        ComponentName(application, alias.activityAliasName),
+                        state,
+                        alias.defaultEnabled
+                    )
                 }
             }.collectLatest { all ->
+                val packageManager = application.packageManager
                 if (android.os.Build.VERSION.SDK_INT >= 33) {
-                    application.packageManager.setComponentEnabledSettings(
+                    packageManager.setComponentEnabledSettings(
                         all.map { (name, state) ->
                             PackageManager.ComponentEnabledSetting(
                                 name, state, PackageManager.DONT_KILL_APP or PackageManager.SYNCHRONOUS
@@ -120,16 +131,51 @@ class AppDisguiseManager @Inject constructor(
                         }
                     )
                 } else {
-                    all.forEach { (name, state) ->
-                        application.packageManager.setComponentEnabledSetting(
+                    // Query current enable state for each component
+                    val changed = all.filter { (name, desiredState, defaultEnabled) ->
+                        val state = packageManager.getComponentEnabledSetting(name)
+                        val wasEnabled = when (state) {
+                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
+                            else -> defaultEnabled
+                        }
+
+                        val willBeEnabled = (desiredState == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) ||
+                                (desiredState == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && defaultEnabled)
+                        wasEnabled != willBeEnabled
+                    }
+
+                    changed.forEach { (name, state) ->
+                        packageManager.setComponentEnabledSetting(
                             name,
                             state,
                             PackageManager.DONT_KILL_APP
                         )
                     }
+
+                    if (changed.isNotEmpty()) {
+                        // Finish current activity if the disguise is on
+                        currentActivity?.finishAffinity()
+                    }
                 }
             }
         }
+
+        application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {
+                currentActivity = activity
+            }
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {
+                if (currentActivity === activity) {
+                    currentActivity = null
+                }
+            }
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
     }
 
     fun setSelectedAliasName(name: String?) {
