@@ -14,6 +14,7 @@ plugins {
 
     id("generate-ip-country-data")
     id("rename-apk")
+    id("witness")
 }
 
 val huaweiEnabled = project.properties["huawei"] != null

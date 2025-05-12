@@ -1,6 +1,7 @@
 plugins {
     `kotlin-dsl`
     `java-gradle-plugin`
+    `groovy-gradle-plugin`
 }
 
 repositories {
@@ -21,9 +22,9 @@ gradlePlugin {
             implementationClass = "GenerateIPCountryDataPlugin"
         }
 
-        create("witness-plugin") {
-            id = "witness-plugin"
-            implementationClass = "org.whispersystems.witness.WitnessPlugin"
+        create("witness") {
+            id = "witness"
+            implementationClass = "WitnessPlugin"
         }
 
         create("rename-apk") {

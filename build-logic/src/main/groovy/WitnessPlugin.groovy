@@ -1,5 +1,3 @@
-package org.whispersystems.witness
-
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
