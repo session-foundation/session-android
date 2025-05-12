@@ -2,33 +2,29 @@ package org.thoughtcrime.securesms.components
 
 import android.content.Context
 import android.util.AttributeSet
-import androidx.preference.CheckBoxPreference
-import com.squareup.phrase.Phrase
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.ComposeView
+import androidx.preference.PreferenceViewHolder
+import androidx.preference.TwoStatePreference
+import kotlinx.coroutines.flow.MutableStateFlow
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
-import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.setThemedContent
 
-class SwitchPreferenceCompat : CheckBoxPreference {
+class SwitchPreferenceCompat : TwoStatePreference {
     private var listener: OnPreferenceClickListener? = null
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context!!, attrs, defStyleAttr) {
-        setLayoutRes()
-    }
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs, androidx.preference.R.attr.switchPreferenceCompatStyle)
+    constructor(context: Context) : this(context, null, androidx.preference.R.attr.switchPreferenceCompatStyle)
 
-    constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context!!, attrs, defStyleAttr, defStyleRes) {
-        setLayoutRes()
-    }
+    private val checkState = MutableStateFlow(isChecked)
+    private val enableState = MutableStateFlow(isEnabled)
 
-    constructor(context: Context?, attrs: AttributeSet?) : super(context!!, attrs) {
-        setLayoutRes()
-    }
-
-    constructor(context: Context?) : super(context!!) {
-        setLayoutRes()
-    }
-
-    private fun setLayoutRes() {
+    init {
         widgetLayoutResource = R.layout.switch_compat_preference
 
         if (this.hasKey()) {
@@ -40,6 +36,31 @@ class SwitchPreferenceCompat : CheckBoxPreference {
                 val substitutedSummaryCS = c.getSubbedCharSequence(R.string.lockAppDescription, APP_NAME_KEY to c.getString(R.string.app_name))
                 this.summary = substitutedSummaryCS
             }
+        }
+    }
+
+    override fun setChecked(checked: Boolean) {
+        super.setChecked(checked)
+
+        checkState.value = checked
+    }
+
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+
+        enableState.value = enabled
+    }
+
+    override fun onBindViewHolder(holder: PreferenceViewHolder) {
+        super.onBindViewHolder(holder)
+
+        val composeView = holder.findViewById(R.id.compose_preference) as ComposeView
+        composeView.setThemedContent {
+            SessionSwitch(
+                checked = checkState.collectAsState().value,
+                onCheckedChange = null,
+                enabled = isEnabled
+            )
         }
     }
 

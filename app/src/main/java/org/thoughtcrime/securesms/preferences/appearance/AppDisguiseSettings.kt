@@ -42,7 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
+import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -61,10 +64,10 @@ fun AppDisguiseSettingsScreen(
 ) {
     AppDisguiseSettings(
         onBack = onBack,
-        setOn = viewModel::setOn,
         isOn = viewModel.isOn.collectAsState().value,
         items = viewModel.alternativeIcons.collectAsState().value,
-        onItemSelected = viewModel::onIconSelected
+        dialogState = viewModel.confirmDialogState.collectAsState().value,
+        onCommand = viewModel::onCommand,
     )
 }
 
@@ -73,9 +76,9 @@ fun AppDisguiseSettingsScreen(
 private fun AppDisguiseSettings(
     items: List<AppDisguiseSettingsViewModel.IconAndName>,
     isOn: Boolean,
-    setOn: (Boolean) -> Unit,
-    onItemSelected: (String) -> Unit,
+    dialogState: AppDisguiseSettingsViewModel.ConfirmDialogState,
     onBack: () -> Unit,
+    onCommand: (AppDisguiseSettingsViewModel.Command) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -98,7 +101,9 @@ private fun AppDisguiseSettings(
             Cell {
                 Row(
                     modifier = Modifier
-                        .toggleable(value = isOn, onValueChange = setOn)
+                        .toggleable(value = isOn, onValueChange = {
+                            onCommand(AppDisguiseSettingsViewModel.Command.ToggleClicked(it))
+                        })
                         .padding(LocalDimensions.current.xsSpacing),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -150,7 +155,7 @@ private fun AppDisguiseSettings(
                                             icon = item.icon,
                                             name = item.name,
                                             selected = item.selected,
-                                            onSelected = { onItemSelected(item.id) },
+                                            onSelected = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelected(item.id)) },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -169,8 +174,22 @@ private fun AppDisguiseSettings(
                     )
                 }
             }
-
         }
+    }
+
+    if (dialogState.showDialog) {
+        AlertDialog(
+            onDismissRequest = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectDismissed) },
+            text = stringResource(R.string.appIconAndNameChangeConfirmation),
+            title = stringResource(R.string.appIconAndNameChange),
+            buttons = listOf(
+                DialogButtonModel(
+                    text = GetString(R.string.closeApp),
+                    color = LocalColors.current.danger,
+                ) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
+                DialogButtonModel(text = GetString(R.string.cancel), dismissOnClick = true)
+            )
+        )
     }
 }
 
@@ -287,9 +306,9 @@ private fun AppDisguiseSettingsPreview(
                 ),
             ),
             isOn = true,
-            setOn = { },
-            onItemSelected = { },
             onBack = { },
+            dialogState = AppDisguiseSettingsViewModel.ConfirmDialogState(null, false),
+            onCommand = {}
         )
     }
 }
