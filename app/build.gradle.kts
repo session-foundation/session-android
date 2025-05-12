@@ -7,13 +7,15 @@ plugins {
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.plugin.parcelize)
     alias(libs.plugins.ksp)
+//    id("witness-plugin")
+    id("generate-ip-country-data")
     alias(libs.plugins.hilt.android)
-    alias(libs.plugins.dependency.analysis)
+//    alias(libs.plugins.dependency.analysis)
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
 
-apply(plugin = "witness")
+//apply(plugin = "witness")
 
 configurations.configureEach {
     exclude(module = "commons-logging")
@@ -159,7 +161,7 @@ android {
         create("play") {
             isDefault = true
             dimension = "distribution"
-            apply(plugin = "com.google.gms.google-services")
+//            apply(plugin = "com.google.gms.google-services")
             ext["websiteUpdateUrl"] = "null"
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "false")
             buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
@@ -372,6 +374,7 @@ fun autoResConfig(): List<String> {
 }
 
 
+//apply<GenerateIPCountryDataPlugin>()
 
 //applicationVariants.configureEach {
 //    outputs.forEach { output ->

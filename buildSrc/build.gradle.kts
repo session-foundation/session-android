@@ -1,7 +1,0 @@
-repositories {
-    google()
-    mavenCentral()
-}
-
-dependencies {
-}
