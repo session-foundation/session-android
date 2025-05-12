@@ -12,7 +12,7 @@ import java.io.DataOutputStream
 import java.io.FileOutputStream
 import java.io.File
 
-abstract class GenerateIPCountryDataPlugin : Plugin<Project> {
+class GenerateIPCountryDataPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.plugins.withId("com.android.application") {
             val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)

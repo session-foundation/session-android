@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.google.services)
 
     id("generate-ip-country-data")
+    id("rename-apk")
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
@@ -371,7 +372,6 @@ fun autoResConfig(): List<String> {
     return listOf("en") + files.mapNotNull { it.takeIf { f -> f.startsWith("values-") }?.substringAfter("values-") }
         .sorted()
 }
-
 
 //apply<GenerateIPCountryDataPlugin>()
 

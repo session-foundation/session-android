@@ -25,5 +25,10 @@ gradlePlugin {
             id = "witness-plugin"
             implementationClass = "org.whispersystems.witness.WitnessPlugin"
         }
+
+        create("rename-apk") {
+            id = "rename-apk"
+            implementationClass = "RenameApkPlugin"
+        }
     }
 }
