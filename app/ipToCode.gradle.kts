@@ -2,7 +2,7 @@ import java.io.File
 import java.io.DataOutputStream
 import java.io.FileOutputStream
 
-abstract class GenerateCountrBlocksTask : DefaultTask() {
+abstract class GenerateCountryBlocksTask : DefaultTask() {
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -39,3 +39,14 @@ abstract class GenerateCountrBlocksTask : DefaultTask() {
         println("Processed data written to: ${outputFile.absolutePath}")
     }
 }
+
+class GenerateIPFilePlugin : Plugin<Project> {
+    override fun apply(project: Project) {
+        val androidComponents = project.extensions.getByType<AndroidComponentsExtension>()
+        androidComponents.onVariants { variant ->
+            println("Got ${variant.name}")
+        }
+    }
+}
+
+apply<GenerateIPFilePlugin>()
