@@ -41,6 +41,7 @@ val getGitHash = providers
     }
     .standardOutput
     .asText
+    .map { it.trim() }
 
 android {
     namespace = "network.loki.messenger"
