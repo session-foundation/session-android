@@ -266,6 +266,7 @@
     <string name="create">Vytvořit</string>
     <string name="creatingCall">Vytváření hovoru</string>
     <string name="cut">Vyjmout</string>
+    <string name="databaseErrorGeneric">Došlo k chybě databáze.\n\nExportujte své aplikační logy a sdílejte je pro účely diagnostiky. Pokud to nebude úspěšné, přeinstalujte {app_name} a obnovte svůj účet.</string>
     <string name="databaseErrorTimeout">Všimli jsme si, že spuštění aplikace {app_name} trvá dlouho.\n\nMůžete pokračovat v čekání, exportovat logy zařízení k řešení problémů nebo zkusit restartovat {app_name}.</string>
     <string name="databaseErrorUpdate">Databáze vaší aplikace není kompatibilní s touto verzí {app_name}. Přeinstalujte aplikaci a obnovte svůj účet pro vytvoření nové databáze a pokračování v používání {app_name}.\n\nVarování: To povede ke ztrátě všech zpráv a příloh starších než dva týdny.</string>
     <string name="databaseOptimizing">Optimalizace databáze</string>
@@ -431,6 +432,7 @@
     <string name="groupCreate">Vytvořit skupinu</string>
     <string name="groupCreateErrorNoMembers">Prosím vyberte alespoň jednoho dalšího člena skupiny.</string>
     <string name="groupDelete">Smazat skupinu</string>
+    <string name="groupDeleteDescription">Jste si jisti, že chcete smazat <b>{group_name}</b>?\n\nTímto odeberete všechny členy a smažete veškerý obsah skupiny.</string>
     <string name="groupDeleteDescriptionMember">Opravdu chcete smazat <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">Skupina {group_name} byla smazána správcem skupiny. Nebudete moci posílat další zprávy.</string>
     <string name="groupDescriptionEnter">Zadejte popis skupiny</string>
@@ -643,6 +645,8 @@
         <item quantity="other">Ve skupině %1$s máte %2$d nových zpráv.</item>
     </plurals>
     <string name="messageReplyingTo">Odpovědět na</string>
+    <string name="messageRequestDisabledToastAttachments">Dokud není vaše žádost o zprávu přijata, nemůžete posílat přílohy</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Dokud není vaše žádost o zprávu přijata, nemůžete posílat hlasové zprávy</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> vás pozval(a) do skupiny <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Odesláním zprávy do této skupiny automaticky přijmete pozvánku do skupiny.</string>
     <string name="messageRequestPending">Vaše žádost o komunikaci teď čeká na vyřízení.</string>
@@ -707,6 +711,7 @@
     <string name="notificationsMuteFor">Ztlumit na {time_large}</string>
     <string name="notificationsMuteUnmute">Zrušit ztlumení</string>
     <string name="notificationsMuted">Ztlumeno</string>
+    <string name="notificationsMutedForTime">Ztlumeno do {date_time}</string>
     <string name="notificationsSlowMode">Pomalý režim</string>
     <string name="notificationsSlowModeDescription">{app_name} bude občas kontrolovat nové zprávy na pozadí.</string>
     <string name="notificationsSound">Zvuk</string>
@@ -922,6 +927,7 @@
     <string name="updateError">Nelze aktualizovat</string>
     <string name="updateErrorDescription">{app_name} se nepodařilo aktualizovat. Přejděte prosím na {session_download_url} a nainstalujte novou verzi ručně, poté kontaktujte naše Centrum pomoci a dejte nám vědět o tomto problému.</string>
     <string name="updateNewVersion"><b>Je dostupná nová verze {app_name}, klikněte pro aktualizaci</b></string>
+    <string name="updateNewVersionDescription">Je dostupná nová verze ({version}) aplikace {app_name}.</string>
     <string name="updateReleaseNotes">Přejít na poznámky k vydání</string>
     <string name="updateSession">Aktualizace {app_name}</string>
     <string name="updateVersion">Verze {version}</string>

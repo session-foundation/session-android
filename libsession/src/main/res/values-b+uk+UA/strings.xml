@@ -14,6 +14,7 @@
     <string name="accountIdYoursDescription">Це ваш Account ID. Інші користувачі можуть просканувати його, щоб почати розмову з вами.</string>
     <string name="actualSize">Актуальний розмір</string>
     <string name="add">Додати</string>
+    <string name="addAdmins">Додати адміністраторів</string>
     <string name="adminCannotBeRemoved">Адміністратори не можуть бути видалені.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> та ще <b>{count} інших</b> було підвищено до адміністраторів.</string>
     <string name="adminPromote">Підвищити адміністратора</string>
