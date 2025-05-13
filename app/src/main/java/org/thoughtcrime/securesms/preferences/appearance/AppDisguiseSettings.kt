@@ -100,7 +100,7 @@ private fun AppDisguiseSettings(
                 // Make sure we fit all the items in the columns by trying each column size until
                 // we find one that suits. When the column size gets down to 1, it will always fit :
                 // n % 1 is always 0.
-                val numColumn = (maxNumColumn downTo  1)
+                val numColumn = (maxNumColumn downTo 1)
                     .first { items.size % it == 0 }
 
                 val numRows = ceil(items.size.toFloat() / numColumn).toInt()
@@ -134,7 +134,13 @@ private fun AppDisguiseSettings(
                                             icon = item.icon,
                                             name = item.name,
                                             selected = item.selected,
-                                            onSelected = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelected(item.id)) },
+                                            onSelected = {
+                                                onCommand(
+                                                    AppDisguiseSettingsViewModel.Command.IconSelected(
+                                                        item.id
+                                                    )
+                                                )
+                                            },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -145,7 +151,8 @@ private fun AppDisguiseSettings(
 
                     Text(
                         stringResource(R.string.appIconAndNameDescription),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(top = LocalDimensions.current.smallSpacing),
                         style = LocalType.current.base,
                         color = LocalColors.current.textSecondary,
@@ -253,6 +260,12 @@ private fun AppDisguiseSettingsPreview(
         AppDisguiseSettings(
             items = listOf(
                 AppDisguiseSettingsViewModel.IconAndName(
+                    id = "3",
+                    icon = R.mipmap.ic_launcher,
+                    name = R.string.app_name,
+                    selected = true
+                ),
+                AppDisguiseSettingsViewModel.IconAndName(
                     id = "1",
                     icon = R.mipmap.ic_launcher_weather,
                     name = R.string.appNameWeather,
@@ -263,12 +276,6 @@ private fun AppDisguiseSettingsPreview(
                     icon = R.mipmap.ic_launcher_stocks,
                     name = R.string.appNameStocks,
                     selected = false
-                ),
-                AppDisguiseSettingsViewModel.IconAndName(
-                    id = "3",
-                    icon = R.mipmap.ic_launcher,
-                    name = R.string.app_name,
-                    selected = true
                 ),
                 AppDisguiseSettingsViewModel.IconAndName(
                     id = "1",
