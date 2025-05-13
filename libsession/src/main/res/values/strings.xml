@@ -54,6 +54,7 @@
     <string name="appIconAndNameChange">Change App Icon and Name</string>
     <string name="appIconAndNameChangeConfirmation">Changing the app icon and name requires {app_name} to be closed. Notifications will continue to use the default {app_name} icon and name.</string>
     <string name="appIconAndNameDescription">Alternate app icon and name is displayed on home screen and app drawer.</string>
+    <string name="appIconAndNameSelectionDescription">The selected app icon and name is displayed on the home screen and app drawer.</string>
     <string name="appIconAndNameSelectionTitle">Icon and name</string>
     <string name="appIconDescription">Alternate app icon is displayed on home screen and app library. App name will still appear as \'{app_name}\'.</string>
     <string name="appIconEnableIcon">Use alternate app icon</string>
@@ -895,6 +896,7 @@
     <string name="searchSearching">Searching...</string>
     <string name="select">Select</string>
     <string name="selectAll">Select All</string>
+    <string name="selectAppIcon">Select app icon</string>
     <string name="send">Send</string>
     <string name="sending">Sending</string>
     <string name="sendingCallOffer">Sending Call Offer</string>
