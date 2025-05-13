@@ -247,14 +247,15 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
 
-    (configurations["playImplementation"])(libs.firebase.messaging) {
+    val playImplementation = configurations.maybeCreate("playImplementation")
+    playImplementation(libs.firebase.messaging) {
         exclude(group = "com.google.firebase", module = "firebase-core")
         exclude(group = "com.google.firebase", module = "firebase-analytics")
         exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
     }
 
     if (huaweiEnabled) {
-        val huaweiImplementation = configurations["huaweiImplementation"]
+        val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)
     }
 
