@@ -223,8 +223,6 @@ android {
     testNamespace = "network.loki.messenger.test"
 }
 
-private val playImplementation = configurations["playImplementation"]
-
 dependencies {
     implementation(project(":content-descriptions"))
 
@@ -249,7 +247,7 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
 
-    playImplementation(libs.firebase.messaging) {
+    (configurations["playImplementation"])(libs.firebase.messaging) {
         exclude(group = "com.google.firebase", module = "firebase-core")
         exclude(group = "com.google.firebase", module = "firebase-analytics")
         exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
@@ -382,6 +380,16 @@ androidComponents {
             val abiName = output.filters.firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier ?: "universal"
             val versionCodeAdditions = checkNotNull(abiPostFix[abiName]) { "$abiName does not exist" }
             output.versionCode.set(canonicalVersionCode * postFixSize + versionCodeAdditions)
+        }
+    }
+}
+
+// Disable google services for non-google variants
+androidComponents {
+    onVariants { variant ->
+        if (variant.flavorName == "play") {
+            tasks.named { it.contains("GoogleServices") }
+                .configureEach { enabled = false }
         }
     }
 }
