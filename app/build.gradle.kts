@@ -387,7 +387,7 @@ androidComponents {
 // Disable google services for non-google variants
 androidComponents {
     onVariants { variant ->
-        if (variant.flavorName == "play") {
+        if (variant.flavorName != "play") {
             tasks.named { it.contains("GoogleServices") }
                 .configureEach { enabled = false }
         }
