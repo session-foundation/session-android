@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -41,13 +40,15 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
+import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.SessionSwitch
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -64,8 +65,7 @@ fun AppDisguiseSettingsScreen(
 ) {
     AppDisguiseSettings(
         onBack = onBack,
-        isOn = viewModel.isOn.collectAsState().value,
-        items = viewModel.alternativeIcons.collectAsState().value,
+        items = viewModel.iconList.collectAsState().value,
         dialogState = viewModel.confirmDialogState.collectAsState().value,
         onCommand = viewModel::onCommand,
     )
@@ -75,8 +75,7 @@ fun AppDisguiseSettingsScreen(
 @Composable
 private fun AppDisguiseSettings(
     items: List<AppDisguiseSettingsViewModel.IconAndName>,
-    isOn: Boolean,
-    dialogState: AppDisguiseSettingsViewModel.ConfirmDialogState,
+    dialogState: AppDisguiseSettingsViewModel.ConfirmDialogState?,
     onBack: () -> Unit,
     onCommand: (AppDisguiseSettingsViewModel.Command) -> Unit,
 ) {
@@ -92,38 +91,19 @@ private fun AppDisguiseSettings(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
         ) {
-            Text(
-                stringResource(R.string.appIcon),
-                style = LocalType.current.large,
-                color = LocalColors.current.textSecondary
-            )
-
-            Cell {
-                Row(
-                    modifier = Modifier
-                        .toggleable(value = isOn, onValueChange = {
-                            onCommand(AppDisguiseSettingsViewModel.Command.ToggleClicked(it))
-                        })
-                        .padding(LocalDimensions.current.xsSpacing),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        stringResource(R.string.appIconEnableIconAndName),
-                        modifier = Modifier.weight(1f),
-                        style = LocalType.current.large,
-                        color = LocalColors.current.text
-                    )
-
-                    SessionSwitch(checked = isOn, onCheckedChange = null)
-                }
-            }
-
             BoxWithConstraints {
                 // Calculate the number of columns based on the min width we want each column
                 // to be.
                 val minColumnWidth = LocalDimensions.current.xxsSpacing + ICON_ITEM_SIZE_DP.dp
-                val numColumn =
+                val maxNumColumn =
                     (constraints.maxWidth / LocalDensity.current.run { minColumnWidth.toPx() }).toInt()
+
+                // Make sure we fit all the items in the columns by trying each column size until
+                // we find one that suits. When the column size gets down to 1, it will always fit :
+                // n % 1 is always 0.
+                val numColumn = (maxNumColumn downTo 1)
+                    .first { items.size % it == 0 }
+
                 val numRows = ceil(items.size.toFloat() / numColumn).toInt()
 
                 Column(
@@ -155,7 +135,13 @@ private fun AppDisguiseSettings(
                                             icon = item.icon,
                                             name = item.name,
                                             selected = item.selected,
-                                            onSelected = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelected(item.id)) },
+                                            onSelected = {
+                                                onCommand(
+                                                    AppDisguiseSettingsViewModel.Command.IconSelected(
+                                                        item.id
+                                                    )
+                                                )
+                                            },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -166,7 +152,8 @@ private fun AppDisguiseSettings(
 
                     Text(
                         stringResource(R.string.appIconAndNameDescription),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(top = LocalDimensions.current.smallSpacing),
                         style = LocalType.current.base,
                         color = LocalColors.current.textSecondary,
@@ -177,10 +164,13 @@ private fun AppDisguiseSettings(
         }
     }
 
-    if (dialogState.showDialog) {
+    if (dialogState != null) {
         AlertDialog(
             onDismissRequest = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectDismissed) },
-            text = stringResource(R.string.appIconAndNameChangeConfirmation),
+            text = Phrase.from(LocalContext.current, R.string.appIconAndNameChangeConfirmation)
+                .put(APP_NAME, stringResource(R.string.app_name))
+                .format()
+                .toString(),
             title = stringResource(R.string.appIconAndNameChange),
             buttons = listOf(
                 DialogButtonModel(
@@ -240,6 +230,7 @@ private fun IconItem(
                         }
                     }
                 }
+                .qaTag("$name option")
                 .selectable(
                     selected = selected,
                     onClick = onSelected,
@@ -261,6 +252,8 @@ private fun IconItem(
 
 @Preview
 @Preview(device = Devices.TABLET)
+@Preview(widthDp = 486)
+@Preview(widthDp = 300)
 @Composable
 private fun AppDisguiseSettingsPreview(
     @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
@@ -268,6 +261,12 @@ private fun AppDisguiseSettingsPreview(
     PreviewTheme(colors) {
         AppDisguiseSettings(
             items = listOf(
+                AppDisguiseSettingsViewModel.IconAndName(
+                    id = "3",
+                    icon = R.mipmap.ic_launcher,
+                    name = R.string.app_name,
+                    selected = true
+                ),
                 AppDisguiseSettingsViewModel.IconAndName(
                     id = "1",
                     icon = R.mipmap.ic_launcher_weather,
@@ -279,12 +278,6 @@ private fun AppDisguiseSettingsPreview(
                     icon = R.mipmap.ic_launcher_stocks,
                     name = R.string.appNameStocks,
                     selected = false
-                ),
-                AppDisguiseSettingsViewModel.IconAndName(
-                    id = "3",
-                    icon = R.mipmap.ic_launcher_news,
-                    name = R.string.appNameNews,
-                    selected = true
                 ),
                 AppDisguiseSettingsViewModel.IconAndName(
                     id = "1",
@@ -305,9 +298,8 @@ private fun AppDisguiseSettingsPreview(
                     selected = false
                 ),
             ),
-            isOn = true,
             onBack = { },
-            dialogState = AppDisguiseSettingsViewModel.ConfirmDialogState(null, false),
+            dialogState = null,
             onCommand = {}
         )
     }

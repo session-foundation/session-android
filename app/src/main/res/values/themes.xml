@@ -312,7 +312,7 @@
         <item name="actionBarPopupTheme">@style/Light.Popup</item>
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
-        <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="actionBarStyle">@style/Widget.Session.ActionBar.Flat</item>
         <item name="accentColor">?colorAccent</item>
         <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
@@ -490,7 +490,7 @@
         <item name="actionMenuTextColor">?android:textColorPrimary</item>
         <item name="actionBarWidgetTheme">@null</item>
         <item name="actionBarTheme">@style/ThemeOverlay.AppCompat.ActionBar</item>
-        <item name="actionBarStyle">@style/Widget.Session.ActionBar</item>
+        <item name="actionBarStyle">@style/Widget.Session.ActionBar.Flat</item>
         <item name="accentColor">?colorAccent</item>
         <item name="onInvertedBackgroundPrimary">?colorAccent</item>
         <item name="prominentButtonColor">?android:textColorPrimary</item>
