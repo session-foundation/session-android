@@ -66,6 +66,12 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
             return themeState.accentStyle
         }
 
+    // Whether we should apply scrim automatically to the navigation bar
+    // If set to true, the system will detect if a scrim is needed based on the content
+    // If set to false, no scrim will be applied
+    open val applyAutoScrimForNavigationBar: Boolean
+        get() = true
+
     override fun getTheme(): Resources.Theme {
         if (modifiedTheme != null) {
             return modifiedTheme!!
@@ -83,16 +89,27 @@ abstract class BaseActionBarActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val detectDarkMode = { _: Resources ->
-            ThemeUtil.isDarkTheme(this)
+        val detectDarkMode = { _: Resources -> ThemeUtil.isDarkTheme(this) }
+
+        // The code above does this:
+        // If applyAutoScrimForNavigationBar is set to true, we use auto system bar style and the
+        // system will detect if it needs to apply a scrim so that a contrast is enforced. The end result
+        // could be that the scrim is present or not, depending on the color on the screen.
+        // However, if applyAutoScrimForNavigationBar is set to false, we use the specific
+        // SystemBarStyle where the contrast isn't enforced. This means that the scrim is always NOT applied.
+        val navigationBarStyle = when {
+            applyAutoScrimForNavigationBar -> {
+                SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+            }
+            detectDarkMode(resources) -> SystemBarStyle.dark(Color.TRANSPARENT)
+            else -> SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
         }
 
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT, detectDarkMode),
-            navigationBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode)
+            statusBarStyle = SystemBarStyle.auto(DefaultLightScrim, DefaultDarkScrim, detectDarkMode),
+            navigationBarStyle = navigationBarStyle
         )
         super.onCreate(savedInstanceState)
-
 
         val actionBar = supportActionBar
         if (actionBar != null) {

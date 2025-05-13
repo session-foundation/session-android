@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.database.Cursor
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -256,6 +257,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusSender: TypingStatusSender
 
     override val applyDefaultWindowInsets: Boolean
+        get() = false
+
+    override val applyAutoScrimForNavigationBar: Boolean
         get() = false
 
     private val screenshotObserver by lazy {
