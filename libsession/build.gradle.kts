@@ -83,7 +83,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
-    testImplementation(libs.mockito.inline)
+    testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.core.testing)

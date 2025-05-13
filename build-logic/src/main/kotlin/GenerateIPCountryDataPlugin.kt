@@ -1,4 +1,7 @@
 import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.ApplicationVariant
+import com.android.build.api.variant.HasUnitTest
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -15,13 +18,19 @@ import java.io.File
 class GenerateIPCountryDataPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         project.plugins.withId("com.android.application") {
-            val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
+            val androidComponents = project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java)
             androidComponents.onVariants { variant ->
                 val task = project.tasks.register("generate${variant.name.capitalized()}IpCountryData", GenerateCountryBlocksTask::class.java) {
                     outputDir.set(project.layout.buildDirectory.dir("generated/${variant.name}"))
                 }
 
                 variant.sources.assets?.addGeneratedSourceDirectory(
+                    task,
+                    GenerateCountryBlocksTask::outputDir
+                )
+
+                // Also add the generated source directory to the unit test sources
+                (variant as? HasUnitTest)?.unitTest?.sources?.resources?.addGeneratedSourceDirectory(
                     task,
                     GenerateCountryBlocksTask::outputDir
                 )

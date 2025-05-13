@@ -119,10 +119,11 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+
         getByName("debug") {
             isDefault = true
             isMinifyEnabled = false
-            enableUnitTestCoverage = true
+            enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -222,7 +223,7 @@ android {
     testNamespace = "network.loki.messenger.test"
 }
 
-val playImplementation = configurations["playImplementation"]
+private val playImplementation = configurations["playImplementation"]
 
 dependencies {
     implementation(project(":content-descriptions"))
@@ -315,6 +316,7 @@ dependencies {
     androidTestImplementation(libs.androidx.truth)
     testImplementation(libs.truth)
     androidTestImplementation(libs.truth)
+    testRuntimeOnly(libs.mockito.core)
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.contrib)
