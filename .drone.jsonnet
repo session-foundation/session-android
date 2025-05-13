@@ -83,8 +83,8 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
           'apt-get update --allow-releaseinfo-change',
           'apt-get install -y ninja-build openjdk-21-jdk',
           'update-java-alternatives -s java-1.21.0-openjdk-amd64',
-          './gradlew assemblePlayDebug assembleWebsiteDebug',
-          './gradlew -Phuawei=1 assembleHuaweiDebug',
+          './gradlew --no-daemon assemblePlayDebug assembleWebsiteDebug',
+          './gradlew --no-daemon -Phuawei=1 assembleHuaweiDebug',
           './scripts/drone-static-upload.sh'
         ],
       }
