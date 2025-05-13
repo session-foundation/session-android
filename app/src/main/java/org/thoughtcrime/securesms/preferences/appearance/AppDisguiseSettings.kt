@@ -266,8 +266,8 @@ private fun AppDisguiseSettingsPreview(
                 ),
                 AppDisguiseSettingsViewModel.IconAndName(
                     id = "3",
-                    icon = R.mipmap.ic_launcher_news,
-                    name = R.string.appNameNews,
+                    icon = R.mipmap.ic_launcher,
+                    name = R.string.app_name,
                     selected = true
                 ),
                 AppDisguiseSettingsViewModel.IconAndName(
