@@ -206,6 +206,7 @@ private fun IconItem(
     val selectedBorderColor = LocalColors.current.textSecondary
     val density = LocalDensity.current
     val borderStroke = Stroke(density.run { 2.dp.toPx() })
+    val nameText = stringResource(name)
 
     Column(
         modifier = modifier
@@ -230,7 +231,7 @@ private fun IconItem(
                         }
                     }
                 }
-                .qaTag("$name option")
+                .qaTag("$nameText option")
                 .selectable(
                     selected = selected,
                     onClick = onSelected,
@@ -242,7 +243,7 @@ private fun IconItem(
         )
 
         Text(
-            stringResource(name),
+            nameText,
             textAlign = TextAlign.Center,
             style = LocalType.current.large,
             color = textColor,
