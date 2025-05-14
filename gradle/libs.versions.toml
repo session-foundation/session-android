@@ -18,6 +18,7 @@ composeBomVersion = "2025.03.01"
 kotlinComposeCompilerVersion = "1.5.15"
 composeVersion = "1.0.0-beta01"
 conscryptAndroidVersion = "2.5.3"
+conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
 copperFlowVersion = "1.0.0"
 coreTestingVersion = "2.2.0"
@@ -120,7 +121,7 @@ androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-test-junit4-android = { module = "androidx.compose.ui:ui-test-junit4-android" }
 agpApi = { module = "com.android.tools.build:gradle-api", version.ref = "gradlePluginVersion" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertjCoreVersion" }
-conscrypt-openjdk-uber = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscryptAndroidVersion" }
+conscrypt-openjdk-uber = { module = "org.conscrypt:conscrypt-openjdk-uber", version.ref = "conscryptJavaVersion" }
 copper-flow = { module = "app.cash.copper:copper-flow", version.ref = "copperFlowVersion" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinVersion" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetimeVersion" }

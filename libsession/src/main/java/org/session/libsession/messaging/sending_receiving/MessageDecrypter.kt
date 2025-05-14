@@ -2,6 +2,7 @@ package org.session.libsession.messaging.sending_receiving
 
 import com.goterl.lazysodium.interfaces.Box
 import com.goterl.lazysodium.interfaces.Sign
+import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageReceiver.Error
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -66,43 +67,34 @@ object MessageDecrypter {
         otherBlindedPublicKey: String,
         serverPublicKey: String
     ): Pair<ByteArray, String> {
-        if (message.size < Box.NONCEBYTES + 2) throw Error.DecryptionFailed
         val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
         val blindedKeyPair = SodiumUtilities.blindedKeyPair(serverPublicKey, userEdKeyPair) ?: throw Error.DecryptionFailed
-        // Calculate the shared encryption key, receiving from A to B
         val otherKeyBytes = Hex.fromStringCondensed(otherBlindedPublicKey.removingIdPrefixIfNeeded())
-        val kA = if (isOutgoing) blindedKeyPair.publicKey.asBytes else otherKeyBytes
-        val decryptionKey = SodiumUtilities.sharedBlindedEncryptionKey(
-            userEdKeyPair.secretKey.asBytes,
-            otherKeyBytes,
-            kA,
-            if (isOutgoing) otherKeyBytes else blindedKeyPair.publicKey.asBytes
-        ) ?: throw Error.DecryptionFailed
 
-        // v, ct, nc = data[0], data[1:-24], data[-24:size]
-        val version = message.first().toInt()
-        if (version != 0) throw Error.DecryptionFailed
-        val ciphertext = message.drop(1).dropLast(Box.NONCEBYTES).toByteArray()
-        val nonce = message.takeLast(Box.NONCEBYTES).toByteArray()
+        val senderKeyBytes: ByteArray
+        val recipientKeyBytes: ByteArray
 
-        // Decrypt the message
-        val innerBytes = SodiumUtilities.decrypt(ciphertext, decryptionKey, nonce) ?: throw Error.DecryptionFailed
-        if (innerBytes.size < Sign.PUBLICKEYBYTES) throw Error.DecryptionFailed
+        if (isOutgoing) {
+            senderKeyBytes = blindedKeyPair.publicKey.asBytes
+            recipientKeyBytes = otherKeyBytes
+        } else {
+            senderKeyBytes = otherKeyBytes
+            recipientKeyBytes = blindedKeyPair.publicKey.asBytes
+        }
 
-        // Split up: the last 32 bytes are the sender's *unblinded* ed25519 key
-        val plaintextEndIndex = innerBytes.size - Sign.PUBLICKEYBYTES
-        val plaintext = innerBytes.slice(0 until plaintextEndIndex).toByteArray()
-        val senderEdPublicKey = innerBytes.slice((plaintextEndIndex until innerBytes.size)).toByteArray()
+        try {
+            val (sessionId, plainText) = SessionEncrypt.decryptForBlindedRecipient(
+                ciphertext = message,
+                myEd25519Privkey = userEdKeyPair.secretKey.asBytes,
+                openGroupPubkey = Hex.fromStringCondensed(serverPublicKey),
+                senderBlindedId = byteArrayOf(0x15) + senderKeyBytes,
+                recipientBlindId = byteArrayOf(0x15) + recipientKeyBytes,
+            )
 
-        // Verify that the inner senderEdPublicKey (A) yields the same outer kA we got with the message
-        val blindingFactor = SodiumUtilities.generateBlindingFactor(serverPublicKey) ?: throw Error.DecryptionFailed
-        val sharedSecret = SodiumUtilities.combineKeys(blindingFactor, senderEdPublicKey) ?: throw Error.DecryptionFailed
-        if (!kA.contentEquals(sharedSecret)) throw Error.InvalidSignature
-
-        // Get the sender's X25519 public key
-        val senderX25519PublicKey = SodiumUtilities.toX25519(senderEdPublicKey) ?: throw Error.InvalidSignature
-
-        val id = AccountId(IdPrefix.STANDARD, senderX25519PublicKey)
-        return Pair(plaintext, id.hexString)
+            return plainText.data to sessionId
+        } catch (e: Exception) {
+            Log.e("MessageDecrypter", "Failed to decrypt blinded message", e)
+            throw Error.DecryptionFailed
+        }
     }
 }
