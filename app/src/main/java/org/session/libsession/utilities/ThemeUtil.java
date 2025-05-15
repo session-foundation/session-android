@@ -18,7 +18,7 @@ import androidx.appcompat.view.ContextThemeWrapper;
 
 import org.session.libsignal.utilities.Log;
 
-import org.session.libsession.R;
+import network.loki.messenger.R;
 
 public class ThemeUtil {
   private static final String TAG = ThemeUtil.class.getSimpleName();

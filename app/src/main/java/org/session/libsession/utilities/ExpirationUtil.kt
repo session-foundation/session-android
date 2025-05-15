@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import org.session.libsession.LocalisedTimeUtil
-import org.session.libsession.R
+import network.loki.messenger.R
 
 fun Context.getExpirationTypeDisplayValue(sent: Boolean) = if (sent) getString(R.string.disappearingMessagesTypeSent)
                                                            else      getString(R.string.disappearingMessagesTypeRead)

@@ -7,7 +7,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.ColorRes;
 import androidx.annotation.NonNull;
 
-import org.session.libsession.R;
+import network.loki.messenger.R;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -96,16 +96,6 @@ public enum MaterialColor {
     }
     return context.getResources().getColor(isDarkTheme(context) ? R.color.transparent_black_70
                                                                 : R.color.transparent_white_aa);
-  }
-
-  public @ColorInt int toQuoteFooterColor(@NonNull Context context, boolean outgoing) {
-    if (outgoing) {
-      int color = toConversationColor(context);
-      int alpha = isDarkTheme(context) ? (int) (0.4 * 255) : (int) (0.6 * 255);
-      return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
-    }
-    return context.getResources().getColor(isDarkTheme(context) ? R.color.transparent_black_90
-                                                                : R.color.transparent_white_bb);
   }
 
   public boolean represents(Context context, int colorValue) {

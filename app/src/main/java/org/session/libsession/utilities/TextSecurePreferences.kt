@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import org.session.libsession.R
+import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.TextSecurePreferences.Companion.AUTOPLAY_AUDIO_MESSAGES
 import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
@@ -132,10 +132,6 @@ interface TextSecurePreferences {
     fun isNotificationVibrateEnabled(): Boolean
     fun getNotificationLedColor(): Int
     fun isThreadLengthTrimmingEnabled(): Boolean
-    fun getMobileMediaDownloadAllowed(): Set<String>?
-    fun getWifiMediaDownloadAllowed(): Set<String>?
-    fun getRoamingMediaDownloadAllowed(): Set<String>?
-    fun getMediaDownloadAllowed(key: String, @ArrayRes defaultValuesRes: Int): Set<String>?
     fun getLogEncryptedSecret(): String?
     fun setLogEncryptedSecret(base64Secret: String?)
     fun getLogUnencryptedSecret(): String?
@@ -748,21 +744,6 @@ interface TextSecurePreferences {
             return getBooleanPreference(context, THREAD_TRIM_ENABLED, true)
         }
 
-        @JvmStatic
-        fun getMobileMediaDownloadAllowed(context: Context): Set<String>? {
-            return getMediaDownloadAllowed(context, MEDIA_DOWNLOAD_MOBILE_PREF, R.array.pref_media_download_mobile_data_default)
-        }
-
-        @JvmStatic
-        fun getWifiMediaDownloadAllowed(context: Context): Set<String>? {
-            return getMediaDownloadAllowed(context, MEDIA_DOWNLOAD_WIFI_PREF, R.array.pref_media_download_wifi_default)
-        }
-
-        @JvmStatic
-        fun getRoamingMediaDownloadAllowed(context: Context): Set<String>? {
-            return getMediaDownloadAllowed(context, MEDIA_DOWNLOAD_ROAMING_PREF, R.array.pref_media_download_roaming_default)
-        }
-
         private fun getMediaDownloadAllowed(context: Context, key: String, @ArrayRes defaultValuesRes: Int): Set<String>? {
             return getStringSetPreference(context, key, HashSet(Arrays.asList(*context.resources.getStringArray(defaultValuesRes))))
         }
@@ -1373,22 +1354,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun isThreadLengthTrimmingEnabled(): Boolean {
         return getBooleanPreference(TextSecurePreferences.THREAD_TRIM_ENABLED, true)
-    }
-
-    override fun getMobileMediaDownloadAllowed(): Set<String>? {
-        return getMediaDownloadAllowed(TextSecurePreferences.MEDIA_DOWNLOAD_MOBILE_PREF, R.array.pref_media_download_mobile_data_default)
-    }
-
-    override fun getWifiMediaDownloadAllowed(): Set<String>? {
-        return getMediaDownloadAllowed(TextSecurePreferences.MEDIA_DOWNLOAD_WIFI_PREF, R.array.pref_media_download_wifi_default)
-    }
-
-    override fun getRoamingMediaDownloadAllowed(): Set<String>? {
-        return getMediaDownloadAllowed(TextSecurePreferences.MEDIA_DOWNLOAD_ROAMING_PREF, R.array.pref_media_download_roaming_default)
-    }
-
-    override fun getMediaDownloadAllowed(key: String, @ArrayRes defaultValuesRes: Int): Set<String>? {
-        return getStringSetPreference(key, HashSet(listOf(*context.resources.getStringArray(defaultValuesRes))))
     }
 
     override fun getLogEncryptedSecret(): String? {

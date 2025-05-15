@@ -53,25 +53,16 @@ dependencies {
 
     api(libs.libsession.util.android)
 
-    implementation(libs.jna) {
-        artifact {
-            type = "aar"
-        }
-    }
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.preference.ktx)
     implementation(libs.material)
     implementation(libs.protobuf.java)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.glide)
     implementation(libs.stream)
-    implementation(libs.roundedimageview)
-    implementation(libs.kryo)
     implementation(libs.jackson.databind)
-    implementation(libs.curve25519.java)
     implementation(libs.okhttp)
     implementation(libs.phrase)
     implementation(libs.kotlin.reflect)

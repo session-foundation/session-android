@@ -1,6 +1,7 @@
 package org.session.libsignal.utilities
 
-import org.session.libsignal.BuildConfig
+import network.loki.messenger.BuildConfig
+
 
 private val VALID_ACCOUNT_ID_PATTERN = Regex("[0-9]{2}[0-9a-fA-F]{64}")
 

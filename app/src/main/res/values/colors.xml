@@ -8,6 +8,7 @@
     <color name="compose_view_background">#1B1B1B</color>
     <color name="compose_text_view_background">#141414</color>
     <color name="paths_building">#FFCE3A</color>
+    <color name="cell_selected">#0C0C0C</color>
 
     <color name="call_action_button">#DD353535</color>
     <color name="call_action_button_highlighted">#FFFFFF</color>
@@ -22,6 +23,12 @@
     <color name="accent_yellow">#ffFAD657</color>
 
     <color name="rust">#A64B00</color>
+
+    <color name="signal_primary">@color/accent_green</color>
+    <color name="signal_primary_dark">@color/accent_green</color>
+
+    <color name="textsecure_primary">@color/signal_primary</color>
+    <color name="textsecure_primary_dark">@color/signal_primary_dark</color>
 
     <array name="profile_picture_placeholder_colors">
         <item>@color/accent_green</item>

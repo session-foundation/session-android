@@ -2,7 +2,7 @@ package org.session.libsession.messaging.groups
 
 import android.content.Context
 import com.squareup.phrase.Phrase
-import org.session.libsession.R
+import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY

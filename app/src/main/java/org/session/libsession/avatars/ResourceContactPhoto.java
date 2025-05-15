@@ -13,7 +13,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 
 import com.makeramen.roundedimageview.RoundedDrawable;
 
-import org.session.libsession.R;
+import network.loki.messenger.R;
 import org.session.libsession.utilities.ThemeUtil;
 
 public class ResourceContactPhoto implements FallbackContactPhoto {

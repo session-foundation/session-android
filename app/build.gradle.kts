@@ -231,7 +231,7 @@ dependencies {
     ksp(libs.glide.ksp)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.hilt.work)
-
+    implementation(libs.roundedimageview)
     implementation(libs.hilt.android)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
@@ -239,6 +239,7 @@ dependencies {
     implementation(libs.flexbox)
     implementation(libs.androidx.cardview)
     implementation(libs.androidx.legacy.preference.v14)
+    implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.lifecycle.process)
@@ -295,9 +296,17 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
+    implementation(libs.jna) {
+        artifact {
+            type = "aar"
+        }
+    }
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
+    implementation(libs.libsession.util.android)
+    implementation(libs.kryo)
+    implementation(libs.curve25519.java)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)
