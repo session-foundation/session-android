@@ -42,7 +42,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants.APP_NAME
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
@@ -151,7 +151,7 @@ private fun AppDisguiseSettings(
                     }
 
                     Text(
-                        stringResource(R.string.appIconAndNameDescription),
+                        stringResource(R.string.appIconAndNameSelectionDescription),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = LocalDimensions.current.smallSpacing),
@@ -168,7 +168,7 @@ private fun AppDisguiseSettings(
         AlertDialog(
             onDismissRequest = { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectDismissed) },
             text = Phrase.from(LocalContext.current, R.string.appIconAndNameChangeConfirmation)
-                .put(APP_NAME, stringResource(R.string.app_name))
+                .put(APP_NAME_KEY, stringResource(R.string.app_name))
                 .format()
                 .toString(),
             title = stringResource(R.string.appIconAndNameChange),
@@ -206,6 +206,7 @@ private fun IconItem(
     val selectedBorderColor = LocalColors.current.textSecondary
     val density = LocalDensity.current
     val borderStroke = Stroke(density.run { 2.dp.toPx() })
+    val nameText = stringResource(name)
 
     Column(
         modifier = modifier
@@ -230,7 +231,7 @@ private fun IconItem(
                         }
                     }
                 }
-                .qaTag("$name option")
+                .qaTag("$nameText option")
                 .selectable(
                     selected = selected,
                     onClick = onSelected,
@@ -242,7 +243,7 @@ private fun IconItem(
         )
 
         Text(
-            stringResource(name),
+            nameText,
             textAlign = TextAlign.Center,
             style = LocalType.current.large,
             color = textColor,

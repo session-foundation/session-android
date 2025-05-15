@@ -409,7 +409,7 @@
                 app:drawableEndCompat="@drawable/ic_chevron_right"
                 app:drawableTint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
-                android:text="@string/appIconSelect"
+                android:text="@string/selectAppIcon"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
