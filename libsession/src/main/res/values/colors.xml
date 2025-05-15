@@ -51,14 +51,6 @@
 
     <color name="avatar_background">@color/transparent_black_90</color>
 
-    <color name="accent_green">#ff31F196</color>
-    <color name="accent_blue">#ff57C9FA</color>
-    <color name="accent_purple">#ffC993FF</color>
-    <color name="accent_pink">#ffFF95EF</color>
-    <color name="accent_red">#ffFF9C8E</color>
-    <color name="accent_orange">#ffFCB159</color>
-    <color name="accent_yellow">#ffFAD657</color>
 
-    <color name="rust">#A64B00</color>
 
 </resources>
