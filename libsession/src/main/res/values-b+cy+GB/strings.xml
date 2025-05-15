@@ -310,6 +310,22 @@
         <item quantity="many">Methwyd dileu negeseuon</item>
         <item quantity="other">Methu dileu negeseuon</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="zero">Mae rhai o\'r negeseuon rydych wedi dewis ni ellir eu dileu o\'ch holl ddyfeisiau</item>
+        <item quantity="one">Ni ellir dileu\'r neges hon o\'ch holl ddyfeisiau</item>
+        <item quantity="two">Mae rhai o\'r negeseuon rydych wedi dewis ni ellir eu dileu o\'ch holl ddyfeisiau</item>
+        <item quantity="few">Mae rhai o\'r negeseuon rydych wedi dewis ni ellir eu dileu o\'ch holl ddyfeisiau</item>
+        <item quantity="many">Mae rhai o\'r negeseuon rydych wedi dewis ni ellir eu dileu o\'ch holl ddyfeisiau</item>
+        <item quantity="other">Mae rhai o\'r negeseuon rydych wedi dewis ni ellir eu dileu o\'ch holl ddyfeisiau</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="zero">Mae rhai o\'r negeseuon a ddewiswyd gennych yn methu cael eu dileu ar gyfer pawb</item>
+        <item quantity="one">Ni ellir dileu\'r neges hon ar gyfer pawb</item>
+        <item quantity="two">Mae rhai o\'r negeseuon a ddewiswyd gennych yn methu cael eu dileu ar gyfer pawb</item>
+        <item quantity="few">Mae rhai o\'r negeseuon a ddewiswyd gennych yn methu cael eu dileu ar gyfer pawb</item>
+        <item quantity="many">Mae rhai o\'r negeseuon a ddewiswyd gennych yn methu cael eu dileu ar gyfer pawb</item>
+        <item quantity="other">Mae rhai o\'r negeseuon a ddewiswyd gennych yn methu cael eu dileu ar gyfer pawb</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Ydych chi\'n siŵr eich bod am ddileu\'r negeseuon hyn i bawb?</string>
     <string name="deleting">Wrthi\'n dileu</string>
     <string name="developerToolsToggle">Toglo Offeryn Datblygwr</string>
@@ -356,6 +372,7 @@
     <string name="displayNameNew">Dewiswch enw arddangos newydd</string>
     <string name="displayNamePick">Dewiswch eich enw arddangos</string>
     <string name="displayNameSet">Gosod Enw Arddangos</string>
+    <string name="displayNameVisible">Mae eich Enw Arddangos yn weladwy i ddefnyddwyr, grwpiau a chymunedau rydych yn rhyngweithio gyda nhw.</string>
     <string name="document">Dogfen</string>
     <string name="done">Wedi gorffen</string>
     <string name="download">Llwytho i lawr</string>
@@ -384,9 +401,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} wedi ymateb gyda {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} a {other_name} wedi ymateb gyda {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} a <span>{count} eraill</span> wedi ymateb gyda {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} a <font color="0">{count} eraill</font> wedi ymateb gyda {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Rydych chi wedi ymateb gyda {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Chi a <span>{count} eraill</span> wedi ymateb gyda {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Chi a <font color="0">{count} eraill</font> wedi ymateb gyda {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Chi a {name} wedi ymateb gyda {emoji_name}</string>
     <string name="emojiReactsNotification">Wedi ymateb i\'ch neges {emoji}</string>
     <string name="enable">Galluogi</string>
@@ -419,12 +436,15 @@
     <string name="groupInviteFailedMultiple">Methu gwahodd {name} a {count} arall i {group_name}</string>
     <string name="groupInviteFailedTwo">Methu gwahodd {name} a {other_name} i {group_name}</string>
     <string name="groupInviteFailedUser">Methu gwahodd {name} i {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> wedi eich gwahodd i ymuno eto â <b>{group_name}</b>, lle\'r ydych chi\'n Gweinyddwr.</string>
+    <string name="groupInviteReinviteYou">Cawsoch wahoddiad i ymuno â <b>{group_name}</b> eto, lle rydych yn Weinyddwr.</string>
     <string name="groupInviteSent">Anfonwyd gwahoddiad</string>
     <string name="groupInviteSuccessful">Gwahoddiad grŵp llwyddiannus</string>
     <string name="groupInviteVersion">Rhaid i\'r defnyddwyr fod â\'r rhyddhad diweddaraf i dderbyn gwahoddiadau</string>
     <string name="groupInviteYou">Gwahoddwyd <b>chi</b> i ymuno â\'r grŵp.</string>
     <string name="groupInviteYouAndMoreNew"><b>Chi</b> a <b>{count} eraill</b> ymunodd â\'r grŵp.</string>
     <string name="groupInviteYouAndOtherNew"><b>Chi</b> a <b>{other_name}</b> ymunodd â\'r grŵp.</string>
+    <string name="groupInviteYouHistory">Gwahoddwyd <b>chi</b> i ymuno â\'r grŵp. Hanes sgwrs wedi cael ei rhannu.</string>
     <string name="groupLeave">Gadael y grŵp</string>
     <string name="groupLeaveDescription">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ydych chi\'n siŵr eich bod am adael <b>{group_name}</b>?\n\nBydd hyn yn dileu\'r holl aelodau ac yn dileu\'r holl gynnwys grŵp.</string>
@@ -448,6 +468,7 @@
     <string name="groupNameEnterShorter">Rhowch enw grŵp byrrach.</string>
     <string name="groupNameNew">Enw\'r grŵp nawr yw {group_name}.</string>
     <string name="groupNameUpdated">Enw\'r grŵp wedi\'i ddiweddaru.</string>
+    <string name="groupNameVisible">Mae enw\'r grŵp i\'w weld i bob aelod o\'r grŵp.</string>
     <string name="groupNoMessages">Nid oes gennych unrhyw negeseuon gan <b>{group_name}</b>. Anfonwch neges i ddechrau\'r sgwrs!</string>
     <string name="groupOnlyAdmin">Chi yw\'r unig weinyddwr yn <b>{group_name}</b>.\n\nNi ellir newid aelodau a gosodiadau\'r grŵp heb weinyddwr.</string>
     <string name="groupPromotedYou">Penodwyd <b>chi</b> i admin.</string>
@@ -475,6 +496,7 @@
     <string name="groupRemovedMultiple"><b>{name} y</b> a <b>{count} eraill</b> wedi cael eu symud o\'r grŵp.</string>
     <string name="groupRemovedTwo"><b>{name} y</b> a <b>{other_name}</b> wedi cael eu symud o\'r grŵp.</string>
     <string name="groupRemovedYou">Tynnwyd chi allan o <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Tynnwyd chi o\'r grŵp.</string>
     <string name="groupRemovedYouMultiple"><b>Chi</b> a <b>{count} eraill</b> wedi cael eu symud o\'r grŵp.</string>
     <string name="groupRemovedYouTwo"><b>Chi</b> a <b>{other_name}</b> wedi cael eu symud o\'r grŵp.</string>
     <string name="groupSetDisplayPicture">Gosod Llun Arddangos y Grŵp</string>
@@ -623,6 +645,7 @@
     <string name="next">Nesaf</string>
     <string name="nicknameDescription">Dewiswch lysenw ar gyfer <b>{name}</b>. Bydd hyn yn ymddangos ichi yn eich sgyrsiau un-i-un a grŵp.</string>
     <string name="nicknameEnter">Rhowch lysenw</string>
+    <string name="nicknameErrorShorter">Rhowch ffugenw byrrach</string>
     <string name="nicknameRemove">Tynnu llysenw</string>
     <string name="nicknameSet">Gosod Llysenw</string>
     <string name="no">Na</string>

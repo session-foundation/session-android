@@ -358,9 +358,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} သည် {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} နှင့် {other_name} သည် {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} နှင့် <span>{count} မှ</span> {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} နှင့် <font color="0">{count} မှ</font> {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
     <string name="emojiReactsHoverYouNameDesktop">သင့်အား {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">သင့်နှင့် <span>{count} မှ</span> {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">သင့်နှင့် <font color="0">{count} မှ</font> {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">သင်နှင့် {name} သည် {emoji_name} ဖြင့်တုံ့ပြန်ခဲ့သည်</string>
     <string name="emojiReactsNotification">သင့်မက်ဆေ့ချ်ကို {emoji} ဖြင့် တုံ့ပြန်သည်</string>
     <string name="enable">ဖွင့်ပါ</string>

@@ -294,6 +294,14 @@
         <item quantity="one">Αποτυχία διαγραφής μηνύματος</item>
         <item quantity="other">Αποτυχία διαγραφής μηνύματος</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Αυτό το μήνυμα δεν μπορεί να διαγραφεί από όλες τις συσκευές σας</item>
+        <item quantity="other">Ορισμένα από τα μηνύματα που επιλέξατε δεν μπορούν να διαγραφούν από όλες τις συσκευές σας</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Αυτό το μήνυμα δεν μπορεί να διαγραφεί για όλους</item>
+        <item quantity="other">Μερικά από τα μηνύματα που έχετε επιλέξει δεν μπορούν να διαγραφούν για όλους</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Σίγουρα θέλετε να διαγράψετε αυτά τα μηνύματα για όλους;</string>
     <string name="deleting">Γίνεται διαγραφή</string>
     <string name="developerToolsToggle">Εναλλαγή Εργαλείων Προγραμματιστή</string>
@@ -340,6 +348,7 @@
     <string name="displayNameNew">Επιλέξτε ένα νέο όνομα εμφάνισης</string>
     <string name="displayNamePick">Επιλέξτε το όνομα εμφάνισής σας</string>
     <string name="displayNameSet">Ορισμός Ονόματος Εμφάνισης</string>
+    <string name="displayNameVisible">Το Όνομα Προβολής σας είναι ορατό στους χρήστες, στις ομάδες και στις κοινότητες με τις οποίες αλληλεπιδράτε.</string>
     <string name="document">Έγγραφο</string>
     <string name="done">Ολοκληρώθηκε</string>
     <string name="download">Λήψη</string>
@@ -364,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} αντέδρασε με {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} και {other_name} αντέδρασαν με {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} και <span>{count} άλλοι</span> αντέδρασαν με {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} και <font color="0">{count} άλλοι</font> αντέδρασαν με {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Εσείς αντέδρασατε με {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Εσείς και <span>{count} άλλοι</span> αντέδρασαν με {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Εσείς και <font color="0">{count} άλλοι</font> αντέδρασαν με {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Εσείς και {name} αντέδρασαν με {emoji_name}</string>
     <string name="emojiReactsNotification">Αντέδρασαν με το μήνυμα {emoji}</string>
     <string name="enable">Ενεργοποίηση</string>
@@ -399,12 +408,15 @@
     <string name="groupInviteFailedMultiple">Αποτυχία πρόσκλησης {name} και {count} άλλων στο {group_name}</string>
     <string name="groupInviteFailedTwo">Αποτυχία πρόσκλησης {name} και {other_name} στο {group_name}</string>
     <string name="groupInviteFailedUser">Αποτυχία πρόσκλησης {name} στο {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> σας προσκάλεσε να επανενωθείτε με την ομάδα <b>{group_name}</b>, όπου είστε Διαχειριστής.</string>
+    <string name="groupInviteReinviteYou">Προσκληθήκατε να επανενταχθείτε στην ομάδα <b>{group_name}</b>, όπου είστε διαχειριστής.</string>
     <string name="groupInviteSent">Η πρόσκληση στάλθηκε</string>
     <string name="groupInviteSuccessful">Η πρόσκληση στην ομάδα ήταν επιτυχής</string>
     <string name="groupInviteVersion">Οι χρήστες πρέπει να έχουν την τελευταία έκδοση για να λάβουν προσκλήσεις</string>
     <string name="groupInviteYou"><b>Εσείς</b> προσκληθήκατε να συμμετάσχετε στην ομάδα.</string>
     <string name="groupInviteYouAndMoreNew"><b>Εσύ</b> και <b>{count} ακόμη</b> συμμετείχατε στην ομάδα.</string>
     <string name="groupInviteYouAndOtherNew"><b>Εσύ</b> και <b>{other_name}</b> συμμετείχατε στην ομάδα.</string>
+    <string name="groupInviteYouHistory"><b>Εσείς</b> προσκληθήκατε να συμμετάσχετε στην ομάδα. Το ιστορικό συνομιλιών κοινοποιήθηκε.</string>
     <string name="groupLeave">Αποχώρηση από την ομάδα</string>
     <string name="groupLeaveDescription">Σίγουρα θέλετε να αποχωρήσετε από την ομάδα <b>{group_name}</b></string>
     <string name="groupLeaveDescriptionAdmin">Σίγουρα θέλετε να αποχωρήσετε από την <b>{group_name}</b>?\n\nΑυτό θα αφαιρέσει όλα τα μέλη και θα διαγράψει όλο το περιεχόμενο της ομάδας.</string>
@@ -428,6 +440,7 @@
     <string name="groupNameEnterShorter">Παρακαλώ εισαγάγετε ένα μικρότερο όνομα ομάδας.</string>
     <string name="groupNameNew">Το όνομα της ομάδας είναι πλέον «{group_name}».</string>
     <string name="groupNameUpdated">Το όνομα της ομάδας ενημερώθηκε.</string>
+    <string name="groupNameVisible">Το όνομα της ομάδας είναι ορατό σε όλα τα μέλη της ομάδας.</string>
     <string name="groupNoMessages">Δεν έχετε μηνύματα από <b>{group_name}</b>. Στείλτε ένα μήνυμα για να ξεκινήσετε τη συζήτηση!</string>
     <string name="groupOnlyAdmin">Είστε ο μόνος διαχειριστής στην <b>{group_name}</b>.\n\nΤα μέλη και οι ρυθμίσεις της ομάδας δεν μπορούν να αλλάξουν χωρίς διαχειριστή.</string>
     <string name="groupPromotedYou"><b>Εσείς</b> γίνατε Διαχειριστές.</string>
@@ -447,6 +460,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> και <b>{count} άλλα</b> αφαιρέθηκαν από την ομάδα.</string>
     <string name="groupRemovedTwo"><b>{name}</b> και <b>{other_name}</b> αφαιρέθηκαν από την ομάδα.</string>
     <string name="groupRemovedYou">Έχετε αφαιρεθεί από <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Έχετε αφαιρεθεί από την ομάδα.</string>
     <string name="groupRemovedYouMultiple"><b>Εσείς</b> και <b>{count} άλλοι</b> αφαιρέθηκαν από την ομάδα.</string>
     <string name="groupRemovedYouTwo"><b>Εσείς</b> και <b>{other_name}</b> αφαιρέθηκαν από την ομάδα.</string>
     <string name="groupSetDisplayPicture">Ορισμός Εικόνας Ομάδας</string>
@@ -575,6 +589,7 @@
     <string name="next">Επόμενο</string>
     <string name="nicknameDescription">Επιλέξτε ένα ψευδώνυμο για <b>{name}</b>. Αυτό θα εμφανιστεί σε εσάς στις προσωπικές και ομαδικές συνομιλίες σας.</string>
     <string name="nicknameEnter">Εισαγάγετε ένα ψευδώνυμο</string>
+    <string name="nicknameErrorShorter">Παρακαλώ εισαγάγετε ένα μικρότερο ψευδώνυμο</string>
     <string name="nicknameRemove">Διαγραφή Ψευδώνυμου</string>
     <string name="nicknameSet">Ορισμός Ψευδώνυμου</string>
     <string name="no">Όχι</string>
@@ -666,6 +681,7 @@
     <string name="passwordSet">Ορισμός Κωδικού Πρόσβασης</string>
     <string name="passwordSetDescription">Ο κωδικός πρόσβασής σας έχει οριστεί. Παρακαλώ κρατήστε τον ασφαλή.</string>
     <string name="paste">Επικόλληση</string>
+    <string name="permissionMusicAudioDenied">{app_name} χρειάζεται πρόσβαση στη μουσική και τον ήχο για να στείλει αρχεία, μουσική και ήχο, αλλά η πρόσβαση έχει απορριφθεί μόνιμα. Πατήστε Ρυθμίσεις → Δικαιώματα, και ενεργοποιήστε το \"Μουσική και ήχος\".</string>
     <string name="permissionsAppleMusic">Το {app_name} χρειάζεται πρόσβαση στο Apple Music για αναπαραγωγή συνημμένων πολυμέσων.</string>
     <string name="permissionsAutoUpdate">Αυτόματη Ενημέρωση</string>
     <string name="permissionsAutoUpdateDescription">Αυτόματος έλεγχος για ενημερώσεις κατά την εκκίνηση</string>

@@ -373,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagavo su {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ir {other_name} reagavo su {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ir <span>{count} kiti</span> sureagavo su {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ir <font color="0">{count} kiti</font> sureagavo su {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Jūs sureagavote su {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Jūs ir <span>{count} kiti</span> sureagavo su {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Jūs ir <font color="0">{count} kiti</font> sureagavo su {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Jūs ir {name} sureagavo su {emoji_name}</string>
     <string name="emojiReactsNotification">Sureagavo į jūsų žinutę {emoji}</string>
     <string name="enable">Įjungti</string>

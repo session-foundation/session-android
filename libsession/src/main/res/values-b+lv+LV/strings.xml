@@ -341,9 +341,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reaģēja ar {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} un {other_name} reaģēja ar {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} un <span>{count} citi</span> reaģēja ar {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} un <font color="0">{count} citi</font> reaģēja ar {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Jūs reaģējāt ar {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Jūs un <span>{count} citi</span> reaģējāt ar {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Jūs un <font color="0">{count} citi</font> reaģējāt ar {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Jūs un {name} reaģējāt ar {emoji_name}</string>
     <string name="emojiReactsNotification">{emoji} reaģēja uz tavu ziņu</string>
     <string name="enable">Iespējot</string>

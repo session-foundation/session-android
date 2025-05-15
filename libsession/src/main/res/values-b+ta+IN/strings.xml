@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} உடன் பதிலளித்தார்</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} மற்றும் {other_name} {emoji_name} உடன் பதிலளித்தனர்</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} மற்றும் <span>{count} மற்றவர்கள்</span> {emoji_name} உடன் பதிலளித்தனர்</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} மற்றும் <font color="0">{count} மற்றவர்கள்</font> {emoji_name} உடன் பதிலளித்தனர்</string>
     <string name="emojiReactsHoverYouNameDesktop">நீங்கள் {emoji_name} உடன் பதிலளித்தீர்</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">நீங்கள் மற்றும் <span>{count} மற்றவர்கள்</span> {emoji_name} உடன் பதிலளித்தனர்</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">நீங்கள் மற்றும் <font color="0">{count} மற்றவர்கள்</font> {emoji_name} உடன் பதிலளித்தனர்</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">நீங்கள் மற்றும் {name} {emoji_name} உடன் பதிலளித்தனர்</string>
     <string name="emojiReactsNotification">உங்கள் செய்திக்கு {emoji} கொண்டு பதிலளித்தார்</string>
     <string name="enable">செயல்படுத்தவும்</string>
@@ -475,6 +475,9 @@
     <string name="learnMore">மேலும் அறிக</string>
     <string name="leave">வெளியேறு</string>
     <string name="leaving">வெளியேறுகின்றது...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">இந்தக் குழு இப்போது படிக்க மட்டுமே. தொடர்ந்து அரட்டையடிக்க இந்தக் குழுவை மீண்டும் உருவாக்கவும்.</string>
+    <string name="legacyGroupAfterDeprecationMember">இந்தக் குழு இப்போது படிக்க மட்டுமே. தொடர்ந்து அரட்டையடிக்க இந்தக் குழுவை மீண்டும் உருவாக்கக் குழு நிர்வாகியிடம் கேளுங்கள்.</string>
+    <string name="legacyGroupChatHistory">அரட்டை வரலாறு புதிய குழுவிற்கு மாற்றப்படாது. உங்கள் பழைய குழுவில் உள்ள அனைத்து அரட்டை வரலாற்றையும் நீங்கள் இன்னும் பார்க்கலாம்.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> குழுவில் சேர்ந்தார்.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> மற்றும் <b>{count} பிறர்</b> குழுவில் சேர்ந்தனர்.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>நீங்கள்</b> மற்றும் <b>{count} பிறர்</b> குழுவில் சேர்ந்தனர்.</string>
@@ -729,6 +732,7 @@
     <string name="recoveryPasswordRestoreDescription">உங்கள் கணக்கை ஏற்ற, உங்கள் recovery password ஐ உள்ளிடவும். நீங்கள் அதை சேமிக்கவில்லை என்றால், நீங்கள் அதை உங்கள் பயன்பாட்டு அமைப்புகளில் காணலாம்.</string>
     <string name="recoveryPasswordView">கடவுச்சொல்லைக் காண்பிக்கவும்</string>
     <string name="recoveryPasswordWarningSendDescription">இது உங்கள் மீட்பு கடவுச்சொல். நீங்கள் இதை யாருக்கும் அனுப்பினால், அவர்களுக்கு உங்கள் கணக்கிற்கு முழு அணுகல் கிடைக்கும்.</string>
+    <string name="recreateGroup">குழுவை மீண்டும் உருவாக்கவும்</string>
     <string name="redo">மீண்டும் செய்</string>
     <string name="remove">அகற்று</string>
     <string name="removePasswordFail">கடவுச்சொல்லை நீக்க முடியவில்லை</string>

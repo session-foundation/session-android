@@ -290,6 +290,12 @@
     <plurals name="deleteMessageFailed">
         <item quantity="other">無法刪除訊息</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">您選擇的一些訊息無法從所有設備中刪除</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">您選擇的一些訊息不能為所有人刪除</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">您確定要為所有人刪除這些訊息嗎？</string>
     <string name="deleting">刪除中</string>
     <string name="developerToolsToggle">切換開發者工具</string>
@@ -336,6 +342,7 @@
     <string name="displayNameNew">請輸入一個新名稱</string>
     <string name="displayNamePick">請輸入您的名稱</string>
     <string name="displayNameSet">設定顯示名稱</string>
+    <string name="displayNameVisible">您的顯示名稱對您互動的用戶、群組和社群可見。</string>
     <string name="document">文件</string>
     <string name="done">完成</string>
     <string name="download">下載</string>
@@ -359,9 +366,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} 回應了 {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} 和 {other_name} 回應了 {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} 和 <span>{count} 人</span> 回應了 {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} 和 <font color="0">{count} 人</font> 回應了 {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">您回應了 {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">您和 <span>{count} 人</span> 回應了 {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">您和 <font color="0">{count} 人</font> 回應了 {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">您和 {name} 回應了 {emoji_name}</string>
     <string name="emojiReactsNotification">已對您的訊息做出反應 {emoji}。</string>
     <string name="enable">啟用</string>
@@ -394,12 +401,15 @@
     <string name="groupInviteFailedMultiple">無法邀請 {name} 和 {count} 位其他成員加入 {group_name}</string>
     <string name="groupInviteFailedTwo">無法邀請 {name} 和 {other_name} 加入 {group_name}</string>
     <string name="groupInviteFailedUser">無法邀請 {name} 加入 {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> 邀請你重新加入 <b>{group_name}</b>，你是一位管理員。</string>
+    <string name="groupInviteReinviteYou">您被邀請重新加入 <b>{group_name}</b>，您在該群組中是管理員。</string>
     <string name="groupInviteSent">邀請已發送</string>
     <string name="groupInviteSuccessful">群組邀請成功</string>
     <string name="groupInviteVersion">用戶必須擁有最新版本才能接收邀請</string>
     <string name="groupInviteYou"><b>你</b> 被邀請加入群組。</string>
     <string name="groupInviteYouAndMoreNew"><b>您</b> 和 <b>{count} 位其他成員</b> 加入了群組。</string>
     <string name="groupInviteYouAndOtherNew"><b>您</b> 和 <b>{other_name}</b> 加入了群組。</string>
+    <string name="groupInviteYouHistory"><b>你</b> 被邀請加入群組。 聊天記錄已分享。</string>
     <string name="groupLeave">離開群組</string>
     <string name="groupLeaveDescription">您確定要離開 <b>{group_name}</b> 嗎？</string>
     <string name="groupLeaveDescriptionAdmin">您確定要離開 <b>{group_name}</b> 嗎？\n\n這將移除所有成員並刪除所有群組內容。</string>
@@ -423,6 +433,7 @@
     <string name="groupNameEnterShorter">請輸入一個較短的群組名稱。</string>
     <string name="groupNameNew">群組名稱現在為 {group_name}。</string>
     <string name="groupNameUpdated">群組名稱已更新。</string>
+    <string name="groupNameVisible">群組名稱對所有群組成員可見。</string>
     <string name="groupNoMessages">您沒有來自 <b>{group_name}</b> 的訊息。發送訊息以開始對話！</string>
     <string name="groupOnlyAdmin">您是 <b>{group_name}</b> 中唯一的管理員。\n\n沒有管理員，群組成員和設定將無法更改。</string>
     <string name="groupPromotedYou"><b>你</b> 被提拔為管理員。</string>
@@ -440,6 +451,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> 和 <b>{count} 其他成員 </b> 被移出了群組。</string>
     <string name="groupRemovedTwo"><b>{name}</b> 和 <b>{other_name}</b> 被移出了群組。</string>
     <string name="groupRemovedYou">您已從<b>{group_name}</b>中被移除。</string>
+    <string name="groupRemovedYouGeneral">您已從群組中移除</string>
     <string name="groupRemovedYouMultiple"><b>您</b> 和 <b>{count} 位其他成員</b> 被移出了群組。</string>
     <string name="groupRemovedYouTwo"><b>您</b> 和 <b>{other_name}</b> 被移出了群組。</string>
     <string name="groupSetDisplayPicture">設定群組顯示圖片</string>
@@ -563,6 +575,7 @@
     <string name="next">下一步</string>
     <string name="nicknameDescription">為 <b>{name}</b> 選擇一個暱稱。這將在您的一對一和群組對話中顯示。</string>
     <string name="nicknameEnter">輸入暱稱</string>
+    <string name="nicknameErrorShorter">請輸入一個較短的暱稱</string>
     <string name="nicknameRemove">移除暱稱</string>
     <string name="nicknameSet">設定暱稱</string>
     <string name="no">否</string>

@@ -294,6 +294,14 @@
         <item quantity="one">Viestin poisto epäonnistui</item>
         <item quantity="other">Viestien poisto epäonnistui</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Tätä viestiä ei voi poistaa kaikista laitteistasi</item>
+        <item quantity="other">Joidenkin valitsemistasi viesteistä ei voida poistaa kaikista laitteistasi</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Tätä viestiä ei voida poistaa kaikilta</item>
+        <item quantity="other">Joitakin valitsemistasi viesteistä ei voida poistaa kaikilta</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Haluatko varmasti poistaa nämä viestit kaikilta?</string>
     <string name="deleting">Poistetaan</string>
     <string name="developerToolsToggle">Näytä/piilota kehittäjätyökalut</string>
@@ -340,6 +348,7 @@
     <string name="displayNameNew">Valitse uusi näyttönimi</string>
     <string name="displayNamePick">Valitse näyttönimi</string>
     <string name="displayNameSet">Aseta näyttönimi</string>
+    <string name="displayNameVisible">Näyttönimesi on näkyvissä käyttäjille, ryhmille ja yhteisöille, joiden kanssa olet vuorovaikutuksessa.</string>
     <string name="document">Dokumentti</string>
     <string name="done">Valmis</string>
     <string name="download">Lataa</string>
@@ -364,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagoi emojilla {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ja {other_name} reagoivat emojilla {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ja <span>{count} muuta</span> reagoivat emojilla {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ja <font color="0">{count} muuta</font> reagoivat emojilla {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Sinä reagoit emojilla {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Sinä ja <span>{count} muuta</span> reagoivat emojilla {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Sinä ja <font color="0">{count} muuta</font> reagoivat emojilla {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Sinä ja {name} reagoivat emojilla {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoi viestiisi {emoji}</string>
     <string name="enable">Ota käyttöön</string>
@@ -399,12 +408,19 @@
     <string name="groupInviteFailedMultiple">Käyttäjien {name} ja {count} muun kutsuminen ryhmään {group_name} epäonnistui</string>
     <string name="groupInviteFailedTwo">Käyttäjien {name} ja {other_name} kutsuminen ryhmään {group_name} epäonnistui</string>
     <string name="groupInviteFailedUser">Käyttäjän {name} kutsuminen ryhmään {group_name} epäonnistui</string>
+    <string name="groupInviteReinvite"><b>{name}</b> kutsui sinut liittymään ryhmään <b>{group_name}</b>, jossa olet ylläpitäjä.</string>
+    <string name="groupInviteReinviteYou">Sinut kutsuttiin liittymään uudelleen ryhmään <b>{group_name}</b>, jossa olet ylläpitäjä.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Lähetä kutsu</item>
+        <item quantity="other">Lähettää  kutsuja</item>
+    </plurals>
     <string name="groupInviteSent">Kutsu on lähetetty</string>
     <string name="groupInviteSuccessful">Ryhmän kutsu onnistui</string>
     <string name="groupInviteVersion">Käyttäjillä on oltava uusin versio vastaanottaakseen kutsuja</string>
     <string name="groupInviteYou"><b>Sinut</b> kutsuttiin liittymään ryhmään.</string>
     <string name="groupInviteYouAndMoreNew"><b>Sinä</b> ja <b>{count} muuta</b> liittyi ryhmään.</string>
     <string name="groupInviteYouAndOtherNew"><b>Sinä</b> ja <b>{other_name}</b> liittyi ryhmään.</string>
+    <string name="groupInviteYouHistory"><b>Sinut</b> kutsuttiin liittymään ryhmään. Keskusteluhistoria jaettiin.</string>
     <string name="groupLeave">Poistu ryhmästä</string>
     <string name="groupLeaveDescription">Haluatko varmasti poistua yhteisöstä <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Haluatko varmasti poistua ryhmästä <b>{group_name}</b>?\n\nTämä poistaa kaikki jäsenet ja poistaa kaiken ryhmäsisällön.</string>
@@ -428,6 +444,7 @@
     <string name="groupNameEnterShorter">Syötä lyhyempi ryhmän nimi.</string>
     <string name="groupNameNew">Ryhmän nimi on nyt {group_name}.</string>
     <string name="groupNameUpdated">Ryhmän nimi on vaihdettu.</string>
+    <string name="groupNameVisible">Ryhmän nimi näkyy ryhmän kaikille jäsenille.</string>
     <string name="groupNoMessages">Sinulla ei ole viestejä käyttäjältä <b>{group_name}</b>. Lähetä viesti aloittaaksesi keskustelun!</string>
     <string name="groupOnlyAdmin">Olet ainoa ylläpitäjä ryhmässä <b>{group_name}</b>.\n\nRyhmän jäseniä ja asetuksia ei voi muuttaa ilman ylläpitäjää.</string>
     <string name="groupPromotedYou"><b>Sinut</b> ylennettiin ylläpitäjäksi.</string>
@@ -447,6 +464,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> ja <b>{count} muuta</b> poistettiin ryhmästä.</string>
     <string name="groupRemovedTwo"><b>{name}</b> ja <b>{other_name}</b> poistettiin ryhmästä.</string>
     <string name="groupRemovedYou">Sinut poistettiin ryhmästä <b>{group_name}.</b></string>
+    <string name="groupRemovedYouGeneral">Sinut poistettiin ryhmästä.</string>
     <string name="groupRemovedYouMultiple"><b>Sinä</b> ja <b>{count} muuta</b> poistettiin ryhmästä.</string>
     <string name="groupRemovedYouTwo"><b>Sinä</b> ja <b>{other_name}</b> poistettiin ryhmästä.</string>
     <string name="groupSetDisplayPicture">Aseta ryhmän näyttökuva</string>
@@ -575,6 +593,7 @@
     <string name="next">Seuraava</string>
     <string name="nicknameDescription">Valitse lempinimi käyttäjälle <b>{name}</b>. Tämä näkyy sinulle kahdenkeskisissä ja ryhmäkeskusteluissa.</string>
     <string name="nicknameEnter">Syötä lempinimi</string>
+    <string name="nicknameErrorShorter">Anna lyhyempi lempinimi</string>
     <string name="nicknameRemove">Poista lempinimi</string>
     <string name="nicknameSet">Aseta lempinimi</string>
     <string name="no">Ei</string>

@@ -3,6 +3,7 @@
     <string name="about">Про</string>
     <string name="accept">Прийняти</string>
     <string name="accountIDCopy">Копіювати ID облікового запису</string>
+    <string name="accountId">Ідентифікатор облікового запису</string>
     <string name="accountIdCopied">ID облікового запису скопійовано</string>
     <string name="accountIdCopyDescription">Скопіюйте свій Account ID, а потім поділіться ним зі своїми друзями, щоб вони могли надіслати вам повідомлення.</string>
     <string name="accountIdEnter">Введіть Account ID</string>
@@ -27,7 +28,9 @@
     <string name="adminPromotionFailedDescription">Не вдалося підвищити {name} до адміністратора у {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Не вдалося підвищити {name} та ще {count} інших до адміністратора у {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Не вдалося підвищити {name} та {other_name} до адміністратора у {group_name}</string>
+    <string name="adminPromotionNotSent">Підвищення статусу не надіслано</string>
     <string name="adminPromotionSent">Права адміністратора надіслано</string>
+    <string name="adminPromotionStatusUnknown">Стан підвищення статусу невідомий</string>
     <string name="adminRemove">Видалити адміністраторів</string>
     <string name="adminRemoveAsAdmin">Видалити з адміністраторів</string>
     <string name="adminRemoveCommunityNone">У цій спільноті немає Адмінів.</string>
@@ -47,6 +50,23 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> та <b>{other_name}</b> було підвищено до адміністраторів.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Анонімно</string>
+    <string name="appIcon">Значок застосунку</string>
+    <string name="appIconAndNameChange">Змінити значок і назву застосунку</string>
+    <string name="appIconAndNameChangeConfirmation">Зміна значка та назви застосунку потребує закриття {app_name}. Сповіщення надходитимуть зі стандартною назвою та значком {app_name}.</string>
+    <string name="appIconAndNameDescription">Альтернативний значок та назва використовуються на домашньому екрані та у переліку застосунків.</string>
+    <string name="appIconAndNameSelectionDescription">Альтернативний значок та назва використовуються на домашньому екрані та у переліку застосунків.</string>
+    <string name="appIconAndNameSelectionTitle">Значок та ім\'я</string>
+    <string name="appIconDescription">Альтернативний значок використовується на домашньому екрані та у бібліотеці застосунків. Назва застосунку продовжує бути «{app_name}».</string>
+    <string name="appIconEnableIcon">Використовувати альтернативний значок застосунку</string>
+    <string name="appIconEnableIconAndName">Використовувати альтернативний значок застосунку та назву</string>
+    <string name="appIconSelect">Обрати альтернативний значок застосунку</string>
+    <string name="appIconSelectionTitle">Значок</string>
+    <string name="appNameCalculator">Калькулятор</string>
+    <string name="appNameMeetingSE">MeetingSE</string>
+    <string name="appNameNews">Новини</string>
+    <string name="appNameNotes">Нотатки</string>
+    <string name="appNameStocks">Акції</string>
+    <string name="appNameWeather">Погода</string>
     <string name="appearanceAutoDarkMode">Автоматичний темний режим</string>
     <string name="appearanceHideMenuBar">Сховати панель меню</string>
     <string name="appearanceLanguage">Мова</string>
@@ -64,6 +84,7 @@
     <string name="appearanceZoomIn">Збільшити</string>
     <string name="appearanceZoomOut">Зменшити</string>
     <string name="attachment">Вкладення</string>
+    <string name="attachments">Вкладення</string>
     <string name="attachmentsAdd">Додати вкладення</string>
     <string name="attachmentsAlbumUnnamed">Альбом без імені</string>
     <string name="attachmentsAutoDownload">Автоматичне завантаження вкладень</string>
@@ -191,6 +212,8 @@
     <string name="clearDeviceAndNetworkConfirm">Ви впевнені, що хочете видалити дані з мережі? Якщо ви продовжите, то не зможете відновити ваші повідомлення або контакти.</string>
     <string name="clearDeviceDescription">Ви впевнені, що хочете очистити свій пристрій?</string>
     <string name="clearDeviceOnly">Очистити лише пристрій</string>
+    <string name="clearDeviceRestart">Очистити пристрій та перезапустити</string>
+    <string name="clearDeviceRestore">Очистити пристрій та відновити</string>
     <string name="clearMessages">Очистити всі повідомлення</string>
     <string name="clearMessagesChatDescription">Ви впевнені, що хочете стерти всі повідомлення з вашої розмови з <b>{name}</b> з вашого пристрою?</string>
     <string name="clearMessagesCommunity">Ви впевнені, що хочете стерти всі повідомлення <b>{community_name}</b> з вашого пристрою?</string>
@@ -200,6 +223,7 @@
     <string name="clearMessagesGroupDescription">Ви впевнені, що хочете стерти всі повідомлення <b>{group_name}</b> з вашого пристрою?</string>
     <string name="clearMessagesNoteToSelfDescription">Ви впевнені, що хочете стерти всі повідомлення Note to Self з вашого пристрою?</string>
     <string name="close">Закрити</string>
+    <string name="closeApp">Закрити застосунок</string>
     <string name="closeWindow">Закрити вікно</string>
     <string name="commitHashDesktop">Хеш коміту: {hash}</string>
     <string name="communityBanDeleteDescription">Ця дія заблокує вибраного користувача у цій спільноті та видалить усі повідомлення. Ви дійсно бажаєте продовжити?</string>
@@ -264,6 +288,7 @@
     <string name="copied">Скопійовано</string>
     <string name="copy">Копіювати</string>
     <string name="create">Створити</string>
+    <string name="creatingCall">Викликаємо</string>
     <string name="cut">Вирізати</string>
     <string name="databaseErrorTimeout">Ми помітили, що {app_name} довго запускається.\n\nВи можете продовжити чекати, експортувати журнали вашого пристрою для аналізу або спробувати перезапустити {app_name}.</string>
     <string name="databaseErrorUpdate">База даних вашого додатку несумісна з цією версією {app_name}. Перевстановіть додаток та відновіть свій обліковий запис, щоб створити нову базу даних і продовжувати користуватися {app_name}.\n\nУвага: Це призведе до втрати всіх повідомлень та вкладень, старших двох тижнів.</string>
@@ -286,6 +311,7 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Будь ласка, зачекайте поки створюється група...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Не вдалося оновити групу</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення інших повідомлень</string>
+    <string name="deleteConversationDescription">Ви дійсно хочете видалити розмову з <b>{name}</b>?\n Це назавжди видалить усі повідомлення та вкладення.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Видалити повідомлення</item>
         <item quantity="few">Видалити повідомлення</item>
@@ -321,6 +347,18 @@
         <item quantity="few">Не вдалося видалити повідомлення</item>
         <item quantity="many">Не вдалося видалити повідомлення</item>
         <item quantity="other">Не вдалося видалити повідомлення</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Це повідомлення не можна видалити з усіх ваших пристроїв</item>
+        <item quantity="few">Деякі з повідомлень, які ви вибрали, не можна видалити з усіх ваших пристроїв</item>
+        <item quantity="many">Деякі з повідомлень, які ви вибрали, не можна видалити з усіх ваших пристроїв</item>
+        <item quantity="other">Деякі з повідомлень, які ви вибрали, не можна видалити з усіх ваших пристроїв</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Це повідомлення не можна видалити для всіх</item>
+        <item quantity="few">Деякі з обраних вами повідомлень не можна видалити для всіх</item>
+        <item quantity="many">Деякі з обраних вами повідомлень не можна видалити для всіх</item>
+        <item quantity="other">Деякі з обраних вами повідомлень не можна видалити для всіх</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Ви впевнені, що хочете видалити ці повідомлення для всіх?</string>
     <string name="deleting">Видалення</string>
@@ -368,6 +406,7 @@
     <string name="displayNameNew">Оберіть новий псевдонім</string>
     <string name="displayNamePick">Оберіть ім\'я, що показуватиметься</string>
     <string name="displayNameSet">Застосувати ім\'я, що показуватиметься</string>
+    <string name="displayNameVisible">Ваше відображуване ім\'я видно користувачам, групам і спільнотам, з якими ви взаємодієте.</string>
     <string name="document">Документ</string>
     <string name="done">Готово</string>
     <string name="download">Завантажити</string>
@@ -394,20 +433,23 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} відреагував з {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} та {other_name} відреагували з {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} та <span>{count} інші</span> відреагували з {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} та <font color="0">{count} інші</font> відреагували з {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Ви відреагували з {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ви та <span>{count} інші</span> відреагували з {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ви та <font color="0">{count} інші</font> відреагували з {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ви та {name} відреагували з {emoji_name}</string>
     <string name="emojiReactsNotification">Відреагували на ваше повідомлення {emoji}</string>
     <string name="enable">Увімкнути</string>
     <string name="errorConnection">Будь ласка, перевірте підключення до Інтернету та спробуйте ще раз.</string>
     <string name="errorCopyAndQuit">Скопіювати помилку та вийти</string>
     <string name="errorDatabase">Помилка бази даних</string>
+    <string name="errorGeneric">Щось пішло не так. Будь ласка, спробуйте пізніше.</string>
     <string name="errorUnknown">Невідома помилка</string>
+    <string name="failedToDownload">Не вдалося завантажити</string>
     <string name="failures">Відмови</string>
     <string name="file">Файл</string>
     <string name="files">Файли</string>
     <string name="followSystemSettings">Використовувати системні налаштування</string>
+    <string name="forever">Завжди</string>
     <string name="from">Від:</string>
     <string name="fullScreenToggle">Увійти до повноекранного режиму</string>
     <string name="gif">ГІФ</string>
@@ -417,6 +459,7 @@
     <string name="groupCreate">Створити групу</string>
     <string name="groupCreateErrorNoMembers">Будь ласка, виберіть принаймні 1 учасника групи.</string>
     <string name="groupDelete">Видалити групу</string>
+    <string name="groupDeleteDescriptionMember">Ви дійсно бажаєте видалити <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} видалено адміністратором групи. Ви більше не зможете надсилати повідомлення.</string>
     <string name="groupDescriptionEnter">Введіть опис групи</string>
     <string name="groupDisplayPictureUpdated">Зображення групи для показу оновлено.</string>
@@ -430,6 +473,9 @@
     <string name="groupInviteFailedMultiple">Не вдалося запросити {name} та ще {count} інших до {group_name}</string>
     <string name="groupInviteFailedTwo">Не вдалося запросити {name} та {other_name} до {group_name}</string>
     <string name="groupInviteFailedUser">Не вдалося запросити {name} до {group_name}</string>
+    <string name="groupInviteNotSent">Запрошення не надіслано</string>
+    <string name="groupInviteReinvite"><b>{name}</b> запросив(ла) Вас повторно приєднатися до <b>{group_name}</b>, де Ви є Адміністратором.</string>
+    <string name="groupInviteReinviteYou">Вас запросили знову приєднатися до <b>{group_name}</b>, де ви є адміністратором.</string>
     <plurals name="groupInviteSending">
         <item quantity="one">Надсилання запрошення</item>
         <item quantity="few">Надсилання запрошень</item>
@@ -437,11 +483,13 @@
         <item quantity="other">Надсилання запрошень</item>
     </plurals>
     <string name="groupInviteSent">Запрошення надіслано</string>
+    <string name="groupInviteStatusUnknown">Статус запрошення невідомий</string>
     <string name="groupInviteSuccessful">Запрошення до групи успішне</string>
     <string name="groupInviteVersion">Користувачі мають мати останню версію, щоб отримувати запрошення</string>
     <string name="groupInviteYou"><b>Ви</b> були підвищені до адміністратора.</string>
     <string name="groupInviteYouAndMoreNew"><b>Ви</b> та ще <b>{count} інших</b> приєдналися до групи.</string>
     <string name="groupInviteYouAndOtherNew"><b>Ви</b> та <b>{other_name}</b> приєдналися до групи.</string>
+    <string name="groupInviteYouHistory"><b>Вас</b> було запрошено приєднатися до групи. Було надано спільний доступ до історії чату.</string>
     <string name="groupLeave">Вийти з групи</string>
     <string name="groupLeaveDescription">Чи дійсно ви бажаєте вийти з <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ви впевнені, що хочете вийти з <b>{group_name}</b>?\n\nЦе видалить усіх учасників та вміст групи.</string>
@@ -456,6 +504,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> та ще <b>{count} інших</b> були запрошені приєднатися до групи.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> та <b>{other_name}</b> були запрошені приєднатися до групи.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ви</b> та <b>{count}</b> інших були запрошені приєднатися до групи. Було надано спільний доступ до історії чату.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Вас</b> та <b>{other_name}</b> запросили до групи з наданням доступу до історії листування.</string>
     <string name="groupMemberYouLeft"><b>Ви</b> покинули групу.</string>
     <string name="groupMembers">Учасники групи</string>
     <string name="groupMembersNone">Відсутні учасники у цій групі.</string>
@@ -465,10 +514,13 @@
     <string name="groupNameEnterShorter">Будь ласка, введіть коротшу назву групи.</string>
     <string name="groupNameNew">Назва групи тепер \"{group_name}\".</string>
     <string name="groupNameUpdated">Назву групи оновлено.</string>
+    <string name="groupNameVisible">Назва групи видима всім учасникам групи.</string>
     <string name="groupNoMessages">У вас немає повідомлень від <b>{group_name}</b>. Надішліть повідомлення, щоб розпочати розмову!</string>
     <string name="groupOnlyAdmin">Ви — єдиний адміністратор у <b>{group_name}</b>.\n\nУчасники групи та налаштування не можуть бути змінені без адміністратора.</string>
+    <string name="groupPendingRemoval">Очікує видалення</string>
     <string name="groupPromotedYou"><b>Вас</b> підвищили до адміністратора.</string>
     <string name="groupPromotedYouMultiple"><b>Ви</b> та ще <b>{count} інших</b> були підвищені до адміністраторів.</string>
+    <string name="groupPromotedYouTwo"><b>Вас</b> та <b>{other_name}</b> підвищено до адміністратора.</string>
     <string name="groupRemoveDescription">Бажаєте видалити <b>{name}</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Бажаєте видалити <b>{name}</b> і <b>{count} інших</b> з <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Бажаєте видалити <b>{name}</b> і <b>{other_name}</b> з <b>{group_name}</b>?</string>
@@ -488,11 +540,13 @@
     <string name="groupRemovedMultiple"><b>{name}</b> та ще <b>{count} інших</b> були вилучені із групи.</string>
     <string name="groupRemovedTwo"><b>{name}</b> та <b>{other_name}</b> були вилучені із групи.</string>
     <string name="groupRemovedYou">Ви були видалені з <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Вас було видалено з групи.</string>
     <string name="groupRemovedYouMultiple"><b>Ви</b> та ще <b>{count} інших</b> були видалені із групи.</string>
     <string name="groupRemovedYouTwo"><b>Ви</b> та <b>{other_name}</b> були видалені із групи.</string>
     <string name="groupSetDisplayPicture">Обрати картинку для групи</string>
     <string name="groupUnknown">Невідома група</string>
     <string name="groupUpdated">Групу оновлено</string>
+    <string name="handlingConnectionCandidates">Опрацювання можливих з\'єднань</string>
     <string name="helpFAQ">Часті питання</string>
     <string name="helpHelpUsTranslateSession">Допоможіть нам перекласти {app_name}</string>
     <string name="helpReportABug">Повідомити про помилку</string>
@@ -507,15 +561,33 @@
     <string name="hideMenuBarDescription">Увімкнути або вимкнути видимість панелі меню</string>
     <string name="hideOthers">Сховати інші</string>
     <string name="image">Зображення</string>
+    <string name="images">зображення</string>
     <string name="incognitoKeyboard">Клавіатура в режимі \"інкогніто\"</string>
     <string name="incognitoKeyboardDescription">Запитувати режим інкогніто, якщо доступний. Залежно від клавіатури, яку ви використовуєте, ваша клавіатура може ігнорувати цей запит.</string>
     <string name="info">Інформація</string>
     <string name="invalidShortcut">Недопустимий ярлик</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Помилка запрошення</item>
+        <item quantity="few">Помилка запрошень</item>
+        <item quantity="many">Помилка запрошень</item>
+        <item quantity="other">Помилка запрошення</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
+        <item quantity="few">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
+        <item quantity="many">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
+        <item quantity="other">Неможливо надіслати запрошення. Бажаєте спробувати ще раз?</item>
+    </plurals>
     <string name="join">Приєднатися</string>
     <string name="later">Пізніше</string>
     <string name="learnMore">Дізнатися більше</string>
     <string name="leave">Покинути</string>
     <string name="leaving">Покидання...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Ця група тепер лише для читання. Оновіть цю групу задля продовження спілкування.</string>
+    <string name="legacyGroupAfterDeprecationMember">Ця група тепер лише для читання. Залучіть адміністратора до оновлення цієї групи задля продовження спілкування.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Групи отримали покращення! Оновіть цю групу для підвищення надійності. Ця група стане доступною лише для читання з {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Групи отримали покращення! Залучіть адміністратора групи до оновлення цієї групи задля підвищення надійності. Ця група стане доступною лише для читання з {date}.</string>
+    <string name="legacyGroupChatHistory">Історія чату не буде перенесена в нову групу. Ви можете переглядати всю історію чату у вашій старій групі.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> приєднався до групи.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> та ще <b>{count} інших</b> приєдналися до групи.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Ви</b> та ще <b>{count} інших</b> приєдналися до групи.</string>
@@ -544,6 +616,7 @@
     <string name="lockAppStatus">Статус блокування</string>
     <string name="lockAppUnlock">Торкніться, щоб розблокувати</string>
     <string name="lockAppUnlocked">{app_name} розблоковано</string>
+    <string name="manageMembers">Керувати учасниками</string>
     <string name="max">Максимум</string>
     <string name="media">Медіа</string>
     <plurals name="members">
@@ -595,7 +668,15 @@
         <item quantity="many">Ви отримали %1$d нових повідомлень</item>
         <item quantity="other">Ви отримали %1$d нових повідомлень</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">У вас нове повідомлення у %1$s.</item>
+        <item quantity="few">У вас нові повідомлення — %1$d — у %2$s.</item>
+        <item quantity="many">У вас нові повідомлення — %1$d — у %2$s.</item>
+        <item quantity="other">У вас нові повідомлення — %1$d — у %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Відповідь на</string>
+    <string name="messageRequestDisabledToastAttachments">Ви не зможете надсилати вкладення, допоки ваш запит не буде схвалено</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Ви не зможете надсилати голосові повідомлення, допоки ваш запит не буде схвалено</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> запросив(ла) Вас приєднатися до <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Надсилання повідомлення до цієї групи автоматично прийме запрошення до групи.</string>
     <string name="messageRequestPending">Ваш запит на повідомлення зараз очікує на розгляд.</string>
@@ -626,6 +707,7 @@
     <string name="next">Далі</string>
     <string name="nicknameDescription">Виберіть псевдонім для <b>{name}</b>. Він з\'являтиметься в особистих та групових розмовах.</string>
     <string name="nicknameEnter">Введіть псевдонім</string>
+    <string name="nicknameErrorShorter">Будь ласка, введіть коротший псевдонім</string>
     <string name="nicknameRemove">Видалити нікнейм</string>
     <string name="nicknameSet">Встановити псевдонім</string>
     <string name="no">Ні</string>
@@ -644,6 +726,7 @@
     <string name="notificationsContentShowNoNameOrContent">Без імен або вмісту</string>
     <string name="notificationsFastMode">Швидкий режим</string>
     <string name="notificationsFastModeDescription">Ви отримуватимете сповіщення про нові повідомлення надійно та одразу за допомогою серверів сповіщень Google.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Ви отримуватимете сповіщення про нові повідомлення надійно та миттєво за допомогою серверів сповіщень Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Ви отримуватимете сповіщення про нові повідомлення надійно та одразу за допомогою серверів сповіщень Apple.</string>
     <string name="notificationsGoToDevice">Перейти до налаштувань сповіщень пристрою</string>
     <string name="notificationsHeaderAllMessages">Сповіщення — Всі</string>
@@ -659,6 +742,8 @@
     <string name="notificationsMuteFor">Вимкнути звук на {time_large}</string>
     <string name="notificationsMuteUnmute">Увімкнути звук</string>
     <string name="notificationsMuted">Беззвучний</string>
+    <string name="notificationsMutedFor">Стишено на {time_large}</string>
+    <string name="notificationsMutedForTime">Стишено до {date_time}</string>
     <string name="notificationsSlowMode">Повільний режим</string>
     <string name="notificationsSlowModeDescription">{app_name} буде періодично перевіряти наявність нових повідомлень у фоновому режимі.</string>
     <string name="notificationsSound">Звук</string>
@@ -717,20 +802,32 @@
     <string name="passwordSet">Встановити пароль</string>
     <string name="passwordSetDescription">Ваш пароль встановлено. Будь ласка, збережіть його в безпеці.</string>
     <string name="paste">Вставити</string>
+    <string name="permissionChange">Потрібна зміна дозволів</string>
     <string name="permissionMusicAudioDenied">{app_name} потребує доступу до музики та аудіо, щоб надсилати файли, музику та аудіо, але доступ було постійно відхилено. Натисніть Налаштування → Дозволи та увімкніть «Музика та аудіо».</string>
     <string name="permissionsAppleMusic">{app_name} потребує використовувати Apple Music для відтворення медіавкладень.</string>
     <string name="permissionsAutoUpdate">Автоматичне оновлення</string>
     <string name="permissionsAutoUpdateDescription">Автоматично перевіряти наявність оновлень при запуску</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Доступ до камери потрібен для здійснення відеодзвінків. Для продовження увімкніть дозвіл «Камера» у налаштуваннях.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Доступ до камери дозволено. Для скасування доступу — вимкніть «Камера» в налаштуваннях.</string>
     <string name="permissionsCameraDenied">{app_name} потребує доступу до камери для зйомки фотографій та відео, але доступ було постійно заборонено. Натисніть Налаштування → Дозволи та увімкніть камеру.</string>
+    <string name="permissionsCameraDescriptionIos">Дозвольте доступ до камери для відеодзвінків.</string>
     <string name="permissionsFaceId">Функція блокування екрана в {app_name} використовує Face ID.</string>
     <string name="permissionsKeepInSystemTray">Зберігати в системному треї</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} продовжує працювати у фоновому режимі, коли ви закриваєте вікно</string>
     <string name="permissionsLibrary">{app_name} потрібен доступ до фотогалереї для продовження. Ви можете надати дозвіл у налаштуваннях iOS.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Для здійснення дзвінків потрібен доступ до локальної мережі. Увімкніть дозвіл «Локальна мережа» в налаштуваннях для продовження.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} потребує доступу до локальної мережі для здійснення голосових та відеодзвінків.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Доступ до локальної мережі дозволено. Для скасування доступу — вимкніть «Локальна мережа» в налаштуваннях.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Дозвольте доступ до локальної мережі для здійснення голосових та відео дзвінків.</string>
+    <string name="permissionsLocalNetworkIos">Локальна мережа</string>
     <string name="permissionsMicrophone">Мікрофон</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} потребує доступу до мікрофона для здійснення дзвінків та надсилання голосових повідомлень, але доступ було назавжди скасовано. Торкніться Налаштування → Дозволи й увімкніть «Мікрофон».</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Доступ до мікрофона потрібен для здійснення дзвінків та запису голосових повідомлень. Увімкніть дозвіл «Мікрофон» в налаштуваннях для продовження.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Ви можете увімкнути доступ до мікрофона в налаштуваннях конфіденційності {app_name}</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} потребує доступу до мікрофона для здійснення дзвінків та запису голосових повідомлень.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Доступ до мікрофона дозволено. Для скасування доступу — вимкніть «Мікрофон» в налаштуваннях.</string>
     <string name="permissionsMicrophoneDescription">Надати доступ до мікрофона.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Дозвольте доступ до мікрофона для голосових дзвінків та голосових повідомлень.</string>
     <string name="permissionsMusicAudio">{app_name} потребує доступу до музики та аудіо для надсилання файлів, музики та аудіо.</string>
     <string name="permissionsRequired">Необхідний дозвіл</string>
     <string name="permissionsStorageDenied">{app_name} потребує доступу до галереї для надсилання фото та відео, але доступ було назавжди скасовано. Торкніться Налаштування → Дозволи й увімкніть «Фото та відео».</string>
@@ -750,6 +847,18 @@
     <string name="profileDisplayPictureSizeError">Будь ласка, виберіть файл меншого розміру.</string>
     <string name="profileErrorUpdate">Не вдалося оновити профіль.</string>
     <string name="promote">Підвищити</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Підвищення прав не відбулось</item>
+        <item quantity="few">Підвищення прав не відбулось</item>
+        <item quantity="many">Підвищення прав не відбулось</item>
+        <item quantity="other">Підвищення прав не відбулось</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Підвищення прав не вдалось застосувати. Бажаєте спробувати ще раз?</item>
+        <item quantity="few">Підвищення прав не вдалось застосувати. Бажаєте спробувати ще раз?</item>
+        <item quantity="many">Підвищення прав не вдалось застосувати. Бажаєте спробувати ще раз?</item>
+        <item quantity="other">Підвищення прав не вдалось застосувати. Бажаєте спробувати ще раз?</item>
+    </plurals>
     <string name="qrCode">QR-код</string>
     <string name="qrNotAccountId">Цей QR-код не містить Account ID</string>
     <string name="qrNotRecoveryPassword">Цей QR-код не містить пароль для відновлення</string>
@@ -762,11 +871,15 @@
     <string name="readReceipts">Звіти про перегляд</string>
     <string name="readReceiptsDescription">Показувати підтвердження прочитання для всіх повідомлень, які ви відправляєте та отримуєте.</string>
     <string name="received">Отримано:</string>
+    <string name="receivedAnswer">Отримана відповідь</string>
+    <string name="receivingCallOffer">Отримання запиту виклику</string>
+    <string name="receivingPreOffer">Отримання запиту</string>
     <string name="recommended">Рекомендовано</string>
     <string name="recoveryPasswordBannerDescription">Збережіть свій пароль для відновлення, щоб не втратити доступ до свого облікового запису.</string>
     <string name="recoveryPasswordBannerTitle">Збережіть свій пароль для відновлення</string>
     <string name="recoveryPasswordDescription">Використовуйте свій пароль для відновлення, щоб завантажити свій обліковий запис на нових пристроях.\n\nВаш обліковий запис не може бути відновлений без вашого пароля для відновлення. Переконайтеся, що він зберігається десь у надійному місці та не передавайте його нікому.</string>
     <string name="recoveryPasswordEnter">Введіть свій пароль відновлення</string>
+    <string name="recoveryPasswordErrorLoad">Під час завантаження пароля для відновлення сталася помилка.\n\nБудь ласка, експортуйте ваші журнали, а потім надішліть отриманий файл через Службу підтримки {app_name} для допомоги у розв\'язанні цієї проблеми.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Будь ласка, перевірте свій пароль для відновлення і повторіть спробу.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Деякі слова у вашому паролі для відновлення хибні. Будь ласка, перевірте все та спробуйте ще раз.</string>
     <string name="recoveryPasswordErrorMessageShort">Введений вами пароль для відновлення надто короткий. Будь ласка, перевірте і повторіть спробу.</string>
@@ -780,6 +893,7 @@
     <string name="recoveryPasswordRestoreDescription">Введіть свій пароль відновлення, щоб завантажити свій обліковий запис. Якщо ви його не зберегли, ви можете знайти його в налаштуваннях додатку.</string>
     <string name="recoveryPasswordView">Показати пароль</string>
     <string name="recoveryPasswordWarningSendDescription">Це ваш Recovery password. Якщо ви надішлете його комусь, він матиме повний доступ до вашого облікового запису.</string>
+    <string name="recreateGroup">Оновити групу</string>
     <string name="redo">Вперед</string>
     <string name="remove">Видалити</string>
     <string name="removePasswordFail">Не вдалося видалити пароль</string>
@@ -814,8 +928,11 @@
     <string name="searchSearching">Пошук...</string>
     <string name="select">Обрати</string>
     <string name="selectAll">Обрати все</string>
+    <string name="selectAppIcon">Оберіть значок застосунку</string>
     <string name="send">Відправити</string>
     <string name="sending">Надсилання</string>
+    <string name="sendingCallOffer">Надіслання запиту</string>
+    <string name="sendingConnectionCandidates">Надіслання можливих з\'єднань</string>
     <string name="sent">Надіслано:</string>
     <string name="sessionAppearance">Зовнішній вигляд</string>
     <string name="sessionClearData">Очистити дані</string>
@@ -823,17 +940,20 @@
     <string name="sessionHelp">Допомога</string>
     <string name="sessionInviteAFriend">Запросити друга</string>
     <string name="sessionMessageRequests">Запити на повідомлення</string>
+    <string name="sessionNetworkSecuredBy">Мережа захищена</string>
     <string name="sessionNotifications">Сповіщення</string>
     <string name="sessionPermissions">Дозволи</string>
     <string name="sessionPrivacy">Конфіденційність</string>
     <string name="sessionRecoveryPassword">Пароль для відновлення</string>
     <string name="sessionSettings">Налаштування</string>
     <string name="set">Застосувати</string>
+    <string name="setCommunityDisplayPicture">Обрати картинку для спільноти</string>
     <string name="settingsRestartDescription">Вам необхідно перезапустити {app_name}, щоб застосувати нові налаштування.</string>
     <string name="share">Поділитися</string>
     <string name="shareAccountIdDescription">Запрошуйте друзів спілкуватись у {app_name}, поділившись з ними власним Account ID.</string>
     <string name="shareAccountIdDescriptionCopied">Поширте друзям у застосунках, де ви зазвичай спілкуєтеся, а потім перенесіть розмову сюди.</string>
     <string name="shareExtensionDatabaseError">Виникла проблема при відкритті бази даних. Будь ласка, перезапустіть застосунок і повторіть спробу.</string>
+    <string name="shareExtensionNoAccountError">Овва! Здається, у вас ще немає облікового запису у {app_name}.\n\nСпочатку необхідно створити обліковий запис у {app_name}, а потім зможете поділитись.</string>
     <string name="shareToSession">Поділитись з {app_name}</string>
     <string name="show">Перегляд</string>
     <string name="showAll">Показати все</string>
@@ -841,12 +961,14 @@
     <string name="stickers">Стікери</string>
     <string name="supportGoTo">Перейти на сторінку підтримки</string>
     <string name="systemInformationDesktop">Про систему: {information}</string>
+    <string name="tapToRetry">Торкніться, щоб повторити</string>
     <string name="theContinue">Продовжити</string>
     <string name="theDefault">За Замовчуванням</string>
     <string name="theError">Помилка</string>
     <string name="tryAgain">Спробуйте ще</string>
     <string name="typingIndicators">Індикатор введення тексту</string>
     <string name="typingIndicatorsDescription">Бачити та надсилати індикатори введення тексту.</string>
+    <string name="unavailable">Недоступно</string>
     <string name="undo">Назад</string>
     <string name="unknown">Невідомо</string>
     <string name="updateApp">Оновлення застосунку</string>
@@ -854,10 +976,15 @@
     <string name="updateDownloading">Завантаження оновлення: {percent_loader}%</string>
     <string name="updateError">Не вдалося оновити</string>
     <string name="updateErrorDescription">{app_name} не вдалося оновити. Будь ласка, перейдіть на {session_download_url} і встановіть нову версію вручну, потім зв\'яжіться з нашою Службою підтримки для інформування про цю проблему.</string>
+    <string name="updateGroupInformation">Оновити інформацію групи</string>
+    <string name="updateGroupInformationDescription">Назву та опис групи бачать усі учасники групи.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Будь ласка, введіть коротший опис групи</string>
     <string name="updateNewVersion">Нова версія {app_name} доступна.</string>
+    <string name="updateNewVersionDescription">Доступна нова версія ({version}) {app_name}.</string>
     <string name="updateReleaseNotes">Перейти в примітки до випуску</string>
     <string name="updateSession">Оновлення {app_name}</string>
     <string name="updateVersion">Версія {version}</string>
+    <string name="updated">Останнє оновлення {relative_time} тому</string>
     <string name="uploading">Вивантаження</string>
     <string name="urlCopy">Копіювати URL</string>
     <string name="urlOpen">Відкрити URL-адресу</string>
@@ -867,6 +994,8 @@
     <string name="video">Відео</string>
     <string name="videoErrorPlay">Не вдається відтворити відео.</string>
     <string name="view">Вигляд</string>
+    <string name="viewLess">Показати менше</string>
+    <string name="viewMore">Показати більше</string>
     <string name="waitFewMinutes">Це може зайняти кілька хвилин.</string>
     <string name="waitOneMoment">Будь ласка, зачекайте...</string>
     <string name="warning">Попередження</string>

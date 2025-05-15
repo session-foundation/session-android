@@ -300,6 +300,12 @@
     <plurals name="deleteMessageFailed">
         <item quantity="other">未能删除消息。</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">您选择的一些消息无法从所有设备中删除</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">您选择的某些消息无法为所有人删除</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">您确定要为所有人删除这些消息吗？</string>
     <string name="deleting">正在删除</string>
     <string name="developerToolsToggle">开发者工具</string>
@@ -346,6 +352,7 @@
     <string name="displayNameNew">选择新的显示名称</string>
     <string name="displayNamePick">选择您的显示名称</string>
     <string name="displayNameSet">设置显示名称</string>
+    <string name="displayNameVisible">您的显示名称对与您互动的用户、群组和社区可见。</string>
     <string name="document">文档</string>
     <string name="done">完成</string>
     <string name="download">下载</string>
@@ -369,9 +376,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}回应了{emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name}和{other_name}回应了{emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}和其他<span>{count}人</span>回应了{emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}和其他<font color="0">{count}人</font>回应了{emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">您回应了{emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">您和其他<span>{count}人</span>回应了{emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">您和其他<font color="0">{count}人</font>回应了{emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">您使用{emoji_name}回应了{name}</string>
     <string name="emojiReactsNotification">对您的消息作出反应{emoji}</string>
     <string name="enable">启用</string>
@@ -392,6 +399,7 @@
     <string name="groupCreate">创建群组</string>
     <string name="groupCreateErrorNoMembers">请至少选择一名群组成员。</string>
     <string name="groupDelete">删除群组</string>
+    <string name="groupDeleteDescriptionMember">你确定要删除群组 <b>{group_name}</b>吗?</string>
     <string name="groupDeletedMemberDescription">{group_name} 已被群组管理员删除。您将无法再发送任何信息。</string>
     <string name="groupDescriptionEnter">输入群组描述</string>
     <string name="groupDisplayPictureUpdated">群组头像已更新。</string>
@@ -405,6 +413,8 @@
     <string name="groupInviteFailedMultiple">邀请{name}和其他{count}位成员加入{group_name}失败</string>
     <string name="groupInviteFailedTwo">邀请{name}和{other_name}加入{group_name}失败</string>
     <string name="groupInviteFailedUser">邀请{name}加入{group_name}失败</string>
+    <string name="groupInviteReinvite"><b>{name}</b>邀请您重新加入<b>{group_name}</b>，您是该群组的管理员。</string>
+    <string name="groupInviteReinviteYou">有人邀请您重新加入<b>{group_name}</b>，您是该群的管理员。</string>
     <plurals name="groupInviteSending">
         <item quantity="other">正在发送邀请</item>
     </plurals>
@@ -414,6 +424,7 @@
     <string name="groupInviteYou"><b>您</b>被邀请加入群组。</string>
     <string name="groupInviteYouAndMoreNew"><b>您</b>和其他<b>{count}人</b>被邀请加入了群组。</string>
     <string name="groupInviteYouAndOtherNew"><b>您</b>和<b>{other_name}</b>被邀请加入了群组。</string>
+    <string name="groupInviteYouHistory"><b>您</b>被邀请加入群组。聊天记录已共享。</string>
     <string name="groupLeave">离开群组</string>
     <string name="groupLeaveDescription">您确定要退出<b>{group_name}</b>吗？</string>
     <string name="groupLeaveDescriptionAdmin">您确定要离开<b>{group_name}</b>吗？\n\n该操作将移除所有成员并删除所有群组内容。</string>
@@ -438,6 +449,7 @@
     <string name="groupNameEnterShorter">请输入较短的群组名称。</string>
     <string name="groupNameNew">群组现已更名为{group_name}。</string>
     <string name="groupNameUpdated">群组名称已更新。</string>
+    <string name="groupNameVisible">群组名称对所有群组成员可见。</string>
     <string name="groupNoMessages">您没有来自<b>{group_name}</b>的消息。发送一条消息开始会话！</string>
     <string name="groupOnlyAdmin">您是<b>{group_name}</b>中唯一的管理员。\n\n没有管理员，群组成员和设置将无法被更改。</string>
     <string name="groupPendingRemoval">待移除</string>
@@ -456,6 +468,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b>和<b>{count}其他成员</b>被移出了群组。</string>
     <string name="groupRemovedTwo"><b>{name}</b>和<b>{other_name}</b>被移出了群组。</string>
     <string name="groupRemovedYou">您已被<b>{group_name}</b>移除。</string>
+    <string name="groupRemovedYouGeneral">您已被移出群组。</string>
     <string name="groupRemovedYouMultiple"><b>您</b>和其他<b>{count}人</b>被从群组中移除。</string>
     <string name="groupRemovedYouTwo"><b>您</b>和<b>{other_name}</b>被从该群组中移除。</string>
     <string name="groupSetDisplayPicture">设置群组头像</string>
@@ -579,6 +592,7 @@
     <string name="next">下一步</string>
     <string name="nicknameDescription">为 <b>{name}</b>选择一个昵称。该昵称将在您的一对一和群组对话中显示。</string>
     <string name="nicknameEnter">输入昵称</string>
+    <string name="nicknameErrorShorter">请输入较短的昵称</string>
     <string name="nicknameRemove">移除昵称</string>
     <string name="nicknameSet">设置昵称</string>
     <string name="no">否</string>

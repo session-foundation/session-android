@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} het gereageer met {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} en {other_name} het gereageer met {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} en <span>{count} ander</span> het gereageer met {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} en <font color="0">{count} ander</font> het gereageer met {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Jy het gereageer met {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Jy en <span>{count} ander</span> het gereageer met {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Jy en <font color="0">{count} ander</font> het gereageer met {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Jy en {name} het gereageer met {emoji_name}</string>
     <string name="emojiReactsNotification">Het op jou boodskap gereageer {emoji}</string>
     <string name="enable">Stel In</string>

@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reageeris {emoji_name}\'ga</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ja {other_name} reageerisid {emoji_name}\'ga</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ja <span>{count} veel</span> reageerisid {emoji_name}\'ga</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ja <font color="0">{count} veel</font> reageerisid {emoji_name}\'ga</string>
     <string name="emojiReactsHoverYouNameDesktop">Reageerisid {emoji_name}\'ga</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Sina ja <span>{count} veel</span> reageerisid {emoji_name}\'ga</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Sina ja <font color="0">{count} veel</font> reageerisid {emoji_name}\'ga</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Sina ja {name} reageerisite {emoji_name}\'ga</string>
     <string name="emojiReactsNotification">Reageeris sinu sõnumile {emoji}</string>
     <string name="enable">Luba</string>

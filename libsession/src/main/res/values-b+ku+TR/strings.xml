@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} دەستکاری کردبە {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} و {other_name} دەستکاری کردبە {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} و <span>{count} تایبەتمەندان</span> دەستکاری کردبە {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} و <font color="0">{count} تایبەتمەندان</font> دەستکاری کردبە {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">تۆ دەستکاری کریت بە {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">تۆ و <span>{count} های</span> دەستکاری کردبە {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">تۆ و <font color="0">{count} های</font> دەستکاری کردبە {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">تۆ و {name} دەستکاری کردبە {emoji_name}</string>
     <string name="emojiReactsNotification">وەڵامە لە پەیامەکەت {emoji}</string>
     <string name="enable">چالاک کردن</string>
@@ -762,6 +762,7 @@
     <string name="selectAll">تەواوی هەڵبژێرە</string>
     <string name="send">ناردن</string>
     <string name="sending">ناردن دەکات</string>
+    <string name="sendingCallOffer">پێشنیاری پەیوەندی بنێرە</string>
     <string name="sent">نارد:</string>
     <string name="sessionAppearance">نماوە</string>
     <string name="sessionClearData">سڕینەوەی داتا</string>

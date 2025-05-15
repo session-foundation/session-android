@@ -290,6 +290,12 @@
     <plurals name="deleteMessageFailed">
         <item quantity="other">メッセージの削除に失敗しました</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">選択したメッセージの一部は、すべてのデバイスから削除できません</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">選択したメッセージの一部を全員から削除できません</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">すべてのユーザーのメッセージを削除してもよろしいですか？</string>
     <string name="deleting">削除中</string>
     <string name="developerToolsToggle">開発者ツールを切り替える</string>
@@ -336,6 +342,7 @@
     <string name="displayNameNew">新しい表示名を選択してください</string>
     <string name="displayNamePick">表示名を選択してください</string>
     <string name="displayNameSet">表示名をセット</string>
+    <string name="displayNameVisible">あなたの表示名は、やり取りするユーザー、グループ、コミュニティに表示されます。</string>
     <string name="document">ドキュメント</string>
     <string name="done">完了</string>
     <string name="download">ダウンロード</string>
@@ -359,9 +366,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}が{emoji_name}でリアクションしました</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name}と{other_name}が{emoji_name}でリアクションしました</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}と<span>{count}その他</span>が{emoji_name}で反応しました</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}と<font color="0">{count}その他</font>が{emoji_name}で反応しました</string>
     <string name="emojiReactsHoverYouNameDesktop">あなたは{emoji_name}でリアクションしました</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">あなたと<span>他{count}人</span>が{emoji_name}でリアクションしました</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">あなたと<font color="0">他{count}人</font>が{emoji_name}でリアクションしました</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">あなたと{name}が{emoji_name}で反応しました</string>
     <string name="emojiReactsNotification">メッセージにリアクションしました {emoji}</string>
     <string name="enable">有効にする</string>
@@ -394,12 +401,15 @@
     <string name="groupInviteFailedMultiple">{name} と他 {count} 人を {group_name} に招待できませんでした</string>
     <string name="groupInviteFailedTwo">{name} と {other_name} を {group_name} に招待できませんでした</string>
     <string name="groupInviteFailedUser">{name} を {group_name} に招待できませんでした</string>
+    <string name="groupInviteReinvite"><b>{name}</b> があなたを <b>{group_name}</b> に再参加するよう招待しました。あなたは管理者です。</string>
+    <string name="groupInviteReinviteYou">あなたは管理者である<b>{group_name}</b>に再招待されました。</string>
     <string name="groupInviteSent">招待を送信しました</string>
     <string name="groupInviteSuccessful">グループの招待が成功しました</string>
     <string name="groupInviteVersion">ユーザーは最新のリリースを持っている必要があります</string>
     <string name="groupInviteYou"><b>You</b> はグループに招待されました</string>
     <string name="groupInviteYouAndMoreNew"><b>あなた</b> と <b>{count}名</b> がグループに加わりました。</string>
     <string name="groupInviteYouAndOtherNew"><b>あなた</b> と <b>{other_name}</b> がグループに加わりました。</string>
+    <string name="groupInviteYouHistory"><b>You</b> はグループに招待されました。チャット履歴が共有されました。</string>
     <string name="groupLeave">グループを抜ける</string>
     <string name="groupLeaveDescription">本当に<b>{group_name}</b>を退出しますか？</string>
     <string name="groupLeaveDescriptionAdmin">本当に<b>{group_name}</b>を退会しますか？\n\nこれにより、すべてのメンバーが削除され、すべてのグループコンテンツが削除されます。</string>
@@ -423,6 +433,7 @@
     <string name="groupNameEnterShorter">短いグループ名を入力してください</string>
     <string name="groupNameNew">グループ名が「{group_name}」になりました</string>
     <string name="groupNameUpdated">グループ名を更新しました</string>
+    <string name="groupNameVisible">グループ名は全てのメンバーに表示されます。</string>
     <string name="groupNoMessages"><b>{group_name}</b>からのメッセージがありません。会話を開始するにはメッセージを送信してください。</string>
     <string name="groupOnlyAdmin">あなたは<b>{group_name}</b>で唯一の管理者です。\n\n管理者がいないと、グループメンバーと設定は変更できません。</string>
     <string name="groupPromotedYou"><b>You</b> はアドミンに昇格しました</string>
@@ -440,6 +451,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> と <b>{count}人</b> がグループから削除されました</string>
     <string name="groupRemovedTwo"><b>{name}</b> と <b>{other_name}</b> がグループから削除されました</string>
     <string name="groupRemovedYou"><b>{group_name}</b>から削除されました。</string>
+    <string name="groupRemovedYouGeneral">あなたはこのグループから削除されました。</string>
     <string name="groupRemovedYouMultiple"><b>あなた</b> と <b>{count}名</b> がグループから削除されました。</string>
     <string name="groupRemovedYouTwo"><b>あなた</b> と <b>{other_name}</b> がグループから削除されました。</string>
     <string name="groupSetDisplayPicture">グループのアイコン画像をセット</string>
@@ -563,6 +575,7 @@
     <string name="next">次</string>
     <string name="nicknameDescription"><b>{name}</b>のニックネームを選んでください。これが1対1およびグループ会話で表示されます。</string>
     <string name="nicknameEnter">ニックネームを入力してください</string>
+    <string name="nicknameErrorShorter">短いニックネームを入力してください</string>
     <string name="nicknameRemove">ニックネームを削除</string>
     <string name="nicknameSet">ニックネームをセット</string>
     <string name="no">いいえ</string>

@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagis kun {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} kaj {other_name} reagis kun {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} kaj <span>{count} aliaj</span> reagis per {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} kaj <font color="0">{count} aliaj</font> reagis per {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Vi reagis per {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Vi kaj <span>{count} aliaj</span> reagis per {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Vi kaj <font color="0">{count} aliaj</font> reagis per {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Vi kaj {name} reagis per {emoji_name}</string>
     <string name="emojiReactsNotification">Reagis al via mesaĝo {emoji}</string>
     <string name="enable">Ŝalti</string>

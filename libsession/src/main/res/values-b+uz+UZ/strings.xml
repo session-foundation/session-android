@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} bilan reaksiya qoldirdi</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} va {other_name} {emoji_name} bilan reaksiya qoldirdilar</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} va <span>{count} boshqalar</span> {emoji_name} bilan reaksiya qoldirdilar</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} va <font color="0">{count} boshqalar</font> {emoji_name} bilan reaksiya qoldirdilar</string>
     <string name="emojiReactsHoverYouNameDesktop">{emoji_name} bilan reaksiyaga kirdi</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Siz va <span>{count} boshqalar</span> {emoji_name} bilan reaksiyaga kirdilar</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Siz va <font color="0">{count} boshqalar</font> {emoji_name} bilan reaksiyaga kirdilar</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Siz va {name} {emoji_name} bilan reaksiyaga kirdilar</string>
     <string name="emojiReactsNotification">Sizning xabaringizga {emoji} yordamida reaksiyalar bildirildi</string>
     <string name="enable">Yoqish</string>

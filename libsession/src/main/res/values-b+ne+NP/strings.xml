@@ -359,9 +359,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ले {emoji_name} मा प्रतिक्रिया दिए</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} र {other_name} ले {emoji_name} मा प्रतिक्रिया दिए</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} र <span>अर्को {count}</span> ले {emoji_name} मा प्रतिक्रिया दिए</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} र <font color="0">अर्को {count}</font> ले {emoji_name} मा प्रतिक्रिया दिए</string>
     <string name="emojiReactsHoverYouNameDesktop">तपाईंले {emoji_name} प्रतीकसँग प्रतिक्रिया दिनुभयो</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">तपाईंले र <span>{count} अन्य</span>ले {emoji_name} प्रतिक्रिया जनाउनु भयो।</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">तपाईंले र <font color="0">{count} अन्य</font>ले {emoji_name} प्रतिक्रिया जनाउनु भयो।</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">तपाईँ र {name} ले {emoji_name} सँग प्रतिक्रिया दिनुभयो</string>
     <string name="emojiReactsNotification">तपाईंको सन्देशमा {emoji} प्रतिकृया जनाइएको छ</string>
     <string name="enable">सक्षम गर्नुहोस्</string>

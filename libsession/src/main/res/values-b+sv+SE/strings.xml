@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Misslyckades med att befordra {name} i {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Misslyckades med att befordra {name} och {count} andra i {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Misslyckades med att befordra {name} och {other_name} i {group_name}</string>
+    <string name="adminPromotionNotSent">Befordran ej skickad</string>
     <string name="adminPromotionSent">Admin promotion sent</string>
+    <string name="adminPromotionStatusUnknown">Befordringsstatus oklar</string>
     <string name="adminRemove">Ta bort administratörer</string>
     <string name="adminRemoveAsAdmin">Ta bort som administratör</string>
     <string name="adminRemoveCommunityNone">Det finns inga administratörer i denna Community.</string>
@@ -36,10 +38,28 @@
     <string name="adminRemovedUser"><b>{name}</b> blev borttagen som Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> och <b>{count} andra</b> togs bort som Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> och <b>{other_name}</b> togs bort som Admin.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Sänder administratörsbehörighet</item>
+        <item quantity="other">Sänder administratörsbehörigheter</item>
+    </plurals>
     <string name="adminSettings">Admin Settings</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> och <b>{other_name}</b> blev befordrade till Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
+    <string name="appIcon">App-ikon</string>
+    <string name="appIconAndNameDescription">Alternativ app-ikon och namn visas på hem skärmen och app.</string>
+    <string name="appIconAndNameSelectionTitle">Ikon och namn</string>
+    <string name="appIconDescription">Alternativ app-ikon visas på hem skärmen och app biblioteket. App namn kommer fortsätta visas som \'{app_name}\'.</string>
+    <string name="appIconEnableIcon">Använda alternativ app-ikon</string>
+    <string name="appIconEnableIconAndName">Använd alternativ app-ikon och namn</string>
+    <string name="appIconSelect">Välj en alternativ app-ikon</string>
+    <string name="appIconSelectionTitle">Ikon</string>
+    <string name="appNameCalculator">Miniräknare</string>
+    <string name="appNameMeetingSE">MötenSE</string>
+    <string name="appNameNews">Nyheter</string>
+    <string name="appNameNotes">Anteckningar</string>
+    <string name="appNameStocks">Aktier</string>
+    <string name="appNameWeather">Väder</string>
     <string name="appearanceAutoDarkMode">Automatiskt mörkläge</string>
     <string name="appearanceHideMenuBar">Dölj menyfältet</string>
     <string name="appearanceLanguage">Språk</string>
@@ -148,6 +168,7 @@
     <string name="callsNotificationsRequired">Röst- och videosamtal kräver att aviseringar är aktiverade i dina enhetsinställningar.</string>
     <string name="callsPermissionsRequired">Samtalsbehörigheter krävs</string>
     <string name="callsPermissionsRequiredDescription">Du kan aktivera behörigheten \"Röst- och videosamtal\" i sekretessinställningarna.</string>
+    <string name="callsPermissionsRequiredDescription1">Du kan aktivera behörigheten \"Röst och videosamtal\" i inställningarna för Behörigheter.</string>
     <string name="callsReconnecting">Återansluter…</string>
     <string name="callsRinging">Ringer...</string>
     <string name="callsSessionCall">{app_name} Samtal</string>
@@ -254,6 +275,7 @@
     <string name="copied">Kopierad</string>
     <string name="copy">Kopiera</string>
     <string name="create">Skapa</string>
+    <string name="creatingCall">Skapar samtalet</string>
     <string name="cut">Klipp ut</string>
     <string name="databaseErrorTimeout">Vi har märkt att {app_name} tar lång tid att starta.\n\nDu kan fortsätta vänta, exportera dina felsökningsloggar för att dela för felsökning, eller försöka starta om {app_name}.</string>
     <string name="databaseErrorUpdate">Din appdatabas är inkompatibel med den här versionen av {app_name}. Installera om appen och återställ ditt konto för att skapa en ny databas och fortsätta använda {app_name}.\n\nVarning: Detta resulterar i förlust av alla meddelanden och bilagor äldre än två veckor.</string>
@@ -290,6 +312,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Detta meddelande har raderats</string>
     <string name="deleteMessageDeletedLocally">Detta meddelande har tagits bort på denna enhet</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Är du säker på att du vill ta bort det här meddelandet enbart från den här enheten?</item>
+        <item quantity="other">Är du säker på att du vill ta bort de här meddelandena enbart från den här enheten?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Är du säker på att du vill radera detta meddelande för alla?</string>
     <string name="deleteMessageDeviceOnly">Radera endast på denna enhet</string>
     <string name="deleteMessageDevicesAll">Radera på alla mina enheter</string>
@@ -297,6 +323,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Misslyckades med att radera meddelandet</item>
         <item quantity="other">Misslyckades med att radera meddelanden</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Detta meddelande kan inte raderas från alla dina enheter</item>
+        <item quantity="other">Några av meddelandena som du har valt kan inte raderas från alla dina enheter</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Detta meddelande kan inte tas bort för alla</item>
+        <item quantity="other">Vissa av meddelandena du har valt kan inte tas bort för alla</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Är du säker på att du vill radera dessa meddelanden för alla?</string>
     <string name="deleting">Raderar</string>
@@ -344,6 +378,7 @@
     <string name="displayNameNew">Välj ett nytt visningsnamn</string>
     <string name="displayNamePick">Välj ditt visningsnamn</string>
     <string name="displayNameSet">Ange visningsnamn</string>
+    <string name="displayNameVisible">Ditt visningsnamn är synligt för användare, grupper och samhällen du interagerar med.</string>
     <string name="document">Dokument</string>
     <string name="done">Klar</string>
     <string name="download">Hämta</string>
@@ -368,9 +403,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagerade med {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} och {other_name} reagerade med {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} och <span>{count} andra</span> reagerade med {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} och <font color="0">{count} andra</font> reagerade med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Du reagerade med {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Du och <span>{count} andra</span> reagerade med {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Du och <font color="0">{count} andra</font> reagerade med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Du och {name} reagerade med {emoji_name}</string>
     <string name="emojiReactsNotification">Reagerade på ditt meddelande {emoji}</string>
     <string name="enable">Aktivera</string>
@@ -378,6 +413,7 @@
     <string name="errorCopyAndQuit">Kopiera felmeddelande och avsluta</string>
     <string name="errorDatabase">Databasfel</string>
     <string name="errorUnknown">Ett okänt fel har uppstått.</string>
+    <string name="failedToDownload">Nedladdningen misslyckades</string>
     <string name="failures">Misslyckanden</string>
     <string name="file">Fil</string>
     <string name="files">Filer</string>
@@ -391,6 +427,8 @@
     <string name="groupCreate">Skapa grupp</string>
     <string name="groupCreateErrorNoMembers">Välj minst en annan gruppmedlem.</string>
     <string name="groupDelete">Radera grupp</string>
+    <string name="groupDeleteDescriptionMember">Är du säker på att du vill radera <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} har blivit borttaget av gruppens admin. Du kan inte längre skicka några fler meddelanden.</string>
     <string name="groupDescriptionEnter">Ange en gruppbeskrivning</string>
     <string name="groupDisplayPictureUpdated">Gruppvisningsbild uppdaterad.</string>
     <string name="groupEdit">Redigera grupp</string>
@@ -403,12 +441,21 @@
     <string name="groupInviteFailedMultiple">Misslyckades med att bjuda in {name} och {count} andra till {group_name}</string>
     <string name="groupInviteFailedTwo">Misslyckades med att bjuda in {name} och {other_name} till {group_name}</string>
     <string name="groupInviteFailedUser">Misslyckades med att bjuda in {name} till {group_name}</string>
+    <string name="groupInviteNotSent">Inbjudan ej skickad</string>
+    <string name="groupInviteReinvite"><b>{name}</b> bjöd in dig att gå med i <b>{group_name}</b> igen, där du är administratör.</string>
+    <string name="groupInviteReinviteYou">Du blev inbjuden att återgå till <b>{group_name}</b>, där du är en administratör.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Skickar inbjudning</item>
+        <item quantity="other">Skickar inbjudningar</item>
+    </plurals>
     <string name="groupInviteSent">Inbjudan skickad</string>
+    <string name="groupInviteStatusUnknown">Inbjudningsstatus oklar</string>
     <string name="groupInviteSuccessful">Grupinbjudan lyckades</string>
     <string name="groupInviteVersion">Användare måste ha den senaste versionen för att ta emot inbjudningar</string>
     <string name="groupInviteYou"><b>Du</b> blev inbjuden att gå med i gruppen.</string>
     <string name="groupInviteYouAndMoreNew"><b>Du</b> och <b>{count} andra</b> gick med i gruppen.</string>
     <string name="groupInviteYouAndOtherNew"><b>Du</b> och <b>{other_name}</b> gick med i gruppen.</string>
+    <string name="groupInviteYouHistory"><b>Du</b> blev inbjuden att gå med i gruppen. Chatt historik delades.</string>
     <string name="groupLeave">Lämna grupp</string>
     <string name="groupLeaveDescription">Är du säker på att du vill lämna <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Är du säker på att du vill lämna <b>{group_name}</b>?\n\nDetta kommer att ta bort alla medlemmar och radera allt gruppinnehåll.</string>
@@ -423,6 +470,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> och <b>{count} andra</b> bjöds in till gruppen.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> och <b>{other_name}</b> bjöds in att gå med i gruppen.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> och <b>{count} andra</b> bjöds in att gå med i gruppen. Chatt historik delades.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Du</b>och<b>{other_name}</b>blev inbjudna för att delta i gruppen. Chatt historiken är delad.</string>
     <string name="groupMemberYouLeft"><b>Du</b> lämnade gruppen.</string>
     <string name="groupMembers">Gruppmedlemmar</string>
     <string name="groupMembersNone">Det finns inga andra medlemmar i denna grupp.</string>
@@ -432,10 +480,13 @@
     <string name="groupNameEnterShorter">Vänligen ange ett kortare gruppnamn.</string>
     <string name="groupNameNew">Gruppnamnet är nu {group_name}.</string>
     <string name="groupNameUpdated">Gruppnamn uppdaterat.</string>
+    <string name="groupNameVisible">Gruppnamn är synligt för alla gruppmedlemmar.</string>
     <string name="groupNoMessages">Du har inga meddelanden från <b>{group_name}</b>. Skicka ett meddelande för att starta konversationen!</string>
     <string name="groupOnlyAdmin">Du är den enda administratören i <b>{group_name}</b>.\n\nGruppmedlemmar och inställningar kan inte ändras utan en administratör.</string>
+    <string name="groupPendingRemoval">Avvaktar radering</string>
     <string name="groupPromotedYou"><b>Du</b> blev befordrad till Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> och <b>{count} andra</b> blev befordrade till Admin.</string>
+    <string name="groupPromotedYouTwo"><b>Du</b>och <b>{other_name}</b> blev befordrade till Admin.</string>
     <string name="groupRemoveDescription">Vill du ta bort <b>{name}</b> från <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Vill du ta bort <b>{name}</b> och <b>{count} andra</b> från <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Vill du ta bort <b>{name}</b> och <b>{other_name}</b> från <b>{group_name}</b>?</string>
@@ -451,11 +502,13 @@
     <string name="groupRemovedMultiple"><b>{name}</b> och <b>{count} andra</b> togs bort från gruppen.</string>
     <string name="groupRemovedTwo"><b>{name}</b> och <b>{other_name}</b> togs bort från gruppen.</string>
     <string name="groupRemovedYou">Du togs bort från <b>{group_name}</b></string>
+    <string name="groupRemovedYouGeneral">Du togs bort från gruppen.</string>
     <string name="groupRemovedYouMultiple"><b>Du</b> och <b>{count} andra</b> togs bort från gruppen.</string>
     <string name="groupRemovedYouTwo"><b>Du</b> och <b>{other_name}</b> togs bort från gruppen.</string>
     <string name="groupSetDisplayPicture">Ange gruppvisningsbild</string>
     <string name="groupUnknown">Okänd grupp</string>
     <string name="groupUpdated">Grupp uppdaterad</string>
+    <string name="handlingConnectionCandidates">Hantera kontakt kandidater</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Hjälp oss översätta {app_name}</string>
     <string name="helpReportABug">Rapportera en bugg</string>
@@ -470,15 +523,29 @@
     <string name="hideMenuBarDescription">Växla synlighet för systemmenyraden</string>
     <string name="hideOthers">Dölj andra</string>
     <string name="image">Bild</string>
+    <string name="images">bilder</string>
     <string name="incognitoKeyboard">Inkognito-tangentbord</string>
     <string name="incognitoKeyboardDescription">Begär inkognitoläge om tillgängligt. Beroende på tangentbordet du använder kanske ditt tangentbord ignorerar denna begäran.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ogiltig genväg</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Inbjudningen misslyckades</item>
+        <item quantity="other">Inbjudningarna misslyckades</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Inbjudningen kunde inte skickas. Vill du försöka igen?</item>
+        <item quantity="other">Inbjudningarna kunde inte skickas. Vill du försöka igen?</item>
+    </plurals>
     <string name="join">Anslut</string>
     <string name="later">Senare</string>
     <string name="learnMore">Läs mer</string>
     <string name="leave">Lämna</string>
     <string name="leaving">Lämnar...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Den här gruppen är nu enbart för att läsa. Återskapa denna gruppen för att fortsätta chatta.</string>
+    <string name="legacyGroupAfterDeprecationMember">Den här gruppen är nu enbart för att läsa. Fråga gruppens admin för att återskapa gruppen för att kunna fortsätta chatta.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Grupper har blivit uppgraderad! Återskapa denna grupp för förbättrad pålitlighet. Den här gruppen kommer att bli enbart för att läsa vid  {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Grupper har blivit uppgraderad! Fråga gruppens admin för att återskapa gruppen för förbättrad pålitlighet. Den här gruppen kommer att bli enbart för att läsa vid  {date}.</string>
+    <string name="legacyGroupChatHistory">Chatthistoriken kommer inte att överföras till den nya gruppen. Du kan fortsätta se all chatthistorik i den gamla gruppen.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> gick med i gruppen.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name} </b> och <b> {count} andra</b> gick med i gruppen.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Du</b> och <b>{count} andra</b> gick med i gruppen.</string>
@@ -548,6 +615,10 @@
         <item quantity="one">Du har ett nytt meddelande.</item>
         <item quantity="other">Du har %1$d nya meddelanden.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Du har ett nytt meddelande i %1$s.</item>
+        <item quantity="other">Du har %1$d nya meddelanden i %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Svarar på</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> bjöd in dig att gå med i <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Att skicka ett meddelande till den här gruppen godkänner automatiskt gruppinbjudan.</string>
@@ -579,6 +650,7 @@
     <string name="next">Nästa</string>
     <string name="nicknameDescription">Välj ett smeknamn för <b>{name}</b>. Detta kommer att visas för dig i dina en-till-en- och gruppkonversationer.</string>
     <string name="nicknameEnter">Ange smeknamn</string>
+    <string name="nicknameErrorShorter">Vänligen ange ett kortare smeknamn</string>
     <string name="nicknameRemove">Ta bort smeknamn</string>
     <string name="nicknameSet">Ange smeknamn</string>
     <string name="no">Nej</string>
@@ -597,6 +669,7 @@
     <string name="notificationsContentShowNoNameOrContent">Inget namn eller innehåll</string>
     <string name="notificationsFastMode">Snabbläge</string>
     <string name="notificationsFastModeDescription">Du kommer att meddelas om nya meddelanden på ett tillförlitligt sätt och omedelbart genom att använda Googles aviseringsservrar.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Du kommer att meddelas om nya meddelanden på ett tillförlitligt sätt och omedelbart genom att använda Huawei’s aviseringsservrar.</string>
     <string name="notificationsFastModeDescriptionIos">Du kommer att meddelas om nya meddelanden på ett tillförlitligt sätt och omedelbart använda Apples meddelandeservrar.</string>
     <string name="notificationsGoToDevice">Gå till enhetens aviseringsinställningar</string>
     <string name="notificationsHeaderAllMessages">Notifieringar – Alla</string>
@@ -670,20 +743,32 @@
     <string name="passwordSet">Ange lösenord</string>
     <string name="passwordSetDescription">Ditt lösenord har angetts. Håll det säkert.</string>
     <string name="paste">Klistra in</string>
+    <string name="permissionChange">Ändra tillåtelse</string>
     <string name="permissionMusicAudioDenied">{app_name} behöver åtkomst till musik och ljud för att skicka filer, musik och ljud, men åtkomsten har nekats permanent. Tryck på Inställningar → Behörigheter, och slå på \'Musik och ljud\'.</string>
     <string name="permissionsAppleMusic">{app_name} behöver åtkomst till Apple Music för att spela upp bifogade mediafiler.</string>
     <string name="permissionsAutoUpdate">Uppdatera automatiskt</string>
     <string name="permissionsAutoUpdateDescription">Sök efter uppdateringar automatiskt vid uppstart</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Kameraåtkomst krävs för att ringa videosamtal. Växla behörigheten \"Kamera\" i Inställningar för att fortsätta.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Kameraåtkomst är för närvarande aktiverad. För att inaktivera det, växla behörigheten \"Kamera\" i Inställningar.</string>
     <string name="permissionsCameraDenied">{app_name} behöver åtkomst till kameran för att kunna fotografera och filma, men har nekats permanent. Tryck på Inställningar → Behörigheter, och slå på \"Kamera\".</string>
+    <string name="permissionsCameraDescriptionIos">Tillåt åtkomst till kamera för videosamtal.</string>
     <string name="permissionsFaceId">Skärmlåsfunktionen på {app_name} använder Face ID.</string>
     <string name="permissionsKeepInSystemTray">Behåll i systemfältet</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} fortsätter att köras i bakgrunden när du stänger fönstret</string>
     <string name="permissionsLibrary">{app_name} behöver åtkomst till fotobiblioteket för att fortsätta. Du kan aktivera åtkomsten i iOS-inställningarna.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Lokal nätverksåtkomst krävs för att underlätta samtal. Växla behörigheten \"Lokalt nätverk\" i Inställningar för att fortsätta.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} behöver åtkomst till det lokala nätverket för att kunna ringa röst och videosamtal.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Lokal nätverksåtkomst är aktiverad. För att inaktivera det, växla behörigheten \"Lokalt nätverk\" i inställningar.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Tillåt åtkomst till lokala nätverk för att underlätta röst- och videosamtal.</string>
+    <string name="permissionsLocalNetworkIos">Lokalt Nätverk</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} behöver åtkomst till mikrofonen för att ringa samtal och skicka ljudmeddelanden, men det har nekats permanent. Tryck på inställningar → Behörigheter, och slå på \"Mikrofon\".</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Tillgång till mikrofon krävs för att ringa samtal och spela in ljudmeddelanden. Växla behörigheten \"Mikrofon\" i Inställningar för att fortsätta.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Du kan aktivera mikrofontillgång i {app_name}s sekretessinställningar</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} behöver mikrofonåtkomst för att ringa och spela in ljudmeddelanden.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Tillgång till mikrofon är för närvarande aktiverad. För att inaktivera det, växla behörigheten \"Mikrofon\" i inställningar.</string>
     <string name="permissionsMicrophoneDescription">Tillåt åtkomst till mikrofon.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Tillåt åtkomst till mikrofon för röstsamtal och ljudmeddelanden.</string>
     <string name="permissionsMusicAudio">{app_name} behöver åtkomst till musik och ljud för att kunna skicka filer, musik och ljud.</string>
     <string name="permissionsRequired">Behörighet saknas</string>
     <string name="permissionsStorageDenied">{app_name} behöver åtkomst till fotobiblioteket för att du ska kunna skicka foton och videor, men det har permanent nekats. Tryck på Inställningar → Behörigheter och slå på \"Foton och videor\".</string>
@@ -703,6 +788,14 @@
     <string name="profileDisplayPictureSizeError">Vänligen välj en mindre fil.</string>
     <string name="profileErrorUpdate">Misslyckades att uppdatera profilen.</string>
     <string name="promote">Främja</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Befordran Misslyckades</item>
+        <item quantity="other">Befordringar Misslyckades</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Befordran kunde inte tillämpas. Vill du försöka igen?</item>
+        <item quantity="other">Befordringarna kunde inte tillämpas. Vill du försöka igen?</item>
+    </plurals>
     <string name="qrCode">QR-kod</string>
     <string name="qrNotAccountId">Denna QR-kod innehåller inte ett konto-ID</string>
     <string name="qrNotRecoveryPassword">Denna QR-kod innehåller inte ett återställningslösenord</string>
@@ -715,11 +808,14 @@
     <string name="readReceipts">Läskvitton</string>
     <string name="readReceiptsDescription">Visa läskvitton för alla meddelanden du skickar och tar emot.</string>
     <string name="received">Mottaget:</string>
+    <string name="receivedAnswer">Mottog svar</string>
+    <string name="receivingCallOffer">Inkommande erbjudande för samtal</string>
     <string name="recommended">Rekommenderat</string>
     <string name="recoveryPasswordBannerDescription">Spara ditt återställningslösenord så att du inte förlorar tillgången till ditt konto.</string>
     <string name="recoveryPasswordBannerTitle">Spara ditt återställningslösenord</string>
     <string name="recoveryPasswordDescription">Använd din återställningslösenord för att ladda ditt konto på nya enheter. \n\nDitt konto kan inte återställas utan ditt återställningslösenord. Se till att det lagras säkert och dela det inte med någon.</string>
     <string name="recoveryPasswordEnter">Ange ditt recovery password</string>
+    <string name="recoveryPasswordErrorLoad">Ett fel uppstod vid försök av att ladda ditt återställnings lösenord.\n\nVänligen exportera dina loggar, sen ladda upp filen genom {app_name} Hjälp Supportavdelningen att åtgärda problemet.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Kontrollera ditt återställningslösenord och försök igen.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Några av orden i din återställningsfras är felaktiga. Kontrollera och försök igen.</string>
     <string name="recoveryPasswordErrorMessageShort">Den återställningslösenord du angav är inte tillräckligt lång. Kontrollera och försök igen.</string>
@@ -733,6 +829,7 @@
     <string name="recoveryPasswordRestoreDescription">Ange ditt recovery password för att ladda ditt konto. Om du inte har sparat det kan du hitta det i dina appinställningar.</string>
     <string name="recoveryPasswordView">Visa lösenord</string>
     <string name="recoveryPasswordWarningSendDescription">Detta är ditt återställningslösenord. Om du skickar det till någon kommer de att ha full tillgång till ditt konto.</string>
+    <string name="recreateGroup">Skapa gruppen igen</string>
     <string name="redo">Gör om</string>
     <string name="remove">Ta bort</string>
     <string name="removePasswordFail">Misslyckades med att ta bort lösenord</string>
@@ -767,6 +864,8 @@
     <string name="selectAll">Markera alla</string>
     <string name="send">Skicka</string>
     <string name="sending">Skickar</string>
+    <string name="sendingCallOffer">Skickar erbjudande för samtal</string>
+    <string name="sendingConnectionCandidates">Skickar kontakt kandidater</string>
     <string name="sent">Skickat:</string>
     <string name="sessionAppearance">Utseende</string>
     <string name="sessionClearData">Rensa data</string>
@@ -785,6 +884,7 @@
     <string name="shareAccountIdDescription">Bjud in din vän att chatta med dig på {app_name} genom att dela ditt Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Dela med dina vänner var du än brukar prata med dem — flytta sedan konversationen hit.</string>
     <string name="shareExtensionDatabaseError">Det finns ett problem med att öppna databasen. Starta om appen och försök igen.</string>
+    <string name="shareExtensionNoAccountError">Oops! Ser ut som att du inte har ett {app_name} konto ännu.\n\nDu behöver skapa ett först hos {app_name} innan du kan dela.</string>
     <string name="shareToSession">Dela till {app_name}</string>
     <string name="show">Visa</string>
     <string name="showAll">Visa alla</string>
@@ -792,6 +892,7 @@
     <string name="stickers">Klistermärken</string>
     <string name="supportGoTo">Gå till supportsidan</string>
     <string name="systemInformationDesktop">Systeminformation: {information}</string>
+    <string name="tapToRetry">Tryck för ett nytt försök</string>
     <string name="theContinue">Fortsätt</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fel</string>
@@ -806,6 +907,7 @@
     <string name="updateError">Kan inte uppdatera</string>
     <string name="updateErrorDescription">{app_name} misslyckades med att uppdatera. Gå till {session_download_url} och installera den nya versionen manuellt, och kontakta vårt Hjälpcenter för att informera oss om detta problem.</string>
     <string name="updateNewVersion">En ny version av {app_name} är tillgänglig, tryck för att uppdatera</string>
+    <string name="updateNewVersionDescription">En ny version ({version}) av  {app_name} finns tillgänglig</string>
     <string name="updateReleaseNotes">Gå till versionsanteckningar</string>
     <string name="updateSession">{app_name}-uppdatering</string>
     <string name="updateVersion">Version {version}</string>

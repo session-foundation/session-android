@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Falló al promover a {name} en {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">No se pudo promover a {name} y a {count} otros en {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Falló al promover a {name} y {other_name} en {group_name}</string>
+    <string name="adminPromotionNotSent">Promoción no enviada</string>
     <string name="adminPromotionSent">Promoción a administrador enviada</string>
+    <string name="adminPromotionStatusUnknown">Estado de promoción desconocido</string>
     <string name="adminRemove">Eliminar Administradores</string>
     <string name="adminRemoveAsAdmin">Eliminar como Administrador</string>
     <string name="adminRemoveCommunityNone">No hay Administradores en esta Comunidad.</string>
@@ -36,6 +38,10 @@
     <string name="adminRemovedUser"><b>{name}</b> fue destituido como Administrador.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> y <b>otros {count}</b> fueron eliminados como moderadores.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> y <b>{other_name}</b> fueron eliminados como moderadores.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Enviando promoción de administrador</item>
+        <item quantity="other">Enviando promociones de administrador</item>
+    </plurals>
     <string name="adminSettings">Configuración de administrador</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> y <b>{other_name}</b> fueron promovidos a Administradores.</string>
     <string name="andMore">+{count}</string>
@@ -254,6 +260,7 @@
     <string name="copied">Copiado</string>
     <string name="copy">Copiar</string>
     <string name="create">Crear</string>
+    <string name="creatingCall">Creando llamada</string>
     <string name="cut">Cortar</string>
     <string name="databaseErrorTimeout">Hemos notado que {app_name} está tardando mucho en iniciar.\n\nPuedes seguir esperando, exportar los registros de tu dispositivo para compartirlos y solucionar problemas, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">Su base de datos de la aplicación no es compatible con esta versión de {app_name}. Reinstala la aplicación y restaura tu cuenta para generar una nueva base de datos y continuar usando {app_name}.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes y archivos adjuntos anteriores a dos semanas.</string>
@@ -280,12 +287,20 @@
         <item quantity="one">Eliminar Mensaje</item>
         <item quantity="other">Eliminar Mensajes</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">¿Seguro que quieres eliminar este mensaje?</item>
+        <item quantity="other">¿Seguro que quieres eliminar estos mensajes?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Mensaje borrado</item>
         <item quantity="other">Mensajes borrados</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Este mensaje se ha eliminado</string>
     <string name="deleteMessageDeletedLocally">Este mensaje se ha eliminado en este dispositivo</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">¿Seguro que quieres eliminar el mensaje únicamente de este dispositivo?</item>
+        <item quantity="other">¿Seguro que quieres eliminar los mensajes únicamente de este dispositivo?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">¿Estás seguro de que quieres eliminar este mensaje para todos?</string>
     <string name="deleteMessageDeviceOnly">Eliminar solo en este dispositivo</string>
     <string name="deleteMessageDevicesAll">Eliminar en todos mis dispositivos</string>
@@ -293,6 +308,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Fallo al eliminar el mensaje</item>
         <item quantity="other">Fallo al eliminar los mensajes</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Este mensaje no se puede eliminar de todos tus dispositivos</item>
+        <item quantity="other">Algunos de los mensajes que has seleccionado no se pueden eliminar de todos tus dispositivos</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Este mensaje no puede ser eliminado para todos</item>
+        <item quantity="other">Algunos de los mensajes que has seleccionado no pueden ser eliminados para todos</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">¿Estás seguro de querer eliminar estos mensajes para todos?</string>
     <string name="deleting">Eliminando</string>
@@ -340,6 +363,7 @@
     <string name="displayNameNew">Elige un nuevo nombre para mostrar</string>
     <string name="displayNamePick">Elige tu nombre para mostrar</string>
     <string name="displayNameSet">Establecer nombre para mostrar</string>
+    <string name="displayNameVisible">Tu nombre para mostrar es visible para los usuarios, grupos y comunidades con los que interactúas.</string>
     <string name="document">Documento</string>
     <string name="done">Hecho</string>
     <string name="download">Descargar</string>
@@ -364,9 +388,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} Reaccionó con {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} Y {other_name} reaccionaron con {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} Y otros {count} <span> reaccionaron con {emoji_name} </span></string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} Y otros {count} <font color="0"> reaccionaron con {emoji_name} </font></string>
     <string name="emojiReactsHoverYouNameDesktop">Reaccionaste con {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Tú y <span> otros {count} </span> reaccionasteis con {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Tú y <font color="0"> otros {count} </font> reaccionasteis con {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">{name} y tú reaccionasteis con {emoji_name}</string>
     <string name="emojiReactsNotification">Reaccionó a tu mensaje {emoji}</string>
     <string name="enable">Activar</string>
@@ -387,6 +411,7 @@
     <string name="groupCreate">Crear grupo</string>
     <string name="groupCreateErrorNoMembers">Por favor, elige al menos un miembro del grupo.</string>
     <string name="groupDelete">Borrar Grupo</string>
+    <string name="groupDeleteDescriptionMember">¿Seguro que quieres eliminar <b>{group_name}</b>?</string>
     <string name="groupDescriptionEnter">Ingrese una descripción del grupo</string>
     <string name="groupDisplayPictureUpdated">La imagen del grupo se actualizó.</string>
     <string name="groupEdit">Editar grupo</string>
@@ -399,12 +424,21 @@
     <string name="groupInviteFailedMultiple">No se pudo invitar a {name} y a {count} otros a {group_name}</string>
     <string name="groupInviteFailedTwo">No se pudo invitar a {name} y {other_name} a {group_name}</string>
     <string name="groupInviteFailedUser">Falló la invitación de {name} a {group_name}</string>
+    <string name="groupInviteNotSent">Invitación no enviada</string>
+    <string name="groupInviteReinvite"><b>{name}</b> te ha invitado a reincorporarte a <b>{group_name}</b>, donde eres un Admin.</string>
+    <string name="groupInviteReinviteYou">Fuiste invitado a reincorporarte a <b>{group_name}</b>, donde eres un administrador.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Enviando invitación</item>
+        <item quantity="other">Enviando invitaciones</item>
+    </plurals>
     <string name="groupInviteSent">Invitación enviada</string>
+    <string name="groupInviteStatusUnknown">Estado de invitación desconocido</string>
     <string name="groupInviteSuccessful">Grupo invitado con éxito</string>
     <string name="groupInviteVersion">Los usuarios deben tener la última versión para recibir invitaciones</string>
     <string name="groupInviteYou"><b>Tú</b> has sido invitado a unirte al grupo.</string>
     <string name="groupInviteYouAndMoreNew"><b>Tú</b> y <b>{count} más</b> se unieron al grupo.</string>
     <string name="groupInviteYouAndOtherNew"><b>Tú</b> y <b>{other_name}</b> se unieron al grupo.</string>
+    <string name="groupInviteYouHistory"><b>Tú</b> has sido invitado a unirte al grupo. Se compartió el historial del chat.</string>
     <string name="groupLeave">Abandonar grupo</string>
     <string name="groupLeaveDescription">¿Estás seguro de que quieres salir de <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">¿Estás seguro de que deseas abandonar el grupo <b>{group_name}</b>?\n\nEsto eliminará a todos los miembros y borrará todo el contenido del grupo.</string>
@@ -428,6 +462,7 @@
     <string name="groupNameEnterShorter">Por favor, ingresa un nombre de grupo más corto.</string>
     <string name="groupNameNew">Ahora el nombre del grupo es {group_name}.</string>
     <string name="groupNameUpdated">Nombre del grupo actualizadó.</string>
+    <string name="groupNameVisible">El nombre del grupo es visible para todos los miembros del grupo.</string>
     <string name="groupNoMessages">No tienes mensajes de <b>{group_name}</b>. ¡Envía un mensaje para iniciar la conversación!</string>
     <string name="groupOnlyAdmin">Eres el único admin en <b>{group_name}</b>.\n\nLos miembros y la configuración del grupo no pueden ser modificados sin un admin.</string>
     <string name="groupPromotedYou"><b>Tú</b> fuiste promovido a Administrador.</string>
@@ -447,11 +482,13 @@
     <string name="groupRemovedMultiple"><b>{name}</b> y <b>{count} más</b> fueron expulsados del grupo.</string>
     <string name="groupRemovedTwo"><b>{name}</b> y <b>{other_name}</b> fueron expulsados del grupo.</string>
     <string name="groupRemovedYou">Has sido eliminado del grupo <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Has sido eliminado del grupo.</string>
     <string name="groupRemovedYouMultiple"><b>Tú</b> y <b>otros {count}</b> habéis sido eliminados del grupo.</string>
     <string name="groupRemovedYouTwo"><b> Tú </b> y <b>{other_name}</b> fueron expulsados del grupo.</string>
     <string name="groupSetDisplayPicture">Establecer imagen de perfil del grupo</string>
     <string name="groupUnknown">Grupo desconocido</string>
     <string name="groupUpdated">Grupo actualizado</string>
+    <string name="handlingConnectionCandidates">Gestionando candidatos de conexión</string>
     <string name="helpFAQ">Preguntas Frecuentes</string>
     <string name="helpHelpUsTranslateSession">Ayúdanos a traducir {app_name}</string>
     <string name="helpReportABug">Reportar Error</string>
@@ -470,6 +507,14 @@
     <string name="incognitoKeyboardDescription">Solicitar modo incógnito si está disponible. Dependiendo del teclado que estés usando, tu teclado puede ignorar esta solicitud.</string>
     <string name="info">Información</string>
     <string name="invalidShortcut">Atajo no válido</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitación fallida</item>
+        <item quantity="other">Invitaciones fallidas</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">No se ha podido enviar la invitación. ¿Quieres volver a intentarlo?</item>
+        <item quantity="other">No se han podido enviar las invitaciones. ¿Quieres volver a intentarlo?</item>
+    </plurals>
     <string name="join">Unirse</string>
     <string name="later">Más tarde</string>
     <string name="learnMore">Saber más</string>
@@ -544,6 +589,10 @@
         <item quantity="one">Tienes un mensaje nuevo.</item>
         <item quantity="other">Tienes %1$d mensajes nuevos.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Tienes un nuevo mensaje en %1$s.</item>
+        <item quantity="other">Tienes %1$d nuevos mensajes en %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Respondiendo a</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> te ha invitado a unirte a <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Enviar un mensaje a este grupo aceptará automáticamente la invitación al grupo.</string>
@@ -575,6 +624,7 @@
     <string name="next">Siguiente</string>
     <string name="nicknameDescription">Elija un apodo para <b>{name}</b>. Esto aparecerá para ti en tus conversaciones individuales y de grupo.</string>
     <string name="nicknameEnter">Escriba un apodo</string>
+    <string name="nicknameErrorShorter">Por favor, introduce un apodo más corto</string>
     <string name="nicknameRemove">Eliminar apodo</string>
     <string name="nicknameSet">Definir apodo</string>
     <string name="no">No</string>
@@ -699,6 +749,14 @@
     <string name="profileDisplayPictureSizeError">Por favor, elija un archivo más pequeño.</string>
     <string name="profileErrorUpdate">Fallo al actualizar el perfil.</string>
     <string name="promote">Promover</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promoción fallida</item>
+        <item quantity="other">Promociones fallidas</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">La promoción no se ha podido aplicar. ¿Quieres volver a intentarlo?</item>
+        <item quantity="other">Las promociones no se han podido aplicar. ¿Quieres volver a intentarlo?</item>
+    </plurals>
     <string name="qrCode">Código QR</string>
     <string name="qrNotAccountId">Este código QR no contiene un ID de cuenta</string>
     <string name="qrNotRecoveryPassword">Este código QR no contiene una Contraseña de Recuperación</string>
@@ -711,6 +769,7 @@
     <string name="readReceipts">Confirmaciones de lectura</string>
     <string name="readReceiptsDescription">Mostrar confirmaciones de lectura para todos los mensajes que envías y recibes.</string>
     <string name="received">Recibido:</string>
+    <string name="receivedAnswer">Respuesta recibida</string>
     <string name="recommended">Recomendado</string>
     <string name="recoveryPasswordBannerDescription">Guarde su clave de recuperación para asegurarse de que no perderá acceso a su cuenta.</string>
     <string name="recoveryPasswordBannerTitle">Guarde su clave de recuperación</string>

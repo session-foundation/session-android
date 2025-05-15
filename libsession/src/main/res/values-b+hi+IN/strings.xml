@@ -40,6 +40,14 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> और <b>{other_name}</b> को Admin बनाया गया।</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">गुमनाम</string>
+    <string name="appIcon">ऐप आइकॉन</string>
+    <string name="appIconAndNameSelectionTitle">आइकॉन और नाम</string>
+    <string name="appIconSelectionTitle">आइकॉन</string>
+    <string name="appNameCalculator">कैलकुलेटर</string>
+    <string name="appNameNews">समाचार</string>
+    <string name="appNameNotes">नोट्स</string>
+    <string name="appNameStocks">शेयरों</string>
+    <string name="appNameWeather">मौसम</string>
     <string name="appearanceAutoDarkMode">स्वचालित डार्क-मोड</string>
     <string name="appearanceHideMenuBar">मेनू बार छुपाएं</string>
     <string name="appearanceLanguage">भाषा</string>
@@ -294,6 +302,14 @@
         <item quantity="one">संदेश हटाने में विफल</item>
         <item quantity="other">संदेशों को हटाने में विफल रहा</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">यह संदेश आपके सभी उपकरणों से नहीं हटाया जा सकता है</item>
+        <item quantity="other">आपने जिन संदेशों का चयन किया है, उनमें से कुछ आपके सभी उपकरणों से नहीं हटाए जा सकते हैं</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">इस संदेश को सभी के लिए हटाया नहीं जा सकता है</item>
+        <item quantity="other">आपने जिन संदेशों का चयन किया है, उनमें से कुछ को सभी के लिए हटाया नहीं जा सकता है</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">क्या आप वाकई सभी के लिए इन संदेशों को हटाना चाहते हैं?</string>
     <string name="deleting">हटाया जा रहा है</string>
     <string name="developerToolsToggle">डेवलपर टूल टॉगल करें</string>
@@ -340,6 +356,7 @@
     <string name="displayNameNew">एक नया डिसप्ले नाम चुनें</string>
     <string name="displayNamePick">अपना प्रदर्शन नाम चुनें</string>
     <string name="displayNameSet">डिस्प्ले नाम सेट करें</string>
+    <string name="displayNameVisible">आपका डिस्प्ले नाम उन उपयोगकर्ताओं, समूहों और समुदायों को दिखाई देता है जिनके साथ आप संपर्क करते हैं।</string>
     <string name="document">दस्तावेज़</string>
     <string name="done">पूरा हुआ</string>
     <string name="download">डाउनलोड</string>
@@ -364,9 +381,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} और {other_name} ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} और <span>{count} अन्य </span> ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} और <font color="0">{count} अन्य </font> ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
     <string name="emojiReactsHoverYouNameDesktop">आपने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">आपने और <span>{count} अन्य</span> ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">आपने और <font color="0">{count} अन्य</font> ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">आपने और {name} ने {emoji_name} के साथ प्रतिक्रिया व्यक्त की</string>
     <string name="emojiReactsNotification">आपके संदेश पर प्रतिक्रिया दी {emoji}</string>
     <string name="enable">सक्षम करें</string>
@@ -399,12 +416,16 @@
     <string name="groupInviteFailedMultiple">{name} और {count} अन्य को {group_name} में आमंत्रित करने में विफल</string>
     <string name="groupInviteFailedTwo">{name} और {other_name} को {group_name} में आमंत्रित करने में विफल</string>
     <string name="groupInviteFailedUser">{name} को {group_name} में आमंत्रित करने में विफल</string>
+    <string name="groupInviteNotSent">आमंत्रण नहीं भेजा गया</string>
+    <string name="groupInviteReinvite"><b>{name}</b> ने आपको <b>{group_name}</b> में फिर से शामिल होने के लिए आमंत्रित किया है, जहां आप एक व्यवस्थापक हैं।</string>
+    <string name="groupInviteReinviteYou">आपको <b>{group_name}</b> में फिर से जुड़ने के लिए आमंत्रित किया गया है, जहाँ आप एक एडमिन हैं।</string>
     <string name="groupInviteSent">आमंत्रण भेजा गया</string>
     <string name="groupInviteSuccessful">समूह आमंत्रण सफल</string>
     <string name="groupInviteVersion">निमंत्रण प्राप्त करने के लिए उपयोगकर्ताओं के पास नवीनतम रिलीज़ होनी चाहिए</string>
     <string name="groupInviteYou"><b>आप</b> को समूह में शामिल होने के लिए आमंत्रित किया गया था।</string>
     <string name="groupInviteYouAndMoreNew"><b>आप</b> और <b>{count} अन्य</b> समूह में शामिल हुए।</string>
     <string name="groupInviteYouAndOtherNew"><b>आप</b> और <b>{other_name}</b> समूह में शामिल हुए।</string>
+    <string name="groupInviteYouHistory"><b>आप</b> को समूह में शामिल होने के लिए आमंत्रित किया गया था। चैट इतिहास साझा किया गया।</string>
     <string name="groupLeave">ग्रुप को छोड़ें</string>
     <string name="groupLeaveDescription">क्या आप वाकई <b>{group_name}</b> छोड़ना चाहते हैं?</string>
     <string name="groupLeaveDescriptionAdmin">क्या आप वाकई <b>{group_name}</b> छोड़ना चाहते हैं?\n\nइससे सभी सदस्यों को हटा दिया जाएगा और सभी समूह सामग्री को हटा दिया जाएगा।</string>
@@ -428,8 +449,10 @@
     <string name="groupNameEnterShorter">कृपया एक छोटा ग्रुप नाम डालें</string>
     <string name="groupNameNew">समूह का नाम अब {group_name} है।</string>
     <string name="groupNameUpdated">समूह का नाम अपडेट किया गया।</string>
+    <string name="groupNameVisible">समूह का नाम सभी समूह के सदस्यों के लिए दृश्यमान है।</string>
     <string name="groupNoMessages">आपके पास <b>{group_name}</b> से कोई संदेश नहीं हैं। वार्तालाप शुरू करने के लिए एक संदेश भेजें!</string>
     <string name="groupOnlyAdmin">आप <b>{group_name}</b> में अकेले व्यवस्थापक हैं।\n\nसमूह सदस्य और सेटिंग्स बिना व्यवस्थापक के बदले नहीं जा सकते।</string>
+    <string name="groupPendingRemoval">लंबित हटाना</string>
     <string name="groupPromotedYou"><b>आप</b> को Admin बनाया गया।</string>
     <string name="groupPromotedYouMultiple"><b>आप</b> और <b>{count} अन्य</b> को Admin बनाया गया।</string>
     <string name="groupRemoveDescription">क्या आप <b>{name}</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
@@ -447,6 +470,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> और <b>{count} अन्य</b> समूह से हटा दिए गए।</string>
     <string name="groupRemovedTwo"><b>{name}</b> और <b>{other_name}</b> समूह से हटा दिए गए।</string>
     <string name="groupRemovedYou">आपको <b>{group_name}</b> से हटा दिया गया है।</string>
+    <string name="groupRemovedYouGeneral">आपको इस समूह से निकाल दिया गया है।</string>
     <string name="groupRemovedYouMultiple"><b>आप</b> और <b>{count} अन्य</b> को समूह से हटा दिया गया।</string>
     <string name="groupRemovedYouTwo"><b>आप</b> और <b>{other_name}</b> को समूह से हटा दिया गया।</string>
     <string name="groupSetDisplayPicture">समूह डिस्प्ले तस्वीर सेट करें</string>
@@ -475,6 +499,8 @@
     <string name="learnMore">अधिक जानें</string>
     <string name="leave">छोड़ें</string>
     <string name="leaving">छोड़ना...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">यह समूह अब केवल पढ़ने के लिए है। चैटिंग जारी रखने के लिए इस समूह को पुनः बनाएँ।</string>
+    <string name="legacyGroupChatHistory">बातचीत इतिहास का हस्तांतरण नए समूह में नहीं हो सकता है। आप बातचीत इतिहास पुराने समूह में देख सकते हैं।</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> समूह में शामिल हुए</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> और <b>{count} अन्य</b> समूह में शामिल हुए।</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>आप</b> और <b>{count} अन्य</b> समूह में शामिल हुए।</string>
@@ -575,6 +601,7 @@
     <string name="next">अगला</string>
     <string name="nicknameDescription"><b>{name}</b> के लिए एक उपनाम चुनें। यह आपके एक-से-एक और समूह वार्तालापों में आपको दिखाई देगा।</string>
     <string name="nicknameEnter">उपनाम दर्ज करें</string>
+    <string name="nicknameErrorShorter">कृपया एक छोटा उपनाम दर्ज करें</string>
     <string name="nicknameRemove">उपनाम हटाएं</string>
     <string name="nicknameSet">उपनाम सेट करें</string>
     <string name="no">नहीं</string>
@@ -788,6 +815,7 @@
     <string name="stickers">स्टिकर</string>
     <string name="supportGoTo">सहायता पेज पर जाएँ</string>
     <string name="systemInformationDesktop">सिस्टम सूचना: {information}</string>
+    <string name="tapToRetry">पुनः प्रयास करने के लिए दबाएँ</string>
     <string name="theContinue">जारी रखें</string>
     <string name="theDefault">डिफ़ॉल्ट</string>
     <string name="theError">त्रुटि</string>

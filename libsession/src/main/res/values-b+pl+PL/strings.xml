@@ -14,6 +14,7 @@
     <string name="accountIdYoursDescription">To Twój identyfikator konta. Inni użytkownicy mogą go zeskanować, aby rozpocząć z Tobą rozmowę.</string>
     <string name="actualSize">Rzeczywisty rozmiar</string>
     <string name="add">Dodaj</string>
+    <string name="addAdmins">Dodaj administratorów</string>
     <string name="adminCannotBeRemoved">Nie można usuwać administratorów.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali awansowani na administratów.</string>
     <string name="adminPromote">Awansuj administratorów</string>
@@ -26,7 +27,9 @@
     <string name="adminPromotionFailedDescription">Nie udało się awansować użytkownika {name} w grupie {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Nie udało się awansować użytkownika {name} i {count} innych użytkowników w grupie {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Nie udało się awansować użytkowników {name} i {other_name} w grupie {group_name}</string>
+    <string name="adminPromotionNotSent">Promocja niewysłana</string>
     <string name="adminPromotionSent">Wysłano awans na administratora</string>
+    <string name="adminPromotionStatusUnknown">Status promocji nieznany</string>
     <string name="adminRemove">Usuń administratorów</string>
     <string name="adminRemoveAsAdmin">Usuń jako administrator</string>
     <string name="adminRemoveCommunityNone">W społeczności nie ma administratorów.</string>
@@ -46,6 +49,20 @@
     <string name="adminTwoPromotedToAdmin">Użytkownicy <b>{name}</b> i <b>{other_name}</b> zostali administratorami.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
+    <string name="appIcon">Ikona aplikacji</string>
+    <string name="appIconAndNameDescription">Alternatywna ikona i nazwa aplikacji są wyświetlane na ekranie głównym i w szufladzie aplikacji.</string>
+    <string name="appIconAndNameSelectionTitle">Ikona i nazwa</string>
+    <string name="appIconDescription">Alternatywna ikona aplikacji jest wyświetlana na ekranie głównym i w bibliotece aplikacji. Nazwa aplikacji będzie nadal wyświetlana jako „{app_name}”.</string>
+    <string name="appIconEnableIcon">Użyj alternatywnej ikony aplikacji</string>
+    <string name="appIconEnableIconAndName">Użyj alternatywnej ikony i nazwy aplikacji</string>
+    <string name="appIconSelect">Wybierz alternatywną ikonę aplikacji</string>
+    <string name="appIconSelectionTitle">Ikona</string>
+    <string name="appNameCalculator">Kalkulator</string>
+    <string name="appNameMeetingSE">Spotkania</string>
+    <string name="appNameNews">Aktualności</string>
+    <string name="appNameNotes">Notatki</string>
+    <string name="appNameStocks">Akcje</string>
+    <string name="appNameWeather">Pogoda</string>
     <string name="appearanceAutoDarkMode">Automatyczny tryb ciemny</string>
     <string name="appearanceHideMenuBar">Ukryj pasek menu</string>
     <string name="appearanceLanguage">Język</string>
@@ -63,6 +80,7 @@
     <string name="appearanceZoomIn">Przybliż</string>
     <string name="appearanceZoomOut">Oddal</string>
     <string name="attachment">Załącznik</string>
+    <string name="attachments">Załączniki</string>
     <string name="attachmentsAdd">Dodaj załącznik</string>
     <string name="attachmentsAlbumUnnamed">Album bez nazwy</string>
     <string name="attachmentsAutoDownload">Automatyczne pobieranie załączników</string>
@@ -124,9 +142,11 @@
     <string name="banErrorFailed">Nie udało się zablokować dostępu</string>
     <string name="banUnbanErrorFailed">Odblokowanie dostępu się nie powiodło</string>
     <string name="banUnbanUser">Odblokuj użytkownikowi dostęp</string>
+    <string name="banUnbanUserDescription">Wprowadź identyfikator konta użytkownika, który odbanowałeś</string>
     <string name="banUnbanUserUnbanned">Odblokowano użytkownikowi dostęp</string>
     <string name="banUser">Zablokuj użytkownikowi dostęp</string>
     <string name="banUserBanned">Zablokowano użytkownikowi dostęp</string>
+    <string name="banUserDescription">Wprowadź identyfikator konta użytkownika, którego chcesz zablokować</string>
     <string name="block">Zablokuj</string>
     <string name="blockBlockedDescription">Odblokuj ten kontakt, aby wysłać wiadomość.</string>
     <string name="blockBlockedNone">Brak zablokowanych kontaktów</string>
@@ -271,8 +291,10 @@
     <string name="copied">Skopiowano</string>
     <string name="copy">Kopiuj</string>
     <string name="create">Utwórz</string>
+    <string name="creatingCall">Tworzenie połączenia</string>
     <string name="cut">Wytnij</string>
     <string name="databaseErrorClearDataWarning">Czy na pewno chcesz usunąć wszystkie wiadomości, załączniki i dane konta z tego urządzenia i utworzyć nowe konto?</string>
+    <string name="databaseErrorGeneric">Wystąpił błąd bazy danych.\n\nWyeksportuj dzienniki aplikacji do udostępnienia w celu rozwiązania problemu. Jeśli to się nie powiedzie, zainstaluj ponownie {app_name} i przywróć swoje konto.</string>
     <string name="databaseErrorRestoreDataWarning">Czy na pewno chcesz usunąć wszystkie wiadomości, załączniki i dane konta z tego urządzenia i przywrócić konto z sieci?</string>
     <string name="databaseErrorTimeout">Zauważyliśmy, że uruchomienie aplikacji {app_name} zajmuje dużo czasu.\n\n Możesz kontynuować oczekiwanie, wyeksportować dzienniki urządzenia do udostępnienia w celu rozwiązania problemów lub spróbować ponownie uruchomić aplikację {app_name}.</string>
     <string name="databaseErrorUpdate">Twoja baza danych aplikacji jest niezgodna z tą wersją aplikacji {app_name}. Aby wygenerować nową bazę danych i dalej korzystać z aplikacji {app_name}, zainstaluj aplikację ponownie i przywróć swoje konto.\n\nUwaga: spowoduje to utratę wszystkich wiadomości i załączników starszych niż dwa tygodnie.</string>
@@ -295,6 +317,8 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Proszę czekać na utworzenie grupy…</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Nie udało się zaktualizować grupy</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nie masz uprawnień do usuwania wiadomości innych osób</string>
+    <string name="deleteContactDescription">Czy na pewno chcesz usunąć <b>{name}</b> ze swoich kontaktów?\n\nSpowoduje to usunięcie konwersacji, w tym wszystkich wiadomości i załączników. Przyszłe wiadomości od <b>{name}</b> będą wyświetlane jako prośba o wiadomość.</string>
+    <string name="deleteConversationDescription">Czy na pewno chcesz usunąć swoją rozmowę z <b>{name}</b>?\nSpowoduje to trwałe usunięcie wszystkich wiadomości i załączników.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Usuń wiadomość</item>
         <item quantity="few">Usuń wiadomości</item>
@@ -416,9 +440,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}: zareagowano za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">Użytkownicy {name} oraz {other_name} zareagowali za pomocą: {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} i <span>{count} innych użytkowników</span> zareagowali za pomocą: {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} i <font color="0">{count} innych użytkowników</font> zareagowali za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Zareagowano za pomocą {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ty i <span> {count} innych użytkowników</span> zareagowaliście za pomocą: {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ty i <font color="0"> {count} innych użytkowników</font> zareagowaliście za pomocą: {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ty i użytkownik {name} zareagowaliście za pomocą: {emoji_name}</string>
     <string name="emojiReactsNotification">Zareagowano na Twoją wiadomość {emoji}</string>
     <string name="enable">Włącz</string>
@@ -426,10 +450,12 @@
     <string name="errorCopyAndQuit">Skopiuj błąd i zakończ</string>
     <string name="errorDatabase">Błąd bazy danych</string>
     <string name="errorUnknown">Wystąpił nieznany błąd.</string>
+    <string name="failedToDownload">Nie udało się pobrać</string>
     <string name="failures">Awarie</string>
     <string name="file">Plik</string>
     <string name="files">Pliki</string>
     <string name="followSystemSettings">Dopasuj do ustawień systemu</string>
+    <string name="forever">Zawsze</string>
     <string name="from">Od:</string>
     <string name="fullScreenToggle">Pełny ekran</string>
     <string name="gif">GIF</string>
@@ -439,6 +465,8 @@
     <string name="groupCreate">Utwórz grupę</string>
     <string name="groupCreateErrorNoMembers">Wybierz co najmniej jednego innego członka grupy.</string>
     <string name="groupDelete">Usuń grupę</string>
+    <string name="groupDeleteDescription">Czy na pewno chcesz usunąć <b>{group_name}</b>?\n\nSpowoduje to usunięcie wszystkich członków i całej zawartości grupy.</string>
+    <string name="groupDeleteDescriptionMember">Czy jesteś pewny, że chcesz usunąć <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} została usunięta przez administratora grupy. Nie będzie można wysyłać więcej wiadomości.</string>
     <string name="groupDescriptionEnter">Wprowadź opis grupy</string>
     <string name="groupDisplayPictureUpdated">Zaktualizowano zdjęcie profilowe grupy.</string>
@@ -452,6 +480,7 @@
     <string name="groupInviteFailedMultiple">Nie udało się zaprosić użytkownika {name} i {count} innych użytkowników do grupy {group_name}</string>
     <string name="groupInviteFailedTwo">Nie udało się zaprosić użytkowników {name} i {other_name} do grupy {group_name}</string>
     <string name="groupInviteFailedUser">Nie udało się zaprosić użytkownika {name} do grupy {group_name}</string>
+    <string name="groupInviteNotSent">Zaproszenie niewysłane</string>
     <string name="groupInviteReinvite"><b>{name}</b> zaprosił Cię do ponownego dołączenia do <b>{group_name}</b>, gdzie jesteś administratorem.</string>
     <string name="groupInviteReinviteYou">Zostałeś zaproszony do ponownego dołączenia do <b>{group_name}</b>, gdzie jesteś administratorem.</string>
     <plurals name="groupInviteSending">
@@ -461,6 +490,7 @@
         <item quantity="other">Wysyłanie zaproszeń</item>
     </plurals>
     <string name="groupInviteSent">Zaproszenie zostało wysłane</string>
+    <string name="groupInviteStatusUnknown">Status zaproszenia nieznany</string>
     <string name="groupInviteSuccessful">Zaproszenie do grupy zakończone sukcesem</string>
     <string name="groupInviteVersion">Aby otrzymywać zaproszenia, użytkownicy muszą mieć najnowszą wersję</string>
     <string name="groupInviteYou"><b>Zaproszono</b> Cię do grupy.</string>
@@ -481,6 +511,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> i <b>{count} innych użytkowników </b> zostali zaproszeni do grupy.</string>
     <string name="groupMemberNewTwo">Użytkownicy <b>{name}</b> oraz <b>{other_name}</b> zostali zaproszeni do grupy.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście zaproszeni do grupy. Udostępniono historię czatu.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Ty</b> i <b>{other_name}</b> zostaliście zaproszeni do grupy. Historia czatu została udostępniona.</string>
     <string name="groupMemberYouLeft"><b>Opuszczasz</b> grupę.</string>
     <string name="groupMembers">Członkowie grupy</string>
     <string name="groupMembersNone">W grupie nie ma innych członków.</string>
@@ -492,9 +523,12 @@
     <string name="groupNameUpdated">Zaktualizowano nazwę grupy.</string>
     <string name="groupNameVisible">Nazwa grupy jest widoczna dla wszystkich jej członków.</string>
     <string name="groupNoMessages">Brak wiadomości w grupie <b>{group_name}</b>. Wyślij wiadomość, aby rozpocząć rozmowę!</string>
+    <string name="groupNotUpdatedWarning">Ta grupa nie była aktualizowana od ponad 30 dni. Mogą wystąpić problemy z wysyłaniem wiadomości lub wyświetlaniem informacji o grupie.</string>
     <string name="groupOnlyAdmin">Jesteś jedynym administratorem grupy <b>{group_name}</b>.\n\nBez administratora nie można zmieniać członków grupy ani ustawień.</string>
+    <string name="groupPendingRemoval">Oczekuje na usunięcie</string>
     <string name="groupPromotedYou"><b>Zostajesz</b> administratorem.</string>
     <string name="groupPromotedYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> zostaliście administratorami.</string>
+    <string name="groupPromotedYouTwo"><b>Ty</b> i <b>{other_name}</b> zostaliście administratorami.</string>
     <string name="groupRemoveDescription">Czy chcesz usunąć użytkownika <b>{name}</b> z grupy <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Czy chcesz usunąć użytkownika <b>{name}</b> i <b>{count} innych użytkowników</b> z grupy <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Czy chcesz usunąć użytkowników <b>{name}</b> i <b>{other_name}</b> z grupy <b>{group_name}</b>?</string>
@@ -520,6 +554,7 @@
     <string name="groupSetDisplayPicture">Ustaw zdjęcie profilowe grupy</string>
     <string name="groupUnknown">Nieznana grupa</string>
     <string name="groupUpdated">Grupa zaktualizowana</string>
+    <string name="handlingConnectionCandidates">Obsługa kandydatów do połączenia</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Pomóż nam przetłumaczyć aplikację {app_name}</string>
     <string name="helpReportABug">Zgłoś błąd</string>
@@ -535,15 +570,33 @@
     <string name="hideNoteToSelfDescription">Czy na pewno chcesz ukryć <b>Moje notatki</b> na liście konwersacji?</string>
     <string name="hideOthers">Ukryj pozostałe</string>
     <string name="image">Zdjęcie</string>
+    <string name="images">obrazy</string>
     <string name="incognitoKeyboard">Klawiatura w trybie prywatnym</string>
     <string name="incognitoKeyboardDescription">Zażądaj trybu prywatnego, jeśli jest dostępny. W zależności od używanej klawiatury może ona zignorować to żądanie.</string>
     <string name="info">Informacje</string>
     <string name="invalidShortcut">Nieprawidłowy skrót</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Zaproszenie nieudane</item>
+        <item quantity="few">Zaproszenia nieudane</item>
+        <item quantity="many">Zaproszenia nieudane</item>
+        <item quantity="other">Zaproszenia nieudane</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Zaproszenie nie mogło być wysłane. Czy chciałbyś spróbować jeszcze raz?</item>
+        <item quantity="few">Zaproszenia nie mogły być wysłane. Czy chciałbyś spróbować jeszcze raz?</item>
+        <item quantity="many">Zaproszenia nie mogły być wysłane. Czy chciałbyś spróbować jeszcze raz?</item>
+        <item quantity="other">Zaproszenia nie mogły być wysłane. Czy chciałbyś spróbować jeszcze raz?</item>
+    </plurals>
     <string name="join">Dołącz</string>
     <string name="later">Później</string>
     <string name="learnMore">Dowiedz się więcej</string>
     <string name="leave">Opuść</string>
     <string name="leaving">Opuszczanie...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Ta grupa jest teraz tylko do odczytu. Odtwórz grupę, żeby dalej rozmawiać.</string>
+    <string name="legacyGroupAfterDeprecationMember">Ta grupa jest teraz tylko do odczytu. Zapytaj administratora grupy, aby odtworzył grupę, żeby dalej rozmawiać.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Grupy zostały ulepszone! Odtwórz tę grupę dla większej niezawodności. Ta grupa będzie tylko do odczytu od {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Grupy zostały ulepszone! Zapytaj administratora grupy, aby odtworzył tę grupę dla większej niezawodności. Ta grupa będzie tylko do odczytu od {date}.</string>
+    <string name="legacyGroupChatHistory">Historia czatu nie będzie przeniesiona do nowej grupy. Możesz wciąż zobaczyć całą historię czatu w swojej starej grupie.</string>
     <string name="legacyGroupMemberNew">Do grupy dołącza <b>{name}</b>.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> i <b>{count} innych użytkowników</b> dołączyli do grupy.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Ty</b> i <b>{count} innych użytkowników</b> dołączyliście do grupy.</string>
@@ -572,6 +625,7 @@
     <string name="lockAppStatus">Status blokady</string>
     <string name="lockAppUnlock">Naciśnij, aby odblokować</string>
     <string name="lockAppUnlocked">{app_name} jest odblokowany</string>
+    <string name="manageMembers">Zarządzaj członkami</string>
     <string name="max">Maks</string>
     <string name="media">Multimedia</string>
     <plurals name="members">
@@ -622,6 +676,12 @@
         <item quantity="few">Masz %1$d nowe wiadomości.</item>
         <item quantity="many">Masz %1$d nowych wiadomości.</item>
         <item quantity="other">Masz %1$d nowych wiadomości.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Masz nową wiadomość w %1$s.</item>
+        <item quantity="few">Masz %1$d nowych wiadomości w grupie %2$s.</item>
+        <item quantity="many">Masz %1$d nowych wiadomości w grupie %2$s.</item>
+        <item quantity="other">Masz %1$d nowych wiadomości w grupie %2$s.</item>
     </plurals>
     <string name="messageReplyingTo">Odpowiadanie do</string>
     <string name="messageRequestDisabledToastAttachments">Nie można wysyłać załączników, dopóki prośba o wiadomość nie zostanie zaakceptowana</string>
@@ -675,6 +735,7 @@
     <string name="notificationsContentShowNoNameOrContent">Brak nazwy lub zawartości</string>
     <string name="notificationsFastMode">Tryb szybki</string>
     <string name="notificationsFastModeDescription">Dzięki serwerom powiadomień Google będziesz zawsze i natychmiast otrzymywać powiadomienia o nowych wiadomościach.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Będziesz otrzymywać powiadomienia o nowych wiadomościach niezawodnie i natychmiastowo, korzystając z serwerów powiadomień Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Se te notificará de nuevos mensajes de forma fiable e inmediata usando los servidores de notificaciones de Apple.</string>
     <string name="notificationsGoToDevice">Przejdź do ustawień powiadomień urządzenia</string>
     <string name="notificationsHeaderAllMessages">Powiadomienia – wszystkie</string>
@@ -690,6 +751,7 @@
     <string name="notificationsMuteFor">Wycisz na {time_large}</string>
     <string name="notificationsMuteUnmute">Wyłącz wyciszenie</string>
     <string name="notificationsMuted">Wyciszono</string>
+    <string name="notificationsMutedFor">Wyciszony przez {time_large}</string>
     <string name="notificationsSlowMode">Tryb wolny</string>
     <string name="notificationsSlowModeDescription">Aplikacja {app_name} będzie od czasu do czasu sprawdzać nowe wiadomości w tle.</string>
     <string name="notificationsSound">Dźwięk</string>
@@ -748,20 +810,32 @@
     <string name="passwordSet">Ustaw hasło</string>
     <string name="passwordSetDescription">Ustawiono hasło. Zachowaj je w bezpiecznym miejscu.</string>
     <string name="paste">Wklej</string>
+    <string name="permissionChange">Zmiana uprawnień</string>
     <string name="permissionMusicAudioDenied">Aby wysyłać pliki, muzykę i dźwięk, aplikacja {app_name} potrzebuje dostępu do muzyki i dźwięku, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Muzyka i dźwięk”.</string>
     <string name="permissionsAppleMusic">Do odtwarzania załączników multimedialnych aplikacja {app_name} potrzebuje używać aplikacji Apple Music.</string>
     <string name="permissionsAutoUpdate">Automatyczna aktualizacja</string>
     <string name="permissionsAutoUpdateDescription">Automatyczne sprawdzanie dostępności aktualizacji podczas uruchamiania.</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Do prowadzenia rozmów wideo wymagany jest dostęp do kamery. Aby kontynuować, przełącz uprawnienia „Aparat” w Ustawieniach.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Dostęp do aparatu jest obecnie włączony. Aby go wyłączyć, przełącz uprawnienie „Aparat” w Ustawieniach.</string>
     <string name="permissionsCameraDenied">Aby robić zdjęcia i nagrywać wideo, aplikacja {app_name} potrzebuje dostępu do aparatu, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Aparat”.</string>
+    <string name="permissionsCameraDescriptionIos">Zezwól na dostęp do kamery na potrzeby rozmów wideo.</string>
     <string name="permissionsFaceId">Funkcja blokady ekranu w aplikacji {app_name} używa Face ID.</string>
     <string name="permissionsKeepInSystemTray">Trzymaj w zasobniku systemowym</string>
     <string name="permissionsKeepInSystemTrayDescription">Aplikacja {app_name} nadal działa w tle po zamknięciu okna</string>
     <string name="permissionsLibrary">Aby kontynuować, aplikacja {app_name} potrzebuje dostępu do biblioteki zdjęć. Dostęp można włączyć w ustawieniach systemu iOS.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Aby móc wykonywać połączenia, wymagany jest dostęp do sieci lokalnej. Aby kontynuować, przełącz uprawnienia „Sieć lokalna” w Ustawieniach.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} potrzebuje dostępu do sieci lokalnej, aby wykonywać połączenia głosowe i wideo.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Dostęp do sieci lokalnej jest obecnie włączony. Aby go wyłączyć, przełącz uprawnienie „Sieć lokalna” w Ustawieniach.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Zezwól na dostęp do sieci lokalnej, aby ułatwić połączenia głosowe i wideo.</string>
+    <string name="permissionsLocalNetworkIos">Sieć lokalna</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">Aby wykonywać połączenia i wysyłać wiadomości audio, aplikacja {app_name} potrzebuje dostępu do mikrofonu, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Mikrofon”.</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Do wykonywania połączeń i nagrywania wiadomości audio wymagany jest dostęp do mikrofonu. Aby kontynuować, przełącz uprawnienia „Mikrofon” w Ustawieniach.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Możesz włączyć dostęp do mikrofonu w ustawieniach prywatności aplikacji {app_name}</string>
     <string name="permissionsMicrophoneAccessRequiredIos">Aby wykonywać połączenia i nagrywać wiadomości audio, aplikacja {app_name} potrzebuje dostępu do mikrofonu.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Dostęp do mikrofonu jest obecnie włączony. Aby go wyłączyć, przełącz uprawnienie „Mikrofon” w Ustawieniach.</string>
     <string name="permissionsMicrophoneDescription">Zezwól na dostęp do mikrofonu.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Zezwól na dostęp do mikrofonu dla połączeń głosowych i wiadomości audio.</string>
     <string name="permissionsMusicAudio">Aby wysyłać pliki, muzykę i dźwięk, aplikacja {app_name} potrzebuje dostępu do muzyki i dźwięku.</string>
     <string name="permissionsRequired">Wymagane uprawnienie</string>
     <string name="permissionsStorageDenied">Aby wysyłać zdjęcia i wideo, aplikacja {app_name} potrzebuje dostępu do galerii, jednak na stałe go odmówiono. Naciśnij „Ustawienia” → „Uprawnienia” i włącz „Zdjęcia i wideo”.</string>
@@ -781,6 +855,18 @@
     <string name="profileDisplayPictureSizeError">Wybierz mniejszy plik.</string>
     <string name="profileErrorUpdate">Nie udało się zaktualizować profilu.</string>
     <string name="promote">Awansuj</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promocja nie powiodła się</item>
+        <item quantity="few">Promocje nie powiodły się</item>
+        <item quantity="many">Promocje nie powiodły się</item>
+        <item quantity="other">Promocje nie powiodły się</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Nie udało się zastosować promocji. Czy chcesz spróbować ponownie?</item>
+        <item quantity="few">Nie można było zastosować promocji. Czy chcesz spróbować ponownie?</item>
+        <item quantity="many">Nie można było zastosować promocji. Czy chcesz spróbować ponownie?</item>
+        <item quantity="other">Nie można było zastosować promocji. Czy chcesz spróbować ponownie?</item>
+    </plurals>
     <string name="qrCode">Kod QR</string>
     <string name="qrNotAccountId">Kod QR nie zawiera identyfikatora konta</string>
     <string name="qrNotRecoveryPassword">Kod QR nie zawiera hasła odzyskiwania</string>
@@ -793,11 +879,15 @@
     <string name="readReceipts">Potwierdzenia przeczytania</string>
     <string name="readReceiptsDescription">Pokaż potwierdzenia odczytu dla wszystkich wysłanych i odebranych wiadomości.</string>
     <string name="received">Otrzymano:</string>
+    <string name="receivedAnswer">Odebrano odpowiedź</string>
+    <string name="receivingCallOffer">Otrzymanie oferty połączenia</string>
+    <string name="receivingPreOffer">Oferta odbioru</string>
     <string name="recommended">Zalecane</string>
     <string name="recoveryPasswordBannerDescription">Zapisz hasło odzyskiwania, aby mieć pewność, że nie utracisz dostępu do konta.</string>
     <string name="recoveryPasswordBannerTitle">Zapisz swoje hasło odzyskiwania</string>
     <string name="recoveryPasswordDescription">Aby wczytać konto na nowych urządzeniach, użyj hasła odzyskiwania.\n\nNie można odzyskać konta bez hasła odzyskiwania. Upewnij się, że jest ono przechowywane w bezpiecznym miejscu i nie udostępniaj go nikomu.</string>
     <string name="recoveryPasswordEnter">Wprowadź hasło odzyskiwania</string>
+    <string name="recoveryPasswordErrorLoad">Wystąpił błąd podczas próby wczytania hasła odzyskiwania.\n\nWyeksportuj swoje dzienniki, a następnie prześlij plik za pośrednictwem pomocy technicznej aplikacji {app_name}, aby pomóc w rozwiązaniu tego problemu.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Sprawdź hasło odzyskiwania i spróbuj ponownie.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Niektóre ze słów w haśle odzyskiwania są nieprawidłowe. Sprawdź i spróbuj ponownie.</string>
     <string name="recoveryPasswordErrorMessageShort">Wprowadzone hasło odzyskiwania nie jest wystarczająco długie. Sprawdź i spróbuj ponownie.</string>
@@ -811,6 +901,7 @@
     <string name="recoveryPasswordRestoreDescription">Aby wczytać konto, wprowadź hasło odzyskiwania. Jeśli nie zostało ono zapisane, można je znaleźć w ustawieniach aplikacji.</string>
     <string name="recoveryPasswordView">Zobacz hasło</string>
     <string name="recoveryPasswordWarningSendDescription">To jest Twoje hasło odzyskiwania. Jeśli je komuś wyślesz, osoba ta będzie miała pełny dostęp do Twojego konta.</string>
+    <string name="recreateGroup">Odtwórz Grupę</string>
     <string name="redo">Ponów</string>
     <string name="remove">Usuń</string>
     <string name="removePasswordFail">Nie udało się usunąć hasła</string>
@@ -847,6 +938,8 @@
     <string name="selectAll">Zaznacz wszystko</string>
     <string name="send">Wyślij</string>
     <string name="sending">Wysyłanie</string>
+    <string name="sendingCallOffer">Wysyłanie oferty połączenia</string>
+    <string name="sendingConnectionCandidates">Wysyłanie kandydatów do połączenia</string>
     <string name="sent">Wysłano:</string>
     <string name="sessionAppearance">Wygląd</string>
     <string name="sessionClearData">Wyczyść dane</string>
@@ -860,11 +953,13 @@
     <string name="sessionRecoveryPassword">Hasło odzyskiwania</string>
     <string name="sessionSettings">Ustawienia</string>
     <string name="set">Ustawiono</string>
+    <string name="setCommunityDisplayPicture">Ustaw zdjęcie profilowe grupy</string>
     <string name="settingsRestartDescription">Aby zastosować nowe ustawienia, należy ponownie uruchomić aplikację {app_name}.</string>
     <string name="share">Udostępnij</string>
     <string name="shareAccountIdDescription">Zaproś znajomego do rozmowy w aplikacji {app_name}, udostępniając mu swój identyfikator konta.</string>
     <string name="shareAccountIdDescriptionCopied">Udostępnij znajomym tam, gdzie zwykle z nimi rozmawiasz, a następnie przenieś rozmowę tutaj.</string>
     <string name="shareExtensionDatabaseError">Wystąpił problem podczas otwierania bazy danych. Uruchom ponownie aplikację i spróbuj ponownie.</string>
+    <string name="shareExtensionNoAccountError">Ups! Wygląda na to, że nie masz konta {app_name}.\n\nBędziesz musiał stworzyć konto w aplikacji {app_name}, zanim będziesz mógł to udostępnić.</string>
     <string name="shareToSession">Udostępnij w aplikacji {app_name}</string>
     <string name="show">Pokaż</string>
     <string name="showAll">Pokaż wszystko</string>
@@ -874,6 +969,7 @@
     <string name="stickers">Naklejki</string>
     <string name="supportGoTo">Przejdź do strony wsparcia technicznego</string>
     <string name="systemInformationDesktop">Informacja systemowa: {information}</string>
+    <string name="tapToRetry">Dotknij aby ponowić</string>
     <string name="theContinue">Kontynuuj</string>
     <string name="theDefault">Domyślne</string>
     <string name="theError">Błąd</string>
@@ -887,7 +983,11 @@
     <string name="updateDownloading">Pobieranie aktualizacji: {percent_loader}%</string>
     <string name="updateError">Nie można zaktualizować</string>
     <string name="updateErrorDescription">Nie udało się zaktualizować aplikacji {app_name}. Przejdź do adresu {session_download_url} i zainstaluj nową wersję ręcznie, a następnie skontaktuj się z naszym centrum pomocy, aby poinformować nas o tym problemie.</string>
+    <string name="updateGroupInformation">Aktualizuj informacje o grupie</string>
+    <string name="updateGroupInformationDescription">Nazwa i opis grupy są widoczne dla wszystkich jej członków.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Wprowadź krótszy opis grupy</string>
     <string name="updateNewVersion">Dostępna jest nowa wersja aplikacji {app_name}. Stuknij, aby zaktualizować</string>
+    <string name="updateNewVersionDescription">Dostępna jest nowa wersja ({version}) aplikacji {app_name}.</string>
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>
     <string name="updateSession">Aktualizacja aplikacji {app_name}</string>
     <string name="updateVersion">Wersja {version}</string>
@@ -900,6 +1000,8 @@
     <string name="video">Wideo</string>
     <string name="videoErrorPlay">Nie można odtworzyć wideo.</string>
     <string name="view">Zobacz</string>
+    <string name="viewLess">Zobacz mniej</string>
+    <string name="viewMore">Zobacz więcej</string>
     <string name="waitFewMinutes">Może to potrwać kilka minut.</string>
     <string name="waitOneMoment">Chwileczkę...</string>
     <string name="warning">Uwaga</string>

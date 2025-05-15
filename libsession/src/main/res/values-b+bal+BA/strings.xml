@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} لذیذ کئیں</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} او {other_name} {emoji_name} لذیذ کئیں</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} اور <span>{count} دٖگر</span> وت {emoji_name} ات جواب دیگ</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} اور <font color="0">{count} دٖگر</font> وت {emoji_name} ات جواب دیگ</string>
     <string name="emojiReactsHoverYouNameDesktop">وت {emoji_name} ات جواب دیگ</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">شما اور <span>{count} دٖگر</span> وت {emoji_name} ات جواب دیگ</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">شما اور <font color="0">{count} دٖگر</font> وت {emoji_name} ات جواب دیگ</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">سہ، {name} ہبی {emoji_name} ات جواب دیگ</string>
     <string name="emojiReactsNotification">تواں پیغام ءَ کےپتیں {emoji}</string>
     <string name="enable">فعال کریں</string>

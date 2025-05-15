@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} adachita ndi {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ndi {other_name} adaona ndi {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ndi <span>{count} ena</span> adachita ndi {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ndi <font color="0">{count} ena</font> adachita ndi {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Inu adayankha ndi {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Inu ndi <span>{count} ena</span> adachita ndi {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Inu ndi <font color="0">{count} ena</font> adachita ndi {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Inu ndi {name} adayankha ndi {emoji_name}</string>
     <string name="emojiReactsNotification">Wachita React ku uthenga wanu {emoji}</string>
     <string name="enable">Yambitsa</string>

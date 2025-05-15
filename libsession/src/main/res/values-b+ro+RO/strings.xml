@@ -298,6 +298,16 @@
         <item quantity="few">Eroare la ștergerea mesajelor</item>
         <item quantity="other">Eroare la ștergerea mesajelor</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Acest mesaj nu poate fi șters de pe toate dispozitivele tale</item>
+        <item quantity="few">Unele dintre mesajele pe care le-ai selectat nu pot fi șterse de pe toate dispozitivele tale</item>
+        <item quantity="other">Unele dintre mesajele pe care le-ai selectat nu pot fi șterse de pe toate dispozitivele tale</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Acest mesaj nu poate fi șters pentru toată lumea</item>
+        <item quantity="few">Unele dintre mesajele selectate nu pot fi șterse pentru toată lumea</item>
+        <item quantity="other">Unele dintre mesajele selectate nu pot fi șterse pentru toată lumea</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Ești sigur că vrei să ștergi aceste mesaje pentru toată lumea?</string>
     <string name="deleting">Se șterge</string>
     <string name="developerToolsToggle">Comutare unelte dezvoltator</string>
@@ -344,6 +354,7 @@
     <string name="displayNameNew">Alegeți un nou nume afișat</string>
     <string name="displayNamePick">Alegeți numele afișat</string>
     <string name="displayNameSet">Setează numele afișat</string>
+    <string name="displayNameVisible">Numele tău de afișare este vizibil utilizatorilor, grupurilor și comunităților cu care interacționezi.</string>
     <string name="document">Document</string>
     <string name="done">Terminat</string>
     <string name="download">Descarcă</string>
@@ -369,9 +380,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} a reacționat cu {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} și {other_name} au reacționat cu {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} și <span>alți {count}</span> au reacționat cu {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} și <font color="0">alți {count}</font> au reacționat cu {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Ai reacționat cu {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Tu și <span>alți {count}</span> ați reacționat cu {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Tu și <font color="0">alți {count}</font> ați reacționat cu {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Tu și {name} ați reacționat cu {emoji_name}</string>
     <string name="emojiReactsNotification">A reacționat la mesajul tău {emoji}</string>
     <string name="enable">Activare</string>
@@ -404,12 +415,15 @@
     <string name="groupInviteFailedMultiple">Nu s-a putut invita {name} și {count} alții la {group_name}</string>
     <string name="groupInviteFailedTwo">Nu s-a putut invita {name} și {other_name} la {group_name}</string>
     <string name="groupInviteFailedUser">Nu s-a putut invita {name} la {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> te-a invitat să te realături grupului <b>{group_name}</b>, unde ești Admin.</string>
+    <string name="groupInviteReinviteYou">Ai fost invitat să te alături din nou la <b>{group_name}</b>, unde ești administrator.</string>
     <string name="groupInviteSent">Invitația a fost trimisă</string>
     <string name="groupInviteSuccessful">Invitație grup reușită</string>
     <string name="groupInviteVersion">Utilizatorii trebuie să aibă versiunea cea mai recentă pentru a primi invitații</string>
     <string name="groupInviteYou"><b>Tu</b> ai fost invitat/ă să te alături grupului.</string>
     <string name="groupInviteYouAndMoreNew"><b>Tu</b> și <b>alți {count}</b> ați fost invitați să vă alăturați grupului.</string>
     <string name="groupInviteYouAndOtherNew"><b>Tu</b> și <b>{other_name}</b> ați fost invitați să vă alăturați grupului.</string>
+    <string name="groupInviteYouHistory"><b>Tu</b> ai fost invitat/ă să te alături grupului. Istoricul conversațiilor a fost partajat.</string>
     <string name="groupLeave">Părăsește Grupul</string>
     <string name="groupLeaveDescription">Ești sigur/ă că vrei să părăsești grupul <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ești sigur/ă că vrei să părăsești <b>{group_name}</b>?\n\nAceastă acțiune va elimina toți membrii și va șterge tot conținutul grupului.</string>
@@ -433,6 +447,7 @@
     <string name="groupNameEnterShorter">Vă rugăm introduceți un nume de grup mai scurt.</string>
     <string name="groupNameNew">Numele grupului este acum {group_name}.</string>
     <string name="groupNameUpdated">Numele grupului a fost actualizat.</string>
+    <string name="groupNameVisible">Numele grupului este vizibil pentru toți membrii grupului.</string>
     <string name="groupNoMessages">Nu ai mesaje din <b>{group_name}</b>. Trimite un mesaj pentru a începe conversația!</string>
     <string name="groupOnlyAdmin">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator.</string>
     <string name="groupPromotedYou"><b>Tu</b> ai fost promovat/ă la nivel de administrator.</string>
@@ -454,6 +469,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> și <b>alți {count}</b> au fost eliminați din grup.</string>
     <string name="groupRemovedTwo"><b>{name}</b> și <b>{other_name}</b> au fost eliminați din grup.</string>
     <string name="groupRemovedYou">Ai fost eliminat din <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Ai fost scos din grup.</string>
     <string name="groupRemovedYouMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost eliminați din grup.</string>
     <string name="groupRemovedYouTwo"><b>Tu</b> și <b>{other_name}</b> ați fost eliminați din grup.</string>
     <string name="groupSetDisplayPicture">Setează imaginea afișată de grup</string>
@@ -587,6 +603,7 @@
     <string name="next">Următorul</string>
     <string name="nicknameDescription">Alege un pseudonim pentru <b>{name}</b>. Acesta va apărea în conversațiile individuale și de grup.</string>
     <string name="nicknameEnter">Introduceți pseudonimul dorit</string>
+    <string name="nicknameErrorShorter">Te rugăm să introduci un nume mai scurt</string>
     <string name="nicknameRemove">Elimină pseudonimul</string>
     <string name="nicknameSet">Setează pseudonim</string>
     <string name="no">Nu</string>

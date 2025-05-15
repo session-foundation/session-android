@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} සහ {other_name} {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} සහ <span>{count} අනෙක් අය</span> {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} සහ <font color="0">{count} අනෙක් අය</font> {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
     <string name="emojiReactsHoverYouNameDesktop">ඔබ {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">ඔබ සහ <span>{count} අනෙක් අය</span> {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">ඔබ සහ <font color="0">{count} අනෙක් අය</font> {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">ඔබ හා {name} {emoji_name} සමඟ ප්‍රතිචාර දැක්වීය</string>
     <string name="emojiReactsNotification">ඔබගේ පණිවිඩයට {emoji} ප්‍රතිචාර දක්වා ඇත</string>
     <string name="enable">සබල කරන්න</string>

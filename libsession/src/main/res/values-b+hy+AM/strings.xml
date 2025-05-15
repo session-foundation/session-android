@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}-ը արձագանքեց {emoji_name}-ով</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name}-ը և {other_name}-ը արձագանքեցին {emoji_name}-ով</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}-ը և <span>{count} այլ անձինք</span> արձագանքել են {emoji_name}-ով</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}-ը և <font color="0">{count} այլ անձինք</font> արձագանքել են {emoji_name}-ով</string>
     <string name="emojiReactsHoverYouNameDesktop">Դուք արձագանքել եք {emoji_name}-ով</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Դուք և <span>{count} այլ անձինք</span> արձագանքել են {emoji_name}-ով</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Դուք և <font color="0">{count} այլ անձինք</font> արձագանքել են {emoji_name}-ով</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Դուք և {name}-ը արձագանքել եք {emoji_name}-ով</string>
     <string name="emojiReactsNotification">Արձագանքել է ձեր հաղորդագրությանը {emoji}</string>
     <string name="enable">Միացնել</string>

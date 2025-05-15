@@ -291,6 +291,14 @@
         <item quantity="one">پیغام حذف کرنے میں ناکام</item>
         <item quantity="other">پیغامات حذف کرنے میں ناکام</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">یہ پیغام آپ کے تمام آلات سے حذف نہیں کیا جا سکتا</item>
+        <item quantity="other">کچھ منتخب کردہ پیغامات آپ کے تمام آلات سے حذف نہیں کیے جا سکتے</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">یہ پیغام سب کے لیے نہیں حذف کیا جا سکتا</item>
+        <item quantity="other">کچھ پیغامات جو آپ نے منتخب کیے ہیں وہ سب کے لیے حذف نہیں کیے جا سکتے</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">کیا آپ واقعی یہ پیغامات سب کے لئے حذف کرنا چاہتے ہیں؟</string>
     <string name="deleting">حذف کرنے کا عمل جاری ہے</string>
     <string name="developerToolsToggle">ڈویلپر ٹولز ٹوگل کریں</string>
@@ -337,6 +345,7 @@
     <string name="displayNameNew">نیا ڈسپلے نام منتخب کریں</string>
     <string name="displayNamePick">اپنا ڈسپلے نام منتخب کریں</string>
     <string name="displayNameSet">ڈسپلے نام سیٹ کریں</string>
+    <string name="displayNameVisible">آپ کا ڈسپلے نام ان صارفین، گروپوں اور کمیونٹیوں کو نظر آتا ہے جن کے ساتھ آپ تعامل کرتے ہیں۔</string>
     <string name="document">دستاویز</string>
     <string name="done">مکمل ہوا</string>
     <string name="download">ڈاؤن لوڈ کریں</string>
@@ -361,9 +370,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} نے {emoji_name} پر ردعمل دیا</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} اور {other_name} نے {emoji_name} پر ردعمل دیا</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} اور <span>{count} دیگر</span> نے {emoji_name} پر رد عمل دیا</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} اور <font color="0">{count} دیگر</font> نے {emoji_name} پر رد عمل دیا</string>
     <string name="emojiReactsHoverYouNameDesktop">آپ نے {emoji_name} پر ردعمل دیا</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">آپ اور <span>{count} دیگر</span> نے {emoji_name} پر ردعمل دیا</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">آپ اور <font color="0">{count} دیگر</font> نے {emoji_name} پر ردعمل دیا</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">آپ اور {name} نے {emoji_name} پر ردعمل دیا</string>
     <string name="emojiReactsNotification">آپ کے پیغام پر {emoji} کا ردعمل دیا</string>
     <string name="enable">فعال کریں</string>
@@ -396,12 +405,15 @@
     <string name="groupInviteFailedMultiple">{name} اور مزید {count} اراکین کو {group_name} میں مدعو کرنے میں ناکام رہا</string>
     <string name="groupInviteFailedTwo">{name} اور {other_name} کو {group_name} میں مدعو کرنے میں ناکام رہا</string>
     <string name="groupInviteFailedUser">{name} کو {group_name} میں مدعو کرنے میں ناکام رہا</string>
+    <string name="groupInviteReinvite"><b>{name}</b> نے آپ کو <b>{group_name}</b> میں دوبارہ شامل ہونے کی دعوت دی ہے، جہاں آپ ایک ایڈمن ہیں۔</string>
+    <string name="groupInviteReinviteYou">آپ کو دوبارہ شامل ہونے کے لئے مدعو کیا گیا تھا <b>{group_name}</b>، جہاں آپ ایک ایڈمن ہیں۔</string>
     <string name="groupInviteSent">دعوت بھیج دی گئی</string>
     <string name="groupInviteSuccessful">گروپ کی دعوت کامیاب رہی</string>
     <string name="groupInviteVersion">دعوت نامے وصول کرنے کے لیے صارفین کو تازہ ترین ریلیز رکھنی ہوگی</string>
     <string name="groupInviteYou"><b>آپ</b> کو گروپ میں شامل ہونے کی دعوت دی گئی۔</string>
     <string name="groupInviteYouAndMoreNew"><b>آپ</b> اور <b>{count} دیگر</b> نے گروپ میں شمولیت اختیار کی۔</string>
     <string name="groupInviteYouAndOtherNew"><b>آپ</b> اور <b>{other_name}</b> نے گروپ میں شمولیت اختیار کی۔</string>
+    <string name="groupInviteYouHistory"><b>آپ</b> کو گروپ میں شامل ہونے کی دعوت دی گئی۔ چیٹ تاریخ شیئر کی گئی۔</string>
     <string name="groupLeave">گروپ چھوڑیں</string>
     <string name="groupLeaveDescriptionAdmin">کیا آپ واقعی <b>{group_name}</b> چھوڑنا چاہتے ہیں؟\n\nاس سے تمام اراکین کو ہٹا دیا جائے گا اور تمام گروپ مواد کو حذف کر دیا جائے گا۔</string>
     <string name="groupLeaveErrorFailed">{group_name} چھوڑنے میں ناکام</string>
@@ -424,6 +436,7 @@
     <string name="groupNameEnterShorter">براہ کرم ایک چھوٹا گروپ نام درج کریں۔</string>
     <string name="groupNameNew">گروپ کا نام اب {group_name} ہے۔</string>
     <string name="groupNameUpdated">گروپ کا نام اپ ڈیٹ ہوگیا۔</string>
+    <string name="groupNameVisible">گروپ کا نام تمام گروپ ممبران کو نظر آتا ہے۔</string>
     <string name="groupNoMessages">آپ کے پاس <b>{group_name}</b> سے کوئی پیغام نہیں ہے۔ گفتگو شروع کرنے کے لئے پیغام بھیجیں!</string>
     <string name="groupOnlyAdmin">آپ <b>{group_name}</b> میں واحد منتظم ہیں۔\n\nگروپ اراکین اور سیٹنگز ایک منتظم کے بغیر تبدیل نہیں کی جا سکتیں۔</string>
     <string name="groupPromotedYou"><b>آپ</b> کو ایڈمن مقرر کیا گیا۔</string>
@@ -443,6 +456,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> اور <b>{count} دیگر</b> گروپ سے ہٹا دیے گئے۔</string>
     <string name="groupRemovedTwo"><b>{name}</b> اور <b>{other_name}</b> کو گروپ سے ہٹا دیا گیا۔</string>
     <string name="groupRemovedYou">آپ کو <b>{group_name}</b> سے ہٹا دیا گیا ہے۔</string>
+    <string name="groupRemovedYouGeneral">آپ کو گروپ سے ہٹا دیا گیا۔</string>
     <string name="groupRemovedYouMultiple"><b>آپ</b> اور <b>{count} دیگر</b> کو گروپ سے ہٹا دیا گیا۔</string>
     <string name="groupRemovedYouTwo"><b>آپ</b> اور <b>{other_name}</b> کو گروپ سے ہٹا دیا گیا۔</string>
     <string name="groupSetDisplayPicture">گروپ کی ڈسپلے تصویر سیٹ کریں</string>
@@ -571,6 +585,7 @@
     <string name="next">اگلا</string>
     <string name="nicknameDescription"><b>{name}</b> کے لئے ایک عرفی نام منتخب کریں۔ یہ آپ کو آپ کی ایک سے ایک اور گروپ گفتگو میں ظاہر ہوگا۔</string>
     <string name="nicknameEnter">عرفیت درج کریں</string>
+    <string name="nicknameErrorShorter">براہ کرم ایک چھوٹا نک نیم درج کریں</string>
     <string name="nicknameRemove">عرفیت حذف کریں</string>
     <string name="nicknameSet">عرفیت سیٹ کریں</string>
     <string name="no">نہیں</string>

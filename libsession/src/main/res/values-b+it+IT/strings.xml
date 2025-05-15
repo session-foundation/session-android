@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Impossibile promuovere {name} su {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Impossibile promuovere {name} e altri {count} su {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Impossibile promuovere {name} e {other_name} su {group_name}</string>
+    <string name="adminPromotionNotSent">Promozione non inviata</string>
     <string name="adminPromotionSent">Promozione ad amministratore inviata</string>
+    <string name="adminPromotionStatusUnknown">Stato promozione sconosciuto</string>
     <string name="adminRemove">Rimuovi amministratori</string>
     <string name="adminRemoveAsAdmin">Rimuovi come amministratore</string>
     <string name="adminRemoveCommunityNone">Non ci sono amministratori in questa Comunità.</string>
@@ -36,6 +38,10 @@
     <string name="adminRemovedUser"><b>{name}</b> è stato rimosso come amministratore.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> e <b>altri {count}</b> sono stati rimossi come Amministratori.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> e <b>{other_name}</b> sono stati rimossi come amministratori.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Invio promozione ad amministratore</item>
+        <item quantity="other">Invio promozioni ad amministratore</item>
+    </plurals>
     <string name="adminSettings">Impostazioni amministratore</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> e <b>{other_name}</b> sono ora amministratori.</string>
     <string name="andMore">+{count}</string>
@@ -148,6 +154,7 @@
     <string name="callsNotificationsRequired">Le chiamate vocali e video richiedono che le notifiche siano abilitate nelle impostazioni di sistema del dispositivo.</string>
     <string name="callsPermissionsRequired">Sono necessari i permessi di chiamata</string>
     <string name="callsPermissionsRequiredDescription">Puoi concedere l\'autorizzazione alle \'Chiamate vocali e video\' nelle impostazioni della privacy.</string>
+    <string name="callsPermissionsRequiredDescription1">Puoi abilitare l\'autorizzazione per \"Chiamate audio e video\" nelle impostazioni Privacy. Solo su computer.</string>
     <string name="callsReconnecting">Riconnessione...</string>
     <string name="callsRinging">Squilla...</string>
     <string name="callsSessionCall">{app_name} Chiamata</string>
@@ -280,12 +287,20 @@
         <item quantity="one">Elimina Messaggio</item>
         <item quantity="other">Elimina Messaggi</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Sei sicuro di voler eliminare questo messaggio?</item>
+        <item quantity="other">Sei sicuro di voler eliminare questi messaggi?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Messaggio eliminato</item>
         <item quantity="other">Messaggi eliminati</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Questo messaggio è stato eliminato</string>
     <string name="deleteMessageDeletedLocally">Questo messaggio è stato eliminato su questo dispositivo</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Sei sicuro di voler eliminare questo messaggio soltanto da questo dispositivo?</item>
+        <item quantity="other">Sei sicuro di voler eliminare questi messaggi soltanto da questo dispositivo?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Sei sicuro di voler eliminare questo messaggio per tutti?</string>
     <string name="deleteMessageDeviceOnly">Elimina solo da questo dispositivo</string>
     <string name="deleteMessageDevicesAll">Elimina da tutti i miei dispositivi</string>
@@ -293,6 +308,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Impossibile eliminare il messaggio</item>
         <item quantity="other">Impossibile eliminare i messaggi</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Questo messaggio non può essere eliminato da tutti i tuoi dispositivi</item>
+        <item quantity="other">Alcuni dei messaggi selezionati non possono essere eliminati da tutti i tuoi dispositivi</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Questo messaggio non può essere eliminato per tutti</item>
+        <item quantity="other">Alcuni dei messaggi selezionati non possono essere eliminati per tutti</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Sei sicuro di voler eliminare questi messaggi per tutti?</string>
     <string name="deleting">Eliminazione</string>
@@ -340,6 +363,7 @@
     <string name="displayNameNew">Scegli un nuovo nome da visualizzare</string>
     <string name="displayNamePick">Scegli il nome da visualizzare</string>
     <string name="displayNameSet">Imposta nome visualizzato</string>
+    <string name="displayNameVisible">Il tuo Nome Pubblico è visibile agli utenti, ai gruppi e alle comunità con cui interagisci.</string>
     <string name="document">Documento</string>
     <string name="done">Fatto</string>
     <string name="download">Scarica</string>
@@ -364,9 +388,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ha reagito con {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} e {other_name} hanno reagito con {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <span>altri {count}</span> hanno reagito con {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <font color="0">altri {count}</font> hanno reagito con {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Hai reagito con {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Tu e <span>altri {count}</span> avete reagito con {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Tu e <font color="0">altri {count}</font> avete reagito con {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Tu e {name} avete reagito con {emoji_name}</string>
     <string name="emojiReactsNotification">Ha reagito al tuo messaggio {emoji}</string>
     <string name="enable">Attiva</string>
@@ -387,6 +411,8 @@
     <string name="groupCreate">Crea Gruppo</string>
     <string name="groupCreateErrorNoMembers">Scegli almeno un altro membro del gruppo.</string>
     <string name="groupDelete">Elimina gruppo</string>
+    <string name="groupDeleteDescriptionMember">Confermi di voler eliminare <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">Il gruppo {group_name} è stato cancellato da un amministratore. Non potrai più inviare nuovi messaggi.</string>
     <string name="groupDescriptionEnter">Inserisci una descrizione per il gruppo</string>
     <string name="groupDisplayPictureUpdated">Immagine del gruppo aggiornata.</string>
     <string name="groupEdit">Modifica gruppo</string>
@@ -399,12 +425,21 @@
     <string name="groupInviteFailedMultiple">Impossibile invitare {name} e altri {count} su {group_name}</string>
     <string name="groupInviteFailedTwo">Impossibile invitare {name} e {other_name} su {group_name}</string>
     <string name="groupInviteFailedUser">Impossibile invitare {name} su {group_name}</string>
+    <string name="groupInviteNotSent">Invito non inviato</string>
+    <string name="groupInviteReinvite"><b>{name}</b> ti ha invitato a rientrare nel gruppo <b>{group_name}</b>, dove sei un amministratore.</string>
+    <string name="groupInviteReinviteYou">Sei stato invitato a rientrare nel gruppo <b>{group_name}</b>, dove sei un amministratore.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Invio invito</item>
+        <item quantity="other">Invio inviti</item>
+    </plurals>
     <string name="groupInviteSent">Invito inviato</string>
+    <string name="groupInviteStatusUnknown">Stato invito sconosciuto</string>
     <string name="groupInviteSuccessful">Invito al gruppo riuscito</string>
     <string name="groupInviteVersion">Gli utenti devono disporre della versione più recente per ricevere gli inviti</string>
     <string name="groupInviteYou"><b>Sei stata invitato</b> a unirti al gruppo.</string>
     <string name="groupInviteYouAndMoreNew"><b>Tu</b> e <b>{count} altri</b> vi siete uniti al gruppo.</string>
     <string name="groupInviteYouAndOtherNew"><b>Tu</b> e <b>{other_name}</b> fate ora parte del gruppo.</string>
+    <string name="groupInviteYouHistory"><b>Sei stato invitato</b> a unirti al gruppo. La cronologia della chat è stata condivisa.</string>
     <string name="groupLeave">Abbandona gruppo</string>
     <string name="groupLeaveDescription">Sei sicuro di voler abbandonare <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Sei sicuro di voler uscire da <b>{group_name}</b>?\n\nFacendo questo rimuoverai tutti i membri dal gruppo e cancellerai tutto il suo contenuto.</string>
@@ -419,6 +454,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> e <b>altri {count}</b> hanno ricevuto un invito a unirsi al gruppo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> e <b>{other_name}</b> hanno ricevuto un invito a unirsi al gruppo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> e <b>altri {count}</b> avete ricevuto un invito a unirvi al gruppo. La cronologia della chat è condivisa.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Tu</b> e <b>{other_name}</b> siete stati invitati a unirvi al gruppo. La cronologia della chat è stata condivisa.</string>
     <string name="groupMemberYouLeft"><b>Hai</b> lasciato il gruppo.</string>
     <string name="groupMembers">Membri del gruppo</string>
     <string name="groupMembersNone">Non ci sono altri membri in questo gruppo.</string>
@@ -428,10 +464,13 @@
     <string name="groupNameEnterShorter">Inserisci un nome per il gruppo più breve</string>
     <string name="groupNameNew">Il nome del gruppo è ora {group_name}.</string>
     <string name="groupNameUpdated">Nome del gruppo aggiornato.</string>
+    <string name="groupNameVisible">Il nome del gruppo è visibile a tutti i membri.</string>
     <string name="groupNoMessages">Non ci sono messaggi su <b>{group_name}</b>. Invia un messaggio e inizia la conversazione!</string>
     <string name="groupOnlyAdmin">Sei l\'unico amministratore in <b>{group_name}</b>.\n\nI membri e le impostazioni del gruppo non possono essere modificati senza un amministratore.</string>
+    <string name="groupPendingRemoval">Rimozione in corso</string>
     <string name="groupPromotedYou"><b>Sei stato promosso</b> amministratore.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> e <b>altri {count}</b> siete stati promossi ad amministratori.</string>
+    <string name="groupPromotedYouTwo"><b>Tu</b> e <b>{other_name}</b> siete stati promossi Amministratori.</string>
     <string name="groupRemoveDescription">Vuoi rimuovere <b>{name}</b> da <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Vuoi rimuovere <b>{name}</b> e <b>altri {count}</b> da <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Vuoi rimuovere <b>{name}</b> e <b>{other_name}</b> da <b>{group_name}</b>?</string>
@@ -447,6 +486,7 @@
     <string name="groupRemovedMultiple">Hanno rimosso <b>{name}</b> e <b>altri {count}</b> dal gruppo.</string>
     <string name="groupRemovedTwo">Hanno rimosso <b>{name}</b> e <b>{other_name}</b> dal gruppo.</string>
     <string name="groupRemovedYou">Sei stato rimosso da <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Sei stato rimosso dal gruppo.</string>
     <string name="groupRemovedYouMultiple"><b>Tu</b> e <b>altri {count}</b> siete stati rimossi dal gruppo.</string>
     <string name="groupRemovedYouTwo"><b>Tu</b> e <b>{other_name}</b> siete stati rimossi dal gruppo.</string>
     <string name="groupSetDisplayPicture">Imposta immagine del gruppo</string>
@@ -470,11 +510,24 @@
     <string name="incognitoKeyboardDescription">Richiedi la modalità incognito se disponibile. A seconda della tastiera in uso, la tua tastiera potrebbe ignorare questa richiesta.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Scorciatoia non valida</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invito Fallito</item>
+        <item quantity="other">Inviti Falliti</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">L\'invito non può essere inviato. Vuoi riprovare?</item>
+        <item quantity="other">Gli inviti non possono essere inviati. Vuoi riprovare?</item>
+    </plurals>
     <string name="join">Unisciti</string>
     <string name="later">Più tardi</string>
     <string name="learnMore">Per saperne di più</string>
     <string name="leave">Abbandona</string>
     <string name="leaving">Abbandonando...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Questo gruppo ora è in sola lettura. Ricrea il gruppo per continuare a chattare.</string>
+    <string name="legacyGroupAfterDeprecationMember">Questo gruppo ora è in sola lettura. Chiedi a un amministratore di ricreare il gruppo per continuare a chattare.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Il gruppo è stato migliorato! Ricrea il gruppo per aumentarne la sicurezza. Questo gruppo sarà in sola lettura dal {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">I gruppi sono stati migliorati! Chiedi all\'amministratore del gruppo di ricrearlo per migliorarne la sicurezza. Questo gruppo diventerà in sola lettura dal {date}.</string>
+    <string name="legacyGroupChatHistory">La cronologia della chat non sarà trasferita al nuovo gruppo. Puoi ancora vedere tutta la cronologia nel vecchio gruppo.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> è entrato nel gruppo.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> e <b>altri {count}</b> si sono uniti al gruppo.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Tu</b> e <b>altri {count}</b> avete ricevuto un invito a unirvi al gruppo.</string>
@@ -544,6 +597,10 @@
         <item quantity="one">Hai ricevuto un nuovo messaggio.</item>
         <item quantity="other">Hai ricevuto %1$d nuovi messaggi.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Hai un nuovo messaggio in %1$s.</item>
+        <item quantity="other">Hai %1$d nuovi messaggi in %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Rispondendo a</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> ti ha invitato a unirti a <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Inviando un messaggio a questo gruppo accetterai automaticamente l\'invito.</string>
@@ -575,6 +632,7 @@
     <string name="next">Avanti</string>
     <string name="nicknameDescription">Scegli un soprannome per <b>{name}</b>. Apparirà nelle tue conversazioni private e chat di gruppo.</string>
     <string name="nicknameEnter">Inserisci soprannome</string>
+    <string name="nicknameErrorShorter">Per favore, inserisci un nickname più corto</string>
     <string name="nicknameRemove">Rimuovi soprannome</string>
     <string name="nicknameSet">Imposta soprannome</string>
     <string name="no">No</string>
@@ -699,6 +757,14 @@
     <string name="profileDisplayPictureSizeError">Scegli un file più piccolo.</string>
     <string name="profileErrorUpdate">Impossibile aggiornare il profilo.</string>
     <string name="promote">Promuovi</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promozione Fallita</item>
+        <item quantity="other">Promozioni Fallite</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">La promozione non può essere applicata. Vuoi riprovare?</item>
+        <item quantity="other">Le promozioni non possono essere applicate. Vuoi riprovare?</item>
+    </plurals>
     <string name="qrCode">Codice QR</string>
     <string name="qrNotAccountId">Questo codice QR non contiene un ID utente</string>
     <string name="qrNotRecoveryPassword">Questo codice QR non contiene una password di recupero</string>
@@ -729,6 +795,7 @@
     <string name="recoveryPasswordRestoreDescription">Inserisci la tua password di recupero per caricare il tuo account. Se non l\'hai salvata, puoi trovarla nelle impostazioni dell\'app.</string>
     <string name="recoveryPasswordView">Visualizza password</string>
     <string name="recoveryPasswordWarningSendDescription">Questa è la tua password di recupero. Se la dovessi inviare a qualcuno, avrà pieno accesso al tuo account.</string>
+    <string name="recreateGroup">Ricrea gruppo</string>
     <string name="redo">Ripeti</string>
     <string name="remove">Rimuovi</string>
     <string name="removePasswordFail">Impossibile rimuovere la password</string>
@@ -781,6 +848,7 @@
     <string name="shareAccountIdDescription">Invita i tuoi amici su {app_name} condividendo con loro il tuo codice utente.</string>
     <string name="shareAccountIdDescriptionCopied">Condividi l\'ID utente con i tuoi amici in qualsiasi app di messaggistica utilizziate per comunicare — successivamente potrete spostare qui la conversazione.</string>
     <string name="shareExtensionDatabaseError">C\'è un problema nell\'apertura del database. Riavvia l\'app e riprova.</string>
+    <string name="shareExtensionNoAccountError">Ops! Sembra che tu non abbia ancora un account {app_name}. \n\n Devi creare un account {app_name} prima di condividere.</string>
     <string name="shareToSession">Condividi su {app_name}</string>
     <string name="show">Mostra</string>
     <string name="showAll">Mostra tutto</string>

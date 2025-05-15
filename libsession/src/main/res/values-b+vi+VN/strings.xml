@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Thăng cấp {name} lên Admin trong nhóm {group_name} thất bại</string>
     <string name="adminPromotionFailedDescriptionMultiple">Thăng cấp {name} và {count} người khác lên Admin trong nhóm {group_name} thất bại</string>
     <string name="adminPromotionFailedDescriptionTwo">Thăng cấp {name} và {other_name} lên Admin trong nhóm {group_name} thất bại</string>
+    <string name="adminPromotionNotSent">Chưa gửi ưu đãi</string>
     <string name="adminPromotionSent">Đã gửi yêu cầu thăng chức quản trị viên</string>
+    <string name="adminPromotionStatusUnknown">Không rõ trạng thái ưu đãi</string>
     <string name="adminRemove">Xóa quản trị viên</string>
     <string name="adminRemoveAsAdmin">Xóa quyền Quản trị viên</string>
     <string name="adminRemoveCommunityNone">Không có Admin trong Community này.</string>
@@ -43,6 +45,18 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> và <b>{other_name} </b> được thăng lên làm Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Ẩn danh</string>
+    <string name="appIcon">Biểu tượng ứng dụng</string>
+    <string name="appIconAndNameDescription">Biểu tượng và tên thay thế đã được hiển thị tại màn hình chính và thanh điều khiển bên của ứng dụng.</string>
+    <string name="appIconAndNameSelectionTitle">Biểu tượng và tên</string>
+    <string name="appIconEnableIcon">Sử dụng biểu tượng ứng dụng thay thế</string>
+    <string name="appIconEnableIconAndName">Sử dụng biểu tượng và tên thay thế cho ứng dụng</string>
+    <string name="appIconSelect">Chọn biểu tượng ứng dụng thay thế</string>
+    <string name="appIconSelectionTitle">Biểu tượng</string>
+    <string name="appNameCalculator">Máy tính</string>
+    <string name="appNameNews">Tin tức</string>
+    <string name="appNameNotes">Ghi chú</string>
+    <string name="appNameStocks">Chứng khoán</string>
+    <string name="appNameWeather">Thời tiết</string>
     <string name="appearanceAutoDarkMode">Chế độ tối tự động</string>
     <string name="appearanceHideMenuBar">Ẩn thanh Menu</string>
     <string name="appearanceLanguage">Ngôn ngữ</string>
@@ -184,6 +198,8 @@
     <string name="clearDeviceAndNetworkConfirm">Bạn có chắc chắn rằng bạn muốn xoá dữ liệu của bạn khỏi mạng? Nếu bạn tiếp tục, bạn sẽ không thể khôi phục lại tin nhắn hay danh bạ.</string>
     <string name="clearDeviceDescription">Bạn có chắc rằng bạn muốn xoá thiết bị của mình?</string>
     <string name="clearDeviceOnly">Chỉ xóa thiết bị</string>
+    <string name="clearDeviceRestart">Xóa thiết bị và khởi động lại</string>
+    <string name="clearDeviceRestore">Xóa thiết bị và khôi phục</string>
     <string name="clearMessages">Xóa tất cả tin nhắn</string>
     <string name="clearMessagesChatDescription">Bạn có chắc chắn rằng bạn muốn xóa tất cả tin nhắn từ cuộc trò chuyện của mình với <b>{name}</b> khỏi thiết bị của bạn?</string>
     <string name="clearMessagesCommunity">Bạn có chắc chắn rằng bạn muốn xóa tất cả tin nhắn của <b>{community_name}</b> khỏi thiết bị của bạn?</string>
@@ -257,7 +273,9 @@
     <string name="copied">Đã sao chép</string>
     <string name="copy">Sao chép</string>
     <string name="create">Tạo</string>
+    <string name="creatingCall">Đang tạo cuộc gọi</string>
     <string name="cut">Cắt</string>
+    <string name="databaseErrorRestoreDataWarning">Bạn có chắc chắn muốn xóa tất cả tin nhắn, tệp đính kèm, và dữ liệu tài khoản khỏi thiết bị này và khôi phục lại tài khoản của bạn từ mạng lưới?</string>
     <string name="databaseErrorTimeout">Chúng tôi nhận thấy {app_name} mất nhiều thời gian để khởi động.\n\nBạn có thể tiếp tục chờ, xuất nhật ký thiết bị để chia sẻ hỗ trợ khắc phục sự cố, hoặc thử khởi động lại {app_name}.</string>
     <string name="databaseErrorUpdate">Cơ sở dữ liệu ứng dụng của bạn không tương thích với phiên bản {app_name} này. Cài đặt lại ứng dụng và khôi phục tài khoản của bạn để tạo một cơ sở dữ liệu mới và tiếp tục sử dụng {app_name}.\n\nCảnh báo: Điều này sẽ dẫn đến việc mất tất cả tin nhắn và tệp đính kèm cũ hơn hai tuần.</string>
     <string name="databaseOptimizing">Đang tối ưu hóa cơ sở dữ liệu</string>
@@ -376,9 +394,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} đã phản ứng với {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} và {other_name} đã phản ứng với {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} và <span>{count} người khác</span> đã phản ứng với {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} và <font color="0">{count} người khác</font> đã phản ứng với {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Bạn đã phản ứng với {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Bạn và <span>{count} người khác</span> đã phản ứng với {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Bạn và <font color="0">{count} người khác</font> đã phản ứng với {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Bạn và {name} đã phản ứng với {emoji_name}</string>
     <string name="emojiReactsNotification">Đã phản hồi với tin nhắn của bạn {emoji}</string>
     <string name="enable">Bật</string>
@@ -386,10 +404,12 @@
     <string name="errorCopyAndQuit">Sao chép lỗi và thoát</string>
     <string name="errorDatabase">Lỗi cơ sở dữ liệu</string>
     <string name="errorUnknown">Một lỗi không xác định đã xảy ra.</string>
+    <string name="failedToDownload">Không tải xuống được</string>
     <string name="failures">Lỗi</string>
     <string name="file">Tập tin</string>
     <string name="files">Các tập tin</string>
     <string name="followSystemSettings">Theo cài đặt hệ thống</string>
+    <string name="forever">Vĩnh viễn</string>
     <string name="from">Từ:</string>
     <string name="fullScreenToggle">Bật/Tắt toàn màn hình</string>
     <string name="gif">GIF</string>
@@ -413,12 +433,14 @@
     <string name="groupInviteFailedMultiple">Mời {name} và {count} người khác vào nhóm {group_name} thất bại</string>
     <string name="groupInviteFailedTwo">Mời {name} và {other_name} vào nhóm {group_name} thất bại</string>
     <string name="groupInviteFailedUser">Mời {name} vào nhóm {group_name} thất bại</string>
+    <string name="groupInviteNotSent">Chưa gửi lời mời</string>
     <string name="groupInviteReinvite"><b>{name}</b> đã mời bạn tham gia lại <b>{group_name}</b>, nơi bạn là Quản trị viên.</string>
     <string name="groupInviteReinviteYou">Bạn đã được mời tham gia lại <b>{group_name}</b>, nơi bạn là Quản trị viên.</string>
     <plurals name="groupInviteSending">
         <item quantity="other">Đang gửi lời mời</item>
     </plurals>
     <string name="groupInviteSent">Đã gửi lời mời</string>
+    <string name="groupInviteStatusUnknown">Không rõ trạng thái lời mời</string>
     <string name="groupInviteSuccessful">Mời tham gia nhóm thành công</string>
     <string name="groupInviteVersion">Người dùng phải có phiên bản mới nhất để nhận được lời mời</string>
     <string name="groupInviteYou"><b>Bạn</b> đã được mời tham gia nhóm.</string>
@@ -455,6 +477,7 @@
     <string name="groupPendingRemoval">Đang chờ loại bỏ</string>
     <string name="groupPromotedYou"><b>Bạn</b> được thăng lên làm Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã được thăng lên làm Admin.</string>
+    <string name="groupPromotedYouTwo"><b>Bạn</b> và <b>{other_name}</b> đã được thăng cấp lên Quản trị viên.</string>
     <string name="groupRemoveDescription">Bạn có muốn xóa <b>{name}</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionMultiple">Bạn có muốn xóa <b>{name}</b> và <b>{count} người khác</b> khỏi <b>{group_name}</b> không?</string>
     <string name="groupRemoveDescriptionTwo">Bạn có muốn xóa <b>{name}</b> và <b>{other_name}</b> khỏi <b>{group_name}</b> không?</string>
@@ -474,6 +497,7 @@
     <string name="groupSetDisplayPicture">Thiết Lập Hình ảnh Đại diện Nhóm</string>
     <string name="groupUnknown">Nhóm không rõ</string>
     <string name="groupUpdated">Đã cập nhật nhóm</string>
+    <string name="handlingConnectionCandidates">Đang xử lý thông tin các kết nối khả dĩ</string>
     <string name="helpFAQ">Câu hỏi thường gặp</string>
     <string name="helpHelpUsTranslateSession">Giúp chúng tôi dịch {app_name}</string>
     <string name="helpReportABug">Báo cáo lỗi</string>
@@ -488,15 +512,27 @@
     <string name="hideMenuBarDescription">Chuyển đổi sự hiển thị thanh trình đơn hệ thống</string>
     <string name="hideOthers">Ẩn mục khác</string>
     <string name="image">Ảnh</string>
+    <string name="images">hình ảnh</string>
     <string name="incognitoKeyboard">Bàn phím ẩn danh</string>
     <string name="incognitoKeyboardDescription">Yêu cầu ẩn danh nếu có. Tùy thuộc vào bàn phím bạn đang sử dụng, bàn phím của bạn có thể bỏ qua yêu cầu này.</string>
     <string name="info">Thông tin</string>
     <string name="invalidShortcut">Lối tắt không hợp lệ</string>
+    <plurals name="inviteFailed">
+        <item quantity="other">Mời thất bại</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="other">Không thể gửi lời mời. Bạn có muốn thử lại?</item>
+    </plurals>
     <string name="join">Tham gia</string>
     <string name="later">Sau này</string>
     <string name="learnMore">Tìm hiểu thêm</string>
     <string name="leave">Rời đi</string>
     <string name="leaving">Rời...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Nhóm đang ở chế độ chỉ-có-thể-đọc. Hãy tạo lại nhóm để tiếp tục trò chuyện.</string>
+    <string name="legacyGroupAfterDeprecationMember">Nhóm đang ở chế độ chỉ-có-thể-đọc. Hãy yêu cầu quản trị viên tạo lại nhóm để tiếp tục trò chuyện.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Tính năng nhóm vừa được nâng cấp! Hãy tạo lại nhóm này để cải thiện độ tin cậy. Nhóm này sẽ được bật chế độ chỉ-có-thể-đọc vào ngày {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Tính năng nhóm vừa được nâng cấp! Hãy yêu cầu quản trị viên tạo lại nhóm này để cải thiện độ tin cậy. Nhóm này sẽ được bật chế độ chỉ-có-thể-đọc vào ngày {date}.</string>
+    <string name="legacyGroupChatHistory">Lịch sử trò chuyện sẽ không được dời sang nhóm mới. Bạn vẫn có thể xem toàn bộ lịch sử trò chuyện trong nhóm cũ của bạn.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> đã tham gia nhóm.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name} </b> và <b>{count} người khác </b> đã tham gia nhóm.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Bạn</b> và <b>{count} người khác</b> đã tham gia nhóm.</string>
@@ -561,7 +597,12 @@
     <plurals name="messageNewYouveGot">
         <item quantity="other">Bạn có %1$d tin nhắn mới.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="other">Bạn có %1$d tin nhắn mới trong nhóm %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Trả lời đến</string>
+    <string name="messageRequestDisabledToastAttachments">Bạn không thể gửi tệp đính kèm cho đến khi tin nhắn chờ của bạn được chấp nhận</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Bạn không thể gửi tin nhắn thoại cho đến khi tin nhắn chờ của bạn được chấp nhận</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> đã mời bạn tham gia <b>{group_name} </b>.</string>
     <string name="messageRequestGroupInviteDescription">Gửi một tin nhắn đến nhóm này sẽ tự động chấp nhận lời mời vào nhóm.</string>
     <string name="messageRequestPending">Yêu cầu tin nhắn của bạn hiện đang chờ xử lý.</string>
@@ -626,6 +667,7 @@
     <string name="notificationsMuteFor">Im lặng trong {time_large}</string>
     <string name="notificationsMuteUnmute">Tắt tạm im</string>
     <string name="notificationsMuted">Đã ngắt tiếng</string>
+    <string name="notificationsMutedFor">Tắt thông báo trong {time_large}</string>
     <string name="notificationsSlowMode">Slow Mode</string>
     <string name="notificationsSlowModeDescription">{app_name} sẽ thỉnh thoảng kiểm tra tin nhắn mới trong nền.</string>
     <string name="notificationsSound">Âm thanh</string>
@@ -684,6 +726,7 @@
     <string name="passwordSet">Đặt Mật khẩu</string>
     <string name="passwordSetDescription">Mật khẩu của bạn đã được đặt. Hãy giữ nó cẩn thận.</string>
     <string name="paste">Dán</string>
+    <string name="permissionChange">Thay đổi quyền hạn</string>
     <string name="permissionMusicAudioDenied">{app_name} cần quyền truy cập âm nhạc và âm thanh để gửi tệp, nhạc và âm thanh, nhưng quyền này đã bị từ chối vĩnh viễn. Nhấn Cài đặt → Quyền truy cập, và bật \"Âm nhạc và âm thanh\".</string>
     <string name="permissionsAppleMusic">{app_name} cần sử dụng Apple Music để phát các tập tin đính kèm phương tiện.</string>
     <string name="permissionsAutoUpdate">Tự động cập nhật</string>
@@ -693,6 +736,8 @@
     <string name="permissionsKeepInSystemTray">Giữ trong khay hệ thống</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} tiếp tục chạy nền khi bạn đóng cửa sổ</string>
     <string name="permissionsLibrary">{app_name} cần quyền truy cập thư viện ảnh để tiếp tục. Bạn có thể kích hoạt quyền truy cập trong phần cài đặt iOS.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} cần truy cập vào mạng cục bộ để thực hiện các cuộc gọi thoại và hình ảnh.</string>
+    <string name="permissionsLocalNetworkIos">Mạng cục bộ</string>
     <string name="permissionsMicrophone">Micrô</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} cần truy cập microphone để thực hiện cuộc gọi và gửi tin nhắn âm thanh, nhưng quyền này đã bị từ chối vĩnh viễn. Nhấn vào cài đặt → Quyền truy cập, và bật \"Microphone\".</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Bạn có thể bật quyền truy cập microphone trong cài đặt quyền riêng tư của {app_name}</string>
@@ -717,6 +762,12 @@
     <string name="profileDisplayPictureSizeError">Vui lòng chọn tệp nhỏ hơn.</string>
     <string name="profileErrorUpdate">Không thể cập nhật hồ sơ.</string>
     <string name="promote">Quảng bá</string>
+    <plurals name="promotionFailed">
+        <item quantity="other">Yêu cầu thăng cấp cho thành viên đã thất bại</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="other">Yêu cầu thăng cấp thành viên không thể được thực hiện. Bạn có muốn thử lại?</item>
+    </plurals>
     <string name="qrCode">Mã QR</string>
     <string name="qrNotAccountId">Mã QR này không chứa Mã Tài Khoản</string>
     <string name="qrNotRecoveryPassword">Mã QR này không chứa Mật khẩu Khôi phục</string>
@@ -729,11 +780,14 @@
     <string name="readReceipts">Biên lai đã đọc</string>
     <string name="readReceiptsDescription">Hiển thị biên nhận đã đọc cho tất cả tin nhắn bạn gửi và nhận.</string>
     <string name="received">Đã nhận:</string>
+    <string name="receivedAnswer">Đã nhận trả lời</string>
+    <string name="receivingPreOffer">Đang có cuộc gọi đến</string>
     <string name="recommended">Khuyến nghị</string>
     <string name="recoveryPasswordBannerDescription">Lưu mật khẩu phục hồi của bạn để đảm bảo bạn không mất quyền truy cập vào tài khoản của mình.</string>
     <string name="recoveryPasswordBannerTitle">Lưu mật khẩu phục hồi của bạn</string>
     <string name="recoveryPasswordDescription">Dùng mật khẩu khôi phục của bạn để tải tài khoản của bạn trên các thiết bị mới.\n\nTài khoản của bạn không thể được khôi phục nếu không có mật khẩu khôi phục của bạn. Hãy chắc chắn rằng nó được lưu trữ ở một nơi an toàn và bảo mật  — và đừng chia sẻ nó với bất kỳ ai.</string>
     <string name="recoveryPasswordEnter">Nhập mật khẩu khôi phục của bạn</string>
+    <string name="recoveryPasswordErrorLoad">Đã xảy ra lỗi trong quá trình tải mật khẩu khôi phục của bạn.\n\nVui lòng xuất nhật ký ứng dụng của bạn, sau đó tải tệp lên Trung tâm Hỗ trợ của {app_name} để giúp giải quyết vấn đề này.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Vui lòng kiểm tra mật khẩu khôi phục của bạn và thử lại.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Một số từ trong Mật khẩu Khôi phục của bạn không đúng. Vui lòng kiểm tra lại và thử lại.</string>
     <string name="recoveryPasswordErrorMessageShort">Mật khẩu Khôi phục bạn nhập chưa đủ dài. Vui lòng kiểm tra và thử lại.</string>
@@ -747,6 +801,7 @@
     <string name="recoveryPasswordRestoreDescription">Nhập mật khẩu khôi phục của bạn để nạp tài khoản. Nếu chưa lưu, bạn có thể tìm thấy nó trong cài đặt của ứng dụng.</string>
     <string name="recoveryPasswordView">Xem Mật khẩu</string>
     <string name="recoveryPasswordWarningSendDescription">Đây là Mật khẩu Khôi phục của bạn. Nếu bạn gửi nó cho ai đó, họ sẽ có toàn quyền truy cập vào tài khoản của bạn.</string>
+    <string name="recreateGroup">Tạo lại nhóm</string>
     <string name="redo">Hoàn tác</string>
     <string name="remove">Bỏ</string>
     <string name="removePasswordFail">Xóa mật khẩu thất bại</string>
@@ -780,6 +835,7 @@
     <string name="selectAll">Chọn tất cả</string>
     <string name="send">Gửi</string>
     <string name="sending">Đang gửi</string>
+    <string name="sendingConnectionCandidates">Đang nhận thông tin các kết nối khả dĩ</string>
     <string name="sent">Đã gửi:</string>
     <string name="sessionAppearance">Diện mạo</string>
     <string name="sessionClearData">Xóa dữ liệu</string>
@@ -798,6 +854,7 @@
     <string name="shareAccountIdDescription">Mời bạn bè để trò chuyện với bạn trên {app_name} bằng cách chia sẻ Account ID của bạn với họ.</string>
     <string name="shareAccountIdDescriptionCopied">Chia sẻ với bạn bè của bạn bất cứ nơi nào bạn thường nói chuyện với họ — sau đó chuyển cuộc trò chuyện đến đây.</string>
     <string name="shareExtensionDatabaseError">Có vấn đề khi mở cơ sở dữ liệu. Vui lòng khởi động lại ứng dụng và thử lại.</string>
+    <string name="shareExtensionNoAccountError">Ôi! Có vẻ như bạn chưa có tài khoản {app_name}.\n\n Bạn cần tạo tài khoản trong ứng dụng {app_name} trước khi có thể chia sẻ.</string>
     <string name="shareToSession">Chia sẻ đến {app_name}</string>
     <string name="show">Hiển thị</string>
     <string name="showAll">Hiển thị tất cả</string>
@@ -805,6 +862,7 @@
     <string name="stickers">Hình dán</string>
     <string name="supportGoTo">Đi đến trang Hỗ trợ</string>
     <string name="systemInformationDesktop">Thông tin hệ thống: {information}</string>
+    <string name="tapToRetry">Chạm để thử lại</string>
     <string name="theContinue">Tiếp tục</string>
     <string name="theDefault">Mặc định</string>
     <string name="theError">Lỗi</string>
@@ -818,7 +876,9 @@
     <string name="updateDownloading">Đang tải về cập nhật: {percent_loader}%</string>
     <string name="updateError">Không thể cập nhật</string>
     <string name="updateErrorDescription">{app_name} không thể cập nhật. Vui lòng truy cập {session_download_url} và cài đặt phiên bản mới thủ công, sau đó liên hệ Trung tâm trợ giúp của chúng tôi để thông báo về vấn đề này.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Vui lòng nhập một mô tả nhóm ngắn hơn</string>
     <string name="updateNewVersion">Một phiên bản mới của {app_name} đã có, chạm để cập nhật</string>
+    <string name="updateNewVersionDescription">Phiên bản mới ({version}) của {app_name} đã sẵn sàng.</string>
     <string name="updateReleaseNotes">Đi tới các ghi chú phát hành</string>
     <string name="updateSession">Cập nhật {app_name}</string>
     <string name="updateVersion">Phiên bản {version}</string>

@@ -290,6 +290,12 @@
     <plurals name="deleteMessageFailed">
         <item quantity="other">Gagal untuk memadam mesej</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="other">Beberapa mesej yang anda pilih tidak boleh dipadamkan dari semua peranti anda</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="other">Sesetengah mesej yang anda pilih tidak boleh dihapuskan untuk semua orang</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Adakah anda pasti mahu memadamkan mesej ini untuk semua orang?</string>
     <string name="deleting">Memadam</string>
     <string name="developerToolsToggle">Togol Alat Pembangun</string>
@@ -336,6 +342,7 @@
     <string name="displayNameNew">Pilih nama paparan baru</string>
     <string name="displayNamePick">Pilih nama paparan anda</string>
     <string name="displayNameSet">Tetapkan Nama Paparan</string>
+    <string name="displayNameVisible">Nama Paparan anda boleh dilihat oleh pengguna, kumpulan dan komuniti yang anda berinteraksi dengan.</string>
     <string name="document">Dokumen</string>
     <string name="done">Selesai</string>
     <string name="download">Muat turun</string>
@@ -359,9 +366,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} bertindak balas dengan {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} dan {other_name} bertindak balas dengan {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dan <span>{count} yang lain</span> bertindak balas dengan {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dan <font color="0">{count} yang lain</font> bertindak balas dengan {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Anda bertindak balas dengan {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Anda dan <span>{count} yang lain</span> bertindak balas dengan {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Anda dan <font color="0">{count} yang lain</font> bertindak balas dengan {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Anda dan {name} bertindak balas dengan {emoji_name}</string>
     <string name="emojiReactsNotification">Reaksi kepada mesej anda {emoji}</string>
     <string name="enable">Aktifkan</string>
@@ -394,12 +401,15 @@
     <string name="groupInviteFailedMultiple">Gagal menjemput {name} dan {count} lain ke {group_name}</string>
     <string name="groupInviteFailedTwo">Gagal menjemput {name} dan {other_name} ke {group_name}</string>
     <string name="groupInviteFailedUser">Gagal menjemput {name} ke {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> menjemput anda untuk menyertai semula <b>{group_name}</b>, di mana anda adalah Admin.</string>
+    <string name="groupInviteReinviteYou">Anda dijemput untuk menyertai semula <b>{group_name}</b>, di mana anda adalah seorang Admin.</string>
     <string name="groupInviteSent">Jemputan dihantar</string>
     <string name="groupInviteSuccessful">Jemputan kumpulan berjaya</string>
     <string name="groupInviteVersion">Pengguna mesti mempunyai keluaran terkini untuk menerima jemputan</string>
     <string name="groupInviteYou"><b>Anda</b> dijemput untuk menyertai kumpulan.</string>
     <string name="groupInviteYouAndMoreNew"><b>Anda</b> dan <b>{count} lainnya</b> menyertai kumpulan.</string>
     <string name="groupInviteYouAndOtherNew"><b>Anda</b> dan <b>{other_name}</b> menyertai kumpulan.</string>
+    <string name="groupInviteYouHistory"><b>Anda</b> dijemput untuk menyertai kumpulan. Sejarah sembang telah dikongsi.</string>
     <string name="groupLeave">Tinggalkan Kumpulan</string>
     <string name="groupLeaveDescription">Adakah anda yakin anda mahu meninggalkan <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Adakah anda pasti mahu meninggalkan <b>{group_name}</b>?\n\nIni akan membuang semua ahli dan memadamkan semua kandungan kumpulan.</string>
@@ -423,6 +433,7 @@
     <string name="groupNameEnterShorter">Sila masukkan nama kumpulan lebih pendek.</string>
     <string name="groupNameNew">Nama kumpulan kini {group_name}.</string>
     <string name="groupNameUpdated">Nama kumpulan diperbarui.</string>
+    <string name="groupNameVisible">Nama kumpulan kelihatan kepada semua ahli kumpulan.</string>
     <string name="groupNoMessages">Anda tidak mempunyai sebarang mesej daripada <b>{group_name}</b>. Hantar mesej untuk memulakan perbualan!</string>
     <string name="groupOnlyAdmin">Anda adalah satu-satunya pentadbir dalam <b>{group_name}</b>.\n\nAhli kumpulan dan tetapan tidak boleh diubah tanpa pentadbir.</string>
     <string name="groupPromotedYou"><b>Anda</b> dinaikkan ke Admin.</string>
@@ -440,6 +451,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> dan <b>{count} lainnya </b> dikeluarkan dari kumpulan.</string>
     <string name="groupRemovedTwo"><b>{name}</b> dan <b>{other_name}</b> dikeluarkan dari kumpulan.</string>
     <string name="groupRemovedYou">Anda telah dikeluarkan dari <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Anda telah dikeluarkan dari kumpulan.</string>
     <string name="groupRemovedYouMultiple"><b>Anda</b> dan <b>{count} yang lain</b> dikeluarkan dari kumpulan.</string>
     <string name="groupRemovedYouTwo"><b>Anda</b> dan <b>{other_name}</b> dikeluarkan dari kumpulan.</string>
     <string name="groupSetDisplayPicture">Tetapkan Gambar Paparan Kumpulan</string>
@@ -563,6 +575,7 @@
     <string name="next">Seterusnya</string>
     <string name="nicknameDescription">Pilih nama panggilan untuk <b>{name}</b>. Ini akan muncul kepada anda dalam perbualan satu-satu dan kumpulan anda.</string>
     <string name="nicknameEnter">Masukkan nama samaran</string>
+    <string name="nicknameErrorShorter">Sila masukkan nama samaran yang lebih pendek</string>
     <string name="nicknameRemove">Alih Keluar nama samaran</string>
     <string name="nicknameSet">Tetapkan Nama Panggilan</string>
     <string name="no">Tidak</string>

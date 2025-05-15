@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} د {emoji_name} سره غبرګون وښود</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} او {other_name} د {emoji_name} سره غبرګون وښود</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} او <span>{count} نور</span> د {emoji_name} سره غبرګون وښود</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} او <font color="0">{count} نور</font> د {emoji_name} سره غبرګون وښود</string>
     <string name="emojiReactsHoverYouNameDesktop">تاسو د {emoji_name} سره غبرګون وښود</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">تاسو او <span>{count} نور</span> د {emoji_name} سره غبرګون وښود</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">تاسو او <font color="0">{count} نور</font> د {emoji_name} سره غبرګون وښود</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">تاسو او {name} د {emoji_name} سره غبرګون وښود</string>
     <string name="emojiReactsNotification">ستاسو پیغام ته {emoji} سره غبرګون وښود</string>
     <string name="enable">فعالول</string>

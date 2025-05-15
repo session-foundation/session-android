@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਕੀਤੀ</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ਅਤੇ {other_name} ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਦਿੱਤੀ</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ਅਤੇ <span>{count} ਹੋਰ</span> ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਦਿੱਤੀ</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ਅਤੇ <font color="0">{count} ਹੋਰ</font> ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਦਿੱਤੀ</string>
     <string name="emojiReactsHoverYouNameDesktop">ਤੁਸੀਂ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਕੀਤੀ</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">ਤੁਸੀਂ ਅਤੇ <span>{count} ਹੋਰ</span> ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤੀਕ੍ਰਿਆ ਦਿੱਤੀ</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">ਤੁਸੀਂ ਅਤੇ <font color="0">{count} ਹੋਰ</font> ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤੀਕ੍ਰਿਆ ਦਿੱਤੀ</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">ਤੁਸੀਂ ਅਤੇ {name} ਨੇ {emoji_name} ਨਾਲ ਪ੍ਰਤਿਕਿਰਿਆ ਦਿੱਤੀ</string>
     <string name="emojiReactsNotification">ਤੁਹਾਡੇ ਸੁਨੇਹੇ \'ਤੇ ਪ੍ਰਤੀਕਰਮ ਕੀਤਾ {emoji}</string>
     <string name="enable">ਚਾਲੂ ਕਰੋ</string>
