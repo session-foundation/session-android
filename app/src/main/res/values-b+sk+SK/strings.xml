@@ -374,9 +374,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagoval s {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} a {other_name} reagovali s {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} a <span>{count} ďalší</span> reagovali pomocou {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} a <font color="0">{count} ďalší</font> reagovali pomocou {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Reagovali ste s {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Vy a <span>{count} ďalší</span> reagovali pomocou {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Vy a <font color="0">{count} ďalší</font> reagovali pomocou {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Vy a {name} reagovali s {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoval/a na vašu správu {emoji}</string>
     <string name="enable">Zapnúť</string>

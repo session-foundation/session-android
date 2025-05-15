@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} alijibu na {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} na {other_name} walijibu na {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} na <span>{count} wengine</span> walireact na {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} na <font color="0">{count} wengine</font> walireact na {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Umejibu na {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Wewe na <span>{count} wengine</span> mlijibu na {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Wewe na <font color="0">{count} wengine</font> mlijibu na {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Wewe na {name} mliitikia na {emoji_name}</string>
     <string name="emojiReactsNotification">Amezidi ujumbe wako {emoji}</string>
     <string name="enable">Wezesha</string>

@@ -294,6 +294,14 @@
         <item quantity="one">Falha ao eliminar mensagem</item>
         <item quantity="other">Falha ao eliminar mensagens</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Esta mensagem não pode ser excluída de todos os seus dispositivos</item>
+        <item quantity="other">Algumas das mensagens que você selecionou não podem ser excluídas de todos os seus dispositivos</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Esta mensagem não pode ser excluída para todos</item>
+        <item quantity="other">Algumas das mensagens que você selecionou não podem ser excluídas para todos</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Tem a certeza que pretende eliminar estas mensagens para todos?</string>
     <string name="deleting">A eliminar</string>
     <string name="developerToolsToggle">Ativar ferramentas do programador</string>
@@ -340,6 +348,7 @@
     <string name="displayNameNew">Escolha um novo nome</string>
     <string name="displayNamePick">Escolha seu nome</string>
     <string name="displayNameSet">Configurar nome a apresentar</string>
+    <string name="displayNameVisible">Seu Nome de Exibição é visível para usuários, grupos e comunidades com os quais você interage.</string>
     <string name="document">Documento</string>
     <string name="done">Concluído</string>
     <string name="download">Transferir</string>
@@ -364,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagiu com {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} e {other_name} reagiram com {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <span>{count} outros</span> reagiram com {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <font color="0">{count} outros</font> reagiram com {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Reagiu com {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Você e <span>{count} outros</span> reagiram com {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Você e <font color="0">{count} outros</font> reagiram com {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Você e {name} reagiram com {emoji_name}</string>
     <string name="emojiReactsNotification">Reagiu à sua mensagem {emoji}</string>
     <string name="enable">Ativar</string>
@@ -399,12 +408,15 @@
     <string name="groupInviteFailedMultiple">Falha ao convidar {name} e {count} outros para {group_name}</string>
     <string name="groupInviteFailedTwo">Falha ao convidar {name} e {other_name} para {group_name}</string>
     <string name="groupInviteFailedUser">Falha ao convidar {name} para {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> convidou-o a juntar-se novamente a <b>{group_name}</b>, onde você é um Admin.</string>
+    <string name="groupInviteReinviteYou">Você foi convidado a retornar para <b>{group_name}</b>, onde você é um Admin.</string>
     <string name="groupInviteSent">Convite enviado</string>
     <string name="groupInviteSuccessful">Convite para grupo enviado com sucesso</string>
     <string name="groupInviteVersion">Os utilizadores devem ter a versão mais recente para receber convites</string>
     <string name="groupInviteYou"><b>Foi</b> convidado a juntar-se ao grupo.</string>
     <string name="groupInviteYouAndMoreNew"><b>Você</b> e <b>{count} outros</b> foram convidados a juntar-se ao grupo.</string>
     <string name="groupInviteYouAndOtherNew"><b>Você</b> e <b>{other_name}</b> foram convidados a juntar-se ao grupo.</string>
+    <string name="groupInviteYouHistory"><b>Você</b> foi convidado a juntar-se ao grupo. O histórico da conversa foi partilhado.</string>
     <string name="groupLeave">Sair do grupo</string>
     <string name="groupLeaveDescription">Tem a certeza de que pretende sair <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Tem a certeza de que pretende sair <b>{group_name}</b>?\n\nIsto irá remover todos os membros e eliminar todo o conteúdo do grupo.</string>
@@ -428,6 +440,7 @@
     <string name="groupNameEnterShorter">Digite um nome de grupo mais curto.</string>
     <string name="groupNameNew">O nome do grupo é agora \'{group_name}\'.</string>
     <string name="groupNameUpdated">Nome do grupo atualizado.</string>
+    <string name="groupNameVisible">O nome do grupo está visível para todos os membros.</string>
     <string name="groupNoMessages">Não possui mensagens de <b>{group_name}</b>. Envie uma mensagem para iniciar a conversa!</string>
     <string name="groupOnlyAdmin">Você é o único admin em <b>{group_name}</b>.\n\nOs membros e as definições do grupo não podem ser alterados sem um admin.</string>
     <string name="groupPromotedYou"><b>Foi</b> promovido a administrador.</string>
@@ -447,6 +460,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> e <b>{count} outros</b> foram removidos do grupo.</string>
     <string name="groupRemovedTwo"><b>{name}</b> e <b>{other_name}</b> foram removidos do grupo.</string>
     <string name="groupRemovedYou">Foi removido de <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Foi removido(a) do grupo.</string>
     <string name="groupRemovedYouMultiple"><b>Você</b> e <b>{count} outros</b> foram removidos do grupo.</string>
     <string name="groupRemovedYouTwo"><b>Você</b> e <b>{other_name}</b> foram removidos do grupo.</string>
     <string name="groupSetDisplayPicture">Definir Imagem a Exibir do Grupo</string>
@@ -575,6 +589,7 @@
     <string name="next">Seguinte</string>
     <string name="nicknameDescription">Escolha o nome de utilizador para <b>{name}</b>. Isto vai-lhe aparecer no seu um-para-um e conversas de grupo.</string>
     <string name="nicknameEnter">Introduza uma alcunha</string>
+    <string name="nicknameErrorShorter">Por favor, escolha um nome de exibição mais curto</string>
     <string name="nicknameRemove">Remover alcunha</string>
     <string name="nicknameSet">Configurar Alcunha</string>
     <string name="no">Não</string>

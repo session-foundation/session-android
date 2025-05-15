@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ya amsa da {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} da {other_name} sun amsa da {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} da <span>{count} wasu</span> sun amsa da {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} da <font color="0">{count} wasu</font> sun amsa da {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Kai ka amsa da {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Kai da <span>{count} wasu</span> sun amsa da {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Kai da <font color="0">{count} wasu</font> sun amsa da {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Kai da {name} sun amsa da {emoji_name}</string>
     <string name="emojiReactsNotification">Ya yi martani ga saƙonka {emoji}</string>
     <string name="enable">Ba da izini</string>

@@ -48,6 +48,20 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> и <b>{other_name}</b> назначены администраторами.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Анонимно</string>
+    <string name="appIcon">Иконка Приложения</string>
+    <string name="appIconAndNameDescription">Альтернативная иконка и название приложения отображаются на главном экране и в панели приложений.</string>
+    <string name="appIconAndNameSelectionTitle">Иконка и Имя</string>
+    <string name="appIconDescription">Альтернативная иконка приложения отображается на главном экране и в библиотеке приложений. Название приложения по-прежнему будет отображаться как \'{app_name}\'.</string>
+    <string name="appIconEnableIcon">Использовать альтернативную иконку приложения</string>
+    <string name="appIconEnableIconAndName">Использовать альтернативную иконку приложения и имя</string>
+    <string name="appIconSelect">Выберите альтернативную иконку приложения</string>
+    <string name="appIconSelectionTitle">Иконка</string>
+    <string name="appNameCalculator">Калькулятор</string>
+    <string name="appNameMeetingSE">MeetingSE</string>
+    <string name="appNameNews">Новости</string>
+    <string name="appNameNotes">Заметки</string>
+    <string name="appNameStocks">Акции</string>
+    <string name="appNameWeather">Погода</string>
     <string name="appearanceAutoDarkMode">Автоматический темный режим</string>
     <string name="appearanceHideMenuBar">Спрятать системное меню</string>
     <string name="appearanceLanguage">Язык</string>
@@ -200,6 +214,7 @@
     <string name="clearMessagesGroupAdminDescription">Вы уверены, что хотите очистить все сообщения в группе <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Вы уверены, что хотите очистить все сообщения <b>{group_name}</b> на вашем устройстве?</string>
     <string name="clearMessagesNoteToSelfDescription">Вы уверены, что хотите очистить все сообщения «Заметок для Себя» на вашем устройстве?</string>
+    <string name="clearOnThisDevice">Удалить на этом устройстве</string>
     <string name="close">Закрыть</string>
     <string name="closeWindow">Закрыть окно</string>
     <string name="commitHashDesktop">Хеш коммита: {hash}</string>
@@ -265,6 +280,7 @@
     <string name="copied">Скопировано</string>
     <string name="copy">Скопировать</string>
     <string name="create">Создать</string>
+    <string name="creatingCall">Создание вызова</string>
     <string name="cut">Вырезать</string>
     <string name="databaseErrorTimeout">Мы заметили, что {app_name} занимает много времени для запуска.\n\nВы можете продолжить ждать, экспортировать журналы вашего устройства для устранения неполадок или попробовать перезапустить {app_name}.</string>
     <string name="databaseErrorUpdate">База данных вашего приложения несовместима с этой версией {app_name}. Переустановите приложение и восстановите свой аккаунт, чтобы создать новую базу данных и продолжить использовать {app_name}.\n\nВнимание: Это приведет к потере всех сообщений и вложений старше двух недель.</string>
@@ -408,9 +424,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} поставил(а) {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} и {other_name} поставили {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} и <span>{count} других</span> поставили {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} и <font color="0">{count} других</font> поставили {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Вы поставили {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Вы и <span>{count} других</span> поставили {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Вы и <font color="0">{count} других</font> поставили {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Вы и {name} поставили {emoji_name}</string>
     <string name="emojiReactsNotification">Отреагировали на ваше сообщение {emoji}</string>
     <string name="enable">Включить</string>
@@ -418,6 +434,7 @@
     <string name="errorCopyAndQuit">Скопировать ошибку и выйти</string>
     <string name="errorDatabase">Ошибка базы данных</string>
     <string name="errorUnknown">Произошла неизвестная ошибка.</string>
+    <string name="failedToDownload">Не удалось загрузить</string>
     <string name="failures">Сбои</string>
     <string name="file">Файл</string>
     <string name="files">Файлы</string>
@@ -518,6 +535,7 @@
     <string name="groupSetDisplayPicture">Установить изображение группы</string>
     <string name="groupUnknown">Неизвестная группа</string>
     <string name="groupUpdated">Группа обновлена</string>
+    <string name="handlingConnectionCandidates">Обработка Кандидатов на Подключение</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Помогите нам перевести {app_name}</string>
     <string name="helpReportABug">Сообщить об ошибке</string>
@@ -532,6 +550,7 @@
     <string name="hideMenuBarDescription">Переключить видимость панели системного меню</string>
     <string name="hideOthers">Скрыть других</string>
     <string name="image">Изображение</string>
+    <string name="images">изображения</string>
     <string name="incognitoKeyboard">Клавиатура «Инкогнито»</string>
     <string name="incognitoKeyboardDescription">Запросить режим «Инкогнито», если доступно. В зависимости от клавиатуры, которую вы используете, она может проигнорировать этот запрос.</string>
     <string name="info">Информация</string>
@@ -693,6 +712,7 @@
     <string name="notificationsContentShowNoNameOrContent">Нет имени или сообщения</string>
     <string name="notificationsFastMode">Быстрый Режим</string>
     <string name="notificationsFastModeDescription">Вы будете получать новые сообщения надежно и мгновенно через серверы уведомлений Google.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Вы будете моментально и надёжно уведомлены о новых сообщениях с помощью серверов Huawei.</string>
     <string name="notificationsFastModeDescriptionIos">Вы будете получать новые сообщения надежно и мгновенно через серверы уведомлений Apple.</string>
     <string name="notificationsGoToDevice">Перейти в системные настройки уведомлений</string>
     <string name="notificationsHeaderAllMessages">Уведомления - Все</string>
@@ -766,20 +786,32 @@
     <string name="passwordSet">Установить пароль</string>
     <string name="passwordSetDescription">Ваш пароль установлен. Пожалуйста, храните его в безопасном месте.</string>
     <string name="paste">Вставить</string>
+    <string name="permissionChange">Изменение разрешений</string>
     <string name="permissionMusicAudioDenied">{app_name} требуется доступ для отправки музыки, аудио и файлов, но доступ был запрещен. Перейдите в Настройки → Разрешения, и включите \"Музыка и аудио\".</string>
     <string name="permissionsAppleMusic">{app_name} требуется доступ к Apple Music для воспроизведения медиафайлов.</string>
     <string name="permissionsAutoUpdate">Автоматическое обновление</string>
     <string name="permissionsAutoUpdateDescription">Автоматически проверять на наличие обновлений при запуске</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Необходим доступ к камере для совершения видео звонков. Включите \"Камера\" в Настройках, чтобы продолжить.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Включён доступ к Камере. Чтобы отключить его, переключите разрешение \"Камера\" в Настройках.</string>
     <string name="permissionsCameraDenied">{app_name} требуется доступ к камере для съемки фото и видео, но этот доступ был запрещен. Нажмите Настройки → Разрешения, и включите \"Камеру\".</string>
+    <string name="permissionsCameraDescriptionIos">Разрешите доступ к камере для видео звонков.</string>
     <string name="permissionsFaceId">Функция блокировки экрана в {app_name} использует Face ID.</string>
     <string name="permissionsKeepInSystemTray">При закрытии сворачивать в трей</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} продолжает работать в фоновом режиме даже после закрытия окна</string>
     <string name="permissionsLibrary">{app_name} требуется доступ к фотографиям для продолжения работы. Вы можете включить доступ в настройках телефона.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Необходим доступ к Локальной Сети для совершения звонков. Включите разрешение \"Локальная Сеть\" в Настройках, чтобы продолжить.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} необходим доступ к локальной сети для совершения голосовых и видеозвонков.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Включён доступ к Локальной Сети. Чтобы отключить его, переключите разрешение \"Локальная Сеть\" в Настройках.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Разрешите доступ к локальной сети для совершения видео и аудио звонков.</string>
+    <string name="permissionsLocalNetworkIos">Локальная Сеть</string>
     <string name="permissionsMicrophone">Микрофон</string>
     <string name="permissionsMicrophoneAccessRequired">Для звонков и отправки голосовых сообщений {app_name} требуется разрешение на доступ к микрофону, но оно было вами отклонено. Перейдите в Настройки → Разрешения, и включите «Микрофон».</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Необходим доступ к микрофону, чтобы совершать звонки и записывать голосовые сообщения. Включите \"Микрофон\" в Настройках, чтобы продолжить.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Вы можете включить доступ к микрофону в настройках конфиденциальности {app_name}.</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} требуется доступ к микрофону для совершения звонков и записи голосовых сообщений.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Включён доступ к Микрофону. Чтобы отключить его, переключите разрешение \"Микрофон\" в Настройках.</string>
     <string name="permissionsMicrophoneDescription">Разрешить доступ к микрофону.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Дайте доступ к микрофону для аудио звонков и голосовых сообщений.</string>
     <string name="permissionsMusicAudio">{app_name} требуется доступ к музыке и аудио для отправки файлов, музыки и аудио.</string>
     <string name="permissionsRequired">Требуется разрешение</string>
     <string name="permissionsStorageDenied">Для отправки фото и видео требуется разрешение на доступ к библиотеке фотографий, но оно было вами отклонено. Чтобы предоставить разрешение вручную, перейдите в «Настройки», выберите «Приложения», найдите {app_name}, затем выберите «Разрешения» и включите \"Фото и видео\".</string>
@@ -823,11 +855,15 @@
     <string name="readReceipts">Уведомления о прочтении</string>
     <string name="readReceiptsDescription">Показывать квитанции о прочтении для всех отправляемых и получаемых сообщений.</string>
     <string name="received">Получено:</string>
+    <string name="receivedAnswer">Полученный Ответ</string>
+    <string name="receivingCallOffer">Получение Предложения о Звонке</string>
+    <string name="receivingPreOffer">Получение Предварительного Предложения</string>
     <string name="recommended">Рекомендуется</string>
     <string name="recoveryPasswordBannerDescription">Сохраните ваш пароль восстановления, чтобы не потерять доступ к вашему аккаунту.</string>
     <string name="recoveryPasswordBannerTitle">Сохраните ваш пароль восстановления</string>
     <string name="recoveryPasswordDescription">Используйте пароль восстановления, чтобы загрузить свою учетную запись на новых устройствах.\n\nВаша учетная запись не может быть восстановлена без пароля восстановления. Убедитесь, что он хранится в безопасном месте, и не передавайте его никому.</string>
     <string name="recoveryPasswordEnter">Введите ваш пароль восстановления</string>
+    <string name="recoveryPasswordErrorLoad">Произошла ошибка при попытке загрузить пароль восстановления. \n\nПожалуйста, сохраните log файл и загрузите его через {app_name} Help Desk, чтобы помочь решить данную проблему.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Пожалуйста, проверьте ваш пароль восстановления и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Некоторые из слов в вашем Пароле Восстановления неверны. Пожалуйста, проверьте и попробуйте снова.</string>
     <string name="recoveryPasswordErrorMessageShort">Введенный вами Пароль Восстановления недостаточно длинный. Пожалуйста, проверьте и попробуйте снова.</string>
@@ -878,6 +914,8 @@
     <string name="selectAll">Выбрать Все</string>
     <string name="send">Отправить</string>
     <string name="sending">Отправка</string>
+    <string name="sendingCallOffer">Отправка Предложения о Звонке</string>
+    <string name="sendingConnectionCandidates">Отправка Кандидатов на Подключение</string>
     <string name="sent">Отправлено:</string>
     <string name="sessionAppearance">Внешний вид</string>
     <string name="sessionClearData">Очистить данные</string>
@@ -905,6 +943,7 @@
     <string name="stickers">Стикеры</string>
     <string name="supportGoTo">Перейти на страницу поддержки</string>
     <string name="systemInformationDesktop">Информация о системе: {information}</string>
+    <string name="tapToRetry">Нажмите, чтобы повторить</string>
     <string name="theContinue">Продолжить</string>
     <string name="theDefault">По умолчанию</string>
     <string name="theError">Ошибка</string>
@@ -919,6 +958,7 @@
     <string name="updateError">Обновить не удается</string>
     <string name="updateErrorDescription">Не удалось обновить {app_name}. Пожалуйста, перейдите по ссылке {session_download_url} и установите новую версию вручную, затем свяжитесь с нашим Центром поддержки, чтобы сообщить нам об этой проблеме.</string>
     <string name="updateNewVersion">Доступна новая версия {app_name}, нажмите для обновления</string>
+    <string name="updateNewVersionDescription">Доступна новая версия ({version}) приложения {app_name}.</string>
     <string name="updateReleaseNotes">Перейти к описанию обновления</string>
     <string name="updateSession">Обновление {app_name}</string>
     <string name="updateVersion">Версия {version}</string>

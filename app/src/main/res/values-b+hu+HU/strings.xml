@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ezzel reagált {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} és {other_name} ezzel reagáltak {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} és <span>{count} másik</span> reagált ezzel {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} és <font color="0">{count} másik</font> reagált ezzel {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Te ezzel reagáltál: {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Te és <span>{count} másik személy</span> ezzel reagáltatok: {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Te és <font color="0">{count} másik személy</font> ezzel reagáltatok: {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Te és {name} ezzel reagáltatok: {emoji_name}</string>
     <string name="emojiReactsNotification">Reagált az üzenetedre {emoji}</string>
     <string name="enable">Engedélyezés</string>

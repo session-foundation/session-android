@@ -359,9 +359,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ต่อต่อด้วย {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} และ {other_name} ต่อต่อด้วย {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} และ <span>{count} คนอื่นๆ</span> แสดงอารมณ์ด้วย {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} และ <font color="0">{count} คนอื่นๆ</font> แสดงอารมณ์ด้วย {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">คุณได้แสดงความรู้สึกด้วย {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">คุณและ <span>{count} อื่นๆ</span> ได้แสดงความรู้สึกด้วย {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">คุณและ <font color="0">{count} อื่นๆ</font> ได้แสดงความรู้สึกด้วย {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">คุณและ {name} ได้แสดงความรู้สึกด้วย {emoji_name}</string>
     <string name="emojiReactsNotification">แสดงความเห็นผ่านอิโมจิที่ข้อความของคุณ {emoji}</string>
     <string name="enable">เปิดใช้งาน</string>

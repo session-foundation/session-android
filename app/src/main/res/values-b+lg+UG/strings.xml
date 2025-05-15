@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} yasanze ku {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ne {other_name} baasanze ku {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ne <span>{count} balala</span> baasanze ku {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ne <font color="0">{count} balala</font> baasanze ku {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Ggwe wasanze ku {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ggwe ne<span>{count} balala</span> baasanze ku {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ggwe ne<font color="0">{count} balala</font> baasanze ku {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ggwe and {name} reagyed {emoji_name}</string>
     <string name="emojiReactsNotification">Abaakoleddeko ekifo kyo {emoji}</string>
     <string name="enable">Tambula</string>

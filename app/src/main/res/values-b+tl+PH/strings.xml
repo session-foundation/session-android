@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">Nag-react si {name} ng {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">Si {name} at {other_name} nag-react ng {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">Si {name} at <span>{count} iba pa</span> nag-react gamit ang {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">Si {name} at <font color="0">{count} iba pa</font> nag-react gamit ang {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Nag-react ka ng {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ikaw at <span>{count} iba pa</span> nag-react gamit ang {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ikaw at <font color="0">{count} iba pa</font> nag-react gamit ang {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ikaw at {name} ay nag-react ng {emoji_name}</string>
     <string name="emojiReactsNotification">Nag-react sa iyong mensahe {emoji}</string>
     <string name="enable">I-enable</string>

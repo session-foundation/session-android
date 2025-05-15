@@ -294,6 +294,14 @@
         <item quantity="one">Falha ao deletar mensagem</item>
         <item quantity="other">Falha ao deletar mensagens</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Esta mensagem não pode ser deletada de todos os seus dispositivos</item>
+        <item quantity="other">Algumas das mensagens que você selecionou não podem ser deletadas de todos os seus dispositivos</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Esta mensagem não pode ser excluída para todos</item>
+        <item quantity="other">Algumas das mensagens que você selecionou não podem ser excluídas para todos</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Tem certeza de que deseja excluir essas mensagens para todos?</string>
     <string name="deleting">Deletando</string>
     <string name="developerToolsToggle">Ferramentas de desenvolvimento</string>
@@ -340,6 +348,7 @@
     <string name="displayNameNew">Escolha um novo nome de exibição</string>
     <string name="displayNamePick">Escolha seu nome de display</string>
     <string name="displayNameSet">Definir Nome de Exibição</string>
+    <string name="displayNameVisible">Seu Nome de Exibição é visível para usuários, grupos e comunidades com os quais você interage.</string>
     <string name="document">Documento</string>
     <string name="done">Pronto</string>
     <string name="download">Baixar</string>
@@ -364,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagiu com {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} e {other_name} reagiram com {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <span>{count} outros</span> reagiram com {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} e <font color="0">{count} outros</font> reagiram com {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Você reagiu com {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Você e <span>{count} outros</span> reagiram com {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Você e <font color="0">{count} outros</font> reagiram com {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Você e {name} reagiram com {emoji_name}</string>
     <string name="emojiReactsNotification">Reagiu à sua mensagem {emoji}</string>
     <string name="enable">Ativar</string>
@@ -399,12 +408,19 @@
     <string name="groupInviteFailedMultiple">Falha ao convidar {name} e {count} outros para {group_name}</string>
     <string name="groupInviteFailedTwo">Falha ao convidar {name} e {other_name} para {group_name}</string>
     <string name="groupInviteFailedUser">Falha ao convidar {name} para {group_name}</string>
+    <string name="groupInviteReinvite"><b>{name}</b> convidou você para voltar a <b>{group_name}</b>, onde você é um Admin.</string>
+    <string name="groupInviteReinviteYou">Você foi convidado a voltar para o <b>{group_name}</b>, onde você é um Admin.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Enviando convite</item>
+        <item quantity="other">Enviando convites</item>
+    </plurals>
     <string name="groupInviteSent">Convite enviado</string>
     <string name="groupInviteSuccessful">Convite para grupo bem-sucedido</string>
     <string name="groupInviteVersion">Usuários devem ter a versão mais recente para receber convites</string>
     <string name="groupInviteYou"><b>Você</b> foi convidado a entrar no grupo.</string>
     <string name="groupInviteYouAndMoreNew"><b>Você</b> e <b>{count} outros</b> entraram no grupo.</string>
     <string name="groupInviteYouAndOtherNew"><b>Você</b> e <b>{other_name}</b> entraram no grupo.</string>
+    <string name="groupInviteYouHistory"><b>Você</b> foi convidado a entrar no grupo. O histórico de conversas foi compartilhado.</string>
     <string name="groupLeave">Sair do Grupo</string>
     <string name="groupLeaveDescription">Você tem certeza que deseja sair <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Tem certeza de que deseja sair de <b>{group_name}</b>?\n\nIsso removerá todos os membros e excluirá todo o conteúdo do grupo.</string>
@@ -428,6 +444,7 @@
     <string name="groupNameEnterShorter">Por favor entre um nome de grupo mais curto.</string>
     <string name="groupNameNew">O nome do grupo agora é {group_name}.</string>
     <string name="groupNameUpdated">Nome do grupo atualizado.</string>
+    <string name="groupNameVisible">O nome do grupo está visível para todos os membros do grupo.</string>
     <string name="groupNoMessages">Você não possui mensagens de <b>{group_name}.</b> Envie uma mensagem para começar a conversa!</string>
     <string name="groupOnlyAdmin">Você é o único administrador em <b>{group_name}</b>.\n\nOs membros do grupo e as configurações não podem ser alterados sem um administrador.</string>
     <string name="groupPromotedYou"><b>Você</b> foi promovido a Administrador.</string>
@@ -447,6 +464,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> e <b>{count} outros</b> foram removidos do grupo.</string>
     <string name="groupRemovedTwo"><b>{name}</b> e <b>{other_name}</b> foram removidos do grupo.</string>
     <string name="groupRemovedYou">Você foi removido do <b>{group_name}.</b></string>
+    <string name="groupRemovedYouGeneral">Você foi removido do grupo.</string>
     <string name="groupRemovedYouMultiple"><b>Você</b> e <b>{count} outros</b> foram removidos do grupo.</string>
     <string name="groupRemovedYouTwo"><b>Você</b> e <b>{other_name}</b> foram removidos do grupo.</string>
     <string name="groupSetDisplayPicture">Definir Imagem do Grupo</string>
@@ -575,6 +593,7 @@
     <string name="next">Avançar</string>
     <string name="nicknameDescription">Escolha um apelido para <b>{name}</b>. Isso aparecerá para você em suas conversas individuais e em grupo.</string>
     <string name="nicknameEnter">Insira um apelido</string>
+    <string name="nicknameErrorShorter">Por favor, escolha um apelido mais curto</string>
     <string name="nicknameRemove">Remover apelido</string>
     <string name="nicknameSet">Definir Apelido</string>
     <string name="no">Não</string>

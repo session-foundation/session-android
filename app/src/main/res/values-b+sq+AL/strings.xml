@@ -362,9 +362,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagoi me {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} dhe {other_name} reaguan me {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dhe <span>{count} të tjerë</span> reaguan me {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dhe <font color="0">{count} të tjerë</font> reaguan me {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Ju reaguat me {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ju dhe <span>{count} të tjerë</span> reaguat me {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ju dhe <font color="0">{count} të tjerë</font> reaguat me {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ju dhe {name} reaguat me {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoi ndaj mesazhit tënd {emoji}</string>
     <string name="enable">Aktivizoje</string>

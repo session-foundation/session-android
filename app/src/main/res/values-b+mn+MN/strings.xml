@@ -294,6 +294,14 @@
         <item quantity="one">Мессеж устгах амжилтгүй боллоо</item>
         <item quantity="other">Мессежүүд устгах амжилтгүй боллоо</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Энэхүү мессежийг бүх төхөөрөмжөөс устгах боломжгүй</item>
+        <item quantity="other">Таны сонгосон зарим мессежүүдийг бүх төхөөрөмжөөс устгах боломжгүй</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Энэ мессежийг бүх хүмүүст устгаж чадахгүй</item>
+        <item quantity="other">Сонгосон мессежүүдийн заримыг бүх хүмүүст устгаж чадахгүй</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Та эдгээр мессежүүдийг бүгдэд зориулж устгахыг хүсэж байна уу?</string>
     <string name="deleting">Устгаж байна</string>
     <string name="developerToolsToggle">Хөгжүүлэгчний багаж хэрэгслийг соль</string>
@@ -340,6 +348,7 @@
     <string name="displayNameNew">Шинээр дэлгэцийн нэр сонгоорой</string>
     <string name="displayNamePick">Дэлгэцийн нэрээ сонгоорой</string>
     <string name="displayNameSet">Дэлгэцийн нэрээ тохируулах</string>
+    <string name="displayNameVisible">Таны дэлгэцийн нэртэй хэрэглэгчид, бүлгүүд болон дагуулсан нийгэмлэгүүдэд таны харилцдаг.</string>
     <string name="document">Баримт бичиг</string>
     <string name="done">Дууссан</string>
     <string name="download">Татаж авах</string>
@@ -364,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} нь {emoji_name}-ээр хариу үйлдэл үзүүлсэн</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} болон {other_name} -ээр {emoji_name} реакц хийсэн</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} болон <span>{count} бусад</span> -ээр {emoji_name} реакц хийсэн</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} болон <font color="0">{count} бусад</font> -ээр {emoji_name} реакц хийсэн</string>
     <string name="emojiReactsHoverYouNameDesktop">Та {emoji_name} -ээр хариу үйлдэл үзүүлсэн</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Та and <span>{count} бусад хүн </span> {emoji_name} -тэй хариу үзүүлсэн байна</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Та and <font color="0">{count} бусад хүн </font> {emoji_name} -тэй хариу үзүүлсэн байна</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Та болон {name} нар {emoji_name} -ээр хариу үйлдэл үзүүлсэн</string>
     <string name="emojiReactsNotification">Таны зурваст эможи хариу үзүүлсэн {emoji}</string>
     <string name="enable">Идэвхжүүлэх</string>
@@ -399,12 +408,15 @@
     <string name="groupInviteFailedMultiple">{name} болон {count} бусад хүмүүсийг {group_name} руу урьж авахад алдаа гарлаа</string>
     <string name="groupInviteFailedTwo">{name} болон {other_name} хүмүүсийг {group_name} руу урьж авахад алдаа гарлаа</string>
     <string name="groupInviteFailedUser">{name} хүнийг {group_name} руу урьж авахад алдаа гарлаа</string>
+    <string name="groupInviteReinvite"><b>{name}</b> таныг <b>{group_name}</b> бүлэгт дахин нэгдэхийг урьсан байна, та энэ бүлэгт Админ байсан.</string>
+    <string name="groupInviteReinviteYou">Танд <b>{group_name}</b> бүлэгт дахин орох урилга ирсэн байна, энэ бүлэгт та админ байна.</string>
     <string name="groupInviteSent">Урилга илгээгдсэн</string>
     <string name="groupInviteSuccessful">Бүлгийн урилга амжилттай</string>
     <string name="groupInviteVersion">Хэрэглэгчид урилга хүлээн авахын тулд хамгийн сүүлийн хувилбар байх хэрэгтэй</string>
     <string name="groupInviteYou"><b>Та </b> бүлэгт нэгдэх урилга авсан байна.</string>
     <string name="groupInviteYouAndMoreNew"><b>Та</b> болон <b>{count} бусад</b> бүлэгт нэгдсэн байна.</string>
     <string name="groupInviteYouAndOtherNew"><b>Та</b> болон <b>{other_name}</b> бүлэгт нэгдсэн байна.</string>
+    <string name="groupInviteYouHistory"><b>Та</b> бүлэгт нэгдэх урилга авсан. Чатын түүх хуваалцагдсан.</string>
     <string name="groupLeave">Бүлгээс гарах</string>
     <string name="groupLeaveDescription">Та <b>{group_name}</b>-ээс гарахдаа итгэлтэй байна уу?</string>
     <string name="groupLeaveDescriptionAdmin">Та <b>{group_name}</b> бүлгээс гарахдаа итгэлтэй байна уу?\n\nЭнэ нь бүх гишүүдийг устгаж, бүлгийн бүх контентыг устгана.</string>
@@ -428,6 +440,7 @@
     <string name="groupNameEnterShorter">Бүлгийн нэрээ богиносгоно уу.</string>
     <string name="groupNameNew">Бүлгийн нэрийг одоо {group_name} гэж өглөө.</string>
     <string name="groupNameUpdated">Бүлгийн нэр шинэчлэгдсэн.</string>
+    <string name="groupNameVisible">Бүлгийн нэр нь бүлгийн бүх гишүүдэд харагдана.</string>
     <string name="groupNoMessages">Танд <b>{group_name}</b>ээс мессэж байхгүй байна. Яриагаа эхлүүлэхийн тулд илгээмжээ илгээнэ үү!</string>
     <string name="groupOnlyAdmin">Та <b>{group_name}</b>-ийн цорын ганц админ байна.\n\nБүлгийн гишүүд болон тохиргоог админгүй өөрчлөх боломжгүй.</string>
     <string name="groupPromotedYou"><b>Та </b> Админ боллоо.</string>
@@ -447,6 +460,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> болон <b>{count} бусад </b> бүлгээс хасагдлаа.</string>
     <string name="groupRemovedTwo"><b>{name} </b> болон <b>{other_name} </b> бүлгээс хасагдлаа.</string>
     <string name="groupRemovedYou">Та <b>{group_name}</b> бүлгээс хасагдсан байна.</string>
+    <string name="groupRemovedYouGeneral">Таныг бүлгээс хассан байна.</string>
     <string name="groupRemovedYouMultiple"><b>Та</b> болон <b>{count} бусад</b> бүлгээс хасагдлаа.</string>
     <string name="groupRemovedYouTwo"><b>Та</b> болон <b>{other_name}</b> бүлгээс хасагдлаа.</string>
     <string name="groupSetDisplayPicture">Бүлгийн дэлгэцийн зургаа тохируулах</string>
@@ -575,6 +589,7 @@
     <string name="next">Дараагийн</string>
     <string name="nicknameDescription"><b>{name}</b>-д зориулж хоч сонгоно уу. Энэ нь таны нэг ба бүлгийн ярианд харагдах болно.</string>
     <string name="nicknameEnter">Нэр оруулна уу</string>
+    <string name="nicknameErrorShorter">Хэрэв та богинохон хоч уу</string>
     <string name="nicknameRemove">Нэр устгах</string>
     <string name="nicknameSet">Хочоо тохируулах</string>
     <string name="no">Үгүй</string>

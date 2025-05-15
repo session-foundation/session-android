@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">{name} {group_name} yönetici olarak yükseltilemedi</string>
     <string name="adminPromotionFailedDescriptionMultiple">{name} ve {count} diğerleri {group_name} yönetici olarak yükseltilemedi</string>
     <string name="adminPromotionFailedDescriptionTwo">{name} ve {other_name} {group_name} yönetici olarak yükseltilemedi</string>
+    <string name="adminPromotionNotSent">Ayrıcalık gönderilmedi</string>
     <string name="adminPromotionSent">Admin terfisi gönderildi</string>
+    <string name="adminPromotionStatusUnknown">Ayrıcalık durumu bilimiyor</string>
     <string name="adminRemove">Yönetici Kaldır</string>
     <string name="adminRemoveAsAdmin">Yönetici olarak kaldır</string>
     <string name="adminRemoveCommunityNone">Bu Toplulukta hiçbir Yönetici yok.</string>
@@ -36,6 +38,10 @@
     <string name="adminRemovedUser"><b>{name}</b> yönetici olarak kaldırıldı.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> ve <b>{count} üye</b> Yönetici seviyesinden düşürüldü.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> ve <b>{other_name}</b> Yönetici seviyesinden düşürüldü.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Yönetici ayrıcalığı gönderiliyor</item>
+        <item quantity="other">Yönetici ayrıcalıkları gönderiliyor</item>
+    </plurals>
     <string name="adminSettings">Yönetici Ayarları</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> ve <b>{other_name}</b> yönetici olarak terfi etti.</string>
     <string name="andMore">+{count}</string>
@@ -148,6 +154,7 @@
     <string name="callsNotificationsRequired">Sesli ve Görüntülü Aramaların çalışabilmesi için cihazınızın sistem ayarlarında Session bildirimlerinin etkinleştirilmiş olması gerekmektedir.</string>
     <string name="callsPermissionsRequired">Arama İzni Gerekli</string>
     <string name="callsPermissionsRequiredDescription">\'Sesli ve Görüntülü Arama\' iznini Gizlilik Ayarlarından etkinleştirebilirsiniz.</string>
+    <string name="callsPermissionsRequiredDescription1">\"Sesli ve Görüntülü Aramalar\" özelliğini Gizlilik Ayarlarından ektinleştirebilirsiniz.</string>
     <string name="callsReconnecting">Yeniden bağlanıyor…</string>
     <string name="callsRinging">Çalıyor...</string>
     <string name="callsSessionCall">{app_name} Arama</string>
@@ -254,7 +261,9 @@
     <string name="copied">Kopyalandı</string>
     <string name="copy">Kopyala</string>
     <string name="create">Oluştur</string>
+    <string name="creatingCall">Arama Oluşturuluyor</string>
     <string name="cut">Kes</string>
+    <string name="databaseErrorGeneric">Veritabanında bir sorun oluştu.\n\nSorun giderme için uygulama günlüklerinizi dışa aktarın. Eğer başarısız olunursa {app_name} uygulamasını yeniden yükleyip, hesabınızı geri yükleyin.</string>
     <string name="databaseErrorTimeout">{app_name} uygulamasının başlatılması uzun sürüyor fark ettik.\n\nBeklemeye devam edebilir, cihaz günlüklerinizi paylaşmak için dışa aktarabilir veya {app_name} yeniden başlatmayı deneyebilirsiniz.</string>
     <string name="databaseErrorUpdate">{app_name} uygulamanızın veritabanı bu sürüm ile uyumsuz. Uygulamayı yeniden yükleyin ve yeni bir veritabanı oluşturmak ve {app_name} kullanmaya devam etmek için hesabınızı geri yükleyin.\n\nUyarı: Bu, iki haftadan daha eski olan tüm ileti ve eklerin kaybolmasına neden olacaktır.</string>
     <string name="databaseOptimizing">Veritabanı En İyi Duruma Getiriliyor</string>
@@ -280,12 +289,20 @@
         <item quantity="one">İletiyi Sil</item>
         <item quantity="other">İletileri Sil</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Bu mesajı silmek istediğinizden emin misiniz?</item>
+        <item quantity="other">Bu mesajları silmek istediğinizden emin misiniz?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">İleti silindi</item>
         <item quantity="other">İletiler silindi</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Bu ileti silindi</string>
     <string name="deleteMessageDeletedLocally">Bu ileti bu cihazda silinmiş</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Bu mesajı sadece bu aygıttan silmek istediğinize emin misiniz?</item>
+        <item quantity="other">Bu mesajları sadece bu aygıttan silmek istediğinizden emin misiniz?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Bu iletiyi herkes için silmek istediğinizden emin misiniz?</string>
     <string name="deleteMessageDeviceOnly">Yalnızca bu cihazda sil</string>
     <string name="deleteMessageDevicesAll">Tüm cihazlarımda sil</string>
@@ -373,9 +390,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} {emoji_name} ile tepki verdi</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ve {other_name} {emoji_name} ile tepki verdi</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ve <span>{count} diğer</span> {emoji_name} ile tepki verdi</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ve <font color="0">{count} diğer</font> {emoji_name} ile tepki verdi</string>
     <string name="emojiReactsHoverYouNameDesktop">Siz {emoji_name} ile tepki verdiniz</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Siz ve <span>{count} diğer</span> {emoji_name} ile tepki gösterdi</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Siz ve <font color="0">{count} diğer</font> {emoji_name} ile tepki gösterdi</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Siz ve {name} {emoji_name} ile tepki verdiniz</string>
     <string name="emojiReactsNotification">İletinize {emoji} ile tepki verdi</string>
     <string name="enable">Etkinleştir</string>
@@ -396,6 +413,9 @@
     <string name="groupCreate">Grup Oluştur</string>
     <string name="groupCreateErrorNoMembers">Lütfen en az 1 grup üyesi seçin.</string>
     <string name="groupDelete">Grubu Sil</string>
+    <string name="groupDeleteDescription"><b>{group_name}</b> adlı gruptan ayrılmak istediğinizden emin misiniz?\n\nBu, tüm üyeleri kaldıracak ve tüm grup içeriğini silecektir.</string>
+    <string name="groupDeleteDescriptionMember"><b>{group_name}</b> isimli grubu silmek istediğinizden emin misiniz?</string>
+    <string name="groupDeletedMemberDescription">{group_name} yönetici tarafından silindi. Buraya daha fazla mesaj gönderemezsiniz.</string>
     <string name="groupDescriptionEnter">Grup açıklaması girin</string>
     <string name="groupDisplayPictureUpdated">Grup görüntü resmi güncellendi.</string>
     <string name="groupEdit">Grubu Düzenle</string>
@@ -411,6 +431,10 @@
     <string name="groupInviteNotSent">Davet gönderilemedi</string>
     <string name="groupInviteReinvite"><b>{name}</b> sizi yönetici olduğunuz <b>{group_name}</b> grubuna yeniden katılmaya davet etti.</string>
     <string name="groupInviteReinviteYou">Yönetici olduğunuz <b>{group_name}</b> grubuna yeniden katılmaya davet edildiniz.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Davet gönderiliyor</item>
+        <item quantity="other">Davetler gönderiliyor</item>
+    </plurals>
     <string name="groupInviteSent">Davet gönderildi</string>
     <string name="groupInviteStatusUnknown">Davet durumu bilinmiyor</string>
     <string name="groupInviteSuccessful">Grup daveti başarılı</string>
@@ -433,6 +457,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> ve <b>{count} diğer</b> gruba katılmaları için davet edildi.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> ve <b>{other_name}</b> gruba katılmak üzere davet edildi.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Sen</b> ve <b>{count} diğerleri</b> gruba katılmaya davet edildiniz. Sohbet geçmişi paylaşıldı.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Siz</b> ve <b>{other_name}</b> bir gruba katılmaya davet edildiniz. Sohbet geçmişi paylaşıldı.</string>
     <string name="groupMemberYouLeft"><b>Sen</b> gruptan ayrıldın.</string>
     <string name="groupMembers">Grup Üyeleri</string>
     <string name="groupMembersNone">Bu grupta başka üye yok.</string>
@@ -444,9 +469,12 @@
     <string name="groupNameUpdated">Grup adı güncellendi.</string>
     <string name="groupNameVisible">Grup adı tüm grup üyelerine görünür.</string>
     <string name="groupNoMessages"><b>{group_name}</b> kullanıcısından herhangi bir iletiniz yok. Sohbeti başlatmak için bir ileti gönderin!</string>
+    <string name="groupNotUpdatedWarning">Bu grup 30 günden daha fazladır güncellenmedi. Mesaj gönderirken veya grup bilgilerini görüntülerken sorun yaşayabilirsiniz.</string>
     <string name="groupOnlyAdmin"><b>{group_name}</b> grubunda tek adminsiniz.\n\nAdmin olmadan grup üyeleri ve ayarları değiştirilemez.</string>
+    <string name="groupPendingRemoval">Kaldırma bekleniyor</string>
     <string name="groupPromotedYou"><b>Sen</b> yönetici olarak terfi ettin.</string>
     <string name="groupPromotedYouMultiple"><b>Sen</b> ve <b>{count} diğer</b> yönetici olarak terfi ettiniz.</string>
+    <string name="groupPromotedYouTwo"><b>Siz</b> ve <b>{other_name}</b> yönetici haklarını kazandınız.</string>
     <string name="groupRemoveDescription"><b>{group_name}</b> grubundan <b>{name}</b> kişisini kaldırmak ister misiniz?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b> grubundan <b>{name}</b> ve <b>{count} diğerlerini</b> kaldırmak ister misiniz?</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b> grubundan <b>{name}</b> ve <b>{other_name}</b> kişilerini kaldırmak ister misiniz?</string>
@@ -486,11 +514,24 @@
     <string name="incognitoKeyboardDescription">Gizli mod iste. Kullandığınız klavyeye bağlı olarak klavyeniz bu isteği göz ardı edebilir.</string>
     <string name="info">Bilgi</string>
     <string name="invalidShortcut">Geçersiz kısayol</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Davet Başarısız Oldu</item>
+        <item quantity="other">Davetler Başarısız Oldu</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Davet gönderilemedi. Yeniden denemek ister misiniz?</item>
+        <item quantity="other">Davetler gönderilemedi. Yeniden denemek ister misiniz?</item>
+    </plurals>
     <string name="join">Katıl</string>
     <string name="later">Sonra</string>
     <string name="learnMore">Daha fazla bilgi edinin</string>
     <string name="leave">Ayrıl</string>
     <string name="leaving">Çıkılıyor...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Bu grup şu anda salt okunur halde. Sohbete devam etmek için bu grubu yeniden oluşturun.</string>
+    <string name="legacyGroupAfterDeprecationMember">Bu grup şu anda salt okunur halde. Sohbete devam etmek için grup yöneticinizden bu grubu yeniden oluşturmasını isteyin.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Gruplar yükseltildi! Güvenilirliği artırmak için bu grubu yeniden oluşturun. Bu grup {date} tarihinde salt okunur hale gelecektir.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Gruplar yükseltildi! Güvenilirliği artırmak için grup yöneticisinden bu grubu yeniden oluşturmasını isteyin. Bu grup {date} tarihinde salt okunur hale gelecektir.</string>
+    <string name="legacyGroupChatHistory">Sohbet geçmişi yeni gruba taşınmayacaktır. Eski grubunuzdaki sohbet geçmişini hala görüntüleyebilirsiniz.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> gruba katıldı.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> ve <b>{count} diğer</b> grup katıldı.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Sen</b> ve <b>{count} diğerleri</b> gruba katılmaya davet edildiniz.</string>
@@ -559,6 +600,10 @@
     <plurals name="messageNewYouveGot">
         <item quantity="one">Yeni bir iletiniz var.</item>
         <item quantity="other">%1$d Adet Yeni İletiniz Var.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">%1$s tarafından yeni mesaj var.</item>
+        <item quantity="other">%1$s tarafından %2$d adet yeni mesaj var.</item>
     </plurals>
     <string name="messageReplyingTo">Adlı kişiye yanıt olarak</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> sizi <b>{group_name}</b> grubuna katılmaya davet etti.</string>
@@ -716,6 +761,14 @@
     <string name="profileDisplayPictureSizeError">Lütfen daha küçük bir dosya seçin.</string>
     <string name="profileErrorUpdate">Profil güncellenemedi.</string>
     <string name="promote">Yükselt</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Ayrıcalık Başarısız Oldu</item>
+        <item quantity="other">Ayrıcalıklar Başarısız Oldu</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Ayrıcalık uygulanamadı. Yeniden denemek ister misiniz?</item>
+        <item quantity="other">Ayrıcalıklar uygulanamadı. Yeniden denemek ister misiniz?</item>
+    </plurals>
     <string name="qrCode">QR Kod</string>
     <string name="qrNotAccountId">Bu QR kodu bir Hesap Kimliği içermiyor</string>
     <string name="qrNotRecoveryPassword">Bu QR kodu bir Kurtarma Şifresi içermiyor</string>
@@ -728,11 +781,15 @@
     <string name="readReceipts">Okundu Bilgileri</string>
     <string name="readReceiptsDescription">Gönderdiğiniz ve aldığınız tüm iletiler için okundu bilgilerini göster.</string>
     <string name="received">Alındı:</string>
+    <string name="receivedAnswer">Yanıt Alındı</string>
+    <string name="receivingCallOffer">Arama Teklifi Alınıyor</string>
+    <string name="receivingPreOffer">Ön Teklif Alınıyor</string>
     <string name="recommended">Önerilen</string>
     <string name="recoveryPasswordBannerDescription">Hesabınıza erişimi kaybetmemek için kurtarma şifrenizi kaydedin.</string>
     <string name="recoveryPasswordBannerTitle">Kurtarma şifrenizi kaydedin</string>
     <string name="recoveryPasswordDescription">Hesabınızı yeni cihazlarda yüklemek için kurtarma şifrenizi kullanın.\n\nKurtarma şifreniz olmadan hesabınız geri yüklenemez. Güvende olduğundan emin olun ve kimseyle paylaşmayın.</string>
     <string name="recoveryPasswordEnter">Kurtarma parolanızı girin</string>
+    <string name="recoveryPasswordErrorLoad">Kurtarma şifrenizi yüklemeye çalışırken bir sorun oluştu.\n\nLütfen kayıtları dışarı aktarın. Ardından {app_name} uygulamasının Yardım Merkezi üzerinden dışa aktarılmış dosyayı yükleyerek sorunun çözümlenmesine yardımcı olun.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Lütfen kurtarma parolanızı kontrol edin ve tekrar deneyin.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Kurtarma Şifrenizdeki bazı kelimeler yanlış. Lütfen kontrol edip tekrar deneyin.</string>
     <string name="recoveryPasswordErrorMessageShort">Girdiğiniz Kurtarma Şifresi yeterince uzun değil. Lütfen kontrol edin ve tekrar deneyin.</string>
@@ -781,6 +838,8 @@
     <string name="selectAll">Tümünü Seç</string>
     <string name="send">Gönder</string>
     <string name="sending">Gönderiliyor</string>
+    <string name="sendingCallOffer">Arama Teklifi Gönderiliyor</string>
+    <string name="sendingConnectionCandidates">Bağlantı Adayları Gönderiliyor</string>
     <string name="sent">Gönderildi:</string>
     <string name="sessionAppearance">Görünüm</string>
     <string name="sessionClearData">Verileri Temizle</string>
@@ -799,6 +858,7 @@
     <string name="shareAccountIdDescription">Arkadaşını {app_name} üzerinde seninle konuşmaya davet etmek için onunla Hesap ID\'ni paylaşabilirsin.</string>
     <string name="shareAccountIdDescriptionCopied">Arkadaşlarınızla genellikle nerede konuştuğunuzu paylaşın ve ardından sohbeti buraya taşıyın.</string>
     <string name="shareExtensionDatabaseError">Veritabanını açarken bir sorun oluştu. Lütfen uygulamayı yeniden başlatıp tekrar deneyin.</string>
+    <string name="shareExtensionNoAccountError">Olamaz! {app_name} için bir hesaba sahip değilsiniz. \n\nBir şeyler paylaşmadan önce {app_name} için bir hesap oluşturmanız gerekiyor.</string>
     <string name="shareToSession">{app_name}\'ya paylaşın</string>
     <string name="show">Göster</string>
     <string name="showAll">Hepsini Göster</string>
@@ -820,6 +880,7 @@
     <string name="updateError">Güncellenemiyor</string>
     <string name="updateErrorDescription">{app_name} güncellenirken bir sorun meydana geldi. Lütfen {session_download_url} bağlantısını ziyaret edip yeni sürümü manuel olarak yükleyin, ve Yardım Merkezi üzerinden bu sorunu bize bildirin.</string>
     <string name="updateNewVersion">{app_name} yeni bir sürümü mevcut, güncellemek için dokunun</string>
+    <string name="updateNewVersionDescription">{app_name} uygulamasının yeni ({version}) sürümü kullanılabilir.</string>
     <string name="updateReleaseNotes">Sürüm Notlarına Git</string>
     <string name="updateSession">{app_name} Güncellemesi</string>
     <string name="updateVersion">Sürüm {version}</string>

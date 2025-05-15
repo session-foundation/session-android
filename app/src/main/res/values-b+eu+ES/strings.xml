@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name}(e)k {emoji_name}(e)kin erreakzionatu du</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} eta {other_name}k {emoji_name}(e)kin erreakzionatu dute</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} eta <span>{count} bestek</span> {emoji_name}-rekin erreakzionatu dute</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} eta <font color="0">{count} bestek</font> {emoji_name}-rekin erreakzionatu dute</string>
     <string name="emojiReactsHoverYouNameDesktop">Zuk {emoji_name}-rekin erreakzionatu duzu</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Zuk eta <span>{count} beste</span> {emoji_name}-rekin erreakzionatu duzue</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Zuk eta <font color="0">{count} beste</font> {emoji_name}-rekin erreakzionatu duzue</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Zuk eta {name} (e)k {emoji_name}rekin erreakzionatu duzue</string>
     <string name="emojiReactsNotification">Zure mezura {emoji} erreakzionatu du</string>
     <string name="enable">Gaitu</string>

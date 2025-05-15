@@ -365,9 +365,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} با {emoji_name} واکنش نشان داد</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} و {other_name} با {emoji_name} واکنش دادند</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} و <span>{count} سایرین</span> با {emoji_name} واکنش نشان دادند</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} و <font color="0">{count} سایرین</font> با {emoji_name} واکنش نشان دادند</string>
     <string name="emojiReactsHoverYouNameDesktop">شما با {emoji_name} واکنش نشان دادید</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">شما و <span>{count} سایرین </span> با {emoji_name} واکنش نشان دادید</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">شما و <font color="0">{count} سایرین </font> با {emoji_name} واکنش نشان دادید</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">شما و {name} با {emoji_name} واکنش نشان دادید</string>
     <string name="emojiReactsNotification">{emoji} واکنش به پیام شما</string>
     <string name="enable">فعال کردن</string>

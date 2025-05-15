@@ -363,9 +363,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} უპასუხეს {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} და {other_name} უპასუხეს {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} და <span>{count} ან სხვები</span> უპასუხეს {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} და <font color="0">{count} ან სხვები</font> უპასუხეს {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">თქვენ უპასუხეს {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">თქვენ და <span>{count} სხვა</span> უპასუხეს {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">თქვენ და <font color="0">{count} სხვა</font> უპასუხეს {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">თქვენ და {name} უპასუხეს {emoji_name}</string>
     <string name="emojiReactsNotification">თქვენი შეტყობინება მოვიდა {emoji} რეაქცია</string>
     <string name="enable">გააქტიურება</string>

@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">Gagal mempromosikan {name} di {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Gagal mempromosikan {name} dan {count} lainnya di {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Gagal mempromosikan {name} dan {other_name} di {group_name}</string>
+    <string name="adminPromotionNotSent">Promosi tidak terkirim</string>
     <string name="adminPromotionSent">Promosi admin terkirim</string>
+    <string name="adminPromotionStatusUnknown">Status promosi tidak diketahui</string>
     <string name="adminRemove">Hapus Admin</string>
     <string name="adminRemoveAsAdmin">Hapus sebagai Admin</string>
     <string name="adminRemoveCommunityNone">Tidak ada Admin di Komunitas ini.</string>
@@ -43,6 +45,7 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> dan <b>{other_name}</b> dipromosikan menjadi Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
+    <string name="appIcon">Selamat malam</string>
     <string name="appearanceAutoDarkMode">Mode gelap otomatis</string>
     <string name="appearanceHideMenuBar">Sembunyikan Meny Bar</string>
     <string name="appearanceLanguage">Bahasa</string>
@@ -257,6 +260,7 @@
     <string name="copied">Disalin</string>
     <string name="copy">Salin</string>
     <string name="create">Buat</string>
+    <string name="creatingCall">Membuat Panggilan</string>
     <string name="cut">Potong</string>
     <string name="databaseErrorTimeout">Kami menyadari {app_name} membutuhkan waktu lama untuk memulai.\n\nAnda dapat terus menunggu, mengekspor log perangkat Anda untuk dibagikan dalam pemecahan masalah, atau mencoba memulai ulang {app_name}.</string>
     <string name="databaseErrorUpdate">Database aplikasi Anda tidak kompatibel dengan versi {app_name} ini. Instal ulang aplikasi dan pulihkan akun Anda untuk menghasilkan database baru dan terus menggunakan {app_name}.\n\nPeringatan: Ini akan menyebabkan hilangnya semua pesan dan lampiran yang lebih dari dua minggu.</string>
@@ -376,9 +380,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} memberi reaksi {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} dan {other_name} memberi reaksi {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dan <span>{count} lainnya</span> memberi reaksi {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} dan <font color="0">{count} lainnya</font> memberi reaksi {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Anda memberi reaksi {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Anda dan <span>{count} lainnya</span> memberi reaksi {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Anda dan <font color="0">{count} lainnya</font> memberi reaksi {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Anda dan {name} memberi reaksi {emoji_name}</string>
     <string name="emojiReactsNotification">Bereaksi pada pesan Anda {emoji}</string>
     <string name="enable">Aktifkan</string>
@@ -399,6 +403,7 @@
     <string name="groupCreate">Buat Grup</string>
     <string name="groupCreateErrorNoMembers">Pilih setidaknya satu anggota grup lainnya.</string>
     <string name="groupDelete">Hapus Grup</string>
+    <string name="groupDeleteDescriptionMember">Apakah Anda yakin ingin menghapus <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} telah dihapus oleh admin grup. Anda tidak akan dapat mengirim pesan lagi.</string>
     <string name="groupDescriptionEnter">Masukkan deskripsi grup</string>
     <string name="groupDisplayPictureUpdated">Gambar tampilan grup diperbarui.</string>
@@ -412,12 +417,14 @@
     <string name="groupInviteFailedMultiple">Gagal mengundang {name} dan {count} lainnya ke {group_name}</string>
     <string name="groupInviteFailedTwo">Gagal mengundang {name} dan {other_name} ke {group_name}</string>
     <string name="groupInviteFailedUser">Gagal mengundang {name} ke {group_name}</string>
+    <string name="groupInviteNotSent">Undangan tidak terkirim</string>
     <string name="groupInviteReinvite"><b>{name}</b> mengundang Anda untuk gabung kembali ke <b>{group_name}</b>, tempat Anda menjadi Admin.</string>
     <string name="groupInviteReinviteYou">Anda diundang untuk bergabung kembali ke <b>{group_name}</b>, tempat Anda menjadi Admin.</string>
     <plurals name="groupInviteSending">
         <item quantity="other">Mengirim undangan</item>
     </plurals>
     <string name="groupInviteSent">Undangan terkirim</string>
+    <string name="groupInviteStatusUnknown">Status undangan tidak diketahui</string>
     <string name="groupInviteSuccessful">Undangan grup berhasil</string>
     <string name="groupInviteVersion">Pengguna harus memiliki rilis terbaru untuk menerima undangan</string>
     <string name="groupInviteYou"><b>Anda</b> diundang untuk bergabung dengan grup.</string>
@@ -438,6 +445,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> dan <b>{count} lainnya</b> telah diundang untuk bergabung dengan grup.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> dan <b>{other_name}</b> telah diundang untuk bergabung dengan grup.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Anda</b> dan <b>{count} lainnya</b> telah diundang untuk bergabung dengan grup. Riwayat obrolan dibagikan.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Anda</b> dan <b>{other_name}</b> diundang untuk bergabung dengan grup. Riwayat obrolan dibagikan.</string>
     <string name="groupMemberYouLeft"><b>Anda</b> keluar dari grup.</string>
     <string name="groupMembers">Anggota grup</string>
     <string name="groupMembersNone">Tidak ada anggota lain di dalam grup ini.</string>
@@ -450,8 +458,10 @@
     <string name="groupNameVisible">Nama grup dapat dilihat oleh semua anggota grup.</string>
     <string name="groupNoMessages">Tidak ada pesan dari <b>{group_name}</b>. Kirim pesan untuk memulai percakapan!</string>
     <string name="groupOnlyAdmin">Anda adalah satu-satunya admin di <b>{group_name}</b>.\n\nAnggota grup dan pengaturan tidak dapat diubah tanpa admin.</string>
+    <string name="groupPendingRemoval">Penghapusan tertunda</string>
     <string name="groupPromotedYou"><b>Anda</b> dipromosikan menjadi Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> dipromosikan menjadi Admin.</string>
+    <string name="groupPromotedYouTwo"><b>Anda</b> dan <b>{other_name}</b> dipromosikan menjadi Admin.</string>
     <string name="groupRemoveDescription">Apakah Anda ingin menghapus <b>{name}</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Apakah Anda ingin menghapus <b>{name}</b> dan <b>{count} lainnya</b> dari <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Apakah Anda ingin menghapus <b>{name}</b> dan <b>{other_name}</b> dari <b>{group_name}</b>?</string>
@@ -471,6 +481,7 @@
     <string name="groupSetDisplayPicture">Atur Tampilan Gambar Grup</string>
     <string name="groupUnknown">Grup tidak dikenal</string>
     <string name="groupUpdated">Grup diperbarui</string>
+    <string name="handlingConnectionCandidates">Menangani Kandidat Sambungan</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Bantu kami menerjemahkan {app_name}</string>
     <string name="helpReportABug">Laporkan Bug</string>
@@ -489,11 +500,22 @@
     <string name="incognitoKeyboardDescription">Minta mode incognito jika tersedia. Tergantung pada keyboard yang Anda gunakan, keyboard Anda mungkin mengabaikan permintaan ini.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Pintasan tidak valid</string>
+    <plurals name="inviteFailed">
+        <item quantity="other">Undangan Gagal</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="other">Undangan tidak dapat dikirim. Apakah Anda ingin mencoba lagi?</item>
+    </plurals>
     <string name="join">Gabung</string>
     <string name="later">Nanti</string>
     <string name="learnMore">Selengkapnya</string>
     <string name="leave">Tinggalkan</string>
     <string name="leaving">Meninggalkan...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Grup ini sekarang menjadi hanya-baca. Buat ulang grup ini untuk terus mengobrol.</string>
+    <string name="legacyGroupAfterDeprecationMember">Grup ini sekarang menjadi hanya-baca. Mintalah admin grup untuk membuat ulang grup ini agar dapat terus mengobrol.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Grup telah dimutakhirkan! Buat ulang grup ini untuk meningkatkan kehandalan. Grup ini akan menjadi hanya-baca pada {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Grup telah dimutakhirkan! Mintalah admin grup untuk membuat ulang grup ini untuk meningkatkan kehandalan. Grup ini akan menjadi hanya-baca pada {date}.</string>
+    <string name="legacyGroupChatHistory">Riwayat obrolan tidak akan ditransfer ke grup baru. Anda masih dapat melihat semua riwayat obrolan di grup lama Anda.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> bergabung dengan grup.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> dan <b>{count} lainnya</b> bergabung dengan grup.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Anda</b> dan <b>{count} lainnya</b> bergabung dengan grup.</string>
@@ -557,6 +579,9 @@
     <string name="messageNewDescriptionMobile">Mulai percakapan baru dengan memasukkan ID Akun teman Anda, ONS atau memindai kode QR mereka.</string>
     <plurals name="messageNewYouveGot">
         <item quantity="other">Anda menerima pesan baru %1$d.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="other">Anda memiliki %1$d pesan baru di %2$s.</item>
     </plurals>
     <string name="messageReplyingTo">Membalas ke</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> mengundang Anda untuk bergabung dengan <b>{group_name}</b>.</string>
@@ -714,6 +739,12 @@
     <string name="profileDisplayPictureSizeError">Silakan pilih berkas yang lebih kecil.</string>
     <string name="profileErrorUpdate">Gagal memperbarui profil.</string>
     <string name="promote">Promosikan</string>
+    <plurals name="promotionFailed">
+        <item quantity="other">Promosi Gagal</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="other">Promosi tidak dapat diterapkan. Apakah Anda ingin mencoba lagi?</item>
+    </plurals>
     <string name="qrCode">Kode QR</string>
     <string name="qrNotAccountId">Kode QR ini tidak berisi ID akun</string>
     <string name="qrNotRecoveryPassword">Kode QR ini tidak berisi Kata Sandi Pemulihan</string>
@@ -726,6 +757,9 @@
     <string name="readReceipts">Laporan Terbaca</string>
     <string name="readReceiptsDescription">Tampilkan tanda terima baca untuk semua pesan yang Anda kirim dan terima.</string>
     <string name="received">Diterima:</string>
+    <string name="receivedAnswer">Jawaban Diterima</string>
+    <string name="receivingCallOffer">Menerima Penawaran Panggilan</string>
+    <string name="receivingPreOffer">Menerima Pra-Penawaran</string>
     <string name="recommended">Direkomendasikan</string>
     <string name="recoveryPasswordBannerDescription">Simpan kata sandi pemulihan Anda untuk memastikan Anda tidak kehilangan akses ke akun Anda.</string>
     <string name="recoveryPasswordBannerTitle">Simpan kata sandi pemulihan Anda</string>
@@ -744,6 +778,7 @@
     <string name="recoveryPasswordRestoreDescription">Masukkan kata sandi pemulihan Anda untuk memuat akun Anda. Jika Anda belum menyimpannya, Anda dapat menemukannya di pengaturan aplikasi Anda.</string>
     <string name="recoveryPasswordView">Lihat Kata Sandi</string>
     <string name="recoveryPasswordWarningSendDescription">Ini adalah kata sandi pemulihan Anda. Jika Anda mengirimkannya ke seseorang, mereka akan memiliki akses penuh ke akun Anda.</string>
+    <string name="recreateGroup">Buat Ulang Grup</string>
     <string name="redo">mengulang</string>
     <string name="remove">Hapus</string>
     <string name="removePasswordFail">Gagal menghapus kata sandi</string>
@@ -777,6 +812,8 @@
     <string name="selectAll">Pilih Semua</string>
     <string name="send">Kirim</string>
     <string name="sending">Mengirim</string>
+    <string name="sendingCallOffer">Mengirim Penawaran Panggilan</string>
+    <string name="sendingConnectionCandidates">Mengirim Kandidat Sambungan</string>
     <string name="sent">Terkirim:</string>
     <string name="sessionAppearance">Tampilan</string>
     <string name="sessionClearData">Hapus Data</string>
@@ -795,6 +832,7 @@
     <string name="shareAccountIdDescription">Undang teman Anda untuk mengobrol dengan Anda di {app_name} dengan membagikan ID Akun Anda kepada mereka.</string>
     <string name="shareAccountIdDescriptionCopied">Bagikan dengan teman Anda di mana pun Anda biasa berbicara dengan mereka — lalu pindahkan percakapan ke sini.</string>
     <string name="shareExtensionDatabaseError">Terjadi masalah saat membuka database. Silakan mulai ulang aplikasi dan coba lagi.</string>
+    <string name="shareExtensionNoAccountError">Oops! Sepertinya Anda belum memiliki akun {app_name}.\n\nAnda harus membuatnya di aplikasi {app_name} sebelum dapat berbagi.</string>
     <string name="shareToSession">Bagikan ke {app_name}</string>
     <string name="show">Tampilkan</string>
     <string name="showAll">Tampilkan Semua</string>

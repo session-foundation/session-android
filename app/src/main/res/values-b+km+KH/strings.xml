@@ -358,9 +358,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} បានប្រតិកម្មដោយ {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} និង {other_name} បានប្រតិកម្មដោយ {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} និង <span>{count} នាក់ផ្សេងទៀត</span> បានប្រតិកម្មដោយ {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} និង <font color="0">{count} នាក់ផ្សេងទៀត</font> បានប្រតិកម្មដោយ {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">អ្នកបានប្រតិកម្មដោយ {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">អ្នក និង <span>{count} នាក់ផ្សេងទៀត</span> បានប្រតិកម្មដោយ {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">អ្នក និង <font color="0">{count} នាក់ផ្សេងទៀត</font> បានប្រតិកម្មដោយ {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">អ្នក និង {name} បានប្រតិកម្មដោយ {emoji_name}</string>
     <string name="emojiReactsNotification">បានធ្វើប្រតិកម្មចំពោះសាររបស់អ្នក {emoji}</string>
     <string name="enable">បើក</string>
@@ -404,6 +404,7 @@
     <string name="groupLeaveDescriptionAdmin">តើអ្នកប្រាកដទេថាអ្នកចង់ចាកចេញពី <b>{group_name}</b>?\n\nនេះនឹងដកសមាជិកទាំងអស់និងលុបមាតិកាក្រុមទាំងមូល។</string>
     <string name="groupLeaveErrorFailed">បរាជ័យក្នុងការចាកចេញពី {group_name}</string>
     <string name="groupMemberLeft"><b>{name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
+    <string name="groupMemberLeftMultiple"><b>{name}‍</b> និង <b>{count}</b> គេផ្សង ទៀត‍ បន ចាចកេញីក្រុមនេះ។</string>
     <string name="groupMemberLeftTwo"><b>{name}‍</b> និង <b>{other_name}‍</b> បានចាកចេញពីក្រុមនេះ។</string>
     <string name="groupMemberNew"><b>{name}‍</b>បន ចូលក្រុម។</string>
     <string name="groupMemberNewHistory"><b>{name}</b> ត្រូវបានអញ្ជើញឱ្យចូលក្រុមនេះ។បានចែករំលែកប្រវត្តិការជជែក។</string>

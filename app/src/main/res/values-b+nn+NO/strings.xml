@@ -293,6 +293,10 @@
         <item quantity="one">Klarte ikkje sletta meldinga</item>
         <item quantity="other">Klarte ikkje sletta meldingane</item>
     </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Diese Nachricht kann nicht gelöscht werden</item>
+        <item quantity="other">Ein paar Nachrichten könnten nicht gelöscht werden</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">Er du sikker på at du vil slette desse meldingane for alle?</string>
     <string name="deleting">Slettar</string>
     <string name="developerToolsToggle">Skru av/på Utviklerverktøy</string>
@@ -363,9 +367,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagerte med {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} og {other_name} reagerte med {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} og <span>{count} andre</span> reagerte med {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} og <font color="0">{count} andre</font> reagerte med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Du reagerte med {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Du og <span>{count} andre</span> reagerte med {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Du og <font color="0">{count} andre</font> reagerte med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Du og {name} reagerte med {emoji_name}</string>
     <string name="emojiReactsNotification">Reagerte på meldinga di {emoji}</string>
     <string name="enable">Skru på</string>
@@ -710,6 +714,7 @@
     <string name="readReceipts">Lesekvitteringar</string>
     <string name="readReceiptsDescription">Vis lesekvitteringar for alle meldingane du sender og mottar.</string>
     <string name="received">Motteke:</string>
+    <string name="receivedAnswer">Eingegangene Antwort</string>
     <string name="recommended">Anbefalt</string>
     <string name="recoveryPasswordBannerDescription">Lagre ditt Recovery password for å sikre at du ikkje mistar tilgangen til kontoen din.</string>
     <string name="recoveryPasswordBannerTitle">Lagre ditt Recovery password</string>

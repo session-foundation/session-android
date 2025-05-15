@@ -368,9 +368,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} је реаговао са {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} и {other_name} су реаговали са {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} и <span>{count} других</span> реаговали су са {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} и <font color="0">{count} других</font> реаговали су са {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Ви сте реаговали са {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Ви и <span>{count} других</span> реаговали сте са {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Ви и <font color="0">{count} других</font> реаговали сте са {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Ви и {name} сте реаговали са {emoji_name}</string>
     <string name="emojiReactsNotification">Реаговао је на твоју поруку {emoji}</string>
     <string name="enable">Укључи</string>

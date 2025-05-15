@@ -427,15 +427,16 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reacted with {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} and {other_name} reacted with {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} and <span>{count} others</span> reacted with {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} and <font color="0">{count} others</font> reacted with {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">You reacted with {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">You and <span>{count} others</span> reacted with {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">You and <font color="0">{count} others</font> reacted with {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">You and {name} reacted with {emoji_name}</string>
     <string name="emojiReactsNotification">Reacted to your message {emoji}</string>
     <string name="enable">Enable</string>
     <string name="errorConnection">Please check your internet connection and try again.</string>
     <string name="errorCopyAndQuit">Copy Error and Quit</string>
     <string name="errorDatabase">Database Error</string>
+    <string name="errorGeneric">Something went wrong. Please try again later.</string>
     <string name="errorUnknown">An unknown error occurred.</string>
     <string name="failedToDownload">Failed to download</string>
     <string name="failures">Failures</string>
@@ -908,6 +909,16 @@
     <string name="sessionHelp">Help</string>
     <string name="sessionInviteAFriend">Invite a Friend</string>
     <string name="sessionMessageRequests">Message Requests</string>
+    <string name="sessionNetworkCurrentPrice">Current {token_name_short} price</string>
+    <string name="sessionNetworkDescription">Messages are sent using the {network_name}. The network is comprised of nodes incentivized with {token_name_long}, which keeps {app_name} decentralized and secure. <font color="0"><b>Learn More</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Learn About Staking</string>
+    <string name="sessionNetworkMarketCap">Market Cap</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} Nodes securing <font color="0">your messages</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} Nodes in <font color="0">your swarm</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} is live! Explore the new {network_name} section in Settings to learn how {token_name_long} powers Session.</string>
+    <string name="sessionNetworkSecuredBy">Network secured by</string>
+    <string name="sessionNetworkTokenDescription">When you stake {token_name_long} to secure the network, you earn rewards in {token_name_short} from the {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> New</font></string>
     <string name="sessionNotifications">Notifications</string>
     <string name="sessionPermissions">Permissions</string>
     <string name="sessionPrivacy">Privacy</string>
@@ -937,6 +948,7 @@
     <string name="tryAgain">Try Again</string>
     <string name="typingIndicators">Typing Indicators</string>
     <string name="typingIndicatorsDescription">See and share typing indicators.</string>
+    <string name="unavailable">Unavailable</string>
     <string name="undo">Undo</string>
     <string name="unknown">Unknown</string>
     <string name="updateApp">App updates</string>
@@ -952,6 +964,7 @@
     <string name="updateReleaseNotes">Go to Release Notes</string>
     <string name="updateSession">{app_name} Update</string>
     <string name="updateVersion">Version {version}</string>
+    <string name="updated">Last updated {relative_time} ago</string>
     <string name="uploading">Uploading</string>
     <string name="urlCopy">Copy URL</string>
     <string name="urlOpen">Open URL</string>

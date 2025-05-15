@@ -14,6 +14,7 @@
     <string name="accountIdYoursDescription">Dette er din kontoid. Andre brugere kan scanne den for at starte en samtale med dig.</string>
     <string name="actualSize">Faktisk størrelse</string>
     <string name="add">Tilføj</string>
+    <string name="addAdmins">Tilføj administratorer</string>
     <string name="adminCannotBeRemoved">Admins kan ikke fjernes.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> og <b>{count} andre</b> blev forfremmet til Admin.</string>
     <string name="adminPromote">Forfrem administratorer</string>
@@ -26,7 +27,9 @@
     <string name="adminPromotionFailedDescription">Kunne ikke promovere {name} i {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Kunne ikke promovere {name} og {count} andre i {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Kunne ikke promovere {name} og {other_name} i {group_name}</string>
+    <string name="adminPromotionNotSent">Forfremmelsen er ikke sendt</string>
     <string name="adminPromotionSent">Admin promovering sendt</string>
+    <string name="adminPromotionStatusUnknown">Status på forfremmelsen er ukendt</string>
     <string name="adminRemove">Fjern administratorer</string>
     <string name="adminRemoveAsAdmin">Fjern som administrator</string>
     <string name="adminRemoveCommunityNone">Der er ingen administratorer i dette Community.</string>
@@ -36,10 +39,28 @@
     <string name="adminRemovedUser"><b>{name}</b> blev fjernet som Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> og <b>{count} andre</b> blev fjernet som Admin.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> og <b>{other_name}</b> blev fjernet som Admin.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Sender administrator-forfremmelse</item>
+        <item quantity="other">Sender administrator-forfremmelser</item>
+    </plurals>
     <string name="adminSettings">Admin indstillinger</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> og <b>{other_name}</b> blev forfremmet til Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonym</string>
+    <string name="appIcon">App-ikon</string>
+    <string name="appIconAndNameDescription">Alternativ ikon og app-navn vises på hjemmeskærmen og i app-skuffen.</string>
+    <string name="appIconAndNameSelectionTitle">Ikon og navn</string>
+    <string name="appIconDescription">Alternativ ikon vises på hjemmeskærmen og i biblioteket. App-navnet vil stadig være \'{app_name}\'.</string>
+    <string name="appIconEnableIcon">Brug alternativ app-ikon</string>
+    <string name="appIconEnableIconAndName">Brug alternativ app-ikon og -navn</string>
+    <string name="appIconSelect">Vælg alternativ app-ikon</string>
+    <string name="appIconSelectionTitle">Ikon</string>
+    <string name="appNameCalculator">Lommeregner</string>
+    <string name="appNameMeetingSE">MødeSE</string>
+    <string name="appNameNews">Nyheder</string>
+    <string name="appNameNotes">Noter</string>
+    <string name="appNameStocks">Aktier</string>
+    <string name="appNameWeather">Vejr</string>
     <string name="appearanceAutoDarkMode">Auto mørk tilstand</string>
     <string name="appearanceHideMenuBar">Skjul Menulinje</string>
     <string name="appearanceLanguage">Sprog</string>
@@ -57,6 +78,7 @@
     <string name="appearanceZoomIn">Zoom ind</string>
     <string name="appearanceZoomOut">Zoom ud</string>
     <string name="attachment">Vedhæftning</string>
+    <string name="attachments">Vedhæftninger</string>
     <string name="attachmentsAdd">Vedhæft fil</string>
     <string name="attachmentsAlbumUnnamed">Unavngivet Album</string>
     <string name="attachmentsAutoDownload">Automatisk download af vedhæftninger</string>
@@ -118,9 +140,11 @@
     <string name="banErrorFailed">Bandlys mislykkedes</string>
     <string name="banUnbanErrorFailed">Afvisning mislykkedes</string>
     <string name="banUnbanUser">Afvis Bruger</string>
+    <string name="banUnbanUserDescription">Indtast konto-ID\'et for den bruger, du vil fjerne blokering for</string>
     <string name="banUnbanUserUnbanned">Bruger godkendt</string>
     <string name="banUser">Udeluk bruger</string>
     <string name="banUserBanned">Bruger bandlyst</string>
+    <string name="banUserDescription">Indtast konto-ID\'et for den bruger, du vil blokere</string>
     <string name="block">Bloker</string>
     <string name="blockBlockedDescription">Fjern blokering af denne kontakt for at sende en besked.</string>
     <string name="blockBlockedNone">Ingen blokerede kontakter</string>
@@ -142,11 +166,13 @@
     <string name="callsInProgress">Opkald i gang</string>
     <string name="callsIncoming">Indgående opkald fra {name}</string>
     <string name="callsIncomingUnknown">Indgående opkald</string>
+    <string name="callsMicrophonePermissionsRequired">Du mistede et opkald fra <b>{name}</b>, fordi du ikke har givet <b>adgang til mikrofonen</b>.</string>
     <string name="callsMissed">Mistet opkald</string>
     <string name="callsMissedCallFrom">Mistet opkald fra {name}</string>
     <string name="callsNotificationsRequired">Lyd- og videoopkald kræver, at notifikationer er aktiveret i enhedens systemindstillinger.</string>
     <string name="callsPermissionsRequired">Opkalds Tilladelse Krævet</string>
     <string name="callsPermissionsRequiredDescription">Du kan aktivere tilladelsen \"Stemme- og videoopkald\" i Privatlivsindstillinger.</string>
+    <string name="callsPermissionsRequiredDescription1">Du kan aktivere ’Lyd- og videoopkald’ i Privatlivsindstillinger.</string>
     <string name="callsReconnecting">Genopretter...</string>
     <string name="callsRinging">Ringer...</string>
     <string name="callsSessionCall">{app_name} Opkald</string>
@@ -180,14 +206,22 @@
     <string name="clearDeviceAndNetworkConfirm">Er du sikker på, at du vil slette dine data fra netværket? Hvis du fortsætter, vil du ikke kunne gendanne dine beskeder eller kontakter.</string>
     <string name="clearDeviceDescription">Er du sikker på, at du vil nulstille din enhed?</string>
     <string name="clearDeviceOnly">Kun Ryd enheden</string>
+    <string name="clearDeviceRestart">Slet enhed og genstart</string>
+    <string name="clearDeviceRestore">Slet enhed og gendan</string>
     <string name="clearMessages">Ryd Alle Beskeder</string>
     <string name="clearMessagesChatDescription">Er du sikker på, at du vil rydde alle beskeder fra din samtale med <b>{name}</b> fra din enhed?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Er du sikker på, at du vil slette alle beskeder fra din samtale med <b>{name}</b> på denne enhed?</string>
     <string name="clearMessagesCommunity">Er du sikker på, at du vil rydde alle <b>{community_name}</b> beskeder fra din enhed?</string>
+    <string name="clearMessagesCommunityUpdated">Er du sikker på, at du vil slette alle beskeder fra <b>{community_name}</b> på denne enhed?</string>
     <string name="clearMessagesForEveryone">Ryd for alle</string>
     <string name="clearMessagesForMe">Ryd for mig</string>
     <string name="clearMessagesGroupAdminDescription">Er du sikker på, at du vil rydde alle <b>{group_name}</b> beskeder?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Er du sikker på, at du vil slette alle beskeder fra <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Er du sikker på, at du vil rydde alle <b>{group_name}</b> beskeder fra din enhed?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Er du sikker på, at du vil slette alle beskeder fra <b>{group_name}</b> på denne enhed?</string>
     <string name="clearMessagesNoteToSelfDescription">Er du sikker på, at du vil rydde alle Egen Note beskeder fra din enhed?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Er du sikker på, at du vil slette alle <b>Egen note</b>-beskeder fra din enhed?</string>
+    <string name="clearOnThisDevice">Slet på denne enhed</string>
     <string name="close">Luk</string>
     <string name="closeWindow">Luk vindue</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
@@ -253,7 +287,11 @@
     <string name="copied">Kopieret</string>
     <string name="copy">Kopiér</string>
     <string name="create">Opret</string>
+    <string name="creatingCall">Kalder op</string>
     <string name="cut">Klip</string>
+    <string name="databaseErrorClearDataWarning">Er du sikker på, at du vil slette alle beskeder, vedhæftede filer og kontodata fra denne enhed og oprette en ny konto?</string>
+    <string name="databaseErrorGeneric">Der opstod en databasefejl.\n\nEksporter dine applikationslogs til deling for fejlfinding. Hvis dette ikke lykkes, geninstaller {app_name} og gendan din konto.</string>
+    <string name="databaseErrorRestoreDataWarning">Er du sikker på, at du vil slette alle beskeder, vedhæftede filer og kontodata fra denne enhed og gendanne din konto fra netværket?</string>
     <string name="databaseErrorTimeout">Vi har bemærket, at {app_name} tager lang tid at starte.\n\nDu kan fortsætte med at vente, eksportere dine enhedslogfiler for at dele dem til fejlfinding eller prøve at genstarte {app_name}.</string>
     <string name="databaseErrorUpdate">Din app-database er inkompatibel med denne version af {app_name}. Geninstaller appen og gendan din konto for at generere en ny database og fortsætte med at bruge {app_name}.\n\nAdvarsel: Dette vil resultere i tab af alle beskeder og vedhæftninger, der er ældre end to uger.</string>
     <string name="databaseOptimizing">Optimerer Database</string>
@@ -275,9 +313,15 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Vent venligst mens gruppen oprettes...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Kunne ikke opdatere gruppe</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Du har ikke tilladelse til at slette andres beskeder</string>
+    <string name="deleteContactDescription">Er du sikker på, at du vil slette <b>{name}</b> fra dine kontakter?\n\nDette vil slette din samtale, herunder alle beskeder og vedhæftede filer. Fremtidige beskeder fra <b>{name}</b> vises som en besked anmodning.</string>
+    <string name="deleteConversationDescription">Er du sikker på, at du vil slette din samtale med <b>{name}</b>?\nDette vil permanent slette alle beskeder og vedhæftede filer.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Slet besked</item>
         <item quantity="other">Slet beskeder</item>
+    </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Er du sikker på, at du vil slette denne besked?</item>
+        <item quantity="other">Er du sikker på, at du vil slette disse beskeder?</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Besked slettet</item>
@@ -285,6 +329,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Denne besked er slettet</string>
     <string name="deleteMessageDeletedLocally">Denne besked blev slettet på denne enhed</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Er du sikker på, at du kun ønsker beskeden slettet fra denne enhed?</item>
+        <item quantity="other">Er du sikker på, at du kun ønsker beskederne slettet fra denne enhed?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Er du sikker på, at du vil slette denne besked for alle?</string>
     <string name="deleteMessageDeviceOnly">Slet kun på denne enhed</string>
     <string name="deleteMessageDevicesAll">Slet på alle mine enheder</string>
@@ -292,6 +340,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Kunne ikke slette besked</item>
         <item quantity="other">Kunne ikke slette beskeder</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Denne besked kan ikke slettes fra alle dine enheder</item>
+        <item quantity="other">Nogle af de beskeder, du har valgt, kan ikke slettes fra alle dine enheder</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Denne besked kan ikke slettes for alle</item>
+        <item quantity="other">Nogle af de beskeder, du har valgt, kan ikke slettes for alle</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Er du sikker på, at du vil slette disse beskeder for alle?</string>
     <string name="deleting">Sletter</string>
@@ -339,6 +395,7 @@
     <string name="displayNameNew">Vælg et nyt visningsnavn</string>
     <string name="displayNamePick">Vælg dit visningsnavn</string>
     <string name="displayNameSet">Indstil visningsnavn</string>
+    <string name="displayNameVisible">Dit kaldenavn er synligt for brugere, grupper og fællesskaber, du interagerer med.</string>
     <string name="document">Dokument</string>
     <string name="done">Færdig</string>
     <string name="download">Download</string>
@@ -363,9 +420,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} reagerede med {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} og {other_name} reagerede med {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} og <span>{count} andre</span> reagerede med {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} og <font color="0">{count} andre</font> reagerede med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Du reagerede med {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Du og <span>{count} andre</span> reagerede med {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Du og <font color="0">{count} andre</font> reagerede med {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Du og {name} reagerede med {emoji_name}</string>
     <string name="emojiReactsNotification">Reagerede på din besked {emoji}</string>
     <string name="enable">Aktivér</string>
@@ -373,10 +430,12 @@
     <string name="errorCopyAndQuit">Kopier fejl og afslut</string>
     <string name="errorDatabase">Databasefejl</string>
     <string name="errorUnknown">Der opstod en ukendt fejl.</string>
+    <string name="failedToDownload">Kunne ikke hente</string>
     <string name="failures">Registrerede fejl</string>
     <string name="file">Fil</string>
     <string name="files">Filer</string>
     <string name="followSystemSettings">Følg systemindstillinger</string>
+    <string name="forever">For altid</string>
     <string name="from">Fra:</string>
     <string name="fullScreenToggle">Vis fuldskærm</string>
     <string name="gif">GIF</string>
@@ -386,6 +445,9 @@
     <string name="groupCreate">Opret gruppe</string>
     <string name="groupCreateErrorNoMembers">Venligst vælg mindst én anden gruppemedlem.</string>
     <string name="groupDelete">Slet gruppe</string>
+    <string name="groupDeleteDescription">Er du sikker på, at du vil slette <b>{group_name}</b>?\n\nDette vil fjerne alle medlemmer og slette alt gruppe-indhold.</string>
+    <string name="groupDeleteDescriptionMember">Er du sikker på, du vil slette <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} er blevet slettet af en gruppeadministrator. Du vil ikke kunne sende flere beskeder.</string>
     <string name="groupDescriptionEnter">Indtast en gruppedescription</string>
     <string name="groupDisplayPictureUpdated">Gruppedisplaybillede opdateret.</string>
     <string name="groupEdit">Rediger gruppe</string>
@@ -398,12 +460,21 @@
     <string name="groupInviteFailedMultiple">Kunne ikke invitere {name} og {count} andre til {group_name}</string>
     <string name="groupInviteFailedTwo">Kunne ikke invitere {name} og {other_name} til {group_name}</string>
     <string name="groupInviteFailedUser">Kunne ikke invitere {name} til {group_name}</string>
+    <string name="groupInviteNotSent">Invitationen er ikke sendt</string>
+    <string name="groupInviteReinvite"><b>{name}</b> inviterede dig til igen at slutte dig til <b>{group_name}</b>, hvor du er administrator.</string>
+    <string name="groupInviteReinviteYou">Du blev inviteret til igen at slutte dig til <b>{group_name}</b>, hvor du er administrator.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Sender invitation</item>
+        <item quantity="other">Sender invitationer</item>
+    </plurals>
     <string name="groupInviteSent">Invitation afsendt</string>
+    <string name="groupInviteStatusUnknown">Status på invitationen er ukendt</string>
     <string name="groupInviteSuccessful">Gruppeinvite vellykket</string>
     <string name="groupInviteVersion">Brugerne skal have den nyeste version for at modtage invitationer</string>
     <string name="groupInviteYou"><b>Du</b> blev inviteret til at deltage i gruppen.</string>
     <string name="groupInviteYouAndMoreNew"><b>Du</b> og <b>{count} andre</b> blev inviteret til at deltage i gruppen.</string>
     <string name="groupInviteYouAndOtherNew"><b>Du</b> og <b>{other_name}</b> blev inviteret til at deltage i gruppen.</string>
+    <string name="groupInviteYouHistory"><b>Du</b> blev inviteret til at slutte dig til gruppen. Tidligere beskeder blev delt.</string>
     <string name="groupLeave">Forlad gruppe</string>
     <string name="groupLeaveDescription">Er du sikker på, at du vil forlade <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Er du sikker på, at du vil forlade <b>{group_name}</b>?\n\nDette vil fjerne alle medlemmer og slette alt gruppeoplekalt indhold.</string>
@@ -418,6 +489,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> og <b>{count} andre</b> blev inviteret til at deltage i gruppen.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> og <b>{other_name}</b> blev inviteret til at deltage i gruppen.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Du</b> og <b>{count} andre</b> blev inviteret til at deltage i gruppen. Chat historik blev delt.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Du</b> og <b>{other_name}</b> blev inviteret til at deltage i gruppen. Tidligere beskeder blev delt.</string>
     <string name="groupMemberYouLeft"><b>Du</b> forlod gruppen.</string>
     <string name="groupMembers">Gruppemedlemmer</string>
     <string name="groupMembersNone">Der er ingen andre medlemmer i denne gruppe.</string>
@@ -427,10 +499,14 @@
     <string name="groupNameEnterShorter">Please enter a shorter group name.</string>
     <string name="groupNameNew">Navnet på gruppen er nu {group_name}.</string>
     <string name="groupNameUpdated">Gruppenavn opdateret.</string>
+    <string name="groupNameVisible">Gruppenavnet er synligt for alle gruppemedlemmer.</string>
     <string name="groupNoMessages">Du har ingen beskeder fra <b>{group_name}.</b> Send en besked for at starte samtalen!</string>
+    <string name="groupNotUpdatedWarning">Denne gruppe er ikke blevet opdateret i over 30 dage. Du kan opleve problemer med at sende beskeder eller se gruppeoplysninger.</string>
     <string name="groupOnlyAdmin">Du er den eneste administrator i <b>{group_name}</b>.\n\nGruppemedlemmer og indstillinger kan ikke ændres uden en administrator.</string>
+    <string name="groupPendingRemoval">Afventer at blive fjernet</string>
     <string name="groupPromotedYou"><b>Du</b> blev forfremmet til Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Du</b> og <b>{count} andre</b> blev forfremmet til Admin.</string>
+    <string name="groupPromotedYouTwo"><b>Du</b> og <b>{other_name}</b> blev forfremmet til administratorer.</string>
     <string name="groupRemoveDescription">Vil du fjerne <b>{name}</b> fra <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Vil du fjerne <b>{name}</b> og <b>{count}</b> andre fra <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Vil du fjerne <b>{name}</b> og <b>{other_name}</b> fra <b>{group_name}</b>?</string>
@@ -446,11 +522,13 @@
     <string name="groupRemovedMultiple"><b>{name}</b> og <b>{count} andre</b> blev fjernet fra gruppen.</string>
     <string name="groupRemovedTwo"><b>{name}</b> og <b>{other_name}</b> blev fjernet fra gruppen.</string>
     <string name="groupRemovedYou">Du blev fjernet fra <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Du blev fjernet fra gruppen.</string>
     <string name="groupRemovedYouMultiple"><b>Du</b> og <b>{count} andre</b> blev fjernet fra gruppen.</string>
     <string name="groupRemovedYouTwo"><b>Du</b> og <b>{other_name}</b> blev fjernet fra gruppen.</string>
     <string name="groupSetDisplayPicture">Indstil gruppens profilbillede</string>
     <string name="groupUnknown">Ukendt gruppe</string>
     <string name="groupUpdated">Gruppe opdateret</string>
+    <string name="handlingConnectionCandidates">Håndterer mulige forbindelser</string>
     <string name="helpFAQ">FAQ</string>
     <string name="helpHelpUsTranslateSession">Hjælp os med at oversætte {app_name}</string>
     <string name="helpReportABug">Rapporter en fejl</string>
@@ -463,17 +541,32 @@
     <string name="helpWedLoveYourFeedback">Vi vil gerne høre din feedback</string>
     <string name="hide">Skjul</string>
     <string name="hideMenuBarDescription">Slå synlighed for systemmenulinjen til/fra</string>
+    <string name="hideNoteToSelfDescription">Er du sikker på, at du vil skjule <b>Egen note</b> fra din samtaleliste?</string>
     <string name="hideOthers">Skjul andre</string>
     <string name="image">Billede</string>
+    <string name="images">billeder</string>
     <string name="incognitoKeyboard">Inkognito tastatur</string>
     <string name="incognitoKeyboardDescription">Anmod om inkognitotilstand, hvis tilgængeligt. Afhængigt af tastaturet du bruger, kan dit tastatur ignorere denne anmodning.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Ugyldig genvej</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitationen mislykkedes</item>
+        <item quantity="other">Invitationer mislykkedes</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Invitationen kunne ikke sendes. Vil du prøve igen?</item>
+        <item quantity="other">Invitationerne kunne ikke sendes. Vil du prøve igen?</item>
+    </plurals>
     <string name="join">Deltag</string>
     <string name="later">Senere</string>
     <string name="learnMore">Lær mere</string>
     <string name="leave">Forlad</string>
     <string name="leaving">Forlader...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Denne gruppe er nu skrivebeskyttet. Genskab gruppen for at fortsætte med at chatte.</string>
+    <string name="legacyGroupAfterDeprecationMember">Denne gruppe er nu skrivebeskyttet. Bed gruppeadministratoren om at genskabe gruppen for at fortsætte med at chatte.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Grupper er er blevet opgraderet! Genskab denne gruppe for forbedret pålidelighed. Gruppen vil blive skrivebeskyttet den {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Grupper er er blevet opgraderet! Bed gruppeadministratoren om at genskabe gruppen for bedre pålidelighed. Gruppen vil blive skrivebeskyttet den {date}.</string>
+    <string name="legacyGroupChatHistory">Tidligere beskeder vil ikke blive overført til den nye gruppe. Du kan stadig se alle tidligere beskeder i din gamle gruppe.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> tilsluttede sig gruppen.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> og <b>{count} andre</b> tilsluttede sig gruppen.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Du</b> og <b>{count} andre</b> tilsluttede sig gruppen.</string>
@@ -502,6 +595,7 @@
     <string name="lockAppStatus">Låse status</string>
     <string name="lockAppUnlock">Tryk for at låse op</string>
     <string name="lockAppUnlocked">{app_name} er ulåst</string>
+    <string name="manageMembers">Administrer medlemmer</string>
     <string name="max">Max.</string>
     <string name="media">Medie</string>
     <plurals name="members">
@@ -543,6 +637,10 @@
         <item quantity="one">Du har en ny besked.</item>
         <item quantity="other">Du har %1$d nye beskeder.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Du har en ny besked i %1$s.</item>
+        <item quantity="other">Du har %1$d nye beskeder i %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Svar til</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> inviterede dig til at deltage i <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Ved at sende en besked til denne gruppe, accepterer du automatisk gruppeinvitationen.</string>
@@ -574,6 +672,7 @@
     <string name="next">Næste</string>
     <string name="nicknameDescription">Vælg et kælenavn for <b>{name}</b>. Dette vil blive vist for dig i din en-til-en samtaler og gruppekonversationer.</string>
     <string name="nicknameEnter">Indtast et kaldenavn</string>
+    <string name="nicknameErrorShorter">Indtast venligst et kortere kaldenavn</string>
     <string name="nicknameRemove">Fjern brugernavn</string>
     <string name="nicknameSet">Indstil brugernavn</string>
     <string name="no">Nej</string>
@@ -592,6 +691,7 @@
     <string name="notificationsContentShowNoNameOrContent">Intet Navn eller Indhold</string>
     <string name="notificationsFastMode">Hurtig Tilstand</string>
     <string name="notificationsFastModeDescription">Du får besked om nye meddelelser pålideligt og straks ved hjælp af Googles notifikationsservere.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Du vil blive underrettet om nye beskeder pålideligt og straks ved hjælp af Huawei\'s notifikationsservere.</string>
     <string name="notificationsFastModeDescriptionIos">Du vil få notifikationer om nye beskeder øjeblikkeligt ved hjælp af Apples notifikations servere.</string>
     <string name="notificationsGoToDevice">Gå til indstillinger for enhedsnotifikationer</string>
     <string name="notificationsHeaderAllMessages">Notifikationer - Alle</string>
@@ -607,6 +707,7 @@
     <string name="notificationsMuteFor">Udsæt for {time_large}</string>
     <string name="notificationsMuteUnmute">Fjern udsættelse</string>
     <string name="notificationsMuted">Lyden slået fra</string>
+    <string name="notificationsMutedFor">Notifikationer på pause i {time_large}</string>
     <string name="notificationsSlowMode">Langsom Tilstand</string>
     <string name="notificationsSlowModeDescription">{app_name} vil lejlighedsvis tjekke for nye beskeder i baggrunden.</string>
     <string name="notificationsSound">Lyd</string>
@@ -665,20 +766,32 @@
     <string name="passwordSet">Indstil adgangskode</string>
     <string name="passwordSetDescription">Din adgangskode er blevet indstillet. Venligst hold den sikker.</string>
     <string name="paste">Indsæt</string>
+    <string name="permissionChange">Ændring af adgange</string>
     <string name="permissionMusicAudioDenied">{app_name} kræver musik- og lydadgang for at sende filer, musik og lyd, men det er blevet permanent nægtet. Tryk på Indstillinger → Tilladelser, og slå \"Musik og lyd\" til.</string>
     <string name="permissionsAppleMusic">{app_name} skal bruge Apple Music for at afspille medievedhæftninger.</string>
     <string name="permissionsAutoUpdate">Auto Opdatér</string>
     <string name="permissionsAutoUpdateDescription">Automatisk søg efter opdateringer ved opstart</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">Adgang til kameraet er nødvendig for at foretage videoopkald. Slå tilladelsen \"Kamera\" til i indstillinger for at fortsætte.</string>
+    <string name="permissionsCameraChangeDescriptionIos">Kamera-adgang er i øjeblikket aktiveret. For at deaktivere den, skal du slå tilladelsen \"Kamera\" fra i Indstillinger.</string>
     <string name="permissionsCameraDenied">{app_name} kræver kameraadgang for at tage fotos og videoer, men det er blevet permanent nægtet. Tryk på Indstillinger → Tilladelser, og slå \"Kamera\" til.</string>
+    <string name="permissionsCameraDescriptionIos">Tillad adgang til kameraet for videoopkald.</string>
     <string name="permissionsFaceId">Skærmlåsfunktionen på {app_name} bruger Face ID.</string>
     <string name="permissionsKeepInSystemTray">Behold i statusfeltet</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} kører fortsat i baggrunden, når du lukker vinduet</string>
     <string name="permissionsLibrary">{app_name} behøver adgang til fotobiblioteket for at fortsætte. Du kan aktivere adgang i iOS\' indstillinger.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">Lokal netværksadgang er nødvendig for opkald. Slå tilladelsen \"Lokalt netværk\" til i indstillinger for at fortsætte.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} har brug for adgang til lokalt netværk for at foretage stemme- og videoopkald.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">Lokal netværksadgang er i øjeblikket aktiveret. For at deaktivere den, skal du slå tilladelsen \"Lokalt Netværk\" fra i indstillinger.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Tillad adgang til det lokale netværk for stemme- og videoopkald.</string>
+    <string name="permissionsLocalNetworkIos">Lokalt netværk</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} kræver tilladelse til at tilgå mikrofonen for at kunne foretage opkald og sende lydmeddelelser, men det er blevet permanent nægtet. Tryk på indstillinger → Tilladelser, og slå \"Mikrofon\" til.</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">Adgang til mikrofonen er nødvendig for at foretage opkald og optage lydbeskeder. Slå tilladelsen \"Mikrofon\" til i indstillinger for at fortsætte.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Du kan aktivere mikrofontilladelse i {app_name}\'s privatlivsindstillinger.</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} kræver mikrofonadgang for at foretage opkald og optage lydmeddelelser.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">Mikrofonadgang er i øjeblikket aktiveret. For at deaktivere den, skal du slå tilladelsen \"Mikrofon\" fra i indstillinger.</string>
     <string name="permissionsMicrophoneDescription">Tillad adgang til mikrofon.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Tillad adgang til mikrofon for stemmeopkald og lydbeskeder.</string>
     <string name="permissionsMusicAudio">{app_name} kræver musik- og lydadgang for at sende filer, musik og lyd.</string>
     <string name="permissionsRequired">Tilladelse krævet</string>
     <string name="permissionsStorageDenied">{app_name} kræver tilladelse til at tilgå dit fotobibliotek, så du kan sende fotos og videoer, men det er blevet permanent nægtet. Tryk på Indstillinger → Tilladelser, og slå \"Fotos og videoer\" til.</string>
@@ -698,6 +811,14 @@
     <string name="profileDisplayPictureSizeError">Venligst vælg en mindre fil.</string>
     <string name="profileErrorUpdate">Kunne ikke opdatere profil.</string>
     <string name="promote">Fremme</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Forfremmelsen mislykkedes</item>
+        <item quantity="other">Forfremmelserne mislykkedes</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Forfremmelsen kunne ikke gennemføres. Vil du prøve i gen?</item>
+        <item quantity="other">Forfremmelserne kunne ikke gennemføres. Vil du prøve i gen?</item>
+    </plurals>
     <string name="qrCode">QR-kode</string>
     <string name="qrNotAccountId">Denne QR-kode indeholder ikke en Konto-ID</string>
     <string name="qrNotRecoveryPassword">Denne QR-kode indeholder ikke en Gendannelseskode</string>
@@ -710,11 +831,15 @@
     <string name="readReceipts">Læsekvitteringer</string>
     <string name="readReceiptsDescription">Vis læsekvitteringer for alle beskeder du sender og modtager.</string>
     <string name="received">Modtaget:</string>
+    <string name="receivedAnswer">Modtog svar</string>
+    <string name="receivingCallOffer">Modtager opkaldstilbud</string>
+    <string name="receivingPreOffer">Modtager forhåndstilbud</string>
     <string name="recommended">Anbefalet</string>
     <string name="recoveryPasswordBannerDescription">Gem din recovery password for at sikre, at du ikke mister adgangen til din konto.</string>
     <string name="recoveryPasswordBannerTitle">Gem din recovery password</string>
     <string name="recoveryPasswordDescription">Brug din recovery password til at indlæse din konto på nye enheder.\n\nDin konto kan ikke gendannes uden din recovery password. Sørg for, at den er opbevaret et sikkert sted, og del den ikke med nogen.</string>
     <string name="recoveryPasswordEnter">Indtast din gendannelsesadgangskode</string>
+    <string name="recoveryPasswordErrorLoad">Der opstod en fejl under forsøget på at indlæse din gendannelsesadgangskode.\n\nEksporter dine logs, og upload derefter filen via Hjælp i {app_name} for at hjælpe med at løse dette problem.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Nogle af ordene i din Recovery Password er forkerte. Venligst tjek igen.</string>
     <string name="recoveryPasswordErrorMessageShort">Den indtastede Gendannelseskode er ikke lang nok. Kontroller den og prøv igen.</string>
@@ -728,6 +853,7 @@
     <string name="recoveryPasswordRestoreDescription">Indtast din gendannelsesadgangskode for at indlæse din konto. Hvis du ikke har gemt den, kan du finde den i dine app-indstillinger.</string>
     <string name="recoveryPasswordView">Vis adgangskode</string>
     <string name="recoveryPasswordWarningSendDescription">Det her er din gendannelsessætning. Hvis du sender den til nogen vil de have fuld adgang til din konto.</string>
+    <string name="recreateGroup">Genskab gruppe</string>
     <string name="redo">Gentag</string>
     <string name="remove">Fjern</string>
     <string name="removePasswordFail">Kunne ikke fjerne adgangskode</string>
@@ -751,8 +877,8 @@
     <string name="searchConversation">Søg I Beskeder</string>
     <string name="searchEnter">Indtast venligst din søgning.</string>
     <plurals name="searchMatches">
-        <item quantity="one">%1$d ud af %2$d match</item>
-        <item quantity="other">%1$d ud af %2$d matches</item>
+        <item quantity="one">%1$d ud af %2$d fundet</item>
+        <item quantity="other">%1$d ud af %2$d fundet</item>
     </plurals>
     <string name="searchMatchesNone">Ingen resultater fundet.</string>
     <string name="searchMatchesNoneSpecific">Ingen resultater fundet for {query}</string>
@@ -762,6 +888,8 @@
     <string name="selectAll">Vælg Alle</string>
     <string name="send">Send</string>
     <string name="sending">Sender</string>
+    <string name="sendingCallOffer">Sender opkaldstilbud</string>
+    <string name="sendingConnectionCandidates">Sender mulige forbindelser</string>
     <string name="sent">Sendt:</string>
     <string name="sessionAppearance">Udseende</string>
     <string name="sessionClearData">Ryd data</string>
@@ -775,18 +903,23 @@
     <string name="sessionRecoveryPassword">Gendannelsesadgangskode</string>
     <string name="sessionSettings">Indstillinger</string>
     <string name="set">Indstil</string>
+    <string name="setCommunityDisplayPicture">Vælg billede til fællesskabet</string>
     <string name="settingsRestartDescription">Du skal genstarte {app_name} for at anvende dine nye indstillinger.</string>
     <string name="share">Del</string>
     <string name="shareAccountIdDescription">Invite din ven til at chatte med dig på {app_name} ved at dele din Account ID med dem.</string>
     <string name="shareAccountIdDescriptionCopied">Del med dine venner, uanset hvor du normalt taler med dem — og fortsæt samtalen her.</string>
     <string name="shareExtensionDatabaseError">Der er et problem med at åbne databasen. Genstart appen og prøv igen.</string>
+    <string name="shareExtensionNoAccountError">Ups! Det ser ud til, at du ikke har en {app_name}-konto endnu.\n\nDu skal oprette en i {app_name}-appen, før du kan dele.</string>
     <string name="shareToSession">Del til {app_name}</string>
     <string name="show">Vis</string>
     <string name="showAll">Vis alle</string>
     <string name="showLess">Vis mindre</string>
+    <string name="showNoteToSelf">Egen note</string>
+    <string name="showNoteToSelfDescription">Er du sikker på, at du vil vise <b>Egen note</b> i din samtaleliste?</string>
     <string name="stickers">Klistermærker</string>
     <string name="supportGoTo">Gå til supportsiden</string>
     <string name="systemInformationDesktop">Systemoplysninger: {information}</string>
+    <string name="tapToRetry">Tryk for at prøve igen</string>
     <string name="theContinue">Fortsæt</string>
     <string name="theDefault">Standard</string>
     <string name="theError">Fejl</string>
@@ -800,7 +933,11 @@
     <string name="updateDownloading">Download af opdatering: {percent_loader}%</string>
     <string name="updateError">Kan ikke opdatere</string>
     <string name="updateErrorDescription">{app_name} opdateringen mislykkedes. Gå venligst til {session_download_url} og installer den nye version manuelt, og kontakt derefter vores Hjælpecenter for at informere os om dette problem.</string>
+    <string name="updateGroupInformation">Opdatér gruppeoplysninger</string>
+    <string name="updateGroupInformationDescription">Gruppenavn og beskrivelse er synlig for alle gruppemedlemmer.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Indtast venligst en kortere gruppebeskrivelse</string>
     <string name="updateNewVersion">En ny version af {app_name} er tilgængelig, tryk for at opdatere</string>
+    <string name="updateNewVersionDescription">En ny version ({version}) af {app_name} er tilgængelig.</string>
     <string name="updateReleaseNotes">Gå til udgivelsesnoter</string>
     <string name="updateSession">{app_name} Opdatering</string>
     <string name="updateVersion">Version {version}</string>
@@ -813,6 +950,8 @@
     <string name="video">Video</string>
     <string name="videoErrorPlay">Kan ikke afspille video.</string>
     <string name="view">Vis</string>
+    <string name="viewLess">Vis mindre</string>
+    <string name="viewMore">Vis mere</string>
     <string name="waitFewMinutes">Dette kan tage nogle minutter.</string>
     <string name="waitOneMoment">Et øjeblik, tak...</string>
     <string name="warning">Advarsel</string>

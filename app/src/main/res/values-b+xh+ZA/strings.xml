@@ -364,9 +364,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} usebenzise {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} and {other_name} basebenzise {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} kunye <span>{count} abanye</span> baphendule nge {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} kunye <font color="0">{count} abanye</font> baphendule nge {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">Uphendule nge {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">Wena, <span>{count} abanye</span> baphendule nge {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">Wena, <font color="0">{count} abanye</font> baphendule nge {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Wena, {name} baphendule nge {emoji_name}</string>
     <string name="emojiReactsNotification">Uphendule umyalezo wakho {emoji}</string>
     <string name="enable">Vumela</string>

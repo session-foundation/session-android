@@ -373,9 +373,9 @@
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} הגיב עם {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} ו-{other_name} הגיבו עם {emoji_name}</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ו<span>{count} אחרים</span> הגיבו עם {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} ו<font color="0">{count} אחרים</font> הגיבו עם {emoji_name}</string>
     <string name="emojiReactsHoverYouNameDesktop">אתה הגבת עם {emoji_name}</string>
-    <string name="emojiReactsHoverYouNameMultipleDesktop">אתה ו<span>{count} אחרים</span> הגבתם עם {emoji_name}</string>
+    <string name="emojiReactsHoverYouNameMultipleDesktop">אתה ו<font color="0">{count} אחרים</font> הגבתם עם {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">אתה ו-{name} הגבתם עם {emoji_name}</string>
     <string name="emojiReactsNotification">הגיב להודעתך {emoji}</string>
     <string name="enable">אפשר</string>

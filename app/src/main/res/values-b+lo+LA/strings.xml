@@ -166,7 +166,7 @@
     <string name="emojiCategoryActivities">ກິລາເດີນທາງ.</string>
     <string name="emojiCategoryAnimals">ສັດແລະທຳມະຊາດ</string>
     <string name="emojiReactsClearAll">ເຈົ້າຕ້ອງທຳທີໃຫ້ໃຫ້ໄອອິໂມຈີທັງໝົດ {emoji}?</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} and <span>{count} others</span> reacted with {emoji_name}</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} and <font color="0">{count} others</font> reacted with {emoji_name}</string>
     <string name="enable">ເປີດ</string>
     <string name="errorCopyAndQuit">ເສັກກີ້າບເອີເທິ່ນຫຍັງາ</string>
     <string name="errorDatabase">ຂໍ້ມູນຂອງຖານຂໍ້ມູນຜິດພາດ</string>
