@@ -205,7 +205,7 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         }
 
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessage(messageId.id, messageId.sms)
-        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageId.id, mms = messageId.sms)
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageId.id, mms = messageId.mms)
     }
 
     override fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean) {
