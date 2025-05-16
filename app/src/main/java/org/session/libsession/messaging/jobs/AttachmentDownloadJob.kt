@@ -19,6 +19,7 @@ import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ByteArraySlice.Companion.write
+import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -57,11 +58,11 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
         fun eligibleForDownload(threadID: Long,
                                 storage: StorageProtocol,
                                 messageDataProvider: MessageDataProvider,
-                                databaseMessageID: Long): Boolean {
+                                mmsId: Long): Boolean {
             val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
 
             // if we are the sender we are always eligible
-            val selfSend = messageDataProvider.isMmsOutgoing(databaseMessageID)
+            val selfSend = messageDataProvider.isOutgoingMessage(MessageId(mmsId, true))
             if (selfSend) {
                 return true
             }

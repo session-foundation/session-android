@@ -110,18 +110,20 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         database.endTransaction()
     }
 
-    fun deleteMessages(messageIDs: List<Long>) {
+    fun deleteMessages(messageIDs: List<Long>, isSms: Boolean) {
         val database = writableDatabase
         database.beginTransaction()
 
+        val messageTypeValue = if (isSms) SMS_TYPE else MMS_TYPE
+
         database.delete(
             messageIDTable,
-            "${Companion.messageID} IN (${messageIDs.map { "?" }.joinToString(",")})",
+            "${Companion.messageID} IN (${messageIDs.joinToString(",") { "?" }}) AND $messageType = $messageTypeValue",
             messageIDs.map { "$it" }.toTypedArray()
         )
         database.delete(
             messageThreadMappingTable,
-            "${Companion.messageID} IN (${messageIDs.map { "?" }.joinToString(",")})",
+            "${Companion.messageID} IN (${messageIDs.joinToString(",") { "?" }}) AND $messageType = $messageTypeValue",
             messageIDs.map { "$it" }.toTypedArray()
         )
 
@@ -286,9 +288,8 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
                     .map {
                         ServerHashToMessageId(
                             serverHash = cursor.getString(0),
-                            messageId = cursor.getLong(1),
+                            messageId = MessageId(cursor.getLong(1), mms = cursor.getInt(4) == 0),
                             sender = cursor.getString(2),
-                            isSms = cursor.getInt(4) == 1,
                             isOutgoing = MmsSmsColumns.Types.isOutgoingMessageType(cursor.getLong(3))
                         )
                     }

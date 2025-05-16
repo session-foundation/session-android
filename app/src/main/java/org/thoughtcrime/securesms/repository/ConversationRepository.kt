@@ -14,7 +14,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -31,7 +30,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.DraftDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
@@ -233,11 +231,11 @@ class DefaultConversationRepository @Inject constructor(
         val (mms, sms) = messages.partition { it.isMms }
 
         if(mms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(mms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = false,
+            messageDataProvider.markMessagesAsDeleted(
+                mms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -246,11 +244,11 @@ class DefaultConversationRepository @Inject constructor(
         }
 
         if(sms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(sms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = true,
+            messageDataProvider.markMessagesAsDeleted(
+                sms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -264,7 +262,7 @@ class DefaultConversationRepository @Inject constructor(
         val senderId = messageRecord.recipient.address.contactIdentifier()
         val messageRecordsToRemoveFromLocalStorage = mmsSmsDb.getAllMessageRecordsFromSenderInThread(threadId, senderId)
         for (message in messageRecordsToRemoveFromLocalStorage) {
-            messageDataProvider.deleteMessage(message.id, !message.isMms)
+            messageDataProvider.deleteMessage(messageId = message.messageId)
         }
     }
 
@@ -370,10 +368,6 @@ class DefaultConversationRepository @Inject constructor(
                 userAddress?.let { MessageSender.send(unsendRequest, it) }
             }
         }
-    }
-
-    private fun shouldSendUnsendRequest(recipient: Recipient): Boolean {
-        return recipient.is1on1 || recipient.isLegacyGroupRecipient
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {

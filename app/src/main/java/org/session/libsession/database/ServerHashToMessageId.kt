@@ -1,5 +1,7 @@
 package org.session.libsession.database
 
+import org.thoughtcrime.securesms.database.model.MessageId
+
 data class ServerHashToMessageId(
     val serverHash: String,
     /**
@@ -8,7 +10,6 @@ data class ServerHashToMessageId(
      * meaning of this field.
      */
     val sender: String,
-    val messageId: Long,
-    val isSms: Boolean,
+    val messageId: MessageId,
     val isOutgoing: Boolean,
 )

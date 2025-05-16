@@ -17,9 +17,6 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_INCOMING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_DELETED_OUTGOING_TYPE;
-import static org.thoughtcrime.securesms.database.MmsSmsColumns.Types.BASE_TYPE_MASK;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -40,7 +37,6 @@ import org.thoughtcrime.securesms.database.MessagingDatabase.SyncMessageId;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
-import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
 import java.io.Closeable;
@@ -294,16 +290,6 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
-  public long getLastMessageID(long threadId) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, "1")) {
-      cursor.moveToFirst();
-      return cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.ID));
-    }
-  }
-
   public List<MessageRecord> getUserMessages(long threadId, String sender) {
 
     List<MessageRecord> idList = new ArrayList<>();
@@ -354,28 +340,6 @@ public class MmsSmsDatabase extends Database {
       }
     }
     return identifiedMessages;
-  }
-
-  public long getLastOutgoingTimestamp(long threadId) {
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    // Try everything with resources so that they auto-close on end of scope
-    try (Cursor cursor = queryTables(PROJECTION, selection, order, null)) {
-      try (MmsSmsDatabase.Reader reader = readerFor(cursor)) {
-        MessageRecord messageRecord;
-        long attempts = 0;
-        long maxAttempts = 20;
-        while ((messageRecord = reader.getNext()) != null) {
-          // Note: We rely on the message order to get us the most recent outgoing message - so we
-          // take the first outgoing message we find as the last outgoing message.
-          if (messageRecord.isOutgoing()) return messageRecord.getTimestamp();
-          if (attempts++ > maxAttempts) break;
-        }
-      }
-    }
-    Log.i(TAG, "Could not find last sent message from us - returning -1.");
-    return -1;
   }
 
   @Nullable
@@ -433,34 +397,9 @@ public class MmsSmsDatabase extends Database {
     return count;
   }
 
-  public void incrementDeliveryReceiptCount(SyncMessageId syncMessageId, long timestamp) {
-    DatabaseComponent.get(context).smsDatabase().incrementReceiptCount(syncMessageId, true, false);
-    DatabaseComponent.get(context).mmsDatabase().incrementReceiptCount(syncMessageId, timestamp, true, false);
-  }
-
   public void incrementReadReceiptCount(SyncMessageId syncMessageId, long timestamp) {
     DatabaseComponent.get(context).smsDatabase().incrementReceiptCount(syncMessageId, false, true);
     DatabaseComponent.get(context).mmsDatabase().incrementReceiptCount(syncMessageId, timestamp, false, true);
-  }
-
-  public int getQuotedMessagePosition(long threadId, long quoteId, @NonNull Address address) {
-    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
-    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
-
-    try (Cursor cursor = queryTables(new String[]{ MmsSmsColumns.NORMALIZED_DATE_SENT, MmsSmsColumns.ADDRESS }, selection, order, null)) {
-      String  serializedAddress = address.toString();
-      boolean isOwnNumber       = Util.isOwnNumber(context, address.toString());
-
-      while (cursor != null && cursor.moveToNext()) {
-        boolean quoteIdMatches = cursor.getLong(0) == quoteId;
-        boolean addressMatches = serializedAddress.equals(cursor.getString(1));
-
-        if (quoteIdMatches && (addressMatches || isOwnNumber)) {
-          return cursor.getPosition();
-        }
-      }
-    }
-    return -1;
   }
 
   public int getMessagePositionInConversation(long threadId, long sentTimestamp, @NonNull Address address, boolean reverse) {
