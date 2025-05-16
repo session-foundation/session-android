@@ -11,7 +11,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 
@@ -20,8 +19,7 @@ object ResendMessageUtilities {
     fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
         val recipient: Recipient = messageRecord.recipient
         val message = VisibleMessage()
-        val messageId = MessageId(messageRecord.getId(), messageRecord.isMms)
-        message.id = messageId
+        message.id = messageRecord.messageId
         if (messageRecord.isOpenGroupInvitation) {
             val openGroupInvitation = OpenGroupInvitation()
             UpdateMessageData.fromJSON(messageRecord.body)?.let { updateMessageData ->
@@ -57,10 +55,10 @@ object ResendMessageUtilities {
         val sender = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
-                MessagingModuleConfiguration.shared.storage.markAsResyncing(messageId)
+                MessagingModuleConfiguration.shared.storage.markAsResyncing(messageRecord.messageId)
                 MessageSender.sendNonDurably(message, Destination.from(recipient.address), isSyncMessage = true)
             } else {
-                MessagingModuleConfiguration.shared.storage.markAsSending(messageId)
+                MessagingModuleConfiguration.shared.storage.markAsSending(messageRecord.messageId)
                 MessageSender.send(message, recipient.address)
             }
         }
