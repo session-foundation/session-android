@@ -69,13 +69,9 @@ public class Util {
   }
 
   public static byte[] getSecretBytes(int size) {
-    try {
-      byte[] secret = new byte[size];
-      SecureRandom.getInstance("SHA1PRNG").nextBytes(secret);
-      return secret;
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    }
+    byte[] secret = new byte[size];
+    new SecureRandom().nextBytes(secret);
+    return secret;
   }
 
   public static String readFully(InputStream in) throws IOException {

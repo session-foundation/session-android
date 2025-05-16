@@ -53,7 +53,7 @@ object MessageWrapper {
                 request = WebSocketRequestMessage.newBuilder().apply {
                     verb = "PUT"
                     path = "/api/v1/message"
-                    id = SecureRandom.getInstance("SHA1PRNG").nextLong()
+                    id = SecureRandom().nextLong()
                     body = envelope.toByteString()
                 }.build()
                 type = WebSocketMessage.Type.REQUEST
