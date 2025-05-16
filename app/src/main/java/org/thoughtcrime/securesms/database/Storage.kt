@@ -279,7 +279,7 @@ open class Storage @Inject constructor(
 
     override fun deleteMessagesByHash(threadId: Long, hashes: List<String>) {
         for (info in lokiMessageDatabase.getSendersForHashes(threadId, hashes.toSet())) {
-            messageDataProvider.deleteMessage(info.messageId, info.isSms)
+            messageDataProvider.deleteMessage(info.messageId)
             if (!info.isOutgoing) {
                 notificationManager.updateNotification(context)
             }

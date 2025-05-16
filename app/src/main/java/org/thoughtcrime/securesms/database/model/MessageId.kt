@@ -17,6 +17,8 @@ data class MessageId(
   @Keep
   private constructor(): this(0, false)
 
+  val sms: Boolean get() = !mms
+
   fun serialize(): String {
     return "$id|$mms"
   }

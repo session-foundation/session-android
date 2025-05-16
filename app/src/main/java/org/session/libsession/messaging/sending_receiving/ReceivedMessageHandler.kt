@@ -294,7 +294,8 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
     val timestamp = message.timestamp ?: return null
     val author = message.author ?: return null
     val messageToDelete = storage.getMessageBy(timestamp, author) ?: return null
-    val messageType = messageToDelete.individualRecipient.getType()
+    val messageIdToDelete = messageToDelete.messageId
+    val messageType = messageToDelete.individualRecipient?.getType()
 
     // send a /delete rquest for 1on1 messages
     if (messageType == MessageType.ONE_ON_ONE) {
@@ -311,12 +312,11 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
 
     // the message is marked as deleted locally
     // except for 'note to self' where the message is completely deleted
-    if(messageType == MessageType.NOTE_TO_SELF){
-        messageDataProvider.deleteMessage(messageToDelete.id, !messageToDelete.isMms)
+    if (messageType == MessageType.NOTE_TO_SELF){
+        messageDataProvider.deleteMessage(messageIdToDelete)
     } else {
         messageDataProvider.markMessageAsDeleted(
-            timestamp = timestamp,
-            author = author,
+            messageIdToDelete,
             displayedMessage = context.getString(R.string.deleteMessageDeletedGlobally)
         )
     }
@@ -329,7 +329,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
         SSKEnvironment.shared.notificationManager.updateNotification(context)
     }
 
-    return messageToDelete.messageId
+    return messageIdToDelete
 }
 
 fun handleMessageRequestResponse(message: MessageRequestResponse) {
