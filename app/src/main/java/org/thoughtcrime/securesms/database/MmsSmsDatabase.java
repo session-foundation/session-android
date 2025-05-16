@@ -105,11 +105,14 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  public @Nullable MessageRecord getNonDeletedMessageForTimestamp(long timestamp) {
-    String selection = MmsSmsColumns.NORMALIZED_DATE_SENT + " = " + timestamp;
-    try (Cursor cursor = queryTables(PROJECTION, selection, null, null)) {
-      MmsSmsDatabase.Reader reader = readerFor(cursor);
-      return reader.getNext();
+  public @Nullable MessageRecord getMessageById(@NonNull MessageId id) {
+    if (id.isMms()) {
+      final MmsDatabase db = DatabaseComponent.get(context).mmsDatabase();
+      try (final Cursor cursor = db.getMessage(id.getId())) {
+        return db.readerFor(cursor, true).getNext();
+      }
+    } else {
+      return DatabaseComponent.get(context).smsDatabase().getMessageOrNull(id.getId());
     }
   }
 

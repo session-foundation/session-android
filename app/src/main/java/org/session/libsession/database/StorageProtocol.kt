@@ -37,6 +37,7 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.model.MessageId
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -121,15 +122,15 @@ interface StorageProtocol {
     fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment>
     fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? // TODO: This is a weird name
     fun getMessageType(timestamp: Long, author: String): MessageType?
-    fun updateSentTimestamp(messageID: Long, isMms: Boolean, openGroupSentTimestamp: Long, threadId: Long)
-    fun markAsResyncing(timestamp: Long, author: String)
-    fun markAsSyncing(timestamp: Long, author: String)
-    fun markAsSending(timestamp: Long, author: String)
-    fun markAsSent(messageID: Long, isMms: Boolean)
-    fun markAsSyncFailed(timestamp: Long, author: String, error: Exception)
-    fun markAsSentFailed(timestamp: Long, author: String, error: Exception)
-    fun clearErrorMessage(messageID: Long)
-    fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String)
+    fun updateSentTimestamp(messageId: MessageId, openGroupSentTimestamp: Long, threadId: Long)
+    fun markAsResyncing(messageId: MessageId)
+    fun markAsSyncing(messageId: MessageId)
+    fun markAsSending(messageId: MessageId)
+    fun markAsSent(messageId: MessageId)
+    fun markAsSyncFailed(messageId: MessageId, error: Exception)
+    fun markAsSentFailed(messageId: MessageId, error: Exception)
+    fun clearErrorMessage(messageID: MessageId)
+    fun setMessageServerHash(messageId: MessageId, serverHash: String)
 
     // Legacy Closed Groups
     fun getGroup(groupID: String): GroupRecord?

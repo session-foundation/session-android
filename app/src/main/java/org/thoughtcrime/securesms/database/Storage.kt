@@ -663,66 +663,48 @@ open class Storage @Inject constructor(
     }
 
     override fun updateSentTimestamp(
-        messageID: Long,
-        isMms: Boolean,
+        messageId: MessageId,
         openGroupSentTimestamp: Long,
         threadId: Long
     ) {
-        if (isMms) {
+        if (messageId.mms) {
             val mmsDb = mmsDatabase
-            mmsDb.updateSentTimestamp(messageID, openGroupSentTimestamp, threadId)
+            mmsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
         } else {
             val smsDb = smsDatabase
-            smsDb.updateSentTimestamp(messageID, openGroupSentTimestamp, threadId)
+            smsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
         }
     }
 
-    override fun markAsSent(messageID: Long, isMms: Boolean) {
-        if (isMms) {
-            mmsDatabase.markAsSent(messageID, true)
-        } else {
-            smsDatabase.markAsSent(messageID, true)
-        }
+    override fun markAsSent(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSent(messageId.id, true)
     }
 
-    override fun markAsSyncing(timestamp: Long, author: String) {
-        mmsSmsDatabase
-            .getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncing(id) }
+    override fun markAsSyncing(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSyncing(messageId.id)
     }
 
     private fun getMmsDatabaseElseSms(isMms: Boolean) =
         if (isMms) mmsDatabase
         else smsDatabase
 
-    override fun markAsResyncing(timestamp: Long, author: String) {
-        mmsSmsDatabase
-            .getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsResyncing(id) }
+    override fun markAsResyncing(messageId: MessageId) {
+        getMmsDatabaseElseSms(messageId.mms).markAsResyncing(messageId.id)
     }
 
-    override fun markAsSending(timestamp: Long, author: String) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markAsSending(messageRecord.getId())
+    override fun markAsSending(messageId: MessageId) {
+        if (messageId.mms) {
+            mmsDatabase.markAsSending(messageId.id)
         } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markAsSending(messageRecord.getId())
-            messageRecord.isPending
+            smsDatabase.markAsSending(messageId.id)
         }
     }
 
-    override fun markAsSentFailed(timestamp: Long, author: String, error: Exception) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-        if (messageRecord.isMms) {
-            val mmsDatabase = mmsDatabase
-            mmsDatabase.markAsSentFailed(messageRecord.getId())
+    override fun markAsSentFailed(messageId: MessageId, error: Exception) {
+        if (messageId.mms) {
+            mmsDatabase.markAsSentFailed(messageId.id)
         } else {
-            val smsDatabase = smsDatabase
-            smsDatabase.markAsSentFailed(messageRecord.getId())
+            smsDatabase.markAsSentFailed(messageId.id)
         }
         if (error.localizedMessage != null) {
             val message: String
@@ -731,18 +713,14 @@ open class Storage @Inject constructor(
             } else {
                 message = error.localizedMessage!!
             }
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), message)
+            lokiMessageDatabase.setErrorMessage(messageId, message)
         } else {
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+            lokiMessageDatabase.setErrorMessage(messageId, error.javaClass.simpleName)
         }
     }
 
-    override fun markAsSyncFailed(timestamp: Long, author: String, error: Exception) {
-        val database = mmsSmsDatabase
-        val messageRecord = database.getMessageFor(timestamp, author) ?: return
-
-        database.getMessageFor(timestamp, author)
-            ?.run { getMmsDatabaseElseSms(isMms).markAsSyncFailed(id) }
+    override fun markAsSyncFailed(messageId: MessageId, error: Exception) {
+        getMmsDatabaseElseSms(messageId.mms).markAsSyncFailed(messageId.id)
 
         if (error.localizedMessage != null) {
             val message: String
@@ -751,19 +729,18 @@ open class Storage @Inject constructor(
             } else {
                 message = error.localizedMessage!!
             }
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), message)
+            lokiMessageDatabase.setErrorMessage(messageId, message)
         } else {
-            lokiMessageDatabase.setErrorMessage(messageRecord.getId(), error.javaClass.simpleName)
+            lokiMessageDatabase.setErrorMessage(messageId, error.javaClass.simpleName)
         }
     }
 
-    override fun clearErrorMessage(messageID: Long) {
-        val db = lokiMessageDatabase
-        db.clearErrorMessage(messageID)
+    override fun clearErrorMessage(messageID: MessageId) {
+        lokiMessageDatabase.clearErrorMessage(messageID)
     }
 
-    override fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
-        lokiMessageDatabase.setMessageServerHash(messageID, mms, serverHash)
+    override fun setMessageServerHash(messageId: MessageId, serverHash: String) {
+        lokiMessageDatabase.setMessageServerHash(messageId.id, messageId.mms, serverHash)
     }
 
     override fun getGroup(groupID: String): GroupRecord? {

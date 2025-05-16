@@ -5,15 +5,17 @@ import android.text.format.Formatter
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -24,7 +26,6 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.Util
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.MediaPreviewArgs
@@ -34,36 +35,32 @@ import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
-import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlin.text.Typography.ellipsis
 
-@HiltViewModel
-class MessageDetailsViewModel @Inject constructor(
+@HiltViewModel(assistedFactory = MessageDetailsViewModel.Factory::class)
+class MessageDetailsViewModel @AssistedInject constructor(
+    @Assisted val messageId: MessageId,
     private val prefs: TextSecurePreferences,
     private val attachmentDb: AttachmentDatabase,
     private val lokiMessageDatabase: LokiMessageDatabase,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val threadDb: ThreadDatabase,
-    private val repository: ConversationRepository,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
-    private val messageDataProvider: MessageDataProvider,
-    private val storage: Storage
+    messageDataProvider: MessageDataProvider,
+    storage: Storage
 ) : ViewModel() {
-
-    private var job: Job? = null
-
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()
 
@@ -76,33 +73,34 @@ class MessageDetailsViewModel @Inject constructor(
         scope = viewModelScope,
     )
 
-    @OptIn(FlowPreview::class)
-    var timestamp: Long = 0L
-        set(value) {
-            job?.cancel()
-
-            field = value
-            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp)
+    init {
+        viewModelScope.launch {
+            val messageRecord =  withContext(Dispatchers.Default) {
+                mmsSmsDatabase.getMessageById(messageId)
+            }
 
             if (messageRecord == null) {
-                viewModelScope.launch { event.send(Event.Finish) }
-                return
+                event.send(Event.Finish)
+                return@launch
             }
 
             // listen to conversation and attachments changes
-            job = viewModelScope.launch {
-                (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
+            (context.contentResolver.observeChanges(DatabaseContentProviders.Conversation.getUriForThread(messageRecord.threadId)) as Flow<*>)
                     .debounce(200L)
-                    .onStart { emit(Unit) }
-                    .collect{
-                        val updatedRecord = mmsSmsDatabase.getMessageForTimestamp(value)
+                    .map {
+                        withContext(Dispatchers.Default) {
+                            mmsSmsDatabase.getMessageById(messageId)
+                        }
+                    }
+                    .onStart { emit(messageRecord) }
+                    .collect { updatedRecord ->
                         if(updatedRecord == null) event.send(Event.Finish)
                         else {
                             createStateFromRecord(updatedRecord)
                         }
                     }
-            }
         }
+    }
 
     private suspend fun createStateFromRecord(messageRecord: MessageRecord){
         val mmsRecord = messageRecord as? MmsMessageRecord
@@ -116,7 +114,7 @@ class MessageDetailsViewModel @Inject constructor(
                         deprecationManager.isDeprecated
 
 
-                val errorString = lokiMessageDatabase.getErrorMessage(id)
+                val errorString = lokiMessageDatabase.getErrorMessage(messageId)
 
                 var status: MessageStatus? = null
                 // create a 'failed to send' status if appropriate
@@ -227,6 +225,11 @@ class MessageDetailsViewModel @Inject constructor(
 
     fun retryFailedAttachments(attachments: List<DatabaseAttachment>){
         attachmentDownloadHandler.retryFailedAttachments(attachments)
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(id: MessageId) : MessageDetailsViewModel
     }
 }
 

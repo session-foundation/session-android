@@ -90,12 +90,12 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         return 0
     }
 
-    fun isOutgoingMessage(timestamp: Long): Boolean =
+    fun isOutgoingMessage(id: Long): Boolean =
         writableDatabase.query(
             TABLE_NAME,
             arrayOf(ID, THREAD_ID, MESSAGE_BOX, ADDRESS),
-            DATE_SENT + " = ?",
-            arrayOf(timestamp.toString()),
+            "$ID = ?",
+            arrayOf(id.toString()),
             null,
             null,
             null,
@@ -107,12 +107,12 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                 .any { MmsSmsColumns.Types.isOutgoingMessageType(it) }
         }
 
-    fun isDeletedMessage(timestamp: Long): Boolean =
+    fun isDeletedMessage(id: Long): Boolean =
         writableDatabase.query(
             TABLE_NAME,
             arrayOf(ID, THREAD_ID, MESSAGE_BOX, ADDRESS),
-            DATE_SENT + " = ?",
-            arrayOf(timestamp.toString()),
+            "$ID = ?",
+            arrayOf(id.toString()),
             null,
             null,
             null,

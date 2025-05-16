@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.TextUtils
 import com.google.protobuf.ByteString
 import org.session.libsession.database.MessageDataProvider
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
@@ -28,6 +27,7 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.Database
 import org.thoughtcrime.securesms.database.MessagingDatabase
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -90,17 +90,17 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         return messagingDatabase.getMessageFor(timestamp, author)!!.body
     }
 
-    override fun getAttachmentIDsFor(messageID: Long): List<Long> {
+    override fun getAttachmentIDsFor(mmsMessageId: Long): List<Long> {
         return DatabaseComponent.get(context)
             .attachmentDatabase()
-            .getAttachmentsForMessage(messageID).mapNotNull {
+            .getAttachmentsForMessage(mmsMessageId).mapNotNull {
             if (it.isQuote) return@mapNotNull null
             it.attachmentId.rowId
         }
     }
 
-    override fun getLinkPreviewAttachmentIDFor(messageID: Long): Long? {
-        val message = DatabaseComponent.get(context).mmsDatabase().getOutgoingMessage(messageID)
+    override fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long? {
+        val message = DatabaseComponent.get(context).mmsDatabase().getOutgoingMessage(mmsMessageId)
         return message.linkPreviews.firstOrNull()?.attachmentId?.rowId
     }
 
@@ -137,16 +137,20 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         }?.isOutgoing ?: false
     }
 
-    override fun isOutgoingMessage(timestamp: Long): Boolean {
-        val smsDatabase = DatabaseComponent.get(context).smsDatabase()
-        val mmsDatabase = DatabaseComponent.get(context).mmsDatabase()
-        return smsDatabase.isOutgoingMessage(timestamp) || mmsDatabase.isOutgoingMessage(timestamp)
+    override fun isOutgoingMessage(id: MessageId): Boolean {
+        return if (id.mms) {
+            DatabaseComponent.get(context).mmsDatabase().isOutgoingMessage(id.id)
+        } else {
+            DatabaseComponent.get(context).smsDatabase().isOutgoingMessage(id.id)
+        }
     }
 
-    override fun isDeletedMessage(timestamp: Long): Boolean {
-        val smsDatabase = DatabaseComponent.get(context).smsDatabase()
-        val mmsDatabase = DatabaseComponent.get(context).mmsDatabase()
-        return smsDatabase.isDeletedMessage(timestamp) || mmsDatabase.isDeletedMessage(timestamp)
+    override fun isDeletedMessage(id: MessageId): Boolean {
+        return if (id.mms) {
+            DatabaseComponent.get(context).mmsDatabase().isDeletedMessage(id.id)
+        } else {
+            DatabaseComponent.get(context).smsDatabase().isDeletedMessage(id.id)
+        }
     }
 
     override fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {

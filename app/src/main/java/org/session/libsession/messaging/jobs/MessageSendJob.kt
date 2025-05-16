@@ -35,33 +35,29 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
 
     companion object {
         val TAG = MessageSendJob::class.simpleName
-        val KEY: String = "MessageSendJob"
+        const val KEY: String = "MessageSendJob"
 
         // Keys used for database storage
-        private val MESSAGE_KEY = "message"
-        private val DESTINATION_KEY = "destination"
+        private const val MESSAGE_KEY = "message"
+        private const val DESTINATION_KEY = "destination"
     }
 
     override suspend fun execute(dispatcherName: String) {
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
+        val messageId = message.id
         val message = message as? VisibleMessage
         val storage = MessagingModuleConfiguration.shared.storage
 
         // do not attempt to send if the message is marked as deleted
-        message?.sentTimestamp?.let{
-            if(messageDataProvider.isDeletedMessage(it)){
-                return@execute
-            }
+        if (messageId != null && messageDataProvider.isDeletedMessage(messageId)) {
+            return
         }
 
-        val sentTimestamp = this.message.sentTimestamp
-        val sender = storage.getUserPublicKey()
-        if (sentTimestamp != null && sender != null) {
-            storage.markAsSending(sentTimestamp, sender)
-        }
+        messageId?.let(storage::markAsSending)
 
         if (message != null) {
-            if (!messageDataProvider.isOutgoingMessage(message.sentTimestamp!!) && message.reaction == null) return // The message has been deleted
+            val isOutgoing = messageId != null && messageDataProvider.isOutgoingMessage(messageId)
+            if (!isOutgoing && message.reaction == null) return // The message has been deleted
             val attachmentIDs = mutableListOf<Long>()
             attachmentIDs.addAll(message.attachmentIDs)
             message.quote?.let { it.attachmentID?.let { attachmentID -> attachmentIDs.add(attachmentID) } }
@@ -81,7 +77,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
                 return
             } // Wait for all attachments to upload before continuing
         }
-        val isSync = destination is Destination.Contact && destination.publicKey == sender
+        val isSync = destination is Destination.Contact && destination.publicKey == storage.getUserPublicKey()
 
         try {
             withTimeout(20_000L) {
@@ -134,11 +130,11 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
 
     private fun handleFailure(dispatcherName: String, error: Exception) {
         Log.w(TAG, "Failed to send $message::class.simpleName.", error)
-        val message = message as? VisibleMessage
-        if (message != null) {
+        val messageId = message.id
+        if (message is VisibleMessage && messageId != null) {
             if (
-                MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(message.sentTimestamp!!) ||
-                !MessagingModuleConfiguration.shared.messageDataProvider.isOutgoingMessage(message.sentTimestamp!!)
+                MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(messageId) ||
+                !MessagingModuleConfiguration.shared.messageDataProvider.isOutgoingMessage(messageId)
                 ) {
                 return // The message has been deleted
             }

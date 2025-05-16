@@ -52,12 +52,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
@@ -65,6 +66,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.CarouselNextButton
@@ -96,11 +98,15 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
     @Inject
     lateinit var storage: StorageProtocol
 
-    private val viewModel: MessageDetailsViewModel by viewModels()
+    private val viewModel: MessageDetailsViewModel by viewModels(extrasProducer = {
+        defaultViewModelCreationExtras.withCreationCallback<MessageDetailsViewModel.Factory> {
+            it.create(IntentCompat.getParcelableExtra(intent, MESSAGE_ID, MessageId::class.java)!!)
+        }
+    })
 
     companion object {
         // Extras
-        const val MESSAGE_TIMESTAMP = "message_timestamp"
+        const val MESSAGE_ID = "message_id"
 
         const val ON_REPLY = 1
         const val ON_RESEND = 2
@@ -113,8 +119,6 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
         super.onCreate(savedInstanceState, ready)
 
         title = resources.getString(R.string.messageInfo)
-
-        viewModel.timestamp = intent.getLongExtra(MESSAGE_TIMESTAMP, -1L)
 
         setComposeContent { MessageDetailsScreen() }
 
@@ -159,10 +163,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
     }
 
     private fun setResultAndFinish(code: Int) {
-        Bundle().apply { putLong(MESSAGE_TIMESTAMP, viewModel.timestamp) }
-            .let(Intent()::putExtras)
-            .let { setResult(code, it) }
-
+        setResult(code, Intent().putExtra(MESSAGE_ID, viewModel.messageId))
         finish()
     }
 }

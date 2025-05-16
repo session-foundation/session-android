@@ -323,7 +323,8 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
     storage.deleteReactions(messageId = messageIdToDelete, mms = mms)
 
     // update notification
-    if (!messageDataProvider.isOutgoingMessage(timestamp)) {
+    val isOutgoing = message.id?.let(messageDataProvider::isOutgoingMessage) == true
+    if (!isOutgoing) {
         SSKEnvironment.shared.notificationManager.updateNotification(context)
     }
 

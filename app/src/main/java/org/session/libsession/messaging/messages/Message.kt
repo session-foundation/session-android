@@ -8,9 +8,10 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.snode.SnodeMessage
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.protos.SignalServiceProtos.Content.ExpirationType
+import org.thoughtcrime.securesms.database.model.MessageId
 
 abstract class Message {
-    var id: Long? = null
+    var id: MessageId? = null // Message ID in the database. Not all messages will be saved to db.
     var threadID: Long? = null
     var sentTimestamp: Long? = null
     var receivedTimestamp: Long? = null

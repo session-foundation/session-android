@@ -9,6 +9,7 @@ import org.session.libsession.database.ServerHashToMessageId
 import org.session.libsignal.database.LokiMessageDatabaseProtocol
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.util.asSequence
 import javax.inject.Provider
 
@@ -55,9 +56,14 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         val createGroupInviteTableCommand = "CREATE TABLE IF NOT EXISTS $groupInviteTable ($threadID INTEGER PRIMARY KEY, $invitingSessionId STRING, $invitingMessageHash STRING);"
         @JvmStatic
         val createThreadDeleteTrigger = "CREATE TRIGGER IF NOT EXISTS $groupInviteDeleteTrigger AFTER DELETE ON ${ThreadDatabase.TABLE_NAME} BEGIN DELETE FROM $groupInviteTable WHERE $threadID = OLD.${ThreadDatabase.ID}; END;"
+        @JvmStatic
+        val updateErrorMessageTableCommand = "ALTER TABLE $errorMessageTable ADD COLUMN $messageType INTEGER DEFAULT 0"
 
         const val SMS_TYPE = 0
         const val MMS_TYPE = 1
+
+        private val MessageId.asMessageType: Int
+            get() = if (this.mms) MMS_TYPE else SMS_TYPE
     }
 
     fun getServerID(messageID: Long): Long? {
@@ -198,24 +204,28 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         database.insertWithOnConflict(messageThreadMappingTable, null, contentValues, CONFLICT_REPLACE)
     }
 
-    fun getErrorMessage(messageID: Long): String? {
+    fun getErrorMessage(messageID: MessageId): String? {
         val database = readableDatabase
-        return database.get(errorMessageTable, "${Companion.messageID} = ?", arrayOf(messageID.toString())) { cursor ->
-            cursor.getString(errorMessage)
-        }
+        return database.get(errorMessageTable,
+            "${Companion.messageID} = ? AND $messageType = ?",
+            arrayOf(messageID.id.toString(), messageID.asMessageType.toString()))
+        { cursor -> cursor.getString(errorMessage) }
     }
 
-    fun setErrorMessage(messageID: Long, errorMessage: String) {
+    fun setErrorMessage(messageID: MessageId, errorMessage: String) {
         val database = writableDatabase
         val contentValues = ContentValues(2)
-        contentValues.put(Companion.messageID, messageID)
+        contentValues.put(Companion.messageID, messageID.id)
+        contentValues.put(messageType, messageID.asMessageType)
         contentValues.put(Companion.errorMessage, errorMessage)
-        database.insertOrUpdate(errorMessageTable, contentValues, "${Companion.messageID} = ?", arrayOf(messageID.toString()))
+        database.insertOrUpdate(errorMessageTable, contentValues, "${Companion.messageID} = ? AND $messageType = ?",
+            arrayOf(messageID.id.toString(), messageID.asMessageType.toString()))
     }
 
-    fun clearErrorMessage(messageID: Long) {
+    fun clearErrorMessage(messageID: MessageId) {
         val database = writableDatabase
-        database.delete(errorMessageTable, "${Companion.messageID} = ?", arrayOf(messageID.toString()))
+        database.delete(errorMessageTable, "${Companion.messageID} = ? AND $messageType = ?",
+            arrayOf(messageID.id.toString(), messageID.asMessageType))
     }
 
     fun deleteThread(threadId: Long) {

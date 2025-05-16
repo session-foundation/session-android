@@ -51,7 +51,6 @@ import org.session.libsignal.utilities.defaultRequiresAuth
 import org.session.libsignal.utilities.hasNamespaces
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import java.util.concurrent.TimeUnit
-import org.session.libsession.messaging.sending_receiving.attachments.Attachment as SignalAttachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview as SignalLinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel as SignalQuote
 
@@ -432,13 +431,12 @@ object MessageSender {
         val threadId by lazy { requireNotNull(message.threadID) { "threadID for the message is null" } }
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
-        val timestamp = message.sentTimestamp!!
         // Ignore future self-sends
-        storage.addReceivedMessageTimestamp(timestamp)
-        storage.getMessageIdInDatabase(timestamp, userPublicKey)?.let { (messageID, mms) ->
+        storage.addReceivedMessageTimestamp(message.sentTimestamp!!)
+        message.id?.let { messageId ->
             if (openGroupSentTimestamp != -1L && message is VisibleMessage) {
                 storage.addReceivedMessageTimestamp(openGroupSentTimestamp)
-                storage.updateSentTimestamp(messageID, message.isMediaMessage(), openGroupSentTimestamp, threadId)
+                storage.updateSentTimestamp(messageId, openGroupSentTimestamp, threadId)
                 message.sentTimestamp = openGroupSentTimestamp
             }
 
@@ -446,11 +444,11 @@ object MessageSender {
             // will be replaced by the hash value of the sync message. Since the hash value of the
             // real message has no use when we delete a message. It is OK to let it be.
             message.serverHash?.let {
-                storage.setMessageServerHash(messageID, mms, it)
+                storage.setMessageServerHash(messageId, it)
             }
 
             // in case any errors from previous sends
-            storage.clearErrorMessage(messageID)
+            storage.clearErrorMessage(messageId)
 
             // Track the open group server message ID
             val messageIsAddressedToCommunity = message.openGroupServerMessageID != null && (destination is Destination.LegacyOpenGroup || destination is Destination.OpenGroup)
@@ -473,12 +471,12 @@ object MessageSender {
                 val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
                 val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
                 if (communityThreadID != null && communityThreadID >= 0) {
-                    storage.setOpenGroupServerMessageID(messageID, message.openGroupServerMessageID!!, communityThreadID, !(message as VisibleMessage).isMediaMessage())
+                    storage.setOpenGroupServerMessageID(messageId.id, message.openGroupServerMessageID!!, communityThreadID, !messageId.mms)
                 }
             }
 
             // Mark the message as sent.
-            storage.markAsSent(messageID = messageID, isMms = mms)
+            storage.markAsSent(messageId)
 
             // Start the disappearing messages timer if needed
             SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message, startDisappearAfterRead = true)
@@ -493,7 +491,7 @@ object MessageSender {
             if (message is VisibleMessage) message.syncTarget = destination.publicKey
             if (message is ExpirationTimerUpdate) message.syncTarget = destination.publicKey
 
-            storage.markAsSyncing(timestamp, userPublicKey)
+            message.id?.let(storage::markAsSyncing)
             GlobalScope.launch {
                 try {
                     sendToSnodeDestination(Destination.Contact(userPublicKey), message, true)
@@ -506,32 +504,31 @@ object MessageSender {
 
     fun handleFailedMessageSend(message: Message, error: Exception, isSyncMessage: Boolean = false) {
         val storage = MessagingModuleConfiguration.shared.storage
-        val timestamp = message.sentTimestamp!!
+
+        val messageId = message.id ?: return
 
         // no need to handle if message is marked as deleted
-        if(MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(message.sentTimestamp!!)){
+        if(MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(messageId)){
             return
         }
 
-        val userPublicKey = storage.getUserPublicKey()!!
-
-        val author = message.sender ?: userPublicKey
-
-        if (isSyncMessage) storage.markAsSyncFailed(timestamp, author, error)
-        else storage.markAsSentFailed(timestamp, author, error)
+        if (isSyncMessage) storage.markAsSyncFailed(messageId, error)
+        else storage.markAsSentFailed(messageId, error)
     }
 
     // Convenience
     @JvmStatic
-    fun send(message: VisibleMessage, address: Address, attachments: List<SignalAttachment>, quote: SignalQuote?, linkPreview: SignalLinkPreview?) {
+    fun send(message: VisibleMessage, address: Address, quote: SignalQuote?, linkPreview: SignalLinkPreview?) {
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
-        val attachmentIDs = messageDataProvider.getAttachmentIDsFor(message.id!!)
-        message.attachmentIDs.addAll(attachmentIDs)
+        val messageId = message.id
+        if (messageId?.mms == true) {
+            message.attachmentIDs.addAll(messageDataProvider.getAttachmentIDsFor(messageId.id))
+        }
         message.quote = Quote.from(quote)
         message.linkPreview = LinkPreview.from(linkPreview)
         message.linkPreview?.let { linkPreview ->
-            if (linkPreview.attachmentID == null) {
-                messageDataProvider.getLinkPreviewAttachmentIDFor(message.id!!)?.let { attachmentID ->
+            if (linkPreview.attachmentID == null && messageId?.mms == true) {
+                messageDataProvider.getLinkPreviewAttachmentIDFor(messageId.id)?.let { attachmentID ->
                     linkPreview.attachmentID = attachmentID
                     message.attachmentIDs.remove(attachmentID)
                 }
@@ -563,12 +560,6 @@ object MessageSender {
         val resultChannel = Channel<Result<Unit>>()
         send(message, address, resultChannel)
         resultChannel.receive().getOrThrow()
-    }
-
-    fun sendNonDurably(message: VisibleMessage, attachments: List<SignalAttachment>, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {
-        val attachmentIDs = MessagingModuleConfiguration.shared.messageDataProvider.getAttachmentIDsFor(message.id!!)
-        message.attachmentIDs.addAll(attachmentIDs)
-        return sendNonDurably(message, address, isSyncMessage)
     }
 
     fun sendNonDurably(message: Message, address: Address, isSyncMessage: Boolean): Promise<Unit, Exception> {

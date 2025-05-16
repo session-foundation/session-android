@@ -37,7 +37,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markExpireStarted(long messageId, long startTime);
 
-  public abstract void markAsSent(long messageId, boolean secure);
+  public abstract void markAsSent(long messageId, boolean sent);
 
   public abstract void markAsSyncing(long id);
 

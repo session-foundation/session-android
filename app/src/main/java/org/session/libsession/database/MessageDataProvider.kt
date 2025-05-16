@@ -12,6 +12,7 @@ import org.session.libsession.utilities.UploadResult
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
+import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.InputStream
 
 interface MessageDataProvider {
@@ -40,14 +41,14 @@ interface MessageDataProvider {
     fun insertAttachment(messageId: Long, attachmentId: AttachmentId, stream : InputStream)
     fun updateAudioAttachmentDuration(attachmentId: AttachmentId, durationMs: Long, threadId: Long)
     fun isMmsOutgoing(mmsMessageId: Long): Boolean
-    fun isOutgoingMessage(timestamp: Long): Boolean
-    fun isDeletedMessage(timestamp: Long): Boolean
+    fun isOutgoingMessage(id: MessageId): Boolean
+    fun isDeletedMessage(id: MessageId): Boolean
     fun handleSuccessfulAttachmentUpload(attachmentId: Long, attachmentStream: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult)
     fun handleFailedAttachmentUpload(attachmentId: Long)
     fun getMessageForQuote(timestamp: Long, author: Address): Triple<Long, Boolean, String>?
     fun getAttachmentsAndLinkPreviewFor(mmsId: Long): List<Attachment>
     fun getMessageBodyFor(timestamp: Long, author: String): String
-    fun getAttachmentIDsFor(messageID: Long): List<Long>
-    fun getLinkPreviewAttachmentIDFor(messageID: Long): Long?
+    fun getAttachmentIDsFor(mmsMessageId: Long): List<Long>
+    fun getLinkPreviewAttachmentIDFor(mmsMessageId: Long): Long?
     fun getIndividualRecipientForMms(mmsId: Long): Recipient?
 }
