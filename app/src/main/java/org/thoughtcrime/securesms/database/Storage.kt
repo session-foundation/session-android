@@ -64,10 +64,8 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.MessageType
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState
-import org.session.libsession.utilities.recipients.getType
 import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -258,8 +256,8 @@ open class Storage @Inject constructor(
         return database.insertAttachments(messageID, databaseAttachments)
     }
 
-    override fun getAttachmentsForMessage(messageID: Long): List<DatabaseAttachment> {
-        return attachmentDatabase.getAttachmentsForMessage(messageID)
+    override fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment> {
+        return attachmentDatabase.getAttachmentsForMessage(mmsMessageId)
     }
 
     override fun getLastSeen(threadId: Long): Long {
@@ -345,14 +343,15 @@ open class Storage @Inject constructor(
         threadDb.update(threadId, unarchive)
     }
 
-    override fun persist(message: VisibleMessage,
-                         quotes: QuoteModel?,
-                         linkPreview: List<LinkPreview?>,
-                         groupPublicKey: String?,
-                         openGroupID: String?,
-                         attachments: List<Attachment>,
-                         runThreadUpdate: Boolean): Long? {
-        var messageID: Long? = null
+    override fun persist(
+        message: VisibleMessage,
+        quotes: QuoteModel?,
+        linkPreview: List<LinkPreview?>,
+        groupPublicKey: String?,
+        openGroupID: String?,
+        attachments: List<Attachment>,
+        runThreadUpdate: Boolean): MessageId? {
+        val messageID: MessageId?
         val senderAddress = fromSerialized(message.sender!!)
         val isUserSender = (message.sender!! == getUserPublicKey())
         val isUserBlindedSender = message.threadID?.takeIf { it >= 0 }?.let(::getOpenGroup)?.publicKey
@@ -437,9 +436,9 @@ open class Storage @Inject constructor(
                 val mediaMessage = IncomingMediaMessage.from(message, senderAddress, expiresInMillis, expireStartedAt, group, signalServiceAttachments, quote, linkPreviews)
                 mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, message.threadID!!, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            if (insertResult.isPresent) {
-                messageID = insertResult.get().messageId
-            }
+
+            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = true) }
+
         } else {
             val isOpenGroupInvitation = (message.openGroupInvitation != null)
 
@@ -453,17 +452,12 @@ open class Storage @Inject constructor(
                 val encrypted = IncomingEncryptedMessage(textMessage, textMessage.messageBody)
                 smsDatabase.insertMessageInbox(encrypted, message.receivedTimestamp ?: 0, runThreadUpdate)
             }
-            insertResult.orNull()?.let { result ->
-                messageID = result.messageId
-            }
+            messageID = insertResult.orNull()?.messageId?.let { MessageId(it, mms = false) }
         }
+
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                // When a message with attachment is received, we don't immediately have
-                // attachments attached in the messages, but it's a mms from the db's perspective
-                // nonetheless.
-                val isMms = message.isMediaMessage() || attachments.isNotEmpty()
-                lokiMessageDatabase.setMessageServerHash(id, isMms, serverHash)
+                lokiMessageDatabase.setMessageServerHash(id.id, id.mms, serverHash)
             }
         }
         return messageID
@@ -651,15 +645,10 @@ open class Storage @Inject constructor(
         SessionMetaProtocol.removeTimestamps(timestamps)
     }
 
-    override fun getMessageIdInDatabase(timestamp: Long, author: String): Pair<Long, Boolean>? {
+    override fun getMessageBy(timestamp: Long, author: String): MessageRecord? {
         val database = mmsSmsDatabase
         val address = fromSerialized(author)
-        return database.getMessageFor(timestamp, address)?.run { getId() to isMms }
-    }
-
-    override fun getMessageType(timestamp: Long, author: String): MessageType? {
-        val address = fromSerialized(author)
-        return mmsSmsDatabase.getMessageFor(timestamp, address)?.individualRecipient?.getType()
+        return database.getMessageFor(timestamp, address)
     }
 
     override fun updateSentTimestamp(
@@ -1741,7 +1730,7 @@ open class Storage @Inject constructor(
         return mapping
     }
 
-    override fun addReaction(reaction: Reaction, messageSender: String, notifyUnread: Boolean) {
+    override fun addReaction(reaction: Reaction, threadId: Long, messageSender: String, notifyUnread: Boolean) {
         val timestamp = reaction.timestamp
         val localId = reaction.localId
         val isMms = reaction.isMms
@@ -1753,7 +1742,7 @@ open class Storage @Inject constructor(
 
             MessageId(localId, isMms)
         } else if (timestamp != null && timestamp > 0) {
-            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(timestamp) ?: return
+            val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, timestamp) ?: return
             if (messageRecord.isDeleted) return
             MessageId(messageRecord.id, messageRecord.isMms)
         } else return
@@ -1774,10 +1763,15 @@ open class Storage @Inject constructor(
         )
     }
 
-    override fun removeReaction(emoji: String, messageTimestamp: Long, author: String, notifyUnread: Boolean) {
-        val messageRecord = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp) ?: return
-        val messageId = MessageId(messageRecord.id, messageRecord.isMms)
-        reactionDatabase.deleteReaction(emoji, messageId, author, notifyUnread)
+    override fun removeReaction(
+        emoji: String,
+        messageTimestamp: Long,
+        threadId: Long,
+        author: String,
+        notifyUnread: Boolean
+    ) {
+        val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, messageTimestamp) ?: return
+        reactionDatabase.deleteReaction(emoji, MessageId(messageRecord.id, messageRecord.isMms), author, notifyUnread)
     }
 
     override fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long) {

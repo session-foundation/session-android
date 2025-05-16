@@ -52,6 +52,7 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -65,6 +66,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
+import org.thoughtcrime.securesms.database.model.MessageId
 import java.security.MessageDigest
 import java.security.SignatureException
 import java.util.LinkedList
@@ -265,7 +267,7 @@ private fun handleConfigurationMessage(message: ConfigurationMessage) {
     storage.addContacts(message.contacts)
 }
 
-fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
+fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
     val userPublicKey = MessagingModuleConfiguration.shared.storage.getUserPublicKey()
     val storage = MessagingModuleConfiguration.shared.storage
     val userAuth = storage.userAuth ?: return null
@@ -291,12 +293,12 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
     val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
     val timestamp = message.timestamp ?: return null
     val author = message.author ?: return null
-    val (messageIdToDelete, mms) = storage.getMessageIdInDatabase(timestamp, author) ?: return null
-    val messageType = storage.getMessageType(timestamp, author) ?: return null
+    val messageToDelete = storage.getMessageBy(timestamp, author) ?: return null
+    val messageType = messageToDelete.individualRecipient.getType()
 
     // send a /delete rquest for 1on1 messages
-    if(messageType == MessageType.ONE_ON_ONE) {
-        messageDataProvider.getServerHashForMessage(messageIdToDelete, mms)?.let { serverHash ->
+    if (messageType == MessageType.ONE_ON_ONE) {
+        messageDataProvider.getServerHashForMessage(messageToDelete.id, messageToDelete.isMms)?.let { serverHash ->
             GlobalScope.launch(Dispatchers.IO) { // using GlobalScope as we are slowly migrating to coroutines but we can't migrate everything at once
                 try {
                     SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))
@@ -310,7 +312,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
     // the message is marked as deleted locally
     // except for 'note to self' where the message is completely deleted
     if(messageType == MessageType.NOTE_TO_SELF){
-        messageDataProvider.deleteMessage(messageIdToDelete, !mms)
+        messageDataProvider.deleteMessage(messageToDelete.id, !messageToDelete.isMms)
     } else {
         messageDataProvider.markMessageAsDeleted(
             timestamp = timestamp,
@@ -320,15 +322,14 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): Long? {
     }
 
     // delete reactions
-    storage.deleteReactions(messageId = messageIdToDelete, mms = mms)
+    storage.deleteReactions(messageId = messageToDelete.id, mms = messageToDelete.isMms)
 
     // update notification
-    val isOutgoing = message.id?.let(messageDataProvider::isOutgoingMessage) == true
-    if (!isOutgoing) {
+    if (!messageToDelete.isOutgoing) {
         SSKEnvironment.shared.notificationManager.updateNotification(context)
     }
 
-    return messageIdToDelete
+    return messageToDelete.messageId
 }
 
 fun handleMessageRequestResponse(message: MessageRequestResponse) {
@@ -351,7 +352,7 @@ fun MessageReceiver.handleVisibleMessage(
     threadId: Long,
     runThreadUpdate: Boolean,
     runProfileUpdate: Boolean
-): Long? {
+): MessageId? {
     val storage = MessagingModuleConfiguration.shared.storage
     val context = MessagingModuleConfiguration.shared.context
     val userPublicKey = storage.getUserPublicKey()
@@ -480,9 +481,20 @@ fun MessageReceiver.handleVisibleMessage(
             reaction.serverId = message.openGroupServerMessageID?.toString() ?: message.serverHash.orEmpty()
             reaction.dateSent = message.sentTimestamp ?: 0
             reaction.dateReceived = message.receivedTimestamp ?: 0
-            storage.addReaction(reaction, messageSender, !threadIsGroup)
+            storage.addReaction(
+                reaction = reaction,
+                threadId = threadId,
+                messageSender = messageSender,
+                notifyUnread = !threadIsGroup
+            )
         } else {
-            storage.removeReaction(reaction.emoji!!, reaction.timestamp!!, reaction.publicKey!!, threadIsGroup)
+            storage.removeReaction(
+                emoji = reaction.emoji!!,
+                messageTimestamp = reaction.timestamp!!,
+                threadId = threadId,
+                author = reaction.publicKey!!,
+                notifyUnread = threadIsGroup
+            )
         }
     } ?: run {
         // A user is mentioned if their public key is in the body of a message or one of their messages
@@ -499,17 +511,16 @@ fun MessageReceiver.handleVisibleMessage(
         val messageID = storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID, attachments, runThreadUpdate) ?: return null
         // Parse & persist attachments
         // Start attachment downloads if needed
-        if (threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey) {
-            storage.getAttachmentsForMessage(messageID).iterator().forEach { attachment ->
+        if (messageID.mms && (threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
+            storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                 attachment.attachmentId?.let { id ->
-                    val downloadJob = AttachmentDownloadJob(id.rowId, messageID)
+                    val downloadJob = AttachmentDownloadJob(id.rowId, messageID.id)
                     JobQueue.shared.add(downloadJob)
                 }
             }
         }
         message.openGroupServerMessageID?.let {
-            val isSms = !message.isMediaMessage() && attachments.isEmpty()
-            storage.setOpenGroupServerMessageID(messageID, it, threadID, isSms)
+            storage.setOpenGroupServerMessageID(messageID.id, it, threadID, messageID.mms)
         }
         SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message)
         return messageID
@@ -542,46 +553,61 @@ fun MessageReceiver.handleOpenGroupReactions(
         val count = if (reaction.you) reaction.count - 1 else reaction.count
         // Add the first reaction (with the count)
         reactorIds.firstOrNull()?.let { reactor ->
-            storage.addReaction(Reaction(
-                localId = messageId,
-                isMms = !isSms,
-                publicKey = reactor,
-                emoji = emoji,
-                react = true,
-                serverId = "$openGroupMessageServerID",
-                count = count,
-                index = reaction.index
-            ), reactor, false)
+            storage.addReaction(
+                reaction = Reaction(
+                    localId = messageId,
+                    isMms = !isSms,
+                    publicKey = reactor,
+                    emoji = emoji,
+                    react = true,
+                    serverId = "$openGroupMessageServerID",
+                    count = count,
+                    index = reaction.index
+                ),
+                threadId = threadId,
+                messageSender = reactor,
+                notifyUnread = false
+            )
         }
 
         // Add all other reactions
         val maxAllowed = if (shouldAddUserReaction) 4 else 5
         val lastIndex = min(maxAllowed, reactorIds.size)
         reactorIds.slice(1 until lastIndex).map { reactor ->
-            storage.addReaction(Reaction(
-                localId = messageId,
-                isMms = !isSms,
-                publicKey = reactor,
-                emoji = emoji,
-                react = true,
-                serverId = "$openGroupMessageServerID",
-                count = 0,  // Only want this on the first reaction
-                index = reaction.index
-            ), reactor, false)
+            storage.addReaction(
+                reaction = Reaction(
+                    localId = messageId,
+                    isMms = !isSms,
+                    publicKey = reactor,
+                    emoji = emoji,
+                    react = true,
+                    serverId = "$openGroupMessageServerID",
+                    count = 0,  // Only want this on the first reaction
+                    index = reaction.index
+                ),
+                threadId = threadId,
+                messageSender = reactor,
+                notifyUnread = false
+            )
         }
 
         // Add the current user reaction (if applicable and not already included)
         if (shouldAddUserReaction) {
-            storage.addReaction(Reaction(
-                localId = messageId,
-                isMms = !isSms,
-                publicKey = userPublicKey,
-                emoji = emoji,
-                react = true,
-                serverId = "$openGroupMessageServerID",
-                count = 1,
-                index = reaction.index
-            ), userPublicKey, false)
+            storage.addReaction(
+                reaction = Reaction(
+                    localId = messageId,
+                    isMms = !isSms,
+                    publicKey = userPublicKey,
+                    emoji = emoji,
+                    react = true,
+                    serverId = "$openGroupMessageServerID",
+                    count = 1,
+                    index = reaction.index
+                ),
+                threadId = threadId,
+                messageSender = userPublicKey,
+                notifyUnread = false
+            )
         }
     }
 }

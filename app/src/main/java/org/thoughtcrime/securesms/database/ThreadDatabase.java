@@ -904,10 +904,7 @@ public class ThreadDatabase extends Database {
 
       if (count > 0) {
         MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
-        long messageTimestamp = mmsSmsDatabase.getLastMessageTimestamp(threadId);
-        if (messageTimestamp > 0) {
-          lastMessage = mmsSmsDatabase.getMessageForTimestamp(messageTimestamp);
-        }
+        lastMessage = mmsSmsDatabase.getLastMessage(threadId);
       }
 
       final GroupThreadStatus groupThreadStatus;

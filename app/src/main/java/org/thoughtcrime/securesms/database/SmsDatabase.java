@@ -46,6 +46,7 @@ import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
@@ -392,7 +393,7 @@ public class SmsDatabase extends MessagingDatabase {
       while (cursor != null && cursor.moveToNext()) {
         long timestamp = cursor.getLong(2);
         SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), timestamp);
-        ExpirationInfo expirationInfo = new ExpirationInfo(cursor.getLong(0), timestamp, cursor.getLong(4), cursor.getLong(5), false);
+        ExpirationInfo expirationInfo = new ExpirationInfo(new MessageId(cursor.getLong(0), false), timestamp, cursor.getLong(4), cursor.getLong(5));
 
         results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
       }

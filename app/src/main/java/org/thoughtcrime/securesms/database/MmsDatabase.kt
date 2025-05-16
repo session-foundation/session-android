@@ -56,6 +56,7 @@ import org.thoughtcrime.securesms.attachments.MmsNotificationAttachment
 import org.thoughtcrime.securesms.database.SmsDatabase.InsertListener
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.NotificationMmsMessageRecord
@@ -398,11 +399,10 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     val timestamp = cursor.getLong(2)
                     val syncMessageId = SyncMessageId(fromSerialized(cursor.getString(1)), timestamp)
                     val expirationInfo = ExpirationInfo(
-                        id = cursor.getLong(0),
+                        id = MessageId(cursor.getLong(0), mms = true),
                         timestamp = timestamp,
                         expiresIn = cursor.getLong(4),
                         expireStarted = cursor.getLong(5),
-                        isMms = true
                     )
                     result.add(MarkedMessageInfo(syncMessageId, expirationInfo))
                 }

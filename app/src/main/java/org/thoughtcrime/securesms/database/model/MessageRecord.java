@@ -69,6 +69,10 @@ public abstract class MessageRecord extends DisplayRecord {
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
 
+  public final MessageId getMessageId() {
+    return new MessageId(getId(), isMms());
+  }
+
   MessageRecord(long id, String body, Recipient conversationRecipient,
     Recipient individualRecipient,
     long dateSent, long dateReceived, long threadId,

@@ -36,6 +36,7 @@ import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.model.MessageId
 import kotlin.math.max
 
 data class MessageReceiveParameters(
@@ -175,7 +176,7 @@ class BatchMessageReceiveJob(
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
         fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
             // The LinkedHashMap should preserve insertion order
-            val messageIds = linkedMapOf<Long, Pair<Boolean, Boolean>>()
+            val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
             var newLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
             messages.forEach { (parameters, message, proto) ->
@@ -216,11 +217,11 @@ class BatchMessageReceiveJob(
                         }
 
                         is UnsendRequest -> {
-                            val deletedMessageId = MessageReceiver.handleUnsendRequest(message)
+                            val deletedMessage = MessageReceiver.handleUnsendRequest(message)
 
                             // If we removed a message then ensure it isn't in the 'messageIds'
-                            if (deletedMessageId != null) {
-                                messageIds.remove(deletedMessageId)
+                            if (deletedMessage != null) {
+                                messageIds.remove(deletedMessage)
                             }
                         }
 

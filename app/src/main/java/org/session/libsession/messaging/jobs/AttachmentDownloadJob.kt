@@ -24,7 +24,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long) : Job {
+class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -73,16 +73,16 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
     override suspend fun execute(dispatcherName: String) {
         val storage = MessagingModuleConfiguration.shared.storage
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
-        val threadID = storage.getThreadIdForMms(databaseMessageID)
+        val threadID = storage.getThreadIdForMms(mmsMessageId)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
             if(exception is HTTP.HTTPRequestFailedException && exception.statusCode == 404){
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
-                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, id, mmsMessageId)
                 } ?: run {
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, don't have attachment")
-                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, AttachmentId(attachmentID,0), databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.EXPIRED, AttachmentId(attachmentID,0), mmsMessageId)
                 }
             } else if (exception == Error.NoAttachment
                     || exception == Error.NoThread
@@ -90,29 +90,29 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                     || (exception is OnionRequestAPI.HTTPRequestFailedAtDestinationException && exception.statusCode == 400)) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, have attachment")
-                    messageDataProvider.setAttachmentState(AttachmentState.FAILED, id, databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.FAILED, id, mmsMessageId)
                 } ?: run {
                     Log.d("AttachmentDownloadJob", "Setting attachment state = failed, don't have attachment")
-                    messageDataProvider.setAttachmentState(AttachmentState.FAILED, AttachmentId(attachmentID,0), databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.FAILED, AttachmentId(attachmentID,0), mmsMessageId)
                 }
                 this.handlePermanentFailure(dispatcherName, exception)
             } else if (exception == Error.DuplicateData) {
                 attachment?.let { id ->
                     Log.d("AttachmentDownloadJob", "Setting attachment state = done from duplicate data")
-                    messageDataProvider.setAttachmentState(AttachmentState.DONE, id, databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.DONE, id, mmsMessageId)
                 } ?: run {
                     Log.d("AttachmentDownloadJob", "Setting attachment state = done from duplicate data")
-                    messageDataProvider.setAttachmentState(AttachmentState.DONE, AttachmentId(attachmentID,0), databaseMessageID)
+                    messageDataProvider.setAttachmentState(AttachmentState.DONE, AttachmentId(attachmentID,0), mmsMessageId)
                 }
                 this.handleSuccess(dispatcherName)
             } else {
                 if (failureCount + 1 >= maxFailureCount) {
                     attachment?.let { id ->
                         Log.d("AttachmentDownloadJob", "Setting attachment state = failed from max failure count, have attachment")
-                        messageDataProvider.setAttachmentState(AttachmentState.FAILED, id, databaseMessageID)
+                        messageDataProvider.setAttachmentState(AttachmentState.FAILED, id, mmsMessageId)
                     } ?: run {
                         Log.d("AttachmentDownloadJob", "Setting attachment state = failed from max failure count, don't have attachment")
-                        messageDataProvider.setAttachmentState(AttachmentState.FAILED, AttachmentId(attachmentID,0), databaseMessageID)
+                        messageDataProvider.setAttachmentState(AttachmentState.FAILED, AttachmentId(attachmentID,0), mmsMessageId)
                     }
                 }
                 this.handleFailure(dispatcherName, exception)
@@ -124,7 +124,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
             return
         }
 
-        if (!eligibleForDownload(threadID, storage, messageDataProvider, databaseMessageID)) {
+        if (!eligibleForDownload(threadID, storage, messageDataProvider, mmsMessageId)) {
             handleFailure(Error.NoSender, null)
             return
         }
@@ -139,7 +139,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
                 handleFailure(Error.DuplicateData, attachment.attachmentId)
                 return
             }
-            messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.databaseMessageID)
+            messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.mmsMessageId)
             tempFile = createTempFile()
             val openGroup = storage.getOpenGroup(threadID)
             if (openGroup == null) {
@@ -157,7 +157,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
             val inputStream = getInputStream(tempFile, attachment)
 
             Log.d("AttachmentDownloadJob", "inserting attachment")
-            messageDataProvider.insertAttachment(databaseMessageID, attachment.attachmentId, inputStream)
+            messageDataProvider.insertAttachment(mmsMessageId, attachment.attachmentId, inputStream)
             if (attachment.contentType.startsWith("audio/")) {
                 // process the duration
                     try {
@@ -217,7 +217,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val databaseMessageID: Long)
     override fun serialize(): Data {
         return Data.Builder()
             .putLong(ATTACHMENT_ID_KEY, attachmentID)
-            .putLong(TS_INCOMING_MESSAGE_ID_KEY, databaseMessageID)
+            .putLong(TS_INCOMING_MESSAGE_ID_KEY, mmsMessageId)
             .build();
     }
 

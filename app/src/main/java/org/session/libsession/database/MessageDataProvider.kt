@@ -13,6 +13,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceAttachmentStream
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.MessageRecord
 import java.io.InputStream
 
 interface MessageDataProvider {
