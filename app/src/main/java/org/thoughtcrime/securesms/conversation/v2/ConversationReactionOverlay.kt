@@ -340,6 +340,11 @@ class ConversationReactionOverlay : FrameLayout {
     private fun hideInternal(onHideListener: OnHideListener?) {
         job?.cancel()
         overlayState = OverlayState.HIDDEN
+        contextMenu?.dismiss()
+
+        // in case hide is called before show
+        if (!::selectedConversationModel.isInitialized) return
+
         val animatorSet = newHideAnimatorSet()
         hideAnimatorSet = animatorSet
         revealAnimatorSet.end()
@@ -352,7 +357,6 @@ class ConversationReactionOverlay : FrameLayout {
                 onHideListener?.onHide()
             }
         })
-        contextMenu?.dismiss()
     }
 
     val isShowing: Boolean

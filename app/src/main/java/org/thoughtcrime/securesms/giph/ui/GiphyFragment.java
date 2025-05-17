@@ -38,6 +38,7 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
   private TextView                         noResultsView;
 
   protected String searchString;
+  private Boolean pendingGridLayout = null;
 
   @Override
   public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup viewGroup, Bundle bundle) {
@@ -45,6 +46,18 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
     this.recyclerView    = ViewUtil.findById(container, R.id.giphy_list);
     this.loadingProgress = ViewUtil.findById(container, R.id.loading_progress);
     this.noResultsView   = ViewUtil.findById(container, R.id.no_results);
+
+    // Now that views are ready, apply the searchString if it's set
+    applySearchStringToUI();
+
+    // Apply pending layout if it was set before view was ready
+    if (pendingGridLayout != null) {
+      setLayoutManager(pendingGridLayout);
+      pendingGridLayout = null;
+    } else {
+      // Or set default
+      setLayoutManager(TextSecurePreferences.isGifSearchInGridLayout(getContext()));
+    }
 
     return container;
   }
@@ -56,7 +69,6 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
     this.giphyAdapter = new GiphyAdapter(getActivity(), Glide.with(this), new LinkedList<>());
     this.giphyAdapter.setListener(this);
 
-    setLayoutManager(TextSecurePreferences.isGifSearchInGridLayout(getContext()));
     this.recyclerView.setItemAnimator(new DefaultItemAnimator());
     this.recyclerView.setAdapter(giphyAdapter);
     this.recyclerView.addOnScrollListener(new GiphyScrollListener());
@@ -81,7 +93,11 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
   }
 
   public void setLayoutManager(boolean gridLayout) {
-    recyclerView.setLayoutManager(getLayoutManager(gridLayout));
+    if (recyclerView != null) {
+      recyclerView.setLayoutManager(getLayoutManager(gridLayout));
+    } else {
+      pendingGridLayout = gridLayout;
+    }
   }
 
   private RecyclerView.LayoutManager getLayoutManager(boolean gridLayout) {
@@ -89,10 +105,19 @@ public abstract class GiphyFragment extends Fragment implements LoaderManager.Lo
                       : new LinearLayoutManager(getActivity());
   }
 
+
   public void setSearchString(@Nullable String searchString) {
     this.searchString = searchString;
-    this.noResultsView.setVisibility(View.GONE);
-    this.getLoaderManager().restartLoader(0, null, this);
+    if (this.noResultsView != null) {
+      applySearchStringToUI();
+    }
+  }
+
+  private void applySearchStringToUI() {
+    if (this.noResultsView != null) {
+      this.noResultsView.setVisibility(View.GONE);
+      this.getLoaderManager().restartLoader(0, null, this);
+    }
   }
 
   @Override
