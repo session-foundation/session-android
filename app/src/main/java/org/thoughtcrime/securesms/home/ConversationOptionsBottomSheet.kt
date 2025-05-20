@@ -131,7 +131,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
-                    drawableStartRes = R.drawable.ic_trash_2
+                    drawableStartRes = R.drawable.ic_eye_off
                 }
 
                 // 1on1

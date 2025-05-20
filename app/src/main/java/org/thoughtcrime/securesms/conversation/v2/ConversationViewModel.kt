@@ -718,8 +718,6 @@ class ConversationViewModel(
     private fun markAsDeletedForEveryone(
         data: DeleteForEveryoneDialogData
     ) = viewModelScope.launch {
-        val recipient = recipient ?: return@launch Log.w("Loki", "Recipient was null for delete for everyone - aborting delete operation.")
-
         // make sure to stop audio messages, if any
         data.messages.filterIsInstance<MmsMessageRecord>()
             .mapNotNull { it.slideDeck.audioSlide }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
@@ -548,8 +549,14 @@ object MessageSender {
         JobQueue.shared.add(job)
 
         // if we are sending a 'Note to Self' make sure it is not hidden
-        if(address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey()){
+        if( message is VisibleMessage &&
+            address.toString() == MessagingModuleConfiguration.shared.storage.getUserPublicKey() &&
+            // only show the NTS if it is currently marked as hidden
+            MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
+        ){
+            // make sure note to self is not hidden
             MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
+            // update config in case it was marked as hidden there
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
             }

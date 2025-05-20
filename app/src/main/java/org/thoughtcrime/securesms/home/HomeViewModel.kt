@@ -102,8 +102,12 @@ class HomeViewModel @Inject constructor(
                 messageRequests?.let { add(it) }
 
                 threads.mapNotNullTo(this) { thread ->
-                    // if the note to self is marked as hidden, do not add it
-                    if (thread.recipient.isLocalNumber && hideNoteToSelf) {
+                    // if the note to self is marked as hidden,
+                    // or if the contact is blocked, do not add it
+                    if (
+                        thread.recipient.isLocalNumber && hideNoteToSelf ||
+                        thread.recipient.isBlocked
+                    ) {
                         return@mapNotNullTo null
                     }
 

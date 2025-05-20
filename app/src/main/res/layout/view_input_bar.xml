@@ -47,7 +47,7 @@
                 android:contentDescription="@string/AccessibilityId_inputBox"
                 android:gravity="center_vertical"
                 android:hint="@string/message"
-                android:inputType="textCapSentences|textMultiLine|textAutoComplete"
+                android:inputType="text|textCapSentences|textMultiLine|textAutoComplete"
                 android:maxLength="@integer/max_input_chars"
                 android:textColor="?input_bar_text_user"
                 android:textColorHint="?attr/input_bar_text_hint"
