@@ -18,6 +18,7 @@ plugins {
 }
 
 val huaweiEnabled = project.properties["huawei"] != null
+val hasIncludedLibSessionUtilProject: Boolean = System.getProperty("session.libsession_util.project.path", "").isNotBlank()
 
 configurations.configureEach {
     exclude(module = "commons-logging")
@@ -302,7 +303,17 @@ dependencies {
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
-    implementation(libs.libsession.util.android)
+
+    if (hasIncludedLibSessionUtilProject) {
+        implementation(
+            group = libs.libsession.util.android.get().group,
+            name = libs.libsession.util.android.get().name,
+            version = "dev-snapshot"
+        )
+    } else {
+        implementation(libs.libsession.util.android)
+    }
+
     implementation(libs.kryo)
     implementation(libs.curve25519.java)
     testImplementation(libs.junit)
