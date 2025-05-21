@@ -5,7 +5,6 @@ import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.interfaces.AEAD
 import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Hash
-import com.goterl.lazysodium.interfaces.Sign
 import com.goterl.lazysodium.utils.Key
 import com.goterl.lazysodium.utils.KeyPair
 import org.session.libsignal.utilities.AccountId
@@ -25,7 +24,7 @@ object SodiumUtilities {
     private const val SECRET_KEY_LENGTH: Int = 64 //crypto_sign_secretkeybytes
 
     /* 64-byte blake2b hash then reduce to get the blinding factor */
-    fun generateBlindingFactor(serverPublicKey: String): ByteArray? {
+    private fun generateBlindingFactor(serverPublicKey: String): ByteArray? {
         // k = salt.crypto_core_ed25519_scalar_reduce(blake2b(server_pk, digest_size=64).digest())
         val serverPubKeyData = Hex.fromStringCondensed(serverPublicKey)
         if (serverPubKeyData.size != PUBLIC_KEY_LENGTH) return null
@@ -53,7 +52,7 @@ object SodiumUtilities {
      same secret scalar secret (and so this is just the most convenient way to get 'a' out of
      a sodium Ed25519 secret key)
     */
-    fun generatePrivateKeyScalar(secretKey: ByteArray): ByteArray? {
+    private fun generatePrivateKeyScalar(secretKey: ByteArray): ByteArray? {
         // a = s.to_curve25519_private_key().encode()
         val aBytes = ByteArray(SCALAR_MULT_LENGTH)
         return if (sodium.convertSecretKeyEd25519ToCurve25519(aBytes, secretKey)) {
@@ -145,33 +144,6 @@ object SodiumUtilities {
         } else null
     }
 
-    /*
-     Calculate a shared secret for a message from A to B:
-     BLAKE2b(a kB || kA || kB)
-     The receiver can calculate the same value via:
-     BLAKE2b(b kA || kA || kB)
-    */
-    fun sharedBlindedEncryptionKey(
-        secretKey: ByteArray,
-        otherBlindedPublicKey: ByteArray,
-        kA: ByteArray, /*fromBlindedPublicKey*/
-        kB: ByteArray  /*toBlindedPublicKey*/
-    ): ByteArray? {
-        val aBytes = generatePrivateKeyScalar(secretKey) ?: return null
-        val combinedKeyBytes = combineKeys(aBytes, otherBlindedPublicKey) ?: return null
-        val outputHash = ByteArray(GenericHash.KEYBYTES)
-        val inputBytes = combinedKeyBytes + kA + kB
-        return if (sodium.cryptoGenericHash(
-                outputHash,
-                outputHash.size,
-                inputBytes,
-                inputBytes.size.toLong()
-            )
-        ) {
-            outputHash
-        } else null
-    }
-
     /* This method should be used to check if a users standard accountId matches a blinded one */
     fun accountId(
         standardAccountId: String,
@@ -243,13 +215,6 @@ object SodiumUtilities {
             )
         ) {
             plaintext
-        } else null
-    }
-
-    fun toX25519(ed25519PublicKey: ByteArray): ByteArray? {
-        val x25519PublicKey = ByteArray(PUBLIC_KEY_LENGTH)
-        return if (sodium.convertPublicKeyEd25519ToCurve25519(x25519PublicKey, ed25519PublicKey)) {
-            x25519PublicKey
         } else null
     }
 
