@@ -18,6 +18,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import network.loki.messenger.libsession_util.ED25519
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -924,11 +925,11 @@ object SnodeAPI {
                             .plus(serverHashes)
                             .plus(hashes)
                             .toByteArray()
-                        sodium.cryptoSignVerifyDetached(
-                            Base64.decode(signature),
-                            message,
-                            message.size,
-                            snodePublicKey.asBytes
+
+                        ED25519.verify(
+                            ed25519PublicKey = snodePublicKey.asBytes,
+                            signature = Base64.decode(signature),
+                            message = message,
                         )
                     }
                 }
@@ -1085,7 +1086,11 @@ object SnodeAPI {
                 val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                 // The signature looks like ( PUBKEY_HEX || TIMESTAMP || DELETEDHASH[0] || ... || DELETEDHASH[N] )
                 val message = sequenceOf(userPublicKey, "$timestamp").plus(hashes).toByteArray()
-                sodium.cryptoSignVerifyDetached(Base64.decode(signature), message, message.size, snodePublicKey.asBytes)
+                ED25519.verify(
+                    ed25519PublicKey = snodePublicKey.asBytes,
+                    signature = Base64.decode(signature),
+                    message = message,
+                )
             }
         } ?: mapOf()
 
