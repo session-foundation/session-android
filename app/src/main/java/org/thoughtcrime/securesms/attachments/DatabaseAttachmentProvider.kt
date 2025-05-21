@@ -185,22 +185,19 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         val messages = component.mmsSmsDatabase().getUserMessages(threadId, userPubKey)
         val messageDatabase = component.lokiMessageDatabase()
         return messages.mapNotNull {
-            messageDatabase.getMessageServerHash(
-                messageID = it.id,
-                mms = it.isMms
-            )
+            messageDatabase.getMessageServerHash(it.messageId)
         }
     }
 
     override fun deleteMessage(messageId: MessageId) {
         if (messageId.mms) {
-            DatabaseComponent.get(context).smsDatabase().deleteMessage(messageId.id)
-        } else {
             DatabaseComponent.get(context).mmsDatabase().deleteMessage(messageId.id)
+        } else {
+            DatabaseComponent.get(context).smsDatabase().deleteMessage(messageId.id)
         }
 
-        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessage(messageId.id, messageId.sms)
-        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageId.id, mms = messageId.mms)
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessage(messageId)
+        DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHash(messageId)
     }
 
     override fun deleteMessages(messageIDs: List<Long>, threadId: Long, isSms: Boolean) {
@@ -270,8 +267,8 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         markMessagesAsDeleted(toDelete, displayedMessage)
     }
 
-    override fun getServerHashForMessage(messageID: Long, mms: Boolean): String? =
-        DatabaseComponent.get(context).lokiMessageDatabase().getMessageServerHash(messageID, mms)
+    override fun getServerHashForMessage(messageID: MessageId): String? =
+        DatabaseComponent.get(context).lokiMessageDatabase().getMessageServerHash(messageID)
 
     override fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment? =
         DatabaseComponent.get(context).attachmentDatabase()

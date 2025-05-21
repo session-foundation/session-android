@@ -288,7 +288,7 @@ class DefaultConversationRepository @Inject constructor(
         val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
 
         messages.forEach { message ->
-            lokiMessageDb.getServerID(message.id, !message.isMms)?.let { messageServerID ->
+            lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
                 OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
             }
         }
@@ -308,7 +308,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }
@@ -349,7 +349,7 @@ class DefaultConversationRepository @Inject constructor(
 
         val groupId = AccountId(recipient.address.toString())
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
-            messageDataProvider.getServerHashForMessage(msg.id, msg.isMms)
+            messageDataProvider.getServerHashForMessage(msg.messageId)
         }
 
         groupManager.requestMessageDeletion(groupId, hashes)
@@ -369,7 +369,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }

@@ -613,7 +613,7 @@ class ConversationViewModel(
             val canDeleteForEveryone = messages.all{ !it.isDeleted && !it.isControlMessage } && (
                     messages.all { it.isOutgoing } ||
                     conversationType == MessageType.COMMUNITY ||
-                            messages.all { lokiMessageDb.getMessageServerHash(it.id, it.isMms) != null }
+                            messages.all { lokiMessageDb.getMessageServerHash(it.messageId) != null }
                     )
 
             // There are three types of dialogs for deletion:
@@ -1179,7 +1179,7 @@ class ConversationViewModel(
         viewModelScope.launch(Dispatchers.Default) {
             reactionDb.deleteEmojiReactions(emoji, messageId)
             openGroup?.let { openGroup ->
-                lokiMessageDb.getServerID(messageId.id, !messageId.mms)?.let { serverId ->
+                lokiMessageDb.getServerID(messageId)?.let { serverId ->
                     OpenGroupApi.deleteAllReactions(
                         openGroup.room,
                         openGroup.server,

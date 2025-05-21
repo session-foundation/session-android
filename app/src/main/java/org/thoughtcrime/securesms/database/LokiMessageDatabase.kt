@@ -66,19 +66,21 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
             get() = if (this.mms) MMS_TYPE else SMS_TYPE
     }
 
-    fun getServerID(messageID: Long, isSms: Boolean): Long? {
+    fun getServerID(messageID: MessageId): Long? {
         val database = readableDatabase
-        return database.get(messageIDTable, "${Companion.messageID} = ? AND $messageType = ?", arrayOf(messageID.toString(), if (isSms) SMS_TYPE.toString() else MMS_TYPE.toString())) { cursor ->
+        return database.get(messageIDTable,
+            "${Companion.messageID} = ? AND $messageType = ?",
+            arrayOf(messageID.toString(), messageID.asMessageType.toString())) { cursor ->
             cursor.getInt(serverID)
         }?.toLong()
     }
 
-    fun deleteMessage(messageID: Long, isSms: Boolean) {
+    fun deleteMessage(messageID: MessageId) {
         val database = writableDatabase
 
         val serverID = database.get(messageIDTable,
                 "${Companion.messageID} = ? AND $messageType = ?",
-                arrayOf(messageID.toString(), (if (isSms) SMS_TYPE else MMS_TYPE).toString())) { cursor ->
+                arrayOf(messageID.toString(), messageID.asMessageType.toString())) { cursor ->
             cursor.getInt(serverID).toLong()
         }
 
@@ -278,26 +280,26 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         return result
     }
 
-    fun getMessageServerHash(messageID: Long, mms: Boolean): String? {
+    fun getMessageServerHash(messageID: MessageId): String? {
         return readableDatabase.get(
-            getMessageTable(mms),
+            getMessageTable(messageID.mms),
             "${Companion.messageID} = ?",
-            arrayOf(messageID.toString())) { cursor -> cursor.getString(serverHash) }
+            arrayOf(messageID.id.toString())) { cursor -> cursor.getString(serverHash) }
     }
 
-    fun setMessageServerHash(messageID: Long, mms: Boolean, serverHash: String) {
+    fun setMessageServerHash(messageID: MessageId, serverHash: String) {
         val contentValues = ContentValues(2).apply {
-            put(Companion.messageID, messageID)
+            put(Companion.messageID, messageID.id)
             put(Companion.serverHash, serverHash)
         }
 
         writableDatabase.apply {
-            insertOrUpdate(getMessageTable(mms), contentValues, "${Companion.messageID} = ?", arrayOf(messageID.toString()))
+            insertOrUpdate(getMessageTable(messageID.mms), contentValues, "${Companion.messageID} = ?", arrayOf(messageID.id.toString()))
         }
     }
 
-    fun deleteMessageServerHash(messageID: Long, mms: Boolean) {
-        writableDatabase.delete(getMessageTable(mms), "${Companion.messageID} = ?", arrayOf(messageID.toString()))
+    fun deleteMessageServerHash(messageID: MessageId) {
+        writableDatabase.delete(getMessageTable(messageID.mms), "${Companion.messageID} = ?", arrayOf(messageID.id.toString()))
     }
 
     fun deleteMessageServerHashes(messageIDs: List<Long>, mms: Boolean) {

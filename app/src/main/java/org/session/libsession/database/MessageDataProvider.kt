@@ -26,7 +26,7 @@ interface MessageDataProvider {
     fun markMessagesAsDeleted(messages: List<MarkAsDeletedMessage>, displayedMessage: String)
     fun markMessagesAsDeleted(threadId: Long, serverHashes: List<String>, displayedMessage: String)
     fun markUserMessagesAsDeleted(threadId: Long, until: Long, sender: String, displayedMessage: String)
-    fun getServerHashForMessage(messageID: Long, mms: Boolean): String?
+    fun getServerHashForMessage(messageID: MessageId): String?
     fun getDatabaseAttachment(attachmentId: Long): DatabaseAttachment?
     fun getAttachmentStream(attachmentId: Long): SessionServiceAttachmentStream?
     fun getAttachmentPointer(attachmentId: Long): SessionServiceAttachmentPointer?

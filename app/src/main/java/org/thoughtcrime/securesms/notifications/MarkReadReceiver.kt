@@ -98,7 +98,7 @@ class MarkReadReceiver : BroadcastReceiver() {
 
             return markedReadMessages
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
-                .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id.id, id.mms) } }
+                .associateByNotNull { it.expirationInfo.run { loki.getMessageServerHash(id) } }
                 .takeIf { it.isNotEmpty() }
         }
 

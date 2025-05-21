@@ -470,7 +470,7 @@ open class Storage @Inject constructor(
 
         message.serverHash?.let { serverHash ->
             messageID?.let { id ->
-                lokiMessageDatabase.setMessageServerHash(id.id, id.mms, serverHash)
+                lokiMessageDatabase.setMessageServerHash(id, serverHash)
             }
         }
         return messageID
@@ -742,7 +742,7 @@ open class Storage @Inject constructor(
     }
 
     override fun setMessageServerHash(messageId: MessageId, serverHash: String) {
-        lokiMessageDatabase.setMessageServerHash(messageId.id, messageId.mms, serverHash)
+        lokiMessageDatabase.setMessageServerHash(messageId, serverHash)
     }
 
     override fun getGroup(groupID: String): GroupRecord? {

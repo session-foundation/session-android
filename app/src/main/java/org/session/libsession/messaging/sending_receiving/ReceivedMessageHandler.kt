@@ -299,7 +299,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
 
     // send a /delete rquest for 1on1 messages
     if (messageType == MessageType.ONE_ON_ONE) {
-        messageDataProvider.getServerHashForMessage(messageToDelete.id, messageToDelete.isMms)?.let { serverHash ->
+        messageDataProvider.getServerHashForMessage(messageIdToDelete)?.let { serverHash ->
             GlobalScope.launch(Dispatchers.IO) { // using GlobalScope as we are slowly migrating to coroutines but we can't migrate everything at once
                 try {
                     SnodeAPI.deleteMessage(author, userAuth, listOf(serverHash))

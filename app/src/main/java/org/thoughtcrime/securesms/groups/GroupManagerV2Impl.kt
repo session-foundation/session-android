@@ -405,7 +405,7 @@ class GroupManagerV2Impl @Inject constructor(
         if (threadId != null) {
             for (member in members) {
                 for (msg in mmsSmsDatabase.getUserMessages(threadId, member.hexString)) {
-                    val serverHash = lokiDatabase.getMessageServerHash(msg.id, msg.isMms)
+                    val serverHash = lokiDatabase.getMessageServerHash(msg.messageId)
                     if (serverHash != null) {
                         messagesToDelete.add(serverHash)
                     }
