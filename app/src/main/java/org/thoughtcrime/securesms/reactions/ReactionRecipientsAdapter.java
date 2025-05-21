@@ -1,22 +1,22 @@
 package org.thoughtcrime.securesms.reactions;
 
-import static org.session.libsession.utilities.IdUtilKt.truncateIdForDisplay;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.session.libsignal.utilities.AccountId;
-import java.util.Collections;
-import java.util.List;
-import network.loki.messenger.R;
 import org.thoughtcrime.securesms.components.ProfilePictureView;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
+
+import java.util.Collections;
+import java.util.List;
+
+import network.loki.messenger.R;
 
 final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
@@ -152,8 +152,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
 
     void bind(@NonNull ReactionDetails reaction) {
       this.remove.setOnClickListener((v) -> {
-        MessageId messageId = new MessageId(reaction.getLocalId(), reaction.isMms());
-        callback.onRemoveReaction(reaction.getBaseEmoji(), messageId, reaction.getTimestamp());
+        callback.onRemoveReaction(reaction.getBaseEmoji(), reaction.getLocalId(), reaction.getTimestamp());
       });
 
       this.avatar.update(reaction.getSender());

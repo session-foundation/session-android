@@ -6,8 +6,6 @@ import org.session.libsignal.utilities.Log
 
 class Reaction() {
     var timestamp: Long? = 0
-    var localId: Long? = 0
-    var isMms: Boolean? = false
     var publicKey: String? = null
     var emoji: String? = null
     var react: Boolean? = true
@@ -24,24 +22,22 @@ class Reaction() {
     companion object {
         const val TAG = "Quote"
 
-        fun fromProto(proto: SignalServiceProtos.DataMessage.Reaction): Reaction? {
+        fun fromProto(proto: SignalServiceProtos.DataMessage.Reaction): Reaction {
             val react = proto.action == Action.REACT
             return Reaction(publicKey = proto.author, emoji = proto.emoji, react = react, timestamp = proto.id, count = 1)
         }
 
-        fun from(timestamp: Long, author: String, emoji: String, react: Boolean): Reaction? {
+        fun from(timestamp: Long, author: String, emoji: String, react: Boolean): Reaction {
             return Reaction(author, emoji, react, timestamp)
         }
     }
 
-    internal constructor(publicKey: String, emoji: String, react: Boolean, timestamp: Long? = 0, localId: Long? = 0, isMms: Boolean? = false, serverId: String? = null, count: Long? = 0, index: Long? = 0) : this() {
+    internal constructor(publicKey: String, emoji: String, react: Boolean, timestamp: Long? = 0, serverId: String? = null, count: Long? = 0, index: Long? = 0) : this() {
         this.timestamp = timestamp
         this.publicKey = publicKey
         this.emoji = emoji
         this.react = react
         this.serverId = serverId
-        this.localId = localId
-        this.isMms = isMms
         this.count = count
         this.index = index
     }

@@ -178,12 +178,7 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         database.handleFailedAttachmentUpload(databaseAttachment.attachmentId)
     }
 
-    override fun getMessageID(serverID: Long): Long? {
-        val openGroupMessagingDatabase = DatabaseComponent.get(context).lokiMessageDatabase()
-        return openGroupMessagingDatabase.getMessageID(serverID)
-    }
-
-    override fun getMessageID(serverId: Long, threadId: Long): Pair<Long, Boolean>? {
+    override fun getMessageID(serverId: Long, threadId: Long): MessageId? {
         val messageDB = DatabaseComponent.get(context).lokiMessageDatabase()
         return messageDB.getMessageID(serverId, threadId)
     }

@@ -472,7 +472,11 @@ object MessageSender {
                 val encoded = GroupUtil.getEncodedOpenGroupID("$server.$room".toByteArray())
                 val communityThreadID = storage.getThreadId(Address.fromSerialized(encoded))
                 if (communityThreadID != null && communityThreadID >= 0) {
-                    storage.setOpenGroupServerMessageID(messageId.id, message.openGroupServerMessageID!!, communityThreadID, !messageId.mms)
+                    storage.setOpenGroupServerMessageID(
+                        messageID = messageId,
+                        serverID = message.openGroupServerMessageID!!,
+                        threadID = communityThreadID
+                    )
                 }
             }
 

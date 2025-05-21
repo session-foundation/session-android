@@ -85,7 +85,7 @@ interface StorageProtocol {
     suspend fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo?
     fun onOpenGroupAdded(server: String, room: String)
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
-    fun setOpenGroupServerMessageID(messageID: Long, serverID: Long, threadID: Long, isSms: Boolean)
+    fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
     fun getOpenGroup(room: String, server: String): OpenGroup?
     fun setGroupMemberRoles(members: List<GroupMember>)
 
@@ -253,10 +253,20 @@ interface StorageProtocol {
     fun removeLastOutboxMessageId(server: String)
     fun getOrCreateBlindedIdMapping(blindedId: String, server: String, serverPublicKey: String, fromOutbox: Boolean = false): BlindedIdMapping
 
-    fun addReaction(reaction: Reaction, threadId: Long, messageSender: String, notifyUnread: Boolean)
+    /**
+     * Add reaction to a message that has the timestamp given by [reaction]. This is less than
+     * ideal because timestamp it not a very good identifier for a message, but it is the best we can do
+     * if the swarm doesn't give us anything else. [threadId] will help narrow down the message.
+     */
+    fun addReaction(threadId: Long, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+
+    /**
+     * Add reaction to a specific message. This is preferable to the timestamp lookup.
+     */
+    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
     fun removeReaction(emoji: String, messageTimestamp: Long, threadId: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
-    fun deleteReactions(messageId: Long, mms: Boolean)
+    fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun setRecipientHash(recipient: Recipient, recipientHash: String?)

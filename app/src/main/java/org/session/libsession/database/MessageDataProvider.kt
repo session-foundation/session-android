@@ -18,11 +18,7 @@ import java.io.InputStream
 
 interface MessageDataProvider {
 
-    fun getMessageID(serverID: Long): Long?
-    /**
-     * @return pair of sms or mms table-specific ID and whether it is in SMS table
-     */
-    fun getMessageID(serverId: Long, threadId: Long): Pair<Long, Boolean>?
+    fun getMessageID(serverId: Long, threadId: Long): MessageId?
     fun getMessageIDs(serverIDs: List<Long>, threadID: Long): Pair<List<Long>, List<Long>>
     fun getUserMessageHashes(threadId: Long, userPubKey: String): List<String>
     fun deleteMessage(messageID: Long, isSms: Boolean)
