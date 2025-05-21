@@ -3,8 +3,6 @@ package org.session.libsession.messaging.sending_receiving
 import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
-import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
@@ -44,25 +42,14 @@ object MessageEncrypter {
         if (IdPrefix.fromValue(recipientBlindedId) != IdPrefix.BLINDED) throw Error.SigningFailed
         val userEdKeyPair =
             MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
-        val blindedKeyPair = SodiumUtilities.blindedKeyPair(serverPublicKey, userEdKeyPair) ?: throw Error.SigningFailed
         val recipientBlindedPublicKey = Hex.fromStringCondensed(recipientBlindedId.removingIdPrefixIfNeeded())
 
-        // Calculate the shared encryption key, sending from A to B
-        val encryptionKey = SodiumUtilities.sharedBlindedEncryptionKey(
-            userEdKeyPair.secretKey.asBytes,
-            recipientBlindedPublicKey,
-            blindedKeyPair.publicKey.asBytes,
-            recipientBlindedPublicKey
-        ) ?: throw Error.SigningFailed
-
-        // Inner data: msg || A   (i.e. the sender's ed25519 master pubkey, *not* kA blinded pubkey)
-        val message = plaintext + userEdKeyPair.publicKey.asBytes
-
-        // Encrypt using xchacha20-poly1305
-        val nonce = sodium.nonce(24)
-        val ciphertext = SodiumUtilities.encrypt(message, encryptionKey, nonce) ?: throw Error.EncryptionFailed
-        // data = b'\x00' + ciphertext + nonce
-        return byteArrayOf(0.toByte()) + ciphertext + nonce
+        return SessionEncrypt.encryptForBlindedRecipient(
+            message = plaintext,
+            myEd25519Privkey = userEdKeyPair.secretKey.asBytes,
+            serverPubKey = Hex.fromStringCondensed(serverPublicKey),
+            recipientBlindId = byteArrayOf(0x15) + recipientBlindedPublicKey
+        ).data
     }
 
 }
