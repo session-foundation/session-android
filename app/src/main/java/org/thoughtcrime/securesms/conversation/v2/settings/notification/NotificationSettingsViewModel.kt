@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.util.DateUtils
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -42,6 +43,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
+    private val dateUtils: DateUtils,
 ) : ViewModel() {
     private var thread: Recipient? = null
 
@@ -173,13 +175,8 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    //todo UCS update with date utils functions once we have the code from the network page
     private fun formatTime(timestamp: Long): String{
-        val formatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yy")
-
-        return Instant.ofEpochMilli(timestamp)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
+        return dateUtils.formatTime(timestamp, "HH:mm dd/MM/yy")
     }
 
     private fun shouldEnableSetButton(): Boolean {

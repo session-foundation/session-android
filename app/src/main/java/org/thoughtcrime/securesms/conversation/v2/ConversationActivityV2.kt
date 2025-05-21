@@ -138,7 +138,6 @@ import org.thoughtcrime.securesms.conversation.v2.input_bar.mentions.MentionCand
 import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCallback
 import org.thoughtcrime.securesms.conversation.v2.menus.ConversationActionModeCallbackDelegate
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.messages.ControlMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
@@ -236,7 +235,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
+    UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -1511,25 +1510,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
             cancelButton()
         }
-    }
-
-    override fun copyAccountID(accountId: String) {
-        val clip = ClipData.newPlainText("Account ID", accountId)
-        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        manager.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun copyOpenGroupUrl(thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
-
-        val threadId = threadDb.getThreadIdIfExistsFor(thread)
-        val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
-
-        val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
-        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        manager.setPrimaryClip(clip)
-        Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
     override fun unblockUserFromInput() {

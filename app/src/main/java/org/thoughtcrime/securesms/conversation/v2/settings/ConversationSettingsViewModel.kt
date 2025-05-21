@@ -108,10 +108,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private var recipient: Recipient? = null
 
-    private val groupV2: GroupInfo.ClosedGroupInfo? by lazy {
-        if(recipient == null) return@lazy null
-        configFactory.getGroup(AccountId(recipient!!.address.toString()))
-    }
+    private var groupV2: GroupInfo.ClosedGroupInfo? = null
 
     private val community: OpenGroup? by lazy {
         storage.getOpenGroup(threadId)
@@ -148,6 +145,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
         }
+
+        groupV2 = if(conversation.isGroupV2Recipient) configFactory.getGroup(AccountId(conversation.address.toString()))
+        else null
 
         // admin
         val isAdmin: Boolean =  when {
@@ -193,7 +193,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            conversation.isCommunityRecipient -> { //todo UCS currently this property is null for existing communities and is never updated if the community was already added before caring for the description
+            conversation.isCommunityRecipient -> {
                 (
                     community?.description to // description
                     context.getString(R.string.qa_conversation_settings_description_community) // description qa tag
@@ -810,45 +810,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
-        _dialogState.update {
+        _dialogState.update { state ->
+            val dialogData = groupManager.getLeaveGroupConfirmationDialogData(
+                AccountId(groupData.groupAccountId),
+                _uiState.value.name
+            ) ?: return
 
-            var title = R.string.groupDelete
-            var message: CharSequence = ""
-            var positiveButton = R.string.delete
-            var positiveQaTag = R.string.qa_conversation_settings_dialog_delete_group_confirm
-            var negativeQaTag = R.string.qa_conversation_settings_dialog_delete_group_cancel
-
-            val groupName = _uiState.value.name
-
-            if(!groupData.shouldPoll){
-                message = Phrase.from(context, R.string.groupDeleteDescriptionMember)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-
-            } else if (groupData.hasAdminKey()) {
-                message = Phrase.from(context, R.string.groupLeaveDescriptionAdmin)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-            } else {
-                message = Phrase.from(context, R.string.groupLeaveDescription)
-                    .put(GROUP_NAME_KEY, groupName)
-                    .format()
-
-                title = R.string.groupLeave
-                positiveButton = R.string.leave
-                positiveQaTag = R.string.qa_conversation_settings_dialog_leave_group_confirm
-                negativeQaTag = R.string.qa_conversation_settings_dialog_leave_group_cancel
-            }
-
-
-            it.copy(
+            state.copy(
                 showSimpleDialog = Dialog(
-                    title = context.getString(title),
-                    message = message,
-                    positiveText = context.getString(positiveButton),
-                    negativeText = context.getString(R.string.cancel),
-                    positiveQaTag = context.getString(positiveQaTag),
-                    negativeQaTag = context.getString(negativeQaTag),
+                    title = dialogData.title,
+                    message = dialogData.message,
+                    positiveText = context.getString(dialogData.positiveText),
+                    negativeText = context.getString(dialogData.negativeText),
+                    positiveQaTag = dialogData.positiveQaTag?.let{ context.getString(it) },
+                    negativeQaTag = dialogData.negativeQaTag?.let{ context.getString(it) },
                     onPositive = ::leaveGroup,
                     onNegative = {}
                 )
@@ -1312,7 +1287,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 )
             }
         )
-    }
+    } 
 
     private val optionInviteMembers: OptionsItem by lazy{
         OptionsItem(

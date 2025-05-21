@@ -26,6 +26,7 @@ import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
@@ -38,6 +39,7 @@ import network.loki.messenger.databinding.ActivityHomeBinding
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.JobQueue
@@ -49,12 +51,13 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.wasKickedFromGroupV2
+import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.start.StartConversationFragment
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuHelper
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.GroupDatabase
@@ -668,14 +671,19 @@ class HomeActivity : ScreenLockActionBarActivity(),
         val recipient = thread.recipient
 
         if (recipient.isGroupV2Recipient) {
-            ConversationMenuHelper.leaveGroup(
-                context = this,
-                thread = recipient,
+            val accountId = AccountId(recipient.address.toString())
+            val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
+            val name = configFactory.withGroupConfigs(accountId) {
+                it.groupInfo.getName()
+            } ?: group.name
+
+            confirmAndLeaveGroup(
+                dialogData = groupManagerV2.getLeaveGroupConfirmationDialogData(accountId, name),
                 threadID = threadID,
-                configFactory = configFactory,
                 storage = storage,
-                groupManager = groupManagerV2,
-                deprecationManager = deprecationManager
+                doLeave = {
+                    homeViewModel.leaveGroup(accountId)
+                }
             )
 
             return
@@ -763,6 +771,36 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 deleteAction()
             }
             button(negativeButtonId)
+        }
+    }
+
+    private fun confirmAndLeaveGroup(
+        dialogData: GroupManagerV2.ConfirmDialogData?,
+        threadID: Long,
+        storage: StorageProtocol,
+        doLeave: suspend () -> Unit,
+    ) {
+        if (dialogData == null) return
+
+        showSessionDialog {
+            title(dialogData.title)
+            text(dialogData.message)
+            dangerButton(
+                dialogData.positiveText,
+                contentDescriptionRes = dialogData.positiveQaTag ?: dialogData.positiveText
+            ) {
+                GlobalScope.launch(Dispatchers.Default) {
+                    // Cancel any outstanding jobs
+                    storage.cancelPendingMessageSendJobs(threadID)
+
+                    doLeave()
+                }
+
+            }
+            button(
+                dialogData.negativeText,
+                contentDescriptionRes = dialogData.negativeQaTag ?: dialogData.negativeText
+            )
         }
     }
 

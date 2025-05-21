@@ -113,10 +113,12 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             when {
                 // groups and communities
                 recipient.isGroupOrCommunityRecipient -> {
+                    val accountId = AccountId(recipient.address.toString())
+                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
+                    // or if the user is an admin
                     // the button should read 'Delete' instead of 'Leave'
-                    if (configFactory.wasKickedFromGroupV2(recipient) ||
-                        configFactory.isGroupDestroyed(recipient)) {
+                    if (!group.shouldPoll || group.hasAdminKey()) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2

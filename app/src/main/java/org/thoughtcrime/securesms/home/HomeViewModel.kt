@@ -36,6 +36,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
@@ -65,7 +66,8 @@ class HomeViewModel @Inject constructor(
     private val configFactory: ConfigFactory,
     private val callManager: CallManager,
     private val usernameUtils: UsernameUtils,
-    private val storage: StorageProtocol
+    private val storage: StorageProtocol,
+    private val groupManager: GroupManagerV2
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -228,6 +230,12 @@ class HomeViewModel @Inject constructor(
     fun deleteContact(accountId: String) {
         viewModelScope.launch(Dispatchers.Default) {
             storage.deleteContactAndSyncConfig(accountId)
+        }
+    }
+
+    fun leaveGroup(accountId: AccountId) {
+        viewModelScope.launch(Dispatchers.Default) {
+            groupManager.leaveGroup(accountId)
         }
     }
 

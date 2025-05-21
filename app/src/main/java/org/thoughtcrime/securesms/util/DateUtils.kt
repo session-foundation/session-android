@@ -104,7 +104,7 @@ class DateUtils @Inject constructor(
     }
 
     // Format a given timestamp with a specific pattern
-    private fun formatTime(timestamp: Long, pattern: String, locale: Locale = Locale.getDefault()): String {
+    fun formatTime(timestamp: Long, pattern: String, locale: Locale = Locale.getDefault()): String {
         val formatter = DateTimeFormatter.ofPattern(pattern, locale)
 
         return Instant.ofEpochMilli(timestamp)

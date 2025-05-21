@@ -1,10 +1,12 @@
 package org.session.libsession.messaging.groups
 
+import androidx.annotation.StringRes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 
 /**
  * Business logic handling group v2 operations like inviting members,
@@ -115,4 +117,15 @@ interface GroupManagerV2 {
      * Should be called whenever a group invite is blocked
      */
     fun onBlocked(groupAccountId: AccountId)
+
+    fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
+
+    data class ConfirmDialogData(
+        val title: String,
+        val message: CharSequence,
+        @StringRes val positiveText: Int,
+        @StringRes val negativeText: Int,
+        @StringRes val positiveQaTag: Int?,
+        @StringRes val negativeQaTag: Int?,
+    )
 }

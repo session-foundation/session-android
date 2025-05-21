@@ -131,6 +131,8 @@ fun ConversationAppBar(
                             if (data.showAvatar) {
                                 Avatar(
                                     modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
+                                        .padding(end = LocalDimensions.current.xsSpacing)
+                                        .clip(CircleShape)
                                         .clickable { onAvatarPressed() },
                                     size = LocalDimensions.current.iconLargeAvatar,
                                     data = data.avatarUIData

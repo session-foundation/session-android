@@ -40,6 +40,7 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -51,7 +52,6 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -59,6 +59,7 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
@@ -637,6 +638,12 @@ class ConversationReactionOverlay : FrameLayout {
         backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         return items
+    }
+
+    private fun userCanBanSelectedUsers(context: Context, message: MessageRecord, openGroup: OpenGroup?, userPublicKey: String, blindedPublicKey: String?): Boolean {
+        if (openGroup == null)  return false
+        if (message.isOutgoing) return false // Users can't ban themselves
+        return OpenGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
     }
 
     private fun handleActionItemClicked(action: Action) {
