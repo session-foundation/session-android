@@ -79,7 +79,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             extended = false
         }
         this.messageId = messageId
-        displayReactions(if (extended) Int.MAX_VALUE else DEFAULT_THRESHOLD)
+        displayReactions(messageId, if (extended) Int.MAX_VALUE else DEFAULT_THRESHOLD)
     }
 
     override fun onTouch(v: View, event: MotionEvent): Boolean {
@@ -92,9 +92,9 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         return true
     }
 
-    private fun displayReactions(threshold: Int) {
+    private fun displayReactions(messageId: MessageId, threshold: Int) {
         val userPublicKey = getLocalNumber(context)
-        val reactions = buildSortedReactionsList(records!!, userPublicKey, threshold)
+        val reactions = buildSortedReactionsList(messageId, records!!, userPublicKey, threshold)
         binding.layoutEmojiContainer.removeAllViews()
         val overflowContainer = LinearLayout(context)
         overflowContainer.orientation = LinearLayout.HORIZONTAL
@@ -111,7 +111,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
                 val pill = buildPill(context, this, reaction, true)
                 pill.setOnClickListener { v: View? ->
                     extended = true
-                    displayReactions(Int.MAX_VALUE)
+                    displayReactions(messageId, Int.MAX_VALUE)
                 }
                 pill.findViewById<View>(R.id.reactions_pill_count).visibility = GONE
                 pill.findViewById<View>(R.id.reactions_pill_spacer).visibility = GONE
@@ -143,7 +143,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             for (id in binding.groupShowLess.referencedIds) {
                 findViewById<View>(id).setOnClickListener { view: View? ->
                     extended = false
-                    displayReactions(DEFAULT_THRESHOLD)
+                    displayReactions(messageId, DEFAULT_THRESHOLD)
                 }
             }
         } else {
@@ -151,7 +151,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
         }
     }
 
-    private fun buildSortedReactionsList(records: List<ReactionRecord>, userPublicKey: String?, threshold: Int): List<Reaction> {
+    private fun buildSortedReactionsList(messageId: MessageId, records: List<ReactionRecord>, userPublicKey: String?, threshold: Int): List<Reaction> {
         val counters: MutableMap<String, Reaction> = LinkedHashMap()
 
         records.forEach {
@@ -159,7 +159,7 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
             val info = counters[baseEmoji]
 
             if (info == null) {
-                counters[baseEmoji] = Reaction(messageId!!, it.emoji, it.count, it.sortId, it.dateReceived, userPublicKey == it.author)
+                counters[baseEmoji] = Reaction(messageId, it.emoji, it.count, it.sortId, it.dateReceived, userPublicKey == it.author)
             }
             else {
                 info.update(it.emoji, it.count, it.dateReceived, userPublicKey == it.author)
@@ -214,7 +214,8 @@ class EmojiReactionsView : ConstraintLayout, OnTouchListener {
     }
 
     private fun onReactionClicked(reaction: Reaction) {
-        delegate!!.onReactionClicked(reaction.emoji!!, messageId!!, reaction.userWasSender)
+        val messageId = this.messageId ?: return
+        delegate!!.onReactionClicked(reaction.emoji!!, messageId, reaction.userWasSender)
     }
 
     private fun onDown(messageId: MessageId, emoji: String?) {
