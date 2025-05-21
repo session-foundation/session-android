@@ -82,6 +82,8 @@ class ConfigFactory @Inject constructor(
         // before `lastConfigMessage.timestamp - configChangeBufferPeriod` will not  actually have
         // it's changes applied (control text will still be added though)
         private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
+
+        const val MAX_NAME_BYTES = 100 // max size in bytes for names
     }
 
     init {

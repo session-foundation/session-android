@@ -426,6 +426,22 @@ class GroupManagerV2Impl @Inject constructor(
         SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, messagesToDelete)
     }
 
+    override suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>) {
+        // only admins can perform these tasks
+        val groupAdminAuth = configFactory.getGroup(groupAccountId)?.adminKey?.data?.let {
+            OwnedSwarmAuth.ofClosedGroup(groupAccountId, it)
+        } ?: return
+
+        // change the delete_before
+        configFactory.withMutableGroupConfigs(groupAccountId) { configs ->
+            configs.groupInfo.setDeleteBefore(clock.currentTimeSeconds())
+        }
+
+        // remove messages from swarm SnodeAPI.deleteMessage
+        val cleanedHashes: List<String> = deletedHashes.filter { !it.isNullOrEmpty() }.filterNotNull()
+        if(cleanedHashes.isNotEmpty()) SnodeAPI.deleteMessage(groupAccountId.hexString, groupAdminAuth, cleanedHashes)
+    }
+
     override suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId) = scope.launchAndWait(group, "Handle member left message") {
         val closedGroup = configFactory.getGroup(group) ?: return@launchAndWait
         val groupAdminKey = closedGroup.adminKey?.data
@@ -983,6 +999,17 @@ class GroupManagerV2Impl @Inject constructor(
 
             storage.insertGroupInfoChange(message, groupId)
             MessageSender.sendAndAwait(message, Address.fromSerialized(groupId.hexString))
+        }
+
+    override suspend fun setDescription(groupId: AccountId, newDescription: String): Unit =
+        scope.launchAndWait(groupId, "Set group description") {
+            requireAdminAccess(groupId)
+
+            configFactory.withMutableGroupConfigs(groupId) { configs ->
+                if (configs.groupInfo.getDescription() != newDescription) {
+                    configs.groupInfo.setDescription(newDescription)
+                }
+            }
         }
 
     override suspend fun requestMessageDeletion(

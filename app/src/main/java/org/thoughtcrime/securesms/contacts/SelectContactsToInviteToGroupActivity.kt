@@ -15,6 +15,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 
+//todo remove this when we clean out the legacy group code
 @AndroidEntryPoint
 class SelectContactsToInviteToGroupActivity : ScreenLockActionBarActivity(), LoaderManager.LoaderCallbacks<List<String>> {
     private lateinit var binding: ActivitySelectContactsBinding

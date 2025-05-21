@@ -76,6 +76,10 @@ class SnodeClock() {
         return instantState.value?.now() ?: System.currentTimeMillis()
     }
 
+    fun currentTimeSeconds(): Long {
+        return currentTimeMills() / 1000
+    }
+
     private class Instant(
         val systemUptime: Long,
         val networkTime: Long,

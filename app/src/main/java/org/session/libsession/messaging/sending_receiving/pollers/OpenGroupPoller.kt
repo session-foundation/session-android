@@ -70,6 +70,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                 server = server,
                 room = pollInfo.token,
                 name = name ?: "",
+                description = (pollInfo.details?.description ?: existingOpenGroup?.description),
                 publicKey = publicKey,
                 imageId = (pollInfo.details?.imageId ?: existingOpenGroup?.imageId),
                 canWrite = pollInfo.write,

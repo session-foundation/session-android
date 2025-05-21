@@ -33,12 +33,10 @@ import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.database.SessionContactDatabase;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
-import org.thoughtcrime.securesms.util.AvatarPlaceholderGenerator;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 import org.thoughtcrime.securesms.util.BitmapUtil;
 
 import java.util.LinkedList;
@@ -56,13 +54,18 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
   private SlideDeck    slideDeck;
   private CharSequence contentTitle;
   private CharSequence contentText;
+  private AvatarUtils avatarUtils;
 
   private static final Integer ICON_SIZE = 128;
 
-  public SingleRecipientNotificationBuilder(@NonNull Context context, @NonNull NotificationPrivacyPreference privacy)
-  {
+  public SingleRecipientNotificationBuilder(
+          @NonNull Context context,
+          @NonNull NotificationPrivacyPreference privacy,
+          @NonNull AvatarUtils avatarUtils
+  ) {
     super(context, privacy);
 
+    this.avatarUtils = avatarUtils;
     setSmallIcon(R.drawable.ic_notification);
     setColor(ContextCompat.getColor(context, R.color.accent_green));
     setCategory(NotificationCompat.CATEGORY_MESSAGE);
@@ -95,15 +98,15 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
           setLargeIcon(iconBitmap);
         } catch (InterruptedException | ExecutionException e) {
           Log.w(TAG, "get iconBitmap in getThread failed", e);
-          setLargeIcon(getPlaceholderDrawable(context, recipient));
+          setLargeIcon(getPlaceholderDrawable(avatarUtils, recipient));
         }
       } else {
-        setLargeIcon(getPlaceholderDrawable(context, recipient));
+        setLargeIcon(getPlaceholderDrawable(avatarUtils, recipient));
       }
 
     } else {
       setContentTitle(context.getString(R.string.app_name));
-      setLargeIcon(AvatarPlaceholderGenerator.generate(context, ICON_SIZE, "", "Unknown"));
+      setLargeIcon(avatarUtils.generateTextBitmap(ICON_SIZE, "", "Unknown"));
     }
   }
 
@@ -320,10 +323,10 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     return content;
   }
 
-  private static Drawable getPlaceholderDrawable(Context context, Recipient recipient) {
+  private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
     String displayName = recipient.getName();
-    return AvatarPlaceholderGenerator.generate(context, ICON_SIZE, publicKey, displayName);
+    return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);
   }
 
   /**

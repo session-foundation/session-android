@@ -81,7 +81,7 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:supportsRtl="true"
         android:theme="@style/Theme.Session.DayNight"
-        tools:replace="android:allowBackup,android:label" >
+        tools:replace="android:allowBackup,android:label">
 
         <!-- Disable all analytics -->
         <meta-data
@@ -133,10 +133,16 @@
             android:exported="false"
             android:label="@string/sessionMessageRequests"
             android:screenOrientation="portrait" />
+
         <activity
             android:name="org.thoughtcrime.securesms.preferences.SettingsActivity"
             android:screenOrientation="portrait"
-            android:label="@string/sessionSettings" />
+            android:label="@string/sessionSettings" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.home.HomeActivity" />
+        </activity>
+
         <activity
             android:name="org.thoughtcrime.securesms.debugmenu.DebugActivity"
             android:screenOrientation="portrait"
@@ -158,16 +164,10 @@
             android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
             android:label="@string/groupEdit"
             android:screenOrientation="portrait" />
-
         <activity
-            android:name="org.thoughtcrime.securesms.groups.EditGroupActivity"
+            android:name="org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
-            android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
+            android:label="@string/sessionSettings"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
@@ -194,7 +194,12 @@
         <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-
+        <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+        <activity android:name="org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:exported="true"
             android:name="org.thoughtcrime.securesms.ShareActivity"
@@ -225,6 +230,7 @@
         <activity-alias
             android:name=".RoutingActivity"
             android:exported="true"
+            android:icon="@mipmap/ic_launcher"
             android:targetActivity="org.thoughtcrime.securesms.home.HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -316,6 +322,15 @@
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
         <activity android:name="org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity" />
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppDisguiseSettingsActivity" />
+
+        <activity
+            android:name="org.thoughtcrime.securesms.tokenpage.TokenPageActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.preferences.SettingsActivity" />
+        </activity>
 
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"

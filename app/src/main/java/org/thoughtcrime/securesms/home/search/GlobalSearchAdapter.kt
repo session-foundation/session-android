@@ -16,9 +16,12 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.util.DateUtils
 import java.security.InvalidParameterException
 
+
 class GlobalSearchAdapter(
+    private val dateUtils: DateUtils,
     private val onContactClicked: (Model) -> Unit,
     private val onContactLongPressed: (Model.Contact) -> Unit,
 ): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -67,10 +70,11 @@ class GlobalSearchAdapter(
                 LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_subheader, parent, false)
             )
             else -> ContentView(
-                        LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
-                        onContactClicked,
-                        onContactLongPressed
-                    )
+                LayoutInflater.from(parent.context).inflate(R.layout.view_global_search_result, parent, false),
+                dateUtils,
+                onContactClicked,
+                onContactLongPressed
+            )
         }
 
     override fun onBindViewHolder(
@@ -116,6 +120,7 @@ class GlobalSearchAdapter(
 
     class ContentView(
         view: View,
+        private val dateUtils: DateUtils,
         private val onContactClicked: (Model) -> Unit,
         private val onContactLongPressed: (Model.Contact) -> Unit,
     ) : RecyclerView.ViewHolder(view) {
@@ -130,9 +135,10 @@ class GlobalSearchAdapter(
             binding.searchResultProfilePicture.recycle()
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
-                is Model.Contact           -> bindModel(query, model)
-                is Model.Message           -> bindModel(query, model)
-                is Model.SavedMessages     -> bindModel(model)
+                is Model.Contact -> bindModel(query, model)
+                is Model.Message -> bindModel(query, model, dateUtils)
+                is Model.SavedMessages -> bindModel(model)
+
                 else -> throw InvalidParameterException("Can't display as ContentView")
             }
             binding.root.setOnClickListener { onContactClicked(model) }

@@ -3,13 +3,11 @@ package org.thoughtcrime.securesms.groups.compose
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
@@ -24,14 +22,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.ui.Avatar
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.util.AvatarBadge
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
@@ -49,7 +51,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
                 horizontal = LocalDimensions.current.spacing,
                 vertical = LocalDimensions.current.xxxsSpacing
             )
-            .qaTag(stringResource(R.string.AccessibilityId_versionWarning))
+            .qaTag(R.string.AccessibilityId_versionWarning)
     )
 }
 
@@ -57,6 +59,7 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 fun  MemberItem(
     accountId: AccountId,
     title: String,
+    avatarUIData: AvatarUIData,
     showAsAdmin: Boolean,
     modifier: Modifier = Modifier,
     onClick: ((accountId: AccountId) -> Unit)? = null,
@@ -75,14 +78,14 @@ fun  MemberItem(
                 horizontal = LocalDimensions.current.smallSpacing,
                 vertical = LocalDimensions.current.xsSpacing
             )
-            .qaTag(stringResource(R.string.AccessibilityId_contact)),
+            .qaTag(R.string.AccessibilityId_contact),
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
         verticalAlignment = CenterVertically,
     ) {
         Avatar(
-            accountId = accountId,
-            isAdmin = showAsAdmin,
-            modifier = Modifier.size(LocalDimensions.current.iconLarge)
+            size = LocalDimensions.current.iconLarge,
+            data = avatarUIData,
+            badge = if (showAsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
         )
 
         Column(
@@ -93,7 +96,7 @@ fun  MemberItem(
                 style = LocalType.current.h8,
                 text = title,
                 color = LocalColors.current.text,
-                modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_contact))
+                modifier = Modifier.qaTag(R.string.AccessibilityId_contact)
             )
 
             if (!subtitle.isNullOrEmpty()) {
@@ -101,7 +104,7 @@ fun  MemberItem(
                     text = subtitle,
                     style = LocalType.current.small,
                     color = subtitleColor,
-                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_contactStatus))
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_contactStatus)
                 )
             }
         }
@@ -115,6 +118,7 @@ fun RadioMemberItem(
     enabled: Boolean,
     selected: Boolean,
     accountId: AccountId,
+    avatarUIData: AvatarUIData,
     title: String,
     onClick: (accountId: AccountId) -> Unit,
     showAsAdmin: Boolean,
@@ -124,6 +128,7 @@ fun RadioMemberItem(
 ) {
     MemberItem(
         accountId = accountId,
+        avatarUIData = avatarUIData,
         title = title,
         subtitle = subtitle,
         subtitleColor = subtitleColor,
@@ -146,23 +151,16 @@ fun LazyListScope.multiSelectMemberList(
 ) {
     items(contacts.size) { index ->
         val contact = contacts[index]
-        Column(modifier = modifier) {
-            if (index == 0) {
-                // Show top divider for the first item only
-                HorizontalDivider(color = LocalColors.current.borders)
-            }
-
-            RadioMemberItem(
-                enabled = enabled,
-                selected = contact.selected,
-                accountId = contact.accountID,
-                title = contact.name,
-                showAsAdmin = false,
-                onClick = { onContactItemClicked(contact.accountID) }
-            )
-
-            HorizontalDivider(color = LocalColors.current.borders)
-        }
+        RadioMemberItem(
+            modifier = modifier,
+            enabled = enabled,
+            selected = contact.selected,
+            accountId = contact.accountID,
+            avatarUIData = contact.avatarUIData,
+            title = contact.name,
+            showAsAdmin = false,
+            onClick = { onContactItemClicked(contact.accountID) }
+        )
     }
 }
 
@@ -178,11 +176,27 @@ fun PreviewMemberList() {
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Person",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
+                        ),
                         selected = false,
                     ),
                     ContactItem(
                         accountID = AccountId(random),
                         name = "Cow",
+                        avatarUIData = AvatarUIData(
+                            listOf(
+                                AvatarUIElement(
+                                    name = "TOTO",
+                                    color = primaryBlue
+                                )
+                            )
+                        ),
                         selected = true,
                     )
                 ),

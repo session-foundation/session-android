@@ -6,14 +6,12 @@ import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
-import java.util.Locale
 import network.loki.messenger.R
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.ContentView
-import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Contact as ContactModel
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.GroupConversation
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Header
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
@@ -21,6 +19,8 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMes
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SubHeader
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.SearchUtil
+import java.util.Locale
+import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Contact as ContactModel
 
 class GlobalSearchDiff(
     private val oldQuery: String?,
@@ -28,6 +28,7 @@ class GlobalSearchDiff(
     private val oldData: List<GlobalSearchAdapter.Model>,
     private val newData: List<GlobalSearchAdapter.Model>
 ) : DiffUtil.Callback() {
+
     override fun getOldListSize(): Int = oldData.size
     override fun getNewListSize(): Int = newData.size
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
@@ -118,10 +119,15 @@ fun ContentView.bindModel(model: SavedMessages) {
     binding.searchResultProfilePicture.isVisible = true
 }
 
-fun ContentView.bindModel(query: String?, model: Message) = binding.apply {
+fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) = binding.apply {
     searchResultProfilePicture.isVisible = true
     searchResultTimestamp.isVisible = true
-    searchResultTimestamp.text = DateUtils.getDisplayFormattedTimeSpanString(root.context, Locale.getDefault(), model.messageResult.sentTimestampMs)
+
+    searchResultTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(
+        Locale.getDefault(),
+        model.messageResult.sentTimestampMs
+    )
+
     searchResultProfilePicture.update(model.messageResult.conversationRecipient)
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {

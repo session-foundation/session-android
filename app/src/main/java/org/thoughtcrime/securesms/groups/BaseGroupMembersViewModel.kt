@@ -3,12 +3,14 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.AssistedFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.EnumSet
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
@@ -23,13 +25,17 @@ import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
+import java.util.EnumSet
 
 abstract class BaseGroupMembersViewModel (
     private val groupId: AccountId,
     @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
     private val usernameUtils: UsernameUtils,
-    private val configFactory: ConfigFactoryProtocol
+    private val configFactory: ConfigFactoryProtocol,
+    private val avatarUtils: AvatarUtils
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
@@ -48,27 +54,41 @@ abstract class BaseGroupMembersViewModel (
                     val displayInfo = storage.getClosedGroupDisplayInfo(groupId.hexString)
                         ?: return@withContext null
 
-                    val memberState = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
-                        .map { (member, status) ->
-                            createGroupMember(
-                                member = member,
-                                status = status,
-                                myAccountId = currentUserId,
-                                amIAdmin = displayInfo.isUserAdmin,
-                            )
-                        }
-                        .toList()
+                    val rawMembers = configFactory.withGroupConfigs(groupId) { it.groupMembers.allWithStatus() }
+
+                    val memberState = mutableListOf<GroupMemberState>()
+                    for ((member, status) in rawMembers) {
+                        memberState.add(createGroupMember(member, status, currentUserId, displayInfo.isUserAdmin))
+                    }
 
                     displayInfo to sortMembers(memberState, currentUserId)
                 }
           }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    // Output: the list of the members and their state in the group.
-    val members: StateFlow<List<GroupMemberState>> = groupInfo
-        .map { it?.second.orEmpty() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    private val mutableSearchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> get() = mutableSearchQuery
 
-    private fun createGroupMember(
+    // Output: the list of the members and their state in the group.
+    @OptIn(FlowPreview::class)
+    val members: StateFlow<List<GroupMemberState>> = combine(
+        groupInfo.map { it?.second.orEmpty() },
+        mutableSearchQuery.debounce(100L),
+        ::filterContacts
+    ).stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun onSearchQueryChanged(query: String) {
+        mutableSearchQuery.value = query
+    }
+
+    private fun filterContacts(
+        contacts: List<GroupMemberState>,
+        query: String,
+    ): List<GroupMemberState> {
+        return if(query.isBlank()) contacts
+        else contacts.filter { it.name.contains(query, ignoreCase = true) }
+    }
+
+    private suspend fun createGroupMember(
         member: GroupMember,
         status: GroupMember.Status,
         myAccountId: AccountId,
@@ -102,6 +122,7 @@ abstract class BaseGroupMembersViewModel (
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
+            avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin),
         )
@@ -138,40 +159,16 @@ abstract class BaseGroupMembersViewModel (
     // Refer to notion doc for the sorting logic
     private fun sortMembers(members: List<GroupMemberState>, currentUserId: AccountId) =
         members.sortedWith(
-            compareBy<GroupMemberState>{
-                when (it.status) {
-                    GroupMember.Status.INVITE_FAILED -> 0
-                    GroupMember.Status.INVITE_NOT_SENT -> 1
-                    GroupMember.Status.INVITE_SENDING -> 2
-                    GroupMember.Status.INVITE_SENT -> 3
-                    GroupMember.Status.INVITE_UNKNOWN -> 4
-                    GroupMember.Status.REMOVED,
-                    GroupMember.Status.REMOVED_UNKNOWN,
-                    GroupMember.Status.REMOVED_INCLUDING_MESSAGES -> 5
-                    GroupMember.Status.PROMOTION_FAILED -> 6
-                    GroupMember.Status.PROMOTION_NOT_SENT -> 7
-                    GroupMember.Status.PROMOTION_SENDING -> 8
-                    GroupMember.Status.PROMOTION_SENT -> 9
-                    GroupMember.Status.PROMOTION_UNKNOWN -> 10
-                    null,
-                    GroupMember.Status.INVITE_ACCEPTED,
-                    GroupMember.Status.PROMOTION_ACCEPTED -> 11
-                }
-            }
+            compareBy<GroupMemberState>{ it.accountId != currentUserId } // Current user comes first
                 .thenBy { !it.showAsAdmin } // Admins come first
-                .thenBy { it.accountId != currentUserId } // Being myself comes first
                 .thenComparing(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }) // Sort by name (case insensitive)
                 .thenBy { it.accountId } // Last resort: sort by account ID
         )
-
-    @AssistedFactory
-    interface Factory {
-        fun create(groupId: AccountId): EditGroupViewModel
-    }
 }
 
 data class GroupMemberState(
     val accountId: AccountId,
+    val avatarUIData: AvatarUIData,
     val name: String,
     val status: GroupMember.Status?,
     val highlightStatus: Boolean,

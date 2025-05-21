@@ -11,16 +11,18 @@ data class OpenGroup(
     val room: String,
     val id: String,
     val name: String,
+    val description: String?,
     val publicKey: String,
     val imageId: String?,
     val infoUpdates: Int,
     val canWrite: Boolean,
 ) {
-    constructor(server: String, room: String, publicKey: String, name: String, imageId: String?, canWrite: Boolean, infoUpdates: Int) : this(
+    constructor(server: String, room: String, publicKey: String, name: String, imageId: String?, canWrite: Boolean, infoUpdates: Int, description: String?) : this(
         server = server,
         room = room,
         id = "$server.$room",
         name = name,
+        description = description,
         publicKey = publicKey,
         imageId = imageId,
         infoUpdates = infoUpdates,
@@ -36,11 +38,18 @@ data class OpenGroup(
                 val room = json.get("room").asText().lowercase(Locale.US)
                 val server = json.get("server").asText().lowercase(Locale.US)
                 val displayName = json.get("displayName").asText()
+                val description = json.get("description")
+                    ?.takeUnless { it.isNull }
+                    ?.asText()
                 val publicKey = json.get("publicKey").asText()
                 val imageId = if (json.hasNonNull("imageId")) { json.get("imageId")?.asText() } else { null }
                 val canWrite = json.get("canWrite")?.asText()?.toBoolean() ?: true
                 val infoUpdates = json.get("infoUpdates")?.asText()?.toIntOrNull() ?: 0
-                OpenGroup(server = server, room = room, name = displayName, publicKey = publicKey, imageId = imageId, canWrite = canWrite, infoUpdates = infoUpdates)
+                OpenGroup(
+                    server = server, room = room, name = displayName, publicKey = publicKey,
+                    imageId = imageId, canWrite = canWrite, infoUpdates = infoUpdates,
+                    description = description
+                )
             } catch (e: Exception) {
                 Log.w("Loki", "Couldn't parse open group from JSON: $jsonAsString.", e);
                 null
@@ -63,6 +72,7 @@ data class OpenGroup(
         "server" to server,
         "publicKey" to publicKey,
         "displayName" to name,
+        "description" to description,
         "imageId" to imageId,
         "infoUpdates" to infoUpdates.toString(),
         "canWrite" to canWrite.toString()

@@ -45,7 +45,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
 import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -169,7 +169,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_onboardingAccountCreate),
+                    .qaTag(R.string.AccessibilityId_onboardingAccountCreate),
                 onClick = createAccount
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -178,7 +178,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_onboardingAccountExists),
+                    .qaTag(R.string.AccessibilityId_onboardingAccountExists),
                 onClick = loadAccount
             )
             BorderlessHtmlButton(
@@ -186,7 +186,7 @@ internal fun LandingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally)
-                    .contentDescription(R.string.AccessibilityId_urlOpenBrowser),
+                    .qaTag(R.string.AccessibilityId_urlOpenBrowser),
                 onClick = { isUrlDialogVisible = true }
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))

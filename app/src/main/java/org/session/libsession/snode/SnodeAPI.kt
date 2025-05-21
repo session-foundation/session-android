@@ -335,7 +335,6 @@ object SnodeAPI {
         return parseSnodes(response)
     }
 
-
     /**
      * Build parameters required to call authenticated storage API.
      *

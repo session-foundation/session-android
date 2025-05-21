@@ -42,6 +42,8 @@ import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Date
 import java.util.Locale
@@ -58,6 +60,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
+    private val avatarUtils: AvatarUtils,
     messageDataProvider: MessageDataProvider,
     storage: Storage
 ) : ViewModel() {
@@ -167,7 +170,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                             address.toString()
                         )
                     },
-                    sender = sender,
+                    senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
                     thread = conversation,
                     readOnly = isDeprecatedLegacyGroup
                 )
@@ -245,7 +248,7 @@ data class MessageDetailsState(
     val error: TitledText? = null,
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
-    val sender: Recipient? = null,
+    val senderAvatarData: AvatarUIData? = null,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
 ) {

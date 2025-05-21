@@ -9,25 +9,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/conversationAppBar"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/conversationRecyclerView"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintVertical_bias="0"
-        android:theme="@style/Widget.Session.ActionBar.Flat"
-        android:background="?colorPrimary"
-        app:contentInsetStart="0dp">
-
-        <org.thoughtcrime.securesms.conversation.ConversationActionBarView
-            android:id="@+id/toolbarContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-    </androidx.appcompat.widget.Toolbar>
-
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/conversation_header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
     <!--
     Add this to the below recycler view if you need to debug activity `adjustResize` issues:
     android:background="@drawable/cross"
@@ -220,7 +211,7 @@
         android:id="@+id/conversation_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
         layout="@layout/view_conversation_header" />
 
     <TextView
@@ -268,7 +259,7 @@
 
     </FrameLayout>
 
-    <View
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="?input_bar_background"

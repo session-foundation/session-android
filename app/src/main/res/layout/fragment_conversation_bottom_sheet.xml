@@ -72,32 +72,11 @@
         tools:visibility="visible" />
 
     <TextView
-        android:id="@+id/muteNotificationsTextView"
-        style="@style/BottomSheetActionItem"
-        android:contentDescription="@string/AccessibilityId_notificationsMute"
-        android:text="@string/notificationsMute"
-        app:drawableStartCompat="@drawable/ic_volume_off"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible"
-        android:visibility="gone"
-        />
-
-    <TextView
-        android:id="@+id/unMuteNotificationsTextView"
-        style="@style/BottomSheetActionItem"
-        android:text="@string/notificationsMuteUnmute"
-        app:drawableStartCompat="@drawable/ic_volume_2"
-        app:drawableTint="?attr/colorControlNormal"
-        tools:visibility="visible"
-        android:visibility="gone"
-        />
-
-    <TextView
         android:id="@+id/notificationsTextView"
         style="@style/BottomSheetActionItem"
         android:text="@string/sessionNotifications"
         app:drawableTint="?attr/colorControlNormal"
-        app:drawableStartCompat="@drawable/ic_outline_notification_important_24"
+        app:drawableStartCompat="@drawable/ic_volume_2"
         tools:visibility="visible"
         android:visibility="gone"
         />

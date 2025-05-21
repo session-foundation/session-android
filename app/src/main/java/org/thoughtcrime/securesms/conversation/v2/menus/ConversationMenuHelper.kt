@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2.menus
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -10,10 +9,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.view.ContextThemeWrapper
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.SearchView.OnQueryTextListener
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -31,10 +26,8 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.leave
 import org.session.libsession.utilities.GroupUtil.doubleDecodeGroupID
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
@@ -42,25 +35,11 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.ShortcutLauncherActivity
-import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity
-import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
-import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.utilities.NotificationUtils
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
-import org.thoughtcrime.securesms.groups.EditGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity
 import org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity.Companion.groupIDKey
-import org.thoughtcrime.securesms.groups.GroupMembersActivity
-import org.thoughtcrime.securesms.media.MediaOverviewActivity
-import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
-import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
-import org.thoughtcrime.securesms.showMuteDialog
 import org.thoughtcrime.securesms.showSessionDialog
-import org.thoughtcrime.securesms.ui.findActivity
-import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.BitmapUtil
 import java.io.IOException
 
@@ -94,13 +73,13 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_copy_account_id, menu)
         }
         // One-on-one chat menu (options that should only be present for one-on-one chats)
-        if (thread.isContactRecipient) {
+       /* if (thread.isContactRecipient) {
             if (thread.isBlocked) {
                 inflater.inflate(R.menu.menu_conversation_unblock, menu)
             } else if (!thread.isLocalNumber) {
                 inflater.inflate(R.menu.menu_conversation_block, menu)
             }
-        }
+        }*/
         // (Legacy) Closed group menu (options that should only be present in closed groups)
         if (thread.isLegacyGroupRecipient) {
             inflater.inflate(R.menu.menu_conversation_legacy_group, menu)
@@ -141,12 +120,12 @@ object ConversationMenuHelper {
             inflater.inflate(R.menu.menu_conversation_notification_settings, menu)
         }
 
-        if (thread.showCallMenu()) {
+        /*if (thread.showCallMenu()) {
             inflater.inflate(R.menu.menu_conversation_call, menu)
-        }
+        }*/
 
         // Search
-        val searchViewItem = menu.findItem(R.id.menu_search)
+        /*val searchViewItem = menu.findItem(R.id.menu_search)
         (context as ConversationActivityV2).searchViewItem = searchViewItem
         val searchView = searchViewItem.actionView as SearchView
         val queryListener = object : OnQueryTextListener {
@@ -176,7 +155,7 @@ object ConversationMenuHelper {
                 context.onSearchClosed()
                 return true
             }
-        })
+        })*/
     }
 
     /**
@@ -197,78 +176,36 @@ object ConversationMenuHelper {
     ): ReceiveChannel<GroupLeavingStatus>? {
         when (item.itemId) {
             R.id.menu_view_all_media -> { showAllMedia(context, thread) }
-            R.id.menu_search -> { search(context) }
+         //   R.id.menu_search -> { search(context) }
             R.id.menu_add_shortcut -> { addShortcut(context, thread) }
-            R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
-            R.id.menu_unblock -> { unblock(context, thread) }
-            R.id.menu_block -> { block(context, thread, deleteThread = false) }
-            R.id.menu_block_delete -> { blockAndDelete(context, thread) }
+            //R.id.menu_expiring_messages -> { showDisappearingMessages(context, thread) }
+           /* R.id.menu_unblock -> { unblock(context, thread) }
+            R.id.menu_block -> { block(context, thread, deleteThread = false) }*/
             R.id.menu_copy_account_id -> { copyAccountID(context, thread) }
             R.id.menu_copy_open_group_url -> { copyOpenGroupUrl(context, thread) }
             R.id.menu_edit_group -> { editGroup(context, thread) }
             R.id.menu_group_members -> { showGroupMembers(context, thread) }
-            R.id.menu_leave_group -> { return leaveGroup(
+           /* R.id.menu_leave_group -> { return leaveGroup(
                 context, thread, threadID, factory, storage, groupManager, deprecationManager
-            ) }
-            R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
-            R.id.menu_unmute_notifications -> { unmute(context, thread) }
-            R.id.menu_mute_notifications -> { mute(context, thread) }
-            R.id.menu_notification_settings -> { setNotifyType(context, thread) }
-            R.id.menu_call -> { call(context, thread) }
+            ) }*/
+//            R.id.menu_invite_to_open_group -> { inviteContacts(context, thread) }
+//            R.id.menu_unmute_notifications -> { unmute(context, thread) }
+//            R.id.menu_mute_notifications -> { mute(context, thread) }
+//            R.id.menu_notification_settings -> { setNotifyType(context, thread) }
         }
 
         return null
     }
 
     private fun showAllMedia(context: Context, thread: Recipient) {
-        val activity = context as AppCompatActivity
-        activity.startActivity(MediaOverviewActivity.createIntent(context, thread.address))
+//        val activity = context as AppCompatActivity
+//        activity.startActivity(MediaOverviewActivity.createIntent(context, thread.address))
     }
 
-    private fun search(context: Context) {
-        val searchViewModel = (context as ConversationActivityV2).searchViewModel
-        searchViewModel.onSearchOpened()
-    }
-
-    private fun call(context: Context, thread: Recipient) {
-
-        // if the user has not enabled voice/video calls
-        if (!TextSecurePreferences.isCallNotificationsEnabled(context)) {
-            context.showSessionDialog {
-                title(R.string.callsPermissionsRequired)
-                text(R.string.callsPermissionsRequiredDescription)
-                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
-                    val intent = Intent(context, PrivacySettingsActivity::class.java)
-                    // allow the screen to auto scroll to the appropriate toggle
-                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
-                    context.startActivity(intent)
-                }
-                cancelButton()
-            }
-            return
-        }
-        // or if the user has not granted audio/microphone permissions
-        else if (!Permissions.hasAll(context, Manifest.permission.RECORD_AUDIO)) {
-            Log.d("Loki", "Attempted to make a call without audio permissions")
-
-            Permissions.with(context.findActivity())
-                .request(Manifest.permission.RECORD_AUDIO)
-                .withPermanentDenialDialog(
-                    context.getSubbedString(R.string.permissionsMicrophoneAccessRequired,
-                    APP_NAME_KEY to context.getString(R.string.app_name))
-                )
-                .execute()
-
-            return
-        }
-
-        WebRtcCallActivity.getCallActivityIntent(context)
-            .apply {
-                action = ACTION_START_CALL
-                putExtra(EXTRA_RECIPIENT_ADDRESS, thread.address)
-            }
-            .let(context::startActivity)
-    }
+//    private fun search(context: Context) {
+//        val searchViewModel = (context as ConversationActivityV2).searchViewModel
+//        searchViewModel.onSearchOpened()
+//    }
 
     @SuppressLint("StaticFieldLeak")
     private fun addShortcut(context: Context, thread: Recipient) {
@@ -311,12 +248,12 @@ object ConversationMenuHelper {
         }.execute()
     }
 
-    private fun showDisappearingMessages(context: Context, thread: Recipient) {
+   /* private fun showDisappearingMessages(context: Context, thread: Recipient) {
         val listener = context as? ConversationMenuListener ?: return
         listener.showDisappearingMessages(thread)
-    }
+    }*/
 
-    private fun unblock(context: Context, thread: Recipient) {
+ /*   private fun unblock(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
         val listener = context as? ConversationMenuListener ?: return
         listener.unblock()
@@ -326,13 +263,7 @@ object ConversationMenuHelper {
         if (!thread.isContactRecipient) { return }
         val listener = context as? ConversationMenuListener ?: return
         listener.block(deleteThread)
-    }
-
-    private fun blockAndDelete(context: Context, thread: Recipient) {
-        if (!thread.isContactRecipient) { return }
-        val listener = context as? ConversationMenuListener ?: return
-        listener.block(deleteThread = true)
-    }
+    }*/
 
     private fun copyAccountID(context: Context, thread: Recipient) {
         if (!thread.isContactRecipient) { return }
@@ -349,7 +280,7 @@ object ConversationMenuHelper {
     private fun editGroup(context: Context, thread: Recipient) {
         when {
             thread.isGroupV2Recipient -> {
-                context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
+                //context.startActivity(EditGroupActivity.createIntent(context, thread.address.toString()))
             }
 
             thread.isLegacyGroupRecipient -> {
@@ -363,7 +294,7 @@ object ConversationMenuHelper {
 
 
     private fun showGroupMembers(context: Context, thread: Recipient) {
-        context.startActivity(GroupMembersActivity.createIntent(context, thread.address.toString()))
+       // context.startActivity(GroupMembersActivity.createIntent(context, thread.address.toString()))
     }
 
     enum class GroupLeavingStatus {
@@ -517,14 +448,7 @@ object ConversationMenuHelper {
         }
     }
 
-    private fun inviteContacts(context: Context, thread: Recipient) {
-        if (!thread.isCommunityRecipient) { return }
-        val intent = Intent(context, SelectContactsToInviteToGroupActivity::class.java)
-        val activity = context as AppCompatActivity
-        activity.startActivityForResult(intent, ConversationActivityV2.INVITE_CONTACTS)
-    }
-
-    private fun unmute(context: Context, thread: Recipient) {
+/*    private fun unmute(context: Context, thread: Recipient) {
         DatabaseComponent.get(context).recipientDatabase().setMuted(thread, 0)
     }
 
@@ -538,14 +462,11 @@ object ConversationMenuHelper {
         NotificationUtils.showNotifyDialog(context, thread) { notifyType ->
             DatabaseComponent.get(context).recipientDatabase().setNotifyType(thread, notifyType)
         }
-    }
+    }*/
 
     interface ConversationMenuListener {
-        fun block(deleteThread: Boolean = false)
-        fun unblock()
         fun copyAccountID(accountId: String)
         fun copyOpenGroupUrl(thread: Recipient)
-        fun showDisappearingMessages(thread: Recipient)
     }
 
 }

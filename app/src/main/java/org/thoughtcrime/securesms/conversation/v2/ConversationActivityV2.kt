@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.database.Cursor
-import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.net.Uri
@@ -27,8 +26,6 @@ import android.text.style.ImageSpan
 import android.util.Pair
 import android.util.TypedValue
 import android.view.ActionMode
-import android.view.Menu
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup.LayoutParams
@@ -42,13 +39,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
-import androidx.core.os.BundleCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
@@ -81,7 +75,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityConversationV2Binding
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import nl.komponents.kovenant.ui.successUi
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.messages.ExpirationConfiguration
@@ -107,6 +100,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Stub
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOTIFICATIONS_ENABLED
 import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -118,13 +112,12 @@ import org.session.libsignal.utilities.ListenableFuture
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPrivateKey
 import org.thoughtcrime.securesms.ApplicationContext
+import org.thoughtcrime.securesms.FullComposeActivity.Companion.applyCommonPropertiesForCompose
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.attachments.ScreenshotObserver
 import org.thoughtcrime.securesms.audio.AudioRecorder
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
-import org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity.Companion.SELECTED_CONTACTS_KEY
-import org.thoughtcrime.securesms.conversation.ConversationActionBarDelegate
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnActionSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationReactionOverlay.OnReactionSelectedListener
@@ -151,6 +144,8 @@ import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageView
 import org.thoughtcrime.securesms.conversation.v2.messages.VisibleMessageViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.search.SearchBottomBar
 import org.thoughtcrime.securesms.conversation.v2.search.SearchViewModel
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity
+import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity
 import org.thoughtcrime.securesms.conversation.v2.utilities.AttachmentManager
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
@@ -172,6 +167,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
+import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
@@ -189,10 +185,14 @@ import org.thoughtcrime.securesms.mms.Slide
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.mms.VideoSlide
 import org.thoughtcrime.securesms.permissions.Permissions
+import org.thoughtcrime.securesms.preferences.PrivacySettingsActivity
 import org.thoughtcrime.securesms.reactions.ReactionsDialogFragment
 import org.thoughtcrime.securesms.reactions.any.ReactWithAnyEmojiDialogFragment
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.ui.components.ConversationAppBar
+import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.ActivityDispatcher
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.FilenameUtils
@@ -207,9 +207,10 @@ import org.thoughtcrime.securesms.util.isFullyScrolled
 import org.thoughtcrime.securesms.util.isScrolledToBottom
 import org.thoughtcrime.securesms.util.isScrolledToWithin30dpOfBottom
 import org.thoughtcrime.securesms.util.push
-import org.thoughtcrime.securesms.util.show
 import org.thoughtcrime.securesms.util.toPx
 import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity
+import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_START_CALL
+import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.lang.ref.WeakReference
 import java.util.LinkedList
 import java.util.Locale
@@ -233,7 +234,7 @@ private const val TAG = "ConversationActivityV2"
 class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
-    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>, ConversationActionBarDelegate,
+    SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
     OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
     ConversationMenuHelper.ConversationMenuListener, UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
 
@@ -252,6 +253,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var reactionDb: ReactionDatabase
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
@@ -322,7 +324,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
     // Search
     val searchViewModel: SearchViewModel by viewModels()
-    var searchViewItem: MenuItem? = null
 
     private val bufferedLastSeenChannel = Channel<Long>(capacity = 512, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -432,6 +433,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private var isVoiceToastShowing = false
 
+    // launcher that handles getting results back from the settings page
+    private val settingsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == RESULT_OK &&
+            res.data?.getBooleanExtra(SHOW_SEARCH, false) == true) {
+            onSearchOpened()
+        }
+    }
+
     // Only show a toast related to voice messages if the toast is not already showing (used if to
     // rate limit & prevent toast queueing when the user spams the microphone button).
     private fun showVoiceMessageToastIfNotAlreadyVisible() {
@@ -485,19 +494,23 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         const val FROM_GROUP_THREAD_ID = "from_group_thread_id"
         const val SCROLL_MESSAGE_ID = "scroll_message_id"
         const val SCROLL_MESSAGE_AUTHOR = "scroll_message_author"
+        const val SHOW_SEARCH = "show_search"
         // Request codes
         const val PICK_DOCUMENT = 2
         const val TAKE_PHOTO = 7
         const val PICK_GIF = 10
         const val PICK_FROM_LIBRARY = 12
-        const val INVITE_CONTACTS = 124
-        const val CONVERSATION_SETTINGS = 125 // used to open conversation search on result
     }
     // endregion
 
     fun showOpenUrlDialog(url: String) = viewModel.onCommand(ShowOpenUrlDialog(url))
 
     // region Lifecycle
+    override fun onCreate(savedInstanceState: Bundle?) {
+        applyCommonPropertiesForCompose()
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
         super.onCreate(savedInstanceState, isReady)
         binding = ActivityConversationV2Binding.inflate(layoutInflater)
@@ -506,7 +519,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // set the compose dialog content
         binding.dialogOpenUrl.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
+            setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
@@ -580,7 +593,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 setUpRecyclerView()
                 setUpTypingObserver()
                 setUpRecipientObserver()
-                getLatestOpenGroupInfoIfNeeded()
                 setUpSearchResultObserver()
                 scrollToFirstUnreadMessageIfNeeded()
                 setUpOutdatedClientBanner()
@@ -645,6 +657,27 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             .putExtra(THREAD_ID, event.threadId)
                         )
                     }
+
+                    is ConversationUiEvent.ShowDisappearingMessages -> {
+                        val intent = Intent(this@ConversationActivityV2, DisappearingMessagesActivity::class.java).apply {
+                            putExtra(DisappearingMessagesActivity.THREAD_ID, event.threadId)
+                        }
+                        startActivity(intent)
+                    }
+
+                    is ConversationUiEvent.ShowGroupMembers -> {
+                        val intent = Intent(this@ConversationActivityV2, GroupMembersActivity::class.java).apply {
+                            putExtra(GroupMembersActivity.GROUP_ID, event.groupId)
+                        }
+                        startActivity(intent)
+                    }
+
+                    is ConversationUiEvent.ShowNotificationSettings -> {
+                        val intent = Intent(this@ConversationActivityV2, NotificationSettingsActivity::class.java).apply {
+                            putExtra(NotificationSettingsActivity.THREAD_ID, event.threadId)
+                        }
+                        startActivity(intent)
+                    }
                 }
             }
         }
@@ -678,9 +711,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
-        viewModel.run {
-            binding.toolbarContent?.update(recipient ?: return, openGroup, expirationConfiguration)
-        }
+
+        //todo AVATAR Old code was force refreshing avatar here. Is it needed?
     }
 
     override fun onPause() {
@@ -733,7 +765,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         updatePlaceholder()
         viewModel.recipient?.let {
-            maybeUpdateToolbar(recipient = it)
             setUpOutdatedClientBanner()
         }
     }
@@ -787,6 +818,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     private fun scrollToMostRecentMessageIfWeShould() {
+        //don't do anything during search - it still needs to happen when starting the search when the keyboard opens
+        // so we check the state of the query as an indication that we are scrolling due to search
+        if(!searchViewModel.searchQuery.value.isNullOrEmpty()) return
+
         val lm = layoutManager ?: return Log.w(TAG, "Cannot scroll recycler view without a layout manager - bailing.")
 
         // Grab an initial 'previous' last visible message..
@@ -817,23 +852,31 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
-        setSupportActionBar(binding.toolbar)
+        binding.conversationAppBar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
 
-        binding.toolbar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
+        binding.conversationAppBar.setThemedContent {
+           val data by viewModel.appBarData.collectAsState()
+            val query by searchViewModel.searchQuery.collectAsState()
 
-        val actionBar = supportActionBar ?: return
-        val recipient = viewModel.recipient ?: return
-        actionBar.title = ""
-        actionBar.setDisplayHomeAsUpEnabled(true)
-        actionBar.setHomeButtonEnabled(true)
-        binding.toolbarContent.bind(
-            this,
-            viewModel.threadId,
-            recipient,
-            viewModel.expirationConfiguration,
-            viewModel.openGroup
-        )
-        maybeUpdateToolbar(recipient)
+           ConversationAppBar(
+               data = data,
+               onBackPressed = ::finish,
+               onCallPressed = ::callRecipient,
+               searchQuery = query ?: "",
+               onSearchQueryChanged = ::onSearchQueryUpdated,
+               onSearchQueryClear = {  onSearchQueryUpdated("") },
+               onSearchCanceled = ::onSearchClosed,
+               onAvatarPressed = {
+                   val intent = ConversationSettingsActivity.createIntent(
+                       context = this,
+                       threadId = viewModel.threadId,
+                       threadAddress = viewModel.recipient?.address
+                   )
+
+                   settingsLauncher.launch(intent)
+               }
+           )
+       }
     }
 
     // called from onCreate
@@ -913,14 +956,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun setUpRecipientObserver()    = viewModel.recipient?.addListener(this)
     private fun tearDownRecipientObserver() = viewModel.recipient?.removeListener(this)
-
-    private fun getLatestOpenGroupInfoIfNeeded() {
-        val openGroup = viewModel.openGroup ?: return
-        OpenGroupApi.getMemberCount(openGroup.room, openGroup.server) successUi {
-            binding.toolbarContent.updateSubtitle(viewModel.recipient!!, openGroup, viewModel.expirationConfiguration)
-            maybeUpdateToolbar(viewModel.recipient!!)
-        }
-    }
 
     // called from onCreate
     private fun setUpBlockedBanner() {
@@ -1062,6 +1097,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     binding.inputBar.run {
                         isVisible = state.showInput
                         allowAttachMultimediaButtons = state.enableAttachMediaControls
+                        // if the user is blocked, hide input and show blocked message
+                        setBlockedState(state.userBlocked)
                     }
 
                     binding.root.requestApplyInsets()
@@ -1113,22 +1150,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val recipient = viewModel.recipient ?: return false
-        if (viewModel.showOptionsMenu) {
-            ConversationMenuHelper.onPrepareOptionsMenu(
-                menu = menu,
-                inflater = menuInflater,
-                thread = recipient,
-                context = this,
-                configFactory = configFactory,
-                deprecationManager = viewModel.legacyGroupDeprecationManager
-            )
-        }
-        maybeUpdateToolbar(recipient)
-        return true
-    }
-
     override fun onDestroy() {
         if(::binding.isInitialized) {
             viewModel.saveDraft(binding.inputBar.text.trim())
@@ -1155,12 +1176,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
-            maybeUpdateToolbar(threadRecipient)
         }
-    }
-
-    private fun maybeUpdateToolbar(recipient: Recipient) {
-        binding.toolbarContent.update(recipient, viewModel.openGroup, viewModel.expirationConfiguration)
     }
 
     private fun updateSendAfterApprovalText() {
@@ -1423,15 +1439,48 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // endregion
 
     // region Interaction
-    override fun onDisappearingMessagesClicked() {
-        viewModel.recipient?.let { showDisappearingMessages(it) }
+    private fun callRecipient() {
+        if(viewModel.recipient == null) return
+
+        // if the user has not enabled voice/video calls
+        if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
+            showSessionDialog {
+                title(R.string.callsPermissionsRequired)
+                text(R.string.callsPermissionsRequiredDescription)
+                button(R.string.sessionSettings, R.string.AccessibilityId_sessionSettings) {
+                    val intent = Intent(context, PrivacySettingsActivity::class.java)
+                    // allow the screen to auto scroll to the appropriate toggle
+                    intent.putExtra(PrivacySettingsActivity.SCROLL_AND_TOGGLE_KEY, CALL_NOTIFICATIONS_ENABLED)
+                    context.startActivity(intent)
+                }
+                cancelButton()
+            }
+            return
+        }
+        // or if the user has not granted audio/microphone permissions
+        else if (!Permissions.hasAll(this, Manifest.permission.RECORD_AUDIO)) {
+            Log.d("Loki", "Attempted to make a call without audio permissions")
+
+            Permissions.with(this)
+                .request(Manifest.permission.RECORD_AUDIO)
+                .withPermanentDenialDialog(
+                    getSubbedString(R.string.permissionsMicrophoneAccessRequired,
+                        APP_NAME_KEY to getString(R.string.app_name))
+                )
+                .execute()
+
+            return
+        }
+
+        WebRtcCallActivity.getCallActivityIntent(this)
+            .apply {
+                action = ACTION_START_CALL
+                putExtra(EXTRA_RECIPIENT_ADDRESS, viewModel.recipient!!.address)
+            }
+            .let(::startActivity)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId == android.R.id.home) false else viewModel.onOptionItemSelected(this, item)
-    }
-
-    override fun block(deleteThread: Boolean) {
+    fun block(deleteThread: Boolean) {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for block action")
         val invitingAdmin = viewModel.invitingAdmin
 
@@ -1483,17 +1532,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
     }
 
-    // TODO: don't need to allow new closed group check here, removed in new disappearing messages
-    override fun showDisappearingMessages(thread: Recipient) {
-        if (thread.isLegacyGroupRecipient) {
-            groupDb.getGroup(thread.address.toGroupString()).orNull()?.run { if (!isActive) return }
-        }
-        Intent(this, DisappearingMessagesActivity::class.java)
-            .apply { putExtra(DisappearingMessagesActivity.THREAD_ID, viewModel.threadId) }
-            .also { show(it, true) }
+    override fun unblockUserFromInput() {
+        unblock()
     }
 
-    override fun unblock() {
+    fun unblock() {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
 
         if (!recipient.isContactRecipient) {
@@ -1558,7 +1601,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             deprecationManager = viewModel.legacyGroupDeprecationManager
         )
         actionModeCallback.delegate = this
-        searchViewItem?.collapseActionView()
+        if(binding.searchBottomBar.isVisible) onSearchClosed()
         if (actionMode == null) { // Nothing should be selected if this is the case
             adapter.toggleSelection(message, position)
             this.actionMode = startActionMode(actionModeCallback, ActionMode.TYPE_PRIMARY)
@@ -1677,15 +1720,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         } else {
             // Put the message in the database
             val reaction = ReactionRecord(
-                messageId = originalMessage.id,
-                isMms = originalMessage.isMms,
+                messageId = originalMessage.messageId,
                 author = author,
                 emoji = emoji,
                 count = 1,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
-            reactionDb.addReaction(MessageId(originalMessage.id, originalMessage.isMms), reaction, false)
+            reactionDb.addReaction(reaction, false)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -2189,16 +2231,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 }
                 sendAttachments(slideDeck.asAttachments(), body)
             }
-            INVITE_CONTACTS -> {
-                if (viewModel.recipient?.isCommunityRecipient != true) { return }
-                val extras = intent?.extras ?: return
-                if (!intent.hasExtra(SELECTED_CONTACTS_KEY)) { return }
-                val selectedContacts = extras.getStringArray(SELECTED_CONTACTS_KEY)!!
-                val recipients = selectedContacts.map { contact ->
-                    Recipient.from(this, fromSerialized(contact), true)
-                }
-                viewModel.inviteContacts(recipients)
-            }
         }
     }
 
@@ -2244,7 +2276,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 .execute()
         }
     }
-
 
     override fun sendVoiceMessage() {
         Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
@@ -2369,7 +2400,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {
-                val formattedTimestamp = DateUtils.getDisplayFormattedTimeSpanString(this, Locale.getDefault(), message.timestamp)
+                val formattedTimestamp = dateUtils.getDisplayFormattedTimeSpanString(
+                    Locale.getDefault(),
+                    message.timestamp
+                )
                 builder.append("$formattedTimestamp: ")
             }
             builder.append(body)
@@ -2388,7 +2422,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         endActionMode()
     }
 
-    override fun copyAccountID(messages: Set<MessageRecord>) {
+    private fun copyAccountID(messages: Set<MessageRecord>) {
         val accountID = messages.first().individualRecipient.address.toString()
         val clip = ClipData.newPlainText("Account ID", accountID)
         val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -2581,24 +2615,27 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (result.getResults().isNotEmpty()) {
                 result.getResults()[result.position]?.let {
                     jumpToMessage(it.messageRecipient.address, it.sentTimestampMs, true) {
-                        searchViewModel.onMissingResult() }
+                        searchViewModel.onMissingResult()
+                    }
                 }
             }
 
-            binding.searchBottomBar.setData(result.position, result.getResults().size)
+            binding.searchBottomBar.setData(result.position, result.getResults().size, searchViewModel.searchQuery.value)
         })
     }
 
     fun onSearchOpened() {
+        viewModel.onSearchOpened()
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
-        binding.searchBottomBar.setData(0, 0)
+        binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
         binding.inputBar.visibility = View.INVISIBLE
         binding.root.requestApplyInsets()
 
     }
 
     fun onSearchClosed() {
+        viewModel.onSearchClosed()
         searchViewModel.onSearchClosed()
         binding.searchBottomBar.visibility = View.GONE
         binding.inputBar.visibility = View.VISIBLE
@@ -2608,9 +2645,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     fun onSearchQueryUpdated(query: String) {
-        searchViewModel.onQueryUpdated(query, viewModel.threadId)
         binding.searchBottomBar.showLoading()
-        adapter.onSearchQueryUpdated(query)
+        searchViewModel.onQueryUpdated(query, viewModel.threadId)
+        adapter.onSearchQueryUpdated(query.takeUnless { it.length < 2 })
     }
 
     override fun onSearchMoveUpPressed() {

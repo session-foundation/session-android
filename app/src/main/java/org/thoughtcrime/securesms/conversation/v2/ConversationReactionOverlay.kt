@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.graphics.PointF
@@ -25,6 +26,9 @@ import androidx.core.view.isVisible
 import androidx.vectordrawable.graphics.drawable.AnimatorInflaterCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -58,9 +62,6 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 @AndroidEntryPoint
 class ConversationReactionOverlay : FrameLayout {
@@ -102,6 +103,7 @@ class ConversationReactionOverlay : FrameLayout {
 
     @Inject lateinit var mmsSmsDatabase: MmsSmsDatabase
     @Inject lateinit var repository: ConversationRepository
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var lokiThreadDatabase: LokiThreadDatabase
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
@@ -156,7 +158,10 @@ class ConversationReactionOverlay : FrameLayout {
         val conversationItemSnapshot = selectedConversationModel.bitmap
         conversationBubble.layoutParams = LinearLayout.LayoutParams(conversationItemSnapshot.width, conversationItemSnapshot.height)
         conversationBubble.background = BitmapDrawable(resources, conversationItemSnapshot)
-        conversationTimestamp.text = DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), messageRecord.timestamp)
+        conversationTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(
+            Locale.getDefault(),
+            messageRecord.timestamp
+        )
         updateConversationTimestamp(messageRecord)
         val isMessageOnLeft = selectedConversationModel.isOutgoing xor ViewUtil.isLtr(this)
         conversationItem.scaleX = LONG_PRESS_SCALE_FACTOR
@@ -346,6 +351,11 @@ class ConversationReactionOverlay : FrameLayout {
     private fun hideInternal(onHideListener: OnHideListener?) {
         job?.cancel()
         overlayState = OverlayState.HIDDEN
+        contextMenu?.dismiss()
+
+        // in case hide is called before show
+        if (!::selectedConversationModel.isInitialized) return
+
         val animatorSet = newHideAnimatorSet()
         hideAnimatorSet = animatorSet
         revealAnimatorSet.end()
@@ -358,7 +368,6 @@ class ConversationReactionOverlay : FrameLayout {
                 onHideListener?.onHide()
             }
         })
-        contextMenu?.dismiss()
     }
 
     val isShowing: Boolean
@@ -371,7 +380,6 @@ class ConversationReactionOverlay : FrameLayout {
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-
         hide()
     }
 
@@ -644,6 +652,7 @@ class ConversationReactionOverlay : FrameLayout {
         })
     }
 
+    @SuppressLint("RestrictedApi")
     private fun initAnimators() {
         val revealDuration = context.resources.getInteger(R.integer.reaction_scrubber_reveal_duration)
         val revealOffset = context.resources.getInteger(R.integer.reaction_scrubber_reveal_offset)

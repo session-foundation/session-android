@@ -23,8 +23,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 407
-val canonicalVersionName = "1.23.1"
+val canonicalVersionCode = 409
+val canonicalVersionName = "1.24.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -308,7 +308,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)
-    androidTestImplementation(libs.mockito.android)
+    androidTestImplementation(libs.mockito.core)
     androidTestImplementation(libs.mockito.kotlin)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.core.testing)

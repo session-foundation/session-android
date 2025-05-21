@@ -47,9 +47,6 @@ public abstract class DisplayRecord {
     long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
     long type, int readReceiptCount)
   {
-    // TODO: This gets hit very, very often and it likely shouldn't - place a Log.d statement in it to see.
-    //Log.d("[ACL]", "Creating a display record with delivery status of: " + deliveryStatus);
-
     this.threadId             = threadId;
     this.recipient            = recipient;
     this.dateSent             = dateSent;
@@ -77,8 +74,6 @@ public abstract class DisplayRecord {
     return (deliveryStatus >= SmsDatabase.Status.STATUS_COMPLETE &&
             deliveryStatus < SmsDatabase.Status.STATUS_PENDING) || deliveryReceiptCount > 0;
   }
-
-
 
   public boolean isFailed() {
     return MmsSmsColumns.Types.isFailedMessageType(type)

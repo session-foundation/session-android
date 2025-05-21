@@ -25,6 +25,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONM
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
+import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VERSION_CHECK
@@ -193,11 +194,12 @@ interface TextSecurePreferences {
     fun setLastVersionCheck()
     fun getEnvironment(): Environment
     fun setEnvironment(value: Environment)
+    fun hasSeenTokenPageNotification(): Boolean
+    fun setHasSeenTokenPageNotification(value: Boolean)
 
     var deprecationStateOverride: String?
     var deprecatedTimeOverride: ZonedDateTime?
     var deprecatingStartTimeOverride: ZonedDateTime?
-
     var migratedToGroupV2Config: Boolean
     var migratedToDisablingKDF: Boolean
     var migratedToMultiPartConfig: Boolean
@@ -295,6 +297,7 @@ interface TextSecurePreferences {
         const val MIGRATED_TO_GROUP_V2_CONFIG = "migrated_to_group_v2_config"
         const val MIGRATED_TO_DISABLING_KDF = "migrated_to_disabling_kdf"
         const val MIGRATED_TO_MULTIPART_CONFIG = "migrated_to_multi_part_config"
+        const val FORCED_COMMUNITY_DESCRIPTION_POLL = "forced_community_description_poll"
 
         const val HAS_RECEIVED_LEGACY_CONFIG = "has_received_legacy_config"
         const val HAS_FORCED_NEW_CONFIG = "has_forced_new_config"
@@ -327,6 +330,17 @@ interface TextSecurePreferences {
         // Note: We only ever display this once - and when the user has accepted the warning we never show it again
         // for the lifetime of the Session installation.
         const val HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS = "libsession.HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS"
+
+        // As we will have an incoming push notification to inform the user about the new token page, but we
+        // will also schedule instigating a local notification, we need to keep track of whether ANY notification
+        // has been shown to the user, and if so we don't show another.
+        const val HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE = "pref_shown_a_notification_about_token_page"
+
+        // Key name for the user's preferred date format string
+        const val DATE_FORMAT_PREF = "libsession.DATE_FORMAT_PREF"
+
+        // Key name for the user's preferred time format string
+        const val TIME_FORMAT_PREF = "libsession.TIME_FORMAT_PREF"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -792,6 +806,14 @@ interface TextSecurePreferences {
         fun hasForcedNewConfig(context: Context): Boolean {
             return getBooleanPreference(context, HAS_FORCED_NEW_CONFIG, false)
         }
+        
+        fun forcedCommunityDescriptionPoll(context: Context, room: String): Boolean {
+            return getBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, false)
+        }
+
+        fun setForcedCommunityDescriptionPoll(context: Context, room: String, forced: Boolean) {
+            setBooleanPreference(context, FORCED_COMMUNITY_DESCRIPTION_POLL+room, forced)
+        }
 
         @JvmStatic
         fun getBooleanPreference(context: Context, key: String?, defaultValue: Boolean): Boolean {
@@ -953,8 +975,14 @@ interface TextSecurePreferences {
             setBooleanPreference(context, FINGERPRINT_KEY_GENERATED, true)
         }
 
+        @JvmStatic
+        fun clearAll(context: Context) {
+            getDefaultSharedPreferences(context).edit().clear().commit()
+        }
+
 
         // ----- Get / set methods for if we have already warned the user that saving attachments will allow other apps to access them -----
+        // Note: We only ever show the warning dialog about this ONCE - when the user accepts this fact we write true to the flag & never show again.
         @JvmStatic
         fun getHaveWarnedUserAboutSavingAttachments(context: Context): Boolean {
             return getBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, false)
@@ -964,12 +992,16 @@ interface TextSecurePreferences {
         fun setHaveWarnedUserAboutSavingAttachments(context: Context) {
             setBooleanPreference(context, HAVE_WARNED_USER_ABOUT_SAVING_ATTACHMENTS, true)
         }
-        // ---------------------------------------------------------------------------------------------------------------------------------
+
+        // ----- Get / set methods for the user's date format preference -----
+        @JvmStatic
+        fun getDateFormatPref(context: Context): Int {
+            // Note: 0 means "follow system setting" (default) - go to the declaration of DATE_FORMAT_PREF for further details.
+            return getIntegerPreference(context, DATE_FORMAT_PREF, -1)
+        }
 
         @JvmStatic
-        fun clearAll(context: Context) {
-            getDefaultSharedPreferences(context).edit().clear().commit()
-        }
+        fun setDateFormatPref(context: Context, value: Int) { setIntegerPreference(context, DATE_FORMAT_PREF, value) }
     }
 }
 
@@ -1674,6 +1706,14 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setHidePassword(value: Boolean) {
         setBooleanPreference(HIDE_PASSWORD, value)
+    }
+
+    override fun hasSeenTokenPageNotification(): Boolean {
+        return getBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, false)
+    }
+
+    override fun setHasSeenTokenPageNotification(value: Boolean) {
+        setBooleanPreference(HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE, value)
     }
 
     override var deprecationStateOverride: String?

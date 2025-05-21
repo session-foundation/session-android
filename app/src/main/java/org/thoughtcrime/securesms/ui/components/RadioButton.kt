@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.ui.components
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,15 +29,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -49,6 +56,7 @@ fun RadioButton(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
     enabled: Boolean = true,
+    @DrawableRes iconRes: Int? = null,
     contentPadding: PaddingValues = PaddingValues(),
     content: @Composable RowScope.() -> Unit = {}
 ) {
@@ -67,9 +75,20 @@ fun RadioButton(
         shape = RectangleShape,
         contentPadding = contentPadding
     ) {
+        if(iconRes != null){
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(LocalDimensions.current.iconMedium),
+            )
+
+            Spacer(modifier = Modifier.width(LocalDimensions.current.spacing))
+        }
+
         content()
 
-        Spacer(modifier = Modifier.width(20.dp))
+        Spacer(modifier = Modifier.width(LocalDimensions.current.spacing))
         RadioButtonIndicator(
             selected = selected,
             enabled = enabled,
@@ -84,7 +103,7 @@ fun RadioButtonIndicator(
     selected: Boolean,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    size: Dp = 22.dp
+    size: Dp = LocalDimensions.current.iconMedium
 ) {
     Box(modifier = modifier) {
         AnimatedVisibility(
@@ -118,6 +137,27 @@ fun RadioButtonIndicator(
     }
 }
 
+/**
+ * Convenience access for a TitledRadiobutton used in dialogs
+ */
+@Composable
+fun <T> DialogTitledRadioButton(
+    modifier: Modifier = Modifier,
+    option: RadioOption<T>,
+    onClick: () -> Unit
+) {
+    TitledRadioButton(
+        modifier = modifier,
+        contentPadding = PaddingValues(
+            horizontal = LocalDimensions.current.xxsSpacing,
+            vertical = 0.dp
+        ),
+        titleStyle = LocalType.current.large,
+        option = option,
+        onClick = onClick
+    )
+}
+
 @Composable
 fun <T> TitledRadioButton(
     modifier: Modifier = Modifier,
@@ -125,15 +165,17 @@ fun <T> TitledRadioButton(
         horizontal = LocalDimensions.current.spacing,
         vertical = LocalDimensions.current.smallSpacing
     ),
+    titleStyle: TextStyle = LocalType.current.h8,
+    subtitleStyle: TextStyle = LocalType.current.extraSmall,
     option: RadioOption<T>,
     onClick: () -> Unit
 ) {
     RadioButton(
-        modifier = modifier
-            .contentDescription(option.contentDescription),
+        modifier = modifier.qaTag(option.qaTag?.string()),
         onClick = onClick,
         selected = option.selected,
         enabled = option.enabled,
+        iconRes = option.iconRes,
         contentPadding = contentPadding,
         content = {
             Column(
@@ -143,12 +185,12 @@ fun <T> TitledRadioButton(
             ) {
                 Text(
                     text = option.title(),
-                    style = LocalType.current.large
+                    style = titleStyle
                 )
                 option.subtitle?.let {
                     Text(
                         text = it(),
-                        style = LocalType.current.extraSmall
+                        style = subtitleStyle
                     )
                 }
             }
@@ -165,6 +207,23 @@ fun PreviewTextRadioButton() {
                 value = ExpiryType.AFTER_SEND.mode(7.days),
                 title = GetString(7.days),
                 subtitle = GetString("This is a subtitle"),
+                enabled = true,
+                selected = true
+            )
+        ) {}
+    }
+}
+
+@Preview
+@Composable
+fun PreviewTextIconRadioButton() {
+    PreviewTheme {
+        TitledRadioButton(
+            option = RadioOption<ExpiryMode>(
+                value = ExpiryType.AFTER_SEND.mode(7.days),
+                title = GetString(7.days),
+                subtitle = GetString("This is a subtitle"),
+                iconRes = R.drawable.ic_users_group_custom,
                 enabled = true,
                 selected = true
             )

@@ -99,7 +99,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         showSessionDialog {
             title(R.string.contactDelete)
             text(
-                Phrase.from(context, R.string.contactDeleteDescription)
+                Phrase.from(context, R.string.deleteContactDescription)
                     .put(NAME_KEY, contactName)
                     .put(NAME_KEY, contactName)
                     .format())

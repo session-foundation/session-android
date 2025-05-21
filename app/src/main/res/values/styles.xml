@@ -211,8 +211,14 @@
         <item name="android:padding">@dimen/medium_spacing</item>
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:fontFamily">@font/space_mono_regular</item>
+        <item name="android:fontFamily">monospace</item>
         <item name="android:textAlignment">viewStart</item>
+    </style>
+
+    <style name="SessionNetworkTextBaseMono">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:fontFamily">monospace</item>
     </style>
 
     <style name="SessionEditText">
@@ -293,6 +299,11 @@
 
     <style name="PopupMenu.MessageRequests" parent="@style/Widget.AppCompat.PopupMenu">
         <item name="android:background">?backgroundSecondary</item>
+    </style>
+
+    <style name="circleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
     </style>
 
 </resources>

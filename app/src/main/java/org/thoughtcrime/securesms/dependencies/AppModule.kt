@@ -20,6 +20,9 @@ import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.tokenpage.TokenRepository
+import org.thoughtcrime.securesms.tokenpage.TokenRepositoryImpl
 import javax.inject.Singleton
 
 @Module
@@ -28,8 +31,10 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideMessageNotifier(): MessageNotifier {
-        return OptimizedMessageNotifier(DefaultMessageNotifier())
+    fun provideMessageNotifier(
+        avatarUtils: AvatarUtils
+    ): MessageNotifier {
+        return OptimizedMessageNotifier(DefaultMessageNotifier(avatarUtils))
     }
 }
 
@@ -42,6 +47,9 @@ abstract class AppBindings {
 
     @Binds
     abstract fun bindConversationRepository(repository: DefaultConversationRepository): ConversationRepository
+
+    @Binds
+    abstract fun bindTokenRepository(repository: TokenRepositoryImpl): TokenRepository
 
     @Binds
     abstract fun bindGroupManager(groupManager: GroupManagerV2Impl): GroupManagerV2

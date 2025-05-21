@@ -16,7 +16,7 @@ class MessageRequestsViewModel @Inject constructor(
 
     // We assume thread.recipient is a contact or thread.invitingAdmin is not null
     fun blockMessageRequest(thread: ThreadRecord, blockRecipient: Recipient) = viewModelScope.launch {
-        repository.setBlocked(thread.threadId, blockRecipient, true)
+        repository.setBlocked(blockRecipient, true)
         deleteMessageRequest(thread)
     }
 

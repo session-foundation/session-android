@@ -1,12 +1,14 @@
 package org.thoughtcrime.securesms.debugmenu
 
-import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,29 +18,35 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
-import network.loki.messenger.libsession_util.util.Sodium
-import org.session.libsession.utilities.Environment
-import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
+import org.session.libsession.utilities.Environment
+import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.upsertContact
+import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
+import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
 import javax.inject.Inject
+
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
+    private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
+    private val storage: StorageProtocol,
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val clearDataUtils: ClearDataUtils,
     private val threadDb: ThreadDatabase,
@@ -68,8 +76,11 @@ class DebugMenuViewModel @Inject constructor(
 
     private var temporaryEnv: Environment? = null
 
+    private val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
     private var temporaryDeprecatedState: LegacyGroupDeprecationManager.DeprecationState? = null
 
+    @OptIn(ExperimentalStdlibApi::class)
     fun onCommand(command: Commands) {
         when (command) {
             is Commands.ChangeEnvironment -> changeEnvironment()
@@ -79,6 +90,41 @@ class DebugMenuViewModel @Inject constructor(
 
             is Commands.ShowEnvironmentWarningDialog ->
                 showEnvironmentWarningDialog(command.environment)
+
+            is Commands.ScheduleTokenNotification -> {
+                tokenPageNotificationManager.scheduleTokenPageNotification( true)
+                Toast.makeText(context, "Scheduled a notification for 10s from now", Toast.LENGTH_LONG).show()
+            }
+
+            is Commands.Copy07PrefixedBlindedPublicKey -> {
+                val secretKey = storage.getUserED25519KeyPair()?.secretKey?.asBytes
+                    ?: throw (FileServerApi.Error.NoEd25519KeyPair)
+                val userBlindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
+
+                val clip = ClipData.newPlainText("07-prefixed Version Blinded Public Key",
+                    "07" + userBlindedKeys.pubKey.data.toHexString())
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(context, "Copied key to clipboard", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            is Commands.CopyAccountId -> {
+                val accountId = textSecurePreferences.getLocalNumber()
+                val clip = ClipData.newPlainText("Account ID", accountId)
+                clipboardManager.setPrimaryClip(ClipData(clip))
+
+                // Show a toast if the version is below Android 13
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(
+                        context,
+                        "Copied account ID to clipboard",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
 
             is Commands.HideMessageRequest -> {
                 textSecurePreferences.setHasHiddenMessageRequests(command.hide)
@@ -251,18 +297,21 @@ class DebugMenuViewModel @Inject constructor(
         val deprecatingStartTime: ZonedDateTime,
     )
 
-    sealed interface Commands {
-        data object ChangeEnvironment : Commands
-        data class ShowEnvironmentWarningDialog(val environment: String) : Commands
-        data object HideEnvironmentWarningDialog : Commands
-        data class HideMessageRequest(val hide: Boolean) : Commands
-        data class HideNoteToSelf(val hide: Boolean) : Commands
-        data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands
-        data object HideDeprecationChangeDialog : Commands
-        data object OverrideDeprecationState : Commands
-        data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands
-        data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands
-        data object ClearTrustedDownloads: Commands
-        data class GenerateContacts(val prefix: String, val count: Int): Commands
+    sealed class Commands {
+        object ChangeEnvironment : Commands()
+        data class ShowEnvironmentWarningDialog(val environment: String) : Commands()
+        object HideEnvironmentWarningDialog : Commands()
+        object ScheduleTokenNotification : Commands()
+        object Copy07PrefixedBlindedPublicKey : Commands()
+        object CopyAccountId : Commands()
+        data class HideMessageRequest(val hide: Boolean) : Commands()
+        data class HideNoteToSelf(val hide: Boolean) : Commands()
+        data class ShowDeprecationChangeDialog(val state: LegacyGroupDeprecationManager.DeprecationState?) : Commands()
+        object HideDeprecationChangeDialog : Commands()
+        object OverrideDeprecationState : Commands()
+        data class OverrideDeprecatedTime(val time: ZonedDateTime) : Commands()
+        data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
+        object ClearTrustedDownloads: Commands()
+        data class GenerateContacts(val prefix: String, val count: Int): Commands()
     }
 }

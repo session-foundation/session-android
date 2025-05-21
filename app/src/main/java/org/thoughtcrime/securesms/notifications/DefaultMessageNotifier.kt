@@ -66,6 +66,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
@@ -76,7 +77,9 @@ import org.thoughtcrime.securesms.util.SpanUtil
  *
  * @author Moxie Marlinspike
  */
-class DefaultMessageNotifier : MessageNotifier {
+class DefaultMessageNotifier(
+    val avatarUtils: AvatarUtils
+) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
     }
@@ -264,7 +267,7 @@ class DefaultMessageNotifier : MessageNotifier {
             return
         }
 
-        val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
+        val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context), avatarUtils)
         val notifications = notificationState.notifications
         val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
@@ -625,9 +628,6 @@ class DefaultMessageNotifier : MessageNotifier {
         }
     }
 
-    // ACL: What is the concept behind delayed notifications? Why would we ever want this? To batch them up so
-    // that we get a bunch of notifications once per minute or something rather than a constant stream of them
-    // if that's what was incoming?!?
     private class DelayedNotification(private val context: Context, private val threadId: Long) : Runnable {
         private val canceled = AtomicBoolean(false)
 

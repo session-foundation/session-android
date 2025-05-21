@@ -38,6 +38,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
 import org.thoughtcrime.securesms.ui.getSubbedString
+import org.thoughtcrime.securesms.util.DateUtils
 import javax.inject.Inject
 
 
@@ -66,6 +67,7 @@ class ControlMessageView : LinearLayout {
     constructor(context: Context, attrs: AttributeSet, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
     @Inject lateinit var disappearingMessages: DisappearingMessages
+    @Inject lateinit var dateUtils: DateUtils
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -74,7 +76,7 @@ class ControlMessageView : LinearLayout {
     }
 
     fun bind(message: MessageRecord, previous: MessageRecord?, longPress: (() -> Unit)? = null) {
-        binding.dateBreakTextView.showDateBreak(message, previous)
+        binding.dateBreakTextView.showDateBreak(message, previous, dateUtils)
         binding.iconImageView.isGone = true
         binding.expirationTimerView.isGone = true
         binding.followSetting.isGone = true

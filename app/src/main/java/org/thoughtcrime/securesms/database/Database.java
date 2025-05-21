@@ -29,7 +29,6 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
 import org.session.libsession.utilities.WindowDebouncer;
-import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 

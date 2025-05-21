@@ -55,6 +55,7 @@ class HomeDiffUtil(
         if (isSameItem) { isSameItem = (oldItem.count == newItem.count) }
         if (isSameItem) { isSameItem = (oldItem.unreadCount == newItem.unreadCount) }
         if (isSameItem) { isSameItem = (oldItem.isPinned == newItem.isPinned) }
+        if (isSameItem) { isSameItem = (oldItem.isRead == newItem.isRead) }
 
         // The recipient is passed as a reference and changes to recipients update the reference so we
         // need to cache the hashCode for the recipient and use that for diffing - unfortunately

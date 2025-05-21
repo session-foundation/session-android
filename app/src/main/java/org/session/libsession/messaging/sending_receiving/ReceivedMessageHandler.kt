@@ -4,9 +4,9 @@ import android.text.TextUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.Sodium
-import network.loki.messenger.R
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -18,11 +18,11 @@ import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.ExpirationConfiguration.Companion.isNewConfigEnabled
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
@@ -50,8 +50,8 @@ import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.MessageType
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.getType
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
@@ -322,7 +322,7 @@ fun MessageReceiver.handleUnsendRequest(message: UnsendRequest): MessageId? {
     }
 
     // delete reactions
-    storage.deleteReactions(messageId = messageToDelete.id, mms = messageToDelete.isMms)
+    storage.deleteReactions(messageToDelete.messageId)
 
     // update notification
     if (!messageToDelete.isOutgoing) {
@@ -482,8 +482,8 @@ fun MessageReceiver.handleVisibleMessage(
             reaction.dateSent = message.sentTimestamp ?: 0
             reaction.dateReceived = message.receivedTimestamp ?: 0
             storage.addReaction(
-                reaction = reaction,
                 threadId = threadId,
+                reaction = reaction,
                 messageSender = messageSender,
                 notifyUnread = !threadIsGroup
             )
@@ -520,7 +520,11 @@ fun MessageReceiver.handleVisibleMessage(
             }
         }
         message.openGroupServerMessageID?.let {
-            storage.setOpenGroupServerMessageID(messageID.id, it, threadID, messageID.mms)
+            storage.setOpenGroupServerMessageID(
+                messageID = messageID,
+                serverID = it,
+                threadID = threadID
+            )
         }
         SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message)
         return messageID
@@ -535,8 +539,8 @@ fun MessageReceiver.handleOpenGroupReactions(
 ) {
     if (reactions.isNullOrEmpty()) return
     val storage = MessagingModuleConfiguration.shared.storage
-    val (messageId, isSms) = MessagingModuleConfiguration.shared.messageDataProvider.getMessageID(openGroupMessageServerID, threadId) ?: return
-    storage.deleteReactions(messageId, !isSms)
+    val messageId = MessagingModuleConfiguration.shared.messageDataProvider.getMessageID(openGroupMessageServerID, threadId) ?: return
+    storage.deleteReactions(messageId)
     val userPublicKey = storage.getUserPublicKey()!!
     val openGroup = storage.getOpenGroup(threadId)
     val blindedPublicKey = openGroup?.publicKey?.let { serverPublicKey ->
@@ -554,9 +558,8 @@ fun MessageReceiver.handleOpenGroupReactions(
         // Add the first reaction (with the count)
         reactorIds.firstOrNull()?.let { reactor ->
             storage.addReaction(
+                messageId = messageId,
                 reaction = Reaction(
-                    localId = messageId,
-                    isMms = !isSms,
                     publicKey = reactor,
                     emoji = emoji,
                     react = true,
@@ -564,7 +567,6 @@ fun MessageReceiver.handleOpenGroupReactions(
                     count = count,
                     index = reaction.index
                 ),
-                threadId = threadId,
                 messageSender = reactor,
                 notifyUnread = false
             )
@@ -575,9 +577,8 @@ fun MessageReceiver.handleOpenGroupReactions(
         val lastIndex = min(maxAllowed, reactorIds.size)
         reactorIds.slice(1 until lastIndex).map { reactor ->
             storage.addReaction(
+                messageId = messageId,
                 reaction = Reaction(
-                    localId = messageId,
-                    isMms = !isSms,
                     publicKey = reactor,
                     emoji = emoji,
                     react = true,
@@ -585,7 +586,6 @@ fun MessageReceiver.handleOpenGroupReactions(
                     count = 0,  // Only want this on the first reaction
                     index = reaction.index
                 ),
-                threadId = threadId,
                 messageSender = reactor,
                 notifyUnread = false
             )
@@ -594,9 +594,8 @@ fun MessageReceiver.handleOpenGroupReactions(
         // Add the current user reaction (if applicable and not already included)
         if (shouldAddUserReaction) {
             storage.addReaction(
+                messageId = messageId,
                 reaction = Reaction(
-                    localId = messageId,
-                    isMms = !isSms,
                     publicKey = userPublicKey,
                     emoji = emoji,
                     react = true,
@@ -604,7 +603,6 @@ fun MessageReceiver.handleOpenGroupReactions(
                     count = 1,
                     index = reaction.index
                 ),
-                threadId = threadId,
                 messageSender = userPublicKey,
                 notifyUnread = false
             )

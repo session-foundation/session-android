@@ -102,7 +102,7 @@ private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onCo
             SessionOutlinedTextField(
                 text = state.recoveryPhrase,
                 modifier = Modifier.fillMaxWidth()
-                    .qaTag(stringResource(R.string.AccessibilityId_recoveryPasswordEnter)),
+                    .qaTag(R.string.AccessibilityId_recoveryPasswordEnter),
                 placeholder = stringResource(R.string.recoveryPasswordEnter),
                 onChange = onChange,
                 onContinue = onContinue,

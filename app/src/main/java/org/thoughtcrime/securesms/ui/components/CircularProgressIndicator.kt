@@ -14,8 +14,7 @@ fun CircularProgressIndicator(
 ) {
     androidx.compose.material3.CircularProgressIndicator(
         modifier = modifier.size(40.dp),
-        color = color,
-        strokeWidth = 2.dp
+        color = color
     )
 }
 

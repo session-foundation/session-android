@@ -718,7 +718,17 @@ object OpenGroupApi {
             )
         )
         rooms.forEach { room ->
-            val infoUpdates = storage.getOpenGroup(room, server)?.infoUpdates ?: 0
+            // we need to make sure communities have their description data, and since we were not
+            // tracking that property before (04/20205) we need to force existing communities to
+            // request their info data
+            val forcedDescriptionPoll = if(TextSecurePreferences.forcedCommunityDescriptionPoll(context, server+room)){
+                true
+            } else {
+                TextSecurePreferences.setForcedCommunityDescriptionPoll(context, server+room, true)
+                false
+            }
+
+            val infoUpdates = if(!forcedDescriptionPoll) 0 else storage.getOpenGroup(room, server)?.infoUpdates ?: 0
             val lastMessageServerId = storage.getLastMessageServerID(room, server) ?: 0L
             requests.add(
                 BatchRequestInfo(

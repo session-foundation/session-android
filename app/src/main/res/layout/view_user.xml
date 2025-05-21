@@ -25,8 +25,8 @@
 
             <org.thoughtcrime.securesms.components.ProfilePictureView
                 android:id="@+id/profilePictureView"
-                android:layout_width="@dimen/small_profile_picture_size"
-                android:layout_height="@dimen/small_profile_picture_size"
+                android:layout_width="@dimen/medium_profile_picture_size"
+                android:layout_height="@dimen/medium_profile_picture_size"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"

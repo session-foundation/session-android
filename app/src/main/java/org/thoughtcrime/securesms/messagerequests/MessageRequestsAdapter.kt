@@ -16,10 +16,12 @@ import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import com.bumptech.glide.RequestManager
+import org.thoughtcrime.securesms.util.DateUtils
 
 class MessageRequestsAdapter(
     context: Context,
     cursor: Cursor?,
+    val dateUtils: DateUtils,
     val listener: ConversationClickListener
 ) : CursorRecyclerViewAdapter<MessageRequestsAdapter.ViewHolder>(context, cursor) {
     private val threadDatabase = DatabaseComponent.get(context).threadDatabase()
@@ -44,7 +46,7 @@ class MessageRequestsAdapter(
 
     override fun onBindItemViewHolder(viewHolder: ViewHolder, cursor: Cursor) {
         val thread = getThread(cursor)!!
-        viewHolder.view.bind(thread, glide)
+        viewHolder.view.bind(thread, dateUtils)
     }
 
     override fun onItemViewRecycled(holder: ViewHolder?) {

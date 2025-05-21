@@ -29,6 +29,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -159,6 +160,10 @@ class InputBar @JvmOverloads constructor(
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
+
+        binding.blockedBanner.setSafeOnClickListener {
+            delegate?.unblockUserFromInput()
+        }
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
@@ -275,6 +280,11 @@ class InputBar @JvmOverloads constructor(
     fun setInputBarEditableFactory(factory: Editable.Factory) {
         binding.inputBarEditText.setEditableFactory(factory)
     }
+
+    fun setBlockedState(blocked: Boolean){
+        binding.inputBarEditText.isVisible = !blocked
+        binding.blockedBanner.isVisible = blocked
+    }
 }
 
 interface InputBarDelegate {
@@ -286,5 +296,6 @@ interface InputBarDelegate {
     fun onMicrophoneButtonCancel(event: MotionEvent)
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
+    fun unblockUserFromInput()
     fun commitInputContent(contentUri: Uri)
 }

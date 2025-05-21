@@ -36,6 +36,8 @@ public interface MmsSmsColumns {
   public static final String IS_DELETED               = "is_deleted";
   public static final String IS_GROUP_UPDATE          = "is_group_update";
 
+  public static final String SERVER_HASH              = "server_hash";
+
   public static class Types {
     protected static final long TOTAL_MASK = 0xFFFFFFFF;
 

@@ -1,0 +1,6 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_user_filled_custom"
+    android:insetLeft="@dimen/small_spacing"
+    android:insetTop="@dimen/small_spacing"
+    android:insetRight="@dimen/small_spacing"
+    android:insetBottom="@dimen/small_spacing"/>

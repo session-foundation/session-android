@@ -52,6 +52,20 @@ object LocalisedTimeUtil {
             "0m ${this.inWholeSeconds}s"
         }
 
+    // Method to return a non-localised single-part shorted string of a duration.
+    // For example "6s" / "6m" / "6h" / "6d" / "6w" for 6 seconds/minutes/hours/days/weeks.
+    fun Duration.toShortSinglePartString(): String =
+        if (this.inWholeWeeks > 0) {
+            "${this.inWholeWeeks}w"
+        } else if (this.inWholeDays > 0) {
+            "${this.inWholeDays}d"
+        } else if (this.inWholeHours > 0) {
+            "${this.inWholeHours}h"
+        } else {
+            // We treat anything less than one hour as minutes, so we'll get things like "33m" and sub-one-minute durations will be "0m"
+            "${this.inWholeMinutes}m"
+        }
+
     // Method to get a locale-aware duration string using the largest time unit in a given duration.
     // For example a duration of 3 hours and 7 minutes will return "3 hours" in English, or
     // "3 horas" in Spanish.

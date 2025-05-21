@@ -34,6 +34,8 @@ import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
 import org.thoughtcrime.securesms.util.NetworkConnectivity
@@ -47,7 +49,8 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val avatarUtils: AvatarUtils
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -55,10 +58,12 @@ class SettingsViewModel @Inject constructor(
 
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
-    private val userAddress = Address.fromSerialized(hexEncodedPublicKey)
+    private val userRecipient by lazy {
+        Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
+    }
 
     private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
-        getDefaultAvatarDialogState()
+        AvatarDialogState.NoAvatar
     )
     val avatarDialogState: StateFlow<AvatarDialogState>
         get() = _avatarDialogState
@@ -71,26 +76,23 @@ class SettingsViewModel @Inject constructor(
     val recoveryHidden: StateFlow<Boolean>
         get() = _recoveryHidden
 
-    private val _avatarData: MutableStateFlow<AvatarData?> = MutableStateFlow(null)
-    val avatarData: StateFlow<AvatarData?>
+    private val _avatarData: MutableStateFlow<AvatarUIData?> = MutableStateFlow(null)
+    val avatarData: StateFlow<AvatarUIData?>
         get() = _avatarData
 
-    /**
-     * Refreshes the avatar on the main settings page
-     */
-    private val _refreshAvatar: MutableSharedFlow<Unit> = MutableSharedFlow()
-    val refreshAvatar: SharedFlow<Unit>
-        get() = _refreshAvatar.asSharedFlow()
-
     init {
+        updateAvatar()
+
+        // set default dialog ui
+        viewModelScope.launch {
+            _avatarDialogState.value = getDefaultAvatarDialogState()
+        }
+    }
+
+    private fun updateAvatar(){
         viewModelScope.launch(Dispatchers.Default) {
-            val recipient = Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
             _avatarData.update {
-                AvatarData(
-                    publicKey = hexEncodedPublicKey,
-                    displayName = getDisplayName(),
-                    recipient = recipient
-                )
+                avatarUtils.getUIDataFromRecipient(userRecipient)
             }
         }
     }
@@ -147,10 +149,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onAvatarDialogDismissed() {
-        _avatarDialogState.value = getDefaultAvatarDialogState()
+        viewModelScope.launch {
+            _avatarDialogState.value = getDefaultAvatarDialogState()
+        }
     }
 
-    fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(userAddress)
+    private suspend fun getDefaultAvatarDialogState() = if (hasAvatar()) AvatarDialogState.UserAvatar(
+        avatarUtils.getUIDataFromRecipient(userRecipient)
+    )
     else AvatarDialogState.NoAvatar
 
     fun saveAvatar() {
@@ -227,7 +233,7 @@ class SettingsViewModel @Inject constructor(
                     }
 
                     // update dialog state
-                    _avatarDialogState.value = AvatarDialogState.UserAvatar(userAddress)
+                    _avatarDialogState.value = AvatarDialogState.UserAvatar(avatarUtils.getUIDataFromRecipient(userRecipient))
                 }
 
             } catch (e: Exception){ // If the sync failed then inform the user
@@ -238,7 +244,7 @@ class SettingsViewModel @Inject constructor(
             }
 
             // Finally update the main avatar
-            _refreshAvatar.emit(Unit)
+            updateAvatar()
             // And remove the loader animation after we've waited for the attempt to succeed or fail
             _showLoader.value = false
         }
@@ -258,16 +264,10 @@ class SettingsViewModel @Inject constructor(
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
-        data class UserAvatar(val address: Address) : AvatarDialogState()
+        data class UserAvatar(val data: AvatarUIData) : AvatarDialogState()
         data class TempAvatar(
             val data: ByteArray,
             val hasAvatar: Boolean // true if the user has an avatar set already but is in this temp state because they are trying out a new avatar
         ) : AvatarDialogState()
     }
-
-    data class AvatarData(
-        val publicKey: String,
-        val displayName: String,
-        val recipient: Recipient
-    )
 }

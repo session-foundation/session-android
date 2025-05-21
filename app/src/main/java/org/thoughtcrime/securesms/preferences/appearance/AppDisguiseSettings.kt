@@ -25,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -196,10 +198,16 @@ private fun IconItem(
     val resources = LocalContext.current.resources
     val theme = LocalContext.current.theme
 
-    val (path, bitmap) = remember(icon, resources, theme) {
-        val drawable =
-            ResourcesCompat.getDrawable(resources, icon, theme) as AdaptiveIconDrawable
-        drawable.iconMask.asComposePath() to drawable.toBitmap().asImageBitmap()
+    val (path: Path, bitmap) = remember(icon, resources, theme) {
+        val drawable = ResourcesCompat.getDrawable(resources, icon, theme)
+
+        when(drawable){
+            is AdaptiveIconDrawable -> drawable.iconMask.asComposePath() to drawable.toBitmap().asImageBitmap()
+            else -> { // if the system does not support adaptive icons (like Huawei phones) default to a rectangle shape
+                val bmp = drawable!!.toBitmap()
+                Path().apply { addRect(Rect(0f, 0f, bmp.width.toFloat(), bmp.height.toFloat())) } to bmp.asImageBitmap()
+            }
+        }
     }
 
     val textColor = LocalColors.current.text

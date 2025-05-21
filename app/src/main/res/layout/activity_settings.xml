@@ -21,10 +21,10 @@
             android:orientation="vertical"
             android:gravity="center_horizontal">
 
-            <org.thoughtcrime.securesms.components.ProfilePictureView
-                android:id="@+id/profilePictureView"
-                android:layout_width="@dimen/large_profile_picture_size"
-                android:layout_height="@dimen/large_profile_picture_size"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/userAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/medium_spacing"
                 android:contentDescription="@string/AccessibilityId_profilePicture" />
 
@@ -81,7 +81,7 @@
                 android:layout_marginRight="@dimen/large_spacing"
                 android:textSize="@dimen/large_font_size"
                 android:textColor="?android:textColorPrimary"
-                android:fontFamily="@font/space_mono_regular"
+                android:fontFamily="monospace"
                 android:textAlignment="center"
                 android:contentDescription="@string/AccessibilityId_shareAccountId"
                 tools:text="05987d601943c267879be41830888066c6a024cbdc9a548d06813924bf3372ea78" />

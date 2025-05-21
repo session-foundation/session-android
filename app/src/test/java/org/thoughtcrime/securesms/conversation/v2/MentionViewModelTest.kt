@@ -71,7 +71,8 @@ class MentionViewModelTest : BaseViewModelTest() {
         publicKey = "",
         imageId = null,
         infoUpdates = 0,
-        canWrite = true
+        canWrite = true,
+        description = ""
     )
 
     @Before

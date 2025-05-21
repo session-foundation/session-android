@@ -17,6 +17,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupDestroyed
 import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -45,7 +46,6 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
-    var onSetMuteTapped: ((Boolean) -> Unit)? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
@@ -64,8 +64,6 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
-            binding.unMuteNotificationsTextView -> onSetMuteTapped?.invoke(false)
-            binding.muteNotificationsTextView -> onSetMuteTapped?.invoke(true)
         }
     }
 
@@ -95,16 +93,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.copyCommunityUrl.isVisible = recipient.isCommunityRecipient
         binding.copyCommunityUrl.setOnClickListener(this)
 
-        binding.unMuteNotificationsTextView.isVisible = recipient.isMuted && !recipient.isLocalNumber
-                && !isDeprecatedLegacyGroup
-        binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
-                && !isDeprecatedLegacyGroup
-
-        binding.unMuteNotificationsTextView.setOnClickListener(this)
-        binding.muteNotificationsTextView.setOnClickListener(this)
-        binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
-                && !isDeprecatedLegacyGroup
-
+        val notificationIconRes = when{
+            recipient.isMuted -> R.drawable.ic_volume_off
+            recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+                R.drawable.ic_at_sign
+            else -> R.drawable.ic_volume_2
+        }
+        binding.notificationsTextView.setCompoundDrawablesWithIntrinsicBounds(notificationIconRes, 0, 0, 0)
+        binding.notificationsTextView.isVisible = !recipient.isLocalNumber && !isDeprecatedLegacyGroup
         binding.notificationsTextView.setOnClickListener(this)
 
         // delete
@@ -135,7 +131,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
-                    drawableStartRes = R.drawable.ic_trash_2
+                    drawableStartRes = R.drawable.ic_eye_off
                 }
 
                 // 1on1

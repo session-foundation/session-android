@@ -20,8 +20,8 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         private const val messageThreadMappingTable = "loki_message_thread_mapping_database"
         private const val errorMessageTable = "loki_error_message_database"
         private const val messageHashTable = "loki_message_hash_database"
-        private const val smsHashTable = "loki_sms_hash_database"
-        private const val mmsHashTable = "loki_mms_hash_database"
+        const val smsHashTable = "loki_sms_hash_database"
+        const val mmsHashTable = "loki_mms_hash_database"
         const val groupInviteTable = "loki_group_invites"
 
         private const val groupInviteDeleteTrigger = "group_invite_delete_trigger"
@@ -41,7 +41,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         @JvmStatic
         val createMessageToThreadMappingTableCommand = "CREATE TABLE IF NOT EXISTS $messageThreadMappingTable ($messageID INTEGER PRIMARY KEY, $threadID INTEGER);"
         @JvmStatic
-        val createErrorMessageTableCommand = "CREATE TABLE IF NOT EXISTS $errorMessageTable ($messageID INTEGER PRIMARY KEY, $errorMessage STRING);"
+        val createErrorMessageTableCommand = "CREATE TABLE IF NOT EXISTS $errorMessageTable ($messageID INTEGER PRIMARY KEY, $messageType INTEGER NOT NULL, $errorMessage STRING);"
         @JvmStatic
         val updateMessageIDTableForType = "ALTER TABLE $messageIDTable ADD COLUMN $messageType INTEGER DEFAULT 0; ALTER TABLE $messageIDTable ADD CONSTRAINT PK_$messageIDTable PRIMARY KEY ($messageID, $serverID);"
         @JvmStatic
@@ -66,24 +66,10 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
             get() = if (this.mms) MMS_TYPE else SMS_TYPE
     }
 
-    fun getServerID(messageID: Long): Long? {
-        val database = readableDatabase
-        return database.get(messageIDTable, "${Companion.messageID} = ?", arrayOf(messageID.toString())) { cursor ->
-            cursor.getInt(serverID)
-        }?.toLong()
-    }
-
     fun getServerID(messageID: Long, isSms: Boolean): Long? {
         val database = readableDatabase
         return database.get(messageIDTable, "${Companion.messageID} = ? AND $messageType = ?", arrayOf(messageID.toString(), if (isSms) SMS_TYPE.toString() else MMS_TYPE.toString())) { cursor ->
             cursor.getInt(serverID)
-        }?.toLong()
-    }
-
-    fun getMessageID(serverID: Long): Long? {
-        val database = readableDatabase
-        return database.get(messageIDTable, "${Companion.serverID} = ?", arrayOf(serverID.toString())) { cursor ->
-            cursor.getInt(messageID)
         }?.toLong()
     }
 
@@ -131,10 +117,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         database.endTransaction()
     }
 
-    /**
-     * @return pair of sms or mms table-specific ID and whether it is in SMS table
-     */
-    fun getMessageID(serverID: Long, threadID: Long): Pair<Long, Boolean>? {
+    fun getMessageID(serverID: Long, threadID: Long): MessageId? {
         val database = readableDatabase
         val mappingResult = database.get(messageThreadMappingTable, "${Companion.serverID} = ? AND ${Companion.threadID} = ?",
                 arrayOf(serverID.toString(), threadID.toString())) { cursor ->
@@ -146,7 +129,10 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         return database.get(messageIDTable,
                 "$messageID = ? AND ${Companion.serverID} = ?",
                 arrayOf(mappedID.toString(), mappedServerID.toString())) { cursor ->
-            cursor.getInt(messageID).toLong() to (cursor.getInt(messageType) == SMS_TYPE)
+            MessageId(
+                id = cursor.getInt(messageID).toLong(),
+                mms = cursor.getInt(messageType) == MMS_TYPE
+            )
         }
     }
 
@@ -181,20 +167,13 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         return Pair(smsMessageIds, mmsMessageIds)
     }
 
-    override fun setServerID(messageID: Long, serverID: Long, isSms: Boolean) {
+    override fun setServerID(messageID: MessageId, serverID: Long) {
         val database = writableDatabase
         val contentValues = ContentValues(3)
-        contentValues.put(Companion.messageID, messageID)
+        contentValues.put(Companion.messageID, messageID.id)
         contentValues.put(Companion.serverID, serverID)
-        contentValues.put(messageType, if (isSms) SMS_TYPE else MMS_TYPE)
+        contentValues.put(messageType, if (messageID.mms) MMS_TYPE else SMS_TYPE)
         database.insertWithOnConflict(messageIDTable, null, contentValues, CONFLICT_REPLACE)
-    }
-
-    fun getOriginalThreadID(messageID: Long): Long {
-        val database = readableDatabase
-        return database.get(messageThreadMappingTable, "${Companion.messageID} = ?", arrayOf(messageID.toString())) { cursor ->
-            cursor.getInt(threadID)
-        }?.toLong() ?: -1L
     }
 
     fun setOriginalThreadID(messageID: Long, serverID: Long, threadID: Long) {

@@ -128,6 +128,5 @@
     <dimen name="max_bubble_width">200dp</dimen>
     <dimen name="radial_size">34dp</dimen>
     <dimen name="small_radial_size">26dp</dimen>
-    <dimen name="setting_image_size">26dp</dimen>
 
 </resources>

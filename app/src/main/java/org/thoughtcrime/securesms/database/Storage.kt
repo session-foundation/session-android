@@ -297,6 +297,19 @@ open class Storage @Inject constructor(
         }
     }
 
+    override fun clearAllMessages(threadId: Long): List<String?> {
+        val messages = mmsSmsDatabase.getAllMessagesWithHash(threadId)
+        val (mmsMessages, smsMessages) = messages.partition { it.first.isMms }
+        if (mmsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(mmsMessages.map{ it.first.id }, threadId, isSms = false)
+        }
+        if (smsMessages.isNotEmpty()) {
+            messageDataProvider.deleteMessages(smsMessages.map{ it.first.id }, threadId, isSms = true)
+        }
+
+        return messages.map { it.second } // return the message hashes
+    }
+
     override fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean) {
         val threadDb = threadDatabase
         getRecipientForThread(threadId)?.let { recipient ->
@@ -600,9 +613,9 @@ open class Storage @Inject constructor(
         lokiAPIDatabase.setUserCount(room, server, newValue)
     }
 
-    override fun setOpenGroupServerMessageID(messageID: Long, serverID: Long, threadID: Long, isSms: Boolean) {
-        lokiMessageDatabase.setServerID(messageID, serverID, isSms)
-        lokiMessageDatabase.setOriginalThreadID(messageID, serverID, threadID)
+    override fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long) {
+        lokiMessageDatabase.setServerID(messageID, serverID)
+        lokiMessageDatabase.setOriginalThreadID(messageID.id, serverID, threadID)
     }
 
     override fun getOpenGroup(room: String, server: String): OpenGroup? {
@@ -1229,6 +1242,7 @@ open class Storage @Inject constructor(
         // which in the case of contacts we are messaging for the first time and who haven't yet approved us, it won't be the case
         // But that person is saved in the Recipient db. We might need to investigate how to clean the relationship between Recipients, Contacts and config Contacts.
         val removedContacts = recipientDatabase.allRecipients.filter { localContact ->
+            AccountId(localContact.address.toString()).prefix == IdPrefix.STANDARD && // only want standard address
             localContact.is1on1 && // only for conversations
             localContact.address.toString() != currentUserKey && // we don't want to remove ourselves (ie, our Note to Self)
             moreContacts.none { it.id == localContact.address.toString() } // we don't want to remove contacts that are present in the config
@@ -1730,27 +1744,30 @@ open class Storage @Inject constructor(
         return mapping
     }
 
-    override fun addReaction(reaction: Reaction, threadId: Long, messageSender: String, notifyUnread: Boolean) {
+    override fun addReaction(
+        threadId: Long,
+        reaction: Reaction,
+        messageSender: String,
+        notifyUnread: Boolean
+    ) {
         val timestamp = reaction.timestamp
-        val localId = reaction.localId
-        val isMms = reaction.isMms
 
-        val messageId = if (localId != null && localId > 0 && isMms != null) {
-            // bail early is the message is marked as deleted
-            val messagingDatabase: MessagingDatabase = if (isMms == true) mmsDatabase else smsDatabase
-            if(messagingDatabase.getMessageRecord(localId)?.isDeleted == true) return
-
-            MessageId(localId, isMms)
-        } else if (timestamp != null && timestamp > 0) {
+        val messageId = if (timestamp != null && timestamp > 0) {
             val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, timestamp) ?: return
             if (messageRecord.isDeleted) return
             MessageId(messageRecord.id, messageRecord.isMms)
-        } else return
+        } else {
+            Log.d(TAG, "Invalid reaction timestamp: $timestamp. Not adding")
+            return
+        }
+
+        addReaction(messageId, reaction, messageSender, notifyUnread)
+    }
+
+    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean) {
         reactionDatabase.addReaction(
-            messageId,
             ReactionRecord(
-                messageId = messageId.id,
-                isMms = messageId.mms,
+                messageId = messageId,
                 author = messageSender,
                 emoji = reaction.emoji!!,
                 serverId = reaction.serverId!!,
@@ -1790,8 +1807,8 @@ open class Storage @Inject constructor(
         database.updateReaction(reaction)
     }
 
-    override fun deleteReactions(messageId: Long, mms: Boolean) {
-        reactionDatabase.deleteMessageReactions(MessageId(messageId, mms))
+    override fun deleteReactions(messageId: MessageId) {
+        reactionDatabase.deleteMessageReactions(messageId)
     }
 
     override fun deleteReactions(messageIds: List<Long>, mms: Boolean) {
