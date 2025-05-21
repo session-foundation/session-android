@@ -253,29 +253,5 @@ object SodiumUtilities {
         } else null
     }
 
-    /**
-     * Returns true only if the signature verified successfully
-     */
-    fun verifySignature(
-        signature: ByteArray,
-        publicKey: ByteArray,
-        messageToVerify: ByteArray
-    ): Boolean {
-        return sodium.cryptoSignVerifyDetached(
-            signature,
-            messageToVerify, messageToVerify.size, publicKey)
-    }
-
-    /**
-     * For signing
-     */
-    fun sign(message: ByteArray, signingKey: ByteArray): ByteArray {
-        val signature = ByteArray(Sign.BYTES)
-
-        if (!sodium.cryptoSignDetached(signature, message, message.size.toLong(), signingKey)) {
-            throw SecurityException("Couldn't sign the message with the signing key")
-        }
-        return signature
-    }
 }
 

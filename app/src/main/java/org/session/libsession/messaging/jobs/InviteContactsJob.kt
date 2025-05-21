@@ -7,6 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import network.loki.messenger.libsession_util.ED25519
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.messages.Destination
@@ -60,9 +61,9 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                         }
 
                         val timestamp = SnodeAPI.nowWithOffset
-                        val signature = SodiumUtilities.sign(
-                            buildGroupInviteSignature(memberId, timestamp),
-                            adminKey.data
+                        val signature = ED25519.sign(
+                            ed25519PrivateKey = adminKey.data,
+                            message = buildGroupInviteSignature(memberId, timestamp),
                         )
 
                         val groupInvite = GroupUpdateInviteMessage.newBuilder()

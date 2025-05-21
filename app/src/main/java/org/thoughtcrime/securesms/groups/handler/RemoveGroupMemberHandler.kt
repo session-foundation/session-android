@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.allWithStatus
@@ -230,13 +231,14 @@ class RemoveGroupMemberHandler @Inject constructor(
                             }
                             .setAdminSignature(
                                 ByteString.copyFrom(
-                                    SodiumUtilities.sign(
-                                        MessageAuthentication.buildDeleteMemberContentSignature(
+                                    ED25519.sign(
+                                        message = MessageAuthentication.buildDeleteMemberContentSignature(
                                             memberIds = memberSessionIDs.map { AccountId(it) }
                                                 .toList(),
                                             messageHashes = emptyList(),
                                             timestamp = timestamp,
-                                        ), adminKey
+                                        ),
+                                        ed25519PrivateKey = adminKey
                                     )
                                 )
                             )

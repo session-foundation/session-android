@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.Bytes.Companion.toBytes
 import network.loki.messenger.libsession_util.util.Conversation
@@ -35,7 +36,6 @@ import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildDeleteMemberContentSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildInfoChangeSignature
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildMemberChangeSignature
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
@@ -336,9 +336,9 @@ class GroupManagerV2Impl @Inject constructor(
         newMembers: Collection<AccountId>,
     ) {
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
-            adminKey
+        val signature = ED25519.sign(
+            message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.ADDED, timestamp),
+            ed25519PrivateKey = adminKey
         )
 
         val updatedMessage = GroupUpdated(
@@ -373,12 +373,12 @@ class GroupManagerV2Impl @Inject constructor(
         )
 
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildMemberChangeSignature(
+        val signature = ED25519.sign(
+            message = buildMemberChangeSignature(
                 GroupUpdateMemberChangeMessage.Type.REMOVED,
                 timestamp
             ),
-            adminKey
+            ed25519PrivateKey = adminKey
         )
 
         val updateMessage = GroupUpdateMessage.newBuilder()
@@ -547,9 +547,9 @@ class GroupManagerV2Impl @Inject constructor(
 
             // Build a group update message to the group telling members someone has been promoted
             val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
-                adminKey
+            val signature = ED25519.sign(
+                message = buildMemberChangeSignature(GroupUpdateMemberChangeMessage.Type.PROMOTED, timestamp),
+                ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
@@ -981,9 +981,9 @@ class GroupManagerV2Impl @Inject constructor(
             }
 
             val timestamp = clock.currentTimeMills()
-            val signature = SodiumUtilities.sign(
-                buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
-                adminKey
+            val signature = ED25519.sign(
+                message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.NAME, timestamp),
+                ed25519PrivateKey = adminKey
             )
 
             val message = GroupUpdated(
@@ -1054,13 +1054,13 @@ class GroupManagerV2Impl @Inject constructor(
         // Construct a message to ask members to delete the messages, sign if we are admin, then send
         val timestamp = clock.currentTimeMills()
         val signature = group.adminKey?.data?.let { key ->
-            SodiumUtilities.sign(
-                buildDeleteMemberContentSignature(
+            ED25519.sign(
+                message = buildDeleteMemberContentSignature(
                     memberIds = emptyList(),
                     messageHashes,
                     timestamp
                 ),
-                key
+                ed25519PrivateKey = key
             )
         }
         val message = GroupUpdated(
@@ -1197,9 +1197,9 @@ class GroupManagerV2Impl @Inject constructor(
 
         // Construct a message to notify the group members about the expiration timer change
         val timestamp = clock.currentTimeMills()
-        val signature = SodiumUtilities.sign(
-            buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
-            adminKey
+        val signature = ED25519.sign(
+            message = buildInfoChangeSignature(GroupUpdateInfoChangeMessage.Type.DISAPPEARING_MESSAGES, timestamp),
+            ed25519PrivateKey = adminKey
         )
 
         val message = GroupUpdated(

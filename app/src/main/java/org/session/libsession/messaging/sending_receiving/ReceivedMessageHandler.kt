@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.avatars.AvatarHelper
@@ -833,7 +834,7 @@ private fun MessageReceiver.handleNewLibSessionClosedGroupMessage(message: Group
  */
 private fun verifyAdminSignature(groupSessionId: AccountId, signatureData: ByteArray, messageToValidate: ByteArray) {
     val groupPubKey = groupSessionId.pubKeyBytes
-    if (!SodiumUtilities.verifySignature(signatureData, groupPubKey, messageToValidate)) {
+    if (!ED25519.verify(signature = signatureData, ed25519PublicKey = groupPubKey, message = messageToValidate)) {
         throw SignatureException("Verification failed for signature data")
     }
 }
