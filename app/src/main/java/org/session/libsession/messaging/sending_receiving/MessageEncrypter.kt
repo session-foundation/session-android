@@ -1,9 +1,6 @@
 package org.session.libsession.messaging.sending_receiving
 
-import com.goterl.lazysodium.LazySodiumAndroid
-import com.goterl.lazysodium.SodiumAndroid
-import com.goterl.lazysodium.interfaces.Box
-import com.goterl.lazysodium.interfaces.Sign
+import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.sending_receiving.MessageSender.Error
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -27,24 +24,16 @@ object MessageEncrypter {
         val userED25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: throw Error.NoUserED25519KeyPair
         val recipientX25519PublicKey = Hex.fromStringCondensed(recipientHexEncodedX25519PublicKey.removingIdPrefixIfNeeded())
 
-        val verificationData = plaintext + userED25519KeyPair.publicKey.asBytes + recipientX25519PublicKey
-        val signature = ByteArray(Sign.BYTES)
         try {
-            sodium.cryptoSignDetached(signature, verificationData, verificationData.size.toLong(), userED25519KeyPair.secretKey.asBytes)
-        } catch (exception: Exception) {
-            Log.d("Loki", "Couldn't sign message due to error: $exception.")
-            throw Error.SigningFailed
-        }
-        val plaintextWithMetadata = plaintext + userED25519KeyPair.publicKey.asBytes + signature
-        val ciphertext = ByteArray(plaintextWithMetadata.size + Box.SEALBYTES)
-        try {
-            sodium.cryptoBoxSeal(ciphertext, plaintextWithMetadata, plaintextWithMetadata.size.toLong(), recipientX25519PublicKey)
+            return SessionEncrypt.encryptForRecipient(
+                userED25519KeyPair.secretKey.asBytes,
+                recipientX25519PublicKey,
+                plaintext
+            ).data
         } catch (exception: Exception) {
             Log.d("Loki", "Couldn't encrypt message due to error: $exception.")
             throw Error.EncryptionFailed
         }
-
-        return ciphertext
     }
 
     internal fun encryptBlinded(

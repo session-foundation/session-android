@@ -1,15 +1,10 @@
 package org.session.libsession.snode
 
-import kotlinx.coroutines.GlobalScope
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.deferred
 import org.session.libsession.snode.OnionRequestAPI.Destination
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.AESGCM.EncryptionResult
-import org.session.libsignal.utilities.toHexString
 import org.session.libsignal.utilities.JsonUtil
-import org.session.libsignal.utilities.ThreadUtils
+import org.session.libsignal.utilities.toHexString
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
