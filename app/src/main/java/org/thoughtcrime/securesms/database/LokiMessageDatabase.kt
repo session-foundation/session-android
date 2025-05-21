@@ -109,7 +109,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         )
         database.delete(
             messageThreadMappingTable,
-            "${Companion.messageID} IN (${messageIDs.joinToString(",") { "?" }}) AND $messageType = $messageTypeValue",
+            "${Companion.messageID} IN (${messageIDs.joinToString(",") { "?" }})",
             messageIDs.map { "$it" }.toTypedArray()
         )
 
