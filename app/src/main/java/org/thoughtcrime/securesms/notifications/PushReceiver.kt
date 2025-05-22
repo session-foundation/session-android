@@ -54,7 +54,7 @@ class PushReceiver @Inject constructor(
      * As long as it is properly formatted
      */
     fun onPushDataReceived(dataMap: Map<String, String>?) {
-        Log.d("", "Push data received: $dataMap")
+        Log.d(TAG, "Push data received: $dataMap")
         addMessageReceiveJob(dataMap?.asPushData())
     }
 
