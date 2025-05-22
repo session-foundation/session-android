@@ -10,6 +10,7 @@ import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Sign
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
@@ -324,7 +325,6 @@ object OpenGroupApi {
             val nonce = sodium.nonce(16)
             val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
             var pubKey = ""
-            var signature = ByteArray(Sign.BYTES)
             var bodyHash = ByteArray(0)
             if (request.parameters != null) {
                 val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
@@ -356,7 +356,7 @@ object OpenGroupApi {
                 .plus(request.verb.rawValue.toByteArray())
                 .plus("/${request.endpoint.value}".toByteArray())
                 .plus(bodyHash)
-            if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+            val signature = if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
                 BlindKeyAPI.blind15KeyPairOrNull(
                     ed25519SecretKey = ed25519KeyPair.secretKey.asBytes,
                     serverPubKey = Hex.fromStringCondensed(publicKey),
@@ -366,7 +366,7 @@ object OpenGroupApi {
                         keyPair.pubKey.data
                     ).hexString
 
-                    signature = SodiumUtilities.sogsSignature(
+                    SodiumUtilities.sogsSignature(
                         messageBytes,
                         ed25519KeyPair.secretKey.asBytes,
                         keyPair.secretKey.data,
@@ -378,11 +378,10 @@ object OpenGroupApi {
                     IdPrefix.UN_BLINDED,
                     ed25519KeyPair.publicKey.asBytes
                 ).hexString
-                sodium.cryptoSignDetached(
-                    signature,
-                    messageBytes,
-                    messageBytes.size.toLong(),
-                    ed25519KeyPair.secretKey.asBytes
+
+                ED25519.sign(
+                    ed25519PrivateKey = ed25519KeyPair.secretKey.asBytes,
+                    message = messageBytes
                 )
             }
             headers["X-SOGS-Nonce"] = encodeBytes(nonce)

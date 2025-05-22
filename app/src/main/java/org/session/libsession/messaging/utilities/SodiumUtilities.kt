@@ -5,9 +5,6 @@ import com.goterl.lazysodium.SodiumAndroid
 import com.goterl.lazysodium.interfaces.AEAD
 import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Hash
-import com.goterl.lazysodium.utils.KeyPair
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
-import network.loki.messenger.libsession_util.util.KeyPair as LibSessionKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
