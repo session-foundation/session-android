@@ -1,9 +1,9 @@
 package org.session.libsession.messaging.open_groups
 
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
@@ -57,20 +57,21 @@ data class OpenGroupMessage(
         val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(server)
         val signature = when {
             serverCapabilities.contains(Capability.BLIND.name.lowercase()) -> {
-                val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = userEdKeyPair.secretKey.data,
-                    serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
-                ) ?: return null
-                SodiumUtilities.sogsSignature(
-                    decode(base64EncodedData),
-                    userEdKeyPair.secretKey.data,
-                    blindedKeyPair.secretKey.data,
-                    blindedKeyPair.pubKey.data
-                ) ?: return null
+                runCatching {
+                    BlindKeyAPI.blind15Sign(
+                        ed25519SecretKey = userEdKeyPair.secretKey.data,
+                        serverPubKey = openGroup.publicKey,
+                        message = decode(base64EncodedData)
+                    )
+                }.onFailure {
+                    Log.e("OpenGroupMessage", "Failed to sign message with blind key", it)
+                }.getOrNull() ?: return null
             }
+
             fallbackSigningType == IdPrefix.UN_BLINDED -> {
                 curve.calculateSignature(userEdKeyPair.secretKey.data, decode(base64EncodedData))
             }
+
             else -> {
                 val (publicKey, privateKey) = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().let { it.publicKey.serialize() to it.privateKey.serialize() }
                 if (sender != publicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null

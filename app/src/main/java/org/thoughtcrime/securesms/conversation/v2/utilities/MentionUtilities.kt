@@ -8,10 +8,10 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Range
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.combine.Tuple2
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -158,7 +158,13 @@ object MentionUtilities {
     }
 
     private fun isYou(mentionedPublicKey: String, userPublicKey: String, openGroup: OpenGroup?): Boolean {
-        val isUserBlindedPublicKey = openGroup?.let { SodiumUtilities.accountId(userPublicKey, mentionedPublicKey, it.publicKey) } ?: false
+        val isUserBlindedPublicKey = openGroup?.let {
+            BlindKeyAPI.sessionIdMatchesBlindedId(
+                sessionId = userPublicKey,
+                blindedId = mentionedPublicKey,
+                serverPubKey = it.publicKey
+            )
+        } ?: false
         return mentionedPublicKey.equals(userPublicKey, ignoreCase = true) || isUserBlindedPublicKey
     }
 }

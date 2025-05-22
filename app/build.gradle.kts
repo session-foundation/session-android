@@ -286,7 +286,6 @@ dependencies {
     implementation(libs.androidx.sqlite.ktx)
     implementation(libs.sqlcipher.android)
     implementation(libs.kotlinx.serialization.json)
-    implementation(project(":liblazysodium"))
     implementation(libs.protobuf.java)
     implementation(libs.jackson.databind)
     implementation(libs.okhttp)

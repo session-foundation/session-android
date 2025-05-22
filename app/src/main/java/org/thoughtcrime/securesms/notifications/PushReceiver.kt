@@ -9,22 +9,20 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.getString
-import com.goterl.lazysodium.interfaces.AEAD
-import com.goterl.lazysodium.utils.Key
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.SessionEncrypt
+import okio.ByteString.Companion.decodeHex
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.sending_receiving.notifications.PushNotificationMetadata
 import org.session.libsession.messaging.utilities.MessageWrapper
-import org.session.libsession.messaging.utilities.SodiumUtilities
-import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.bencode.Bencode
 import org.session.libsession.utilities.bencode.BencodeList
@@ -34,10 +32,12 @@ import org.session.libsignal.protos.SignalServiceProtos.Envelope
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.home.HomeActivity
 import org.thoughtcrime.securesms.groups.GroupRevokedMessageHandler
+import org.thoughtcrime.securesms.home.HomeActivity
+import java.security.SecureRandom
 import javax.inject.Inject
 
 private const val TAG = "PushHandler"
@@ -227,13 +227,11 @@ class PushReceiver @Inject constructor(
         Log.d(TAG, "decrypt() called")
 
         val encKey = getOrCreateNotificationKey()
-        val nonce = encPayload.sliceArray(0 until AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES)
-        val payload =
-            encPayload.sliceArray(AEAD.XCHACHA20POLY1305_IETF_NPUBBYTES until encPayload.size)
-        val padded = SodiumUtilities.decrypt(payload, encKey.asBytes, nonce)
-            ?: error("Failed to decrypt push notification")
-        val contentEndedAt = padded.indexOfLast { it.toInt() != 0 }
-        val decrypted = if (contentEndedAt >= 0) padded.sliceArray(0..contentEndedAt) else padded
+        val decrypted = SessionEncrypt.decryptPushNotification(
+            message = encPayload,
+            secretKey = encKey
+        ).data
+
         val bencoded = Bencode.Decoder(decrypted)
         val expectedList = (bencoded.decode() as? BencodeList)?.values
             ?: error("Failed to decode bencoded list from payload")
@@ -251,15 +249,15 @@ class PushReceiver @Inject constructor(
         }
     }
 
-    fun getOrCreateNotificationKey(): Key {
+    fun getOrCreateNotificationKey(): ByteArray {
         val keyHex = IdentityKeyUtil.retrieve(context, IdentityKeyUtil.NOTIFICATION_KEY)
         if (keyHex != null) {
-            return Key.fromHexString(keyHex)
+            return keyHex.decodeHex().toByteArray()
         }
 
         // generate the key and store it
-        val key = sodium.keygen(AEAD.Method.XCHACHA20_POLY1305_IETF)
-        IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.asHexString)
+        val key = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        IdentityKeyUtil.save(context, IdentityKeyUtil.NOTIFICATION_KEY, key.toHexString())
         return key
     }
 

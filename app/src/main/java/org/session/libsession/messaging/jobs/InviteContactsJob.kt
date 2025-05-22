@@ -15,7 +15,6 @@ import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.messaging.utilities.MessageAuthentication.buildGroupInviteSignature
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.getGroup

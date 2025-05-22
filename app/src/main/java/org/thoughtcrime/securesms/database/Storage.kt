@@ -51,7 +51,6 @@ import org.session.libsession.messaging.sending_receiving.data_extraction.DataEx
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.SnodeClock
@@ -372,7 +371,13 @@ open class Storage @Inject constructor(
         val senderAddress = fromSerialized(message.sender!!)
         val isUserSender = (message.sender!! == getUserPublicKey())
         val isUserBlindedSender = message.threadID?.takeIf { it >= 0 }?.let(::getOpenGroup)?.publicKey
-            ?.let { SodiumUtilities.accountId(getUserPublicKey()!!, message.sender!!, it) } ?: false
+            ?.let {
+                BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = getUserPublicKey()!!,
+                    blindedId = message.sender!!,
+                    serverPubKey = it
+                )
+            } ?: false
         val group: Optional<SignalServiceGroup> = when {
             openGroupID != null -> Optional.of(SignalServiceGroup(openGroupID.toByteArray(), SignalServiceGroup.GroupType.PUBLIC_CHAT))
             groupPublicKey != null && groupPublicKey.startsWith(IdPrefix.GROUP.value) -> {
@@ -1570,7 +1575,12 @@ open class Storage @Inject constructor(
                 }
             }
             for (mapping in mappings) {
-                if (!SodiumUtilities.accountId(senderPublicKey, mapping.value.blindedId, mapping.value.serverId)) {
+                if (!BlindKeyAPI.sessionIdMatchesBlindedId(
+                        sessionId = senderPublicKey,
+                        blindedId = mapping.value.blindedId,
+                        serverPubKey = mapping.value.serverId
+                    )
+                ) {
                     continue
                 }
                 mappingDb.addBlindedIdMapping(mapping.value.copy(accountId = senderPublicKey))
@@ -1731,14 +1741,24 @@ open class Storage @Inject constructor(
         }
         getAllContacts().forEach { contact ->
             val accountId = AccountId(contact.accountID)
-            if (accountId.prefix == IdPrefix.STANDARD && SodiumUtilities.accountId(accountId.hexString, blindedId, serverPublicKey)) {
+            if (accountId.prefix == IdPrefix.STANDARD && BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = accountId.hexString,
+                    blindedId = blindedId,
+                    serverPubKey = serverPublicKey
+                )
+            ) {
                 val contactMapping = mapping.copy(accountId = accountId.hexString)
                 db.addBlindedIdMapping(contactMapping)
                 return contactMapping
             }
         }
         db.getBlindedIdMappingsExceptFor(server).forEach {
-            if (SodiumUtilities.accountId(it.accountId!!, blindedId, serverPublicKey)) {
+            if (BlindKeyAPI.sessionIdMatchesBlindedId(
+                    sessionId = it.accountId!!,
+                    blindedId = blindedId,
+                    serverPubKey = serverPublicKey
+                )
+            ) {
                 val otherMapping = mapping.copy(accountId = it.accountId)
                 db.addBlindedIdMapping(otherMapping)
                 return otherMapping

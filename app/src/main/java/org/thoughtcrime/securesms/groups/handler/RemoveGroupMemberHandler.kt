@@ -23,7 +23,6 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.MessageAuthentication
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock

@@ -4,11 +4,6 @@ package org.session.libsession.snode
 
 import android.os.SystemClock
 import com.fasterxml.jackson.databind.JsonNode
-import com.goterl.lazysodium.exceptions.SodiumException
-import com.goterl.lazysodium.interfaces.GenericHash
-import com.goterl.lazysodium.interfaces.PwHash
-import com.goterl.lazysodium.interfaces.SecretBox
-import com.goterl.lazysodium.utils.Key
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
 import network.loki.messenger.libsession_util.ED25519
+import network.loki.messenger.libsession_util.Hash
+import network.loki.messenger.libsession_util.SessionEncrypt
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.all
 import nl.komponents.kovenant.functional.bind
@@ -26,7 +23,6 @@ import nl.komponents.kovenant.functional.map
 import nl.komponents.kovenant.unwrap
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.MessageWrapper
-import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsession.snode.model.BatchResponse
 import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.snode.utilities.asyncPromise
@@ -249,18 +245,12 @@ object SnodeAPI {
         val accountIDByteCount = 33
         // Hash the ONS name using BLAKE2b
         val onsName = onsName.lowercase(Locale.US)
-        val nameAsData = onsName.toByteArray()
-        val nameHash = ByteArray(GenericHash.BYTES)
-        if (!sodium.cryptoGenericHash(nameHash, nameHash.size, nameAsData, nameAsData.size.toLong())) {
-            throw Error.HashingFailed
-        }
-        val base64EncodedNameHash = Base64.encodeBytes(nameHash)
         // Ask 3 different snodes for the Account ID associated with the given name hash
         val parameters = buildMap<String, Any> {
             this["endpoint"] = "ons_resolve"
             this["params"] = buildMap {
                 this["type"] = 0
-                this["name_hash"] = base64EncodedNameHash
+                this["name_hash"] = Base64.encodeBytes(Hash.hash32(onsName.toByteArray()))
             }
         }
         val promises = List(validationCount) {
@@ -275,34 +265,12 @@ object SnodeAPI {
                 val intermediate = json["result"] as? Map<*, *> ?: throw Error.Generic
                 val hexEncodedCiphertext = intermediate["encrypted_value"] as? String ?: throw Error.Generic
                 val ciphertext = Hex.fromStringCondensed(hexEncodedCiphertext)
-                val isArgon2Based = (intermediate["nonce"] == null)
-                if (isArgon2Based) {
-                    // Handle old Argon2-based encryption used before HF16
-                    val salt = ByteArray(PwHash.SALTBYTES)
-                    val nonce = ByteArray(SecretBox.NONCEBYTES)
-                    val accountIDAsData = ByteArray(accountIDByteCount)
-                    val key = try {
-                        Key.fromHexString(sodium.cryptoPwHash(onsName, SecretBox.KEYBYTES, salt, PwHash.OPSLIMIT_MODERATE, PwHash.MEMLIMIT_MODERATE, PwHash.Alg.PWHASH_ALG_ARGON2ID13)).asBytes
-                    } catch (e: SodiumException) {
-                        throw Error.HashingFailed
-                    }
-                    if (!sodium.cryptoSecretBoxOpenEasy(accountIDAsData, ciphertext, ciphertext.size.toLong(), nonce, key)) {
-                        throw Error.DecryptionFailed
-                    }
-                    Hex.toStringCondensed(accountIDAsData)
-                } else {
-                    val hexEncodedNonce = intermediate["nonce"] as? String ?: throw Error.Generic
-                    val nonce = Hex.fromStringCondensed(hexEncodedNonce)
-                    val key = ByteArray(GenericHash.BYTES)
-                    if (!sodium.cryptoGenericHash(key, key.size, nameAsData, nameAsData.size.toLong(), nameHash, nameHash.size)) {
-                        throw Error.HashingFailed
-                    }
-                    val accountIDAsData = ByteArray(accountIDByteCount)
-                    if (!sodium.cryptoAeadXChaCha20Poly1305IetfDecrypt(accountIDAsData, null, null, ciphertext, ciphertext.size.toLong(), null, 0, nonce, key)) {
-                        throw Error.DecryptionFailed
-                    }
-                    Hex.toStringCondensed(accountIDAsData)
-                }
+                val nonce = (intermediate["nonce"] as? String)?.let(Hex::fromStringCondensed)
+                SessionEncrypt.decryptOnsResponse(
+                    lowercaseName = onsName,
+                    ciphertext = ciphertext,
+                    nonce = nonce
+                )
             }.takeIf { it.size == validationCount && it.toSet().size == 1 }?.first()
                 ?: throw Error.ValidationFailed
         }
@@ -919,7 +887,6 @@ object SnodeAPI {
                         // Hashes of deleted messages
                         val hashes = json["deleted"] as List<String>
                         val signature = json["signature"] as String
-                        val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                         // The signature looks like ( PUBKEY_HEX || RMSG[0] || ... || RMSG[N] || DMSG[0] || ... || DMSG[M] )
                         val message = sequenceOf(swarmAuth.accountId.hexString)
                             .plus(serverHashes)
@@ -927,7 +894,7 @@ object SnodeAPI {
                             .toByteArray()
 
                         ED25519.verify(
-                            ed25519PublicKey = snodePublicKey.asBytes,
+                            ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
                             signature = Base64.decode(signature),
                             message = message,
                         )
@@ -1083,11 +1050,10 @@ object SnodeAPI {
             } else {
                 val hashes = (json["deleted"] as Map<String,List<String>>).flatMap { (_, hashes) -> hashes }.sorted() // Hashes of deleted messages
                 val signature = json["signature"] as String
-                val snodePublicKey = Key.fromHexString(hexSnodePublicKey)
                 // The signature looks like ( PUBKEY_HEX || TIMESTAMP || DELETEDHASH[0] || ... || DELETEDHASH[N] )
                 val message = sequenceOf(userPublicKey, "$timestamp").plus(hashes).toByteArray()
                 ED25519.verify(
-                    ed25519PublicKey = snodePublicKey.asBytes,
+                    ed25519PublicKey = Hex.fromStringCondensed(hexSnodePublicKey),
                     signature = Base64.decode(signature),
                     message = message,
                 )

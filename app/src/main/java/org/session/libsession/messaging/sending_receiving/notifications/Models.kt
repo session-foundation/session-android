@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving.notifications
 
-import com.goterl.lazysodium.utils.Key
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -111,13 +110,3 @@ data class PushNotificationMetadata(
         val data_too_long : Boolean = false
 )
 
-@Serializable
-data class PushNotificationServerObject(
-    val enc_payload: String,
-    val spns: Int,
-) {
-    fun decryptPayload(key: Key): Any {
-
-        TODO()
-    }
-}

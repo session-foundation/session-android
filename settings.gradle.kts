@@ -17,5 +17,4 @@ if (libSessionUtilProjectPath.isNotBlank()) {
 }
 
 include(":app")
-include(":liblazysodium")
 include(":content-descriptions") // ONLY AccessibilityID strings (non-translated) used to identify UI elements in automated testing

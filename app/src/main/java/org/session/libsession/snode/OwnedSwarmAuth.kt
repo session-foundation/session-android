@@ -1,8 +1,6 @@
 package org.session.libsession.snode
 
-import com.goterl.lazysodium.interfaces.Sign
 import network.loki.messenger.libsession_util.ED25519
-import org.session.libsession.messaging.utilities.SodiumUtilities.sodium
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
 
@@ -16,12 +14,6 @@ class OwnedSwarmAuth(
     override val ed25519PublicKeyHex: String?,
     val ed25519PrivateKey: ByteArray,
 ) : SwarmAuth {
-    init {
-        check(ed25519PrivateKey.size == Sign.SECRETKEYBYTES) {
-            "Invalid secret key size, expecting ${Sign.SECRETKEYBYTES} but got ${ed25519PrivateKey.size}"
-        }
-    }
-
     override fun sign(data: ByteArray): Map<String, String> {
         val signature = Base64.encodeBytes(ED25519.sign(ed25519PrivateKey = ed25519PrivateKey, message = data))
 

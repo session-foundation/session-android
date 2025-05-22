@@ -4,7 +4,7 @@ import org.session.libsignal.crypto.IdentityKeyPair
 import org.session.libsignal.crypto.ecc.ECKeyPair
 
 fun ByteArray.toHexString(): String {
-    return joinToString("") { String.format("%02x", it) }
+    return Hex.toStringCondensed(this)
 }
 
 val IdentityKeyPair.hexEncodedPublicKey: String
