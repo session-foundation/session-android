@@ -188,7 +188,7 @@ class BatchMessageReceiveJob(
                                 message.sender == serverPublicKey?.let {
                                     BlindKeyAPI.blind15KeyPairOrNull(
                                         ed25519SecretKey = storage.getUserED25519KeyPair()!!
-                                            .secretKey.asBytes,
+                                            .secretKey.data,
                                         serverPubKey = Hex.fromStringCondensed(it),
                                     )
                                 }?.let {

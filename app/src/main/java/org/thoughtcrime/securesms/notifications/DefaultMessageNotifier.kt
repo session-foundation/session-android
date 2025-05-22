@@ -572,7 +572,7 @@ class DefaultMessageNotifier(
         val edKeyPair = getUserED25519KeyPair(context)
         if (openGroup != null && edKeyPair != null) {
             val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair.secretKey.asBytes,
+                ed25519SecretKey = edKeyPair.secretKey.data,
                 serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
             )
             if (blindedKeyPair != null) {

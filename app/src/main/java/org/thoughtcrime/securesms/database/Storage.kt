@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
-import com.goterl.lazysodium.utils.KeyPair
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
@@ -12,6 +11,7 @@ import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.KeyPair
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.MessageDataProvider
@@ -208,7 +208,7 @@ open class Storage @Inject constructor(
         return AccountId(
             IdPrefix.BLINDED,
             BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = userKeyPair.secretKey.asBytes,
+                ed25519SecretKey = userKeyPair.secretKey.data,
                 serverPubKey = Hex.fromStringCondensed(serverPublicKey),
             )!!.pubKey.data
         )

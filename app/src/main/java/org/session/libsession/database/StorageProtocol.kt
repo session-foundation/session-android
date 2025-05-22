@@ -2,7 +2,7 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
-import com.goterl.lazysodium.utils.KeyPair
+import network.loki.messenger.libsession_util.util.KeyPair
 import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.contacts.Contact

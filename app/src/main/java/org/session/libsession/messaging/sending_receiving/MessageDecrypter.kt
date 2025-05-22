@@ -41,7 +41,7 @@ object MessageDecrypter {
         val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
             ?: throw Error.NoUserED25519KeyPair
         val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
-            ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+            ed25519SecretKey = userEdKeyPair.secretKey.data,
             serverPubKey = Hex.fromStringCondensed(serverPublicKey),
         ) ?: throw Error.DecryptionFailed
         val otherKeyBytes =
@@ -61,7 +61,7 @@ object MessageDecrypter {
         try {
             val (sessionId, plainText) = SessionEncrypt.decryptForBlindedRecipient(
                 ciphertext = message,
-                myEd25519Privkey = userEdKeyPair.secretKey.asBytes,
+                myEd25519Privkey = userEdKeyPair.secretKey.data,
                 openGroupPubkey = Hex.fromStringCondensed(serverPublicKey),
                 senderBlindedId = byteArrayOf(0x15) + senderKeyBytes,
                 recipientBlindId = byteArrayOf(0x15) + recipientKeyBytes,

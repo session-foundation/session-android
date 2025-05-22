@@ -373,7 +373,7 @@ fun MessageReceiver.handleVisibleMessage(
     val userBlindedKey = openGroupID?.let {
         val openGroup = storage.getOpenGroup(threadID) ?: return@let null
         val blindedKey = BlindKeyAPI.blind15KeyPairOrNull(
-            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.asBytes,
+            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
             serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
         ) ?: return@let null
         AccountId(
@@ -550,7 +550,7 @@ fun MessageReceiver.handleOpenGroupReactions(
     val openGroup = storage.getOpenGroup(threadId)
     val blindedPublicKey = openGroup?.publicKey?.let { serverPublicKey ->
         BlindKeyAPI.blind15KeyPairOrNull(
-            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.asBytes,
+            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
             serverPubKey = Hex.fromStringCondensed(serverPublicKey),
         )
             ?.let { AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString }

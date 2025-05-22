@@ -24,7 +24,7 @@ object MessageEncrypter {
 
         try {
             return SessionEncrypt.encryptForRecipient(
-                userED25519KeyPair.secretKey.asBytes,
+                userED25519KeyPair.secretKey.data,
                 recipientX25519PublicKey,
                 plaintext
             ).data
@@ -46,7 +46,7 @@ object MessageEncrypter {
 
         return SessionEncrypt.encryptForBlindedRecipient(
             message = plaintext,
-            myEd25519Privkey = userEdKeyPair.secretKey.asBytes,
+            myEd25519Privkey = userEdKeyPair.secretKey.data,
             serverPubKey = Hex.fromStringCondensed(serverPublicKey),
             recipientBlindId = byteArrayOf(0x15) + recipientBlindedPublicKey
         ).data

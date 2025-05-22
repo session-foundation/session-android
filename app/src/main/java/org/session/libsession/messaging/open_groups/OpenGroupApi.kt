@@ -358,7 +358,7 @@ object OpenGroupApi {
                 .plus(bodyHash)
             val signature = if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
                 BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = ed25519KeyPair.secretKey.asBytes,
+                    ed25519SecretKey = ed25519KeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(publicKey),
                 )?.let { keyPair ->
                     pubKey = AccountId(
@@ -368,7 +368,7 @@ object OpenGroupApi {
 
                     SodiumUtilities.sogsSignature(
                         messageBytes,
-                        ed25519KeyPair.secretKey.asBytes,
+                        ed25519KeyPair.secretKey.data,
                         keyPair.secretKey.data,
                         keyPair.pubKey.data
                     ) ?: return Promise.ofFail(Error.SigningFailed)
@@ -376,11 +376,11 @@ object OpenGroupApi {
             } else {
                 pubKey = AccountId(
                     IdPrefix.UN_BLINDED,
-                    ed25519KeyPair.publicKey.asBytes
+                    ed25519KeyPair.pubKey.data
                 ).hexString
 
                 ED25519.sign(
-                    ed25519PrivateKey = ed25519KeyPair.secretKey.asBytes,
+                    ed25519PrivateKey = ed25519KeyPair.secretKey.data,
                     message = messageBytes
                 )
             }

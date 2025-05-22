@@ -58,22 +58,22 @@ data class OpenGroupMessage(
         val signature = when {
             serverCapabilities.contains(Capability.BLIND.name.lowercase()) -> {
                 val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                    ed25519SecretKey = userEdKeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
                 ) ?: return null
                 SodiumUtilities.sogsSignature(
                     decode(base64EncodedData),
-                    userEdKeyPair.secretKey.asBytes,
+                    userEdKeyPair.secretKey.data,
                     blindedKeyPair.secretKey.data,
                     blindedKeyPair.pubKey.data
                 ) ?: return null
             }
             fallbackSigningType == IdPrefix.UN_BLINDED -> {
-                curve.calculateSignature(userEdKeyPair.secretKey.asBytes, decode(base64EncodedData))
+                curve.calculateSignature(userEdKeyPair.secretKey.data, decode(base64EncodedData))
             }
             else -> {
                 val (publicKey, privateKey) = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().let { it.publicKey.serialize() to it.privateKey.serialize() }
-                if (sender != publicKey.toHexString() && !userEdKeyPair.publicKey.asHexString.equals(sender?.removingIdPrefixIfNeeded(), true)) return null
+                if (sender != publicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null
                 try {
                     curve.calculateSignature(privateKey, decode(base64EncodedData))
                 } catch (e: Exception) {

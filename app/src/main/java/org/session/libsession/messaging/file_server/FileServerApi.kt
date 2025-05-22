@@ -126,7 +126,7 @@ object FileServerApi {
      */
     suspend fun getClientVersion(): VersionData {
         // Generate the auth signature
-        val secretKey =  MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()?.secretKey?.asBytes
+        val secretKey =  MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()?.secretKey?.data
             ?: throw (Error.NoEd25519KeyPair)
 
         val blindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)

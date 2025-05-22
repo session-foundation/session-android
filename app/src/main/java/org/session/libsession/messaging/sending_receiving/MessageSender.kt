@@ -341,7 +341,7 @@ object MessageSender {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                        ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                        ed25519SecretKey = userEdKeyPair.secretKey.data,
                         serverPubKey = Hex.fromStringCondensed(it.publicKey),
                     )?.pubKey?.data
                 }
@@ -349,7 +349,7 @@ object MessageSender {
             is Destination.OpenGroupInbox -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
                 blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                    ed25519SecretKey = userEdKeyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
                 )?.pubKey?.data
             }
@@ -357,7 +357,7 @@ object MessageSender {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
                     blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
-                        ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                        ed25519SecretKey = userEdKeyPair.secretKey.data,
                         serverPubKey = Hex.fromStringCondensed(it.publicKey),
                     )?.pubKey?.data
                 }
@@ -367,7 +367,7 @@ object MessageSender {
         val messageSender = if (serverCapabilities.contains(Capability.BLIND.name.lowercase()) && blindedPublicKey != null) {
             AccountId(IdPrefix.BLINDED, blindedPublicKey!!).hexString
         } else {
-            AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.publicKey.asBytes).hexString
+            AccountId(IdPrefix.UN_BLINDED, userEdKeyPair.pubKey.data).hexString
         }
         message.sender = messageSender
         // Set the failure handler (need it here already for precondition failure handling)

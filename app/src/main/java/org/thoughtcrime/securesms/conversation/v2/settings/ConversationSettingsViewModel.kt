@@ -493,7 +493,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             val keyPair = storage.getUserED25519KeyPair() ?: return false
             val blindedPublicKey = community!!.publicKey.let {
                 BlindKeyAPI.blind15KeyPairOrNull(
-                    ed25519SecretKey = keyPair.secretKey.asBytes,
+                    ed25519SecretKey = keyPair.secretKey.data,
                     serverPubKey = Hex.fromStringCondensed(it),
                 )?.pubKey?.data }
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString

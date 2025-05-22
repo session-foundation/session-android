@@ -61,7 +61,7 @@ class ConversationActionModeCallback(
         val edKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
         val blindedPublicKey = openGroup?.publicKey?.let {
             BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = edKeyPair.secretKey.asBytes,
+                ed25519SecretKey = edKeyPair.secretKey.data,
                 serverPubKey = Hex.fromStringCondensed(it),
             )?.pubKey?.data }
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString

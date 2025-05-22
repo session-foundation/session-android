@@ -97,7 +97,7 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.Copy07PrefixedBlindedPublicKey -> {
-                val secretKey = storage.getUserED25519KeyPair()?.secretKey?.asBytes
+                val secretKey = storage.getUserED25519KeyPair()?.secretKey?.data
                     ?: throw (FileServerApi.Error.NoEd25519KeyPair)
                 val userBlindedKeys = BlindKeyAPI.blindVersionKeyPair(secretKey)
 

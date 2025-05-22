@@ -104,7 +104,7 @@ class ConfigFactory @Inject constructor(
         })
 
     private fun requiresCurrentUserED25519SecKey(): ByteArray =
-        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
             "No logged in user"
         }
 
@@ -346,7 +346,7 @@ class ConfigFactory @Inject constructor(
     ): ByteArray? {
         return Sodium.decryptForMultipleSimple(
             encoded = encoded,
-            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
                 "No logged in user"
             },
             domain = domain,

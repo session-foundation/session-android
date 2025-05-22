@@ -177,7 +177,7 @@ object MessageReceiver {
         }
         val isUserBlindedSender = sender == openGroupPublicKey?.let {
             BlindKeyAPI.blind15KeyPairOrNull(
-                ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.asBytes,
+                ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
                 serverPubKey = Hex.fromStringCondensed(it),
             )
         }?.let { AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString }
