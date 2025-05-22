@@ -294,11 +294,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kovenant)
     implementation(libs.kovenant.android)
-    implementation(libs.jna) {
-        artifact {
-            type = "aar"
-        }
-    }
     implementation(libs.opencsv)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.rxbinding)
