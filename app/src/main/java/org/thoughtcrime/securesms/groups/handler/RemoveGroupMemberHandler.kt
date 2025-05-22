@@ -16,7 +16,7 @@ import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.ReadableGroupKeysConfig
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
-import network.loki.messenger.libsession_util.util.Sodium
+import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.Destination
@@ -256,7 +256,7 @@ class RemoveGroupMemberHandler @Inject constructor(
     ) = SnodeMessage(
         recipient = groupAccountId,
         data = Base64.encodeBytes(
-            Sodium.encryptForMultipleSimple(
+            MultiEncrypt.encryptForMultipleSimple(
                 messages = Array(pendingRemovals.size) {
                     AccountId(pendingRemovals[it].accountId()).pubKeyBytes
                         .plus(keys.currentGeneration().toString().toByteArray())
@@ -265,7 +265,7 @@ class RemoveGroupMemberHandler @Inject constructor(
                     AccountId(pendingRemovals[it].accountId()).pubKeyBytes
                 },
                 ed25519SecretKey = adminKey,
-                domain = Sodium.KICKED_DOMAIN
+                domain = MultiEncrypt.KICKED_DOMAIN
             )
         ),
         ttl = SnodeMessage.DEFAULT_TTL,

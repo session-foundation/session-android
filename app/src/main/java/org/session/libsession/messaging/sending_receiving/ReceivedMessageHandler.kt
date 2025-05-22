@@ -8,7 +8,6 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.Sodium
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -772,7 +771,7 @@ private fun handlePromotionMessage(message: GroupUpdated) {
         try {
             MessagingModuleConfiguration.shared.groupManagerV2
                 .handlePromotion(
-                    groupId = AccountId(IdPrefix.GROUP, Sodium.ed25519KeyPair(seed).pubKey.data),
+                    groupId = AccountId(IdPrefix.GROUP, ED25519.generate(seed).pubKey.data),
                     groupName = promotion.name,
                     adminKeySeed = seed,
                     promoter = adminId,

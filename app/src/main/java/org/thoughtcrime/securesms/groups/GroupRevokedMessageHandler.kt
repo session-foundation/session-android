@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.groups
 
-import network.loki.messenger.libsession_util.util.Sodium
+import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
@@ -22,7 +22,7 @@ class GroupRevokedMessageHandler @Inject constructor(
         rawMessages.forEach { data ->
             val decoded = configFactoryProtocol.decryptForUser(
                 data,
-                Sodium.KICKED_DOMAIN,
+                MultiEncrypt.KICKED_DOMAIN,
                 groupId,
             )
 
