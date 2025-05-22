@@ -26,7 +26,6 @@ import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Base64.decode
 import org.session.libsignal.utilities.Base64.encodeBytes
 import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
@@ -38,8 +37,6 @@ import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.removingIdPrefixIfNeeded
-import org.whispersystems.curve25519.Curve25519
 import java.security.SecureRandom
 import java.util.concurrent.TimeUnit
 import kotlin.collections.component1
@@ -47,7 +44,6 @@ import kotlin.collections.component2
 import kotlin.collections.set
 
 object OpenGroupApi {
-    private val curve = Curve25519.getInstance(Curve25519.BEST)
     val defaultRooms = MutableSharedFlow<List<DefaultGroup>>(replay = 1)
     private val hasPerformedInitialPoll = mutableMapOf<String, Boolean>()
     private var hasUpdatedLastOpenDate = false
@@ -479,67 +475,6 @@ object OpenGroupApi {
         }
     }
     // endregion
-
-    // region Messages
-    fun getMessages(room: String, server: String): Promise<List<OpenGroupMessage>, Exception> {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val queryParameters = mutableMapOf<String, String>()
-        storage.getLastMessageServerID(room, server)?.let { lastId ->
-            queryParameters += "from_server_id" to lastId.toString()
-        }
-        val request = Request(
-            verb = GET,
-            room = room,
-            server = server,
-            endpoint = Endpoint.RoomMessage(room),
-            queryParameters = queryParameters
-        )
-        return getResponseBodyJson(request).map { json ->
-            @Suppress("UNCHECKED_CAST") val rawMessages =
-                json["messages"] as? List<Map<String, Any>>
-                    ?: throw Error.ParsingFailed
-            parseMessages(room, server, rawMessages)
-        }
-    }
-
-    private fun parseMessages(
-        room: String,
-        server: String,
-        rawMessages: List<Map<*, *>>
-    ): List<OpenGroupMessage> {
-        val messages = rawMessages.mapNotNull { json ->
-            json as Map<String, Any>
-            try {
-                val message = OpenGroupMessage.fromJSON(json) ?: return@mapNotNull null
-                if (message.serverID == null || message.sender.isNullOrEmpty()) return@mapNotNull null
-                val sender = message.sender
-                val data = decode(message.base64EncodedData)
-                val signature = decode(message.base64EncodedSignature)
-                val publicKey = Hex.fromStringCondensed(sender.removingIdPrefixIfNeeded())
-                val isValid = curve.verifySignature(publicKey, data, signature)
-                if (!isValid) {
-                    Log.d("Loki", "Ignoring message with invalid signature.")
-                    return@mapNotNull null
-                }
-                message
-            } catch (e: Exception) {
-                null
-            }
-        }
-        return messages
-    }
-
-    fun getReactors(room: String, server: String, messageId: Long, emoji: String): Promise<Map<*, *>, Exception> {
-        val request = Request(
-            verb = GET,
-            room = room,
-            server = server,
-            endpoint = Endpoint.Reactors(room, messageId, emoji)
-        )
-        return getResponseBody(request).map { response ->
-            JsonUtil.fromJson(response, Map::class.java)
-        }
-    }
 
     fun addReaction(room: String, server: String, messageId: Long, emoji: String): Promise<AddReactionResponse, Exception> {
         val request = Request(

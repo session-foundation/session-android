@@ -38,7 +38,7 @@ internal object AESGCM {
     /**
      * Sync. Don't call from the main thread.
      */
-    internal fun generateSymmetricKey(x25519PublicKey: ByteArray, x25519PrivateKey: ByteArray): ByteArray {
+    private fun generateSymmetricKey(x25519PublicKey: ByteArray, x25519PrivateKey: ByteArray): ByteArray {
         val ephemeralSharedSecret = Curve25519.getInstance(Curve25519.BEST).calculateAgreement(x25519PublicKey, x25519PrivateKey)
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec("LOKI".toByteArray(), "HmacSHA256"))
