@@ -10,6 +10,7 @@ import com.goterl.lazysodium.interfaces.GenericHash
 import com.goterl.lazysodium.interfaces.Sign
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
@@ -356,17 +357,20 @@ object OpenGroupApi {
                 .plus("/${request.endpoint.value}".toByteArray())
                 .plus(bodyHash)
             if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
-                SodiumUtilities.blindedKeyPair(publicKey, ed25519KeyPair)?.let { keyPair ->
+                BlindKeyAPI.blind15KeyPairOrNull(
+                    ed25519SecretKey = ed25519KeyPair.secretKey.asBytes,
+                    serverPubKey = Hex.fromStringCondensed(publicKey),
+                )?.let { keyPair ->
                     pubKey = AccountId(
                         IdPrefix.BLINDED,
-                        keyPair.publicKey.asBytes
+                        keyPair.pubKey.data
                     ).hexString
 
                     signature = SodiumUtilities.sogsSignature(
                         messageBytes,
                         ed25519KeyPair.secretKey.asBytes,
-                        keyPair.secretKey.asBytes,
-                        keyPair.publicKey.asBytes
+                        keyPair.secretKey.data,
+                        keyPair.pubKey.data
                     ) ?: return Promise.ofFail(Error.SigningFailed)
                 } ?: return Promise.ofFail(Error.SigningFailed)
             } else {

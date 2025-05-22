@@ -6,6 +6,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import network.loki.messenger.libsession_util.ConfigBase
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -29,11 +30,11 @@ import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactio
 import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
 import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -185,12 +186,13 @@ class BatchMessageReceiveJob(
                         is VisibleMessage -> {
                             val isUserBlindedSender =
                                 message.sender == serverPublicKey?.let {
-                                    SodiumUtilities.blindedKeyPair(
-                                        serverPublicKey = it,
-                                        edKeyPair = storage.getUserED25519KeyPair()!!
+                                    BlindKeyAPI.blind15KeyPairOrNull(
+                                        ed25519SecretKey = storage.getUserED25519KeyPair()!!
+                                            .secretKey.asBytes,
+                                        serverPubKey = Hex.fromStringCondensed(it),
                                     )
                                 }?.let {
-                                    AccountId(IdPrefix.BLINDED, it.publicKey.asBytes).hexString
+                                    AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString
                                 }
                             if (message.sender == localUserPublicKey || isUserBlindedSender) {
                                 // use sent timestamp here since that is technically the last one we have

@@ -10,7 +10,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
@@ -38,13 +37,13 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -57,6 +56,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -491,7 +491,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         else{
             val userPublicKey = textSecurePreferences.getLocalNumber() ?: return false
             val keyPair = storage.getUserED25519KeyPair() ?: return false
-            val blindedPublicKey = community!!.publicKey.let { SodiumUtilities.blindedKeyPair(it, keyPair)?.publicKey?.asBytes }
+            val blindedPublicKey = community!!.publicKey.let {
+                BlindKeyAPI.blind15KeyPairOrNull(
+                    ed25519SecretKey = keyPair.secretKey.asBytes,
+                    serverPubKey = Hex.fromStringCondensed(it),
+                )?.pubKey?.data }
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
             return OpenGroupManager.isUserModerator(context, community!!.id, userPublicKey, blindedPublicKey)
         }

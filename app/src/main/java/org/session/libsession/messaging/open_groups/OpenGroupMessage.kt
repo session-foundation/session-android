@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.open_groups
 
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.utilities.SodiumUtilities
@@ -7,6 +8,7 @@ import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Base64.decode
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
@@ -55,12 +57,15 @@ data class OpenGroupMessage(
         val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(server)
         val signature = when {
             serverCapabilities.contains(Capability.BLIND.name.lowercase()) -> {
-                val blindedKeyPair = SodiumUtilities.blindedKeyPair(openGroup.publicKey, userEdKeyPair) ?: return null
+                val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
+                    ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                    serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
+                ) ?: return null
                 SodiumUtilities.sogsSignature(
                     decode(base64EncodedData),
                     userEdKeyPair.secretKey.asBytes,
-                    blindedKeyPair.secretKey.asBytes,
-                    blindedKeyPair.publicKey.asBytes
+                    blindedKeyPair.secretKey.data,
+                    blindedKeyPair.pubKey.data
                 ) ?: return null
             }
             fallbackSigningType == IdPrefix.UN_BLINDED -> {

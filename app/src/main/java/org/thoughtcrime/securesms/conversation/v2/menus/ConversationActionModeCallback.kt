@@ -3,14 +3,12 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 import android.content.Context
 import android.view.ActionMode
 import android.view.ContextThemeWrapper
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.IdPrefix
@@ -22,6 +20,8 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import androidx.core.view.size
 import androidx.core.view.get
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import org.session.libsignal.utilities.Hex
 
 class ConversationActionModeCallback(
     private val adapter: ConversationAdapter,
@@ -59,7 +59,11 @@ class ConversationActionModeCallback(
         val thread = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(threadID)!!
         val userPublicKey = TextSecurePreferences.getLocalNumber(context)!!
         val edKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
-        val blindedPublicKey = openGroup?.publicKey?.let { SodiumUtilities.blindedKeyPair(it, edKeyPair)?.publicKey?.asBytes }
+        val blindedPublicKey = openGroup?.publicKey?.let {
+            BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = edKeyPair.secretKey.asBytes,
+                serverPubKey = Hex.fromStringCondensed(it),
+            )?.pubKey?.data }
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
 
         val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&

@@ -9,6 +9,7 @@ import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.Namespace
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.deferred
@@ -32,7 +33,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.utilities.MessageWrapper
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.snode.SnodeMessage
@@ -46,6 +46,7 @@ import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.defaultRequiresAuth
@@ -339,17 +340,26 @@ object MessageSender {
             is Destination.OpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
-                    blindedPublicKey = SodiumUtilities.blindedKeyPair(it.publicKey, userEdKeyPair)?.publicKey?.asBytes
+                    blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
+                        ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                    )?.pubKey?.data
                 }
             }
             is Destination.OpenGroupInbox -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
-                blindedPublicKey = SodiumUtilities.blindedKeyPair(destination.serverPublicKey, userEdKeyPair)?.publicKey?.asBytes
+                blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
+                    ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                    serverPubKey = Hex.fromStringCondensed(destination.serverPublicKey),
+                )?.pubKey?.data
             }
             is Destination.LegacyOpenGroup -> {
                 serverCapabilities = storage.getServerCapabilities(destination.server)
                 storage.getOpenGroup(destination.roomToken, destination.server)?.let {
-                    blindedPublicKey = SodiumUtilities.blindedKeyPair(it.publicKey, userEdKeyPair)?.publicKey?.asBytes
+                    blindedPublicKey = BlindKeyAPI.blind15KeyPairOrNull(
+                        ed25519SecretKey = userEdKeyPair.secretKey.asBytes,
+                        serverPubKey = Hex.fromStringCondensed(it.publicKey),
+                    )?.pubKey?.data
                 }
             }
             else -> {}

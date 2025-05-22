@@ -8,6 +8,7 @@ import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDD
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
@@ -206,7 +207,10 @@ open class Storage @Inject constructor(
         val userKeyPair = getUserED25519KeyPair() ?: return null
         return AccountId(
             IdPrefix.BLINDED,
-            SodiumUtilities.blindedKeyPair(serverPublicKey, userKeyPair)!!.publicKey.asBytes
+            BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = userKeyPair.secretKey.asBytes,
+                serverPubKey = Hex.fromStringCondensed(serverPublicKey),
+            )!!.pubKey.data
         )
     }
 
