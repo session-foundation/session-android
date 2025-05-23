@@ -264,7 +264,6 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
-    implementation(libs.aesgcmprovider)
     implementation(libs.android)
     implementation(libs.shortcutbadger)
     implementation(libs.photoview)
@@ -309,7 +308,6 @@ dependencies {
     }
 
     implementation(libs.kryo)
-    implementation(libs.curve25519.java)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)

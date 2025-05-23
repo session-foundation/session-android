@@ -112,7 +112,7 @@ object ProfilePictureUtilities {
         }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
-        val url = "${FileServerApi.fileServerURL}/file/$id"
+        val url = "${FileServerApi.FILE_SERVER_URL}/file/$id"
         TextSecurePreferences.setProfilePictureURL(context, url)
 
         return url
