@@ -264,7 +264,6 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
-    implementation(libs.aesgcmprovider)
     implementation(libs.android)
     implementation(libs.shortcutbadger)
     implementation(libs.photoview)

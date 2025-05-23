@@ -25,13 +25,17 @@ internal object AESGCM {
     /**
      * Sync. Don't call from the main thread.
      */
-    internal fun decrypt(ivAndCiphertext: ByteArray, symmetricKey: ByteArray): ByteArray {
-        val iv = ivAndCiphertext.sliceArray(0 until ivSize)
-        val ciphertext = ivAndCiphertext.sliceArray(ivSize until ivAndCiphertext.count())
+    internal fun decrypt(
+        ivAndCiphertext: ByteArray,
+        offset: Int = 0,
+        len: Int = ivAndCiphertext.size,
+        symmetricKey: ByteArray
+    ): ByteArray {
+        val iv = ivAndCiphertext.sliceArray(offset until (offset + ivSize))
         synchronized(CIPHER_LOCK) {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(symmetricKey, "AES"), GCMParameterSpec(gcmTagSize, iv))
-            return cipher.doFinal(ciphertext)
+            return cipher.doFinal(ivAndCiphertext, offset + ivSize, len - ivSize)
         }
     }
 

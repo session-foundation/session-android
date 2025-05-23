@@ -6,6 +6,7 @@ import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
@@ -21,9 +22,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 object FileServerApi {
 
-    private const val fileServerPublicKey = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
-    const val fileServerURL = "http://filev2.getsession.org"
-    const val maxFileSize = 10_000_000 // 10 MB
+    private const val FILE_SERVER_PUBLIC_KEY = "da21e1d886c6fbaea313f75298bd64aab03a97ce985b46bb2dad9f2089c8ee59"
+    const val FILE_SERVER_URL = "http://filev2.getsession.org"
+    const val MAX_FILE_SIZE = 10_000_000 // 10 MB
+
+    val fileServerUrl: HttpUrl by lazy { FILE_SERVER_URL.toHttpUrl() }
 
     sealed class Error(message: String) : Exception(message) {
         object ParsingFailed    : Error("Invalid response.")
@@ -54,12 +57,8 @@ object FileServerApi {
 
 
     private fun send(request: Request): Promise<ByteArraySlice, Exception> {
-        val url = fileServerURL.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
-
-        val urlBuilder = HttpUrl.Builder()
-            .scheme(url.scheme)
-            .host(url.host)
-            .port(url.port)
+        val urlBuilder = fileServerUrl
+            .newBuilder()
             .addPathSegments(request.endpoint)
         if (request.verb == HTTP.Verb.GET) {
             for ((key, value) in request.queryParameters) {
@@ -76,7 +75,7 @@ object FileServerApi {
             HTTP.Verb.DELETE -> requestBuilder.delete(createBody(request.body, request.parameters))
         }
         return if (request.useOnionRouting) {
-            OnionRequestAPI.sendOnionRequest(requestBuilder.build(), fileServerURL, fileServerPublicKey).map {
+            OnionRequestAPI.sendOnionRequest(requestBuilder.build(), FILE_SERVER_URL, FILE_SERVER_PUBLIC_KEY).map {
                 it.body ?: throw Error.ParsingFailed
             }.fail { e ->
                 when (e) {

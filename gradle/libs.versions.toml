@@ -5,7 +5,6 @@ androidCompileSdkVersion = "35"
 accompanistPermissionsVersion = "0.36.0"
 accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
-aesgcmproviderVersion = "0.0.3"
 androidImageCropperVersion = "4.5.0"
 androidSmsmmsVersion = "4.0.1"
 androidVersion = "125.6422.07"
@@ -84,7 +83,6 @@ huaweiPushVersion = "6.7.0.300"
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistThemeadapterAppcompatVersion" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
-aesgcmprovider = { module = "org.signal:aesgcmprovider", version.ref = "aesgcmproviderVersion" }
 android = { module = "io.github.webrtc-sdk:android", version.ref = "androidVersion" }
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropperVersion" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotationVersion" }

@@ -64,7 +64,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
-                val keyAndResult = upload(attachment, FileServerApi.fileServerURL, true) {
+                val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) {
                     FileServerApi.upload(it)
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
