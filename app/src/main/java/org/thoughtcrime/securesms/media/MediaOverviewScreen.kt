@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -46,6 +45,7 @@ import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions

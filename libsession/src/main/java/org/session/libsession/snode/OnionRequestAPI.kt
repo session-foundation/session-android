@@ -42,6 +42,8 @@ private typealias Path = List<Snode>
 /**
  * See the "Onion Requests" section of [The Session Whitepaper](https://arxiv.org/pdf/2002.04609.pdf) for more information.
  */
+
+
 object OnionRequestAPI {
     private var buildPathsPromise: Promise<List<Path>, Exception>? = null
     private val database: LokiAPIDatabaseProtocol
@@ -410,7 +412,7 @@ object OnionRequestAPI {
                         handleUnspecificError()
                     }
                 } else if (destination is Destination.Server && exception.statusCode == 400) {
-                    Log.d("Loki","Destination server returned ${exception.statusCode}")
+                    Log.d("Loki","Destination server returned code ${exception.statusCode} with message: $message")
                 } else if (message == "Loki Server error") {
                     Log.d("Loki", "message was $message")
                 } else if (exception.statusCode == 404) {
@@ -555,6 +557,7 @@ object OnionRequestAPI {
                             responseInfo,
                             destination.description
                         )
+
                         return deferred.reject(exception)
                     }
                 }

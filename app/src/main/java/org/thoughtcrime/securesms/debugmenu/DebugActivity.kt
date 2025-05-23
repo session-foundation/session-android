@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
 import org.thoughtcrime.securesms.FullComposeActivity
 
-
 @AndroidEntryPoint
 class DebugActivity : FullComposeActivity() {
 

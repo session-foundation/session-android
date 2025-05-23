@@ -1,13 +1,18 @@
 package org.thoughtcrime.securesms.ui
 
+import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -30,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -38,20 +44,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -59,11 +72,19 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -156,7 +177,7 @@ fun ItemButtonWithDrawable(
     val context = LocalContext.current
 
     ItemButton(
-        text = stringResource(textId),
+        annotatedStringText = AnnotatedString(stringResource(textId)),
         modifier = modifier,
         icon = {
             Image(
@@ -215,9 +236,30 @@ fun LargeItemButton(
 }
 
 @Composable
+fun LargeItemButton(
+    annotatedStringText: AnnotatedString,
+    @DrawableRes icon: Int,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
+    onClick: () -> Unit
+) {
+    ItemButton(
+        modifier = modifier,
+        annotatedStringText = annotatedStringText,
+        icon = icon,
+        minHeight = LocalDimensions.current.minLargeItemButtonHeight,
+        textStyle = LocalType.current.h8,
+        colors = colors,
+        shape = shape,
+        onClick = onClick
+    )
+}
+
+@Composable
 fun ItemButton(
     text: String,
-    icon: Int,
+    @DrawableRes icon: Int,
     modifier: Modifier,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
@@ -226,15 +268,9 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        text = text,
+        annotatedStringText = AnnotatedString(text),
         modifier = modifier,
-        icon = {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        },
+        icon = icon,
         minHeight = minHeight,
         textStyle = textStyle,
         colors = colors,
@@ -258,7 +294,30 @@ fun ItemButton(
     onClick: () -> Unit
 ) {
     ItemButton(
-        text = stringResource(textId),
+        annotatedStringText = AnnotatedString(stringResource(textId)),
+        modifier = modifier,
+        icon = icon,
+        minHeight = minHeight,
+        textStyle = textStyle,
+        shape = shape,
+        colors = colors,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun ItemButton(
+    annotatedStringText: AnnotatedString,
+    icon: Int,
+    modifier: Modifier,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+    textStyle: TextStyle = LocalType.current.xl,
+    colors: ButtonColors = transparentButtonColors(),
+    shape: Shape = RectangleShape,
+    onClick: () -> Unit
+) {
+    ItemButton(
+        annotatedStringText = annotatedStringText,
         modifier = modifier,
         icon = {
             Icon(
@@ -276,13 +335,14 @@ fun ItemButton(
 }
 
 /**
-* Base [ItemButton] implementation.
+ * Base [ItemButton] implementation using an AnnotatedString rather than a plain String.
  *
  * A button to be used in a list of buttons, usually in a [Cell] or [Card]
-*/
+ */
+// THIS IS THE FINAL DEEP LEVEL ANNOTATED STRING BUTTON
 @Composable
 fun ItemButton(
-    text: String,
+    annotatedStringText: AnnotatedString,
     icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
@@ -307,7 +367,7 @@ fun ItemButton(
         )
 
         Text(
-            text,
+            annotatedStringText,
             Modifier
                 .fillMaxWidth()
                 .align(Alignment.CenterVertically),
@@ -634,6 +694,143 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     }
 }
 
+// Permanently visible vertical scrollbar.
+// Note: This scrollbar modifier was adapted from Mardann's fantastic solution at: https://stackoverflow.com/a/78453760/24337669
+@Composable
+fun Modifier.verticalScrollbar(
+    state: ScrollState,
+    scrollbarWidth: Dp = 6.dp,
+    barColour: Color = LocalColors.current.textSecondary,
+    backgroundColour: Color = LocalColors.current.borders,
+    edgePadding: Dp = LocalDimensions.current.xxsSpacing
+): Modifier {
+    // Calculate the viewport and content heights
+    val viewHeight    = state.viewportSize.toFloat()
+    val contentHeight = state.maxValue + viewHeight
+
+    // Determine if the scrollbar is needed
+    val isScrollbarNeeded = contentHeight > viewHeight
+
+    // Set the target alpha based on whether scrolling is possible
+    val alphaTarget = when {
+        !isScrollbarNeeded       -> 0f // No scrollbar needed, set alpha to 0f
+        state.isScrollInProgress -> 1f
+        else                     -> 0.2f
+    }
+
+    // Animate the alpha value smoothly
+    val alpha by animateFloatAsState(
+        targetValue   = alphaTarget,
+        animationSpec = tween(400, delayMillis = if (state.isScrollInProgress) 0 else 700),
+        label         = "VerticalScrollbarAnimation"
+    )
+
+    return this.then(Modifier.drawWithContent {
+        drawContent()
+
+        // Only proceed if the scrollbar is needed
+        if (isScrollbarNeeded) {
+            val minScrollBarHeight = 10.dp.toPx()
+            val maxScrollBarHeight = viewHeight
+            val scrollbarHeight = (viewHeight * (viewHeight / contentHeight)).coerceIn(
+                minOf(minScrollBarHeight, maxScrollBarHeight)..maxOf(minScrollBarHeight, maxScrollBarHeight)
+            )
+            val variableZone = viewHeight - scrollbarHeight
+            val scrollbarYoffset = (state.value.toFloat() / state.maxValue) * variableZone
+
+            // Calculate the horizontal offset with padding
+            val scrollbarXOffset = size.width - scrollbarWidth.toPx() - edgePadding.toPx()
+
+            // Draw the missing section of the scrollbar track
+            drawRoundRect(
+                color = backgroundColour,
+                topLeft = Offset(scrollbarXOffset, 0f),
+                size = Size(scrollbarWidth.toPx(), viewHeight),
+                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+                alpha = alpha
+            )
+
+            // Draw the scrollbar thumb
+            drawRoundRect(
+                color = barColour,
+                topLeft = Offset(scrollbarXOffset, scrollbarYoffset),
+                size = Size(scrollbarWidth.toPx(), scrollbarHeight),
+                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+                alpha = alpha
+            )
+        }
+    })
+}
+
+@Composable
+fun SimplePopup(
+    arrowSize: DpSize = DpSize(
+        LocalDimensions.current.smallSpacing,
+        LocalDimensions.current.xsSpacing
+    ),
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val popupBackgroundColour = LocalColors.current.backgroundBubbleReceived
+
+    Popup(
+        popupPositionProvider = AboveCenterPositionProvider(),
+        onDismissRequest = onDismiss
+    ) {
+        Box(
+            modifier = Modifier.clickable { onDismiss() },
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = CenterHorizontally
+            ) {
+                // Speech bubble card
+                Card(
+                    shape = RoundedCornerShape(LocalDimensions.current.spacing),
+                    colors = CardDefaults.cardColors(
+                        containerColor = popupBackgroundColour
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(4.dp)
+                ) {
+                    content()
+                }
+
+                // Triangle below the card to make it look like a speech bubble
+                Canvas(
+                    modifier = Modifier.size(arrowSize)
+                ) {
+                    val path = Path().apply {
+                        moveTo(0f, 0f)
+                        lineTo(size.width, 0f)
+                        lineTo(size.width / 2, size.height)
+                        close()
+                    }
+                    drawPath(
+                        path = path,
+                        color = popupBackgroundColour
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Positions the popup above/centered from its parent
+ */
+class AboveCenterPositionProvider() : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize
+    ): IntOffset {
+        return IntOffset(
+            anchorBounds.topCenter.x - (popupContentSize.width / 2),
+            anchorBounds.topCenter.y - popupContentSize.height
+        )
+    }
+}
 
 @Composable
 fun SearchBar(

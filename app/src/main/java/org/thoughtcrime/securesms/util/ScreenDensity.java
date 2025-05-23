@@ -5,9 +5,6 @@ import android.util.DisplayMetrics;
 
 import androidx.annotation.NonNull;
 
-import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.thoughtcrime.securesms.ApplicationContext;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 

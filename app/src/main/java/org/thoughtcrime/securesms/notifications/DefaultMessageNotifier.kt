@@ -625,9 +625,6 @@ class DefaultMessageNotifier : MessageNotifier {
         }
     }
 
-    // ACL: What is the concept behind delayed notifications? Why would we ever want this? To batch them up so
-    // that we get a bunch of notifications once per minute or something rather than a constant stream of them
-    // if that's what was incoming?!?
     private class DelayedNotification(private val context: Context, private val threadId: Long) : Runnable {
         private val canceled = AtomicBoolean(false)
 

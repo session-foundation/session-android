@@ -5,11 +5,20 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
@@ -85,6 +94,31 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
  * As such we need to repeat it for every component that wants to use testTag, until such
  * a time as we have one root composable
  */
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun Modifier.qaTag(tag: String) = semantics { testTagsAsResourceId = true }.testTag(tag)
+fun Modifier.qaTag(tag: String?): Modifier {
+    if (tag == null) return this
+    return this.semantics { testTagsAsResourceId = true }.testTag(tag)
+}
+
+@Composable
+fun Modifier.qaTag(@StringRes tagResId: Int) = semantics { testTagsAsResourceId = true }.testTag(
+    stringResource(tagResId)
+)
+
+@Composable
+fun AnimateFade(
+    visible: Boolean,
+    modifier: Modifier = Modifier,
+    fadeInAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    fadeOutAnimationSpec: FiniteAnimationSpec<Float> = spring(stiffness = Spring.StiffnessMediumLow),
+    content: @Composable() AnimatedVisibilityScope.() -> Unit
+){
+    AnimatedVisibility(
+        modifier = modifier,
+        visible = visible,
+        enter = fadeIn(animationSpec = fadeInAnimationSpec),
+        exit = fadeOut(animationSpec = fadeOutAnimationSpec)
+    ) {
+        content()
+    }
+}

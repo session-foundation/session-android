@@ -81,7 +81,7 @@
         android:networkSecurityConfig="@xml/network_security_configuration"
         android:supportsRtl="true"
         android:theme="@style/Theme.Session.DayNight"
-        tools:replace="android:allowBackup,android:label" >
+        tools:replace="android:allowBackup,android:label">
 
         <!-- Disable all analytics -->
         <meta-data
@@ -133,10 +133,16 @@
             android:exported="false"
             android:label="@string/sessionMessageRequests"
             android:screenOrientation="portrait" />
+
         <activity
             android:name="org.thoughtcrime.securesms.preferences.SettingsActivity"
             android:screenOrientation="portrait"
-            android:label="@string/sessionSettings" />
+            android:label="@string/sessionSettings" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.home.HomeActivity" />
+        </activity>
+
         <activity
             android:name="org.thoughtcrime.securesms.debugmenu.DebugActivity"
             android:screenOrientation="portrait"
@@ -317,6 +323,15 @@
         <activity android:name="org.thoughtcrime.securesms.media.MediaOverviewActivity" />
         <activity android:name="org.thoughtcrime.securesms.migration.DatabaseMigrationStateActivity" />
         <activity android:name="org.thoughtcrime.securesms.preferences.appearance.AppDisguiseSettingsActivity" />
+
+        <activity
+            android:name="org.thoughtcrime.securesms.tokenpage.TokenPageActivity"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="org.thoughtcrime.securesms.preferences.SettingsActivity" />
+        </activity>
 
         <service
             android:name="org.thoughtcrime.securesms.service.KeyCachingService"

@@ -74,8 +74,10 @@ val buttonShape = pillShape
 
 @Composable
 fun sessionShapes() = Shapes(
+    extraSmall = RoundedCornerShape(LocalDimensions.current.shapeExtraSmall),
     small = RoundedCornerShape(LocalDimensions.current.shapeSmall),
     medium = RoundedCornerShape(LocalDimensions.current.shapeMedium)
+
 )
 
 /**

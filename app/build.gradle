@@ -15,8 +15,8 @@ configurations.configureEach {
     exclude module: "commons-logging"
 }
 
-def canonicalVersionCode = 408
-def canonicalVersionName = "1.23.2"
+def canonicalVersionCode = 409
+def canonicalVersionName = "1.24.0"
 
 def postFixSize = 10
 def abiPostFix = ['armeabi-v7a' : 1,
@@ -54,7 +54,6 @@ android {
             excludes += ['LICENSE.txt', 'LICENSE', 'NOTICE', 'asm-license.txt', 'META-INF/LICENSE', 'META-INF/NOTICE', 'META-INF/proguard/androidx-annotations.pro']
         }
     }
-
 
     splits {
         abi {

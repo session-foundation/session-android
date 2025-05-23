@@ -102,6 +102,7 @@ import org.thoughtcrime.securesms.service.ExpiringMessageManager
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.sskenvironment.ReadReceiptManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.Broadcaster
 import org.thoughtcrime.securesms.util.VersionDataFetcher
@@ -163,6 +164,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var adminStateSync: Lazy<AdminStateSync>
     @Inject lateinit var destroyedGroupSync: Lazy<DestroyedGroupSync>
     @Inject lateinit var removeGroupMemberHandler: Lazy<RemoveGroupMemberHandler> // Exists here only to start upon app starts
+    @Inject lateinit var tokenDataManager: Lazy<TokenDataManager> // Exists here only to start upon app starts
     @Inject lateinit var snodeClock: Lazy<SnodeClock>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
     @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
@@ -318,6 +320,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         destroyedGroupSync.get().start()
         adminStateSync.get().start()
         cleanupInvitationHandler.get().start()
+        tokenDataManager.get().getTokenDataWhenLoggedIn()
 
         // Start our migration process as early as possible so we can show the user a progress UI
         migrationManager.get().requestMigration(fromRetry = false)

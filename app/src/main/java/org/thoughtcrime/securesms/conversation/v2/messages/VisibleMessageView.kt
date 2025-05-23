@@ -84,6 +84,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsSmsDb: MmsSmsDatabase
     @Inject lateinit var smsDb: SmsDatabase
     @Inject lateinit var mmsDb: MmsDatabase
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var usernameUtils: UsernameUtils
 
@@ -267,7 +268,10 @@ class VisibleMessageView : FrameLayout {
 
         // Date break
         val showDateBreak = isStartOfMessageCluster || snIsSelected
-        binding.dateBreakTextView.text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else null
+        binding.dateBreakTextView.text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
+            Locale.getDefault(),
+            message.timestamp
+        ) else null
         binding.dateBreakTextView.isVisible = showDateBreak
 
         // Update message status indicator
@@ -403,14 +407,14 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun isStartOfMessageCluster(current: MessageRecord, previous: MessageRecord?, isGroupThread: Boolean): Boolean =
-        previous == null || previous.isControlMessage || !DateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
+        previous == null || previous.isControlMessage || !dateUtils.isSameHour(current.timestamp, previous.timestamp) || if (isGroupThread) {
             current.recipient.address != previous.recipient.address
         } else {
             current.isOutgoing != previous.isOutgoing
         }
 
     private fun isEndOfMessageCluster(current: MessageRecord, next: MessageRecord?, isGroupThread: Boolean): Boolean =
-        next == null || next.isControlMessage || !DateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
+        next == null || next.isControlMessage || !dateUtils.isSameHour(current.timestamp, next.timestamp) || if (isGroupThread) {
             current.recipient.address != next.recipient.address
         } else {
             current.isOutgoing != next.isOutgoing

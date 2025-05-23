@@ -64,6 +64,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             expiredGroupManager = mock(),
             usernameUtils = mock(),
+            dateUtils = mock()
         )
     }
 

@@ -2,14 +2,18 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.widget.TextView
 import androidx.core.view.isVisible
+import java.util.Locale
+import kotlin.time.Duration.Companion.minutes
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.util.DateUtils
-import java.util.Locale
 
-private const val maxTimeBetweenBreaks = 5 * 60 * 1000L // 5 minutes
+private val maxTimeBetweenBreaksMS =  5.minutes.inWholeMilliseconds
 
-fun TextView.showDateBreak(message: MessageRecord, previous: MessageRecord?) {
-    val showDateBreak = previous == null || message.timestamp - previous.timestamp > maxTimeBetweenBreaks
+fun TextView.showDateBreak(message: MessageRecord, previous: MessageRecord?, dateUtils: DateUtils) {
+    val showDateBreak = (previous == null || message.timestamp - previous.timestamp > maxTimeBetweenBreaksMS)
     isVisible = showDateBreak
-    text = if (showDateBreak) DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), message.timestamp) else ""
+    text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
+        Locale.getDefault(),
+        message.timestamp
+    ) else ""
 }

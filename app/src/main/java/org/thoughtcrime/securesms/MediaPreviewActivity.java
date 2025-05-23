@@ -95,6 +95,7 @@ import network.loki.messenger.R;
 import network.loki.messenger.databinding.MediaPreviewActivityBinding;
 import network.loki.messenger.databinding.MediaViewPageBinding;
 
+
 /**
  * Activity for displaying media attachments in-app
  */
@@ -103,7 +104,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
                                                                                  LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
                                                                                  MediaRailAdapter.RailItemListener
 {
-
   private final static String TAG = MediaPreviewActivity.class.getSimpleName();
 
   private static final int UI_ANIMATION_DELAY     = 300;
@@ -132,6 +132,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   private boolean isFullscreen = false;
   private final Handler hideHandler = new Handler(Looper.myLooper());
+
+  @Inject DateUtils dateUtils;
+
   private final Runnable showRunnable = () -> {
     getSupportActionBar().show();
   };
@@ -229,7 +232,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       CharSequence relativeTimeSpan;
 
       if (mediaItem.date > 0) {
-        relativeTimeSpan = DateUtils.INSTANCE.getDisplayFormattedTimeSpanString(this, Locale.getDefault(), mediaItem.date);
+        relativeTimeSpan = dateUtils.getDisplayFormattedTimeSpanString(Locale.getDefault(), mediaItem.date);
       } else {
         relativeTimeSpan = getString(R.string.draft);
       }

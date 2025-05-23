@@ -251,6 +251,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var reactionDb: ReactionDatabase
     @Inject lateinit var viewModelFactory: ConversationViewModel.AssistedFactory
     @Inject lateinit var mentionViewModelFactory: MentionViewModel.AssistedFactory
+    @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
@@ -2244,7 +2245,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-
     override fun sendVoiceMessage() {
         Log.i(TAG, "Sending voice message at: ${System.currentTimeMillis()}")
 
@@ -2368,7 +2368,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {
-                val formattedTimestamp = DateUtils.getDisplayFormattedTimeSpanString(this, Locale.getDefault(), message.timestamp)
+                val formattedTimestamp = dateUtils.getDisplayFormattedTimeSpanString(
+                    Locale.getDefault(),
+                    message.timestamp
+                )
                 builder.append("$formattedTimestamp: ")
             }
             builder.append(body)

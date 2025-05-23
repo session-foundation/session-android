@@ -57,6 +57,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.content.ContextCompat
@@ -69,11 +73,14 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -89,6 +96,7 @@ import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogStat
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.Cell
@@ -115,8 +123,6 @@ import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
-import java.io.File
-import javax.inject.Inject
 
  @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
@@ -502,7 +508,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             Cell {
                 Column {
-                    // add the debug menu in non release builds
+                    // Add the debug menu in non release builds
                     if (BuildConfig.BUILD_TYPE != "release") {
                         LargeItemButton(
                             "Debug Menu",
@@ -542,6 +548,31 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         R.drawable.ic_user_round_plus,
                         Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
                     ) { sendInvitationToUseSession() }
+                    Divider()
+
+                    // Add the token page option.
+                    // Note: We can't do this all-in-one via `annotatedStringResource` because the font sizes vary.
+                    val sessionNetworkAS = buildAnnotatedString {
+                        // "Session Network" part styled with normal theme color
+                        withStyle(style = SpanStyle(color = LocalColors.current.text)) {
+                            append(NETWORK_NAME)
+                        }
+                        // " • New" part styled with theme accent color, small font size, and normal (not bold) weight
+                        withStyle(
+                            style = SpanStyle(
+                                color = LocalColors.current.primaryText,
+                                fontSize = LocalType.current.extraSmall.fontSize,
+                                fontWeight = FontWeight.Normal
+                            )
+                        ) {
+                            append(" "+applicationContext.getString(R.string.sessionNew))
+                        }
+                    }
+                    LargeItemButton(
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
+                        annotatedStringText = sessionNetworkAS,
+                        icon = R.drawable.session_network_logo
+                    ) { push<TokenPageActivity>() }
                     Divider()
 
                     // Only show the recovery password option if the user has not chosen to permanently hide it

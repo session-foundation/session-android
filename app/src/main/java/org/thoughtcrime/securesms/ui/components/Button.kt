@@ -45,6 +45,7 @@ import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.buttonShape
+import org.thoughtcrime.securesms.ui.theme.sessionShapes
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -112,8 +113,20 @@ fun Button(
     Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled)
 }
 
+@Composable fun PrimaryFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled, shape = sessionShapes().extraSmall)
+}
+
+@Composable fun PrimaryFillButtonRect(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Button(onClick = onClick, ButtonType.PrimaryFill, modifier = modifier, enabled = enabled, shape = sessionShapes().extraSmall, content = content)
+}
+
 @Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, ButtonType.Outline(color), modifier, enabled)
+}
+
+@Composable fun PrimaryOutlineButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, shape = sessionShapes().extraSmall)
 }
 
 @Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
@@ -127,11 +140,11 @@ fun Button(
 }
 
 @Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled)
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled)
 }
 
 @Composable fun PrimaryOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Button(onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled, content = content)
+    Button(onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, content = content)
 }
 
 @Composable fun SlimOutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
@@ -146,7 +159,7 @@ fun Button(
 }
 
 @Composable fun SlimPrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryButtonFill), modifier, enabled, ButtonStyle.Slim)
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, ButtonStyle.Slim)
 }
 
 @Composable
@@ -155,7 +168,7 @@ fun PrimaryOutlineCopyButton(
     style: ButtonStyle = ButtonStyle.Large,
     onClick: () -> Unit
 ) {
-    OutlineCopyButton(modifier, style, LocalColors.current.primaryButtonFill, onClick)
+    OutlineCopyButton(modifier, style, LocalColors.current.primaryText, onClick)
 }
 
 @Composable
@@ -321,6 +334,10 @@ private fun VariousButtons(
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
+            PrimaryFillButtonRect("Primary Fill Rect") {}
+            PrimaryFillButtonRect("Primary Fill Rect Disabled", enabled = false) {}
+            PrimaryOutlineButtonRect("Outline Button Rect") {}
+            PrimaryOutlineButtonRect("Outline ButtonDisabled", enabled = false) {}
         }
     }
 }

@@ -81,7 +81,7 @@
                 android:layout_marginRight="@dimen/large_spacing"
                 android:textSize="@dimen/large_font_size"
                 android:textColor="?android:textColorPrimary"
-                android:fontFamily="@font/space_mono_regular"
+                android:fontFamily="monospace"
                 android:textAlignment="center"
                 android:contentDescription="@string/AccessibilityId_shareAccountId"
                 tools:text="05987d601943c267879be41830888066c6a024cbdc9a548d06813924bf3372ea78" />

@@ -34,11 +34,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.times
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.URL_KEY
@@ -51,7 +48,6 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
-
 
 class DialogButtonModel(
     val text: GetString,

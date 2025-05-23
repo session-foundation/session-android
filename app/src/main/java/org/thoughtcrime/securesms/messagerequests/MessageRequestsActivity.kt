@@ -7,21 +7,22 @@ import androidx.activity.viewModels
 import androidx.core.view.isVisible
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
-import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import com.bumptech.glide.Glide
-import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.showSessionDialog
+import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.push
 
 @AndroidEntryPoint
@@ -31,11 +32,12 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private lateinit var glide: RequestManager
 
     @Inject lateinit var threadDb: ThreadDatabase
+    @Inject lateinit var dateUtils: DateUtils
 
     private val viewModel: MessageRequestsViewModel by viewModels()
 
     private val adapter: MessageRequestsAdapter by lazy {
-        MessageRequestsAdapter(context = this, cursor = null, listener = this)
+        MessageRequestsAdapter(context = this, cursor = null, dateUtils = dateUtils, listener = this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {

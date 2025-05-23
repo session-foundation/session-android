@@ -14,6 +14,7 @@ import org.thoughtcrime.securesms.database.model.ThreadRecord
 import com.bumptech.glide.RequestManager
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
+import javax.inject.Inject
 
 class MessageRequestView : LinearLayout {
     private lateinit var binding: ViewMessageRequestBinding
@@ -32,13 +33,16 @@ class MessageRequestView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(thread: ThreadRecord, glide: RequestManager) {
+    fun bind(thread: ThreadRecord, dateUtils: DateUtils) {
         this.thread = thread
 
         val senderDisplayName = getUserDisplayName(thread.recipient) ?: thread.recipient.address.toString()
 
         binding.displayNameTextView.text = senderDisplayName
-        binding.timestampTextView.text = DateUtils.getDisplayFormattedTimeSpanString(context, Locale.getDefault(), thread.date)
+        binding.timestampTextView.text = dateUtils.getDisplayFormattedTimeSpanString(
+            Locale.getDefault(),
+            thread.date
+        )
         val snippet = highlightMentions(
             text = thread.getDisplayBody(context),
             formatOnly = true, // no styling here, only text formatting

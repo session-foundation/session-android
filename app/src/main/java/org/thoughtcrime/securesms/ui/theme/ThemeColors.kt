@@ -33,8 +33,8 @@ interface ThemeColors {
     val textBubbleReceived: Color
     val qrCodeContent: Color
     val qrCodeBackground: Color
-    val primaryButtonFill: Color
     val primaryButtonFillText: Color
+    val primaryText: Color
 }
 
 // extra functions and properties that work for all themes
@@ -98,7 +98,6 @@ fun dangerButtonColors() = ButtonDefaults.buttonColors(
     contentColor = LocalColors.current.danger
 )
 
-
 // Our themes
 data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = false
@@ -116,8 +115,8 @@ data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors
     override val textBubbleReceived = Color.White
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val primaryButtonFill = primary
     override val primaryButtonFillText = Color.Black
+    override val primaryText = primary
     override val textAlert: Color = classicDark0
 }
 
@@ -137,8 +136,8 @@ data class ClassicLight(override val primary: Color = primaryGreen) : ThemeColor
     override val textBubbleReceived = classicLight4
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val primaryButtonFill = text
-    override val primaryButtonFillText = Color.White
+    override val primaryButtonFillText = Color.Black
+    override val primaryText = text
     override val textAlert: Color = classicLight0
 }
 
@@ -158,8 +157,8 @@ data class OceanDark(override val primary: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanDark4
     override val qrCodeContent = background
     override val qrCodeBackground = text
-    override val primaryButtonFill = primary
     override val primaryButtonFillText = Color.Black
+    override val primaryText = primary
     override val textAlert: Color = oceanDark0
 }
 
@@ -179,8 +178,8 @@ data class OceanLight(override val primary: Color = primaryBlue) : ThemeColors {
     override val textBubbleReceived = oceanLight1
     override val qrCodeContent = text
     override val qrCodeBackground = backgroundSecondary
-    override val primaryButtonFill = text
-    override val primaryButtonFillText = Color.White
+    override val primaryButtonFillText = Color.Black
+    override val primaryText = text
     override val textAlert: Color = oceanLight0
 }
 

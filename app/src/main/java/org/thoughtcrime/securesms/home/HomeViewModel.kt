@@ -201,7 +201,7 @@ class HomeViewModel @Inject constructor(
 
     private fun createMessageRequests(
         count: Int,
-        hidden: Boolean,
+        hidden: Boolean
     ) = if (count > 0 && !hidden) Item.MessageRequests(count) else null
 
 

@@ -47,9 +47,12 @@ import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ChangeEnvironment
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ClearTrustedDownloads
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.Copy07PrefixedBlindedPublicKey
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.CopyAccountId
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideDeprecationChangeDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.HideEnvironmentWarningDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.OverrideDeprecationState
+import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ScheduleTokenNotification
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowDeprecationChangeDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
@@ -200,6 +203,7 @@ fun DebugMenu(
                 )
             }
 
+            // Fake contacts
             DebugCell("Generate fake contacts") {
                 var prefix by remember { mutableStateOf("User-") }
                 var count by remember { mutableStateOf("2000") }
@@ -230,6 +234,38 @@ fun DebugMenu(
                     )
                 }
             }
+
+            // Session Token
+            DebugCell("Session Token") {
+                // Schedule a test token-drop notification for 10 seconds from now
+                SlimOutlineButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Schedule Token Page Notification (10s)",
+                    onClick = { sendCommand(ScheduleTokenNotification) }
+                )
+            }
+
+            // Keys
+            DebugCell("User Details") {
+
+                SlimOutlineButton (
+                    text = "Copy Account ID",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        sendCommand(CopyAccountId)
+                    }
+                )
+
+                SlimOutlineButton(
+                    text = "Copy 07-prefixed Version Blinded Public Key",
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        sendCommand(Copy07PrefixedBlindedPublicKey)
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
             // Flags
             DebugCell("Flags") {

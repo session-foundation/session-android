@@ -91,6 +91,7 @@ class ConversationViewModel(
     private val groupManagerV2: GroupManagerV2,
     private val callManager: CallManager,
     val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+    val dateUtils: DateUtils,
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils
 
@@ -241,7 +242,7 @@ class ConversationViewModel(
                 Phrase.from(application, if (admin) R.string.legacyGroupBeforeDeprecationAdmin else R.string.legacyGroupBeforeDeprecationMember)
                 .put(DATE_KEY,
                     time.withZoneSameInstant(ZoneId.systemDefault())
-                        .format(DateUtils.getMediumDateTimeFormatter())
+                        .format(dateUtils.getMediumDateTimeFormatter())
                 )
                 .format()
 
@@ -1148,6 +1149,7 @@ class ConversationViewModel(
         private val groupManagerV2: GroupManagerV2,
         private val callManager: CallManager,
         private val legacyGroupDeprecationManager: LegacyGroupDeprecationManager,
+        private val dateUtils: DateUtils,
         private val expiredGroupManager: ExpiredGroupManager,
         private val usernameUtils: UsernameUtils,
     ) : ViewModelProvider.Factory {
@@ -1169,6 +1171,7 @@ class ConversationViewModel(
                 groupManagerV2 = groupManagerV2,
                 callManager = callManager,
                 legacyGroupDeprecationManager = legacyGroupDeprecationManager,
+                dateUtils = dateUtils,
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils
             ) as T
