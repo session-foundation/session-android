@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.onboarding.loadaccount
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,10 +16,12 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,15 +49,24 @@ internal fun LoadAccountScreen(
 ) {
     val pagerState = rememberPagerState { TITLES.size }
 
-    Column {
-        SessionTabRow(pagerState, TITLES)
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f)
-        ) { page ->
-            when (TITLES[page]) {
-                R.string.sessionRecoveryPassword -> RecoveryPassword(state, onChange, onContinue)
-                R.string.qrScan -> QRScannerScreen(qrErrors, onScan = onScan)
+    Scaffold { paddingValues ->
+        Column {
+            SessionTabRow(pagerState, TITLES)
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f)
+            ) { page ->
+                when (TITLES[page]) {
+                    R.string.sessionRecoveryPassword -> RecoveryPassword(
+                        modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())
+                            .consumeWindowInsets(paddingValues),
+                        state = state,
+                        onChange = onChange,
+                        onContinue = onContinue
+                    )
+
+                    R.string.qrScan -> QRScannerScreen(qrErrors, onScan = onScan)
+                }
             }
         }
     }
@@ -68,9 +81,14 @@ private fun PreviewRecoveryPassword() {
 }
 
 @Composable
-private fun RecoveryPassword(state: State, onChange: (String) -> Unit = {}, onContinue: () -> Unit = {}) {
+private fun RecoveryPassword(
+    state: State,
+    modifier: Modifier = Modifier,
+    onChange: (String) -> Unit = {},
+    onContinue: () -> Unit = {}
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {

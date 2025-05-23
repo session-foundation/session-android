@@ -49,13 +49,15 @@ class UserView : LinearLayout {
     // endregion
 
     // region Updating
-    fun bind(user: Recipient, glide: RequestManager, actionIndicator: ActionIndicator, isSelected: Boolean = false) {
+    fun bind(user: Recipient, actionIndicator: ActionIndicator, isSelected: Boolean = false, showCurrentUserAsNoteToSelf: Boolean = false) {
         val isLocalUser = user.isLocalNumber
 
         fun getUserDisplayName(publicKey: String): String {
-            if (isLocalUser) return context.getString(R.string.you)
-
-            return usernameUtils.getContactNameWithAccountID(publicKey)
+            return when {
+                isLocalUser && showCurrentUserAsNoteToSelf -> context.getString(R.string.noteToSelf)
+                isLocalUser && !showCurrentUserAsNoteToSelf -> context.getString(R.string.you)
+                else -> usernameUtils.getContactNameWithAccountID(publicKey)
+            }
         }
 
         val address = user.address.toString()

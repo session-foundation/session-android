@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
@@ -13,6 +17,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
+import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import javax.inject.Inject
 
@@ -37,7 +42,6 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     companion object {
-        @JvmField val DISPLAY_MODE = "display_mode"
         @JvmField val MULTI_SELECT = "multi_select"
         @JvmField val REFRESHABLE = "refreshable"
     }
@@ -61,6 +65,15 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
         super.onViewCreated(view, savedInstanceState)
         binding.recyclerView.layoutManager = LinearLayoutManager(activity)
         binding.recyclerView.adapter = listAdapter
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
+
+            binding.recyclerView.updatePadding(bottom = bottomInsets)
+
+            // There shouldn't be anything else needing the insets so we'll consume all of them
+            WindowInsetsCompat.CONSUMED
+        }
     }
 
     override fun onStop() {
@@ -80,7 +93,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
         return ContactSelectionListLoader(
             context = requireActivity(),
-            mode = requireActivity().intent.getIntExtra(DISPLAY_MODE, ContactsCursorLoader.DisplayMode.FLAG_ALL),
+            mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
             deprecationManager = deprecationManager
         )

@@ -83,6 +83,7 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
@@ -370,22 +371,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { _, insets ->
-            // Apply status bar insets to the toolbar
-            binding.toolbar.updatePadding(
-                top = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            )
-
-            val bottomInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.ime()).bottom
-
-            binding.globalSearchRecycler.updatePadding(bottom = bottomInsets)
-            binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = bottomInsets + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+            alsoApply = { insets ->
+                binding.globalSearchRecycler.updatePadding(bottom = insets.bottom)
+                binding.newConversationButton.updateLayoutParams<MarginLayoutParams> {
+                    bottomMargin = insets.bottom + resources.getDimensionPixelSize(R.dimen.new_conversation_button_bottom_offset)
+                }
             }
-
-            // There shouldn't be anything else needing the insets so we'll consume all of them
-            WindowInsetsCompat.CONSUMED
-        }
+        )
     }
 
     override fun onCancelClicked() {

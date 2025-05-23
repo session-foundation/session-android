@@ -540,7 +540,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     binding.mediaPager.registerOnPageChangeCallback(viewPagerListener);
 
     try {
-      binding.mediaPager.setCurrentItem(item);
+      binding.mediaPager.setCurrentItem(item, false);
     } catch (CursorIndexOutOfBoundsException e) {
       throw new RuntimeException("restartItem = " + restartItem + ", data.second = " + data.second + " leftIsRecent = " + leftIsRecent, e);
     }

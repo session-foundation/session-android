@@ -1,12 +1,10 @@
 package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
-import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import network.loki.messenger.databinding.ContactSelectionListDividerBinding
-import org.session.libsession.utilities.recipients.Recipient
 import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.recipients.Recipient
 
 class ContactSelectionListAdapter(private val context: Context, private val multiSelect: Boolean) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     lateinit var glide: RequestManager
@@ -17,19 +15,9 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
 
     private object ViewType {
         const val Contact = 0
-        const val Divider = 1
     }
 
     class UserViewHolder(val view: UserView) : RecyclerView.ViewHolder(view)
-    class DividerViewHolder(
-        private val binding: ContactSelectionListDividerBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(item: ContactSelectionListItem.Header) {
-            with(binding){
-                label.text = item.name
-            }
-        }
-    }
 
     override fun getItemCount(): Int {
         return items.size
@@ -43,20 +31,11 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (items[position]) {
-            is ContactSelectionListItem.Header -> ViewType.Divider
-            else -> ViewType.Contact
-        }
+        return ViewType.Contact
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewType == ViewType.Contact) {
-          UserViewHolder(UserView(context))
-        } else {
-          DividerViewHolder(
-              ContactSelectionListDividerBinding.inflate(LayoutInflater.from(context), parent, false)
-          )
-        }
+        return UserViewHolder(UserView(context))
     }
 
     override fun onBindViewHolder(viewHolder: RecyclerView.ViewHolder, position: Int) {
@@ -66,12 +45,11 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
             viewHolder.view.setOnClickListener { contactClickListener?.onContactClick(item.recipient) }
             val isSelected = selectedContacts.contains(item.recipient)
             viewHolder.view.bind(
-                    item.recipient,
-                    glide,
-                    if (multiSelect) UserView.ActionIndicator.Tick else UserView.ActionIndicator.None,
-                    isSelected)
-        } else if (viewHolder is DividerViewHolder) {
-            viewHolder.bind(item as ContactSelectionListItem.Header)
+                item.recipient,
+                if (multiSelect) UserView.ActionIndicator.Tick else UserView.ActionIndicator.None,
+                isSelected,
+                showCurrentUserAsNoteToSelf = true
+            )
         }
     }
 
@@ -85,7 +63,6 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
         }
         val index = items.indexOfFirst {
             when (it) {
-                is ContactSelectionListItem.Header -> false
                 is ContactSelectionListItem.Contact -> it.recipient == recipient
             }
         }
