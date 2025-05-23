@@ -70,9 +70,9 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         val database = readableDatabase
         return database.get(messageIDTable,
             "${Companion.messageID} = ? AND $messageType = ?",
-            arrayOf(messageID.toString(), messageID.asMessageType.toString())) { cursor ->
-            cursor.getInt(serverID)
-        }?.toLong()
+            arrayOf(messageID.id.toString(), messageID.asMessageType.toString())) { cursor ->
+            cursor.getLong(serverID)
+        }
     }
 
     fun deleteMessage(messageID: MessageId) {
@@ -80,7 +80,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
 
         val serverID = database.get(messageIDTable,
                 "${Companion.messageID} = ? AND $messageType = ?",
-                arrayOf(messageID.toString(), messageID.asMessageType.toString())) { cursor ->
+                arrayOf(messageID.id.toString(), messageID.asMessageType.toString())) { cursor ->
             cursor.getInt(serverID).toLong()
         }
 
@@ -91,8 +91,8 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
 
         database.beginTransaction()
 
-        database.delete(messageIDTable, "${Companion.messageID} = ? AND ${Companion.serverID} = ?", arrayOf(messageID.toString(), serverID.toString()))
-        database.delete(messageThreadMappingTable, "${Companion.messageID} = ? AND ${Companion.serverID} = ?", arrayOf(messageID.toString(), serverID.toString()))
+        database.delete(messageIDTable, "${Companion.messageID} = ? AND ${Companion.serverID} = ?", arrayOf(messageID.id.toString(), serverID.toString()))
+        database.delete(messageThreadMappingTable, "${Companion.messageID} = ? AND ${Companion.serverID} = ?", arrayOf(messageID.id.toString(), serverID.toString()))
 
         database.setTransactionSuccessful()
         database.endTransaction()
@@ -174,7 +174,7 @@ class LokiMessageDatabase(context: Context, helper: Provider<SQLCipherOpenHelper
         val contentValues = ContentValues(3)
         contentValues.put(Companion.messageID, messageID.id)
         contentValues.put(Companion.serverID, serverID)
-        contentValues.put(messageType, if (messageID.mms) MMS_TYPE else SMS_TYPE)
+        contentValues.put(messageType, messageID.asMessageType)
         database.insertWithOnConflict(messageIDTable, null, contentValues, CONFLICT_REPLACE)
     }
 
