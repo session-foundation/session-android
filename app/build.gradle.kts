@@ -308,7 +308,6 @@ dependencies {
     }
 
     implementation(libs.kryo)
-    implementation(libs.curve25519.java)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)

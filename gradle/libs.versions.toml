@@ -21,7 +21,6 @@ conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
 copperFlowVersion = "1.0.0"
 coreTestingVersion = "2.2.0"
-curve25519JavaVersion = "0.6.0"
 espressoCoreVersion = "3.5.1"
 eventbusVersion = "3.0.0"
 exifinterfaceVersion = "1.3.4"
@@ -124,7 +123,6 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kryo = { module = "com.esotericsoftware:kryo", version.ref = "kryoVersion" }
 libsession-util-android = { module = "org.sessionfoundation:libsession-util-android", version.ref = "libsessionUtilAndroidVersion" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxingVersion" }
-curve25519-java = { module = "com.github.session-foundation.session-android-curve-25519:curve25519-java", version.ref = "curve25519JavaVersion" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jacksonDatabindVersion" }
 junit = { module = "junit:junit", version.ref = "junitVersion" }
 kinkerapps-android-smsmms = { module = "com.klinkerapps:android-smsmms", version.ref = "androidSmsmmsVersion" }
