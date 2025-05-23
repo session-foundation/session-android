@@ -2,13 +2,12 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.app.Application
 import android.content.ContentResolver
-import android.content.Context
 import app.cash.copper.Query
-import com.goterl.lazysodium.utils.KeyPair
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import network.loki.messenger.libsession_util.util.KeyPair
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.notNullValue
 import org.hamcrest.CoreMatchers.nullValue
