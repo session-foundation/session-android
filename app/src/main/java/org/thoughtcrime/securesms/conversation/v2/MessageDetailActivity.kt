@@ -503,7 +503,7 @@ fun PreviewMessageDetails(
                 ),
                 sent = TitledText(R.string.sent, "6:12 AM Tue, 09/08/2022"),
                 received = TitledText(R.string.received, "6:12 AM Tue, 09/08/2022"),
-                error = TitledText(R.string.error, "Message failed to send"),
+                error = TitledText(R.string.errorUnknown, "Message failed to send"),
                 senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
 
             ),

@@ -70,7 +70,7 @@ fun InviteContacts(
     onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    @StringRes okButtonResId: Int = R.string.ok,
+    @StringRes okButtonResId: Int = android.R.string.ok,
     banner: @Composable ()->Unit = {}
 ) {
     Scaffold(

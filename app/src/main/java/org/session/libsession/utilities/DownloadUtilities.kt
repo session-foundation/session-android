@@ -1,55 +1,29 @@
 package org.session.libsession.utilities
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
-import org.session.libsignal.exceptions.NonRetryableException
+import org.session.libsignal.utilities.ByteArraySlice
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArraySlice.Companion.write
-import java.io.File
-import java.io.OutputStream
 
 object DownloadUtilities {
-
     /**
-     * Blocks the calling thread.
+     * Downloads a file from the file server using the provided URL.
+     *
+     * This will assume the URL is a valid file server URL, and if not,
      */
-    suspend fun downloadFile(destination: File, url: String) {
-        var remainingAttempts = 2
-        var exception: Exception? = null
-
-        destination.outputStream().use { outputStream ->
-            while (remainingAttempts > 0) {
-                remainingAttempts -= 1
-
-                try {
-                    downloadFile(outputStream, url)
-                    return  // return on success
-                } catch (e: HTTP.HTTPRequestFailedException) {
-                    exception = e
-                } catch (e: Exception) {
-                    exception = e
-                }
-            }
-        }
-
-        throw exception ?: NonRetryableException("Couldn't download file: $url")
-    }
-
-    /**
-     * Blocks the calling thread.
-     */
-    suspend fun downloadFile(outputStream: OutputStream, urlAsString: String) {
-        val url = urlAsString.toHttpUrlOrNull()!!
-        val fileID = url.pathSegments.last()
+    suspend fun downloadFromFileServer(urlAsString: String): ByteArraySlice {
         try {
-            val data = FileServerApi.download(fileID).await()
-            withContext(Dispatchers.IO) {
-                outputStream.write(data)
+            val url = urlAsString.toHttpUrl()
+            require(url.host == FileServerApi.fileServerUrl.host) {
+                "Invalid file server URL: $url"
             }
+            val fileID = checkNotNull(url.pathSegments.lastOrNull()) {
+                "No file ID found in URL: $url"
+            }
+
+            return FileServerApi.download(fileID).await()
         } catch (e: Exception) {
             when (e) {
                 // No need for the stack trace for HTTP errors

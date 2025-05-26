@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -96,6 +97,7 @@ fun ConversationSettingsDialogs(
                         .focusRequester(focusRequester)
                         .padding(top = LocalDimensions.current.smallSpacing),
                     placeholder = stringResource(R.string.nicknameEnter),
+                    innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
                     onChange = { updatedText ->
                         sendCommand(UpdateNickname(updatedText))
                     },
@@ -147,6 +149,7 @@ fun ConversationSettingsDialogs(
                         modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_input)
                             .focusRequester(focusRequester)
                             .padding(top = LocalDimensions.current.smallSpacing),
+                        innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
                         placeholder = stringResource(R.string.groupNameEnter),
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupName(updatedText))
@@ -160,6 +163,7 @@ fun ConversationSettingsDialogs(
                         modifier = Modifier.qaTag(R.string.qa_conversation_settings_dialog_groupname_description_input)
                             .padding(top = LocalDimensions.current.xxsSpacing),
                         placeholder = stringResource(R.string.groupDescriptionEnter),
+                        innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
                         minLines = 3,
                         maxLines = 12,
                         onChange = { updatedText ->

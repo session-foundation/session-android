@@ -1,11 +1,12 @@
 package org.session.libsession.utilities
 
 import androidx.annotation.WorkerThread
+import network.loki.messenger.libsession_util.Curve25519
+import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsignal.crypto.CipherUtil.CIPHER_LOCK
 import org.session.libsignal.utilities.ByteUtil
-import org.session.libsignal.utilities.Util
 import org.session.libsignal.utilities.Hex
-import org.whispersystems.curve25519.Curve25519
+import org.session.libsignal.utilities.Util
 import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
@@ -25,13 +26,17 @@ internal object AESGCM {
     /**
      * Sync. Don't call from the main thread.
      */
-    internal fun decrypt(ivAndCiphertext: ByteArray, symmetricKey: ByteArray): ByteArray {
-        val iv = ivAndCiphertext.sliceArray(0 until ivSize)
-        val ciphertext = ivAndCiphertext.sliceArray(ivSize until ivAndCiphertext.count())
+    internal fun decrypt(
+        ivAndCiphertext: ByteArray,
+        offset: Int = 0,
+        len: Int = ivAndCiphertext.size,
+        symmetricKey: ByteArray
+    ): ByteArray {
+        val iv = ivAndCiphertext.sliceArray(offset until (offset + ivSize))
         synchronized(CIPHER_LOCK) {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(symmetricKey, "AES"), GCMParameterSpec(gcmTagSize, iv))
-            return cipher.doFinal(ciphertext)
+            return cipher.doFinal(ivAndCiphertext, offset + ivSize, len - ivSize)
         }
     }
 
@@ -39,7 +44,7 @@ internal object AESGCM {
      * Sync. Don't call from the main thread.
      */
     private fun generateSymmetricKey(x25519PublicKey: ByteArray, x25519PrivateKey: ByteArray): ByteArray {
-        val ephemeralSharedSecret = Curve25519.getInstance(Curve25519.BEST).calculateAgreement(x25519PublicKey, x25519PrivateKey)
+        val ephemeralSharedSecret = SessionEncrypt.calculateECHDAgreement(x25519PubKey = x25519PublicKey, x25519PrivKey = x25519PrivateKey)
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec("LOKI".toByteArray(), "HmacSHA256"))
         return mac.doFinal(ephemeralSharedSecret)
@@ -62,10 +67,10 @@ internal object AESGCM {
      */
     internal fun encrypt(plaintext: ByteArray, hexEncodedX25519PublicKey: String): EncryptionResult {
         val x25519PublicKey = Hex.fromStringCondensed(hexEncodedX25519PublicKey)
-        val ephemeralKeyPair = Curve25519.getInstance(Curve25519.BEST).generateKeyPair()
-        val symmetricKey = generateSymmetricKey(x25519PublicKey, ephemeralKeyPair.privateKey)
+        val ephemeralKeyPair = Curve25519.generateKeyPair()
+        val symmetricKey = generateSymmetricKey(x25519PublicKey, ephemeralKeyPair.secretKey.data)
         val ciphertext = encrypt(plaintext, symmetricKey)
-        return EncryptionResult(ciphertext, symmetricKey, ephemeralKeyPair.publicKey)
+        return EncryptionResult(ciphertext, symmetricKey, ephemeralKeyPair.pubKey.data)
     }
 
 }

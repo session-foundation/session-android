@@ -181,11 +181,14 @@ class ConversationViewModel(
 
     val blindedRecipient: Recipient?
         get() = _recipient.value?.let { recipient ->
-            when {
-                recipient.isCommunityOutboxRecipient -> recipient
-                recipient.isCommunityInboxRecipient -> repository.maybeGetBlindedRecipient(recipient)
-                else -> null
-            }
+            getBlindedRecipient(recipient)
+        }
+
+    private fun getBlindedRecipient(recipient: Recipient?): Recipient? =
+        when {
+            recipient?.isCommunityOutboxRecipient == true -> recipient
+            recipient?.isCommunityInboxRecipient == true -> repository.maybeGetBlindedRecipient(recipient)
+            else -> null
         }
 
     /**
@@ -489,6 +492,7 @@ class ConversationViewModel(
      *  2. The legacy group is inactive, OR
      *  3. The legacy group is deprecated, OR
      *  4. The community chat is read only
+     *  5. Blinded recipient who have disabled message request from community members
      */
     private fun shouldShowInput(recipient: Recipient?,
                                 community: OpenGroup?,
@@ -501,6 +505,7 @@ class ConversationViewModel(
                         deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
             community != null -> community.canWrite
+            getBlindedRecipient(recipient)?.blocksCommunityMessageRequests == true -> false
             else -> true
         }
     }

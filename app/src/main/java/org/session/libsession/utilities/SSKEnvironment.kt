@@ -45,7 +45,11 @@ class SSKEnvironment(
         fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
 
         fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
-            if (message is ExpirationTimerUpdate && message.isGroup || message is LegacyGroupControlMessage) return
+            if (
+                message is ExpirationTimerUpdate && message.isGroup ||
+                message is LegacyGroupControlMessage ||
+                message.openGroupServerMessageID != null // ignore expiration on communities since they do not support disappearing mesasges
+            ) return
 
             maybeStartExpiration(
                 message.sentTimestamp ?: return,

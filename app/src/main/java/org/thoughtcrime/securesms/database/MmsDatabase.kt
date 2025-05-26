@@ -20,7 +20,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
-import com.google.android.mms.pdu_alt.PduHeaders
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONException
@@ -52,14 +51,12 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.attachments.MmsNotificationAttachment
 import org.thoughtcrime.securesms.database.SmsDatabase.InsertListener
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.database.model.NotificationMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.Quote
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.MmsException
@@ -606,7 +603,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.toString())
         contentValues.put(MESSAGE_BOX, mailbox)
-        contentValues.put(MESSAGE_TYPE, PduHeaders.MESSAGE_TYPE_RETRIEVE_CONF)
         contentValues.put(THREAD_ID, threadId)
         contentValues.put(CONTENT_LOCATION, contentLocation)
         contentValues.put(STATUS, Status.DOWNLOAD_INITIALIZED)
@@ -730,7 +726,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         val earlyReadReceipts = earlyReadReceiptCache.remove(message.sentTimeMillis)
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, message.sentTimeMillis)
-        contentValues.put(MESSAGE_TYPE, PduHeaders.MESSAGE_TYPE_SEND_REQ)
         contentValues.put(MESSAGE_BOX, type)
         contentValues.put(THREAD_ID, threadId)
         contentValues.put(READ, 1)
@@ -1308,38 +1303,8 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             get() = if (cursor == null || !cursor.moveToNext()) null else current
         val current: MessageRecord
             get() {
-                val mmsType = cursor!!.getLong(cursor.getColumnIndexOrThrow(MESSAGE_TYPE))
-                return if (mmsType == PduHeaders.MESSAGE_TYPE_NOTIFICATION_IND.toLong()) {
-                    getNotificationMmsMessageRecord(cursor)
-                } else {
-                    getMediaMmsMessageRecord(cursor, getQuote)
-                }
+                return getMediaMmsMessageRecord(cursor!!, getQuote)
             }
-
-        private fun getNotificationMmsMessageRecord(cursor: Cursor): NotificationMmsMessageRecord {
-            // Note: Additional details such as ADDRESS_DEVICE_ID, CONTENT_LOCATION, and TRANSACTION_ID are available if required.
-            val id                   = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
-            val dateSent             = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_SENT))
-            val dateReceived         = cursor.getLong(cursor.getColumnIndexOrThrow(NORMALIZED_DATE_RECEIVED))
-            val threadId             = cursor.getLong(cursor.getColumnIndexOrThrow(THREAD_ID))
-            val mailbox              = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_BOX))
-            val address              = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS))
-            val recipient            = getRecipientFor(address)
-            val messageSize          = cursor.getLong(cursor.getColumnIndexOrThrow(MESSAGE_SIZE))
-            val expiry               = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRY))
-            val status               = cursor.getInt(cursor.getColumnIndexOrThrow(STATUS))
-            val deliveryReceiptCount = cursor.getInt(cursor.getColumnIndexOrThrow(DELIVERY_RECEIPT_COUNT))
-            val readReceiptCount     = if (isReadReceiptsEnabled(context)) cursor.getInt(cursor.getColumnIndexOrThrow(READ_RECEIPT_COUNT)) else 0
-            val hasMention           = (cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1)
-            val slideDeck            = SlideDeck(context, MmsNotificationAttachment(status, messageSize))
-
-            return NotificationMmsMessageRecord(
-                id, recipient, recipient,
-                dateSent, dateReceived, deliveryReceiptCount, threadId,
-                messageSize, expiry, status, mailbox, slideDeck,
-                readReceiptCount, hasMention
-            )
-        }
 
         private fun getMediaMmsMessageRecord(cursor: Cursor, getQuote: Boolean): MediaMmsMessageRecord {
             val id                   = cursor.getLong(cursor.getColumnIndexOrThrow(ID))
@@ -1465,6 +1430,8 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         const val MESSAGE_BOX: String = "msg_box"
         const val CONTENT_LOCATION: String = "ct_l"
         const val EXPIRY: String = "exp"
+
+        @kotlin.Deprecated(message = "No longer used.")
         const val MESSAGE_TYPE: String = "m_type"
         const val MESSAGE_SIZE: String = "m_size"
         const val STATUS: String = "st"

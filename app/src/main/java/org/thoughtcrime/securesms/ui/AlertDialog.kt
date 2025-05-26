@@ -331,7 +331,7 @@ fun PreviewSimpleDialog() {
                     onClick = { }
                 ),
                 DialogButtonModel(
-                    GetString(stringResource(R.string.ok))
+                    GetString(stringResource(android.R.string.ok))
                 )
             )
         )

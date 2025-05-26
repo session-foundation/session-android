@@ -18,7 +18,6 @@ import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArraySlice.Companion.write
 import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.File
 import java.io.FileInputStream
@@ -141,19 +140,23 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
                 return
             }
             messageDataProvider.setAttachmentState(AttachmentState.DOWNLOADING, attachment.attachmentId, this.mmsMessageId)
-            tempFile = createTempFile()
             val openGroup = storage.getOpenGroup(threadID)
-            if (openGroup == null) {
+            val downloadedData = if (openGroup == null) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                DownloadUtilities.downloadFile(tempFile, attachment.url)
+                DownloadUtilities.downloadFromFileServer(attachment.url)
             } else {
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!
                 val fileID = url.pathSegments.last()
-                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await().let { data ->
-                    FileOutputStream(tempFile).use { output -> output.write(data) }
+                OpenGroupApi.download(fileID, openGroup.room, openGroup.server).await()
+            }
+
+            tempFile = createTempFile().also { file ->
+                FileOutputStream(file).use {
+                    it.write(downloadedData.data, downloadedData.offset, downloadedData.len)
                 }
             }
+
             Log.d("AttachmentDownloadJob", "getting input stream")
             val inputStream = getInputStream(tempFile, attachment)
 

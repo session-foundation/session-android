@@ -264,7 +264,6 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
-    implementation(libs.aesgcmprovider)
     implementation(libs.android)
     implementation(libs.shortcutbadger)
     implementation(libs.photoview)
@@ -277,10 +276,6 @@ dependencies {
     }
     implementation(libs.tooltips) {
         exclude(group = "com.android.support", module = "appcompat-v7")
-    }
-    implementation(libs.kinkerapps.android.smsmms) {
-        exclude(group = "com.squareup.okhttp", module = "okhttp")
-        exclude(group = "com.squareup.okhttp", module = "okhttp-urlconnection")
     }
     implementation(libs.stream)
     implementation(libs.androidx.sqlite.ktx)
@@ -309,7 +304,6 @@ dependencies {
     }
 
     implementation(libs.kryo)
-    implementation(libs.curve25519.java)
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.kotlin)

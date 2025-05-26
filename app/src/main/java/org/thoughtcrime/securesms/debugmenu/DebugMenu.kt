@@ -132,7 +132,7 @@ fun DebugMenu(
                         onClick = { sendCommand(HideDeprecationChangeDialog) }
                     ),
                     DialogButtonModel(
-                        text = GetString(R.string.ok),
+                        text = GetString(android.R.string.ok),
                         onClick = { sendCommand(OverrideDeprecationState) }
                     )
                 )
@@ -151,7 +151,7 @@ fun DebugMenu(
                         onClick = { sendCommand(HideEnvironmentWarningDialog) }
                     ),
                     DialogButtonModel(
-                        text = GetString(R.string.ok),
+                        text = GetString(android.R.string.ok),
                         onClick = { sendCommand(ChangeEnvironment) }
                     )
                 )
@@ -402,7 +402,7 @@ fun DebugMenu(
                         }
                     ),
                     DialogButtonModel(
-                        text = GetString(R.string.ok),
+                        text = GetString(android.R.string.ok),
                         onClick = {
                             if (showingDeprecatedTimePicker) {
                                 sendCommand(

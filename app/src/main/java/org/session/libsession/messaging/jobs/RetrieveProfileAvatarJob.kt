@@ -1,24 +1,22 @@
 package org.session.libsession.messaging.jobs
 
+import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
+import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.DownloadUtilities.downloadFile
+import org.session.libsession.utilities.DownloadUtilities.downloadFromFileServer
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
-import org.session.libsession.utilities.Util.copy
 import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.exceptions.NonRetryableException
-import org.session.libsignal.streams.ProfileCipherInputStream
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.util.concurrent.ConcurrentSkipListSet
 
 class RetrieveProfileAvatarJob(
@@ -78,14 +76,19 @@ class RetrieveProfileAvatarJob(
             return
         }
 
-        val downloadDestination = File.createTempFile("avatar", ".jpg", context.cacheDir)
 
         try {
-            downloadFile(downloadDestination, profileAvatar)
-            val avatarStream: InputStream = ProfileCipherInputStream(FileInputStream(downloadDestination), profileKey)
-            val decryptDestination = File.createTempFile("avatar", ".jpg", context.cacheDir)
-            copy(avatarStream, FileOutputStream(decryptDestination))
-            decryptDestination.renameTo(AvatarHelper.getAvatarFile(context, recipient.address))
+            val downloaded = downloadFromFileServer(profileAvatar)
+            val decrypted = AESGCM.decrypt(
+                downloaded.data,
+                offset = downloaded.offset,
+                len = downloaded.len,
+                symmetricKey = profileKey
+            )
+
+            FileOutputStream(AvatarHelper.getAvatarFile(context, recipient.address)).use { out ->
+                out.write(decrypted)
+            }
 
             if (recipient.isLocalNumber) {
                 setProfileAvatarId(context, SECURE_RANDOM.nextInt())
@@ -111,8 +114,6 @@ class RetrieveProfileAvatarJob(
                 }
                 return delegate.handleJobFailed(this, dispatcherName, e)
             }
-        } finally {
-            downloadDestination.delete()
         }
         return delegate.handleJobSucceeded(this, dispatcherName)
     }

@@ -93,6 +93,9 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
             // we want to avoid the 1-to-1 message format which is unauthenticated in a group settings.
             if (groupv2Id != null) {
                 Log.d("MessageReceiver", "Ignoring expiration timer update for closed group")
+            } // also ignore it for communities since they do not support disappearing messages
+            else if (openGroupID != null) {
+                Log.d("MessageReceiver", "Ignoring expiration timer update for communities")
             } else {
                 handleExpirationTimerUpdate(message)
             }
@@ -512,6 +515,12 @@ fun MessageReceiver.handleVisibleMessage(
 
         // Persist the message
         message.threadID = threadID
+
+        // clean up the message - For example we do not want any expiration data on messages for communities
+       if(message.openGroupServerMessageID != null){
+           message.expiryMode = ExpiryMode.NONE
+       }
+
         val messageID = storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID, attachments, runThreadUpdate) ?: return null
         // Parse & persist attachments
         // Start attachment downloads if needed

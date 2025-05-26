@@ -9,7 +9,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/conversationAppBar"
         android:layout_width="0dp"
@@ -64,14 +63,6 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/bottomSpacer"
         android:visibility="gone"/>
-
-    <ViewStub
-        android:focusable="false"
-        android:id="@+id/conversation_reaction_scrubber_stub"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:inflatedId="@+id/conversation_reaction_scrubber"
-        android:layout="@layout/conversation_reaction_scrubber"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/conversation_mention_candidates"
@@ -272,6 +263,14 @@
         tools:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <ViewStub
+        android:focusable="false"
+        android:id="@+id/conversation_reaction_scrubber_stub"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:inflatedId="@+id/conversation_reaction_scrubber"
+        android:layout="@layout/conversation_reaction_scrubber"/>
 
     <FrameLayout
         android:id="@+id/loader"
