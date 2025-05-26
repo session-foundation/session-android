@@ -8,7 +8,6 @@ import org.session.libsignal.crypto.PushTransportDetails
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Base64.decode
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
@@ -46,7 +45,7 @@ data class OpenGroupMessage(
         }
     }
 
-    fun sign(room: String, server: String, fallbackSigningType: IdPrefix): OpenGroupMessage? {
+    fun sign(room: String, server: String): OpenGroupMessage? {
         if (base64EncodedData.isNullOrEmpty()) return null
         val userEdKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair() ?: return null
         val openGroup = MessagingModuleConfiguration.shared.storage.getOpenGroup(room, server) ?: return null
@@ -64,19 +63,12 @@ data class OpenGroupMessage(
                 }.getOrNull() ?: return null
             }
 
-            fallbackSigningType == IdPrefix.UN_BLINDED -> {
-                ED25519.sign(
-                    ed25519PrivateKey = userEdKeyPair.secretKey.data,
-                    message = decode(base64EncodedData)
-                )
-            }
-
             else -> {
-                val (publicKey, privateKey) = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().let { it.publicKey.serialize() to it.privateKey.serialize() }
-                if (sender != publicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null
+                val x25519PublicKey = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().publicKey.serialize()
+                if (sender != x25519PublicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null
                 try {
                     ED25519.sign(
-                        ed25519PrivateKey = privateKey,
+                        ed25519PrivateKey = userEdKeyPair.secretKey.data,
                         message = decode(base64EncodedData)
                     )
                 } catch (e: Exception) {

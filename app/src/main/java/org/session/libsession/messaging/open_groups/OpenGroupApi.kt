@@ -450,7 +450,7 @@ object OpenGroupApi {
         whisperMods: Boolean? = null,
         fileIds: List<String>? = null
     ): Promise<OpenGroupMessage, Exception> {
-        val signedMessage = message.sign(room, server, fallbackSigningType = IdPrefix.STANDARD) ?: return Promise.ofFail(Error.SigningFailed)
+        val signedMessage = message.sign(room, server) ?: return Promise.ofFail(Error.SigningFailed)
         val parameters = signedMessage.toJSON().toMutableMap()
 
         // add file IDs if there are any (from attachments)

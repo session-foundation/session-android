@@ -28,6 +28,7 @@ import org.session.libsignal.crypto.IdentityKey;
 import org.session.libsignal.crypto.IdentityKeyPair;
 import org.session.libsignal.crypto.ecc.Curve;
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
+import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
 import org.session.libsignal.crypto.ecc.ECPrivateKey;
 import org.session.libsignal.crypto.ecc.ECPublicKey;
@@ -111,7 +112,7 @@ public class IdentityKeyUtil {
 
     try {
       IdentityKey  publicKey  = getIdentityKey(context);
-      ECPrivateKey privateKey = new DjbECPrivateKey(Base64.decode(retrieve(context, IDENTITY_PRIVATE_KEY_PREF)));
+      ECPrivateKey privateKey = Curve.decodePrivatePoint(Base64.decode(retrieve(context, IDENTITY_PRIVATE_KEY_PREF)));
 
       return new IdentityKeyPair(publicKey, privateKey);
     } catch (IOException e) {
@@ -121,8 +122,13 @@ public class IdentityKeyUtil {
 
   public static void generateIdentityKeyPair(@NonNull Context context) {
     KeyPair keyPair = Curve25519.INSTANCE.generateKeyPair();
-    save(context, IDENTITY_PUBLIC_KEY_PREF, Base64.encodeBytes(keyPair.getPubKey().getData()));
-    save(context, IDENTITY_PRIVATE_KEY_PREF, Base64.encodeBytes(keyPair.getSecretKey().getData()));
+    ECKeyPair ecKeyPair = new ECKeyPair(
+        new DjbECPublicKey(keyPair.getPubKey().getData()),
+        new DjbECPrivateKey(keyPair.getSecretKey().getData())
+    );
+
+    save(context, IDENTITY_PUBLIC_KEY_PREF, Base64.encodeBytes(ecKeyPair.getPublicKey().serialize()));
+    save(context, IDENTITY_PRIVATE_KEY_PREF, Base64.encodeBytes(ecKeyPair.getPrivateKey().serialize()));
   }
 
   public static String retrieve(Context context, String key) {
