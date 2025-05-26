@@ -67,11 +67,6 @@ class VoiceMessageView @JvmOverloads constructor(
         // This sets the final duration of the uploaded voice message
         (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
             attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
-
-                // When audio processing is complete we set the final audio duration. For recorded voice
-                // messages this will be identical to our interim duration, but for uploaded audio files
-                // it will update the placeholder to the actual audio duration now that we know it.
-                Log.d("VoiceMessageView", "Bound duration = ${audioExtras.durationMs}ms")
                 if (audioExtras.durationMs > 0) {
                     val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(audioExtras.durationMs)
                     binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
@@ -81,8 +76,6 @@ class VoiceMessageView @JvmOverloads constructor(
                 }
 
                 binding.voiceMessageViewDurationTextView.visibility = VISIBLE
-            } ?: run {
-                Log.d("VoiceMessageView", "No audio extras found for attachment ${attachment.attachmentId}. Using default duration.")
             }
         }
     }
@@ -110,7 +103,6 @@ class VoiceMessageView @JvmOverloads constructor(
         // As playback progress increases the remaining duration of the audio decreases
         val remainingDurationMS = durationMS - (progress * durationMS.toDouble()).roundToLong()
 
-        Log.d("VoiceMessageView", "Progress changed to $progress, durationMS: $durationMS, remainingDurationMS: $remainingDurationMS")
         binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remainingDurationMS)
 
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams
