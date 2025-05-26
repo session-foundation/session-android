@@ -5,19 +5,11 @@
  */
 package org.session.libsignal.crypto.ecc;
 
-import org.whispersystems.curve25519.Curve25519;
-import org.whispersystems.curve25519.Curve25519KeyPair;
 import org.session.libsignal.exceptions.InvalidKeyException;
-import static org.whispersystems.curve25519.Curve25519.BEST;
 
 public class Curve {
 
   public  static final int DJB_TYPE   = 0x05;
-
-  public static ECKeyPair generateKeyPair() {
-    Curve25519KeyPair keyPair = Curve25519.getInstance(BEST).generateKeyPair();
-    return new ECKeyPair(new DjbECPublicKey(keyPair.getPublicKey()), new DjbECPrivateKey(keyPair.getPrivateKey()));
-  }
 
   public static ECPublicKey decodePoint(byte[] bytes, int offset)
       throws InvalidKeyException

@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.open_groups
 
+import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi.Capability
@@ -11,7 +12,6 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
-import org.whispersystems.curve25519.Curve25519
 
 data class OpenGroupMessage(
     val serverID: Long? = null,
@@ -30,8 +30,6 @@ data class OpenGroupMessage(
 ) {
 
     companion object {
-        private val curve = Curve25519.getInstance(Curve25519.BEST)
-
         fun fromJSON(json: Map<String, Any>): OpenGroupMessage? {
             val base64EncodedData = json["data"] as? String ?: return null
             val sentTimestamp = json["posted"] as? Double ?: return null
@@ -67,14 +65,20 @@ data class OpenGroupMessage(
             }
 
             fallbackSigningType == IdPrefix.UN_BLINDED -> {
-                curve.calculateSignature(userEdKeyPair.secretKey.data, decode(base64EncodedData))
+                ED25519.sign(
+                    ed25519PrivateKey = userEdKeyPair.secretKey.data,
+                    message = decode(base64EncodedData)
+                )
             }
 
             else -> {
                 val (publicKey, privateKey) = MessagingModuleConfiguration.shared.storage.getUserX25519KeyPair().let { it.publicKey.serialize() to it.privateKey.serialize() }
                 if (sender != publicKey.toHexString() && !userEdKeyPair.pubKey.data.toHexString().equals(sender?.removingIdPrefixIfNeeded(), true)) return null
                 try {
-                    curve.calculateSignature(privateKey, decode(base64EncodedData))
+                    ED25519.sign(
+                        ed25519PrivateKey = privateKey,
+                        message = decode(base64EncodedData)
+                    )
                 } catch (e: Exception) {
                     Log.w("Loki", "Couldn't sign open group message.", e)
                     return null

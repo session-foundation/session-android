@@ -5,6 +5,7 @@ package org.session.libsession.messaging.sending_receiving
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
+import network.loki.messenger.libsession_util.Curve25519
 import nl.komponents.kovenant.Promise
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.GroupLeavingJob
@@ -19,15 +20,16 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsignal.crypto.ecc.Curve
+import org.session.libsignal.crypto.ecc.DjbECPrivateKey
+import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
-import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
+import org.session.libsignal.utilities.toHexString
 import java.util.LinkedList
 import java.util.concurrent.ConcurrentHashMap
 
@@ -46,9 +48,14 @@ fun MessageSender.create(
         val userPublicKey = storage.getUserPublicKey()!!
         val membersAsData = members.map { ByteString.copyFrom(Hex.fromStringCondensed(it)) }
         // Generate the group's public key
-        val groupPublicKey = Curve.generateKeyPair().hexEncodedPublicKey // Includes the "05" prefix
+        val groupPublicKey = Curve25519.generateKeyPair().pubKey.data.toHexString() // Includes the "05" prefix
         // Generate the key pair that'll be used for encryption and decryption
-        val encryptionKeyPair = Curve.generateKeyPair()
+        val encryptionKeyPair = Curve25519.generateKeyPair().let { k ->
+            ECKeyPair(
+                DjbECPublicKey(k.pubKey.data),
+                DjbECPrivateKey(k.secretKey.data),
+            )
+        }
         // Create the group
         val groupID = GroupUtil.doubleEncodeGroupID(groupPublicKey)
         val admins = setOf( userPublicKey )
@@ -257,7 +264,12 @@ fun MessageSender.generateAndSendNewEncryptionKeyPair(groupPublicKey: String, ta
         throw Error.InvalidClosedGroupUpdate
     }
     // Generate the new encryption key pair
-    val newKeyPair = Curve.generateKeyPair()
+    val newKeyPair = Curve25519.generateKeyPair().let {
+        ECKeyPair(
+            DjbECPublicKey(it.pubKey.data),
+            DjbECPrivateKey(it.secretKey.data),
+        )
+    }
     // Replace call will not succeed if no value already set
     pendingKeyPairs.putIfAbsent(groupPublicKey,Optional.absent())
     do {
