@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<org.thoughtcrime.securesms.conversation.v2.messages.VoiceMessageView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainVoiceMessageViewContainer"
     android:contentDescription="@string/AccessibilityId_messageVoice"
     android:background="@drawable/message_bubble_background"
@@ -62,7 +62,7 @@
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="@dimen/small_spacing"
         android:gravity="center"
-        android:text="0:08"
+        tools:text="0:08"
         android:textColor="@color/black"
         android:textSize="@dimen/small_font_size"
         android:background="@drawable/view_voice_message_duration_text_view_background"

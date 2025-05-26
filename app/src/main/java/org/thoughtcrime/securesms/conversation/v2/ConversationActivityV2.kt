@@ -87,6 +87,7 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment
+import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachmentAudioExtras
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
@@ -150,6 +151,7 @@ import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ResendMessageUtilities
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.MnemonicUtilities
+import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -257,6 +259,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
+    @Inject lateinit var attachmentDatabase: AttachmentDatabase
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -2040,8 +2043,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         attachments: List<Attachment>,
         body: String?,
         quotedMessage: MessageRecord? = binding.inputBar.quote,
-        linkPreview: LinkPreview? = null
+        linkPreview: LinkPreview? = null,
+        updateAttachmentVoiceDurationMS: Long? = null, // If not null, this will update the assumed only attachment's voice duration
     ): Pair<Address, Long>? {
+        require(updateAttachmentVoiceDurationMS == null || attachments.size == 1) {
+            "updateAttachmentVoiceDurationMS should only be set if there is exactly one attachment"
+        }
+
         if (viewModel.recipient == null) {
             Log.w(TAG, "Cannot send attachments to a null recipient")
             return null
@@ -2087,13 +2095,25 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         // do the heavy work in the bg
         lifecycleScope.launch(Dispatchers.Default) {
             // Put the message in the database and send it
-            message.id = MessageId(mmsDb.insertMessageOutbox(
+            val mmsId = mmsDb.insertMessageOutbox(
                 outgoingTextMessage,
                 viewModel.threadId,
                 false,
                 null,
                 runThreadUpdate = true
-            ), true)
+            )
+            message.id = MessageId(mmsId, true)
+
+            if (updateAttachmentVoiceDurationMS != null) {
+                val firstAttachment = attachmentDatabase.getAttachmentsForMessage(mmsId).firstOrNull()
+                if (firstAttachment != null) {
+                    attachmentDatabase.setAttachmentAudioExtras(DatabaseAttachmentAudioExtras(
+                        attachmentId = firstAttachment.attachmentId,
+                        visualSamples = byteArrayOf(),
+                        durationMs = updateAttachmentVoiceDurationMS
+                    ))
+                }
+            }
 
             waitForApprovalJobToBeSubmitted()
 
@@ -2301,11 +2321,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
                 // Only proceed with sending the voice message if it's long enough
                 if (voiceMessageMeetsMinimumDuration) {
-                    val formattedAudioDuration = MediaUtil.getFormattedVoiceMessageDuration(voiceMessageDurationMS)
-                    val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true, formattedAudioDuration)
+                    val audioSlide = AudioSlide(this@ConversationActivityV2, uri, voiceMessageFilename, dataSizeBytes, MediaTypes.AUDIO_AAC, true)
                     val slideDeck = SlideDeck()
                     slideDeck.addSlide(audioSlide)
-                    sendAttachments(slideDeck.asAttachments(), body = null)
+                    sendAttachments(slideDeck.asAttachments(), body = null, updateAttachmentVoiceDurationMS = voiceMessageDurationMS)
                 }
             }
 
