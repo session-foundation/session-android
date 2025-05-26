@@ -2047,7 +2047,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         updateAttachmentVoiceDurationMS: Long? = null, // If not null, this will update the assumed only attachment's voice duration
     ): Pair<Address, Long>? {
         require(updateAttachmentVoiceDurationMS == null || attachments.size == 1) {
-            "updateAttachmentVoiceDurationMS should only be set if there is exactly one attachment"
+            "updateAttachmentVoiceDurationMS should only be set for exactly one attachment"
         }
 
         if (viewModel.recipient == null) {
