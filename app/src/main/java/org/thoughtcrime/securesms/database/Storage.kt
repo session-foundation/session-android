@@ -129,7 +129,8 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val openGroupManager: Provider<OpenGroupManager>,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -1055,7 +1056,7 @@ open class Storage @Inject constructor(
     }
 
     override fun updateOpenGroup(openGroup: OpenGroup) {
-        OpenGroupManager.updateOpenGroup(openGroup, context)
+        openGroupManager.get().updateOpenGroup(openGroup, context)
     }
 
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
@@ -1063,7 +1064,7 @@ open class Storage @Inject constructor(
     }
 
     override suspend fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
-        return OpenGroupManager.addOpenGroup(urlAsString, context)
+        return openGroupManager.get().addOpenGroup(urlAsString, context)
     }
 
     override fun onOpenGroupAdded(server: String, room: String) {

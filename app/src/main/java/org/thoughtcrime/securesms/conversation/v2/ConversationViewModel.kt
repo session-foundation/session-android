@@ -107,8 +107,8 @@ class ConversationViewModel(
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
-    private val recipientChangeSource: RecipientChangeSource
-
+    private val recipientChangeSource: RecipientChangeSource,
+    private val openGroupManager: OpenGroupManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -343,7 +343,7 @@ class ConversationViewModel(
 
         // Listen for changes in the open group's write access
         viewModelScope.launch {
-            OpenGroupManager.getCommunitiesWriteAccessFlow()
+            openGroupManager.getCommunitiesWriteAccessFlow()
                 .map {
                     withContext(Dispatchers.Default) {
                         if (openGroup?.groupId != null)
@@ -1015,7 +1015,7 @@ class ConversationViewModel(
 
     private fun isUserCommunityManager() = openGroup?.let { openGroup ->
         val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-        OpenGroupManager.isUserModerator(application, openGroup.id, userPublicKey, blindedPublicKey)
+        openGroupManager.isUserModerator(application, openGroup.id, userPublicKey, blindedPublicKey)
     } ?: false
 
     /**
@@ -1297,6 +1297,7 @@ class ConversationViewModel(
         private val usernameUtils: UsernameUtils,
         private val avatarUtils: AvatarUtils,
         private val recipientChangeSource: RecipientChangeSource,
+        private val openGroupManager: OpenGroupManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1321,7 +1322,8 @@ class ConversationViewModel(
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils,
                 avatarUtils = avatarUtils,
-                recipientChangeSource = recipientChangeSource
+                recipientChangeSource = recipientChangeSource,
+                openGroupManager = openGroupManager,
             ) as T
         }
     }

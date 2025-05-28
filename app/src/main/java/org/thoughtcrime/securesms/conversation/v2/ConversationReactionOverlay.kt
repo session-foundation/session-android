@@ -109,6 +109,7 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private var job: Job? = null
 
@@ -643,7 +644,7 @@ class ConversationReactionOverlay : FrameLayout {
     private fun userCanBanSelectedUsers(context: Context, message: MessageRecord, openGroup: OpenGroup?, userPublicKey: String, blindedPublicKey: String?): Boolean {
         if (openGroup == null)  return false
         if (message.isOutgoing) return false // Users can't ban themselves
-        return OpenGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
+        return openGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
     }
 
     private fun handleActionItemClicked(action: Action) {

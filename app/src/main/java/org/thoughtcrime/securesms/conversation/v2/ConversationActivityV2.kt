@@ -257,6 +257,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -1547,7 +1548,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             adapter = adapter,
             threadID = viewModel.threadId,
             context = this,
-            deprecationManager = viewModel.legacyGroupDeprecationManager
+            deprecationManager = viewModel.legacyGroupDeprecationManager,
+            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         actionModeCallback.updateActionModeMenu(actionMode.menu)
@@ -1571,7 +1573,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             adapter = adapter,
             threadID = viewModel.threadId,
             context = this,
-            deprecationManager = viewModel.legacyGroupDeprecationManager
+            deprecationManager = viewModel.legacyGroupDeprecationManager,
+            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         if(binding.searchBottomBar.isVisible) onSearchClosed()
@@ -1927,7 +1930,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-                OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
+                openGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
             } ?: false
             val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)

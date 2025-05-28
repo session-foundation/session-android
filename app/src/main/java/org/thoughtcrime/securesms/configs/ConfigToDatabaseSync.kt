@@ -64,13 +64,13 @@ class ConfigToDatabaseSync @Inject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
-    private val recipientDatabase: RecipientDatabase,
     private val clock: SnodeClock,
     private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
     private val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
+    private val openGroupManager: OpenGroupManager,
 ) {
     init {
         if (!preferences.migratedToGroupV2Config) {
@@ -285,7 +285,7 @@ class ConfigToDatabaseSync @Inject constructor(
 
         // delete the ones which are not listed in the config
         toDeleteCommunities.values.forEach { openGroup ->
-            OpenGroupManager.delete(openGroup.server, openGroup.room, context)
+            openGroupManager.delete(openGroup.server, openGroup.room, context)
         }
 
         toDeleteLegacyClosedGroups.forEach { deleteGroup ->

@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class JoinCommunityFragment : Fragment() {
@@ -39,6 +40,9 @@ class JoinCommunityFragment : Fragment() {
     lateinit var delegate: StartConversationDelegate
 
     var lastUrl: String? = null
+
+    @Inject
+    lateinit var openGroupManager: OpenGroupManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -104,7 +108,7 @@ class JoinCommunityFragment : Fragment() {
                     try {
                         val sanitizedServer = openGroup.server.removeSuffix("/")
                         val openGroupID = "$sanitizedServer.${openGroup.room}"
-                        OpenGroupManager.add(
+                        openGroupManager.add(
                             sanitizedServer,
                             openGroup.room,
                             openGroup.serverPublicKey,
