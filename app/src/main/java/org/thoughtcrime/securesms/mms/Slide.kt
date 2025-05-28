@@ -147,6 +147,7 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
 
     companion object {
         @JvmStatic
+        @JvmOverloads
         protected fun constructAttachmentFromUri(
             context: Context,
             uri: Uri,
@@ -158,7 +159,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
             fileName: String?,
             caption: String?,
             voiceNote: Boolean,
-            quote: Boolean
+            quote: Boolean,
+            audioDurationMills: Long = -1L,
         ): Attachment {
             val resolvedType = Optional.fromNullable(MediaUtil.getMimeType(context, uri)).or(defaultMime)
             val fastPreflightId = SECURE_RANDOM.nextLong().toString()
@@ -175,7 +177,8 @@ abstract class Slide(@JvmField protected val context: Context, protected val att
                 fastPreflightId,
                 voiceNote,
                 quote,
-                caption
+                caption,
+                audioDurationMills
             )
         }
     }

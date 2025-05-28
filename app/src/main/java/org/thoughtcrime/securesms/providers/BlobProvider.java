@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
 
 import kotlin.Pair;
 import kotlin.Result;
+import kotlin.Triple;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -177,6 +178,15 @@ public class BlobProvider {
     return URI_MATCHER.match(uri) == MATCH;
   }
 
+  private static Triple<Uri, InputStream, OutputStream> createFileBasedOutputStream(@NonNull Context context, @NonNull BlobSpec blobSpec) throws IOException {
+    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
+    String           directory        = getDirectory(blobSpec.getStorageType());
+    File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
+    OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
+
+    return new Triple<>(buildUri(blobSpec), blobSpec.getData(), outputStream);
+  }
+
   @WorkerThread
   @NonNull
   private static CompletableFuture<Uri> writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
@@ -260,6 +270,12 @@ public class BlobProvider {
 
     protected BlobSpec buildBlobSpec(@NonNull StorageType storageType) {
       return new BlobSpec(data, id, storageType, mimeType, fileName, fileSize);
+    }
+
+    @NonNull
+    public Triple<Uri, InputStream, OutputStream> createOnDisk(@NonNull Context context) throws IOException {
+      BlobSpec blobSpec = buildBlobSpec(StorageType.SINGLE_USE_MEMORY);
+      return createFileBasedOutputStream(context, blobSpec);
     }
 
     /**

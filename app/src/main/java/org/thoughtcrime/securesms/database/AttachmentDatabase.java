@@ -131,9 +131,10 @@ public class AttachmentDatabase extends Database {
                                                            SIZE, FILE_NAME, THUMBNAIL, THUMBNAIL_ASPECT_RATIO,
                                                            UNIQUE_ID, DIGEST, FAST_PREFLIGHT_ID, VOICE_NOTE,
                                                            QUOTE, DATA_RANDOM, THUMBNAIL_RANDOM, WIDTH, HEIGHT,
-                                                           CAPTION, STICKER_PACK_ID, STICKER_PACK_KEY, STICKER_ID, URL};
+                                                           CAPTION, STICKER_PACK_ID, STICKER_PACK_KEY, STICKER_ID, URL,
+                                                           AUDIO_DURATION};
 
-  private static final String[] PROJECTION_AUDIO_EXTRAS = new String[] {AUDIO_VISUAL_SAMPLES, AUDIO_DURATION};
+  private static final String[] PROJECTION_AUDIO_EXTRAS = new String[] {AUDIO_VISUAL_SAMPLES};
 
   public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" + ROW_ID + " INTEGER PRIMARY KEY, " +
     MMS_ID + " INTEGER, " + "seq" + " INTEGER DEFAULT 0, "                        +
@@ -197,17 +198,6 @@ public class AttachmentDatabase extends Database {
     }
   }
 
-  public void setTransferProgressFailed(AttachmentId attachmentId, long mmsId)
-      throws MmsException
-  {
-    SQLiteDatabase database = getWritableDatabase();
-    ContentValues  values   = new ContentValues();
-    values.put(TRANSFER_STATE, AttachmentState.FAILED.getValue());
-
-    database.update(TABLE_NAME, values, PART_ID_WHERE, attachmentId.toStrings());
-    notifyConversationListeners(DatabaseComponent.get(context).mmsDatabase().getThreadIdForMessage(mmsId));
-  }
-
   public @Nullable DatabaseAttachment getAttachment(@NonNull AttachmentId attachmentId)
   {
     SQLiteDatabase database = getReadableDatabase();
@@ -253,23 +243,6 @@ public class AttachmentDatabase extends Database {
       if (cursor != null)
         cursor.close();
     }
-  }
-
-  public @NonNull List<DatabaseAttachment> getPendingAttachments() {
-    final SQLiteDatabase           database    = getReadableDatabase();
-    final List<DatabaseAttachment> attachments = new LinkedList<>();
-
-    Cursor cursor = null;
-    try {
-      cursor = database.query(TABLE_NAME, PROJECTION, TRANSFER_STATE + " = ?", new String[] {String.valueOf(AttachmentState.DOWNLOADING.getValue())}, null, null, null);
-      while (cursor != null && cursor.moveToNext()) {
-        attachments.addAll(getAttachment(cursor));
-      }
-    } finally {
-      if (cursor != null) cursor.close();
-    }
-
-    return attachments;
   }
 
   public @NonNull List<DatabaseAttachment> getAllAttachments() {
@@ -389,21 +362,6 @@ public class AttachmentDatabase extends Database {
       deleteAttachmentOnDisk(data, thumbnail, contentType);
       notifyAttachmentListeners();
     }
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  void deleteAllAttachments() {
-    SQLiteDatabase database = getWritableDatabase();
-    database.delete(TABLE_NAME, null, null);
-
-    File   attachmentsDirectory = context.getDir(DIRECTORY, Context.MODE_PRIVATE);
-    File[] attachments          = attachmentsDirectory.listFiles();
-
-    for (File attachment : attachments) {
-      attachment.delete();
-    }
-
-    notifyAttachmentListeners();
   }
 
   private void deleteAttachmentsOnDisk(List<MmsAttachmentInfo> mmsAttachmentInfos) {
@@ -528,30 +486,6 @@ public class AttachmentDatabase extends Database {
     return insertedAttachments;
   }
 
-  /**
-   * Insert attachments in database and return the IDs of the inserted attachments
-   *
-   * @param mmsId message ID
-   * @param attachments attachments to persist
-   * @return IDs of the persisted attachments
-   * @throws MmsException
-   */
-  @NonNull List<Long> insertAttachments(long mmsId, @NonNull List<Attachment> attachments)
-          throws MmsException
-  {
-    Log.d(TAG, "insertParts(" + attachments.size() + ")");
-
-    List<Long> insertedAttachmentsIDs = new LinkedList<>();
-
-    for (Attachment attachment : attachments) {
-      AttachmentId attachmentId = insertAttachment(mmsId, attachment, attachment.isQuote());
-      insertedAttachmentsIDs.add(attachmentId.getRowId());
-      Log.i(TAG, "Inserted attachment at ID: " + attachmentId);
-    }
-
-    return insertedAttachmentsIDs;
-  }
-
   public @NonNull Attachment updateAttachmentData(@NonNull Attachment attachment,
                                                   @NonNull MediaStream mediaStream)
       throws MmsException
@@ -604,7 +538,8 @@ public class AttachmentDatabase extends Database {
                                   mediaStream.getHeight(),
                                   databaseAttachment.isQuote(),
                                   databaseAttachment.getCaption(),
-                                  databaseAttachment.getUrl());
+                                  databaseAttachment.getUrl(),
+                                  databaseAttachment.getAudioDurationMs());
   }
 
   public void markAttachmentUploaded(long messageId, Attachment attachment) {
@@ -752,13 +687,15 @@ public class AttachmentDatabase extends Database {
                                               object.getInt(HEIGHT),
                                               object.getInt(QUOTE) == 1,
                                               object.getString(CAPTION),
-                                              "")); // TODO: Not sure if this will break something
+                                              "", // TODO: Not sure if this will break something
+                                              object.getLong(AUDIO_DURATION)));
           }
         }
 
         return new ArrayList<>(result);
       } else {
         int urlIndex = cursor.getColumnIndex(URL);
+        int audioDurationIndex = cursor.getColumnIndexOrThrow(AUDIO_DURATION);
         return Collections.singletonList(new DatabaseAttachment(new AttachmentId(cursor.getLong(cursor.getColumnIndexOrThrow(ROW_ID)),
                                                                                  cursor.getLong(cursor.getColumnIndexOrThrow(UNIQUE_ID))),
                                                                 cursor.getLong(cursor.getColumnIndexOrThrow(MMS_ID)),
@@ -778,7 +715,9 @@ public class AttachmentDatabase extends Database {
                                                                 cursor.getInt(cursor.getColumnIndexOrThrow(HEIGHT)),
                                                                 cursor.getInt(cursor.getColumnIndexOrThrow(QUOTE)) == 1,
                                                                 cursor.getString(cursor.getColumnIndexOrThrow(CAPTION)),
-                                                                urlIndex > 0 ? cursor.getString(urlIndex) : ""));
+                                                                urlIndex > 0 ? cursor.getString(urlIndex) : "",
+                                                                cursor.isNull(audioDurationIndex) ? -1L : cursor.getLong(audioDurationIndex))
+                );
       }
     } catch (JSONException e) {
       throw new AssertionError(e);
@@ -818,6 +757,10 @@ public class AttachmentDatabase extends Database {
     contentValues.put(QUOTE, quote);
     contentValues.put(CAPTION, attachment.getCaption());
     contentValues.put(URL, attachment.getUrl());
+    long audioDuration = attachment.getAudioDurationMs();
+    if (audioDuration > 0) {
+      contentValues.put(AUDIO_DURATION, audioDuration);
+    }
 
     if (dataInfo != null) {
       contentValues.put(DATA, dataInfo.file.getAbsolutePath());
@@ -942,15 +885,6 @@ public class AttachmentDatabase extends Database {
     }
 
     return alteredRows > 0;
-  }
-
-  /**
-   * Updates audio extra columns for the "audio/*" mime type attachments only.
-   * @return true if the update operation was successful.
-   */
-  @Synchronized
-  public boolean setAttachmentAudioExtras(@NonNull DatabaseAttachmentAudioExtras extras) {
-    return setAttachmentAudioExtras(extras, -1); // -1 for no update
   }
 
   @VisibleForTesting

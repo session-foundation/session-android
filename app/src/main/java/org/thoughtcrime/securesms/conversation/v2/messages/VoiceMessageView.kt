@@ -56,6 +56,17 @@ class VoiceMessageView @JvmOverloads constructor(
         cornerMask.setBottomRightRadius(cornerRadii[2])
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
+        // This sets the final duration of the uploaded voice message
+        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+            if (attachment.audioDurationMs > 0) {
+                val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(attachment.audioDurationMs)
+                binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
+            } else {
+                Log.w(TAG, "For some reason attachment.audioDurationMs was NOT greater than zero!")
+                binding.voiceMessageViewDurationTextView.text = "--:--"
+            }
+        }
+
         // On initial upload (and while processing audio) we will exit at this point and then return when processing is complete
         if (audioSlide.isPendingDownload || audioSlide.isInProgress) {
             this.player = null
@@ -63,21 +74,6 @@ class VoiceMessageView @JvmOverloads constructor(
         }
 
         this.player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
-
-        // This sets the final duration of the uploaded voice message
-        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-            attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
-                if (audioExtras.durationMs > 0) {
-                    val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(audioExtras.durationMs)
-                    binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
-                } else {
-                    Log.w(TAG, "For some reason audioExtras.durationMs was NOT greater than zero!")
-                    binding.voiceMessageViewDurationTextView.text = "--:--"
-                }
-
-                binding.voiceMessageViewDurationTextView.visibility = VISIBLE
-            }
-        }
     }
 
     override fun onPlayerStart(player: AudioSlidePlayer) {

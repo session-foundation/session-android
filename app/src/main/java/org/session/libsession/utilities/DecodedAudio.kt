@@ -5,7 +5,10 @@ import android.media.MediaCodec
 import android.media.MediaDataSource
 import android.media.MediaExtractor
 import android.media.MediaFormat
+import java.io.ByteArrayInputStream
+import java.io.File
 import java.io.FileDescriptor
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -352,32 +355,21 @@ inline fun normalizedFloatToByte(value: Float): Byte {
     return (255f * value - 128f).roundToInt().toByte()
 }
 
-class InputStreamMediaDataSource: MediaDataSource {
-
-    private val data: ByteArray
-
-    constructor(inputStream: InputStream): super() {
-        this.data = inputStream.readBytes()
-    }
+class InputStreamMediaDataSource(private val inputStream: InputStream): MediaDataSource() {
+    private val bytes by lazy { inputStream.readBytes() }
 
     override fun readAt(position: Long, buffer: ByteArray, offset: Int, size: Int): Int {
-        val length: Int = data.size
-        if (position >= length) {
-            return -1 // -1 indicates EOF
+        if (position < 0 || position >= bytes.size) {
+            return -1 // End of stream or invalid position.
         }
-        var actualSize = size
-        if (position + size > length) {
-            actualSize -= (position + size - length).toInt()
-        }
-        System.arraycopy(data, position.toInt(), buffer, offset, actualSize)
-        return actualSize
+        val bytesRead = size.coerceAtMost(bytes.size - position.toInt())
+        System.arraycopy(bytes, position.toInt(), buffer, offset, bytesRead)
+        return bytesRead
     }
 
-    override fun getSize(): Long {
-        return data.size.toLong()
-    }
+    override fun getSize(): Long = bytes.size.toLong()
 
     override fun close() {
-        // We don't need to close the wrapped stream.
+        inputStream.close()
     }
 }

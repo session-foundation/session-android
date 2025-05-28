@@ -554,7 +554,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (threadId == -1) {
       threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(message.getRecipient());
     }
-    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, null, runThreadUpdate);
+    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
       return Optional.absent();
     }
@@ -563,7 +563,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public long insertMessageOutbox(long threadId, OutgoingTextMessage message,
-                                  boolean forceSms, long date, InsertListener insertListener,
+                                  boolean forceSms, long date,
                                   boolean runThreadUpdate)
   {
     long type = Types.BASE_SENDING_TYPE;
@@ -597,9 +597,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     SQLiteDatabase db        = getWritableDatabase();
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
-    if (insertListener != null) {
-      insertListener.onComplete();
-    }
 
     if (runThreadUpdate) {
       DatabaseComponent.get(context).threadDatabase().update(threadId, true);
@@ -888,10 +885,6 @@ public class SmsDatabase extends MessagingDatabase {
         cursor.close();
       }
     }
-  }
-
-  public interface InsertListener {
-    public void onComplete();
   }
 
 }

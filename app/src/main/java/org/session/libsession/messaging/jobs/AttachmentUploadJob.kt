@@ -116,15 +116,13 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
 
-        // Outgoing voice messages do not have their final duration set because older Android versions (API 28 and below)
-        // can have bugs where the media duration is calculated incorrectly. In such cases we leave the correct "interim"
-        // voice message duration as the final duration as we know that it'll be correct..
+        // We don't need to calculate the duration for voice notes, as they will have it set already.
         if (attachment.contentType.startsWith("audio/") && !attachment.voiceNote) {
-            // ..but for outgoing audio files we do process the duration to the best of our ability.
             try {
                 val inputStream = messageDataProvider.getAttachmentStream(attachmentID)!!.inputStream!!
                 InputStreamMediaDataSource(inputStream).use { mediaDataSource ->
                     val durationMS = (DecodedAudio.create(mediaDataSource).totalDurationMicroseconds / 1000.0).toLong()
+                    Log.d(TAG, "Audio attachment duration calculated as: $durationMS ms")
                     messageDataProvider.getDatabaseAttachment(attachmentID)?.attachmentId?.let { attachmentId ->
                         messageDataProvider.updateAudioAttachmentDuration(attachmentId, durationMS, threadID.toLong())
                     }

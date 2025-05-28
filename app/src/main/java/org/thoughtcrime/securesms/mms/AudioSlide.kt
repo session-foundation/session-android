@@ -35,7 +35,7 @@ class AudioSlide : Slide {
     override val thumbnailUri: Uri?
         get() = null
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean)
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean, durationMills: Long)
         // Note: The `caption` field of `constructAttachmentFromUri` is repurposed to store the interim
         : super(context,
                 constructAttachmentFromUri(
@@ -49,10 +49,11 @@ class AudioSlide : Slide {
                     filename,
                     null,
                     voiceNote,
-                    false)     // quote
+                    false,
+                    durationMills)     // quote
                 )
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean)
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean, durationMills: Long)
         : super(context,
                 UriAttachment(
                     uri,
@@ -66,7 +67,8 @@ class AudioSlide : Slide {
                     null,        // fastPreflightId
                     voiceNote,
                     false,       // quote
-                    null)
+                    null,
+                    durationMills)
                 )
 
     constructor(context: Context, attachment: Attachment) : super(context, attachment)

@@ -51,7 +51,6 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
-import org.thoughtcrime.securesms.database.SmsDatabase.InsertListener
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -647,7 +646,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             retrieved.sharedContacts,
             retrieved.linkPreviews,
             contentValues,
-            null,
         )
         if (!MmsSmsColumns.Types.isExpirationTimerUpdate(mailbox)) {
             if (runThreadUpdate) {
@@ -667,7 +665,13 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
         if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
-        val messageId = insertMessageOutbox(retrieved, threadId, false, null, serverTimestamp, runThreadUpdate)
+        val messageId = insertMessageOutbox(
+            retrieved,
+            threadId,
+            false,
+            serverTimestamp,
+            runThreadUpdate
+        )
         if (messageId == -1L) {
             Log.w(TAG, "insertSecureDecryptedMessageOutbox believes the MmsDatabase insertion failed.")
             return Optional.absent()
@@ -708,7 +712,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
     fun insertMessageOutbox(
         message: OutgoingMediaMessage,
         threadId: Long, forceSms: Boolean,
-        insertListener: InsertListener?,
         serverTimestamp: Long = 0,
         runThreadUpdate: Boolean
     ): Long {
@@ -765,7 +768,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             message.sharedContacts,
             message.linkPreviews,
             contentValues,
-            insertListener,
         )
         if (message.recipient.address.isGroupOrCommunity) {
             val members = get(context).groupDatabase()
@@ -809,7 +811,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         sharedContacts: List<Contact>,
         linkPreviews: List<LinkPreview>,
         contentValues: ContentValues,
-        insertListener: InsertListener?,
     ): Long {
         val db = writableDatabase
         val partsDatabase = get(context).attachmentDatabase()
@@ -870,7 +871,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             messageId
         } finally {
             db.endTransaction()
-            insertListener?.onComplete()
             notifyConversationListeners(contentValues.getAsLong(THREAD_ID))
         }
     }
@@ -1575,6 +1575,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     "'" + AttachmentDatabase.CAPTION + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.CAPTION + ", " +
                     "'" + AttachmentDatabase.STICKER_PACK_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_ID + ", " +
                     "'" + AttachmentDatabase.STICKER_PACK_KEY + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_PACK_KEY + ", " +
+                    "'" + AttachmentDatabase.AUDIO_DURATION + "', ifnull(" + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.AUDIO_DURATION + ", -1), " +
                     "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
                     ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
             "json_group_array(json_object(" +

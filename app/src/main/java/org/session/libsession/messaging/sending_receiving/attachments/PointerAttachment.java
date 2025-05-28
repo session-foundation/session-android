@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import org.session.libsignal.utilities.guava.Optional;
 import org.session.libsignal.messages.SignalServiceAttachment;
-import org.session.libsignal.messages.SignalServiceDataMessage;
 import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.protos.SignalServiceProtos;
 
@@ -22,7 +21,7 @@ public class PointerAttachment extends Attachment {
                             @Nullable byte[] digest, @Nullable String fastPreflightId, boolean voiceNote,
                             int width, int height, @Nullable String caption, String url)
   {
-    super(contentType, transferState, size, fileName, location, key, relay, digest, fastPreflightId, voiceNote, width, height, false, caption, url);
+    super(contentType, transferState, size, fileName, location, key, relay, digest, fastPreflightId, voiceNote, width, height, false, caption, url, -1L);
   }
 
   @Nullable
@@ -44,22 +43,6 @@ public class PointerAttachment extends Attachment {
     if (pointers.isPresent()) {
       for (SignalServiceAttachment pointer : pointers.get()) {
         Optional<Attachment> result = forPointer(Optional.of(pointer));
-
-        if (result.isPresent()) {
-          results.add(result.get());
-        }
-      }
-    }
-
-    return results;
-  }
-
-  public static List<Attachment> forPointersOfDataMessage(List<SignalServiceDataMessage.Quote.QuotedAttachment> pointers) {
-    List<Attachment> results = new LinkedList<>();
-
-    if (pointers != null) {
-      for (SignalServiceDataMessage.Quote.QuotedAttachment pointer : pointers) {
-        Optional<Attachment> result = forPointer(pointer);
 
         if (result.isPresent()) {
           results.add(result.get());
@@ -149,25 +132,6 @@ public class PointerAttachment extends Attachment {
             thumbnail != null ? thumbnail.getHeight() : 0,
             thumbnail != null ? thumbnail.getCaption() : null,
             thumbnail != null ? thumbnail.getUrl() : ""));
-  }
-
-  public static Optional<Attachment> forPointer(SignalServiceDataMessage.Quote.QuotedAttachment pointer) {
-    SignalServiceAttachment thumbnail = pointer.getThumbnail();
-
-    return Optional.of(new PointerAttachment(pointer.getContentType(),
-            AttachmentState.PENDING.getValue(),
-            thumbnail != null ? thumbnail.asPointer().getSize().or(0) : 0,
-            pointer.getFileName(),
-            String.valueOf(thumbnail != null ? thumbnail.asPointer().getId() : 0),
-            thumbnail != null && thumbnail.asPointer().getKey() != null ? Base64.encodeBytes(thumbnail.asPointer().getKey()) : null,
-            null,
-            thumbnail != null ? thumbnail.asPointer().getDigest().orNull() : null,
-            null,
-            false,
-            thumbnail != null ? thumbnail.asPointer().getWidth() : 0,
-            thumbnail != null ? thumbnail.asPointer().getHeight() : 0,
-            thumbnail != null ? thumbnail.asPointer().getCaption().orNull() : null,
-            thumbnail != null ? thumbnail.asPointer().getUrl() : ""));
   }
 
   /**

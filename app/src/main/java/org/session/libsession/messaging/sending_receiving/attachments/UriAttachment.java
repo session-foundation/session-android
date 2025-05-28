@@ -13,15 +13,23 @@ public class UriAttachment extends Attachment {
   public UriAttachment(@NonNull Uri uri, @NonNull String contentType, int transferState, long size,
                        @Nullable String fileName, boolean voiceNote, boolean quote, @Nullable String caption)
   {
-    this(uri, uri, contentType, transferState, size, 0, 0, fileName, null, voiceNote, quote, caption);
+    this(uri, uri, contentType, transferState, size, 0, 0, fileName, null, voiceNote, quote, caption, -1);
   }
 
   public UriAttachment(@NonNull Uri dataUri, @Nullable Uri thumbnailUri,
                        @NonNull String contentType, int transferState, long size, int width, int height,
                        @Nullable String fileName, @Nullable String fastPreflightId,
-                       boolean voiceNote, boolean quote, @Nullable String caption)
+                       boolean voiceNote, boolean quote, @Nullable String caption) {
+    this(dataUri, thumbnailUri, contentType, transferState, size, width, height, fileName, fastPreflightId,
+         voiceNote, quote, caption, -1);
+  }
+
+  public UriAttachment(@NonNull Uri dataUri, @Nullable Uri thumbnailUri,
+                       @NonNull String contentType, int transferState, long size, int width, int height,
+                       @Nullable String fileName, @Nullable String fastPreflightId,
+                       boolean voiceNote, boolean quote, @Nullable String caption, long audioDurationMs)
   {
-    super(contentType, transferState, size, fileName, null, null, null, null, fastPreflightId, voiceNote, width, height, quote, caption, "");
+    super(contentType, transferState, size, fileName, null, null, null, null, fastPreflightId, voiceNote, width, height, quote, caption, "", audioDurationMs);
     this.dataUri      = dataUri;
     this.thumbnailUri = thumbnailUri;
   }

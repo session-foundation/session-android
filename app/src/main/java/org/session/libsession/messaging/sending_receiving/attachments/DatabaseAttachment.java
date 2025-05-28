@@ -1,7 +1,9 @@
 package org.session.libsession.messaging.sending_receiving.attachments;
 
 import android.net.Uri;
+
 import androidx.annotation.Nullable;
+
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 
 public class DatabaseAttachment extends Attachment {
@@ -18,9 +20,9 @@ public class DatabaseAttachment extends Attachment {
                             String filename, String location, String key, String relay,
                             byte[] digest, String fastPreflightId, boolean voiceNote,
                             int width, int height, boolean quote, @Nullable String caption,
-                            String url
+                            String url, long audioDurationMs
   ) {
-    super(contentType, transferProgress, size, filename, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, caption, url);
+    super(contentType, transferProgress, size, filename, location, key, relay, digest, fastPreflightId, voiceNote, width, height, quote, caption, url, audioDurationMs);
     this.attachmentId = attachmentId;
     this.hasData      = hasData;
     this.hasThumbnail = hasThumbnail;
