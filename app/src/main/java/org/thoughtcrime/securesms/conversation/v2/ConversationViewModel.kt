@@ -107,8 +107,8 @@ class ConversationViewModel(
     private val expiredGroupManager: ExpiredGroupManager,
     private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
-    private val recipientChangeSource: RecipientChangeSource
-
+    private val recipientChangeSource: RecipientChangeSource,
+    private val openGroupManager: OpenGroupManager,
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
@@ -322,10 +322,8 @@ class ConversationViewModel(
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
-                        showInput = shouldShowInput(recipient, community, deprecationState),
-                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
+                        inputBarState = getInputBarState(recipient, community, deprecationState),
                         messageRequestState = buildMessageRequestState(recipient),
-                        userBlocked = recipient?.isBlocked ?: false
                     )
                 }
             }
@@ -337,8 +335,7 @@ class ConversationViewModel(
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
-                        enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
-                        userBlocked = recipient?.isBlocked ?: false
+                        inputBarState = getInputBarState(recipient, _openGroup.value, legacyGroupDeprecationManager.deprecationState.value),
                     )
                 }
             }
@@ -346,7 +343,7 @@ class ConversationViewModel(
 
         // Listen for changes in the open group's write access
         viewModelScope.launch {
-            OpenGroupManager.getCommunitiesWriteAccessFlow()
+            openGroupManager.getCommunitiesWriteAccessFlow()
                 .map {
                     withContext(Dispatchers.Default) {
                         if (openGroup?.groupId != null)
@@ -359,6 +356,46 @@ class ConversationViewModel(
                     // update our community object
                     _openGroup.value = openGroup?.copy(canWrite = it)
                 }
+        }
+    }
+
+    private fun getInputBarState(
+        recipient: Recipient?,
+        community: OpenGroup?,
+        deprecationState: LegacyGroupDeprecationManager.DeprecationState
+    ): InputBarState {
+        return when {
+            // prioritise cases that demand the input to be hidden
+            !shouldShowInput(recipient, community, deprecationState) -> InputBarState(
+                contentState = InputBarContentState.Hidden,
+                enableAttachMediaControls = false
+            )
+
+            // next are cases where the  input is visible but disabled
+            // when the recipient is blocked
+            recipient?.isBlocked == true -> InputBarState(
+                contentState = InputBarContentState.Disabled(
+                    text = application.getString(R.string.blockBlockedDescription),
+                    onClick = {
+                        _uiEvents.tryEmit(ConversationUiEvent.ShowUnblockConfirmation)
+                    }
+                ),
+                enableAttachMediaControls = false
+            )
+
+            // the user does not have write access in the community
+            openGroup?.canWrite == false -> InputBarState(
+                contentState = InputBarContentState.Disabled(
+                    text = application.getString(R.string.permissionsWriteCommunity),
+                ),
+                enableAttachMediaControls = false
+            )
+
+            // other cases the input is visible, and the buttons might be disabled based on some criteria
+            else -> InputBarState(
+                contentState = InputBarContentState.Visible,
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient)
+            )
         }
     }
 
@@ -491,8 +528,7 @@ class ConversationViewModel(
      *  1. The user has been kicked from a group(v2), OR
      *  2. The legacy group is inactive, OR
      *  3. The legacy group is deprecated, OR
-     *  4. The community chat is read only
-     *  5. Blinded recipient who have disabled message request from community members
+     *  4. Blinded recipient who have disabled message request from community members
      */
     private fun shouldShowInput(recipient: Recipient?,
                                 community: OpenGroup?,
@@ -504,7 +540,6 @@ class ConversationViewModel(
                 groupDb.getGroup(recipient.address.toGroupString()).orNull()?.isActive == true &&
                         deprecationState != LegacyGroupDeprecationManager.DeprecationState.DEPRECATED
             }
-            community != null -> community.canWrite
             getBlindedRecipient(recipient)?.blocksCommunityMessageRequests == true -> false
             else -> true
         }
@@ -980,7 +1015,7 @@ class ConversationViewModel(
 
     private fun isUserCommunityManager() = openGroup?.let { openGroup ->
         val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-        OpenGroupManager.isUserModerator(application, openGroup.id, userPublicKey, blindedPublicKey)
+        openGroupManager.isUserModerator(openGroup.id, userPublicKey, blindedPublicKey)
     } ?: false
 
     /**
@@ -1070,15 +1105,6 @@ class ConversationViewModel(
         _recipient.updateTo(repository.maybeGetRecipientForThreadId(threadId))
         updateAppBarData(recipient)
     }
-
-    /**
-     * The input should be hidden when:
-     * - We are in a community without write access
-     * - We are dealing with a contact from a community (blinded recipient) that does not allow
-     *   requests form community members
-     */
-    fun shouldHideInputBar(): Boolean = openGroup?.canWrite == false ||
-            blindedRecipient?.blocksCommunityMessageRequests == true
 
     fun legacyBannerRecipient(context: Context): Recipient? = recipient?.run {
         storage.getLastLegacyRecipient(address.toString())?.let { Recipient.from(context, Address.fromSerialized(it), false) }
@@ -1271,6 +1297,7 @@ class ConversationViewModel(
         private val usernameUtils: UsernameUtils,
         private val avatarUtils: AvatarUtils,
         private val recipientChangeSource: RecipientChangeSource,
+        private val openGroupManager: OpenGroupManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1295,7 +1322,8 @@ class ConversationViewModel(
                 expiredGroupManager = expiredGroupManager,
                 usernameUtils = usernameUtils,
                 avatarUtils = avatarUtils,
-                recipientChangeSource = recipientChangeSource
+                recipientChangeSource = recipientChangeSource,
+                openGroupManager = openGroupManager,
             ) as T
         }
     }
@@ -1351,23 +1379,32 @@ data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
-    val showInput: Boolean = true,
+    val inputBarState: InputBarState = InputBarState(),
 
+    val showLoader: Boolean = false,
+)
+
+data class InputBarState(
+    val contentState: InputBarContentState = InputBarContentState.Visible,
     // Note: These input media controls are with regard to whether the user can attach multimedia files
     // or record voice messages to be sent to a recipient - they are NOT things like video or audio
     // playback controls.
     val enableAttachMediaControls: Boolean = true,
-
-    val userBlocked: Boolean = false,
-
-    val showLoader: Boolean = false,
 )
+
+sealed interface InputBarContentState {
+    data object Hidden : InputBarContentState
+    data object Visible : InputBarContentState
+    data class Disabled(val text: String, val onClick: (() -> Unit)? = null) : InputBarContentState
+}
+
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
     data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
+    data object ShowUnblockConfirmation : ConversationUiEvent
 }
 
 sealed interface MessageRequestUiState {

@@ -122,7 +122,6 @@
     <string name="banUser">Ipagbawal ang taong ito</string>
     <string name="banUserBanned">User banned</string>
     <string name="block">Harangin</string>
-    <string name="blockBlockedDescription">I-unblock ang contact na ito para magpadala ng mensahe.</string>
     <string name="blockBlockedNone">Walang naka-block na contact</string>
     <string name="blockBlockedUser">Na-block na si {name}</string>
     <string name="blockDescription">Sigurado ka bang gusto mong harangin si <b>{name}?</b> Ang mga hinarang na user ay hindi makakapagpadala ng mga kahilingan sa pagmemensahe, mga imbitasyon sa grupo o tira-tawag sa\'yo.</string>

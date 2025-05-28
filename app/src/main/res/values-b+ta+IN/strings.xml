@@ -122,7 +122,6 @@
     <string name="banUser">பயனரை தடை செய்யவும்</string>
     <string name="banUserBanned">பயனர் தடை செய்யப்பட்டது</string>
     <string name="block">தடை</string>
-    <string name="blockBlockedDescription">ஒரு செய்தியை அனுப்ப இந்த தொடர்பை விடுவிக்கவும்.</string>
     <string name="blockBlockedNone">தடைசெய்யப்பட்ட தொடர்புகள் இல்லை</string>
     <string name="blockBlockedUser">{name} தடை</string>
     <string name="blockDescription">நீங்கள் நிச்சயமாக <b>{name}</b> ஐ தடுக்க விரும்புகிறீர்களா? தடுக்கப்பட்ட பயனர்களால் உங்களுக்கு தகவல் கோரிக்கைகளை அனுப்ப முடியாது, குழு அழைப்புகளை கையாளவும் அல்லது அழைக்கவும் முடியாது.</string>

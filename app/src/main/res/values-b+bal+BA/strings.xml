@@ -122,7 +122,6 @@
     <string name="banUser">صارف کو پابندی لگائیں</string>
     <string name="banUserBanned">صارف پر پابندی عائد کر دی گئی</string>
     <string name="block">رکاوٹ</string>
-    <string name="blockBlockedDescription">پیغام بھیجنے کے لئے اس رابطہ کو غیر بلاک کریں۔</string>
     <string name="blockBlockedNone">هیچں بندکرتگ امدیدبونه یافت نه بیت</string>
     <string name="blockBlockedUser">{name} کو روکا گیا</string>
     <string name="blockDescription">کیا آپ یقیناً <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک شدہ صارفین آپ کو پیغام کی درخواستیں، گروپ دعوتیں نہیں بھیجیں گے یا آپ کو کال نہیں کریں گے۔</string>

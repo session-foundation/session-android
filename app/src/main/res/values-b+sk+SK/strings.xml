@@ -122,7 +122,6 @@
     <string name="banUser">Zakázať používateľa</string>
     <string name="banUserBanned">Používateľ zakázaný</string>
     <string name="block">Blokovať</string>
-    <string name="blockBlockedDescription">Pre odoslanie správy kontakt odblokujte.</string>
     <string name="blockBlockedNone">Žiadne zablokované kontakty</string>
     <string name="blockBlockedUser">Zablokovaný {name}</string>
     <string name="blockDescription">Ste si istý, že chcete zablokovať <b>{name}</b>? Zablokovaní používatelia vám nemôžu posielať žiadosti o správy, pozvánky do skupín alebo vám volať.</string>

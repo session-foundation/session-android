@@ -28,6 +28,7 @@ class ConversationActionModeCallback(
     private val threadID: Long,
     private val context: Context,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val openGroupManager: OpenGroupManager,
     ) : ActionMode.Callback {
     var delegate: ConversationActionModeCallbackDelegate? = null
 
@@ -76,7 +77,11 @@ class ConversationActionModeCallback(
             if (anySentByCurrentUser) { return false } // Users can't ban themselves
             val selectedUsers = selectedItems.map { it.recipient.address.toString() }.toSet()
             if (selectedUsers.size > 1) { return false }
-            return OpenGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
+            return openGroupManager.isUserModerator(
+                openGroup.groupId,
+                userPublicKey,
+                blindedPublicKey
+            )
         }
 
 

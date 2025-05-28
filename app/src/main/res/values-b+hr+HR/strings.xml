@@ -122,7 +122,6 @@
     <string name="banUser">Zabrani korisnik</string>
     <string name="banUserBanned">Korisnik zabranjen</string>
     <string name="block">Blokiraj</string>
-    <string name="blockBlockedDescription">Deblokiraj ovaj kontakt za slanje poruke.</string>
     <string name="blockBlockedNone">Nema blokiranih kontakata</string>
     <string name="blockBlockedUser">Blokiran {name}</string>
     <string name="blockDescription">Jeste li sigurni da želite blokirati <b>{name}</b>? Blokirani korisnici vam ne mogu poslati zahtjeve za poruke, pozive ili pozive u grupu.</string>

@@ -148,7 +148,6 @@
     <string name="banUserBanned">Zablokowano użytkownikowi dostęp</string>
     <string name="banUserDescription">Wprowadź identyfikator konta użytkownika, którego chcesz zablokować</string>
     <string name="block">Zablokuj</string>
-    <string name="blockBlockedDescription">Odblokuj ten kontakt, aby wysłać wiadomość.</string>
     <string name="blockBlockedNone">Brak zablokowanych kontaktów</string>
     <string name="blockBlockedUser">Zablokowano {name}</string>
     <string name="blockDescription">Czy na pewno chcesz zablokować <b>{name}</b>? Zablokowani użytkownicy nie mogą wysyłać próśb o wiadomości, zaproszeń do grupy ani dzwonić.</string>

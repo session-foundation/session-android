@@ -46,6 +46,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
+    var onDeleteContactTapped: (() -> Unit)? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
@@ -64,6 +65,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
+            binding.deleteContactTextView -> onDeleteContactTapped?.invoke()
         }
     }
 
@@ -71,6 +73,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
+
+        binding.deleteContactTextView.isVisible = false
+
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
@@ -112,7 +117,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             // the text, content description and icon will change depending on the type
             when {
                 // groups and communities
-                recipient.isGroupOrCommunityRecipient -> {
+                recipient.isGroupRecipient -> {
                     val accountId = AccountId(recipient.address.toString())
                     val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
@@ -129,6 +134,12 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                     }
                 }
 
+                recipient.isCommunityRecipient -> {
+                    text = context.getString(R.string.leave)
+                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                    drawableStartRes = R.drawable.ic_log_out
+                }
+
                 // note to self
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
@@ -138,9 +149,13 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
                 // 1on1
                 else -> {
-                    text = context.getString(R.string.delete)
+                    text = context.getString(R.string.conversationsDelete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
                     drawableStartRes = R.drawable.ic_trash_2
+
+                    // also show delete contact for 1on1
+                    binding.deleteContactTextView.isVisible = true
+                    binding.deleteContactTextView.setOnClickListener(this@ConversationOptionsBottomSheet)
                 }
             }
 

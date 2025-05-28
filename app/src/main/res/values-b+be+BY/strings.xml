@@ -122,7 +122,6 @@
     <string name="banUser">Забараніць карыстальніка</string>
     <string name="banUserBanned">Карыстальнік забаронены</string>
     <string name="block">Заблакіраваць</string>
-    <string name="blockBlockedDescription">Разблакуйце гэты кантакт, каб адправіць паведамленне.</string>
     <string name="blockBlockedNone">Няма заблакіраваных кантактаў</string>
     <string name="blockBlockedUser">Заблакавана {name}</string>
     <string name="blockDescription">Вы ўпэўненыя, што жадаеце заблакіраваць <b>{name}?</b> Заблакіраваныя карыстальнікі не могуць адпраўляць вам запыты на паведамленні, запрашэнні ў групы ці тэлефанаваць вам.</string>

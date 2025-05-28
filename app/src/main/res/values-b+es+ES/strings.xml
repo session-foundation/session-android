@@ -128,7 +128,6 @@
     <string name="banUser">Banear usuario</string>
     <string name="banUserBanned">Usuario expulsado</string>
     <string name="block">Bloquear</string>
-    <string name="blockBlockedDescription">Desbloquea este contacto para enviar mensajes.</string>
     <string name="blockBlockedNone">No hay contactos bloqueados</string>
     <string name="blockBlockedUser">Bloqueado {name}</string>
     <string name="blockDescription">¿Estás seguro de que quieres bloquear a <b>{name}?</b> Los usuarios bloqueados no pueden enviarte solicitudes de mensajes, invitaciones a grupos ni llamarte.</string>

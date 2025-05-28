@@ -150,7 +150,6 @@
     <string name="banUser">Додати користувача до чорного списку</string>
     <string name="banUserBanned">Користувач заблокований</string>
     <string name="block">Заблокувати</string>
-    <string name="blockBlockedDescription">Розблокувати контакт для надсилання повідомлення.</string>
     <string name="blockBlockedNone">Немає заблокованих контактів</string>
     <string name="blockBlockedUser">Заблоковано {name}</string>
     <string name="blockDescription">Ви дійсно бажаєте заблокувати <b>{name}?</b> Заблоковані користувачі не можуть відправляти вам запити, групові запрошення або зателефонувати вам.</string>

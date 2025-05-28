@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
@@ -44,7 +45,6 @@ import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.GroupMember
 import org.session.libsession.messaging.open_groups.OpenGroup
-import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -129,7 +129,8 @@ open class Storage @Inject constructor(
     private val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils
+    private val usernameUtils: UsernameUtils,
+    private val openGroupManager: Lazy<OpenGroupManager>,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {
@@ -1059,19 +1060,18 @@ open class Storage @Inject constructor(
     }
 
     override fun updateOpenGroup(openGroup: OpenGroup) {
-        OpenGroupManager.updateOpenGroup(openGroup, context)
+        openGroupManager.get().updateOpenGroup(openGroup, context)
     }
 
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
         return groupDatabase.getAllGroups(includeInactive)
     }
 
-    override suspend fun addOpenGroup(urlAsString: String): OpenGroupApi.RoomInfo? {
-        return OpenGroupManager.addOpenGroup(urlAsString, context)
+    override suspend fun addOpenGroup(urlAsString: String) {
+        return openGroupManager.get().addOpenGroup(urlAsString, context)
     }
 
     override fun onOpenGroupAdded(server: String, room: String) {
-        OpenGroupManager.restartPollerForServer(server.removeSuffix("/"))
         configFactory.withMutableUserConfigs { configs ->
             val groups = configs.userGroups
             val volatileConfig = configs.convoInfoVolatile

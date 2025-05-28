@@ -122,7 +122,6 @@
     <string name="banUser">Sekat Pengguna</string>
     <string name="banUserBanned">Pengguna diharamkan</string>
     <string name="block">Sekat</string>
-    <string name="blockBlockedDescription">Nyahsekat kontak ini untuk menghantar mesej.</string>
     <string name="blockBlockedNone">Tiada kenalan yang disekat</string>
     <string name="blockBlockedUser">{name} disekat</string>
     <string name="blockDescription">Adakah anda pasti mahu menyekat <b>{name}</b>? Pengguna yang disekat tidak boleh menghantar permintaan mesej, jemputan kumpulan atau menghubungi anda.</string>

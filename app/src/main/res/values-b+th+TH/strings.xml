@@ -122,7 +122,6 @@
     <string name="banUser">แบนผู้ใช้</string>
     <string name="banUserBanned">แบนผู้ใช้แล้ว.</string>
     <string name="block">บล็อก</string>
-    <string name="blockBlockedDescription">เลิกปิดกั้นผู้ติดต่อนี้เพื่อส่งข้อความ.</string>
     <string name="blockBlockedNone">ไม่มีผู้ติดต่อที่ถูกปิดกั้น</string>
     <string name="blockBlockedUser">บล็อก {name}</string>
     <string name="blockDescription">คุณแน่ใจหรือไม่ว่าต้องการบล็อก <b>{name}?</b> ผู้ใช้ที่ถูกบล็อกจะไม่สามารถส่งคำร้องขอข้อความเชิญกลุ่ม หรือโทรหาคุณได้</string>

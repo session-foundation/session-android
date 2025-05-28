@@ -128,7 +128,6 @@
     <string name="banUser">Rimuovi utente</string>
     <string name="banUserBanned">Utente bloccato</string>
     <string name="block">Blocca</string>
-    <string name="blockBlockedDescription">Per inviare un messaggio sblocca questo contatto.</string>
     <string name="blockBlockedNone">Nessun contatto bloccato</string>
     <string name="blockBlockedUser">{name} bloccato</string>
     <string name="blockDescription">Confermi di voler bloccare <b>{name}?</b> Gli utenti bloccati non possono inviarti richieste di messaggi, inviti ai gruppi o chiamarti.</string>

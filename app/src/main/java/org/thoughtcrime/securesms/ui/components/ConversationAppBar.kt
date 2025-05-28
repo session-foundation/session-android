@@ -5,6 +5,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -35,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,6 +54,7 @@ import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
@@ -132,8 +136,11 @@ fun ConversationAppBar(
                                 Avatar(
                                     modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
                                         .padding(end = LocalDimensions.current.xsSpacing)
-                                        .clip(CircleShape)
-                                        .clickable { onAvatarPressed() },
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = ripple(bounded = false, radius = LocalDimensions.current.iconLargeAvatar/2),
+                                            onClick = onAvatarPressed
+                                        ),
                                     size = LocalDimensions.current.iconLargeAvatar,
                                     data = data.avatarUIData
                                 )
@@ -416,6 +423,10 @@ fun ConversationTopBarPreview(
                         AvatarUIElement(
                             name = "TO",
                             color = primaryBlue
+                        ),
+                        AvatarUIElement(
+                            name = "TA",
+                            color = primaryOrange
                         )
                     )
                 )

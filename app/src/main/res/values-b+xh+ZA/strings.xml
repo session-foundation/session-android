@@ -122,7 +122,6 @@
     <string name="banUser">Vimba Umsebenzisi</string>
     <string name="banUserBanned">Umsebenzisi urhoxisiwe</string>
     <string name="block">Zziyiiza</string>
-    <string name="blockBlockedDescription">Susa lo qhakamshelwano ukuze uthumele umyalezo.</string>
     <string name="blockBlockedNone">Akukho qhagamshela okubhlokiweyo</string>
     <string name="blockBlockedUser">Uvimbile {name}</string>
     <string name="blockDescription">Uqinisekile ukuba ufuna ukuzivimba <b>{name}?</b> Abasebenzisi abavalweyo abanakukuthumela izicelo zemiyalezo, izimemo zeqela okanye bakufowunele.</string>

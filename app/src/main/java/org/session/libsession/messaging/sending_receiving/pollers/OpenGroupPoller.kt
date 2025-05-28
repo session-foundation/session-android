@@ -1,14 +1,26 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
 import com.google.protobuf.ByteString
-import nl.komponents.kovenant.Promise
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import nl.komponents.kovenant.functional.map
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.jobs.OpenGroupDeleteJob
 import org.session.libsession.messaging.jobs.TrimThreadJob
@@ -25,35 +37,49 @@ import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.snode.OnionRequestAPI
-import org.session.libsession.snode.utilities.successBackground
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
-import java.util.UUID
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
+import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
-class OpenGroupPoller(private val server: String, private val executorService: ScheduledExecutorService?) {
-    var hasStarted = false
-    var isCaughtUp = false
-    var secondToLastJob: MessageReceiveJob? = null
-    private var future: ScheduledFuture<*>? = null
-    @Volatile private var runId: UUID = UUID.randomUUID()
+private typealias ManualPollRequestToken = Channel<Result<Unit>>
+
+/**
+ * A [OpenGroupPoller] is responsible for polling all communities on a particular server.
+ *
+ * Once this class is created, it will start polling when the app becomes visible (and stop whe
+ * the app becomes invisible), it will also respond to manual poll requests regardless of the app visibility.
+ *
+ * To stop polling, you can cancel the [CoroutineScope] that was passed to the constructor.
+ */
+class OpenGroupPoller @AssistedInject constructor(
+    private val storage: StorageProtocol,
+    private val appVisibilityManager: AppVisibilityManager,
+    @Assisted private val server: String,
+    @Assisted private val scope: CoroutineScope,
+) {
+    private val mutableIsCaughtUp = MutableStateFlow(false)
+    val isCaughtUp: StateFlow<Boolean> get() = mutableIsCaughtUp
+
+    private val manualPollRequest = Channel<ManualPollRequestToken>()
 
     companion object {
-        private const val pollInterval: Long = 4000L
-        const val maxInactivityPeriod = 14 * 24 * 60 * 60 * 1000
+        private const val POLL_INTERVAL_MILLS: Long = 4000L
+        const val MAX_INACTIVITIY_PERIOD_MILLS = 14 * 24 * 60 * 60 * 1000L // 14 days
 
-        public fun handleRoomPollInfo(
+        private const val TAG = "OpenGroupPoller"
+
+        fun handleRoomPollInfo(
+            storage: StorageProtocol,
             server: String,
             roomToken: String,
             pollInfo: OpenGroupApi.RoomPollInfo,
             createGroupIfMissingWithPublicKey: String? = null
         ) {
-            val storage = MessagingModuleConfiguration.shared.storage
             val groupId = "$server.$roomToken"
             val dbGroupId = GroupUtil.getEncodedOpenGroupID(groupId.toByteArray())
             val existingOpenGroup = storage.getOpenGroup(roomToken, server)
@@ -133,79 +159,94 @@ class OpenGroupPoller(private val server: String, private val executorService: S
         }
     }
 
-    fun startIfNeeded() {
-        if (hasStarted) { return }
-        hasStarted = true
-        runId = UUID.randomUUID()
-        future = executorService?.schedule(::poll, 0, TimeUnit.MILLISECONDS)
-    }
+    init {
+        scope.launch {
+            while (true) {
+                // Wait until the app is visible before starting the polling,
+                // or when we receive a manual poll request
+                val token = merge(
+                    appVisibilityManager.isAppVisible.filter { it }.map { null },
+                    manualPollRequest.receiveAsFlow()
+                ).first()
 
-    fun stop() {
-        future?.cancel(false)
-        hasStarted = false
-    }
-
-    fun poll(isPostCapabilitiesRetry: Boolean = false): Promise<Unit, Exception> {
-        val currentRunId = runId
-        val storage = MessagingModuleConfiguration.shared.storage
-        val rooms = storage.getAllOpenGroups().values.filter { it.server == server }.map { it.room }
-
-        return OpenGroupApi.poll(rooms, server).successBackground { responses ->
-            responses.filterNot { it.body == null }.forEach { response ->
-                when (response.endpoint) {
-                    is Endpoint.Capabilities -> {
-                        handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
-                    }
-                    is Endpoint.RoomPollInfo -> {
-                        handleRoomPollInfo(server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
-                    }
-                    is Endpoint.RoomMessagesRecent -> {
-                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
-                    }
-                    is Endpoint.RoomMessagesSince  -> {
-                        handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
-                    }
-                    is Endpoint.Inbox, is Endpoint.InboxSince -> {
-                        handleDirectMessages(server, false, response.body as List<OpenGroupApi.DirectMessage>)
-                    }
-                    is Endpoint.Outbox, is Endpoint.OutboxSince -> {
-                        handleDirectMessages(server, true, response.body as List<OpenGroupApi.DirectMessage>)
-                    }
-                    else -> { /* We don't care about the result of any other calls (won't be polled for) */}
+                mutableIsCaughtUp.value = false
+                var delayDuration = POLL_INTERVAL_MILLS
+                try {
+                    Log.d(TAG, "Polling open group messages for server: $server")
+                    pollOnce()
+                    mutableIsCaughtUp.value = true
+                    token?.trySend(Result.success(Unit))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error while polling open group messages", e)
+                    delayDuration = 2000L
+                    token?.trySend(Result.failure(e))
                 }
-                if (secondToLastJob == null && !isCaughtUp) {
-                    isCaughtUp = true
-                }
-            }
 
-            // Only poll again if it's the same poller run
-            if (currentRunId == runId) {
-                future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
+                delay(delayDuration)
             }
-        }.fail {
-            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, currentRunId, it)
-        }.map { }
+        }
     }
 
-    private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, currentRunId: UUID, exception: Exception) {
+    private suspend fun pollOnce(isPostCapabilitiesRetry: Boolean = false) {
+        val rooms = storage.getAllOpenGroups()
+            .values
+            .asSequence()
+            .filter { it.server == server }
+            .map { it.room }
+            .toList()
+
+        try {
+            OpenGroupApi
+                .poll(rooms, server)
+                .await()
+                .asSequence()
+                .filterNot { it.body == null }
+                .forEach { response ->
+                    when (response.endpoint) {
+                        is Endpoint.Capabilities -> {
+                            handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
+                        }
+                        is Endpoint.RoomPollInfo -> {
+                            handleRoomPollInfo(storage, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
+                        }
+                        is Endpoint.RoomMessagesRecent -> {
+                            handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                        }
+                        is Endpoint.RoomMessagesSince  -> {
+                            handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
+                        }
+                        is Endpoint.Inbox, is Endpoint.InboxSince -> {
+                            handleDirectMessages(server, false, response.body as List<OpenGroupApi.DirectMessage>)
+                        }
+                        is Endpoint.Outbox, is Endpoint.OutboxSince -> {
+                            handleDirectMessages(server, true, response.body as List<OpenGroupApi.DirectMessage>)
+                        }
+                        else -> { /* We don't care about the result of any other calls (won't be polled for) */}
+                    }
+                }
+        } catch (e: Exception) {
+            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
+            throw e
+        }
+    }
+
+    suspend fun manualPollOnce() {
+        val token = Channel<Result<Unit>>()
+        manualPollRequest.send(token)
+        token.receive().getOrThrow()
+    }
+
+    private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, exception: Exception) {
         if (exception is OnionRequestAPI.HTTPRequestFailedBlindingRequiredException) {
             if (!isPostCapabilitiesRetry) {
                 OpenGroupApi.getCapabilities(server).map {
                     handleCapabilities(server, it)
                 }
-
-                // Only poll again if it's the same poller run
-                if (currentRunId == runId) {
-                    future = executorService?.schedule({ poll(isPostCapabilitiesRetry = true) }, pollInterval, TimeUnit.MILLISECONDS)
-                }
             }
-        } else if (currentRunId == runId) {
-            future = executorService?.schedule(this@OpenGroupPoller::poll, pollInterval, TimeUnit.MILLISECONDS)
         }
     }
 
     private fun handleCapabilities(server: String, capabilities: OpenGroupApi.Capabilities) {
-        val storage = MessagingModuleConfiguration.shared.storage
         storage.setServerCapabilities(server, capabilities.capabilities)
     }
     
@@ -216,7 +257,7 @@ class OpenGroupPoller(private val server: String, private val executorService: S
     ) {
         val sortedMessages = messages.sortedBy { it.seqno }
         sortedMessages.maxOfOrNull { it.seqno }?.let { seqNo ->
-            MessagingModuleConfiguration.shared.storage.setLastMessageServerID(roomToken, server, seqNo)
+            storage.setLastMessageServerID(roomToken, server, seqNo)
             OpenGroupApi.pendingReactions.removeAll { !(it.seqNo == null || it.seqNo!! > seqNo) }
         }
         val (deletions, additions) = sortedMessages.partition { it.deleted }
@@ -239,7 +280,6 @@ class OpenGroupPoller(private val server: String, private val executorService: S
         messages: List<OpenGroupApi.DirectMessage>
     ) {
         if (messages.isEmpty()) return
-        val storage = MessagingModuleConfiguration.shared.storage
         val serverPublicKey = storage.getOpenGroupPublicKey(server)!!
         val sortedMessages = messages.sortedBy { it.id }
         val lastMessageId = sortedMessages.last().id
@@ -281,22 +321,21 @@ class OpenGroupPoller(private val server: String, private val executorService: S
                     }
                     mappingCache[it.recipient] = mapping
                 }
-                val threadId = Message.getThreadId(message, null, MessagingModuleConfiguration.shared.storage, false)
+                val threadId = Message.getThreadId(message, null, storage, false)
                 MessageReceiver.handle(message, proto, threadId ?: -1, null, null)
             } catch (e: Exception) {
-                Log.e("Loki", "Couldn't handle direct message", e)
+                Log.e(TAG, "Couldn't handle direct message", e)
             }
         }
     }
 
     private fun handleNewMessages(server: String, roomToken: String, messages: List<OpenGroupMessage>) {
-        val storage = MessagingModuleConfiguration.shared.storage
         val openGroupID = "$server.$roomToken"
         val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
         // check thread still exists
         val threadId = storage.getThreadId(Address.fromSerialized(groupID)) ?: -1
         val threadExists = threadId >= 0
-        if (!hasStarted || !threadExists) { return }
+        if (!threadExists) { return }
         val envelopes =  mutableListOf<Triple<Long?, SignalServiceProtos.Envelope, Map<String, OpenGroupApi.Reaction>?>>()
         messages.sortedBy { it.serverID!! }.forEach { message ->
             if (!message.base64EncodedData.isNullOrEmpty()) {
@@ -329,7 +368,6 @@ class OpenGroupPoller(private val server: String, private val executorService: S
 
     private fun handleDeletedMessages(server: String, roomToken: String, serverIds: List<Long>) {
         val openGroupId = "$server.$roomToken"
-        val storage = MessagingModuleConfiguration.shared.storage
         val groupID = GroupUtil.getEncodedOpenGroupID(openGroupId.toByteArray())
         val threadID = storage.getThreadId(Address.fromSerialized(groupID)) ?: return
 
@@ -337,5 +375,10 @@ class OpenGroupPoller(private val server: String, private val executorService: S
             val deleteJob = OpenGroupDeleteJob(serverIds.toLongArray(), threadID, openGroupId)
             JobQueue.shared.add(deleteJob)
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(server: String, scope: CoroutineScope): OpenGroupPoller
     }
 }

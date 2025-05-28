@@ -122,7 +122,6 @@
     <string name="banUser">Utesteng bruker</string>
     <string name="banUserBanned">Bruker utestengt</string>
     <string name="block">Blokker</string>
-    <string name="blockBlockedDescription">Avblokker denne kontakten for å sende en beskjed.</string>
     <string name="blockBlockedNone">Ingen blokkerte kontakter</string>
     <string name="blockBlockedUser">Blokkerte {name}</string>
     <string name="blockDescription">Er du sikker på at du vil blokkere <b>{name} </b>? Blokkerte brukere kan ikke sende deg meldingsforespørsler, gruppeinvitasjoner eller ringe deg.</string>

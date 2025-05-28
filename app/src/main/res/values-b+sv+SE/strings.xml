@@ -142,7 +142,6 @@
     <string name="banUser">Bannlys användare</string>
     <string name="banUserBanned">Användare bannlyst</string>
     <string name="block">Blockera</string>
-    <string name="blockBlockedDescription">Avblockera denna kontakt för att skicka meddelanden.</string>
     <string name="blockBlockedNone">Inga blockerade kontakter</string>
     <string name="blockBlockedUser">Blockerade {name}</string>
     <string name="blockDescription">Är du säker på att du vill blockera <b>{name}</b>? Blockerade användare kan inte skicka meddelandeförfrågningar, gruppinbjudningar eller ringa dig.</string>

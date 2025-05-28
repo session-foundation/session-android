@@ -125,7 +125,6 @@
     <string name="banUser">禁言该用户</string>
     <string name="banUserBanned">用户已被封禁</string>
     <string name="block">屏蔽</string>
-    <string name="blockBlockedDescription">取消屏蔽此联系人以发送消息。</string>
     <string name="blockBlockedNone">没有屏蔽的联系人</string>
     <string name="blockBlockedUser">已屏蔽{name}</string>
     <string name="blockDescription">您确定要屏蔽<b>{name}</b>吗？被屏蔽的用户将无法向您发送消息请求、群聊邀请或者语音通话。</string>

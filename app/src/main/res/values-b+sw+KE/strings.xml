@@ -122,7 +122,6 @@
     <string name="banUser">Piga marufuku mtumiaji</string>
     <string name="banUserBanned">Mtumiaji amepigwa marufuku</string>
     <string name="block">Zuia</string>
-    <string name="blockBlockedDescription">Ondolea kizuizi kwa mawasiliano haya kutuma ujumbe.</string>
     <string name="blockBlockedNone">Hakuna mawasiliano yaliyofungiwa</string>
     <string name="blockBlockedUser">Amezuiliwa {name}</string>
     <string name="blockDescription">Una uhakika unataka kumzuia <b>{name}?</b> Watumiaji waliodhamiriwa hawawezi kukutumia maombi ya ujumbe, mialiko ya kikundi au kukupigia simu.</string>

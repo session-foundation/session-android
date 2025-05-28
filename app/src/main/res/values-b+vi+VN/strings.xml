@@ -139,7 +139,6 @@
     <string name="banUser">Cấm người dùng</string>
     <string name="banUserBanned">Người dùng bị cấm</string>
     <string name="block">Chặn</string>
-    <string name="blockBlockedDescription">Mở khóa người (liên lạc) này để gởi thông báo.</string>
     <string name="blockBlockedNone">Không có liên lạc bị chặn</string>
     <string name="blockBlockedUser">Đã chặn {name}</string>
     <string name="blockDescription">Bạn có chắc chắn rằng bạn muốn chặn <b>{name}?</b> Người dùng bị chặn không thể gửi yêu cầu tin nhắn, lời mời nhóm hoặc gọi cho bạn.</string>

@@ -122,7 +122,6 @@
     <string name="banUser">Onemogoči uporabnika</string>
     <string name="banUserBanned">Uporabnik je blokiran</string>
     <string name="block">Blokiraj</string>
-    <string name="blockBlockedDescription">Za pošiljanje sporočila morate najprej odblokirati ta stik.</string>
     <string name="blockBlockedNone">Ni blokiranih stikov</string>
     <string name="blockBlockedUser">Blokiram {name}</string>
     <string name="blockDescription">Ali ste prepričani, da želite blokirati <b>{name}?</b> Blokirani uporabniki vam ne morejo poslati zahtev za sporočila, povabil v skupino ali vas poklicati.</string>

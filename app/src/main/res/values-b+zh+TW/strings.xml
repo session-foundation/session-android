@@ -122,7 +122,6 @@
     <string name="banUser">封鎖用戶</string>
     <string name="banUserBanned">已封鎖用戶</string>
     <string name="block">封鎖</string>
-    <string name="blockBlockedDescription">解除封鎖聯絡人以傳送訊息。</string>
     <string name="blockBlockedNone">無已封鎖的聯絡人</string>
     <string name="blockBlockedUser">已封鎖 {name}</string>
     <string name="blockDescription">您確定要封鎖 <b>{name}</b> 嗎？被封鎖的使用者無法向您發送訊息請求、群組邀請或呼叫您。</string>

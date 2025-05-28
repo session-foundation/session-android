@@ -122,7 +122,6 @@
     <string name="banUser">მომხმარებლის დაბლოკვა</string>
     <string name="banUserBanned">მომხმარებელი დაბლოკილია</string>
     <string name="block">დაბლოკვა</string>
-    <string name="blockBlockedDescription">შეტყობინების გაგზავნისთვის ბლოკი მოხსენით.</string>
     <string name="blockBlockedNone">არ არის დაბლოკილი კონტაქტები</string>
     <string name="blockBlockedUser">დაბლოკილი {name}</string>
     <string name="blockDescription">დარწმუნებული ხართ, რომ გსურთ დაბლოკოთ <b>{name}?</b> დაბლოკილი მომხმარებლები ვერ გამოგიგზავნიან შეტყობინების მოთხოვნებს, ჯგუფის მოწვევებს ან ვერ დაგირეკავენ.</string>

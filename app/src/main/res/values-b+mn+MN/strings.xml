@@ -122,7 +122,6 @@
     <string name="banUser">Хэрэглэгчийг хориглох</string>
     <string name="banUserBanned">Хэрэглэгчийг хөндийлсөн</string>
     <string name="block">Хаах</string>
-    <string name="blockBlockedDescription">Түгжээг арилгаж, мессеж илгээх боломжтой болно.</string>
     <string name="blockBlockedNone">Хаасан контакт байхгүй</string>
     <string name="blockBlockedUser">{name} -г хориглосон</string>
     <string name="blockDescription">Та <b>{name}</b>-ийг хаахыг хүсэж байгаадаа итгэлтэй байна уу? Хаагдсан хэрэглэгчид танд мессеж хүсэлт илгээж, бүлгийн урилга илгээж эсвэл залгах боломжгүй.</string>

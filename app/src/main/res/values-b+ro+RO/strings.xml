@@ -122,7 +122,6 @@
     <string name="banUser">Interzice utilizatorul</string>
     <string name="banUserBanned">Utilizator interzis</string>
     <string name="block">Blochează</string>
-    <string name="blockBlockedDescription">Deblochează acest contact pentru a putea trimite mesaje.</string>
     <string name="blockBlockedNone">Nu aveți contacte blocate</string>
     <string name="blockBlockedUser">Blocat {name}</string>
     <string name="blockDescription">Ești sigur/ă că vrei să blochezi pe <b>{name}?</b> Utilizatorii blocați nu îți pot trimite solicitări de mesaje, invitații de grup sau să te apeleze.</string>

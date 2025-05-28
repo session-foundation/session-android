@@ -122,7 +122,6 @@
     <string name="banUser">Blokkeer Gebruiker</string>
     <string name="banUserBanned">Gebruiker verban</string>
     <string name="block">Blokkeer</string>
-    <string name="blockBlockedDescription">Deblokkeer hierdie kontak om \'n boodskap te stuur.</string>
     <string name="blockBlockedNone">Geen geblokkeerde kontakte</string>
     <string name="blockBlockedUser">{name} Geblokkeer</string>
     <string name="blockDescription">Is jy seker jy wil <b>{name} blokkeer?</b> Geblokkeerde gebruikers kan nie vir jou boodskapversoeke stuur, groepuitnodigings stuur of jou bel nie.</string>

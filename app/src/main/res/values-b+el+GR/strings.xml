@@ -122,7 +122,6 @@
     <string name="banUser">Αποκλεισμός Χρήστη</string>
     <string name="banUserBanned">Ο χρήστης αποκλείστηκε</string>
     <string name="block">Φραγή</string>
-    <string name="blockBlockedDescription">Καταργήστε τη φραγή αυτής τη επαφής για να στείλετε ένα μήνυμα.</string>
     <string name="blockBlockedNone">Καμία μπλοκαρισμένη επαφή</string>
     <string name="blockBlockedUser">Σε φραγή {name}</string>
     <string name="blockDescription">Είστε σίγουροι ότι θέλετε να θέσετε σε φραγή <b>{name}</b>; Οι μπλοκαρισμένοι χρήστες δεν μπορούν να σας στείλουν αιτήματα μηνύματα, προσκλήσεις ομάδας ή να σας καλέσουν.</string>

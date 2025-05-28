@@ -800,7 +800,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   }
 
   public synchronized boolean showCallMenu() {
-    return !isGroupOrCommunityRecipient() && hasApprovedMe();
+    return !isGroupOrCommunityRecipient() && hasApprovedMe() && isApproved();
   }
 
   @Override

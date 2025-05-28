@@ -122,7 +122,6 @@
     <string name="banUser">පරිශීලක තහනම් කරන්න</string>
     <string name="banUserBanned">පරිශීලක තහනම් කර ඇත.</string>
     <string name="block">අවහිර</string>
-    <string name="blockBlockedDescription">පණිවිඩය යැවීමට මෙම සබඳතාවය අනවහිර කරන්න.</string>
     <string name="blockBlockedNone">අවහිර කළ සබඳතා නැත</string>
     <string name="blockBlockedUser">අවහිර කළා {name}</string>
     <string name="blockDescription">ඔබට <b>{name}</b> ඔවුන් අවහිර කිරීමට අවශ්‍ය බව විශ්වාසද? අවහිර කළ පරිශීලකයින්ට ඔබට පණිවිඩ ඉල්ලීම්, සමූහ ආරාධනා හෝ ඇමතුම් යැවිය නොහැක.</string>

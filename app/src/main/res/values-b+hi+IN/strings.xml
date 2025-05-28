@@ -130,7 +130,6 @@
     <string name="banUser">प्रतिबंध उपयोगकर्ता</string>
     <string name="banUserBanned">उपयोगकर्ता प्रतिबंधित</string>
     <string name="block">खंड</string>
-    <string name="blockBlockedDescription">कोई संदेश भेजने के लिए इस संपर्क को अनवरोधित करें</string>
     <string name="blockBlockedNone">कोई अवरुद्ध संपर्क नहीं</string>
     <string name="blockBlockedUser">अवरोधित {name}</string>
     <string name="blockDescription">क्या आप वाकई <b>{name}</b> को ब्लॉक करना चाहते हैं? अवरोधित उपयोगकर्ता आपको संदेश अनुरोध नहीं भेज सकते, समूह निमंत्रण या कॉल नहीं कर सकते।</string>

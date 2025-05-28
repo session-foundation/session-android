@@ -122,7 +122,6 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">Omukozesa asazibwaamu</string>
     <string name="block">Block</string>
-    <string name="blockBlockedDescription">Sazaamu omukozesa kuno okusindika obubaka.</string>
     <string name="blockBlockedNone">Tolina mikutu</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Oli mbanankubye <b>{name} </b>? Abanankubize tebayinza kusindikidde obubaka, obubaka bw\'ekibinja oba okubakubira simu.</string>

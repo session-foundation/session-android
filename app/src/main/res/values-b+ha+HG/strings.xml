@@ -122,7 +122,6 @@
     <string name="banUser">Hana Mai Amfani</string>
     <string name="banUserBanned">Mai amfani ya kulle</string>
     <string name="block">To\'she</string>
-    <string name="blockBlockedDescription">Cire katanga wannan saduwa don aika saƙo.</string>
     <string name="blockBlockedNone">Babu an toshe lambobin sadarwa</string>
     <string name="blockBlockedUser">{name} an toshe</string>
     <string name="blockDescription">Kana tabbata kana so ka toshe <b>{name}?</b>? Ba za su iya aiko maka da roƙon saƙonni, gayyatar rukuni ko kira ba idan an toshe su.</string>

@@ -122,7 +122,6 @@
     <string name="banUser">I-ban ang user</string>
     <string name="banUserBanned">Na-ban ang user</string>
     <string name="block">I-block</string>
-    <string name="blockBlockedDescription">I-unblock ang contact na ito upang magpadala ng mensahe.</string>
     <string name="blockBlockedNone">Walang naka-block na contact</string>
     <string name="blockBlockedUser">Naka-block {name}</string>
     <string name="blockDescription">Sigurado ka bang gusto mong i-block si <b>{name}?</b> Ang mga na-block na gumagamit ay hindi maaaring magpadala sa iyo ng mga kahilingan sa mensahe, mga paanyaya sa grupo, o tumawag sa iyo.</string>

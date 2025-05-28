@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayoutMediator
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +28,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.ui.getSubbedString
-import org.thoughtcrime.securesms.util.ConfigurationMessageUtilities
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class JoinCommunityFragment : Fragment() {
@@ -39,6 +38,9 @@ class JoinCommunityFragment : Fragment() {
     lateinit var delegate: StartConversationDelegate
 
     var lastUrl: String? = null
+
+    @Inject
+    lateinit var openGroupManager: OpenGroupManager
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -104,7 +106,7 @@ class JoinCommunityFragment : Fragment() {
                     try {
                         val sanitizedServer = openGroup.server.removeSuffix("/")
                         val openGroupID = "$sanitizedServer.${openGroup.room}"
-                        OpenGroupManager.add(
+                        openGroupManager.add(
                             sanitizedServer,
                             openGroup.room,
                             openGroup.serverPublicKey,

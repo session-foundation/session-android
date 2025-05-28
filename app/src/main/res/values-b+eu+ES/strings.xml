@@ -122,7 +122,6 @@
     <string name="banUser">Ban User</string>
     <string name="banUserBanned">Erabiltzailea debekatu da</string>
     <string name="block">Block</string>
-    <string name="blockBlockedDescription">Kontaktu hau desblokeatu mezu bat bidaltzeko.</string>
     <string name="blockBlockedNone">Ez dago blokeatutako kontakturik</string>
     <string name="blockBlockedUser">Blocked {name}</string>
     <string name="blockDescription">Ziur zaude <b>{name}</b> blokeatu nahi duzula? Erabiltzaile blokeatuek ezin dizkizute mezu-eskaerak, talde-gonbidapenak bidali edo deiak egin.</string>

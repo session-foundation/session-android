@@ -122,7 +122,6 @@
     <string name="banUser">Blokeeri kasutaja</string>
     <string name="banUserBanned">Kasutaja blokeerimine</string>
     <string name="block">Blokeeri</string>
-    <string name="blockBlockedDescription">Sõnumi saatmiseks eemalda selle kontakti blokeering.</string>
     <string name="blockBlockedNone">Blokeeritud kontakte pole</string>
     <string name="blockBlockedUser">Blokeeritud {name}</string>
     <string name="blockDescription">Kas olete kindel, et soovite blokeerida <b>{name}</b>? Blokeeritud kasutajad ei saa teile saata sõnumitaotlusi, grupikutseid ega helistada.</string>

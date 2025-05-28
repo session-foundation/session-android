@@ -123,6 +123,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var clock: SnodeClock
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -282,7 +283,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
-                    OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
                 }
 
@@ -606,6 +606,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             markAllAsRead(thread)
         }
+        bottomSheet.onDeleteContactTapped = {
+            bottomSheet.dismiss()
+            confirmDeleteContact(thread)
+        }
         bottomSheet.show(supportFragmentManager, bottomSheet.tag)
     }
 
@@ -642,6 +646,22 @@ class HomeActivity : ScreenLockActionBarActivity(),
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
+            }
+            cancelButton()
+        }
+    }
+
+    private fun confirmDeleteContact(thread: ThreadRecord) {
+        showSessionDialog {
+            title(R.string.contactDelete)
+            text(
+                Phrase.from(context, R.string.deleteContactDescription)
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .format()
+            )
+            dangerButton(R.string.delete, R.string.qa_conversation_settings_dialog_delete_contact_confirm) {
+                homeViewModel.deleteContact(thread.recipient.address.toString())
             }
             cancelButton()
         }
@@ -698,7 +718,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // Delete the conversation
                 val community = lokiThreadDatabase.getOpenGroupChat(threadID)
                 if (community != null) {
-                    OpenGroupManager.delete(community.server, community.room, context)
+                    openGroupManager.delete(community.server, community.room, context)
                 } else {
                     lifecycleScope.launch(Dispatchers.Default) {
                         storage.deleteConversation(threadID)

@@ -128,7 +128,6 @@
     <string name="banUser">Kullanıcıyı Engelle</string>
     <string name="banUserBanned">Kullanıcı yasaklandı</string>
     <string name="block">Engelle</string>
-    <string name="blockBlockedDescription">İleti göndermek için bu kişinin engellenmesini kaldırın.</string>
     <string name="blockBlockedNone">Engellenmiş kişi yok</string>
     <string name="blockBlockedUser">{name} engellendi</string>
     <string name="blockDescription"><b>{name}</b>\'i engellemek istediğinizden emin misiniz? Engelli kullanıcılar size ileti isteği gönderemez, grup davetiyeleri gönderemez veya sizi arayamaz.</string>

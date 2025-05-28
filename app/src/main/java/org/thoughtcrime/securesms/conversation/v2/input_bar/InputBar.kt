@@ -21,6 +21,8 @@ import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
+import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -70,7 +72,7 @@ class InputBar @JvmOverloads constructor(
                 showOrHideInputIfNeeded()
             }
         }
-    var allowAttachMultimediaButtons: Boolean = true
+    private var allowAttachMultimediaButtons: Boolean = true
         set(value) {
             field = value
             updateMultimediaButtonsState()
@@ -160,10 +162,6 @@ class InputBar @JvmOverloads constructor(
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
-
-        binding.blockedBanner.setSafeOnClickListener {
-            delegate?.unblockUserFromInput()
-        }
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
@@ -281,9 +279,36 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setEditableFactory(factory)
     }
 
-    fun setBlockedState(blocked: Boolean){
-        binding.inputBarEditText.isVisible = !blocked
-        binding.blockedBanner.isVisible = blocked
+    fun setState(state: InputBarState){
+        // handle content state
+        when(state.contentState){
+            is InputBarContentState.Hidden ->{
+                isVisible = false
+            }
+
+            is InputBarContentState.Disabled ->{
+                isVisible = true
+                binding.inputBarEditText.isVisible = false
+                binding.disabledBanner.isVisible = true
+                binding.disabledText.text = state.contentState.text
+                if(state.contentState.onClick == null){
+                    binding.disabledBanner.setOnClickListener(null)
+                } else {
+                    binding.disabledBanner.setOnClickListener {
+                        state.contentState.onClick()
+                    }
+                }
+            }
+
+            else -> {
+                isVisible = true
+                binding.inputBarEditText.isVisible = true
+                binding.disabledBanner.isVisible = false
+            }
+        }
+
+        // handle buttons state
+        allowAttachMultimediaButtons = state.enableAttachMediaControls
     }
 }
 
@@ -296,6 +321,5 @@ interface InputBarDelegate {
     fun onMicrophoneButtonCancel(event: MotionEvent)
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
-    fun unblockUserFromInput()
     fun commitInputContent(contentUri: Uri)
 }

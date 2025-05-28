@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
@@ -32,9 +33,10 @@ class AppModule {
     @Provides
     @Singleton
     fun provideMessageNotifier(
-        avatarUtils: AvatarUtils
+        avatarUtils: AvatarUtils,
+        openGroupPollerManager: OpenGroupPollerManager,
     ): MessageNotifier {
-        return OptimizedMessageNotifier(DefaultMessageNotifier(avatarUtils))
+        return OptimizedMessageNotifier(DefaultMessageNotifier(avatarUtils), openGroupPollerManager)
     }
 }
 

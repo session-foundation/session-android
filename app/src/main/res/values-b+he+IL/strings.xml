@@ -122,7 +122,6 @@
     <string name="banUser">חסום משתמש</string>
     <string name="banUserBanned">משתמש נחסם</string>
     <string name="block">חסום</string>
-    <string name="blockBlockedDescription">בטל חסימה של איש קשר זה כדי לשלוח הודעה.</string>
     <string name="blockBlockedNone">אין אנשי קשר חסומים</string>
     <string name="blockBlockedUser">נחסם {name}</string>
     <string name="blockDescription">האם אתה בטוח שברצונך לחסום את <b>{name}?</b> משתמשים חסומים אינם יכולים לשלוח לך בקשות הודעות, הזמנות לקבוצות או להתקשר אליך.</string>

@@ -127,7 +127,6 @@
     <string name="banUser">사용자 차단</string>
     <string name="banUserBanned">사용자 금지됨</string>
     <string name="block">차단</string>
-    <string name="blockBlockedDescription">보내기 차단 해제하기</string>
     <string name="blockBlockedNone">차단된 연락처가 없습니다.</string>
     <string name="blockBlockedUser">{name} 차단됨</string>
     <string name="blockDescription">Are you sure you want to block <b>{name}?</b> Blocked users cannot send you message requests, group invites or call you.</string>

@@ -18,7 +18,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import org.session.libsession.messaging.MessagingModuleConfiguration
-import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller.Companion.maxInactivityPeriod
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller.Companion.MAX_INACTIVITIY_PERIOD_MILLS
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.OnionResponse
 import org.session.libsession.snode.SnodeAPI
@@ -623,7 +623,7 @@ object OpenGroupApi {
         val context = MessagingModuleConfiguration.shared.context
         val timeSinceLastOpen = this.timeSinceLastOpen
         val shouldRetrieveRecentMessages = (hasPerformedInitialPoll[server] != true
-                && timeSinceLastOpen > maxInactivityPeriod)
+                && timeSinceLastOpen > MAX_INACTIVITIY_PERIOD_MILLS)
         hasPerformedInitialPoll[server] = true
         if (!hasUpdatedLastOpenDate) {
             hasUpdatedLastOpenDate = true

@@ -122,7 +122,6 @@
     <string name="banUser">Estä käyttäjä</string>
     <string name="banUserBanned">Käyttäjä estettiin</string>
     <string name="block">Estä</string>
-    <string name="blockBlockedDescription">Lähettääksesi viestin tälle yhteystiedolle sinun tulee ensin poistaa asettamasi esto.</string>
     <string name="blockBlockedNone">Ei estettyjä yhteystietoja</string>
     <string name="blockBlockedUser">Estetty {name}</string>
     <string name="blockDescription">Haluatko varmasti estää käyttäjän <b>{name}</b>? Estetyt käyttäjät eivät voi lähettää sinulle viestipyyntöjä, ryhmäkutsuja tai soittaa sinulle.</string>

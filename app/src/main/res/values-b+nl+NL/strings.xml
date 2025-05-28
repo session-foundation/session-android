@@ -142,7 +142,6 @@
     <string name="banUser">Gebruiker verbannen</string>
     <string name="banUserBanned">Gebruiker verbannen</string>
     <string name="block">Blokkeren</string>
-    <string name="blockBlockedDescription">Deblokkeer dit contact om een bericht te verzenden.</string>
     <string name="blockBlockedNone">Geen geblokkeerde contactpersonen</string>
     <string name="blockBlockedUser">{name} geblokkeerd</string>
     <string name="blockDescription">Weet u zeker dat u <b>{name}</b> wilt blokkeren? Geblokkeerde gebruikers kunnen u geen berichtverzoeken, groepsuitnodiging sturen of bellen.</string>

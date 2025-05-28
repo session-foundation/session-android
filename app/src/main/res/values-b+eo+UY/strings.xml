@@ -122,7 +122,6 @@
     <string name="banUser">Forbari uzanton</string>
     <string name="banUserBanned">Uzanto forigita</string>
     <string name="block">Bloki</string>
-    <string name="blockBlockedDescription">Malbloki tiun kontakton por sendi mesaĝon.</string>
     <string name="blockBlockedNone">Neniu blokata kontakto</string>
     <string name="blockBlockedUser">Blokis {name}</string>
     <string name="blockDescription">Ĉu vi certas, ke vi volas bloki <b>{name}</b>? Blokitaj uzantoj ne povas sendi al vi mesaĝpetojn, grupinvitadojn aŭ telefonvokojn.</string>

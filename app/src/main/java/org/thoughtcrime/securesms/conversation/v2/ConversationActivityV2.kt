@@ -261,6 +261,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var groupManagerV2: GroupManagerV2
     @Inject lateinit var typingStatusRepository: TypingStatusRepository
     @Inject lateinit var typingStatusSender: TypingStatusSender
+    @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var attachmentDatabase: AttachmentDatabase
 
     override val applyDefaultWindowInsets: Boolean
@@ -682,6 +683,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         }
                         startActivity(intent)
                     }
+
+                    is ConversationUiEvent.ShowUnblockConfirmation -> {
+                        unblock()
+                    }
                 }
             }
         }
@@ -715,8 +720,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
-
-        //todo AVATAR Old code was force refreshing avatar here. Is it needed?
     }
 
     override fun onPause() {
@@ -1098,12 +1101,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.inputBar.run {
-                        isVisible = state.showInput
-                        allowAttachMultimediaButtons = state.enableAttachMediaControls
-                        // if the user is blocked, hide input and show blocked message
-                        setBlockedState(state.userBlocked)
-                    }
+                    binding.inputBar.setState(state.inputBarState)
 
                     binding.root.requestApplyInsets()
 
@@ -1204,7 +1202,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
             showSessionDialog {
                 title(R.string.delete)
-                text(resources.getString(R.string.messageRequestsDelete))
+                text(resources.getString(R.string.messageRequestsContactDelete))
                 dangerButton(R.string.delete) { doDecline() }
                 button(R.string.cancel)
             }
@@ -1517,10 +1515,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    override fun unblockUserFromInput() {
-        unblock()
-    }
-
     fun unblock() {
         val recipient = viewModel.recipient ?: return Log.w("Loki", "Recipient was null for unblock action")
 
@@ -1559,7 +1553,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             adapter = adapter,
             threadID = viewModel.threadId,
             context = this,
-            deprecationManager = viewModel.legacyGroupDeprecationManager
+            deprecationManager = viewModel.legacyGroupDeprecationManager,
+            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         actionModeCallback.updateActionModeMenu(actionMode.menu)
@@ -1583,7 +1578,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             adapter = adapter,
             threadID = viewModel.threadId,
             context = this,
-            deprecationManager = viewModel.legacyGroupDeprecationManager
+            deprecationManager = viewModel.legacyGroupDeprecationManager,
+            openGroupManager = openGroupManager,
         )
         actionModeCallback.delegate = this
         if(binding.searchBottomBar.isVisible) onSearchClosed()
@@ -1939,7 +1935,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-                OpenGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
+                openGroupManager.isUserModerator(
+                    openGroup.id,
+                    userPublicKey,
+                    viewModel.blindedPublicKey
+                )
             } ?: false
             val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)

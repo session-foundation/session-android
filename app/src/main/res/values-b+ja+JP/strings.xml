@@ -122,7 +122,6 @@
     <string name="banUser">ユーザーを禁止する</string>
     <string name="banUserBanned">ユーザーが禁止されました</string>
     <string name="block">ブロック</string>
-    <string name="blockBlockedDescription">この連絡先にメッセージを送るためにブロックを解除する。</string>
     <string name="blockBlockedNone">ブロックしている連絡先はありません</string>
     <string name="blockBlockedUser">{name} をブロックしました</string>
     <string name="blockDescription">本当に<b>{name}</b>をブロックしますか？ブロックされたユーザーは、メッセージリクエスト、グループ招待や通話を送ることができません。</string>

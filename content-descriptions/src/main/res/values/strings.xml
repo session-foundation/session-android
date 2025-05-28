@@ -102,6 +102,8 @@
     <string name="qa_conversation_settings_notifications_radio_mute">notifications-mute-radio-button</string>
     <string name="qa_conversation_settings_notifications_radio_muted_until">notifications-muted-until-radio-button</string>
     <string name="qa_conversation_settings_notifications_radio_forever">notifications-forever-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_1m">notifications-one-minute-time-option</string>
+    <string name="qa_conversation_settings_notifications_radio_5m">notifications-five-minute-time-option</string>
     <string name="qa_conversation_settings_notifications_radio_1h">notifications-one-hour-time-option</string>
     <string name="qa_conversation_settings_notifications_radio_2h">notifications-two-hours-time-option</string>
     <string name="qa_conversation_settings_notifications_radio_1d">notifications-one-day-time-option</string>

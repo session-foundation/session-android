@@ -153,7 +153,6 @@
     <string name="banUserBanned">Uživatel zablokován</string>
     <string name="banUserDescription">Zadejte ID účtu uživatele, kterého chcete blokovat</string>
     <string name="block">Blokovat</string>
-    <string name="blockBlockedDescription">Pro odeslání zprávy tento kontakt odblokujte.</string>
     <string name="blockBlockedNone">Žádné blokované kontakty</string>
     <string name="blockBlockedUser">Blokovat {name}</string>
     <string name="blockDescription">Jste si jisti, že chcete zablokovat <b>{name}</b>? Zablokovaní uživatelé vám nemohou posílat žádosti o komunikaci, pozvánky do skupin ani vám nemohou volat.</string>

@@ -87,6 +87,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var usernameUtils: UsernameUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -229,7 +230,11 @@ class VisibleMessageView : FrameLayout {
                     } else {
                         standardPublicKey = senderAccountID
                     }
-                    val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
+                    val isModerator = openGroupManager.isUserModerator(
+                        openGroup.groupId,
+                        standardPublicKey,
+                        blindedPublicKey
+                    )
                     binding.moderatorIconImageView.isVisible = isModerator
                 }
                 else if (thread.isLegacyGroupRecipient) { // legacy groups

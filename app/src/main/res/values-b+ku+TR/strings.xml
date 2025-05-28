@@ -122,7 +122,6 @@
     <string name="banUser">دەسەڵاتدانە کەسی</string>
     <string name="banUserBanned">بەکارهێنەر بەرچاوکرا</string>
     <string name="block">دووری دەخەیتەوە‬</string>
-    <string name="blockBlockedDescription">ئەم پەیوەندە لابردن بۆ بریتیە لە ناردنی پەیامێک.</string>
     <string name="blockBlockedNone">هیچ پەیوەندیکەرێکی بڵاوکراو نییە</string>
     <string name="blockBlockedUser">{name} دوورکرایەوە</string>
     <string name="blockDescription">دڵنیایت لەوەی ناو بەچەندەی <b>{name} </b>? بەچەندەکانی بەچەرمی نەتوانێ بمەMarker دووبارە.</string>

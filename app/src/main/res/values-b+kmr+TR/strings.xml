@@ -126,7 +126,6 @@
     <string name="banUser">Bikarhênerê Asteng bike</string>
     <string name="banUserBanned">Bikarhênker astengî bû</string>
     <string name="block">Blok bike</string>
-    <string name="blockBlockedDescription">Ji bo şandina peyamê vê bloka vî kontaktê rake.</string>
     <string name="blockBlockedNone">Kontaktên astengkirî nehatin dîtin</string>
     <string name="blockBlockedUser">{name} asteng kir</string>
     <string name="blockDescription">Tu piştrast î ku tu dixwazî <b>{name}</b> blok bikî? Bikarhênerên blokkirî nikarin daxwazên peyamê bişînin, dawetên li grûban bişînin an telefona te bikin.</string>

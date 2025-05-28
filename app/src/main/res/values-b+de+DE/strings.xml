@@ -142,7 +142,6 @@
     <string name="banUser">Mitglied blockieren</string>
     <string name="banUserBanned">Mitglied gesperrt</string>
     <string name="block">Blockieren</string>
-    <string name="blockBlockedDescription">Gib die Blockierung dieses Kontakts frei, um eine Nachricht zu senden.</string>
     <string name="blockBlockedNone">Keine blockierten Kontakte</string>
     <string name="blockBlockedUser">Blockiert {name}</string>
     <string name="blockDescription">Möchtest du <b>{name}</b> blockieren? Blockierte Personen können dir keine Nachrichtenanfragen, Gruppeneinladungen oder Anrufe senden.</string>

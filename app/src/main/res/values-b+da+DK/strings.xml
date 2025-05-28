@@ -146,7 +146,6 @@
     <string name="banUserBanned">Bruger bandlyst</string>
     <string name="banUserDescription">Indtast konto-ID\'et for den bruger, du vil blokere</string>
     <string name="block">Bloker</string>
-    <string name="blockBlockedDescription">Fjern blokering af denne kontakt for at sende en besked.</string>
     <string name="blockBlockedNone">Ingen blokerede kontakter</string>
     <string name="blockBlockedUser">Blokeret {name}</string>
     <string name="blockDescription">Er du sikker på, at du vil blokere <b>{name}?</b> Blokerede brugere kan ikke sende dig beskedanmodninger, gruppeinvitationer eller ringe til dig.</string>

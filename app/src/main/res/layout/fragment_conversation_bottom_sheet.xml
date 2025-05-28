@@ -98,4 +98,12 @@
         app:drawableTint="?attr/colorControlNormal"
         tools:drawableStartCompat="@drawable/ic_trash_2" />
 
+    <TextView
+        android:id="@+id/deleteContactTextView"
+        style="@style/BottomSheetActionItem"
+        android:contentDescription="@string/qa_conversation_settings_delete_contact"
+        android:text="@string/contactDelete"
+        app:drawableTint="?attr/colorControlNormal"
+        app:drawableStartCompat="@drawable/ic_user_round_trash" />
+
 </LinearLayout>

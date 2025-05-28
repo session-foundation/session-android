@@ -40,9 +40,8 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.SearchToolbar
 import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener
-import org.thoughtcrime.securesms.contacts.ContactSelectionListFragment
-import org.thoughtcrime.securesms.contacts.ContactSelectionListFragment.OnContactSelectedListener
-import org.thoughtcrime.securesms.contacts.ContactSelectionListLoader
+import org.thoughtcrime.securesms.contacts.ShareContactListFragment
+import org.thoughtcrime.securesms.contacts.ShareContactListFragment.OnContactSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -68,7 +67,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
          get() = false
 
     // Lateinit UI elements
-    private lateinit var contactsFragment: ContactSelectionListFragment
+    private lateinit var contactsFragment: ShareContactListFragment
     private lateinit var searchToolbar: SearchToolbar
     private lateinit var searchAction: ImageView
     private lateinit var progressWheel: View
@@ -81,7 +80,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
     override fun onCreate(icicle: Bundle?, ready: Boolean) {
 
-        intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
+        intent.putExtra(ShareContactListFragment.REFRESHABLE, false)
 
         setContentView(R.layout.share_activity)
 
@@ -138,7 +137,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         progressWheel = findViewById<View>(R.id.progress_wheel)
         searchToolbar = findViewById<SearchToolbar>(R.id.search_toolbar)
         searchAction = findViewById<ImageView>(R.id.search_action)
-        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment
+        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ShareContactListFragment
         contactsFragment.onContactSelectedListener = this
     }
 

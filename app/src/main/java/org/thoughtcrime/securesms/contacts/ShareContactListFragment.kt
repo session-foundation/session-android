@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -12,18 +11,17 @@ import androidx.fragment.app.Fragment
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
-import network.loki.messenger.databinding.ContactSelectionListFragmentBinding
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
-import network.loki.messenger.R
+import network.loki.messenger.databinding.ShareContactListFragmentBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.utilities.Log
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<ContactSelectionListItem>>, ContactClickListener {
-    private lateinit var binding: ContactSelectionListFragmentBinding
+class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<ContactSelectionListItem>>, ContactClickListener {
+    private lateinit var binding: ShareContactListFragmentBinding
     private var cursorFilter: String? = null
     var onContactSelectedListener: OnContactSelectedListener? = null
 
@@ -57,7 +55,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        binding = ContactSelectionListFragmentBinding.inflate(inflater, container, false)
+        binding = ShareContactListFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -91,7 +89,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
     }
 
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
-        return ContactSelectionListLoader(
+        return ShareContactListLoader(
             context = requireActivity(),
             mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
@@ -109,7 +107,7 @@ class ContactSelectionListFragment : Fragment(), LoaderManager.LoaderCallbacks<L
 
     private fun update(items: List<ContactSelectionListItem>) {
         if (activity?.isDestroyed == true) {
-            Log.e(ContactSelectionListFragment::class.java.name,
+            Log.e(ShareContactListFragment::class.java.name,
                     "Received a loader callback after the fragment was detached from the activity.",
                     IllegalStateException())
             return

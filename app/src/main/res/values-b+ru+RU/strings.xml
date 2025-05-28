@@ -144,7 +144,6 @@
     <string name="banUser">Забанить пользователя</string>
     <string name="banUserBanned">Пользователь забанен</string>
     <string name="block">Блокировка</string>
-    <string name="blockBlockedDescription">Разблокируйте этот контакт, чтобы отправить сообщение.</string>
     <string name="blockBlockedNone">Нет заблокированных контактов</string>
     <string name="blockBlockedUser">Заблокирован {name}</string>
     <string name="blockDescription">Вы уверены, что хотите заблокировать <b>{name}?</b> Заблокированные пользователи не смогут отправлять вам запросы сообщений, приглашения в группы, а также звонить вам.</string>

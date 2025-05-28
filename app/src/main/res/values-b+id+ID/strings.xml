@@ -128,7 +128,6 @@
     <string name="banUser">Larang pengguna</string>
     <string name="banUserBanned">Pengguna diblokir</string>
     <string name="block">Blokir</string>
-    <string name="blockBlockedDescription">Lepaskan blokir kontak ini untuk mengirim pesan.</string>
     <string name="blockBlockedNone">Tidak ada kontak yang diblokir</string>
     <string name="blockBlockedUser">Blokir {name}</string>
     <string name="blockDescription">Apakah Anda yakin ingin memblokir <b>{name}?</b> Pengguna yang diblokir tidak bisa mengirimkan Anda permintaan pesan, undangan grup, atau menelepon Anda.</string>

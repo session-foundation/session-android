@@ -122,7 +122,6 @@
     <string name="banUser">သုံးစွဲသူကို ပိတ်ဆို့မည်</string>
     <string name="banUserBanned">အသုံးပြုသူကို ပိတ်မည်</string>
     <string name="block">ဘလော့ပါ</string>
-    <string name="blockBlockedDescription">မက်ဆေ့ချ် ပို့ရန်အတွက်ဤဆက်သွယ်မှုသို့ ဘလော့ကိုဖြေပါ။</string>
     <string name="blockBlockedNone">ဘလော့လုပ်ထားသော ဆက်သွယ်မှုမရှိ</string>
     <string name="blockBlockedUser">{name} မှ ဘလော့ ခံထားသည်</string>
     <string name="blockDescription">သင် <b>{name} </b> ကို ဘလော့ခ်ချင်တာ သေချာရဲ ့လား? ဘလော့ခ်ထားတဲ့ လူတွေက မက်ဆေ့ချ်လာပို့ခွင့်၊အဖွဲ့ခေါ်ခံရခွင့် နဲ့ဖုန်းခေါ်ရခွင့် ရနိုင်မှာမဟုတ်ပါဘူး။</string>

@@ -116,7 +116,6 @@
     <string name="banUser">Aizliegt lietotāju</string>
     <string name="banUserBanned">Lietotājs bloķēts</string>
     <string name="block">Bloķēt</string>
-    <string name="blockBlockedDescription">Atbloķējiet šo kontaktu, lai nosūtītu ziņojumu.</string>
     <string name="blockBlockedNone">Nav bloķētu kontaktu</string>
     <string name="blockBlockedUser">Bloķēts {name}</string>
     <string name="blockDescription">Vai esat pārliecināts, ka vēlaties bloķēt <b>{name}?</b> Bloķētie lietotāji nevarēs jums nosūtīt ziņojumu pieprasījumus, grupu uzaicinājumus vai zvanīt jums.</string>

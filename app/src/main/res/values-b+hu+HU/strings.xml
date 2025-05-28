@@ -122,7 +122,6 @@
     <string name="banUser">Felhasználó kitiltása</string>
     <string name="banUserBanned">Felhasználó kitiltva</string>
     <string name="block">Letiltás</string>
-    <string name="blockBlockedDescription">Üzenet küldéséhez oldd fel a kontakt letiltását.</string>
     <string name="blockBlockedNone">Nincsenek blokkolt kontaktok</string>
     <string name="blockBlockedUser">{name} letiltva</string>
     <string name="blockDescription">Biztos, hogy blokkolni szeretnéd <b>{name}</b>-t? A blokkolt felhasználók nem küldhetnek üzenetkérelmeket, csoportmeghívókat, és nem hívhatnak fel.</string>

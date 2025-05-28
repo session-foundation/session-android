@@ -122,7 +122,6 @@
     <string name="banUser">کاروونکی بند کړئ</string>
     <string name="banUserBanned">کارن بندیز شو</string>
     <string name="block">بلاک</string>
-    <string name="blockBlockedDescription">د پیغام استولو لپاره له دې اړیکې بې بندیز وکړئ.</string>
     <string name="blockBlockedNone">هیڅ بند شوي اړیکې نشته</string>
     <string name="blockBlockedUser">{name} بلاک کړ</string>
     <string name="blockDescription">آیا تاسې ډاډه یاست چې غواړئ <b>{name}‌</b> بلاک کړئ؟ بلاک شوي کاروونکي تاسو ته د پیغام غوښتنې، د ډلې بلنې یا زنګ وهلو وړتیا نه لري.</string>

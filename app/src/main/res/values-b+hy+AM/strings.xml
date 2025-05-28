@@ -122,7 +122,6 @@
     <string name="banUser">Արգելել օգտատիրոջը</string>
     <string name="banUserBanned">Օգտատեր արգելափակվել է</string>
     <string name="block">Արգելափակել</string>
-    <string name="blockBlockedDescription">Արգելաբացել այս կոնտակտը հաղորդագրություն ուղարկելու համար։</string>
     <string name="blockBlockedNone">Արգելափակված կոնտակտներ չկան</string>
     <string name="blockBlockedUser">Արգելափակվել է {name}֊ը</string>
     <string name="blockDescription">Վստա՞հ եք, որ ցանկանում եք արգելափակել <b>{name}?</b> Արգելափակված օգտատերերը չեն կարող հաղորդագրության հարցումներ, խմբի հրավերներ կամ զանգեր ուղարկել ձեզ։</string>

@@ -122,7 +122,6 @@
     <string name="banUser">صارف کو بین کریں</string>
     <string name="banUserBanned">صارف بین کیا گیا</string>
     <string name="block">بلاک کریں</string>
-    <string name="blockBlockedDescription">پیغام بھیجنے کے لیے اس رابطے کو ان بلاک کریں.</string>
     <string name="blockBlockedNone">کوئی بلاک شدہ رابطہ نہیں ہے</string>
     <string name="blockBlockedUser">{name} کو بلاک کر دیا گیا</string>
     <string name="blockDescription">کیا آپ واقعی <b>{name}</b> کو بلاک کرنا چاہتے ہیں؟ بلاک کئے گئے صارفین آپ کو میسیج کی درخواستیں، گروپ دعوتیں یا کال نہیں بھیج سکتے۔</string>

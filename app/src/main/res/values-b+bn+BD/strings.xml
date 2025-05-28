@@ -122,7 +122,6 @@
     <string name="banUser">ব্যবহারকারীকে ব্যান করুন</string>
     <string name="banUserBanned">ইউজার ব্যান করা হয়েছে</string>
     <string name="block">ব্লক</string>
-    <string name="blockBlockedDescription">মেসেজ পাঠাতে এই কন্টাক্টটি আনব্লক করুন।</string>
     <string name="blockBlockedNone">কোনো ব্লক করা যোগাযোগ নেই</string>
     <string name="blockBlockedUser">{name} কে ব্লক করবেন</string>
     <string name="blockDescription">আপনি কি নিশ্চিত যে আপনি <b>{name}</b> কে ব্লক করতে চান? ব্লক করা ব্যবহারকারীরা আপনাকে বার্তা অনুরোধ, গ্রুপ আমন্ত্রণ বা কল করতে পারবেন না।</string>

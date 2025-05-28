@@ -122,7 +122,6 @@
     <string name="banUser">مسدود کردن کاربر</string>
     <string name="banUserBanned">کاربر ممنوع شد</string>
     <string name="block">مسدود کردن</string>
-    <string name="blockBlockedDescription">برای ارسال پیام،‌ ابتدا این مخاطب را از مسدود بودن درآورید!</string>
     <string name="blockBlockedNone">هیج مخاطبی مسدود نشده</string>
     <string name="blockBlockedUser">مسدود شد {name}</string>
     <string name="blockDescription">آیا مطمئنید می‌خواهید <b>{name} را مسدود کنید؟</b> کاربران مسدود شده نمی‌توانند درخواست پیام، دعوت گروهی یا تماس ارسال کنند.</string>

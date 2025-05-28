@@ -471,7 +471,7 @@ class DefaultConversationRepository @Inject constructor(
                     approved = false
                 )
             } else {
-                storage.deleteConversation(threadId)
+                storage.deleteContactAndSyncConfig(recipient.address.toString())
             }
         }
     }

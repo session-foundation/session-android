@@ -122,7 +122,6 @@
     <string name="banUser">Drausti naudotoją</string>
     <string name="banUserBanned">Vartotojas užblokuotas</string>
     <string name="block">Užblokuoti</string>
-    <string name="blockBlockedDescription">Atblokuokite šį kontaktą, kad išsiųstumėte žinutę.</string>
     <string name="blockBlockedNone">Nėra užblokuotų adresatų</string>
     <string name="blockBlockedUser">Užblokuotas {name}</string>
     <string name="blockDescription">Ar tikrai norite užblokuoti <b>{name}</b>? Užblokuoti naudotojai negali siųsti žinučių užklausų, grupių kvietimų ar skambinti jums.</string>

@@ -143,7 +143,6 @@
     <string name="banUser">منع المستخدم</string>
     <string name="banUserBanned">تم منع المستخدم</string>
     <string name="block">حظر</string>
-    <string name="blockBlockedDescription">إلغاء حظر جهة الإتصال لإرسال رسالة</string>
     <string name="blockBlockedNone">لا توجد جهات اتصال محظورة</string>
     <string name="blockBlockedUser">تم حظر {name}</string>
     <string name="blockDescription">هل أنت متأكد من حظر <b>{name}؟</b> المستخدمين المحظورين لا يمكنهم إرسال طلبات الرسائل، دعوات المجموعات أو الاتصال بك.</string>

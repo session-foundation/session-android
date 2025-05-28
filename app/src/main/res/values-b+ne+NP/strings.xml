@@ -122,7 +122,6 @@
     <string name="banUser">प्रयोगकर्ता प्रतिबन्ध गर्नुहोस्</string>
     <string name="banUserBanned">प्रयोगकर्ता प्रतिबन्धित</string>
     <string name="block">ब्लक गर्नुहोस्</string>
-    <string name="blockBlockedDescription">सन्देश पठाउन यो सम्पर्क अनब्लक गर्नुहोस्।</string>
     <string name="blockBlockedNone">कुनै ब्लक गरिएका सम्पर्कहरू छैनन्</string>
     <string name="blockBlockedUser">{name} ब्लक गरिएको छ</string>
     <string name="blockDescription">के तपाईंलाई <b>{name}</b> بادुकाउनुभो? Block गरिएका प्रयोगकर्ताहरूले तपाईलाई सन्देश अनुरोधहरू, समूह आमन्त्रण वा कल दिन सक्दैनन्।.</string>

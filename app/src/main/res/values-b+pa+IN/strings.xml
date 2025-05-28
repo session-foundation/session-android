@@ -122,7 +122,6 @@
     <string name="banUser">ਉਪਭੋਗਤਾ ਨੂੰ ਬੈਨ ਕਰੋ</string>
     <string name="banUserBanned">ਉਪਭੋਗਤਾ ਨੂੰ ਬੈਨ ਕੀਤਾ ਗਿਆ ਹੈ</string>
     <string name="block">ਬਲੌਕ</string>
-    <string name="blockBlockedDescription">ਸੁਨੇਹਾ ਭੇਜਣ ਲਈ ਇਸ ਸੰਪਰਕ ਨੂੰ ਅਨਬਲੌਕ ਕਰੋ।</string>
     <string name="blockBlockedNone">ਕੋਈ ਬਲਾਕ ਕੀਤੇ ਹੋਏ ਸੰਪਰਕ ਨਹੀਂ</string>
     <string name="blockBlockedUser">{name} ਨੂੰ ਬਲੌਕ ਕੀਤਾ ਗਿਆ</string>
     <string name="blockDescription">ਕੀ ਤੁਸੀਂ ਯਕੀਨਨ <b>{name}</b> ਨੂੰ ਰੋਕਣਾ ਚਾਹੁੰਦੇ ਹੋ? ਰੋਕੇ ਹੋਏ ਯੂਜ਼ਰ ਤੁਹਾਨੂੰ ਸੁਨੇਹੇ ਦੀਆਂ ਬੇਨਤੀਆਂ ਨਹੀਂ ਭੇਜ ਸਕਦੇ, ਗਰੁੱਪ ਨਿਮੰਤ੍ਰਣ ਨਹੀਂ ਦੇ ਸਕਦੇ ਜਾਂ ਕਾਲ ਨਹੀਂ ਕਰ ਸਕਦੇ।</string>

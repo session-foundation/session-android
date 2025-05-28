@@ -122,7 +122,6 @@
     <string name="banUser">Gwahardd Defnyddiwr</string>
     <string name="banUserBanned">Defnyddiwr wedi\'i wahardd</string>
     <string name="block">Rhwystro</string>
-    <string name="blockBlockedDescription">Dadrwystro\'r cyswllt hwn i anfon neges.</string>
     <string name="blockBlockedNone">Dim cysylltiadau wedi\'u rhwystro</string>
     <string name="blockBlockedUser">Rhwystro {name}</string>
     <string name="blockDescription">Ydych chi\'n siŵr eich bod am rwystro <b>{name}</b>? Ni all defnyddwyr rhwystredig anfon ceisiadau neges, gwahoddiadau grŵp na’ch galw.</string>

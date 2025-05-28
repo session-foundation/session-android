@@ -151,7 +151,6 @@
     <string name="banUserBanned">Utilisateur banni</string>
     <string name="banUserDescription">Entrez l\'identifiant du compte de l\'utilisateur que vous souhaitez débannir</string>
     <string name="block">Bloquer</string>
-    <string name="blockBlockedDescription">Débloquez ce contact pour envoyer un message.</string>
     <string name="blockBlockedNone">Aucun contact n’est bloqué</string>
     <string name="blockBlockedUser">Bloqué {name}</string>
     <string name="blockDescription">Êtes-vous sûr·e de vouloir bloquer <b>{name}?</b> Les utilisateurs bloqués ne peuvent pas vous envoyer de demandes de message, d\'invitations de groupe ou vous appeler.</string>

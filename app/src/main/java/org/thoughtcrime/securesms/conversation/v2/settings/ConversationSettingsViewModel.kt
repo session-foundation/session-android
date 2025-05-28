@@ -94,6 +94,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val prefs: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
+    private val openGroupManager: OpenGroupManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -497,7 +498,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     serverPubKey = Hex.fromStringCondensed(it),
                 )?.pubKey?.data }
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
-            return OpenGroupManager.isUserModerator(context, community!!.id, userPublicKey, blindedPublicKey)
+            return openGroupManager.isUserModerator(community!!.id, userPublicKey, blindedPublicKey)
         }
     }
 
@@ -717,7 +718,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             withContext(Dispatchers.Default) {
                 val community = lokiThreadDatabase.getOpenGroupChat(threadId)
                 if (community != null) {
-                    OpenGroupManager.delete(community.server, community.room, context)
+                    openGroupManager.delete(community.server, community.room, context)
                 }
             }
 

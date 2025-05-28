@@ -122,7 +122,6 @@
     <string name="banUser">ហាមឃាត់អ្នកប្រើ</string>
     <string name="banUserBanned">បានហាមឃាត់អ្នកប្រើ</string>
     <string name="block">ទប់ស្កាត់</string>
-    <string name="blockBlockedDescription">ដោះការហាមឃាត់លេខទំនាក់ទំនងនេះ ដើម្បីផ្ញើសារ។</string>
     <string name="blockBlockedNone">ពុំមានលេខដែលបានបិទ</string>
     <string name="blockBlockedUser">បានទប់ស្កាត់ {name}</string>
     <string name="blockDescription">តើអ្នកប្រាកដទេថាអ្នកចង់រារាំង <b>{name}?</b> អ្នកប្រើប្រាស់ដែលត្រូវបានរារាំងមិនអាចផ្ញើសំណើសារ ការអញ្ជើញក្រុម ឬហៅអ្នកបានទេ។</string>

@@ -122,7 +122,6 @@
     <string name="banUser">Забрана на потребител</string>
     <string name="banUserBanned">Потребителят е забранен</string>
     <string name="block">Блокиране</string>
-    <string name="blockBlockedDescription">Отблокирай този контакт за да изпратиш съобщение.</string>
     <string name="blockBlockedNone">Няма блокирани контакти</string>
     <string name="blockBlockedUser">Блокиран {name}</string>
     <string name="blockDescription">Сигурен ли/ли сте, че искате да блокирате <b>{name}</b>? Блокираните потребители не могат да ви изпращат заявки за съобщения, покани за група или да ви се обаждат.</string>

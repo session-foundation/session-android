@@ -135,7 +135,6 @@
     <string name="banUser">Bloquejar usuari</string>
     <string name="banUserBanned">Usuari exclòs</string>
     <string name="block">Bloqueu</string>
-    <string name="blockBlockedDescription">Desbloca aquest contacte per a enviar-li un missatge.</string>
     <string name="blockBlockedNone">No hi ha contactes bloquejats</string>
     <string name="blockBlockedUser">Bloquejat {name}</string>
     <string name="blockDescription">Esteu segur que voleu blocar <b>{name}?</b> Els usuaris bloquejats no us poden enviar sol·licituds de missatges, invitacions de grups ni trucar-vos.</string>

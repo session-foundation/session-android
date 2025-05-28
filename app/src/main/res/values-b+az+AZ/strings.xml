@@ -146,7 +146,6 @@
     <string name="banUserBanned">İstifadəçi yasaqlandı</string>
     <string name="banUserDescription">Ban etdiyiniz istifadəçinin Hesab ID-sini daxil edin</string>
     <string name="block">Əngəllə</string>
-    <string name="blockBlockedDescription">Mesaj göndərmək üçün bu kontaktı əngəldən çıxardın.</string>
     <string name="blockBlockedNone">Əngəllənmiş kontakt yoxdur</string>
     <string name="blockBlockedUser">{name} əngəlləndi</string>
     <string name="blockDescription"><b>{name}</b> əngəllənsin? Əngəllənmiş istifadəçilər sizə mesaj tələbi, qrup dəvəti göndərə və ya sizə zəng edə bilməz.</string>

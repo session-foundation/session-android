@@ -122,7 +122,6 @@
     <string name="banUser">Iflosni surgun qilish</string>
     <string name="banUserBanned">Foydalanuvchi surgun qilindi</string>
     <string name="block">Bloklash</string>
-    <string name="blockBlockedDescription">Xabar yuborish uchun ushbu kontaktni blokdan chiqaring.</string>
     <string name="blockBlockedNone">Bloklangan kontaktlar yoʻq</string>
     <string name="blockBlockedUser">Foydalanuvchi {name} bloklandi</string>
     <string name="blockDescription">Haqiqatan shu <b>{name}</b>ni bloklashni xohlaysizmi? Bloklangan foydalanuvchilar sizga xabar so\'rovlarini, guruh takliflarini yubora olmaydi yoki sizni chaqira olmaydi.</string>

@@ -122,7 +122,6 @@
     <string name="banUser">Dëboni përdorues</string>
     <string name="banUserBanned">Përdoruesi u dëbua</string>
     <string name="block">Bllokoni</string>
-    <string name="blockBlockedDescription">Që t’i dërgohet një mesazh, zhbllokojeni këtë kontakt.</string>
     <string name="blockBlockedNone">S’ka kontakte të bllokuara</string>
     <string name="blockBlockedUser">Të bllokohet {name}</string>
     <string name="blockDescription">A jeni të sigurt që doni ta bllokoni <b>{name}</b>? Përdoruesit e bllokuar nuk mund t\'ju dërgojnë kërkesa për mesazhe, ftesa grupi apo t’ju telefonojnë.</string>

@@ -122,7 +122,6 @@
     <string name="banUser">ಬಳಕೆದಾರರನ್ನು ವಿಲಂಬಿಸಿ</string>
     <string name="banUserBanned">ಬಳಕೆದಾರನನ್ನು ಬ್ಯಾನ್ ಮಾಡಲಾಗಿದೆ</string>
     <string name="block">ತಡೆಯುವ ಸಹಿತ</string>
-    <string name="blockBlockedDescription">ಸಂದೇಶವೊಂದನ್ನು ಕಳುಹಿಸಲು ಈ ಸಂಪರ್ಕವನ್ನು ಬ್ಲಾಕ್ ಮಾಡಿ.</string>
     <string name="blockBlockedNone">ತಡೆಗಟ್ಟಿದ ಸಂಪರ್ಕಗಳು ಎಂಥಹುದೂ ಇಲ್ಲ</string>
     <string name="blockBlockedUser">{name} ತಡೆ ಮಾಡಲಾಗಿದೆ</string>
     <string name="blockDescription">ನೀವು ಖಚಿತವಾಗಿ <b>{name}</b>ನ್ನು ತಡೆಯಲು ಬಯಸುವಿರಾ? ತಡೆಮಾಡಿದ ಬಳಕೆದಾರರು ನಿಮಗೆ ಸಂದೇಶ ವಿನಂತಿಗಳನ್ನು, ಗುಂಪು ಆಹ್ವಾನವನ್ನು ಕಳುಹಿಸಲು ಅಥವಾ ನಿಮಗೆ ಕರೆಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.</string>

@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.contacts
 
 import android.content.Context
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.AsyncLoader
@@ -11,7 +12,7 @@ sealed class ContactSelectionListItem {
     class Contact(val recipient: Recipient) : ContactSelectionListItem()
 }
 
-class ContactSelectionListLoader(
+class ShareContactListLoader(
     context: Context,
     val mode: Int,
     val filter: String?,
@@ -22,6 +23,12 @@ class ContactSelectionListLoader(
         val contacts = ContactUtilities.getAllContacts(context).asSequence()
             .filter {
                 if(it.first.isLegacyGroupRecipient && deprecationManager.isDeprecated) return@filter false // ignore legacy group when deprecated
+                if(it.first.isCommunityRecipient) { // ignore communities without write access
+                    val storage = MessagingModuleConfiguration.shared.storage
+                    val threadId = storage.getThreadId(it.first) ?: return@filter false
+                    val openGroup = storage.getOpenGroup(threadId) ?: return@filter false
+                    return@filter openGroup.canWrite
+                }
                 if (filter.isNullOrEmpty()) return@filter true
                 it.first.name.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
             }.sortedWith(

@@ -122,7 +122,6 @@
     <string name="banUser">వినియోగదారుని నిషేధించు</string>
     <string name="banUserBanned">వాడుకరి నిషేధించబడినారు</string>
     <string name="block">నిరోధించు</string>
-    <string name="blockBlockedDescription">సందేశాన్ని పంపడానికి ఈ పరిచయాన్ని అనుమతించు.</string>
     <string name="blockBlockedNone">నిరోధించిన పరిచయాలు లేవు</string>
     <string name="blockBlockedUser">{name} నిరోధించబడింది</string>
     <string name="blockDescription">మీరు <b>{name}</b>ని బ్లాక్ చేయాలనుకుంటున్నారా? బ్లాక్ చేసిన వినియోగదారులు మీకు సందేశ వివరణలను పంపలేరు, సమూహ ఆహ్వానాలు లేదా మీకు కాల్ చేయలేరు.</string>

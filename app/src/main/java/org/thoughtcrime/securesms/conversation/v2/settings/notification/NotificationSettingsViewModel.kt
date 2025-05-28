@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
@@ -141,6 +142,26 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 )
             }
 
+            // add debug options on non prod builds
+            if (BuildConfig.BUILD_TYPE != "release") {
+                muteRadioOptions.addAll(
+                    debugMuteDurations.map {
+                        RadioOption(
+                            value = it.first,
+                            title = GetString(
+                                LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(
+                                    context,
+                                    it.first.milliseconds
+                                )
+                            ),
+                            subtitle = GetString("For testing purposes"),
+                            qaTag = GetString(it.second),
+                            selected = selectedMuteDuration == it.first
+                        )
+                    }
+                )
+            }
+
             // add the regular options
             muteRadioOptions.addAll(
                 muteDurations.map {
@@ -258,6 +279,11 @@ class NotificationSettingsViewModel @AssistedInject constructor(
         data object MentionsOnly: NotificationType(NOTIFY_TYPE_MENTIONS)
         data object Mute: NotificationType(NOTIFY_TYPE_NONE)
     }
+
+    private val debugMuteDurations = listOf(
+        TimeUnit.MINUTES.toMillis(1) to R.string.qa_conversation_settings_notifications_radio_1m,
+        TimeUnit.MINUTES.toMillis(5) to R.string.qa_conversation_settings_notifications_radio_5m,
+    )
 
     private val muteDurations = listOf(
         durationForever to R.string.qa_conversation_settings_notifications_radio_forever,
