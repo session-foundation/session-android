@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.database
 
 import android.content.Context
 import android.net.Uri
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
@@ -129,7 +130,7 @@ open class Storage @Inject constructor(
     private val clock: SnodeClock,
     private val preferences: TextSecurePreferences,
     private val usernameUtils: UsernameUtils,
-    private val openGroupManager: Provider<OpenGroupManager>,
+    private val openGroupManager: Lazy<OpenGroupManager>,
 ) : Database(context, helper), StorageProtocol, ThreadDatabase.ConversationThreadUpdateListener {
 
     init {

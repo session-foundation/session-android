@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.groups
 
-import android.app.Application
 import android.content.Context
 import android.widget.Toast
 import com.squareup.phrase.Phrase
@@ -13,10 +12,8 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
 import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -31,7 +28,6 @@ class OpenGroupManager @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val groupMemberDatabase: GroupMemberDatabase,
-    private val application: Application,
 ) {
 
     // flow holding information on write access for our current communities
@@ -77,7 +73,6 @@ class OpenGroupManager @Inject constructor(
             val openGroupID = "${server.removeSuffix("/")}.$room"
             val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
             val recipient = threadDb.getRecipientForThreadId(threadID) ?: return
-            threadDb.setThreadArchived(threadID)
             val groupID = recipient.address.toString()
             // Stop the poller if needed
             configFactory.withMutableUserConfigs {
