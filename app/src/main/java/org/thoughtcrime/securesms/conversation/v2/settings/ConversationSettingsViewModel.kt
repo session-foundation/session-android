@@ -498,7 +498,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     serverPubKey = Hex.fromStringCondensed(it),
                 )?.pubKey?.data }
                 ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
-            return openGroupManager.isUserModerator(context, community!!.id, userPublicKey, blindedPublicKey)
+            return openGroupManager.isUserModerator(community!!.id, userPublicKey, blindedPublicKey)
         }
     }
 

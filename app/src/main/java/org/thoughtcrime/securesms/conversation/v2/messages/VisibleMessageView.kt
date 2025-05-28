@@ -230,7 +230,11 @@ class VisibleMessageView : FrameLayout {
                     } else {
                         standardPublicKey = senderAccountID
                     }
-                    val isModerator = openGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
+                    val isModerator = openGroupManager.isUserModerator(
+                        openGroup.groupId,
+                        standardPublicKey,
+                        blindedPublicKey
+                    )
                     binding.moderatorIconImageView.isVisible = isModerator
                 }
                 else if (thread.isLegacyGroupRecipient) { // legacy groups

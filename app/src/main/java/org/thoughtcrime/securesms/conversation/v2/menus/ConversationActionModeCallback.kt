@@ -77,7 +77,11 @@ class ConversationActionModeCallback(
             if (anySentByCurrentUser) { return false } // Users can't ban themselves
             val selectedUsers = selectedItems.map { it.recipient.address.toString() }.toSet()
             if (selectedUsers.size > 1) { return false }
-            return openGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
+            return openGroupManager.isUserModerator(
+                openGroup.groupId,
+                userPublicKey,
+                blindedPublicKey
+            )
         }
 
 

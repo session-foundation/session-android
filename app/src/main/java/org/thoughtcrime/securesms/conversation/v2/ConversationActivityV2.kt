@@ -1930,7 +1930,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         if (viewModel.recipient?.isGroupOrCommunityRecipient == true) {
             val isUserModerator = viewModel.openGroup?.let { openGroup ->
                 val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-                openGroupManager.isUserModerator(this, openGroup.id, userPublicKey, viewModel.blindedPublicKey)
+                openGroupManager.isUserModerator(
+                    openGroup.id,
+                    userPublicKey,
+                    viewModel.blindedPublicKey
+                )
             } ?: false
             val fragment = ReactionsDialogFragment.create(messageId, isUserModerator, emoji, viewModel.canRemoveReaction)
             fragment.show(supportFragmentManager, null)

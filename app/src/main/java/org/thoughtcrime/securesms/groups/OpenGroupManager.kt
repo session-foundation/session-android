@@ -1,8 +1,8 @@
 package org.thoughtcrime.securesms.groups
 
+import android.app.Application
 import android.content.Context
 import android.widget.Toast
-import androidx.annotation.WorkerThread
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,8 +13,10 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
 import org.session.libsession.snode.utilities.await
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -29,6 +31,7 @@ class OpenGroupManager @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val groupMemberDatabase: GroupMemberDatabase,
+    private val application: Application,
 ) {
 
     // flow holding information on write access for our current communities
@@ -37,12 +40,14 @@ class OpenGroupManager @Inject constructor(
 
     fun getCommunitiesWriteAccessFlow() = _communityWriteAccess.asStateFlow()
 
-    suspend fun add(server: String, room: String, publicKey: String, context: Context): Pair<Long, OpenGroupApi.RoomInfo?> {
+    suspend fun add(server: String, room: String, publicKey: String, context: Context) {
         val openGroupID = "$server.$room"
         val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
         // Check it it's added already
         val existingOpenGroup = lokiThreadDB.getOpenGroupChat(threadID)
-        if (existingOpenGroup != null) { return threadID to null }
+        if (existingOpenGroup != null) {
+            return
+        }
         // Clear any existing data if needed
         storage.removeLastDeletionServerID(room, server)
         storage.removeLastMessageServerID(room, server)
@@ -57,6 +62,7 @@ class OpenGroupManager @Inject constructor(
         if (threadID < 0) {
             GroupManager.createOpenGroup(openGroupID, context, null, info.name)
         }
+
         OpenGroupPoller.handleRoomPollInfo(
             storage = storage,
             server = server,
@@ -64,7 +70,6 @@ class OpenGroupManager @Inject constructor(
             pollInfo = info.toPollInfo(),
             createGroupIfMissingWithPublicKey = publicKey
         )
-        return threadID to info
     }
 
     fun delete(server: String, room: String, context: Context) {
@@ -96,13 +101,13 @@ class OpenGroupManager @Inject constructor(
         }
     }
 
-    suspend fun addOpenGroup(urlAsString: String, context: Context): OpenGroupApi.RoomInfo? {
-        val url = urlAsString.toHttpUrlOrNull() ?: return null
+    suspend fun addOpenGroup(urlAsString: String, context: Context) {
+        val url = urlAsString.toHttpUrlOrNull() ?: return
         val server = OpenGroup.getServer(urlAsString)
-        val room = url.pathSegments.firstOrNull() ?: return null
-        val publicKey = url.queryParameter("public_key") ?: return null
+        val room = url.pathSegments.firstOrNull() ?: return
+        val publicKey = url.queryParameter("public_key") ?: return
 
-        return add(server.toString().removeSuffix("/"), room, publicKey, context).second // assume migrated from calling function
+        add(server.toString().removeSuffix("/"), room, publicKey, context) // assume migrated from calling function
     }
 
     fun updateOpenGroup(openGroup: OpenGroup, context: Context) {
@@ -115,7 +120,11 @@ class OpenGroupManager @Inject constructor(
         _communityWriteAccess.value = writeAccesses
     }
 
-    fun isUserModerator(context: Context, groupId: String, standardPublicKey: String, blindedPublicKey: String? = null): Boolean {
+    fun isUserModerator(
+        groupId: String,
+        standardPublicKey: String,
+        blindedPublicKey: String? = null
+    ): Boolean {
         val standardRoles = groupMemberDatabase.getGroupMemberRoles(groupId, standardPublicKey)
         val blindedRoles = blindedPublicKey?.let { groupMemberDatabase.getGroupMemberRoles(groupId, it) } ?: emptyList()
         return standardRoles.any { it.isModerator } || blindedRoles.any { it.isModerator }

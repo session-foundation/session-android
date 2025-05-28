@@ -1015,7 +1015,7 @@ class ConversationViewModel(
 
     private fun isUserCommunityManager() = openGroup?.let { openGroup ->
         val userPublicKey = textSecurePreferences.getLocalNumber() ?: return@let false
-        openGroupManager.isUserModerator(application, openGroup.id, userPublicKey, blindedPublicKey)
+        openGroupManager.isUserModerator(openGroup.id, userPublicKey, blindedPublicKey)
     } ?: false
 
     /**
