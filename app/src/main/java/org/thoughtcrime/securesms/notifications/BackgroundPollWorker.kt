@@ -23,6 +23,7 @@ import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
@@ -37,8 +38,8 @@ class BackgroundPollWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val storage: StorageProtocol,
     private val deprecationManager: LegacyGroupDeprecationManager,
-    private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupPollerManager: GroupPollerManager,
+    private val openGroupPollerManager: OpenGroupPollerManager,
 ) : CoroutineWorker(context, params) {
     enum class Target {
         ONE_TO_ONE,
@@ -133,17 +134,10 @@ class BackgroundPollWorker @AssistedInject constructor(
 
                 // Open groups
                 if (requestTargets.contains(Target.OPEN_GROUPS)) {
-                    lokiThreadDatabase.getAllOpenGroups()
-                        .mapTo(hashSetOf()) { it.value.server }
-                        .mapTo(tasks) { server ->
-                            async {
-                                Log.d(TAG, "Polling open group server $server.")
-                                OpenGroupPoller(server, null)
-                                    .apply { hasStarted = true }
-                                    .poll()
-                                    .await()
-                            }
-                        }
+                    tasks += async {
+                        Log.d(TAG, "Polling open groups.")
+                        openGroupPollerManager.pollAllOpenGroupsOnce()
+                    }
                 }
 
                 // Close group

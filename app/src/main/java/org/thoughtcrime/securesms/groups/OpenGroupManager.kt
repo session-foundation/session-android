@@ -6,7 +6,6 @@ import androidx.annotation.WorkerThread
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.concurrent.Executors
 import network.loki.messenger.R
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -19,57 +18,10 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 
 object OpenGroupManager {
-    private val executorService = Executors.newScheduledThreadPool(4)
-    private val pollers = mutableMapOf<String, OpenGroupPoller>() // One for each server
-    private var isPolling = false
-    private val pollUpdaterLock = Any()
-
-    val isAllCaughtUp: Boolean
-        get() {
-            pollers.values.forEach { poller ->
-                val jobID = poller.secondToLastJob?.id
-                jobID?.let {
-                    val storage = MessagingModuleConfiguration.shared.storage
-                    if (storage.getMessageReceiveJob(jobID) == null) {
-                        // If the second to last job is done, it means we are now handling the last job
-                        poller.isCaughtUp = true
-                        poller.secondToLastJob = null
-                    }
-                }
-                if (!poller.isCaughtUp) { return false }
-            }
-            return true
-        }
 
     // flow holding information on write access for our current communities
     private val _communityWriteAccess: MutableStateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
 
-    fun startPolling() {
-        if (isPolling) { return }
-        isPolling = true
-        val storage = MessagingModuleConfiguration.shared.storage
-        val (serverGroups, toDelete) = storage.getAllOpenGroups().values.partition { storage.getThreadId(it) != null }
-        toDelete.forEach { openGroup ->
-            Log.w("Loki", "Need to delete a group")
-            delete(openGroup.server, openGroup.room, MessagingModuleConfiguration.shared.context)
-        }
-
-        val servers = serverGroups.map { it.server }.toSet()
-        synchronized(pollUpdaterLock) {
-            servers.forEach { server ->
-                pollers[server]?.stop() // Shouldn't be necessary
-                pollers[server] = OpenGroupPoller(server, executorService).apply { startIfNeeded() }
-            }
-        }
-    }
-
-    fun stopPolling() {
-        synchronized(pollUpdaterLock) {
-            pollers.forEach { it.value.stop() }
-            pollers.clear()
-            isPolling = false
-        }
-    }
 
     fun getCommunitiesWriteAccessFlow() = _communityWriteAccess.asStateFlow()
 
@@ -97,25 +49,13 @@ object OpenGroupManager {
             GroupManager.createOpenGroup(openGroupID, context, null, info.name)
         }
         OpenGroupPoller.handleRoomPollInfo(
+            storage = storage,
             server = server,
             roomToken = room,
             pollInfo = info.toPollInfo(),
             createGroupIfMissingWithPublicKey = publicKey
         )
         return threadID to info
-    }
-
-    fun restartPollerForServer(server: String) {
-        // Start the poller if needed
-        synchronized(pollUpdaterLock) {
-            pollers[server]?.stop()
-            pollers[server]?.startIfNeeded() ?: run {
-                val poller = OpenGroupPoller(server, executorService)
-                Log.d("Loki", "Starting poller for open group: $server")
-                pollers[server] = poller
-                poller.startIfNeeded()
-            }
-        }
     }
 
     @WorkerThread
@@ -130,14 +70,6 @@ object OpenGroupManager {
             threadDB.setThreadArchived(threadID)
             val groupID = recipient.address.toString()
             // Stop the poller if needed
-            val openGroups = storage.getAllOpenGroups().filter { it.value.server == server }
-            if (openGroups.isNotEmpty()) {
-                synchronized(pollUpdaterLock) {
-                    val poller = pollers[server]
-                    poller?.stop()
-                    pollers.remove(server)
-                }
-            }
             configFactory.withMutableUserConfigs {
                 it.userGroups.eraseCommunity(server, room)
                 it.convoInfoVolatile.eraseCommunity(server, room)
@@ -187,5 +119,4 @@ object OpenGroupManager {
         val blindedRoles = blindedPublicKey?.let { memberDatabase.getGroupMemberRoles(groupId, it) } ?: emptyList()
         return standardRoles.any { it.isModerator } || blindedRoles.any { it.isModerator }
     }
-
 }

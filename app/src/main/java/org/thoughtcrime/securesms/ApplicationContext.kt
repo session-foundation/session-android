@@ -49,6 +49,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.Poller
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeModule.Companion.configure
@@ -82,8 +83,6 @@ import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
-import org.thoughtcrime.securesms.groups.OpenGroupManager.startPolling
-import org.thoughtcrime.securesms.groups.OpenGroupManager.stopPolling
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
 import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync
@@ -204,6 +203,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject
     lateinit var expiredGroupManager: Lazy<ExpiredGroupManager> // Exists here only to start upon app starts
+
+    @Inject
+    lateinit var openGroupPollerManager: Lazy<OpenGroupPollerManager>
 
     @Volatile
     var isAppVisible: Boolean = false
@@ -379,6 +381,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         appVisibilityManager.get()
         groupPollerManager.get()
         expiredGroupManager.get()
+        openGroupPollerManager.get()
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -393,11 +396,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         }
 
         startPollingIfNeeded()
-
-        queue {
-            startPolling()
-            Unit
-        }
 
         // fetch last version data
         versionDataFetcher.get().startTimedVersionCheck()
@@ -417,7 +415,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     override fun onTerminate() {
         stopKovenant() // Loki
-        stopPolling()
         versionDataFetcher.get().stopTimedVersionCheck()
         super.onTerminate()
     }

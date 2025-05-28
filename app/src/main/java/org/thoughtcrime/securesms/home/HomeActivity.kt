@@ -282,7 +282,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
-                    OpenGroupManager.startPolling()
                     JobQueue.shared.resumePendingJobs()
                 }
 

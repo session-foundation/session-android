@@ -1067,7 +1067,6 @@ open class Storage @Inject constructor(
     }
 
     override fun onOpenGroupAdded(server: String, room: String) {
-        OpenGroupManager.restartPollerForServer(server.removeSuffix("/"))
         configFactory.withMutableUserConfigs { configs ->
             val groups = configs.userGroups
             val volatileConfig = configs.convoInfoVolatile
