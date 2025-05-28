@@ -117,7 +117,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             // the text, content description and icon will change depending on the type
             when {
                 // groups and communities
-                recipient.isGroupOrCommunityRecipient -> {
+                recipient.isGroupRecipient -> {
                     val accountId = AccountId(recipient.address.toString())
                     val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
@@ -132,6 +132,12 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                         contentDescription = context.getString(R.string.AccessibilityId_leave)
                         drawableStartRes = R.drawable.ic_log_out
                     }
+                }
+
+                recipient.isCommunityRecipient -> {
+                    text = context.getString(R.string.leave)
+                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                    drawableStartRes = R.drawable.ic_log_out
                 }
 
                 // note to self
