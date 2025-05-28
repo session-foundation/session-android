@@ -4,18 +4,19 @@ import android.app.Application;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.net.Uri;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.session.libsession.utilities.Util;
+import org.session.libsession.utilities.concurrent.SignalExecutors;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
-import org.session.libsignal.utilities.Log;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.concurrent.SignalExecutors;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -26,11 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-
-import kotlin.Pair;
-import kotlin.Result;
-import kotlin.Triple;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -178,14 +174,6 @@ public class BlobProvider {
     return URI_MATCHER.match(uri) == MATCH;
   }
 
-  private static Triple<Uri, InputStream, OutputStream> createFileBasedOutputStream(@NonNull Context context, @NonNull BlobSpec blobSpec) throws IOException {
-    AttachmentSecret attachmentSecret = AttachmentSecretProvider.getInstance(context).getOrCreateAttachmentSecret();
-    String           directory        = getDirectory(blobSpec.getStorageType());
-    File             outputFile       = new File(getOrCreateCacheDirectory(context, directory), buildFileName(blobSpec.id));
-    OutputStream     outputStream     = ModernEncryptingPartOutputStream.createFor(attachmentSecret, outputFile, true).second;
-
-    return new Triple<>(buildUri(blobSpec), blobSpec.getData(), outputStream);
-  }
 
   @WorkerThread
   @NonNull
@@ -272,11 +260,6 @@ public class BlobProvider {
       return new BlobSpec(data, id, storageType, mimeType, fileName, fileSize);
     }
 
-    @NonNull
-    public Triple<Uri, InputStream, OutputStream> createOnDisk(@NonNull Context context) throws IOException {
-      BlobSpec blobSpec = buildBlobSpec(StorageType.SINGLE_USE_MEMORY);
-      return createFileBasedOutputStream(context, blobSpec);
-    }
 
     /**
      * Create a blob that will exist for a single app session. An app session is defined as the
