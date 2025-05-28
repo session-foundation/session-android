@@ -21,6 +21,9 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manage common operations for open groups, such as adding, deleting, and updating them.
+ */
 @Singleton
 class OpenGroupManager @Inject constructor(
     private val storage: StorageProtocol,

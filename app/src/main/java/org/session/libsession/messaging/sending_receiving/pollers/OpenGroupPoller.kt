@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.selects.select
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
@@ -45,11 +44,18 @@ import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.util.AppVisibilityManager
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 private typealias ManualPollRequestToken = Channel<Result<Unit>>
 
+/**
+ * A [OpenGroupPoller] is responsible for polling all communities on a particular server.
+ *
+ * Once this class is created, it will start polling when the app becomes visible (and stop whe
+ * the app becomes invisible), it will also respond to manual poll requests regardless of the app visibility.
+ *
+ * To stop polling, you can cancel the [CoroutineScope] that was passed to the constructor.
+ */
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,

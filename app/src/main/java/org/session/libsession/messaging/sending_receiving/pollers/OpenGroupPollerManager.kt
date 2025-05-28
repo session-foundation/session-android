@@ -3,7 +3,6 @@ package org.session.libsession.messaging.sending_receiving.pollers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +27,15 @@ import javax.inject.Singleton
 
 private const val TAG = "OpenGroupPollerManager"
 
+/**
+ * [OpenGroupPollerManager] manages the lifecycle of [OpenGroupPoller] instances for all
+ * subscribed open groups. It creates a poller for a server (a server can host
+ * multiple open groups), and it stops the poller when the server is no longer subscribed by
+ * any open groups.
+ *
+ * This process is fully responsive to changes in the user's config and as long as the config
+ * is up to date, the pollers will be created and stopped correctly.
+ */
 @Singleton
 class OpenGroupPollerManager @Inject constructor(
     pollerFactory: OpenGroupPoller.Factory,
