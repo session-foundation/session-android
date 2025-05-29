@@ -2294,28 +2294,26 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             return
         }
 
-        var fileToDelete: File? = null
+        if (!MediaUtil.voiceMessageMeetsMinimumDuration(System.currentTimeMillis() - voiceMessageStartTimestamp)) {
+            handle.cancel()
+            // If the voice message is too short, we show a toast and return early
+            Log.w(TAG, "Voice message is too short: ${System.currentTimeMillis() - voiceMessageStartTimestamp}ms")
+            voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
+            showVoiceMessageToastIfNotAlreadyVisible()
+            return
+        }
 
+        // If we don't send, we'll cancel the audio recording
+        if (!send) {
+            handle.cancel()
+            return
+        }
+
+        // If we do send, we will stop the audio recording, wait for it to complete successfully,
+        // then send the audio message as an attachment.
         lifecycleScope.launch {
             try {
                 val result = handle.stop()
-
-                if (result.duration == null || !MediaUtil.voiceMessageMeetsMinimumDuration(result.duration.inWholeMilliseconds)) {
-                    // If the voice message is too short, we show a toast and return early
-                    Log.w(TAG, "Voice message is too short: ${result.duration}")
-                    voiceNoteTooShortToast.setText(applicationContext.getString(R.string.messageVoiceErrorShort))
-                    showVoiceMessageToastIfNotAlreadyVisible()
-
-                    // Delete the audio file as we don't need them any more
-                    fileToDelete = result.file
-                    return@launch
-                }
-
-                if (!send) {
-                    // If we don't send the file, we might as well delete it
-                    fileToDelete = result.file
-                    return@launch
-                }
 
                 // Generate a filename from the current time such as: "Session-VoiceMessage_2025-01-08-152733.aac"
                 val voiceMessageFilename = FilenameUtils.constructNewVoiceMessageFilename(applicationContext)
@@ -2338,13 +2336,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             } catch (ec: Exception) {
                 Log.e(TAG, "Error while recording", ec)
                 Toast.makeText(this@ConversationActivityV2, R.string.audioUnableToRecord, Toast.LENGTH_LONG).show()
-            } finally {
-                fileToDelete?.let { file ->
-                    // If we have a file to delete, do so
-                    withContext(Dispatchers.Default) {
-                        file.delete()
-                    }
-                }
             }
         }
     }

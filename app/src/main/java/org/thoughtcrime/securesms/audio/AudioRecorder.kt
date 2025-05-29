@@ -30,7 +30,7 @@ private const val TAG = "AudioRecorder"
 data class AudioRecordResult(
     val file: File,
     val length: Long,
-    val duration: Duration?
+    val duration: Duration
 )
 
 
@@ -105,8 +105,13 @@ fun recordAudio(
     scope: CoroutineScope,
     context: Context,
 ): AudioRecorderHandle {
-    val channel = Channel<RecorderCommand>(capacity = 1)
-    val startedResult = MutableSharedFlow<Result<Unit>>(replay = 1, extraBufferCapacity = 1)
+    // Channel to send commands to the recorder coroutine.
+    val commandChannel = Channel<RecorderCommand>(capacity = 1)
+
+    // Channel to notify if the recording has started successfully.
+    val startResultChannel = MutableSharedFlow<Result<Unit>>(replay = 1, extraBufferCapacity = 1)
+
+    // Start the recording in a coroutine
     val deferred = scope.async(Dispatchers.IO) {
         runCatching {
             mediaRecorderMutex.withLock {
@@ -131,7 +136,7 @@ fun recordAudio(
                     recorder.setOutputFile(file)
                     recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                     recorder.setOnErrorListener { _, what, extra ->
-                        channel.trySend(
+                        commandChannel.trySend(
                             RecorderCommand.ErrorReceived(
                                 RuntimeException("MediaRecorder error: what=$what, extra=$extra")
                             )
@@ -142,10 +147,10 @@ fun recordAudio(
                     recorder.start()
                     val recordingStarted = SystemClock.elapsedRealtime()
                     started = true
-                    startedResult.emit(Result.success(Unit))
+                    startResultChannel.emit(Result.success(Unit))
 
                     // Wait for either stop signal or error
-                    when (val c = channel.receive()) {
+                    when (val c = commandChannel.receive()) {
                         is RecorderCommand.Stop -> {
                             Log.d(TAG, "Received stop command, stopping recording.")
                             val duration =
@@ -175,7 +180,7 @@ fun recordAudio(
                     }
 
                     if (!started) {
-                        startedResult.emit(Result.failure(e))
+                        startResultChannel.emit(Result.failure(e))
                     }
                     throw e
                 } finally {
@@ -187,8 +192,8 @@ fun recordAudio(
     }
 
     return AudioRecorderHandle(
-        onStopCommand = { channel.send(RecorderCommand.Stop) },
+        onStopCommand = { commandChannel.send(RecorderCommand.Stop) },
         deferred = deferred,
-        startedResult = startedResult
+        startedResult = startResultChannel
     )
 }
