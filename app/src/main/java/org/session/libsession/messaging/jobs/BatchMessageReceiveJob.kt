@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.jobs
 
-import android.os.Debug
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -12,10 +11,10 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
+import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
@@ -99,9 +98,6 @@ class BatchMessageReceiveJob(
     }
 
     override suspend fun execute(dispatcherName: String) {
-        Log.i(TAG, "Started processing of ${messages.size} messages (id: $id)")
-//        Debug.startMethodTracingSampling(File.createTempFile("method-tracing", ".trace").absolutePath, 100 * 1024 * 1024, 10)
-
         executeAsync(dispatcherName)
     }
 
@@ -295,7 +291,6 @@ class BatchMessageReceiveJob(
 
     private fun handleSuccess(dispatcherName: String) {
         Log.i(TAG, "Completed processing of ${messages.size} messages (id: $id)")
-        Debug.stopMethodTracing()
         delegate?.handleJobSucceeded(this, dispatcherName)
     }
 
