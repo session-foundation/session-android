@@ -206,14 +206,12 @@ class OpenGroupPoller @AssistedInject constructor(
             .toList()
 
         try {
-            Log.d(TAG, "Start polling $server")
             OpenGroupApi
                 .poll(rooms, server)
                 .await()
                 .asSequence()
                 .filterNot { it.body == null }
                 .forEach { response ->
-                    Log.d(TAG, "Start handling ${response.endpoint}")
                     when (response.endpoint) {
                         is Endpoint.Capabilities -> {
                             handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
@@ -235,7 +233,6 @@ class OpenGroupPoller @AssistedInject constructor(
                         }
                         else -> { /* We don't care about the result of any other calls (won't be polled for) */}
                     }
-                    Log.d(TAG, "Stopped handling ${response.endpoint}")
                 }
         } catch (e: Exception) {
             if (e !is CancellationException) {
