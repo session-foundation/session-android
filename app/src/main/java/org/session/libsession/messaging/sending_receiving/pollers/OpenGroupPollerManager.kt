@@ -98,7 +98,7 @@ class OpenGroupPollerManager @Inject constructor(
             pollers.value.map { (server, handle) ->
                 handle.pollerScope.launch {
                     runCatching {
-                        handle.poller.manualPollOnce()
+                        handle.poller.requestPollOnceAndWait()
                     }.onFailure {
                         Log.e(TAG, "Error polling open group ${server}", it)
                     }

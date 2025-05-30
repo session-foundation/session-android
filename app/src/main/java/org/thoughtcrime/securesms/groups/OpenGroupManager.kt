@@ -72,9 +72,9 @@ class OpenGroupManager @Inject constructor(
             createGroupIfMissingWithPublicKey = publicKey
         )
 
-        // If existing poller for the same server exist, we'll ask it to manual poll once now so we can get the
-        // latest messages for the newly added community
-        pollerManager.pollers.value[server]?.poller?.manualPollOnce()
+        // If existing poller for the same server exist, we'll request a poll once now so new room
+        // can be polled immediately.
+        pollerManager.pollers.value[server]?.poller?.requestPollOnce()
     }
 
     fun delete(server: String, room: String, context: Context) {

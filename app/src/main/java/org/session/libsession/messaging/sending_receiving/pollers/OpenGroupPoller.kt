@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -170,6 +169,15 @@ class OpenGroupPoller @AssistedInject constructor(
                     manualPollRequest.receiveAsFlow()
                 ).first()
 
+                // We might have more than one manual poll request, collect them all now so
+                // they don't trigger unnecessary pollings
+                val extraTokens = buildList {
+                    while (true) {
+                        val nexToken = manualPollRequest.tryReceive().getOrNull() ?: break
+                        add(nexToken)
+                    }
+                }
+
                 mutableIsCaughtUp.value = false
                 var delayDuration = POLL_INTERVAL_MILLS
                 try {
@@ -177,6 +185,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     pollOnce()
                     mutableIsCaughtUp.value = true
                     token?.trySend(Result.success(Unit))
+                    extraTokens.forEach { it.trySend(Result.success(Unit)) }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error while polling open group messages", e)
                     delayDuration = 2000L
@@ -238,10 +247,16 @@ class OpenGroupPoller @AssistedInject constructor(
         }
     }
 
-    suspend fun manualPollOnce() {
+    suspend fun requestPollOnceAndWait() {
         val token = Channel<Result<Unit>>()
         manualPollRequest.send(token)
         token.receive().getOrThrow()
+    }
+
+    fun requestPollOnce() {
+        scope.launch {
+            manualPollRequest.send(Channel())
+        }
     }
 
     private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, exception: Exception) {
