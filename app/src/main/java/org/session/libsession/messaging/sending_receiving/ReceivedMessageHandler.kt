@@ -1,6 +1,8 @@
 package org.session.libsession.messaging.sending_receiving
 
+import android.content.Context
 import android.text.TextUtils
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -9,8 +11,11 @@ import network.loki.messenger.libsession_util.ED25519
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
@@ -31,6 +36,7 @@ import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.Attachment
 import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
@@ -68,6 +74,8 @@ import org.session.libsignal.utilities.guava.Optional
 import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.sskenvironment.ProfileManager
 import java.security.MessageDigest
 import java.security.SignatureException
 import java.util.LinkedList
@@ -105,7 +113,9 @@ fun MessageReceiver.handle(message: Message, proto: SignalServiceProtos.Content,
         is UnsendRequest -> handleUnsendRequest(message)
         is MessageRequestResponse -> handleMessageRequestResponse(message)
         is VisibleMessage -> handleVisibleMessage(
-            message, proto, openGroupID, threadId,
+            message = message,
+            proto = proto,
+            context = VisibleMessageHandlerContext(MessagingModuleConfiguration.shared, threadId, openGroupID),
             runThreadUpdate = true,
             runProfileUpdate = true
         )
@@ -349,66 +359,93 @@ private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSecond
     }
 } ?: ExpiryMode.NONE
 
+class VisibleMessageHandlerContext(
+    val context: Context,
+    val threadId: Long,
+    val openGroupID: String?,
+    val storage: StorageProtocol,
+    val profileManager: SSKEnvironment.ProfileManagerProtocol,
+    val groupManagerV2: GroupManagerV2,
+    val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
+    val messageDataProvider: MessageDataProvider,
+) {
+    constructor(module: MessagingModuleConfiguration, threadId: Long, openGroupID: String?):
+            this(
+                context = module.context,
+                threadId = threadId,
+                openGroupID = openGroupID,
+                storage = module.storage,
+                profileManager = SSKEnvironment.shared.profileManager,
+                groupManagerV2 = module.groupManagerV2,
+                messageExpirationManager = SSKEnvironment.shared.messageExpirationManager,
+                messageDataProvider = module.messageDataProvider
+            )
+
+    val openGroup: OpenGroup? by lazy {
+        openGroupID?.let { storage.getOpenGroup(threadId) }
+    }
+
+    val userBlindedKey: String? by lazy {
+        openGroup?.let {
+            val blindedKey = BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
+                serverPubKey = Hex.fromStringCondensed(it.publicKey),
+            ) ?: return@let null
+
+            AccountId(
+                IdPrefix.BLINDED, blindedKey.pubKey.data
+            ).hexString
+        }
+    }
+
+    val userPublicKey: String? by lazy {
+        storage.getUserPublicKey()
+    }
+
+    val threadRecipient: Recipient? by lazy {
+        storage.getRecipientForThread(threadId)
+    }
+}
+
 fun MessageReceiver.handleVisibleMessage(
     message: VisibleMessage,
     proto: SignalServiceProtos.Content,
-    openGroupID: String?,
-    threadId: Long,
+    context: VisibleMessageHandlerContext,
     runThreadUpdate: Boolean,
     runProfileUpdate: Boolean
 ): MessageId? {
-    val storage = MessagingModuleConfiguration.shared.storage
-    val context = MessagingModuleConfiguration.shared.context
-    val userPublicKey = storage.getUserPublicKey()
+    val userPublicKey = context.storage.getUserPublicKey()
     val messageSender: String? = message.sender
 
     // Do nothing if the message was outdated
-    if (MessageReceiver.messageIsOutdated(message, threadId, openGroupID)) { return null }
+    if (MessageReceiver.messageIsOutdated(message, context.threadId, context.openGroupID)) { return null }
 
-    // Get or create thread
-    // FIXME: In case this is an open group this actually * doesn't * create the thread if it doesn't yet
-    //        exist. This is intentional, but it's very non-obvious.
-    val threadID = storage.getThreadIdFor(message.syncTarget ?: messageSender!!, message.groupPublicKey, openGroupID, createThread = true)
-        // Thread doesn't exist; should only be reached in a case where we are processing open group messages for a no longer existent thread
-        ?: throw MessageReceiver.Error.NoThread
-    val threadRecipient = storage.getRecipientForThread(threadID)
-    val userBlindedKey = openGroupID?.let {
-        val openGroup = storage.getOpenGroup(threadID) ?: return@let null
-        val blindedKey = BlindKeyAPI.blind15KeyPairOrNull(
-            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
-            serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
-        ) ?: return@let null
-        AccountId(
-            IdPrefix.BLINDED, blindedKey.pubKey.data
-        ).hexString
-    }
     // Update profile if needed
-    val recipient = Recipient.from(context, Address.fromSerialized(messageSender!!), false)
+    val recipient = Recipient.from(context.context, Address.fromSerialized(messageSender!!), false)
     if (runProfileUpdate) {
         val profile = message.profile
-        val isUserBlindedSender = messageSender == userBlindedKey
+        val isUserBlindedSender = messageSender == context.userBlindedKey
         if (profile != null && userPublicKey != messageSender && !isUserBlindedSender) {
-            val profileManager = SSKEnvironment.shared.profileManager
             val name = profile.displayName!!
             if (name.isNotEmpty()) {
-                profileManager.setName(context, recipient, name)
+                context.profileManager.setName(context.context, recipient, name)
             }
             val newProfileKey = profile.profileKey
 
-            val needsProfilePicture = !AvatarHelper.avatarFileExists(context, Address.fromSerialized(messageSender))
+            val needsProfilePicture = !AvatarHelper.avatarFileExists(context.context, Address.fromSerialized(messageSender))
             val profileKeyValid = newProfileKey?.isNotEmpty() == true && (newProfileKey.size == 16 || newProfileKey.size == 32) && profile.profilePictureURL?.isNotEmpty() == true
             val profileKeyChanged = (recipient.profileKey == null || !MessageDigest.isEqual(recipient.profileKey, newProfileKey))
 
             if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
-                profileManager.setProfilePicture(context, recipient, profile.profilePictureURL, newProfileKey)
-                profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
+                context.profileManager.setProfilePicture(context.context, recipient, profile.profilePictureURL, newProfileKey)
+                context.profileManager.setUnidentifiedAccessMode(context.context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
-                profileManager.setProfilePicture(context, recipient, null, null)
+                context.profileManager.setProfilePicture(context.context, recipient, null, null)
             }
         }
 
         if (userPublicKey != messageSender && !isUserBlindedSender) {
-            storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
+            context.storage.setBlocksCommunityMessageRequests(recipient, message.blocksMessageRequests)
         }
 
         // update the disappearing / legacy banner for the sender
@@ -416,19 +453,19 @@ fun MessageReceiver.handleVisibleMessage(
             proto.dataMessage.expireTimer > 0 && !proto.hasExpirationType() -> Recipient.DisappearingState.LEGACY
             else -> Recipient.DisappearingState.UPDATED
         }
-        storage.updateDisappearingState(
+        context.storage.updateDisappearingState(
             messageSender,
-            threadID,
+            context.threadId,
             disappearingState
         )
     }
     // Handle group invite response if new closed group
-    if (threadRecipient?.isGroupV2Recipient == true) {
+    if (context.threadRecipient?.isGroupV2Recipient == true) {
         GlobalScope.launch {
             try {
                 MessagingModuleConfiguration.shared.groupManagerV2
                     .handleInviteResponse(
-                        AccountId(threadRecipient.address.toString()),
+                        AccountId(context.threadRecipient!!.address.toString()),
                         AccountId(messageSender),
                         approved = true
                     )
@@ -443,7 +480,7 @@ fun MessageReceiver.handleVisibleMessage(
     if (message.quote != null && proto.dataMessage.hasQuote()) {
         val quote = proto.dataMessage.quote
 
-        val author = if (quote.author == userBlindedKey) {
+        val author = if (quote.author == context.userBlindedKey) {
             Address.fromSerialized(userPublicKey!!)
         } else {
             Address.fromSerialized(quote.author)
@@ -482,23 +519,23 @@ fun MessageReceiver.handleVisibleMessage(
     cancelTypingIndicatorsIfNeeded(message.sender!!)
 
     // Parse reaction if needed
-    val threadIsGroup = threadRecipient?.isGroupOrCommunityRecipient == true
+    val threadIsGroup = context.threadRecipient?.isGroupOrCommunityRecipient == true
     message.reaction?.let { reaction ->
         if (reaction.react == true) {
             reaction.serverId = message.openGroupServerMessageID?.toString() ?: message.serverHash.orEmpty()
             reaction.dateSent = message.sentTimestamp ?: 0
             reaction.dateReceived = message.receivedTimestamp ?: 0
-            storage.addReaction(
-                threadId = threadId,
+            context.storage.addReaction(
+                threadId = context.threadId,
                 reaction = reaction,
                 messageSender = messageSender,
                 notifyUnread = !threadIsGroup
             )
         } else {
-            storage.removeReaction(
+            context.storage.removeReaction(
                 emoji = reaction.emoji!!,
                 messageTimestamp = reaction.timestamp!!,
-                threadId = threadId,
+                threadId = context.threadId,
                 author = reaction.publicKey!!,
                 notifyUnread = threadIsGroup
             )
@@ -507,25 +544,25 @@ fun MessageReceiver.handleVisibleMessage(
         // A user is mentioned if their public key is in the body of a message or one of their messages
         // was quoted
         val messageText = message.text
-        message.hasMention = listOf(userPublicKey, userBlindedKey)
+        message.hasMention = listOf(userPublicKey, context.userBlindedKey)
             .filterNotNull()
             .any { key ->
                 messageText?.contains("@$key") == true || key == (quoteModel?.author?.toString() ?: "")
             }
 
         // Persist the message
-        message.threadID = threadID
+        message.threadID = context.threadId
 
         // clean up the message - For example we do not want any expiration data on messages for communities
        if(message.openGroupServerMessageID != null){
            message.expiryMode = ExpiryMode.NONE
        }
 
-        val messageID = storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, openGroupID, attachments, runThreadUpdate) ?: return null
+        val messageID = context.storage.persist(message, quoteModel, linkPreviews, message.groupPublicKey, context.openGroupID, attachments, runThreadUpdate) ?: return null
         // Parse & persist attachments
         // Start attachment downloads if needed
-        if (messageID.mms && (threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
-            storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
+        if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
+            context.storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                 attachment.attachmentId?.let { id ->
                     val downloadJob = AttachmentDownloadJob(id.rowId, messageID.id)
                     JobQueue.shared.add(downloadJob)
@@ -533,58 +570,61 @@ fun MessageReceiver.handleVisibleMessage(
             }
         }
         message.openGroupServerMessageID?.let {
-            storage.setOpenGroupServerMessageID(
+            context.storage.setOpenGroupServerMessageID(
                 messageID = messageID,
                 serverID = it,
-                threadID = threadID
+                threadID = context.threadId
             )
         }
-        SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message)
+        context.messageExpirationManager.maybeStartExpiration(message)
         return messageID
     }
     return null
 }
 
-fun MessageReceiver.handleOpenGroupReactions(
-    threadId: Long,
+/**
+ * Constructs reaction records for a given open group message.
+ *
+ * If the open group message exists in our database, we'll construct a list of reaction records
+ * that is specified in the [reactions].
+ *
+ * Note that this function does not know or check if the local message has any reactions,
+ * you'll be responsible for that. In simpler words, [out] only contains reactions that are given
+ * to this function, it will not include any existing reactions in the database.
+ *
+ * @param openGroupMessageServerID The server ID of this message
+ * @param context The context containing necessary data for processing reactions
+ * @param reactions A map of emoji to [OpenGroupApi.Reaction] objects, representing the reactions for the message
+ * @param out A mutable map that will be populated with [ReactionRecord]s, keyed by [MessageId]
+ */
+fun constructReactionRecords(
     openGroupMessageServerID: Long,
-    reactions: Map<String, OpenGroupApi.Reaction>?
+    context: VisibleMessageHandlerContext,
+    reactions: Map<String, OpenGroupApi.Reaction>?,
+    out: MutableMap<MessageId, MutableList<ReactionRecord>>
 ) {
     if (reactions.isNullOrEmpty()) return
-    val storage = MessagingModuleConfiguration.shared.storage
-    val messageId = MessagingModuleConfiguration.shared.messageDataProvider.getMessageID(openGroupMessageServerID, threadId) ?: return
-    storage.deleteReactions(messageId)
-    val userPublicKey = storage.getUserPublicKey()!!
-    val openGroup = storage.getOpenGroup(threadId)
-    val blindedPublicKey = openGroup?.publicKey?.let { serverPublicKey ->
-        BlindKeyAPI.blind15KeyPairOrNull(
-            ed25519SecretKey = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!.secretKey.data,
-            serverPubKey = Hex.fromStringCondensed(serverPublicKey),
-        )
-            ?.let { AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString }
-    }
+    val messageId = context.messageDataProvider.getMessageID(openGroupMessageServerID, context.threadId) ?: return
+
+    val outList = out.getOrPut(messageId) { arrayListOf() }
+
     for ((emoji, reaction) in reactions) {
         val pendingUserReaction = OpenGroupApi.pendingReactions
-            .filter { it.server == openGroup?.server && it.room == openGroup.room && it.messageId == openGroupMessageServerID && it.add }
+            .filter { it.server == context.openGroup?.server && it.room == context.openGroup?.room && it.messageId == openGroupMessageServerID && it.add }
             .sortedByDescending { it.seqNo }
             .any { it.emoji == emoji }
-        val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(userPublicKey)
-        val reactorIds = reaction.reactors.filter { it != blindedPublicKey && it != userPublicKey }
+        val shouldAddUserReaction = pendingUserReaction || reaction.you || reaction.reactors.contains(context.userPublicKey)
+        val reactorIds = reaction.reactors.filter { it != context.userBlindedKey && it != context.userPublicKey }
         val count = if (reaction.you) reaction.count - 1 else reaction.count
         // Add the first reaction (with the count)
         reactorIds.firstOrNull()?.let { reactor ->
-            storage.addReaction(
+            outList += ReactionRecord(
                 messageId = messageId,
-                reaction = Reaction(
-                    publicKey = reactor,
-                    emoji = emoji,
-                    react = true,
-                    serverId = "$openGroupMessageServerID",
-                    count = count,
-                    index = reaction.index
-                ),
-                messageSender = reactor,
-                notifyUnread = false
+                author = reactor,
+                emoji = emoji,
+                serverId = openGroupMessageServerID.toString(),
+                count = count,
+                sortId = reaction.index,
             )
         }
 
@@ -592,35 +632,25 @@ fun MessageReceiver.handleOpenGroupReactions(
         val maxAllowed = if (shouldAddUserReaction) 4 else 5
         val lastIndex = min(maxAllowed, reactorIds.size)
         reactorIds.slice(1 until lastIndex).map { reactor ->
-            storage.addReaction(
+            outList += ReactionRecord(
                 messageId = messageId,
-                reaction = Reaction(
-                    publicKey = reactor,
-                    emoji = emoji,
-                    react = true,
-                    serverId = "$openGroupMessageServerID",
-                    count = 0,  // Only want this on the first reaction
-                    index = reaction.index
-                ),
-                messageSender = reactor,
-                notifyUnread = false
+                author = reactor,
+                emoji = emoji,
+                serverId = openGroupMessageServerID.toString(),
+                count = 0,  // Only want this on the first reaction
+                sortId = reaction.index,
             )
         }
 
         // Add the current user reaction (if applicable and not already included)
         if (shouldAddUserReaction) {
-            storage.addReaction(
+            outList += ReactionRecord(
                 messageId = messageId,
-                reaction = Reaction(
-                    publicKey = userPublicKey,
-                    emoji = emoji,
-                    react = true,
-                    serverId = "$openGroupMessageServerID",
-                    count = 1,
-                    index = reaction.index
-                ),
-                messageSender = userPublicKey,
-                notifyUnread = false
+                author = context.userPublicKey!!,
+                emoji = emoji,
+                serverId = openGroupMessageServerID.toString(),
+                count = 1,
+                sortId = reaction.index,
             )
         }
     }

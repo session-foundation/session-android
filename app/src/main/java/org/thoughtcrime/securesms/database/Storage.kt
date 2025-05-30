@@ -1808,6 +1808,18 @@ open class Storage @Inject constructor(
         )
     }
 
+    override fun addReactions(
+        reactions: Map<MessageId, List<ReactionRecord>>,
+        replaceAll: Boolean,
+        notifyUnread: Boolean
+    ) {
+        reactionDatabase.addReactions(
+            reactionsByMessageId = reactions,
+            replaceAll = replaceAll,
+            notifyUnread = notifyUnread
+        )
+    }
+
     override fun removeReaction(
         emoji: String,
         messageTimestamp: Long,

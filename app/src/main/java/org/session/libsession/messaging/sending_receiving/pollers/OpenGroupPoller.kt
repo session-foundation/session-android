@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.BlindedIdMapping
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -35,7 +37,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
@@ -196,12 +197,14 @@ class OpenGroupPoller @AssistedInject constructor(
             .toList()
 
         try {
+            Log.d(TAG, "Start polling $server")
             OpenGroupApi
                 .poll(rooms, server)
                 .await()
                 .asSequence()
                 .filterNot { it.body == null }
                 .forEach { response ->
+                    Log.d(TAG, "Start handling ${response.endpoint}")
                     when (response.endpoint) {
                         is Endpoint.Capabilities -> {
                             handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
@@ -223,9 +226,14 @@ class OpenGroupPoller @AssistedInject constructor(
                         }
                         else -> { /* We don't care about the result of any other calls (won't be polled for) */}
                     }
+                    Log.d(TAG, "Stopped handling ${response.endpoint}")
                 }
         } catch (e: Exception) {
-            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
+            if (e !is CancellationException) {
+                Log.e(TAG, "Error while polling open group messages", e)
+                updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
+            }
+
             throw e
         }
     }
@@ -347,10 +355,6 @@ class OpenGroupPoller @AssistedInject constructor(
                     .setTimestamp(message.sentTimestamp)
                     .build()
                 envelopes.add(Triple( message.serverID, envelope, message.reactions))
-            } else if (!message.reactions.isNullOrEmpty()) {
-                message.serverID?.let {
-                    MessageReceiver.handleOpenGroupReactions(threadId, it, message.reactions)
-                }
             }
         }
 

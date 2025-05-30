@@ -234,12 +234,6 @@ object Util {
     }
 
     @JvmStatic
-    @SuppressLint("NewApi")
-    fun isDefaultSmsProvider(context: Context): Boolean {
-        return context.packageName == Telephony.Sms.getDefaultSmsPackage(context)
-    }
-
-    @JvmStatic
     @Throws(IOException::class)
     fun readFully(`in`: InputStream?, buffer: ByteArray) {
         if (`in` == null) return

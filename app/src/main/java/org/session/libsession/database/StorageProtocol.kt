@@ -37,6 +37,7 @@ import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -259,6 +260,12 @@ interface StorageProtocol {
      * Add reaction to a specific message. This is preferable to the timestamp lookup.
      */
     fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+
+    /**
+     * Add reactions into the database. If [replaceAll] is true,
+     * it will remove all existing reactions that belongs to the same message(s).
+     */
+    fun addReactions(reactions: Map<MessageId, List<ReactionRecord>>, replaceAll: Boolean, notifyUnread: Boolean)
     fun removeReaction(emoji: String, messageTimestamp: Long, threadId: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: MessageId)

@@ -1,12 +1,12 @@
 package org.session.libsession.messaging.jobs
 
+import android.os.Debug
 import com.google.protobuf.ByteString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -25,8 +25,9 @@ import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
+import org.session.libsession.messaging.sending_receiving.VisibleMessageHandlerContext
+import org.session.libsession.messaging.sending_receiving.constructReactionRecords
 import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
 import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
@@ -34,10 +35,9 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import kotlin.math.max
 
 data class MessageReceiveParameters(
@@ -99,6 +99,9 @@ class BatchMessageReceiveJob(
     }
 
     override suspend fun execute(dispatcherName: String) {
+        Log.i(TAG, "Started processing of ${messages.size} messages (id: $id)")
+//        Debug.startMethodTracingSampling(File.createTempFile("method-tracing", ".trace").absolutePath, 100 * 1024 * 1024, 10)
+
         executeAsync(dispatcherName)
     }
 
@@ -175,33 +178,37 @@ class BatchMessageReceiveJob(
         }
 
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
-        fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
+        suspend fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
             var newLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
+            val handlerContext = VisibleMessageHandlerContext(
+                module = MessagingModuleConfiguration.shared,
+                threadId = threadId,
+                openGroupID = openGroupID,
+            )
+
+            val allReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
+
             messages.forEach { (parameters, message, proto) ->
                 try {
                     when (message) {
                         is VisibleMessage -> {
                             val isUserBlindedSender =
-                                message.sender == serverPublicKey?.let {
-                                    BlindKeyAPI.blind15KeyPairOrNull(
-                                        ed25519SecretKey = storage.getUserED25519KeyPair()!!
-                                            .secretKey.data,
-                                        serverPubKey = Hex.fromStringCondensed(it),
-                                    )
-                                }?.let {
-                                    AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString
-                                }
+                                message.sender == handlerContext.userBlindedKey
+
                             if (message.sender == localUserPublicKey || isUserBlindedSender) {
                                 // use sent timestamp here since that is technically the last one we have
                                 newLastSeen = max(newLastSeen, message.sentTimestamp!!)
                             }
-                            val messageId = MessageReceiver.handleVisibleMessage(message, proto, openGroupID,
-                                threadId,
+                            val messageId = MessageReceiver.handleVisibleMessage(
+                                message = message,
+                                proto = proto,
+                                context = handlerContext,
                                 runThreadUpdate = false,
-                                runProfileUpdate = true)
+                                runProfileUpdate = true
+                            )
 
                             if (messageId != null && message.reaction == null) {
                                 messageIds[messageId] = Pair(
@@ -209,11 +216,13 @@ class BatchMessageReceiveJob(
                                     message.hasMention
                                 )
                             }
+
                             parameters.openGroupMessageServerID?.let {
-                                MessageReceiver.handleOpenGroupReactions(
-                                    threadId,
-                                    it,
-                                    parameters.reactions
+                                constructReactionRecords(
+                                    openGroupMessageServerID = it,
+                                    context = handlerContext,
+                                    reactions = parameters.reactions,
+                                    out = allReactions
                                 )
                             }
                         }
@@ -255,6 +264,10 @@ class BatchMessageReceiveJob(
             }
             storage.updateThread(threadId, true)
             SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
+
+            if (allReactions.isNotEmpty()) {
+                storage.addReactions(allReactions, replaceAll = true, notifyUnread = false)
+            }
         }
 
         coroutineScope {
@@ -282,6 +295,7 @@ class BatchMessageReceiveJob(
 
     private fun handleSuccess(dispatcherName: String) {
         Log.i(TAG, "Completed processing of ${messages.size} messages (id: $id)")
+        Debug.stopMethodTracing()
         delegate?.handleJobSucceeded(this, dispatcherName)
     }
 

@@ -11,6 +11,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPoller
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
@@ -31,6 +32,7 @@ class OpenGroupManager @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val configFactory: ConfigFactoryProtocol,
     private val groupMemberDatabase: GroupMemberDatabase,
+    private val pollerManager: OpenGroupPollerManager,
 ) {
 
     // flow holding information on write access for our current communities
@@ -69,6 +71,10 @@ class OpenGroupManager @Inject constructor(
             pollInfo = info.toPollInfo(),
             createGroupIfMissingWithPublicKey = publicKey
         )
+
+        // If existing poller for the same server exist, we'll ask it to manual poll once now so we can get the
+        // latest messages for the newly added community
+        pollerManager.pollers.value[server]?.poller?.manualPollOnce()
     }
 
     fun delete(server: String, room: String, context: Context) {
