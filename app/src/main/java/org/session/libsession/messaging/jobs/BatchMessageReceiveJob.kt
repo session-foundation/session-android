@@ -185,7 +185,7 @@ class BatchMessageReceiveJob(
                 openGroupID = openGroupID,
             )
 
-            val allReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
+            val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
 
             messages.forEach { (parameters, message, proto) ->
                 try {
@@ -218,7 +218,7 @@ class BatchMessageReceiveJob(
                                     openGroupMessageServerID = it,
                                     context = handlerContext,
                                     reactions = parameters.reactions,
-                                    out = allReactions
+                                    out = communityReactions
                                 )
                             }
                         }
@@ -261,8 +261,8 @@ class BatchMessageReceiveJob(
             storage.updateThread(threadId, true)
             SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
 
-            if (allReactions.isNotEmpty()) {
-                storage.addReactions(allReactions, replaceAll = true, notifyUnread = false)
+            if (communityReactions.isNotEmpty()) {
+                storage.addReactions(communityReactions, replaceAll = true, notifyUnread = false)
             }
         }
 
