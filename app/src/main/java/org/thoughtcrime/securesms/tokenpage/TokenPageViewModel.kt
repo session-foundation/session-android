@@ -164,11 +164,10 @@ class TokenPageViewModel @Inject constructor(
 
                     showNodeCountsAsRefreshing = false,
 
-                    currentSentPriceUSD = infoResponse.priceData.tokenPriceUSD,                        // Raw token price value "1.23" etc.
-                    currentSentPriceUSDString = infoResponse.priceData.getLocaleFormattedTokenPriceString(), // Formatted token price value "$1.23 USD" etc.
-                    currentMarketCapUSD = infoResponse.priceData.marketCapUSD,                         // Raw market cap value "1,234,567" etc.
-                    currentMarketCapUSDString = infoResponse.priceData.getLocaleFormattedMarketCapString(),  // Formatted market cap value "$1,234,567 USD" etc.
-
+                    currentSentPriceUSDString = "\$" + infoResponse.priceData.tokenPriceUSD.formatWithDecimalPlaces(2) + " $USD_NAME_SHORT", // Formatted token price value "$1.23 USD" etc.
+                    currentMarketCapUSDString = if(infoResponse.priceData.marketCapUSD ==  null) unavailableString
+                        else "\$" + infoResponse.priceData.marketCapUSD.formatWithDecimalPlaces( 0) + " $USD_NAME_SHORT",  // Formatted market cap value "$1,234,567 USD" etc.
+                    
                     currentStakingRewardPool = infoResponse.tokenData.stakingRewardPool,
                     currentStakingRewardPoolString = infoResponse.tokenData.getLocaleFormattedStakingRewardPool() + " $TOKEN_NAME_SHORT",
 
@@ -214,15 +213,18 @@ class TokenPageViewModel @Inject constructor(
 
         viewModelScope.launch {
             // if the data isn't stale then we don't need to refresh it, instead we fake a small wait
-            if (!tokenDataManager.fetchInfoDataIfNeeded()) {
-                // If there is no fresh server data then we'll update the UI elements to show their loading
-                // state for half a second then put them back as they were.
-                showLoading()
-                delay(timeMillis = 500)
-                handleInfoResponse(infoResponse)
-            }
+            try {
+                if (!tokenDataManager.fetchInfoDataIfNeeded()) {
+                    // If there is no fresh server data then we'll update the UI elements to show their loading
+                    // state for half a second then put them back as they were.
+                    showLoading()
+                    delay(timeMillis = 500)
+                    handleInfoResponse(infoResponse)
+                }
+            } catch (e: Exception){ /* exception can be ignored here as the infoResponse can return a wrapped failure object */ }
 
             // Reset the refreshing state when done
+            delay(100) // it seems there's a bug in compose where the refresh does not go away if hidden too quickly
             _uiState.update { state ->
                 state.copy(
                     isRefreshing = false

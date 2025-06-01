@@ -24,11 +24,9 @@ data class TokenPageUIState(
     // ----- PriceResponse / PriceData UI representations -----
 
     // Number so we can perform calculation (this value is obtained from PriceData.usd)
-    var currentSentPriceUSD: SerializableBigDecimal = BigDecimal.ZERO,
     var currentSentPriceUSDString: String = "",
 
     // Number so we can perform calculations (this value is obtained from PriceData.usd_market_cap)
-    val currentMarketCapUSD: SerializableBigDecimal = BigDecimal.ZERO,
     val currentMarketCapUSDString: String = "",
 
     // ----- TokenResponse / TokenData UI representations -----

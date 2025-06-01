@@ -33,7 +33,7 @@ data class PriceData(
     @SerialName("usd") val tokenPriceUSD: SerializableBigDecimal,
 
     // Current market cap value in US dollars
-    @SerialName("usd_market_cap") val marketCapUSD: SerializableBigDecimal,
+    @SerialName("usd_market_cap") val marketCapUSD: SerializableBigDecimal?,
 
     // The timestamp (in seconds) of when the server's CoinGecko-sourced token price data was last updated
     @SerialName("t_price") val priceTimestampSecs: Long,
@@ -44,17 +44,7 @@ data class PriceData(
     // current time is lower than `t_stale`, and if it is then we don't poll the server again as
     // we'd just be getting the same data.
     @SerialName("t_stale") val staleTimestampSecs: Long
-) {
-    // Get the token price in USD to 2 decimal places in a locale-aware manner
-    fun getLocaleFormattedTokenPriceString(): String {
-        return "\$" + tokenPriceUSD.formatWithDecimalPlaces(2) + " USD"
-    }
-
-    // Get the token price in USD to ZERO decimal places in a locale-aware manner
-    fun getLocaleFormattedMarketCapString(): String {
-        return "\$" + marketCapUSD.formatWithDecimalPlaces( 0) + " USD"
-    }
-}
+)
 
 // Data class to hold details provided in a InfoResponse or via the `GET /token` endpoint
 @Serializable

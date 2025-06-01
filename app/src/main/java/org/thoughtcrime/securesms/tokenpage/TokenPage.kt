@@ -812,11 +812,9 @@ fun PreviewTokenPage() {
             uiState = TokenPageUIState(
                 currentSessionNodesInSwarm = 5,
                 currentSessionNodesSecuringMessages = 125349,
-                currentSentPriceUSD = SerializableBigDecimal(1.23),
                 currentSentPriceUSDString = "$1,472.22 USD",
                 networkSecuredBySENTString = "12M SENT",
                 networkSecuredByUSDString = "$1,234,567 USD",
-                currentMarketCapUSD = SerializableBigDecimal(420_000_000),
                 currentStakingRewardPool = SerializableBigDecimal(40_000_000),
                 currentMarketCapUSDString = "$20,456,259 USD",
                 currentStakingRewardPoolString = "40,567,789,654,789 SESH",
@@ -837,10 +835,8 @@ fun PreviewTokenPageLoading() {
             uiState = TokenPageUIState(
                 currentSessionNodesInSwarm = 5,
                 currentSessionNodesSecuringMessages = 123,
-                currentSentPriceUSD = SerializableBigDecimal(1.23),
                 networkSecuredBySENTString = "12M SENT",
                 networkSecuredByUSDString = "$1,234,567 USD",
-                currentMarketCapUSD = SerializableBigDecimal(420_000_000),
                 currentStakingRewardPool = SerializableBigDecimal(40_000_000),
                 showNodeCountsAsRefreshing = true
             ),
