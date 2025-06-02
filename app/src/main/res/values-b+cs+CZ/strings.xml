@@ -322,7 +322,6 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Počkejte prosím, než se skupina vytvoří...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Aktualizace skupiny selhala</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nemáte oprávnění k mazání zpráv ostatních</string>
-    <string name="deleteContactDescription">Opravdu chcete smazat <b>{name}</b> z vašich kontaktů?\n\nTím smažete vaše konverzace, včetně všech zpráv a příloh. Budoucí zprávy od <b>{name}</b> se zobrazí jako požadavek na zprávu.</string>
     <string name="deleteConversationDescription">Opracdu chcete smazat konverzaci s <b>{name}</b>?\nTím trvale smažete všechny zprávy a přílohy.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Smazat zprávu</item>
@@ -786,7 +785,6 @@
     <string name="onboardingTos">Podmínky služby</string>
     <string name="onboardingTosPrivacy">Používáním této služby souhlasíte s našimi <b>Podmínkami služby</b> a <b>Zásadami ochrany osobních údajů</b></string>
     <string name="onionRoutingPath">Trasa</string>
-    <string name="onionRoutingPathDescription">{app_name} skrývá vaši IP adresu tím, že směruje vaše zprávy přes několik Service Nodes v decentralizované síti {app_name}. Toto je vaše aktuální trasa:</string>
     <string name="onionRoutingPathDestination">Cíl</string>
     <string name="onionRoutingPathEntryNode">Vstupní uzel</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
