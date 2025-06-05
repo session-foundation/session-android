@@ -60,7 +60,7 @@ class ExpiringMessageManager @Inject constructor(
     private val scheduleDeletionChannel: SendChannel<ExpiringMessageReference>
 
     init {
-        val channel = Channel<ExpiringMessageReference>(capacity = 100)
+        val channel = Channel<ExpiringMessageReference>(capacity = Channel.UNLIMITED)
         scheduleDeletionChannel = channel
 
         GlobalScope.launch {
