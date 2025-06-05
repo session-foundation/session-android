@@ -43,7 +43,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.setScree
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setScreenLockTimeout
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.components.AnimatingToggle
 import org.thoughtcrime.securesms.crypto.BiometricSecretProvider
 import org.thoughtcrime.securesms.service.KeyCachingService
 import org.thoughtcrime.securesms.service.KeyCachingService.KeySetBinder
@@ -52,7 +51,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
     private val TAG: String = ScreenLockActivity::class.java.simpleName
 
     private lateinit var fingerprintPrompt: ImageView
-    private lateinit var visibilityToggle: AnimatingToggle
 
     private var biometricPrompt: BiometricPrompt?       = null
     private var promptInfo: BiometricPrompt.PromptInfo? = null
@@ -308,7 +306,6 @@ class ScreenLockActivity : BaseActionBarActivity() {
             .put(APP_NAME_KEY, getString(R.string.app_name))
             .format().toString()
 
-        visibilityToggle  = findViewById(R.id.button_toggle)
         fingerprintPrompt = findViewById(R.id.fingerprint_auth_container)
 
         fingerprintPrompt.setImageResource(R.drawable.ic_fingerprint_white_48dp)
