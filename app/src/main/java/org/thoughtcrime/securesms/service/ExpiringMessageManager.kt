@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import network.loki.messenger.libsession_util.util.ExpiryMode.AfterSend
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
@@ -196,7 +195,7 @@ class ExpiringMessageManager @Inject constructor(
         val userPublicKey = preferences.getLocalNumber()
         val senderPublicKey = message.sender
         val sentTimestamp = message.sentTimestamp ?: 0
-        val expireStartedAt = if ((expiryMode is AfterSend || message.isSenderSelf) && !message.isGroup) sentTimestamp else 0
+        val expireStartedAt = if ((expiryMode is ExpiryMode.AfterSend || message.isSenderSelf) && !message.isGroup) sentTimestamp else 0
 
         // Notify the user
         val messageId = if (senderPublicKey == null || userPublicKey == senderPublicKey) {
@@ -226,11 +225,18 @@ class ExpiringMessageManager @Inject constructor(
     }
 
     override fun onMessageSent(message: Message) {
-        scheduleMessageDeletion(message)
+        // When a message is sent, we'll schedule deletion immediately if we have an expiry mode
+        if (message.expiryMode != ExpiryMode.NONE) {
+            scheduleMessageDeletion(message)
+        }
     }
 
     override fun onMessageReceived(message: Message) {
-        scheduleMessageDeletion(message)
+        // When we receive a message, we'll schedule deletion if it has an expiry mode set to
+        // AfterSend, as the message would be considered sent from the sender's perspective.
+        if (message.expiryMode is ExpiryMode.AfterSend) {
+            scheduleMessageDeletion(message)
+        }
     }
 
     private fun scheduleMessageDeletion(message: Message) {
@@ -245,11 +251,11 @@ class ExpiringMessageManager @Inject constructor(
             "Message ID cannot be null when scheduling deletion."
         }
 
-        val sentTimestamp = requireNotNull(message.sentTimestamp) {
-            "Message sent timestamp cannot be null when scheduling deletion."
-        }
-
-        scheduleDeletion(id, sentTimestamp, message.expiryMode.expiryMillis)
+        scheduleDeletion(
+            id = id,
+            expireStartedAt = clock.currentTimeMills(), // The expiration starts now instead of `message.sentTimestamp`, as that property is not really the time the message is sent but the time the user hits send
+            expiresInMills = message.expiryMode.expiryMillis
+        )
     }
 
     private suspend fun process(scheduleChannel: ReceiveChannel<ExpiringMessageReference>) {
