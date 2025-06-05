@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.mms.MmsException
 import java.io.IOException
+import java.util.PriorityQueue
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -257,8 +258,7 @@ class ExpiringMessageManager @Inject constructor(
         val sortedMessageQueue = smsDatabase.readerFor(smsDatabase.expirationStartedMessages).use { smsReader ->
             mmsDatabase.expireStartedMessages.use { mmsReader ->
                 (generateSequence { smsReader.next } + generateSequence { mmsReader.next })
-                    .mapTo(ArrayDeque(), ::ExpiringMessageReference)
-                    .apply { sort() }
+                    .mapTo(PriorityQueue(), ::ExpiringMessageReference)
             }
         }
 
@@ -281,18 +281,12 @@ class ExpiringMessageManager @Inject constructor(
             }
 
             if (newScheduledMessage != null) {
-                // A new message was scheduled, so we need to add it to the queue
-                val index = sortedMessageQueue.binarySearch(newScheduledMessage)
-                if (index < 0) {
-                    sortedMessageQueue.add(-index - 1, newScheduledMessage)
-                } else {
-                    sortedMessageQueue.add(index, newScheduledMessage)
-                }
+                sortedMessageQueue.add(newScheduledMessage)
             }
 
             // Drain the queue and process expired messages
-            while (sortedMessageQueue.isNotEmpty() && sortedMessageQueue.first().expiresAtMillis <= clock.currentTimeMills()) {
-                val expiredMessage = sortedMessageQueue.removeFirst()
+            while (sortedMessageQueue.isNotEmpty() && sortedMessageQueue.peek()!!.expiresAtMillis <= clock.currentTimeMills()) {
+                val expiredMessage = sortedMessageQueue.remove()
                 Log.d(TAG, "Processing expired message: ${expiredMessage.id}")
                 getDatabase(expiredMessage.id.mms).deleteMessage(expiredMessage.id.id)
             }
