@@ -494,7 +494,7 @@ object MessageSender {
             storage.markAsSent(messageId)
 
             // Start the disappearing messages timer if needed
-            SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message, startDisappearAfterRead = true)
+            SSKEnvironment.shared.messageExpirationManager.onMessageSent(message)
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
         }

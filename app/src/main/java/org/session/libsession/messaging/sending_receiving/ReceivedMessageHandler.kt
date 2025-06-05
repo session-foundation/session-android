@@ -2,7 +2,6 @@ package org.session.libsession.messaging.sending_receiving
 
 import android.content.Context
 import android.text.TextUtils
-import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -34,7 +33,6 @@ import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.Attachment
-import org.session.libsession.messaging.messages.visible.Reaction
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
@@ -75,7 +73,6 @@ import org.session.libsignal.utilities.removingIdPrefixIfNeeded
 import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager
 import java.security.MessageDigest
 import java.security.SignatureException
 import java.util.LinkedList
@@ -576,7 +573,8 @@ fun MessageReceiver.handleVisibleMessage(
                 threadID = context.threadId
             )
         }
-        context.messageExpirationManager.maybeStartExpiration(message)
+        message.id = messageID
+        context.messageExpirationManager.onMessageReceived(message)
         return messageID
     }
     return null
