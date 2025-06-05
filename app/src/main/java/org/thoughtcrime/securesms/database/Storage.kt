@@ -1489,7 +1489,6 @@ open class Storage @Inject constructor(
     }
 
     override fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long) {
-        val database = mmsDatabase
         val address = fromSerialized(senderPublicKey)
         val recipient = Recipient.from(context, address, false)
 
@@ -1517,8 +1516,11 @@ open class Storage @Inject constructor(
             Optional.of(message)
         )
 
-        database.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
+            .orNull()
+            ?.let {
+                messageExpirationManager.startExpiringNow(MessageId(id = it.messageId, mms = true))
+            }
     }
 
     /**
@@ -1686,7 +1688,6 @@ open class Storage @Inject constructor(
     }
 
     override fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long) {
-        val database = smsDatabase
         val address = fromSerialized(senderPublicKey)
         val recipient = Recipient.from(context, address, false)
         val threadId = threadDatabase.getOrCreateThreadIdFor(recipient)
@@ -1695,8 +1696,11 @@ open class Storage @Inject constructor(
         val expiresInMillis = expiryMode.expiryMillis
         val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
-        database.insertCallMessage(callMessage)
-        messageExpirationManager.maybeStartExpiration(sentTimestamp, senderPublicKey, expiryMode)
+        smsDatabase.insertCallMessage(callMessage).orNull()
+            ?.let {
+                messageExpirationManager.startExpiringNow(MessageId(it.messageId, mms = false))
+            }
+
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {
