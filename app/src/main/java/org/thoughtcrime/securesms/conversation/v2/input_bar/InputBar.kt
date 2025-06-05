@@ -21,6 +21,8 @@ import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
+import org.thoughtcrime.securesms.conversation.v2.InputBarState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -29,6 +31,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -69,7 +72,7 @@ class InputBar @JvmOverloads constructor(
                 showOrHideInputIfNeeded()
             }
         }
-    var allowAttachMultimediaButtons: Boolean = true
+    private var allowAttachMultimediaButtons: Boolean = true
         set(value) {
             field = value
             updateMultimediaButtonsState()
@@ -274,6 +277,38 @@ class InputBar @JvmOverloads constructor(
 
     fun setInputBarEditableFactory(factory: Editable.Factory) {
         binding.inputBarEditText.setEditableFactory(factory)
+    }
+
+    fun setState(state: InputBarState){
+        // handle content state
+        when(state.contentState){
+            is InputBarContentState.Hidden ->{
+                isVisible = false
+            }
+
+            is InputBarContentState.Disabled ->{
+                isVisible = true
+                binding.inputBarEditText.isVisible = false
+                binding.disabledBanner.isVisible = true
+                binding.disabledText.text = state.contentState.text
+                if(state.contentState.onClick == null){
+                    binding.disabledBanner.setOnClickListener(null)
+                } else {
+                    binding.disabledBanner.setOnClickListener {
+                        state.contentState.onClick()
+                    }
+                }
+            }
+
+            else -> {
+                isVisible = true
+                binding.inputBarEditText.isVisible = true
+                binding.disabledBanner.isVisible = false
+            }
+        }
+
+        // handle buttons state
+        allowAttachMultimediaButtons = state.enableAttachMediaControls
     }
 }
 

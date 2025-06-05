@@ -49,6 +49,7 @@ import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.Poller
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeModule.Companion.configure
@@ -66,7 +67,6 @@ import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.signal.aesgcmprovider.AesGcmProvider
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
@@ -83,8 +83,6 @@ import org.thoughtcrime.securesms.disguise.AppDisguiseManager
 import org.thoughtcrime.securesms.emoji.EmojiSource.Companion.refresh
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.GroupPollerManager
-import org.thoughtcrime.securesms.groups.OpenGroupManager.startPolling
-import org.thoughtcrime.securesms.groups.OpenGroupManager.stopPolling
 import org.thoughtcrime.securesms.groups.handler.AdminStateSync
 import org.thoughtcrime.securesms.groups.handler.CleanupInvitationHandler
 import org.thoughtcrime.securesms.groups.handler.DestroyedGroupSync
@@ -205,6 +203,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject
     lateinit var expiredGroupManager: Lazy<ExpiredGroupManager> // Exists here only to start upon app starts
+
+    @Inject
+    lateinit var openGroupPollerManager: Lazy<OpenGroupPollerManager>
 
     @Volatile
     var isAppVisible: Boolean = false
@@ -380,6 +381,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         appVisibilityManager.get()
         groupPollerManager.get()
         expiredGroupManager.get()
+        openGroupPollerManager.get()
     }
 
     override fun onStart(owner: LifecycleOwner) {
@@ -394,11 +396,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         }
 
         startPollingIfNeeded()
-
-        queue {
-            startPolling()
-            Unit
-        }
 
         // fetch last version data
         versionDataFetcher.get().startTimedVersionCheck()
@@ -418,7 +415,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     override fun onTerminate() {
         stopKovenant() // Loki
-        stopPolling()
         versionDataFetcher.get().stopTimedVersionCheck()
         super.onTerminate()
     }
@@ -426,29 +422,8 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     // Loki
     private fun initializeSecurityProvider() {
-        try {
-            Class.forName("org.signal.aesgcmprovider.AesGcmCipher")
-        } catch (e: ClassNotFoundException) {
-            Log.e(TAG, "Failed to find AesGcmCipher class")
-            throw ProviderInitializationException()
-        }
-
-        val aesPosition = Security.insertProviderAt(AesGcmProvider(), 1)
-        Log.i(
-            TAG,
-            "Installed AesGcmProvider: $aesPosition"
-        )
-
-        if (aesPosition < 0) {
-            Log.e(TAG, "Failed to install AesGcmProvider()")
-            throw ProviderInitializationException()
-        }
-
-        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 2)
-        Log.i(
-            TAG,
-            "Installed Conscrypt provider: $conscryptPosition"
-        )
+        val conscryptPosition = Security.insertProviderAt(Conscrypt.newProvider(), 0)
+        Log.i(TAG, "Installed Conscrypt provider: $conscryptPosition")
 
         if (conscryptPosition < 0) {
             Log.w(TAG, "Did not install Conscrypt provider. May already be present.")

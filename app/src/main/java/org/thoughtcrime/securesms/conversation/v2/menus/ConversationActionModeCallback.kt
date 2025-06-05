@@ -3,14 +3,12 @@ package org.thoughtcrime.securesms.conversation.v2.menus
 import android.content.Context
 import android.view.ActionMode
 import android.view.ContextThemeWrapper
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import network.loki.messenger.R
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.IdPrefix
@@ -22,12 +20,15 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import androidx.core.view.size
 import androidx.core.view.get
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
+import org.session.libsignal.utilities.Hex
 
 class ConversationActionModeCallback(
     private val adapter: ConversationAdapter,
     private val threadID: Long,
     private val context: Context,
     private val deprecationManager: LegacyGroupDeprecationManager,
+    private val openGroupManager: OpenGroupManager,
     ) : ActionMode.Callback {
     var delegate: ConversationActionModeCallbackDelegate? = null
 
@@ -59,7 +60,11 @@ class ConversationActionModeCallback(
         val thread = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(threadID)!!
         val userPublicKey = TextSecurePreferences.getLocalNumber(context)!!
         val edKeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()!!
-        val blindedPublicKey = openGroup?.publicKey?.let { SodiumUtilities.blindedKeyPair(it, edKeyPair)?.publicKey?.asBytes }
+        val blindedPublicKey = openGroup?.publicKey?.let {
+            BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = edKeyPair.secretKey.data,
+                serverPubKey = Hex.fromStringCondensed(it),
+            )?.pubKey?.data }
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
 
         val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
@@ -72,7 +77,11 @@ class ConversationActionModeCallback(
             if (anySentByCurrentUser) { return false } // Users can't ban themselves
             val selectedUsers = selectedItems.map { it.recipient.address.toString() }.toSet()
             if (selectedUsers.size > 1) { return false }
-            return OpenGroupManager.isUserModerator(context, openGroup.groupId, userPublicKey, blindedPublicKey)
+            return openGroupManager.isUserModerator(
+                openGroup.groupId,
+                userPublicKey,
+                blindedPublicKey
+            )
         }
 
 
@@ -112,7 +121,6 @@ class ConversationActionModeCallback(
             R.id.menu_context_ban_user -> delegate?.banUser(selectedItems)
             R.id.menu_context_ban_and_delete_all -> delegate?.banAndDeleteAll(selectedItems)
             R.id.menu_context_copy -> delegate?.copyMessages(selectedItems)
-            R.id.menu_context_copy_public_key -> delegate?.copyAccountID(selectedItems)
             R.id.menu_context_resync -> delegate?.resyncMessage(selectedItems)
             R.id.menu_context_resend -> delegate?.resendMessage(selectedItems)
             R.id.menu_message_details -> delegate?.showMessageDetail(selectedItems)
@@ -136,7 +144,6 @@ interface ConversationActionModeCallbackDelegate {
     fun banUser(messages: Set<MessageRecord>)
     fun banAndDeleteAll(messages: Set<MessageRecord>)
     fun copyMessages(messages: Set<MessageRecord>)
-    fun copyAccountID(messages: Set<MessageRecord>)
     fun resyncMessage(messages: Set<MessageRecord>)
     fun resendMessage(messages: Set<MessageRecord>)
     fun showMessageDetail(messages: Set<MessageRecord>)

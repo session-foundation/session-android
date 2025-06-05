@@ -19,7 +19,7 @@
     <dimen name="small_profile_picture_size">36dp</dimen>
     <dimen name="medium_profile_picture_size">46dp</dimen>
     <dimen name="large_profile_picture_size">76dp</dimen>
-    <dimen name="extra_large_profile_picture_size">128dp</dimen>
+
     <dimen name="conversation_view_status_indicator_size">14dp</dimen>
     <dimen name="border_thickness">1dp</dimen>
     <dimen name="tab_bar_height">36dp</dimen>
@@ -96,7 +96,6 @@
     <dimen name="alertview_small_icon_size">14dp</dimen>
 
     <dimen name="drawable_padding">24dp</dimen>
-    <dimen name="text_size">16sp</dimen>
     <dimen name="normal_padding">16dp</dimen>
     <dimen name="action_item_height">56dp</dimen>
 

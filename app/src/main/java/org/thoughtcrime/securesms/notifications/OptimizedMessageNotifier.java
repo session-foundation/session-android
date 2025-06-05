@@ -3,16 +3,15 @@ package org.thoughtcrime.securesms.notifications;
 import android.content.Context;
 import android.os.Looper;
 
-import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
 
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.Debouncer;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.ThreadUtils;
 import org.thoughtcrime.securesms.ApplicationContext;
-import org.thoughtcrime.securesms.groups.OpenGroupManager;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,10 +21,12 @@ public class OptimizedMessageNotifier implements MessageNotifier {
   private final MessageNotifier         wrapped;
   private final Debouncer               debouncer;
 
-  @MainThread
-  public OptimizedMessageNotifier(@NonNull MessageNotifier wrapped) {
+  private final OpenGroupPollerManager  openGroupPollerManager;
+
+  public OptimizedMessageNotifier(@NonNull MessageNotifier wrapped, OpenGroupPollerManager openGroupPollerManager) {
     this.wrapped   = wrapped;
-    this.debouncer = new Debouncer(TimeUnit.SECONDS.toMillis(2));
+      this.openGroupPollerManager = openGroupPollerManager;
+      this.debouncer = new Debouncer(TimeUnit.SECONDS.toMillis(2));
   }
 
   @Override
@@ -55,7 +56,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       isCaughtUp = isCaughtUp && !poller.isPolling();
     }
 
-    isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
+    isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 
     if (isCaughtUp) {
       performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context));
@@ -72,7 +73,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
-    isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
+    isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
     
     if (isCaughtUp) {
       performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId));
@@ -89,7 +90,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
-    isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
+    isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 
     if (isCaughtUp) {
       performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, threadId, signal));
@@ -106,7 +107,7 @@ public class OptimizedMessageNotifier implements MessageNotifier {
       isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
     }
 
-    isCaughtUp = isCaughtUp && OpenGroupManager.INSTANCE.isAllCaughtUp();
+    isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 
     if (isCaughtUp) {
       performOnBackgroundThreadIfNeeded(() -> wrapped.updateNotification(context, signal, reminderCount));

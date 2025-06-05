@@ -394,10 +394,7 @@ public class AttachmentManager {
 
             switch (this) {
                 case IMAGE:    return new ImageSlide(context, uri, extractedFilename, dataSize, width, height, null);
-
-                // Note: If we come through this path we will not yet have an AudioSlide duration so we set an interim placeholder value.
-                case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false, "--:--");
-
+                case AUDIO:    return new AudioSlide(context, uri, extractedFilename, dataSize, false, -1L);
                 case VIDEO:    return new VideoSlide(context, uri, extractedFilename, dataSize);
                 case VCARD:
                 case DOCUMENT: return new DocumentSlide(context, uri, extractedFilename, mimeType, dataSize);

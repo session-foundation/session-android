@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
+import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
@@ -20,6 +21,7 @@ import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
 import org.thoughtcrime.securesms.sskenvironment.ProfileManager
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.tokenpage.TokenRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepositoryImpl
 import javax.inject.Singleton
@@ -30,8 +32,11 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideMessageNotifier(): MessageNotifier {
-        return OptimizedMessageNotifier(DefaultMessageNotifier())
+    fun provideMessageNotifier(
+        avatarUtils: AvatarUtils,
+        openGroupPollerManager: OpenGroupPollerManager,
+    ): MessageNotifier {
+        return OptimizedMessageNotifier(DefaultMessageNotifier(avatarUtils), openGroupPollerManager)
     }
 }
 

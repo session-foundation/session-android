@@ -14,7 +14,6 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.groups.GroupManagerV2
-import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.MarkAsDeletedMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.UnsendRequest
@@ -57,8 +56,8 @@ interface ConversationRepository {
     fun saveDraft(threadId: Long, text: String)
     fun getDraft(threadId: Long): String?
     fun clearDrafts(threadId: Long)
-    fun inviteContacts(threadId: Long, contacts: List<Recipient>)
-    fun setBlocked(threadId: Long, recipient: Recipient, blocked: Boolean)
+    fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>)
+    fun setBlocked(recipient: Recipient, blocked: Boolean)
     fun markAsDeletedLocally(messages: Set<MessageRecord>, displayedMessage: String)
     fun deleteMessages(messages: Set<MessageRecord>, threadId: Long)
     fun deleteAllLocalMessagesInThreadFromSenderOfMessage(messageRecord: MessageRecord)
@@ -93,6 +92,16 @@ interface ConversationRepository {
     suspend fun declineMessageRequest(threadId: Long, recipient: Recipient): Result<Unit>
     fun hasReceived(threadId: Long): Boolean
     fun getInvitingAdmin(threadId: Long): Recipient?
+
+    /**
+     * This will delete all messages from the database.
+     * If a groupId is passed along, and if the user is an admin of that group,
+     * this will also remove the messages from the swarm and update
+     * the delete_before flag for that group to now
+     *
+     * Returns the amount of deleted messages
+     */
+    suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int
 }
 
 class DefaultConversationRepository @Inject constructor(
@@ -152,7 +161,7 @@ class DefaultConversationRepository @Inject constructor(
         draftDb.clearDrafts(threadId)
     }
 
-    override fun inviteContacts(threadId: Long, contacts: List<Recipient>) {
+    override fun inviteContactsToCommunity(threadId: Long, contacts: List<Recipient>) {
         val openGroup = lokiThreadDb.getOpenGroupChat(threadId) ?: return
         for (contact in contacts) {
             val message = VisibleMessage()
@@ -200,7 +209,7 @@ class DefaultConversationRepository @Inject constructor(
     }
 
     // This assumes that recipient.isContactRecipient is true
-    override fun setBlocked(threadId: Long, recipient: Recipient, blocked: Boolean) {
+    override fun setBlocked(recipient: Recipient, blocked: Boolean) {
         if (recipient.isContactRecipient) {
             storage.setBlocked(listOf(recipient), blocked)
         }
@@ -233,11 +242,11 @@ class DefaultConversationRepository @Inject constructor(
         val (mms, sms) = messages.partition { it.isMms }
 
         if(mms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(mms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = false,
+            messageDataProvider.markMessagesAsDeleted(
+                mms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -246,11 +255,11 @@ class DefaultConversationRepository @Inject constructor(
         }
 
         if(sms.isNotEmpty()){
-            messageDataProvider.markMessagesAsDeleted(sms.map { MarkAsDeletedMessage(
-                messageId = it.id,
-                isOutgoing = it.isOutgoing
-            ) },
-                isSms = true,
+            messageDataProvider.markMessagesAsDeleted(
+                sms.map { MarkAsDeletedMessage(
+                    messageId = it.messageId,
+                    isOutgoing = it.isOutgoing
+                ) },
                 displayedMessage = displayedMessage
             )
 
@@ -264,7 +273,7 @@ class DefaultConversationRepository @Inject constructor(
         val senderId = messageRecord.recipient.address.contactIdentifier()
         val messageRecordsToRemoveFromLocalStorage = mmsSmsDb.getAllMessageRecordsFromSenderInThread(threadId, senderId)
         for (message in messageRecordsToRemoveFromLocalStorage) {
-            messageDataProvider.deleteMessage(message.id, !message.isMms)
+            messageDataProvider.deleteMessage(messageId = message.messageId)
         }
     }
 
@@ -279,7 +288,7 @@ class DefaultConversationRepository @Inject constructor(
         val community = checkNotNull(lokiThreadDb.getOpenGroupChat(threadId)) { "Not a community" }
 
         messages.forEach { message ->
-            lokiMessageDb.getServerID(message.id, !message.isMms)?.let { messageServerID ->
+            lokiMessageDb.getServerID(message.messageId)?.let { messageServerID ->
                 OpenGroupApi.deleteMessage(messageServerID, community.room, community.server).await()
             }
         }
@@ -299,7 +308,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }
@@ -340,7 +349,7 @@ class DefaultConversationRepository @Inject constructor(
 
         val groupId = AccountId(recipient.address.toString())
         val hashes = messages.mapNotNullTo(mutableSetOf()) { msg ->
-            messageDataProvider.getServerHashForMessage(msg.id, msg.isMms)
+            messageDataProvider.getServerHashForMessage(msg.messageId)
         }
 
         groupManager.requestMessageDeletion(groupId, hashes)
@@ -360,7 +369,7 @@ class DefaultConversationRepository @Inject constructor(
 
         messages.forEach { message ->
             // delete from swarm
-            messageDataProvider.getServerHashForMessage(message.id, message.isMms)
+            messageDataProvider.getServerHashForMessage(message.messageId)
                 ?.let { serverHash ->
                     SnodeAPI.deleteMessage(publicKey, userAuth, listOf(serverHash))
                 }
@@ -370,10 +379,6 @@ class DefaultConversationRepository @Inject constructor(
                 userAddress?.let { MessageSender.send(unsendRequest, it) }
             }
         }
-    }
-
-    private fun shouldSendUnsendRequest(recipient: Recipient): Boolean {
-        return recipient.is1on1 || recipient.isLegacyGroupRecipient
     }
 
     private fun buildUnsendRequest(message: MessageRecord): UnsendRequest {
@@ -414,10 +419,25 @@ class DefaultConversationRepository @Inject constructor(
                     deleteMessageRequest(reader.current)
                     val recipient = reader.current.recipient
                     if (block && !recipient.isGroupV2Recipient) {
-                        setBlocked(reader.current.threadId, recipient, true)
+                        setBlocked(recipient, true)
                     }
                 }
             }
+        }
+    }
+
+    override suspend fun clearAllMessages(threadId: Long, groupId: AccountId?): Int {
+        return withContext(Dispatchers.Default) {
+            // delete data locally
+            val deletedHashes = storage.clearAllMessages(threadId)
+            Log.i("", "Cleared messages with hashes: $deletedHashes")
+
+            // if required, also sync groupV2 data
+            if (groupId != null) {
+                groupManager.clearAllMessagesForEveryone(groupId, deletedHashes)
+            }
+
+            deletedHashes.size
         }
     }
 
@@ -451,7 +471,7 @@ class DefaultConversationRepository @Inject constructor(
                     approved = false
                 )
             } else {
-                storage.deleteConversation(threadId)
+                storage.deleteContactAndSyncConfig(recipient.address.toString())
             }
         }
     }

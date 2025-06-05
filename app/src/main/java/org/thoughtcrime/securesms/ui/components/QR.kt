@@ -226,7 +226,7 @@ fun ScanQrCode(errors: Flow<String>, onScan: (String) -> Unit) {
             }
         }
     ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
+        Box {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { PreviewView(it).apply { preview.setSurfaceProvider(surfaceProvider) } }

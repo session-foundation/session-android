@@ -52,8 +52,7 @@
             android:layout_gravity="start"
             android:textAlignment="viewStart"
             android:textColor="?android:attr/textColorTertiary"
-            android:maxLines="10"
-            style="@style/PreferenceSummaryTextStyle"/>
+            android:maxLines="10" />
 
     </RelativeLayout>
 </LinearLayout>

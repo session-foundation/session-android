@@ -47,7 +47,6 @@ class EditLegacyGroupMembersAdapter(
         viewHolder.view.bind(Recipient.from(
             context,
             Address.fromSerialized(member), false),
-            glide,
             if (unlocked) UserView.ActionIndicator.Menu else UserView.ActionIndicator.None)
 
         if (zombieMembers.contains(member))

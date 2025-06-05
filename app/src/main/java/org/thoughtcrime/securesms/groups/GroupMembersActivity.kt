@@ -1,32 +1,38 @@
 package org.thoughtcrime.securesms.groups
 
-import android.content.Context
-import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
 import org.thoughtcrime.securesms.groups.compose.GroupMembersScreen
 
+/**
+ * Forced to add an activity entry point for this screen
+ * (which is otherwise accessed without an activity through the ConversationSettingsNavHost)
+ * because this is navigated to from the conversation app bar
+ */
 @AndroidEntryPoint
 class GroupMembersActivity: FullComposeScreenLockActivity() {
 
-    companion object {
-        private const val EXTRA_GROUP_ID = "GroupMembersActivity_groupID"
-
-        fun createIntent(context: Context, groupSessionId: String): Intent {
-            return Intent(context, GroupMembersActivity::class.java).apply {
-                putExtra(EXTRA_GROUP_ID, groupSessionId)
-            }
-        }
+    private val groupId: String by lazy {
+        intent.getStringExtra(GROUP_ID) ?: ""
     }
-
 
     @Composable
     override fun ComposeContent() {
-        GroupMembersScreen (
-            groupId = AccountId(intent.getStringExtra(EXTRA_GROUP_ID)!!),
-            onBack = this::finish
+        val viewModel: GroupMembersViewModel =
+            hiltViewModel<GroupMembersViewModel, GroupMembersViewModel.Factory> { factory ->
+                factory.create(AccountId(groupId))
+            }
+
+        GroupMembersScreen(
+            viewModel = viewModel,
+            onBack = { finish() },
         )
+    }
+
+    companion object {
+        const val GROUP_ID = "group_id"
     }
 }

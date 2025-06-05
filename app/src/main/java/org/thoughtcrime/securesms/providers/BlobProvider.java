@@ -4,18 +4,19 @@ import android.app.Application;
 import android.content.Context;
 import android.content.UriMatcher;
 import android.net.Uri;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.session.libsession.utilities.Util;
+import org.session.libsession.utilities.concurrent.SignalExecutors;
+import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
 import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.crypto.ModernDecryptingPartInputStream;
 import org.thoughtcrime.securesms.crypto.ModernEncryptingPartOutputStream;
-import org.session.libsignal.utilities.Log;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.concurrent.SignalExecutors;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -26,10 +27,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
-
-import kotlin.Pair;
-import kotlin.Result;
 
 /**
  * Allows for the creation and retrieval of blobs.
@@ -177,6 +174,7 @@ public class BlobProvider {
     return URI_MATCHER.match(uri) == MATCH;
   }
 
+
   @WorkerThread
   @NonNull
   private static CompletableFuture<Uri> writeBlobSpecToDisk(@NonNull Context context, @NonNull BlobSpec blobSpec, @Nullable ErrorListener errorListener) throws IOException {
@@ -261,6 +259,7 @@ public class BlobProvider {
     protected BlobSpec buildBlobSpec(@NonNull StorageType storageType) {
       return new BlobSpec(data, id, storageType, mimeType, fileName, fileSize);
     }
+
 
     /**
      * Create a blob that will exist for a single app session. An app session is defined as the

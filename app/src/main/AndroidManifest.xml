@@ -38,6 +38,7 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
@@ -164,16 +165,10 @@
             android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
             android:label="@string/groupEdit"
             android:screenOrientation="portrait" />
-
         <activity
-            android:name="org.thoughtcrime.securesms.groups.EditGroupActivity"
+            android:name="org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
-            android:theme="@style/Theme.Session.DayNight.NoActionBar"
-            android:label="@string/groupEdit"
+            android:label="@string/sessionSettings"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
@@ -200,7 +195,12 @@
         <activity android:name="org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar" />
-
+        <activity android:name="org.thoughtcrime.securesms.groups.GroupMembersActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
+        <activity android:name="org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar" />
         <activity
             android:exported="true"
             android:name="org.thoughtcrime.securesms.ShareActivity"
@@ -350,7 +350,7 @@
         </service>
         <service
             android:name="org.thoughtcrime.securesms.service.CallForegroundService"
-            android:foregroundServiceType="phoneCall"
+            android:foregroundServiceType="phoneCall|microphone"
             android:exported="false" />
 
         <receiver

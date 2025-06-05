@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +22,7 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.conversation.start.NullStartConversationDelegate
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
@@ -29,7 +31,7 @@ import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BasicAppBar
 import org.thoughtcrime.securesms.ui.components.QrImage
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -47,7 +49,7 @@ internal fun StartConversationScreen(
 
     Column(modifier = Modifier.background(
         LocalColors.current.backgroundSecondary,
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.small.copy(bottomStart = CornerSize(0.dp), bottomEnd = CornerSize(0.dp))
     )) {
         BasicAppBar(
             title = stringResource(R.string.conversationsStart),
@@ -66,27 +68,27 @@ internal fun StartConversationScreen(
                 ItemButton(
                     text = newMessageTitleTxt,
                     icon = R.drawable.ic_message_square,
-                    modifier = Modifier.contentDescription(R.string.AccessibilityId_messageNew),
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
                     onClick = delegate::onNewMessageSelected)
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.groupCreate,
                     icon = R.drawable.ic_users_group_custom,
-                    modifier = Modifier.contentDescription(R.string.AccessibilityId_groupCreate),
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
                     onClick = delegate::onCreateGroupSelected
                 )
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.communityJoin,
                     icon = R.drawable.ic_globe,
-                    modifier = Modifier.contentDescription(R.string.AccessibilityId_communityJoin),
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
                     onClick = delegate::onJoinCommunitySelected
                 )
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.sessionInviteAFriend,
                     icon = R.drawable.ic_user_round_plus,
-                    Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriendButton),
+                    Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
                     onClick = delegate::onInviteFriend
                 )
                 Column(
@@ -105,7 +107,7 @@ internal fun StartConversationScreen(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
                     QrImage(
                         string = accountId,
-                        Modifier.contentDescription(R.string.AccessibilityId_qrCode),
+                        Modifier.qaTag(R.string.AccessibilityId_qrCode),
                         icon = R.drawable.session
                     )
                 }

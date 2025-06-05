@@ -35,7 +35,7 @@ class TokenRepositoryImpl @Inject constructor(
     private val SERVER_PUBLIC_KEY = "cbf461a4431dc9174dceef4421680d743a2a0e1a3131fc794240bcb0bc3dd449"
     
     private val secretKey by lazy {
-        storage.getUserED25519KeyPair()?.secretKey?.asBytes
+        storage.getUserED25519KeyPair()?.secretKey?.data
             ?: throw (FileServerApi.Error.NoEd25519KeyPair)
     }
 

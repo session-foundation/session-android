@@ -1,16 +1,23 @@
 package org.thoughtcrime.securesms.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
@@ -21,23 +28,34 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -61,8 +79,34 @@ fun PreviewSessionOutlinedTextField() {
             )
 
             SessionOutlinedTextField(
+                text = "text with clear",
+                placeholder = "",
+                showClear = true
+            )
+
+            SessionOutlinedTextField(
+                text = "text with clear",
+                placeholder = "",
+                showClear = true,
+                innerPadding = PaddingValues(LocalDimensions.current.smallSpacing)
+            )
+            SessionOutlinedTextField(
+                text = "text with clear \ntest\ntest\ntest\ntest",
+                placeholder = "",
+                showClear = true,
+                innerPadding = PaddingValues(LocalDimensions.current.smallSpacing)
+            )
+
+
+            SessionOutlinedTextField(
                 text = "",
                 placeholder = "placeholder"
+            )
+
+            SessionOutlinedTextField(
+                text = "",
+                placeholder = "placeholder no clear",
+                showClear = true
             )
 
             SessionOutlinedTextField(
@@ -94,31 +138,55 @@ fun SessionOutlinedTextField(
     modifier: Modifier = Modifier,
     onChange: (String) -> Unit = {},
     textStyle: TextStyle = LocalType.current.base,
-    singleLine: Boolean = false,
     innerPadding: PaddingValues = PaddingValues(LocalDimensions.current.spacing),
     borderShape: Shape = MaterialTheme.shapes.small,
     placeholder: String = "",
     onContinue: () -> Unit = {},
     error: String? = null,
     isTextErrorColor: Boolean = error != null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    singleLine: Boolean = false,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    minLines: Int = 1,
+    showClear: Boolean = false,
 ) {
+    // in order to allow the cursor to be at the end of the text by default
+    // we need o handle the TextFieldValue manually here
+    var fieldValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
+    }
+
+    // If caller changes 'text', mirror it and move the caret to end
+    LaunchedEffect(text) {
+        if (text != fieldValue.text) {
+            fieldValue = TextFieldValue(text, TextRange(text.length))
+        }
+    }
+
     BasicTextField(
-        value = text,
-        onValueChange = onChange,
+        value = fieldValue,
+        onValueChange = { newValue ->
+            fieldValue = newValue
+            onChange(newValue.text)     // propagate only the text outward
+        },
         modifier = modifier,
         textStyle = textStyle.copy(
             color = if (enabled) LocalColors.current.text(isTextErrorColor) else LocalColors.current.textSecondary),
-        singleLine = singleLine,
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
         enabled = enabled,
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = if (singleLine) ImeAction.Done else ImeAction.Default
+        ),
+
         keyboardActions = KeyboardActions(
             onDone = { onContinue() },
             onGo = { onContinue() },
             onSearch = { onContinue() },
             onSend = { onContinue() },
         ),
+        singleLine = singleLine,
+        maxLines = maxLines,
+        minLines = minLines,
         decorationBox = { innerTextField ->
             Column(modifier = Modifier.animateContentSize()) {
                 Box(
@@ -130,9 +198,33 @@ fun SessionOutlinedTextField(
                         )
                         .fillMaxWidth()
                         .wrapContentHeight()
-                        .padding(innerPadding)
+                        .padding(innerPadding),
                 ) {
-                    innerTextField()
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            innerTextField()
+                        }
+
+                        if(showClear && text.isNotEmpty()){
+                            Image(
+                                painterResource(id = R.drawable.ic_x),
+                                contentDescription = stringResource(R.string.clear),
+                                colorFilter = ColorFilter.tint(
+                                    LocalColors.current.textSecondary
+                                ),
+                                modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
+                                    .padding(start = LocalDimensions.current.smallSpacing)
+                                    .size(textStyle.fontSize.value.dp)
+                                    .clickable {
+                                        onChange("")
+                                    }
+                            )
+                        }
+                    }
 
                     if (placeholder.isNotEmpty() && text.isEmpty()) {
                         Text(
@@ -143,17 +235,19 @@ fun SessionOutlinedTextField(
                     }
                 }
 
-                error?.let {
-                    Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
-                    Text(
-                        it,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .contentDescription(R.string.AccessibilityId_theError),
-                        textAlign = TextAlign.Center,
-                        style = LocalType.current.base.bold(),
-                        color = LocalColors.current.danger
-                    )
+                AnimatedContent (error) { errorText ->
+                    if (errorText != null) {
+                        Text(
+                            errorText,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = LocalDimensions.current.xsSpacing)
+                                .qaTag(R.string.qa_input_error),
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.bold(),
+                            color = LocalColors.current.danger
+                        )
+                    }
                 }
             }
         }

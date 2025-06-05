@@ -237,9 +237,10 @@ class TokenPageViewModel @Inject constructor(
     // Note: We pass this in to the token page so we can call it when we refresh the page.
     private suspend fun getNodeData() {
         withContext(Dispatchers.Default) {
-            val myPublicKey = getLocalNumber(context)
+            val myPublicKey = prefs.getLocalNumber() ?: return@withContext
+
             val getSwarmSetPromise: Promise<Set<Snode>, Exception> =
-                SnodeAPI.getSwarm(myPublicKey!!)
+                SnodeAPI.getSwarm(myPublicKey)
 
             val numSessionNodesInOurSwarm = try {
                 // Get the count of Session nodes in our swarm (technically in the range 1..10, but

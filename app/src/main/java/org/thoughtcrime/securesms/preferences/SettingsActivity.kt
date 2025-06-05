@@ -1,7 +1,6 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -36,7 +35,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -57,10 +55,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.core.content.ContextCompat
@@ -73,8 +67,6 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -90,6 +82,7 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
+import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
@@ -98,17 +91,17 @@ import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActiv
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.Avatar
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineCopyButton
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -120,9 +113,13 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
+import org.thoughtcrime.securesms.ui.theme.primaryTextButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
+import org.thoughtcrime.securesms.util.setSafeOnClickListener
+import java.io.File
+import javax.inject.Inject
 
  @AndroidEntryPoint
 class SettingsActivity : ScreenLockActionBarActivity() {
@@ -175,14 +172,15 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    private var urlToOPen: String? by mutableStateOf(null)
     private var showAvatarDialog: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
     private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
 
-     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
-     private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
-     private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
-     private val activityTitle by lazy { getString(R.string.image) }
+    private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
+    private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
+    private val imageScrim by lazy { ContextCompat.getColor(this, R.color.avatar_background) }
+    private val activityTitle by lazy { getString(R.string.image) }
 
     companion object {
         private const val SCROLL_STATE = "SCROLL_STATE"
@@ -203,12 +201,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
             SettingsComposeContent(
+                showUrlDialog = urlToOPen,
                 showAvatarDialog = showAvatarDialog,
                 startAvatarSelection = ::startAvatarSelection,
                 saveAvatar = viewModel::saveAvatar,
                 removeAvatar = viewModel::removeAvatar,
                 showAvatarPickerOptions = showAvatarPickerOptions,
                 showCamera = showAvatarPickerOptionCamera,
+                hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
                     pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -222,7 +222,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         binding.run {
-            profilePictureView.setOnClickListener {
+            userAvatar.setOnClickListener {
                 showAvatarDialog = true
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
@@ -240,38 +240,27 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             Buttons(recoveryHidden = recoveryHidden)
         }
 
+        binding.userAvatar.setThemedContent {
+            val avatarData by viewModel.avatarData.collectAsState()
+            if(avatarData == null) return@setThemedContent
+
+            Avatar(
+                size = LocalDimensions.current.iconXXLarge,
+                data = avatarData!!
+            )
+        }
+
         lifecycleScope.launch {
             viewModel.showLoader.collect {
                 binding.loader.isVisible = it
             }
         }
 
-        lifecycleScope.launch {
-            viewModel.refreshAvatar.collect {
-                binding.profilePictureView.recycle()
-                binding.profilePictureView.update()
-            }
-        }
-
-        lifecycleScope.launch {
-            viewModel.avatarData.collect {
-                if(it == null) return@collect
-
-                binding.profilePictureView.apply {
-                    publicKey = it.publicKey
-                    displayName = it.displayName
-                    update(it.recipient)
-                }
-            }
+        binding.sentLogoImageView.setSafeOnClickListener {
+            urlToOPen = "https://token.getsession.org"
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        binding.profilePictureView.update()
     }
 
     override fun finish() {
@@ -506,18 +495,45 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             val hasPaths by OnionRequestAPI.hasPath.collectAsState()
 
+            // Add the debug menu in non release builds
+            if (BuildConfig.BUILD_TYPE != "release") {
+                Cell{
+                    LargeItemButton(
+                        "Debug Menu",
+                        R.drawable.ic_settings,
+                        shape = getCellTopShape()
+                    ) { push<DebugActivity>() }
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+            }
+
             Cell {
                 Column {
-                    // Add the debug menu in non release builds
-                    if (BuildConfig.BUILD_TYPE != "release") {
-                        LargeItemButton(
-                            "Debug Menu",
-                            R.drawable.ic_settings,
-                            shape = getCellTopShape()
-                        ) { push<DebugActivity>() }
-                        Divider()
+                    // Donate
+                    LargeItemButton(
+                        textId = R.string.donate,
+                        icon = R.drawable.ic_heart,
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
+                        colors = primaryTextButtonColors()
+                    ) {
+                        urlToOPen = "https://session.foundation/donate#app"
                     }
+                    Divider()
 
+                    // Invite a friend
+                    LargeItemButton(
+                        R.string.sessionInviteAFriend,
+                        R.drawable.ic_user_round_plus,
+                        Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriend)
+                    ) { sendInvitationToUseSession() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     Crossfade(if (hasPaths) R.drawable.ic_status else R.drawable.ic_path_yellow, label = "path") {
                         LargeItemButtonWithDrawable(
                             R.string.onionRoutingPath,
@@ -528,59 +544,45 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     }
                     Divider()
 
+                    // Add the token page option.
+                    LargeItemButton(
+                        modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
+                        text = NETWORK_NAME,
+                        icon = R.drawable.session_network_logo
+                    ) { push<TokenPageActivity>() }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
+
+            Cell {
+                Column {
                     LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.contentDescription(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
+                    LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_message_square, Modifier.contentDescription(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
+                    LargeItemButton(R.string.sessionConversations, R.drawable.ic_users_round, Modifier.qaTag(R.string.AccessibilityId_sessionConversations)) { push<ChatSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.contentDescription(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.qaTag(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionAppearance, R.drawable.ic_paintbrush_vertical, Modifier.contentDescription(R.string.AccessibilityId_sessionAppearance)) { push<AppearanceSettingsActivity>() }
-                    Divider()
+                    LargeItemButton(R.string.sessionMessageRequests, R.drawable.ic_message_square_warning, Modifier.qaTag(R.string.AccessibilityId_sessionMessageRequests)) { push<MessageRequestsActivity>() }
+                }
+            }
 
-                    LargeItemButton(
-                        R.string.sessionInviteAFriend,
-                        R.drawable.ic_user_round_plus,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionInviteAFriend)
-                    ) { sendInvitationToUseSession() }
-                    Divider()
+            Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
 
-                    // Add the token page option.
-                    // Note: We can't do this all-in-one via `annotatedStringResource` because the font sizes vary.
-                    val sessionNetworkAS = buildAnnotatedString {
-                        // "Session Network" part styled with normal theme color
-                        withStyle(style = SpanStyle(color = LocalColors.current.text)) {
-                            append(NETWORK_NAME)
-                        }
-                        // " • New" part styled with theme accent color, small font size, and normal (not bold) weight
-                        withStyle(
-                            style = SpanStyle(
-                                color = LocalColors.current.primaryText,
-                                fontSize = LocalType.current.extraSmall.fontSize,
-                                fontWeight = FontWeight.Normal
-                            )
-                        ) {
-                            append(" "+applicationContext.getString(R.string.sessionNew))
-                        }
-                    }
-                    LargeItemButton(
-                        modifier = Modifier.qaTag(R.string.qa_settings_item_session_network),
-                        annotatedStringText = sessionNetworkAS,
-                        icon = R.drawable.session_network_logo
-                    ) { push<TokenPageActivity>() }
-                    Divider()
-
+            Cell {
+                Column {
                     // Only show the recovery password option if the user has not chosen to permanently hide it
                     if (!recoveryHidden) {
                         LargeItemButton(
                             R.string.sessionRecoveryPassword,
                             R.drawable.ic_recovery_password_custom,
-                            Modifier.contentDescription(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
+                            Modifier.qaTag(R.string.AccessibilityId_sessionRecoveryPasswordMenuItem)
                         ) {
                             hideRecoveryLauncher.launch(Intent(baseContext, RecoveryPasswordActivity::class.java))
                             overridePendingTransition(R.anim.slide_from_right, R.anim.slide_to_left)
@@ -588,13 +590,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         Divider()
                     }
 
-                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.contentDescription(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
+                    LargeItemButton(R.string.sessionHelp, R.drawable.ic_question_custom, Modifier.qaTag(R.string.AccessibilityId_help)) { push<HelpSettingsActivity>() }
                     Divider()
 
-                    LargeItemButton(R.string.sessionClearData,
-                        R.drawable.ic_trash_2,
-                        Modifier.contentDescription(R.string.AccessibilityId_sessionClearData),
-                        dangerButtonColors(),
+                    LargeItemButton(
+                        textId = R.string.sessionClearData,
+                        icon = R.drawable.ic_trash_2,
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_sessionClearData),
+                        colors = dangerButtonColors(),
                         shape = getCellBottomShape()
                     ) { ClearAllDataDialog().show(supportFragmentManager, "Clear All Data Dialog") }
                 }
@@ -604,10 +607,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
+        showUrlDialog: String?,
         showAvatarDialog: Boolean,
         startAvatarSelection: ()->Unit,
         saveAvatar: ()->Unit,
         removeAvatar: ()->Unit,
+        hideUrlDialog: ()->Unit,
         showAvatarPickerOptions: Boolean,
         showCamera: Boolean,
         onSheetDismissRequest: () -> Unit,
@@ -620,6 +625,14 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 startAvatarSelection = startAvatarSelection,
                 saveAvatar = saveAvatar,
                 removeAvatar = removeAvatar
+            )
+        }
+
+        // donate confirmation
+        if(showUrlDialog != null){
+            OpenURLAlertDialog(
+                url = showUrlDialog,
+                onDismissRequest = hideUrlDialog
             )
         }
 
@@ -669,7 +682,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
             ) {
                 AvatarOption(
-                    modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_imageButton)),
+                    modifier = Modifier.qaTag(R.string.AccessibilityId_imageButton),
                     title = stringResource(R.string.image),
                     iconRes = R.drawable.ic_image,
                     onClick = onGalleryPicked
@@ -677,7 +690,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
                 if(showCamera) {
                     AvatarOption(
-                        modifier = Modifier.qaTag(stringResource(R.string.AccessibilityId_cameraButton)),
+                        modifier = Modifier.qaTag(R.string.AccessibilityId_cameraButton),
                         title = stringResource(R.string.contentDescriptionCamera),
                         iconRes = R.drawable.ic_camera,
                         onClick = onCameraPicked
@@ -751,7 +764,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         ) {
                             startAvatarSelection()
                         }
-                        .qaTag(stringResource(R.string.AccessibilityId_avatarPicker))
+                        .qaTag(R.string.AccessibilityId_avatarPicker)
                         .background(
                             shape = CircleShape,
                             color = LocalColors.current.backgroundBubbleReceived,
@@ -762,7 +775,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     when(val s = state){
                         // user avatar
                         is UserAvatar -> {
-                            Avatar(userAddress = s.address)
+                            Avatar(
+                                size = LocalDimensions.current.iconXXLarge,
+                                data = s.data
+                            )
                         }
 
                         // temporary image
@@ -779,7 +795,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         else -> {
                             Image(
                                 modifier = Modifier.fillMaxSize()
-                                    .padding(LocalDimensions.current.badgeSize)
+                                    .padding(LocalDimensions.current.iconSmall)
                                     .align(Alignment.Center),
                                 painter = painterResource(id = R.drawable.ic_image),
                                 contentScale = ContentScale.Fit,

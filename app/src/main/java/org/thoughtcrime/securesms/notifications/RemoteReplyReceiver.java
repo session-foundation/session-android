@@ -41,6 +41,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase;
 import org.thoughtcrime.securesms.database.SmsDatabase;
 import org.thoughtcrime.securesms.database.Storage;
 import org.thoughtcrime.securesms.database.ThreadDatabase;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.mms.MmsException;
 
 import java.util.Collections;
@@ -109,7 +110,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             case GroupMessage: {
               OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
               try {
-                message.setId(mmsDatabase.insertMessageOutbox(reply, threadId, false, null, true));
+                message.setId(new MessageId(mmsDatabase.insertMessageOutbox(reply, threadId, false, true), true));
                 MessageSender.send(message, address);
               } catch (MmsException e) {
                 Log.w(TAG, e);
@@ -118,7 +119,7 @@ public class RemoteReplyReceiver extends BroadcastReceiver {
             }
             case SecureMessage: {
               OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
-              message.setId(smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), null, true));
+              message.setId(new MessageId(smsDatabase.insertMessageOutbox(threadId, reply, false, System.currentTimeMillis(), true), false));
               MessageSender.send(message, address);
               break;
             }

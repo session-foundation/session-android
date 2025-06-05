@@ -30,7 +30,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.utilities.SodiumUtilities
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix

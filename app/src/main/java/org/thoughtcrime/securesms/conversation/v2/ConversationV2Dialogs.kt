@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.conversation.v2
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -16,7 +15,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
@@ -34,7 +32,7 @@ import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.components.TitledRadioButton
+import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -94,11 +92,7 @@ fun ConversationV2Dialogs(
                         )
                     }
 
-                    TitledRadioButton(
-                        contentPadding = PaddingValues(
-                            horizontal = LocalDimensions.current.xxsSpacing,
-                            vertical = 0.dp
-                        ),
+                    DialogTitledRadioButton(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(stringResource(R.string.deleteMessageDeviceOnly)),
@@ -108,11 +102,7 @@ fun ConversationV2Dialogs(
                         deleteForEveryone = false
                     }
 
-                    TitledRadioButton(
-                        contentPadding = PaddingValues(
-                            horizontal = LocalDimensions.current.xxsSpacing,
-                            vertical = 0.dp
-                        ),
+                    DialogTitledRadioButton(
                         option = RadioOption(
                             value = Unit,
                             title = GetString(data.deleteForEveryoneLabel),

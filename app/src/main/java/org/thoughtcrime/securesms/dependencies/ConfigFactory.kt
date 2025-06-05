@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ConfigBase
 import network.loki.messenger.libsession_util.Contacts
 import network.loki.messenger.libsession_util.ConversationVolatileConfig
+import network.loki.messenger.libsession_util.Curve25519
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
@@ -25,7 +26,7 @@ import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.Contact
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
-import network.loki.messenger.libsession_util.util.Sodium
+import network.loki.messenger.libsession_util.util.MultiEncrypt
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.messages.control.ConfigurationMessage
@@ -82,6 +83,8 @@ class ConfigFactory @Inject constructor(
         // before `lastConfigMessage.timestamp - configChangeBufferPeriod` will not  actually have
         // it's changes applied (control text will still be added though)
         private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
+
+        const val MAX_NAME_BYTES = 100 // max size in bytes for names
     }
 
     init {
@@ -102,7 +105,7 @@ class ConfigFactory @Inject constructor(
         })
 
     private fun requiresCurrentUserED25519SecKey(): ByteArray =
-        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+        requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
             "No logged in user"
         }
 
@@ -342,13 +345,13 @@ class ConfigFactory @Inject constructor(
         domain: String,
         closedGroupSessionId: AccountId
     ): ByteArray? {
-        return Sodium.decryptForMultipleSimple(
+        return MultiEncrypt.decryptForMultipleSimple(
             encoded = encoded,
-            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.asBytes) {
+            ed25519SecretKey = requireNotNull(storage.get().getUserED25519KeyPair()?.secretKey?.data) {
                 "No logged in user"
             },
             domain = domain,
-            senderPubKey = Sodium.ed25519PkToCurve25519(closedGroupSessionId.pubKeyBytes)
+            senderPubKey = Curve25519.pubKeyFromED25519(closedGroupSessionId.pubKeyBytes)
         )
     }
 

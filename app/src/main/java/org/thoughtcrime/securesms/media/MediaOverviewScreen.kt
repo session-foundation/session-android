@@ -61,6 +61,7 @@ fun MediaOverviewScreen(
 ) {
     val selectedItems by viewModel.selectedItemIDs.collectAsState()
     val selectionMode by viewModel.inSelectionMode.collectAsState()
+    val conversationName by viewModel.conversationName.collectAsState()
     val topAppBarState = rememberTopAppBarState()
     var showingDeleteConfirmation by remember { mutableStateOf(false) }
     var showingSaveAttachmentWarning by remember { mutableStateOf(false) }
@@ -127,7 +128,7 @@ fun MediaOverviewScreen(
         topBar = {
             MediaOverviewTopAppBar(
                 selectionMode = selectionMode,
-                title = stringResource(R.string.conversationsSettingsAllMedia),
+                title = conversationName,
                 onBackClicked = viewModel::onBackClicked,
                 onSaveClicked = { showingSaveAttachmentWarning = true },
                 onDeleteClicked = { showingDeleteConfirmation = true },

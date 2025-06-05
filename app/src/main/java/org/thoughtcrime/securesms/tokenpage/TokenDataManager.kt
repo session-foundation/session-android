@@ -40,8 +40,8 @@ class TokenDataManager @Inject constructor(
             textSecurePreferences.watchLocalNumber()
                 .map { it != null }
                 .distinctUntilChanged()
-                .collect {
-                    fetchInfoResponse()
+                .collect { logged ->
+                    if(logged) fetchInfoResponse()
                 }
         }
     }

@@ -2,7 +2,7 @@ package org.thoughtcrime.securesms.recipients
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.thoughtcrime.securesms.util.AvatarPlaceholderGenerator
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 class AvatarGeneratorTest {
 
@@ -18,7 +18,7 @@ class AvatarGeneratorTest {
             "Test" to "TE"
         )
         testNamesAndResults.forEach { (test, expected) ->
-            val processed = AvatarPlaceholderGenerator.extractLabel(test)
+            val processed = AvatarUtils.extractLabel(test)
             assertEquals(expected, processed)
         }
     }

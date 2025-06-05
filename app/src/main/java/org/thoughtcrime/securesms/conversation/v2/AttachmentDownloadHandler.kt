@@ -52,7 +52,7 @@ class AttachmentDownloadHandler(
                     jobQueue.add(
                         AttachmentDownloadJob(
                             attachmentID = attachment.attachmentId.rowId,
-                            databaseMessageID = attachment.mmsId
+                            mmsMessageId = attachment.mmsId
                         )
                     )
                 }

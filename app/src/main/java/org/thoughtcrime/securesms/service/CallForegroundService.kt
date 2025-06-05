@@ -43,7 +43,11 @@ class CallForegroundService : Service() {
                     this,
                     WEBRTC_NOTIFICATION,
                     CallNotificationBuilder.getCallInProgressNotification(this, type, recipient),
-                    if (Build.VERSION.SDK_INT >= 30) ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL else 0
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    } else {
+                        0
+                    }
                 )
                 return
             } catch (e: IllegalStateException) {

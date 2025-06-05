@@ -17,6 +17,7 @@ import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.isGroupDestroyed
 import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.getConversationUnread
@@ -45,7 +46,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
-    var onSetMuteTapped: ((Boolean) -> Unit)? = null
+    var onDeleteContactTapped: (() -> Unit)? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = FragmentConversationBottomSheetBinding.inflate(LayoutInflater.from(parentContext), container, false)
@@ -64,8 +65,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
-            binding.unMuteNotificationsTextView -> onSetMuteTapped?.invoke(false)
-            binding.muteNotificationsTextView -> onSetMuteTapped?.invoke(true)
+            binding.deleteContactTextView -> onDeleteContactTapped?.invoke()
         }
     }
 
@@ -73,6 +73,9 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         super.onViewCreated(view, savedInstanceState)
         if (!this::thread.isInitialized) { return dismiss() }
         val recipient = thread.recipient
+
+        binding.deleteContactTextView.isVisible = false
+
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
             binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
@@ -95,16 +98,14 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.copyCommunityUrl.isVisible = recipient.isCommunityRecipient
         binding.copyCommunityUrl.setOnClickListener(this)
 
-        binding.unMuteNotificationsTextView.isVisible = recipient.isMuted && !recipient.isLocalNumber
-                && !isDeprecatedLegacyGroup
-        binding.muteNotificationsTextView.isVisible = !recipient.isMuted && !recipient.isLocalNumber
-                && !isDeprecatedLegacyGroup
-
-        binding.unMuteNotificationsTextView.setOnClickListener(this)
-        binding.muteNotificationsTextView.setOnClickListener(this)
-        binding.notificationsTextView.isVisible = recipient.isGroupOrCommunityRecipient && !recipient.isMuted
-                && !isDeprecatedLegacyGroup
-
+        val notificationIconRes = when{
+            recipient.isMuted -> R.drawable.ic_volume_off
+            recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
+                R.drawable.ic_at_sign
+            else -> R.drawable.ic_volume_2
+        }
+        binding.notificationsTextView.setCompoundDrawablesWithIntrinsicBounds(notificationIconRes, 0, 0, 0)
+        binding.notificationsTextView.isVisible = !recipient.isLocalNumber && !isDeprecatedLegacyGroup
         binding.notificationsTextView.setOnClickListener(this)
 
         // delete
@@ -116,11 +117,13 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             // the text, content description and icon will change depending on the type
             when {
                 // groups and communities
-                recipient.isGroupOrCommunityRecipient -> {
+                recipient.isGroupRecipient -> {
+                    val accountId = AccountId(recipient.address.toString())
+                    val group = configFactory.withUserConfigs { it.userGroups.getClosedGroup(accountId.hexString) } ?: return
                     // if you are in a group V2 and have been kicked of that group, or the group was destroyed,
+                    // or if the user is an admin
                     // the button should read 'Delete' instead of 'Leave'
-                    if (configFactory.wasKickedFromGroupV2(recipient) ||
-                        configFactory.isGroupDestroyed(recipient)) {
+                    if (!group.shouldPoll || group.hasAdminKey()) {
                         text = context.getString(R.string.delete)
                         contentDescription = context.getString(R.string.AccessibilityId_delete)
                         drawableStartRes = R.drawable.ic_trash_2
@@ -131,18 +134,28 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
                     }
                 }
 
+                recipient.isCommunityRecipient -> {
+                    text = context.getString(R.string.leave)
+                    contentDescription = context.getString(R.string.AccessibilityId_leave)
+                    drawableStartRes = R.drawable.ic_log_out
+                }
+
                 // note to self
                 recipient.isLocalNumber -> {
                     text = context.getString(R.string.hide)
                     contentDescription = context.getString(R.string.AccessibilityId_clear)
-                    drawableStartRes = R.drawable.ic_trash_2
+                    drawableStartRes = R.drawable.ic_eye_off
                 }
 
                 // 1on1
                 else -> {
-                    text = context.getString(R.string.delete)
+                    text = context.getString(R.string.conversationsDelete)
                     contentDescription = context.getString(R.string.AccessibilityId_delete)
                     drawableStartRes = R.drawable.ic_trash_2
+
+                    // also show delete contact for 1on1
+                    binding.deleteContactTextView.isVisible = true
+                    binding.deleteContactTextView.setOnClickListener(this@ConversationOptionsBottomSheet)
                 }
             }
 

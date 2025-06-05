@@ -98,6 +98,12 @@ fun dangerButtonColors() = ButtonDefaults.buttonColors(
     contentColor = LocalColors.current.danger
 )
 
+@Composable
+fun primaryTextButtonColors() = ButtonDefaults.buttonColors(
+    containerColor = Color.Transparent,
+    contentColor = LocalColors.current.primaryText
+)
+
 // Our themes
 data class ClassicDark(override val primary: Color = primaryGreen) : ThemeColors {
     override val isLight = false
@@ -196,6 +202,9 @@ private fun ThemeColors() {
     Column {
         Box(Modifier.background(LocalColors.current.primary)) {
             Text("primary", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.primaryText)) {
+            Text("primaryText", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.background)) {
             Text("background", style = LocalType.current.base)

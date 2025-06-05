@@ -28,12 +28,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.activity.addCallback
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.FileInputStream
-import java.io.IOException
-import java.lang.IllegalArgumentException
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromExternal
@@ -42,19 +38,20 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ShareActivity.ResolveMediaTask
 import org.thoughtcrime.securesms.components.SearchToolbar
 import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener
-import org.thoughtcrime.securesms.contacts.ContactSelectionListFragment
-import org.thoughtcrime.securesms.contacts.ContactSelectionListFragment.OnContactSelectedListener
-import org.thoughtcrime.securesms.contacts.ContactSelectionListLoader
+import org.thoughtcrime.securesms.contacts.ShareContactListFragment
+import org.thoughtcrime.securesms.contacts.ShareContactListFragment.OnContactSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.util.MediaUtil
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
+import java.io.FileInputStream
+import java.io.IOException
 
- // An activity to quickly share content with contacts.
+// An activity to quickly share content with contacts.
 @AndroidEntryPoint
 class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
@@ -66,8 +63,11 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
     }
 
+     override val applyDefaultWindowInsets: Boolean
+         get() = false
+
     // Lateinit UI elements
-    private lateinit var contactsFragment: ContactSelectionListFragment
+    private lateinit var contactsFragment: ShareContactListFragment
     private lateinit var searchToolbar: SearchToolbar
     private lateinit var searchAction: ImageView
     private lateinit var progressWheel: View
@@ -80,11 +80,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
 
     override fun onCreate(icicle: Bundle?, ready: Boolean) {
 
-        if (!intent.hasExtra(ContactSelectionListFragment.DISPLAY_MODE)) {
-            intent.putExtra(ContactSelectionListFragment.DISPLAY_MODE, ContactSelectionListLoader.DisplayMode.FLAG_ALL)
-        }
-
-        intent.putExtra(ContactSelectionListFragment.REFRESHABLE, false)
+        intent.putExtra(ShareContactListFragment.REFRESHABLE, false)
 
         setContentView(R.layout.share_activity)
 
@@ -92,6 +88,13 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         initializeResources()
         initializeSearch()
         initializeMedia()
+
+
+        // only apply inset padding at the top, so the child fragment can allow its recyclerview all the way down
+        findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
+            consumeInsets = false,
+            applyBottom = false,
+        )
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -134,7 +137,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         progressWheel = findViewById<View>(R.id.progress_wheel)
         searchToolbar = findViewById<SearchToolbar>(R.id.search_toolbar)
         searchAction = findViewById<ImageView>(R.id.search_action)
-        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ContactSelectionListFragment
+        contactsFragment = supportFragmentManager.findFragmentById(R.id.contact_selection_list_fragment) as ShareContactListFragment
         contactsFragment.onContactSelectedListener = this
     }
 

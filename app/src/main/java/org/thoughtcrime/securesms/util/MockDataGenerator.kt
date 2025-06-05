@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.Context
+import network.loki.messenger.libsession_util.Curve25519
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage
@@ -11,6 +12,9 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.Curve
+import org.session.libsignal.crypto.ecc.DjbECPrivateKey
+import org.session.libsignal.crypto.ecc.DjbECPublicKey
+import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
@@ -232,7 +236,12 @@ object MockDataGenerator {
                 storage.addClosedGroupPublicKey(randomGroupPublicKey)
 
                 // Add the group to the user's set of public keys to poll for and store the key pair
-                val encryptionKeyPair = Curve.generateKeyPair()
+                val encryptionKeyPair = Curve25519.generateKeyPair().let {
+                    ECKeyPair(
+                        DjbECPublicKey(it.pubKey.data),
+                        DjbECPrivateKey(it.secretKey.data)
+                    )
+                }
                 storage.addClosedGroupEncryptionKeyPair(encryptionKeyPair, randomGroupPublicKey, System.currentTimeMillis())
                 storage.createInitialConfigGroup(randomGroupPublicKey, groupName, GroupUtil.createConfigMemberMap(members, setOf(adminUserId)), System.currentTimeMillis(), encryptionKeyPair, 0)
 
@@ -368,7 +377,13 @@ object MockDataGenerator {
                     )
                 )
                 storage.setUserCount(roomName, serverName, numGroupMembers)
-                lokiThreadDB.setOpenGroupChat(OpenGroup(server = serverName, room = roomName, publicKey = randomGroupPublicKey, name = roomName, imageId = null, canWrite = true, infoUpdates = 0), threadId)
+                lokiThreadDB.setOpenGroupChat(
+                    OpenGroup(
+                        server = serverName, room = roomName, publicKey = randomGroupPublicKey,
+                        name = roomName, imageId = null, canWrite = true, infoUpdates = 0,
+                        description = null
+                    ), threadId
+                )
 
                 // Generate the message history (Note: Unapproved message requests will only include incoming messages)
                 logProgress("Open Group Thread $threadIndex", "Generate $numMessages Messages")

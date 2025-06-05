@@ -54,9 +54,9 @@ class SignalAudioManager(private val context: Context,
 
     private var audioDevices: MutableSet<AudioDevice> = mutableSetOf()
 
-    private val soundPool: SoundPool = androidAudioManager.createSoundPool()
-    private val connectedSoundId = soundPool.load(context, R.raw.webrtc_completed, 1)
-    private val disconnectedSoundId = soundPool.load(context, R.raw.webrtc_disconnected, 1)
+    private val soundPool: SoundPool by lazy { androidAudioManager.createSoundPool() }
+    private val connectedSoundId by lazy { soundPool.load(context, R.raw.webrtc_completed, 1) }
+    private val disconnectedSoundId by lazy { soundPool.load(context, R.raw.webrtc_disconnected, 1) }
 
     private val incomingRinger = IncomingRinger(context)
     private val outgoingRinger = OutgoingRinger(context)
