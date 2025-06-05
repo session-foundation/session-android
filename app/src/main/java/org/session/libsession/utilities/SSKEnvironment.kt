@@ -40,9 +40,6 @@ class SSKEnvironment(
 
     interface MessageExpirationManagerProtocol {
         fun insertExpirationTimerMessage(message: ExpirationTimerUpdate)
-//        fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
-//        fun startAnyExpiration(messageId: MessageId, expireStartedAt: Long)
-
 
         /**
          * Starts the expiration timer for a message, regardless of it has been sent, read or not.
@@ -53,40 +50,6 @@ class SSKEnvironment(
 
         fun onMessageSent(message: Message)
         fun onMessageReceived(message: Message)
-
-//
-//        fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
-//            if (
-//                message is ExpirationTimerUpdate && message.isGroup ||
-//                message is LegacyGroupControlMessage ||
-//                message.openGroupServerMessageID != null // ignore expiration on communities since they do not support disappearing mesasges
-//            ) return
-//
-//            maybeStartExpiration(
-//                message.sentTimestamp ?: return,
-//                message.sender ?: return,
-//                message.expiryMode,
-//                startDisappearAfterRead || message.isSenderSelf
-//            )
-//        }
-//
-//        fun startDisappearAfterRead(timestamp: Long, sender: String) {
-//            startAnyExpiration(
-//                timestamp,
-//                sender,
-//                expireStartedAt = nowWithOffset.coerceAtLeast(timestamp + 1)
-//            )
-//        }
-//
-//        fun maybeStartExpiration(timestamp: Long, sender: String, mode: ExpiryMode, startDisappearAfterRead: Boolean = false) {
-//            val expireStartedAt = when (mode) {
-//                is ExpiryMode.AfterSend -> timestamp
-//                is ExpiryMode.AfterRead -> if (startDisappearAfterRead) nowWithOffset.coerceAtLeast(timestamp + 1) else return
-//                else -> return
-//            }
-//
-//            startAnyExpiration(timestamp, sender, expireStartedAt)
-//        }
     }
 
     companion object {

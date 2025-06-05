@@ -208,21 +208,7 @@ class ExpiringMessageManager @Inject constructor(
         if (messageId != null) {
             startExpiringNow(messageId)
         }
-
-//        maybeStartExpiration(message)
     }
-
-//    override fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long) {
-//        mmsSmsDatabase.getMessageFor(timestamp, author)?.run {
-//            getDatabase(isMms()).markExpireStarted(getId(), expireStartedAt)
-//            scheduleDeletion(messageId)
-//        } ?: Log.e(TAG, "no message record!")
-//    }
-//
-//    override fun startAnyExpiration(messageId: MessageId, expireStartedAt: Long) {
-//        getDatabase(messageId.mms).markExpireStarted(messageId.id, expireStartedAt)
-//        scheduleDeletion(messageId)
-//    }
 
     override fun startExpiringNow(id: MessageId) {
         val message = mmsSmsDatabase.getMessageById(id) ?: run {
