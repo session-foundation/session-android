@@ -103,6 +103,11 @@ class GroupManagerV2Impl @Inject constructor(
         ) { "Only admin is allowed to invite members" }
     }
 
+    // Comparator to sort group members, ensuring a consistent order.
+    // This is more for the benefit of testing rather than correctness.
+    private val groupMemberComparator: GroupMemberComparator get() =
+        GroupMemberComparator(AccountId(requireNotNull(storage.getUserPublicKey()) { "User not logged in"}))
+
     override suspend fun createGroup(
         groupName: String,
         groupDescription: String,
@@ -345,7 +350,7 @@ class GroupManagerV2Impl @Inject constructor(
             GroupUpdateMessage.newBuilder()
                 .setMemberChangeMessage(
                     GroupUpdateMemberChangeMessage.newBuilder()
-                        .addAllMemberSessionIds(newMembers.map { it.hexString })
+                        .addAllMemberSessionIds(newMembers.sortedWith(groupMemberComparator).map { it.hexString })
                         .setType(GroupUpdateMemberChangeMessage.Type.ADDED)
                         .setAdminSignature(ByteString.copyFrom(signature))
                 )
@@ -384,7 +389,7 @@ class GroupManagerV2Impl @Inject constructor(
         val updateMessage = GroupUpdateMessage.newBuilder()
             .setMemberChangeMessage(
                 GroupUpdateMemberChangeMessage.newBuilder()
-                    .addAllMemberSessionIds(removedMembers.map { it.hexString })
+                    .addAllMemberSessionIds(removedMembers.sortedWith(groupMemberComparator).map { it.hexString })
                     .setType(GroupUpdateMemberChangeMessage.Type.REMOVED)
                     .setAdminSignature(ByteString.copyFrom(signature))
             )
@@ -556,7 +561,7 @@ class GroupManagerV2Impl @Inject constructor(
                 GroupUpdateMessage.newBuilder()
                     .setMemberChangeMessage(
                         GroupUpdateMemberChangeMessage.newBuilder()
-                            .addAllMemberSessionIds(members.map { it.hexString })
+                            .addAllMemberSessionIds(members.sortedWith(groupMemberComparator).map { it.hexString })
                             .setType(GroupUpdateMemberChangeMessage.Type.PROMOTED)
                             .setAdminSignature(ByteString.copyFrom(signature))
                     )
