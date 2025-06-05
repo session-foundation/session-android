@@ -225,7 +225,12 @@ class ExpiringMessageManager @Inject constructor(
     }
 
     override fun onMessageSent(message: Message) {
-        // When a message is sent, we'll schedule deletion immediately if we have an expiry mode
+        // When a message is sent, we'll schedule deletion immediately if we have an expiry mode,
+        // even if the expiry mode is set to AfterRead, as we don't have a reliable way to know
+        // that the recipient has read the message at at all. From our perspective it's better
+        // to disappear the message regardlessly for the safety of ourselves.
+        // As for the receiver, they will be able to disappear the message correctly after
+        // they've done reading it.
         if (message.expiryMode != ExpiryMode.NONE) {
             scheduleMessageDeletion(message)
         }
