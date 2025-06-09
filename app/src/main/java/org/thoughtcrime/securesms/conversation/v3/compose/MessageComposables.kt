@@ -106,7 +106,6 @@ fun MessageText(
     data: MessageType.Text,
     modifier: Modifier = Modifier
 ){
-    //todo CONVOv3 handle look into textBubbleSent and textBubbleReceived and make sure they're  needed vs reusing other existing values
     Text(
         modifier = modifier,
         text = data.text,
@@ -130,8 +129,8 @@ fun MessagePreview(
 ) {
     PreviewTheme(colors) {
         Column(
-            modifier = Modifier.padding(LocalDimensions.current.spacing)
-                .width(600.dp)
+            modifier = Modifier.width(600.dp).padding(LocalDimensions.current.spacing)
+
         ) {
             Message(messageType = MessageType.Text(outgoing = true, AnnotatedString("Hi there")))
 
