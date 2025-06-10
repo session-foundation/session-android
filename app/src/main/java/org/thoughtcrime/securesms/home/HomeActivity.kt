@@ -278,8 +278,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         lifecycleScope.launchWhenStarted {
             launch(Dispatchers.Default) {
-                // Double check that the long poller is up
-                (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {

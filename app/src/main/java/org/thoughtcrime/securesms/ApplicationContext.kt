@@ -48,9 +48,8 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
-import org.session.libsession.messaging.sending_receiving.pollers.Poller
+import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SnodeModule.Companion.configure
 import org.session.libsession.utilities.Device
@@ -66,7 +65,6 @@ import org.session.libsession.utilities.WindowDebouncer
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ThreadUtils.queue
 import org.thoughtcrime.securesms.AppContext.configureKovenant
 import org.thoughtcrime.securesms.components.TypingStatusSender
 import org.thoughtcrime.securesms.configs.ConfigUploader
@@ -128,8 +126,6 @@ import kotlin.concurrent.Volatile
 @HiltAndroidApp
 class ApplicationContext : Application(), DefaultLifecycleObserver,
     Toaster, Configuration.Provider {
-    @JvmField
-    var poller: Poller? = null
     var broadcaster: Broadcaster? = null
     var conversationListDebouncer: WindowDebouncer? = null
         get() {
@@ -187,10 +183,10 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var apiDB: Lazy<LokiAPIDatabase>
     @Inject lateinit var emojiSearchDb: Lazy<EmojiSearchDatabase>
     @Inject lateinit var webRtcCallBridge: Lazy<WebRtcCallBridge>
-    @Inject lateinit var legacyClosedGroupPollerV2: Lazy<LegacyClosedGroupPollerV2>
     @Inject lateinit var legacyGroupDeprecationManager: Lazy<LegacyGroupDeprecationManager>
     @Inject lateinit var cleanupInvitationHandler: Lazy<CleanupInvitationHandler>
     @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
+    @Inject lateinit var pollerManager: Lazy<PollerManager>
 
     @Inject
     lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
@@ -277,19 +273,18 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         super<Application>.onCreate()
 
         messagingModuleConfiguration = MessagingModuleConfiguration(
-            this,
-            storage.get(),
-            device.get(),
-            messageDataProvider.get(),
-            configFactory.get(),
-            this,
-            tokenFetcher.get(),
-            groupManagerV2.get(),
-            snodeClock.get(),
-            textSecurePreferences.get(),
-            legacyClosedGroupPollerV2.get(),
-            legacyGroupDeprecationManager.get(),
-            usernameUtils.get()
+            context = this,
+            storage = storage.get(),
+            device = device.get(),
+            messageDataProvider = messageDataProvider.get(),
+            configFactory = configFactory.get(),
+            toaster = this,
+            tokenFetcher = tokenFetcher.get(),
+            groupManagerV2 = groupManagerV2.get(),
+            clock = snodeClock.get(),
+            preferences = textSecurePreferences.get(),
+            deprecationManager = legacyGroupDeprecationManager.get(),
+            usernameUtils = usernameUtils.get()
         )
 
         startKovenant()
@@ -373,7 +368,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         apiDB.get()
         emojiSearchDb.get()
         webRtcCallBridge.get()
-        legacyClosedGroupPollerV2.get()
+        pollerManager.get()
         legacyGroupDeprecationManager.get()
         cleanupInvitationHandler.get()
         usernameUtils.get()
@@ -395,8 +390,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             return
         }
 
-        startPollingIfNeeded()
-
         // fetch last version data
         versionDataFetcher.get().startTimedVersionCheck()
     }
@@ -406,10 +399,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         Log.i(TAG, "App is no longer visible.")
         KeyCachingService.onAppBackgrounded(this)
         messageNotifier.setVisibleThread(-1)
-        if (poller != null) {
-            poller!!.stopIfNeeded()
-        }
-        legacyClosedGroupPollerV2.get().stopAll()
         versionDataFetcher.get().stopTimedVersionCheck()
     }
 
@@ -454,30 +443,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     private fun initializeBlobProvider() {
         AsyncTask.THREAD_POOL_EXECUTOR.execute {
             BlobProvider.getInstance().onSessionStart(this)
-        }
-    }
-
-    private class ProviderInitializationException : RuntimeException()
-
-    private fun setUpPollingIfNeeded() {
-        val userPublicKey = textSecurePreferences.get().getLocalNumber() ?: return
-        if (poller == null) {
-            poller = Poller(configFactory.get(), storage.get(), lokiAPIDatabase.get(), prefs)
-        }
-    }
-
-    fun startPollingIfNeeded() {
-        setUpPollingIfNeeded()
-        if (poller != null) {
-            poller!!.startIfNeeded()
-        }
-        legacyClosedGroupPollerV2.get().start()
-    }
-
-    fun retrieveUserProfile() {
-        setUpPollingIfNeeded()
-        if (poller != null) {
-            poller!!.retrieveUserProfile()
         }
     }
 

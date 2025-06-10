@@ -53,8 +53,6 @@ class LoadAccountManager @Inject constructor(
             }
 
             versionDataFetcher.startTimedVersionCheck()
-
-            ApplicationContext.getInstance(context).retrieveUserProfile()
         }
     }
 }

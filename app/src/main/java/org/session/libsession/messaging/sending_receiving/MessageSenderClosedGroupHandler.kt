@@ -104,8 +104,6 @@ fun MessageSender.create(
         storage.createInitialConfigGroup(groupPublicKey, name, GroupUtil.createConfigMemberMap(members, admins), sentTime, encryptionKeyPair, 0)
         // Notify the PN server
         PushRegistryV1.register(device = device, publicKey = userPublicKey)
-        // Start polling
-        MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.startPolling(groupPublicKey)
         groupID
     }
 }

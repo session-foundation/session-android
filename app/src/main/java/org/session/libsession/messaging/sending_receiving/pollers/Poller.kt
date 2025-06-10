@@ -1,31 +1,29 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
+import android.os.SystemClock
 import android.util.SparseArray
 import androidx.core.util.valueIterator
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.Contacts
-import network.loki.messenger.libsession_util.ConversationVolatileConfig
-import network.loki.messenger.libsession_util.UserGroupsConfig
-import network.loki.messenger.libsession_util.UserProfile
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.time.Duration.Companion.days
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import network.loki.messenger.libsession_util.Namespace
-import nl.komponents.kovenant.Deferred
-import nl.komponents.kovenant.Promise
-import nl.komponents.kovenant.all
-import nl.komponents.kovenant.deferred
-import nl.komponents.kovenant.functional.bind
-import nl.komponents.kovenant.resolve
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
@@ -37,8 +35,6 @@ import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.KEY_BODY
 import org.session.libsession.snode.SnodeAPI.KEY_CODE
 import org.session.libsession.snode.SnodeAPI.KEY_RESULTS
-import org.session.libsession.snode.SnodeModule
-import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
@@ -48,21 +44,46 @@ import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode
+import org.thoughtcrime.securesms.util.AppVisibilityManager
+import org.thoughtcrime.securesms.util.NetworkConnectivity
+import kotlin.time.Duration.Companion.days
 
 private const val TAG = "Poller"
 
-class Poller(
+typealias PollerRequestToken = Channel<Result<Unit>>
+
+class Poller @AssistedInject constructor(
     private val configFactory: ConfigFactoryProtocol,
     private val storage: StorageProtocol,
     private val lokiApiDatabase: LokiAPIDatabaseProtocol,
     private val preferences: TextSecurePreferences,
+    private val appVisibilityManager: AppVisibilityManager,
+    private val networkConnectivity: NetworkConnectivity,
+    @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
         get() = storage.getUserPublicKey().orEmpty()
 
-    var scope: CoroutineScope? = null
+    private val manualRequestTokens: SendChannel<PollerRequestToken>
+    val pollState: StateFlow<PollState>
 
-    var isPolling: Boolean = false
+    init {
+        val tokenChannel = Channel<PollerRequestToken>()
+
+        manualRequestTokens = tokenChannel
+        pollState = flow { setUpPolling(this, tokenChannel) }
+            .stateIn(scope, SharingStarted.Eagerly, PollState.Idle)
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(scope: CoroutineScope): Poller
+    }
+
+    enum class PollState {
+        Idle,
+        Polling,
+    }
 
     // region Settings
     companion object {
@@ -72,37 +93,20 @@ class Poller(
     }
     // endregion
 
-
-    // region Public API
-    fun startIfNeeded() {
-        if (scope != null) { return }
-
-        Log.d(TAG, "Started polling.")
-        scope = CoroutineScope(Dispatchers.Default)
-        scope?.launch {
-            setUpPolling()
-        }
+    /**
+     * Request to do a poll from the poller. If it happens to have other requests pending, they
+     * will be batched together and processed at once.
+     *
+     * Note that if there's any error during the poll, this method will throw the same error.
+     */
+    suspend fun requestPollOnce() {
+        val token = Channel<Result<Unit>>()
+        manualRequestTokens.send(token)
+        token.receive().getOrThrow()
     }
-
-    fun stopIfNeeded() {
-        Log.d(TAG, "Stopped polling.")
-        scope?.cancel()
-        scope = null
-        isPolling = false
-    }
-
-    fun retrieveUserProfile() {
-        Log.d(TAG, "Retrieving user profile. for key = $userPublicKey")
-        SnodeAPI.getSwarm(userPublicKey).success {
-            pollUserProfile(it.random())
-        }.fail { exception ->
-            Log.e(TAG, "Failed to retrieve user profile.", exception)
-        }
-    }
-    // endregion
 
     // region Private API
-    private suspend fun setUpPolling() {
+    private suspend fun setUpPolling(collector: FlowCollector<PollState>, tokenReceiver: ReceiveChannel<PollerRequestToken>) {
         // Migrate to multipart config when needed
         if (!preferences.migratedToMultiPartConfig) {
             val allConfigNamespaces = intArrayOf(Namespace.USER_PROFILE(),
@@ -124,11 +128,36 @@ class Poller(
         val pollPool = hashSetOf<Snode>() // pollPool is the list of snodes we can use while rotating snodes from our swarm
         var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
-        while(true){
-            Log.d(TAG, "Polling...")
+        var scheduledNextPoll = 0L
 
-            isPolling = true
+        while (true) {
+            val requestTokens = merge(
+                combine(
+                    appVisibilityManager.isAppVisible.filter { it },
+                    networkConnectivity.networkAvailable.filter { it },
+                ) { _, _ ->
+                    // If the app is visible and we have network, we can poll but need to stick to
+                    // the scheduled next poll time
+                    val delayMills = scheduledNextPoll - SystemClock.elapsedRealtime()
+                    if (delayMills > 0) {
+                        Log.d(TAG, "Delaying next poll by $delayMills ms")
+                        delay(delayMills)
+                    }
+
+                    mutableListOf()
+                },
+
+                tokenReceiver.receiveAsFlow().map { mutableListOf(it) }
+            ).first()
+
+            // Drain the request tokens channel so we can process all pending requests at once
+            generateSequence { tokenReceiver.tryReceive().getOrNull() }
+                .mapTo(requestTokens) { it }
+
+            Log.d(TAG, "Polling...manualTokenSize?=${requestTokens.size},")
+
             var pollDelay = RETRY_INTERVAL_MS
+            collector.emit(PollState.Polling)
             try {
                 // check if the polling pool is empty
                 if (pollPool.isEmpty()){
@@ -144,16 +173,24 @@ class Poller(
 
                 poll(currentNode)
                 retryScalingFactor = 1f
-            } catch (e: Exception){
+
+                requestTokens.forEach { it.trySend(Result.success(Unit)) }
+            }
+            catch (e: CancellationException) {
+                Log.w(TAG, "Polling cancelled", e)
+                requestTokens.forEach { it.trySend(Result.failure(e)) }
+                throw e
+            }
+            catch (e: Exception){
                 Log.e(TAG, "Error while polling:", e)
                 pollDelay = minOf(MAX_RETRY_INTERVAL_MS, (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong())
                 retryScalingFactor++
+                requestTokens.forEach { it.trySend(Result.failure(e)) }
             } finally {
-                isPolling = false
+                collector.emit(PollState.Idle)
             }
 
-            // wait before polling again
-            delay(pollDelay)
+            scheduledNextPoll = SystemClock.elapsedRealtime() + pollDelay
         }
     }
 
@@ -203,61 +240,6 @@ class Poller(
         }
     }
 
-    //todo we will need to modify this further to fit within the new coroutine setup (currently used by ApplicationContext which is a java class)
-    private fun pollUserProfile(snode: Snode) {
-        val requests = mutableListOf<SnodeAPI.SnodeBatchRequestInfo>()
-        val hashesToExtend = mutableSetOf<String>()
-        val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
-
-        configFactory.withUserConfigs {
-            hashesToExtend += it.userProfile.activeHashes()
-        }
-
-        requests += SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-            lastHash = lokiApiDatabase.getLastMessageHashValue(
-                snode = snode,
-                publicKey = userAuth.accountId.hexString,
-                namespace = Namespace.USER_PROFILE()
-            ),
-            auth = userAuth,
-            namespace = Namespace.USER_PROFILE(),
-            maxSize = -8
-        )
-
-        if (hashesToExtend.isNotEmpty()) {
-            SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                    messageHashes = hashesToExtend.toList(),
-                    auth = userAuth,
-                    newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
-                    extend = true
-            ).let { extensionRequest ->
-                requests += extensionRequest
-            }
-        }
-
-        if (requests.isNotEmpty()) {
-            SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).bind { rawResponses ->
-
-                val responseList = (rawResponses[KEY_RESULTS] as List<RawResponse>)
-                responseList.getOrNull(0)?.let { rawResponse ->
-                    if (rawResponse[KEY_CODE] as? Int != 200) {
-                        Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}")
-                    } else {
-                        val body = rawResponse[KEY_BODY] as? RawResponse
-                        if (body == null) {
-                            Log.e(TAG, "Batch sub-request didn't contain a body")
-                        } else {
-                            processConfig(snode, body, UserConfigType.USER_PROFILE)
-                        }
-                    }
-                }
-
-                Promise.ofSuccess(Unit)
-            }.fail {
-                Log.e(TAG, "Failed to get raw batch response", it)
-            }
-        }
-    }
 
     private suspend fun poll(snode: Snode) {
         val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)

@@ -24,7 +24,6 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
-import org.session.libsession.messaging.sending_receiving.pollers.LegacyClosedGroupPollerV2
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeClock
@@ -42,7 +41,6 @@ import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
-import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
@@ -69,7 +67,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
-    private val legacyClosedGroupPollerV2: LegacyClosedGroupPollerV2,
     private val openGroupManager: OpenGroupManager,
 ) {
     init {
@@ -392,10 +389,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
                 // which in turn allows us to show the `groupNoMessages` control message text.
                 //insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
-
-                // Don't create config group here, it's from a config update
-                // Start polling
-                legacyClosedGroupPollerV2.startPolling(group.accountId)
             }
 
             if (messageTimestamp != null) {
