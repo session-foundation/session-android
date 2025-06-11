@@ -17,6 +17,12 @@ import org.session.libsession.utilities.TextSecurePreferences
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages the lifecycle of the [Poller] instance and the interaction with the poller.
+ *
+ * This is done by controlling the coroutineScope that runs the poller, listening to the changes in
+ * the logged in state.
+ */
 @Singleton
 class PollerManager @Inject constructor(
     prefers: TextSecurePreferences,
@@ -44,7 +50,7 @@ class PollerManager @Inject constructor(
     /**
      * Requests a poll from the current poller.
      *
-     * If there's no, it will suspend until a poller is created.
+     * If there's none, it will suspend until one is created.
      */
     suspend fun pollOnce() {
         currentPoller.filterNotNull().first().requestPollOnce()

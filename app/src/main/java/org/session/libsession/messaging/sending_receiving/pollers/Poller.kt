@@ -1,13 +1,13 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
+import android.app.Application
 import android.os.SystemClock
-import android.util.SparseArray
-import androidx.core.util.valueIterator
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import network.loki.messenger.libsession_util.Namespace
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
@@ -32,9 +34,6 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveParameters
 import org.session.libsession.snode.RawResponse
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.SnodeAPI.KEY_BODY
-import org.session.libsession.snode.SnodeAPI.KEY_CODE
-import org.session.libsession.snode.SnodeAPI.KEY_RESULTS
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
@@ -59,6 +58,7 @@ class Poller @AssistedInject constructor(
     private val preferences: TextSecurePreferences,
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
+    private val application: Application,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -129,6 +129,7 @@ class Poller @AssistedInject constructor(
         var retryScalingFactor = 1.0f // We increment the retry interval by NEXT_RETRY_MULTIPLIER times this value, which we bump on each failure
 
         var scheduledNextPoll = 0L
+        var hasPolledUserProfileOnce = false
 
         while (true) {
             val requestTokens = merge(
@@ -154,13 +155,17 @@ class Poller @AssistedInject constructor(
             generateSequence { tokenReceiver.tryReceive().getOrNull() }
                 .mapTo(requestTokens) { it }
 
-            Log.d(TAG, "Polling...manualTokenSize?=${requestTokens.size},")
+            val pollOnlyUserProfileConfig = !hasPolledUserProfileOnce &&
+                    configFactory.withUserConfigs { it.userProfile.activeHashes().isEmpty() }
+
+            Log.d(TAG, "Polling...manualTokenSize=${requestTokens.size}, " +
+                    "pollOnlyUserProfileConfig=$pollOnlyUserProfileConfig")
 
             var pollDelay = RETRY_INTERVAL_MS
             collector.emit(PollState.Polling)
             try {
                 // check if the polling pool is empty
-                if (pollPool.isEmpty()){
+                if (pollPool.isEmpty()) {
                     // if it is empty, fill it with the snodes from our swarm
                     pollPool.addAll(SnodeAPI.getSwarm(userPublicKey).await())
                 }
@@ -171,19 +176,26 @@ class Poller @AssistedInject constructor(
                 // remove that snode from the pool
                 pollPool.remove(currentNode)
 
-                poll(currentNode)
+                poll(currentNode, pollOnlyUserProfileConfig)
                 retryScalingFactor = 1f
 
                 requestTokens.forEach { it.trySend(Result.success(Unit)) }
-            }
-            catch (e: CancellationException) {
+
+                if (pollOnlyUserProfileConfig) {
+                    pollDelay = 0L // If we only polled the user profile config, we need to poll again immediately
+                }
+
+                hasPolledUserProfileOnce = true
+            } catch (e: CancellationException) {
                 Log.w(TAG, "Polling cancelled", e)
                 requestTokens.forEach { it.trySend(Result.failure(e)) }
                 throw e
-            }
-            catch (e: Exception){
+            } catch (e: Exception) {
                 Log.e(TAG, "Error while polling:", e)
-                pollDelay = minOf(MAX_RETRY_INTERVAL_MS, (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong())
+                pollDelay = minOf(
+                    MAX_RETRY_INTERVAL_MS,
+                    (RETRY_INTERVAL_MS * (NEXT_RETRY_MULTIPLIER * retryScalingFactor)).toLong()
+                )
                 retryScalingFactor++
                 requestTokens.forEach { it.trySend(Result.failure(e)) }
             } finally {
@@ -206,6 +218,7 @@ class Poller @AssistedInject constructor(
     }
 
     private fun processConfig(snode: Snode, rawMessages: RawResponse, forConfig: UserConfigType) {
+        Log.d(TAG, "Received ${rawMessages.size} messages for $forConfig")
         val messages = rawMessages["messages"] as? List<*>
         val namespace = forConfig.namespace
         val processed = if (!messages.isNullOrEmpty()) {
@@ -226,9 +239,9 @@ class Poller @AssistedInject constructor(
             }
         } else emptyList()
 
-        if (processed.isEmpty()) return
+        Log.d(TAG, "About to process ${processed.size} messages for $forConfig")
 
-        Log.i(TAG, "Processing ${processed.size} messages for $forConfig")
+        if (processed.isEmpty()) return
 
         try {
             configFactory.mergeUserConfigs(
@@ -236,36 +249,55 @@ class Poller @AssistedInject constructor(
                 messages = processed,
             )
         } catch (e: Exception) {
-            Log.e(TAG, e)
+            Log.e(TAG, "Error while merging user configs", e)
         }
+
+        Log.d(TAG, "Completed processing messages for $forConfig")
     }
 
 
-    private suspend fun poll(snode: Snode) {
+    private suspend fun poll(snode: Snode, pollOnlyUserProfileConfig: Boolean) = supervisorScope {
         val userAuth = requireNotNull(MessagingModuleConfiguration.shared.storage.userAuth)
-        val requestSparseArray = SparseArray<SnodeAPI.SnodeBatchRequestInfo>()
-        // get messages
-        SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
-            lastHash = lokiApiDatabase.getLastMessageHashValue(
-                snode = snode,
-                publicKey = userAuth.accountId.hexString,
-                namespace = Namespace.DEFAULT()
-            ),
-            auth = userAuth,
-            maxSize = -2)
-            .also { personalMessages ->
-            // namespaces here should always be set
-            requestSparseArray[personalMessages.namespace!!] = personalMessages
+
+        // Get messages call wrapped in an async
+        val fetchMessageTask = if (!pollOnlyUserProfileConfig) {
+            val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                lastHash = lokiApiDatabase.getLastMessageHashValue(
+                    snode = snode,
+                    publicKey = userAuth.accountId.hexString,
+                    namespace = Namespace.DEFAULT()
+                ),
+                auth = userAuth,
+                maxSize = -2)
+
+            this.async {
+                runCatching {
+                    SnodeAPI.sendBatchRequest(
+                        snode = snode,
+                        publicKey = userPublicKey,
+                        request = request,
+                        responseType = Map::class.java
+                    )
+                }
+            }
+        } else {
+            null
         }
-        // get the latest convo info volatile
+
+        // Determine which configs to fetch
+        val configTypesToFetch = if (pollOnlyUserProfileConfig) listOf(UserConfigType.USER_PROFILE)
+            else UserConfigType.entries.sortedBy { it.processingOrder }
+
+        // Prepare a set to keep track of hashes of config messages we need to extend
         val hashesToExtend = mutableSetOf<String>()
-        configFactory.withUserConfigs { configs ->
-            UserConfigType
-                .entries
+
+        // Fetch the config messages in parallel, record the type and the result
+        val configFetchTasks = configFactory.withUserConfigs { configs ->
+            configTypesToFetch
                 .map { type ->
                     val config = configs.getConfig(type)
                     hashesToExtend += config.activeHashes()
-                    type.namespace to SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
+                    val request = SnodeAPI.buildAuthenticatedRetrieveBatchRequest(
                         lastHash = lokiApiDatabase.getLastMessageHashValue(
                             snode = snode,
                             publicKey = userAuth.accountId.hexString,
@@ -275,68 +307,64 @@ class Poller @AssistedInject constructor(
                         namespace = type.namespace,
                         maxSize = -8
                     )
+
+                    this.async {
+                        type to runCatching {
+                            SnodeAPI.sendBatchRequest(snode, userPublicKey, request, Map::class.java)
+                        }
+                    }
                 }
-        }.forEach { (namespace, request) ->
-            // namespaces here should always be set
-            requestSparseArray[namespace] = request
         }
 
-        val requests = requestSparseArray.valueIterator().asSequence().toMutableList()
-
         if (hashesToExtend.isNotEmpty()) {
-            SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
-                messageHashes = hashesToExtend.toList(),
-                auth = userAuth,
-                newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
-                extend = true
-            ).let { extensionRequest ->
-                requests += extensionRequest
+            launch {
+                try {
+                    SnodeAPI.sendBatchRequest(
+                        snode,
+                        userPublicKey,
+                        SnodeAPI.buildAuthenticatedAlterTtlBatchRequest(
+                            messageHashes = hashesToExtend.toList(),
+                            auth = userAuth,
+                            newExpiry = SnodeAPI.nowWithOffset + 14.days.inWholeMilliseconds,
+                            extend = true
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error while extending TTL for hashes", e)
+                }
             }
         }
 
-        if (requests.isNotEmpty()) {
-            val rawResponses = SnodeAPI.getRawBatchResponse(snode, userPublicKey, requests).await()
-            val responseList = (rawResponses[KEY_RESULTS] as List<RawResponse>)
-            // in case we had null configs, the array won't be fully populated
-            // index of the sparse array key iterator should be the request index, with the key being the namespace
-            UserConfigType.entries
-                .map { type -> type to requestSparseArray.indexOfKey(type.namespace) }
-                .filter { (_, i) -> i >= 0 }
-                .forEach { (configType, requestIndex) ->
-                    responseList.getOrNull(requestIndex)?.let { rawResponse ->
-                        if (rawResponse[KEY_CODE] as? Int != 200) {
-                            Log.e(TAG, "Batch sub-request had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}")
-                            return@forEach
-                        }
-                        val body = rawResponse[KEY_BODY] as? RawResponse
-                        if (body == null) {
-                            Log.e(TAG, "Batch sub-request didn't contain a body")
-                            return@forEach
-                        }
+        // From here, we will await on the results of pending tasks
 
-                        processConfig(snode, body, configType)
-                    }
-                }
+        // Always process the configs before the messages
+        for (task in configFetchTasks) {
+            val (configType, result) = task.await()
 
-            // the first response will be the personal messages (we want these to be processed after config messages)
-            val personalResponseIndex = requestSparseArray.indexOfKey(Namespace.DEFAULT())
-            if (personalResponseIndex >= 0) {
-                responseList.getOrNull(personalResponseIndex)?.let { rawResponse ->
-                    if (rawResponse[KEY_CODE] as? Int != 200) {
-                        // If we got a non-success response then the snode might be bad
-                        throw(RuntimeException("Batch sub-request for personal messages had non-200 response code, returned code ${(rawResponse[KEY_CODE] as? Int) ?: "[unknown]"}"))
-                    } else {
-                        val body = rawResponse[KEY_BODY] as? RawResponse
-                        if (body == null) {
-                            throw(RuntimeException("Batch sub-request for personal messages didn't contain a body"))
-                        } else {
-                            processPersonalMessages(snode, body)
-                        }
-                    }
-                }
+            if (result.isFailure) {
+                Log.e(TAG, "Error while fetching config for $configType", result.exceptionOrNull())
+                continue
+            }
+
+            processConfig(snode, result.getOrThrow(), configType)
+        }
+
+        // Process the messages if we requested them
+        if (fetchMessageTask != null) {
+            val result = fetchMessageTask.await()
+            if (result.isFailure) {
+                Log.e(TAG, "Error while fetching messages", result.exceptionOrNull())
             } else {
-                throw(SnodeAPI.Error.Generic)
+                processPersonalMessages(snode, result.getOrThrow())
             }
         }
     }
+
+    private val UserConfigType.processingOrder: Int
+        get() = when (this) {
+            UserConfigType.USER_PROFILE -> 0
+            UserConfigType.CONTACTS -> 1
+            UserConfigType.CONVO_INFO_VOLATILE -> 2
+            UserConfigType.USER_GROUPS -> 3
+        }
 }
