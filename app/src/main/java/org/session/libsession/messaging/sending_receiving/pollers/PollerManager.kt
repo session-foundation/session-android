@@ -40,6 +40,8 @@ class PollerManager @Inject constructor(
                         send(poller)
                         awaitCancellation()
                     }
+                } else {
+                    send(null)
                 }
             }
     }.stateIn(GlobalScope, SharingStarted.Eagerly, null)
