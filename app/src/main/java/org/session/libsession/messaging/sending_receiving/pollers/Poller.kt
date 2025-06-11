@@ -155,6 +155,9 @@ class Poller @AssistedInject constructor(
             generateSequence { tokenReceiver.tryReceive().getOrNull() }
                 .mapTo(requestTokens) { it }
 
+            // When we are only just starting to set up the account, we want to poll only the user
+            // profile config so the user can see their name/avatar ASAP. Once this is done, we
+            // will do a full poll immediately.
             val pollOnlyUserProfileConfig = !hasPolledUserProfileOnce &&
                     configFactory.withUserConfigs { it.userProfile.activeHashes().isEmpty() }
 
