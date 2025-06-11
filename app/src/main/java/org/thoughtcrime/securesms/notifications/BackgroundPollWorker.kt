@@ -46,7 +46,7 @@ class BackgroundPollWorker @AssistedInject constructor(
 
         fun schedulePeriodic(context: Context, targets: Collection<Target> = Target.entries) {
             Log.v(TAG, "Scheduling periodic work.")
-            val interval = 1.minutes
+            val interval = 15.minutes
             val builder = PeriodicWorkRequestBuilder<BackgroundPollWorker>(interval.inWholeSeconds, TimeUnit.SECONDS)
             builder.setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .setInitialDelay(interval.inWholeSeconds, TimeUnit.SECONDS)
