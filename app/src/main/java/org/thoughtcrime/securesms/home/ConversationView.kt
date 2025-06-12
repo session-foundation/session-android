@@ -103,7 +103,7 @@ class ConversationView : LinearLayout {
         val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
             R.drawable.ic_volume_off
         } else {
-            R.drawable.ic_notifications_mentions
+            R.drawable.ic_at_sign
         }
 
         binding.muteIndicatorImageView.setImageResource(drawableRes)
@@ -128,14 +128,15 @@ class ConversationView : LinearLayout {
         binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, android.R.attr.textColorTertiary)) // tertiary in the current xml styling is actually what figma uses as secondary text color...
 
         when {
-            !thread.isOutgoing -> binding.statusIndicatorImageView.visibility = GONE
+            !thread.isOutgoing || thread.lastMessage == null -> binding.statusIndicatorImageView.visibility = View.GONE
+
             thread.isFailed -> {
                 val drawable = ContextCompat.getDrawable(context, R.drawable.ic_triangle_alert)?.mutate()
                 binding.statusIndicatorImageView.setImageDrawable(drawable)
                 binding.statusIndicatorImageView.imageTintList = ColorStateList.valueOf(ThemeUtil.getThemedColor(context, R.attr.danger))
             }
             thread.isPending -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_dots_custom)
-            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
+            thread.isRead -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_eye)
             else -> binding.statusIndicatorImageView.setImageResource(R.drawable.ic_circle_check)
         }
 

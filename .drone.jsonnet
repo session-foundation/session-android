@@ -39,8 +39,8 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
           'apt-get update --allow-releaseinfo-change',
-          'apt-get install -y ninja-build openjdk-17-jdk',
-          'update-java-alternatives -s java-1.17.0-openjdk-amd64',
+          'apt-get install -y ninja-build openjdk-21-jdk',
+          'update-java-alternatives -s java-1.21.0-openjdk-amd64',
           './gradlew testPlayDebugUnitTestCoverageReport'
         ],
       }
@@ -81,10 +81,10 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         environment: { SSH_KEY: { from_secret: 'SSH_KEY' }, ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
           'apt-get update --allow-releaseinfo-change',
-          'apt-get install -y ninja-build openjdk-17-jdk',
-          'update-java-alternatives -s java-1.17.0-openjdk-amd64',
-          './gradlew assemblePlayDebug assembleWebsiteDebug',
-          './gradlew -Phuawei=1 assembleHuaweiDebug',
+          'apt-get install -y ninja-build openjdk-21-jdk',
+          'update-java-alternatives -s java-1.21.0-openjdk-amd64',
+          './gradlew --no-daemon assemblePlayDebug assembleWebsiteDebug',
+          './gradlew --no-daemon -Phuawei=1 assembleHuaweiDebug',
           './scripts/drone-static-upload.sh'
         ],
       }

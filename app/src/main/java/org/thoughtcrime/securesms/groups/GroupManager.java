@@ -63,7 +63,6 @@ public class GroupManager {
 
     long threadID = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(
             groupRecipient, DistributionTypes.CONVERSATION);
-    DatabaseComponent.get(context).threadDatabase().setThreadArchived(threadID);
     return new GroupActionResult(groupRecipient, threadID);
   }
 

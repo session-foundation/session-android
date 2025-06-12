@@ -1,0 +1,131 @@
+package org.session.libsession.messaging.groups
+
+import androidx.annotation.StringRes
+import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.messaging.messages.control.GroupUpdated
+import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsignal.protos.SignalServiceProtos.DataMessage.GroupUpdateDeleteMemberContentMessage
+import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
+
+/**
+ * Business logic handling group v2 operations like inviting members,
+ * removing members, promoting members, leaving groups, etc.
+ */
+interface GroupManagerV2 {
+    suspend fun createGroup(
+        groupName: String,
+        groupDescription: String,
+        members: Set<AccountId>
+    ): Recipient
+
+    suspend fun inviteMembers(
+        group: AccountId,
+        newMembers: List<AccountId>,
+        shareHistory: Boolean,
+        isReinvite: Boolean, // Whether this comes from a re-invite
+    )
+
+    suspend fun removeMembers(
+        groupAccountId: AccountId,
+        removedMembers: List<AccountId>,
+        removeMessages: Boolean
+    )
+
+    /**
+     * Clears all messages from the group for everyone on the config side
+     * This does not delete the messages from the local db (this is handled by the storage class.
+     */
+    suspend fun clearAllMessagesForEveryone(groupAccountId: AccountId, deletedHashes: List<String?>)
+
+    /**
+     * Remove all messages from the group for the given members.
+     *
+     * This will delete all messages locally, and, if the user is an admin, remotely as well.
+     *
+     * Note: unlike [handleDeleteMemberContent], [requestMessageDeletion], this method
+     * does not try to validate the validity of the request, it also does not ask other members
+     * to delete the messages. It simply removes what it can.
+     */
+    suspend fun removeMemberMessages(
+        groupAccountId: AccountId,
+        members: List<AccountId>
+    )
+
+    suspend fun handleMemberLeftMessage(memberId: AccountId, group: AccountId)
+    suspend fun leaveGroup(groupId: AccountId)
+    suspend fun promoteMember(group: AccountId, members: List<AccountId>, isRepromote: Boolean)
+
+    suspend fun handleInvitation(
+        groupId: AccountId,
+        groupName: String,
+        authData: ByteArray,
+        inviter: AccountId,
+        inviterName: String?,
+        inviteMessageHash: String,
+        inviteMessageTimestamp: Long,
+    )
+
+    suspend fun handlePromotion(
+        groupId: AccountId,
+        groupName: String,
+        adminKeySeed: ByteArray,
+        promoter: AccountId,
+        promoterName: String?,
+        promoteMessageHash: String,
+        promoteMessageTimestamp: Long,
+    )
+
+    suspend fun respondToInvitation(groupId: AccountId, approved: Boolean): Unit?
+
+    suspend fun handleInviteResponse(groupId: AccountId, sender: AccountId, approved: Boolean)
+
+    suspend fun handleKicked(groupId: AccountId)
+
+    suspend fun setName(groupId: AccountId, newName: String)
+    suspend fun setDescription(groupId: AccountId, newName: String)
+
+    /**
+     * Send a request to the group to delete the given messages.
+     *
+     * It can be called by a regular member who wishes to delete their own messages.
+     * It can also called by an admin, who can delete any messages from any member.
+     */
+    suspend fun requestMessageDeletion(groupId: AccountId, messageHashes: Set<String>)
+
+    /**
+     * Handle a request to delete a member's content from the group. This is called when we receive
+     * a message from the server that a member's content needs to be deleted. (usually sent by
+     * [requestMessageDeletion], for example)
+     *
+     * In contrast to [removeMemberMessages], where it will remove the messages blindly, this method
+     * will check if the right conditions are met before removing the messages.
+     */
+    suspend fun handleDeleteMemberContent(
+        groupId: AccountId,
+        deleteMemberContent: GroupUpdateDeleteMemberContentMessage,
+        timestamp: Long,
+        sender: AccountId,
+        senderIsVerifiedAdmin: Boolean,
+    )
+
+    fun setExpirationTimer(groupId: AccountId, mode: ExpiryMode, expiryChangeTimestampMs: Long)
+
+    fun handleGroupInfoChange(message: GroupUpdated, groupId: AccountId)
+
+    /**
+     * Should be called whenever a group invite is blocked
+     */
+    fun onBlocked(groupAccountId: AccountId)
+
+    fun getLeaveGroupConfirmationDialogData(groupId: AccountId, name: String): ConfirmDialogData?
+
+    data class ConfirmDialogData(
+        val title: String,
+        val message: CharSequence,
+        @StringRes val positiveText: Int,
+        @StringRes val negativeText: Int,
+        @StringRes val positiveQaTag: Int?,
+        @StringRes val negativeQaTag: Int?,
+    )
+}

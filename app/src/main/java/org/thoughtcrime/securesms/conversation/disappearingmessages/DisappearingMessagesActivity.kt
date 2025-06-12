@@ -1,92 +1,38 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages
 
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
-import network.loki.messenger.R
-import network.loki.messenger.databinding.ActivityDisappearingMessagesBinding
-import org.thoughtcrime.securesms.ScreenLockActionBarActivity
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessages
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
-import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.ui.setThemedContent
-import javax.inject.Inject
+import network.loki.messenger.BuildConfig
+import org.session.libsession.messaging.messages.ExpirationConfiguration
+import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
 
 @AndroidEntryPoint
-class DisappearingMessagesActivity: ScreenLockActionBarActivity() {
-
-    private lateinit var binding : ActivityDisappearingMessagesBinding
-
-    @Inject lateinit var recipientDb: RecipientDatabase
-    @Inject lateinit var threadDb: ThreadDatabase
-    @Inject lateinit var viewModelFactory: DisappearingMessagesViewModel.AssistedFactory
+class DisappearingMessagesActivity: FullComposeScreenLockActivity() {
 
     private val threadId: Long by lazy {
         intent.getLongExtra(THREAD_ID, -1)
     }
 
-    private val viewModel: DisappearingMessagesViewModel by viewModels {
-        viewModelFactory.create(threadId)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
-        super.onCreate(savedInstanceState, ready)
-        binding = ActivityDisappearingMessagesBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setUpToolbar()
-
-        binding.container.setThemedContent { DisappearingMessagesScreen() }
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.event.collect {
-                    when (it) {
-                        Event.SUCCESS -> finish()
-                        Event.FAIL -> showToast(getString(R.string.communityErrorDescription))
-                    }
-                }
+    @Composable
+    override fun ComposeContent() {
+        val viewModel: DisappearingMessagesViewModel =
+            hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
+                factory.create(
+                    threadId = threadId,
+                    isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
+                    showDebugOptions = BuildConfig.DEBUG
+                )
             }
-        }
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect {
-                    supportActionBar?.subtitle = it.subtitle(this@DisappearingMessagesActivity)
-                }
-            }
-        }
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun setUpToolbar() {
-        setSupportActionBar(binding.searchToolbar)
-        supportActionBar?.apply {
-            title = getString(R.string.disappearingMessages)
-            setDisplayHomeAsUpEnabled(true)
-            setHomeButtonEnabled(true)
-        }
+        DisappearingMessagesScreen(
+            viewModel = viewModel,
+            onBack = { finish() },
+        )
     }
 
     companion object {
         const val THREAD_ID = "thread_id"
-    }
-
-    @Composable
-    fun DisappearingMessagesScreen() {
-        val uiState by viewModel.uiState.collectAsState(UiState())
-        DisappearingMessages(uiState, callbacks = viewModel)
     }
 }

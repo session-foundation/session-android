@@ -46,6 +46,7 @@ import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
+import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.ReactionRecord;
 import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
@@ -278,14 +279,14 @@ public class SmsDatabase extends MessagingDatabase {
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
   }
 
-  public boolean isOutgoingMessage(long timestamp) {
+  public boolean isOutgoingMessage(long id) {
     SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isOutgoing   = false;
 
     try {
       cursor = database.query(TABLE_NAME, new String[] { ID, THREAD_ID, ADDRESS, TYPE },
-               DATE_SENT + " = ?", new String[] { String.valueOf(timestamp) },
+               ID + " = ?", new String[] { String.valueOf(id) },
                null, null, null, null);
 
       while (cursor.moveToNext()) {
@@ -300,14 +301,14 @@ public class SmsDatabase extends MessagingDatabase {
     return isOutgoing;
   }
 
-  public boolean isDeletedMessage(long timestamp) {
+  public boolean isDeletedMessage(long id) {
     SQLiteDatabase database     = getWritableDatabase();
     Cursor         cursor       = null;
     boolean        isDeleted   = false;
 
     try {
       cursor = database.query(TABLE_NAME, new String[] { ID, THREAD_ID, ADDRESS, TYPE },
-              DATE_SENT + " = ?", new String[] { String.valueOf(timestamp) },
+              ID + " = ?", new String[] { String.valueOf(id) },
               null, null, null, null);
 
       while (cursor.moveToNext()) {
@@ -392,7 +393,7 @@ public class SmsDatabase extends MessagingDatabase {
       while (cursor != null && cursor.moveToNext()) {
         long timestamp = cursor.getLong(2);
         SyncMessageId  syncMessageId  = new SyncMessageId(Address.fromSerialized(cursor.getString(1)), timestamp);
-        ExpirationInfo expirationInfo = new ExpirationInfo(cursor.getLong(0), timestamp, cursor.getLong(4), cursor.getLong(5), false);
+        ExpirationInfo expirationInfo = new ExpirationInfo(new MessageId(cursor.getLong(0), false), timestamp, cursor.getLong(4), cursor.getLong(5));
 
         results.add(new MarkedMessageInfo(syncMessageId, expirationInfo));
       }
@@ -553,7 +554,7 @@ public class SmsDatabase extends MessagingDatabase {
     if (threadId == -1) {
       threadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(message.getRecipient());
     }
-    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, null, runThreadUpdate);
+    long messageId = insertMessageOutbox(threadId, message, false, serverTimestamp, runThreadUpdate);
     if (messageId == -1) {
       return Optional.absent();
     }
@@ -562,7 +563,7 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public long insertMessageOutbox(long threadId, OutgoingTextMessage message,
-                                  boolean forceSms, long date, InsertListener insertListener,
+                                  boolean forceSms, long date,
                                   boolean runThreadUpdate)
   {
     long type = Types.BASE_SENDING_TYPE;
@@ -596,9 +597,6 @@ public class SmsDatabase extends MessagingDatabase {
 
     SQLiteDatabase db        = getWritableDatabase();
     long           messageId = db.insert(TABLE_NAME, ADDRESS, contentValues);
-    if (insertListener != null) {
-      insertListener.onComplete();
-    }
 
     if (runThreadUpdate) {
       DatabaseComponent.get(context).threadDatabase().update(threadId, true);
@@ -634,22 +632,19 @@ public class SmsDatabase extends MessagingDatabase {
     return rawQuery(where, null);
   }
 
+  @NonNull
   public SmsMessageRecord getMessage(long messageId) throws NoSuchMessageException {
-    Cursor         cursor = rawQuery(ID_WHERE, new String[]{messageId + ""});
-    Reader         reader = new Reader(cursor);
-    SmsMessageRecord record = reader.getNext();
-
-    reader.close();
+    final SmsMessageRecord record = getMessageOrNull(messageId);
 
     if (record == null) throw new NoSuchMessageException("No message for ID: " + messageId);
     else                return record;
   }
 
-  public Cursor getMessageCursor(long messageId) {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor = db.query(TABLE_NAME, MESSAGE_PROJECTION, ID_WHERE, new String[] {messageId + ""}, null, null, null);
-    setNotifyConversationListeners(cursor, getThreadIdForMessage(messageId));
-    return cursor;
+  @Nullable
+  public SmsMessageRecord getMessageOrNull(long messageId) {
+    try (final Cursor cursor = rawQuery(ID_WHERE, new String[]{String.valueOf(messageId)})) {
+      return new Reader(cursor).getNext();
+    }
   }
 
   // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
@@ -890,10 +885,6 @@ public class SmsDatabase extends MessagingDatabase {
         cursor.close();
       }
     }
-  }
-
-  public interface InsertListener {
-    public void onComplete();
   }
 
 }

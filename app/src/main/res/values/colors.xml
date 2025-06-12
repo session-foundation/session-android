@@ -8,10 +8,27 @@
     <color name="compose_view_background">#1B1B1B</color>
     <color name="compose_text_view_background">#141414</color>
     <color name="paths_building">#FFCE3A</color>
+    <color name="cell_selected">#0C0C0C</color>
 
     <color name="call_action_button">#DD353535</color>
     <color name="call_action_button_highlighted">#FFFFFF</color>
     <color name="call_action_foreground_highlighted">#171717</color>
+
+    <color name="accent_green">#ff31F196</color>
+    <color name="accent_blue">#ff57C9FA</color>
+    <color name="accent_purple">#ffC993FF</color>
+    <color name="accent_pink">#ffFF95EF</color>
+    <color name="accent_red">#ffFF9C8E</color>
+    <color name="accent_orange">#ffFCB159</color>
+    <color name="accent_yellow">#ffFAD657</color>
+
+    <color name="rust">#A64B00</color>
+
+    <color name="signal_primary">@color/accent_green</color>
+    <color name="signal_primary_dark">@color/accent_green</color>
+
+    <color name="textsecure_primary">@color/signal_primary</color>
+    <color name="textsecure_primary_dark">@color/signal_primary_dark</color>
 
     <array name="profile_picture_placeholder_colors">
         <item>@color/accent_green</item>
@@ -39,7 +56,7 @@
     <color name="transparent_white_87">#dfffffff</color>
     <color name="transparent_black_90">#90000000</color>
 
-    <color name="conversation_overlay_scrim">#df5e5e5e</color>
+    <color name="conversation_overlay_scrim">#99000000</color>
 
     <color name="transparent_white_15">#26ffffff</color>
     <color name="transparent_white_30">#30ffffff</color>
@@ -67,8 +84,6 @@
     <color name="signal_background_primary">@color/core_grey_95</color>
 
     <color name="text_primary_disabled">@color/core_grey_60</color>
-
-    <color name="react_with_any_background">?colorPrimary</color>
 
     <color name="signal_icon_tint_tab_selected">@color/core_white</color>
 

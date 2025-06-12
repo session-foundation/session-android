@@ -31,7 +31,6 @@ class ReactionsRepository {
                 timestamp = reaction.dateReceived,
                 serverId = reaction.serverId,
                 localId = reaction.messageId,
-                isMms = reaction.isMms,
                 count = reaction.count.toInt()
             )
         }

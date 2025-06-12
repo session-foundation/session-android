@@ -8,6 +8,7 @@
     <dimen name="medium_font_size">16sp</dimen>
     <dimen name="large_font_size">20sp</dimen>
     <dimen name="very_large_font_size">26sp</dimen>
+    <dimen name="text_size">16sp</dimen>
 
     <!-- Need to be temporary added until the theming is properly centralised in Compose -->
     <dimen name="medium2_font_size">18sp</dimen>
@@ -23,6 +24,7 @@
     <dimen name="small_profile_picture_size">36dp</dimen>
     <dimen name="medium_profile_picture_size">46dp</dimen>
     <dimen name="large_profile_picture_size">80dp</dimen>
+    <dimen name="extra_large_profile_picture_size">128dp</dimen>
     <dimen name="conversation_view_status_indicator_size">14dp</dimen>
     <dimen name="border_thickness">1dp</dimen>
     <dimen name="tab_bar_height">36dp</dimen>
@@ -126,6 +128,5 @@
     <dimen name="max_bubble_width">200dp</dimen>
     <dimen name="radial_size">34dp</dimen>
     <dimen name="small_radial_size">26dp</dimen>
-    <dimen name="setting_image_size">26dp</dimen>
 
 </resources>

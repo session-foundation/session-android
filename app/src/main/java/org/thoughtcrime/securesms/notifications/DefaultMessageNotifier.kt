@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.Volatile
 import me.leolin.shortcutbadger.ShortcutBadger
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.messaging.utilities.SodiumUtilities.blindedKeyPair
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ServiceUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
@@ -52,6 +52,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotifi
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util
@@ -66,6 +67,7 @@ import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.canUserReplyToNotification
 import org.thoughtcrime.securesms.util.SpanUtil
@@ -76,7 +78,9 @@ import org.thoughtcrime.securesms.util.SpanUtil
  *
  * @author Moxie Marlinspike
  */
-class DefaultMessageNotifier : MessageNotifier {
+class DefaultMessageNotifier(
+    val avatarUtils: AvatarUtils
+) : MessageNotifier {
     override fun setVisibleThread(threadId: Long) {
         visibleThread = threadId
     }
@@ -264,7 +268,7 @@ class DefaultMessageNotifier : MessageNotifier {
             return
         }
 
-        val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context))
+        val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context), avatarUtils)
         val notifications = notificationState.notifications
         val messageOriginator = notifications[0].recipient
         val notificationId = (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
@@ -567,9 +571,12 @@ class DefaultMessageNotifier : MessageNotifier {
         val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId)
         val edKeyPair = getUserED25519KeyPair(context)
         if (openGroup != null && edKeyPair != null) {
-            val blindedKeyPair = blindedKeyPair(openGroup.publicKey, edKeyPair)
+            val blindedKeyPair = BlindKeyAPI.blind15KeyPairOrNull(
+                ed25519SecretKey = edKeyPair.secretKey.data,
+                serverPubKey = Hex.fromStringCondensed(openGroup.publicKey),
+            )
             if (blindedKeyPair != null) {
-                return AccountId(IdPrefix.BLINDED, blindedKeyPair.publicKey.asBytes).hexString
+                return AccountId(IdPrefix.BLINDED, blindedKeyPair.pubKey.data).hexString
             }
         }
         return null

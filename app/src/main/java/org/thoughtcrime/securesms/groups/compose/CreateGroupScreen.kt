@@ -47,6 +47,9 @@ import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
@@ -83,6 +86,7 @@ fun CreateGroupScreen(
         groupNameError = viewModel.groupNameError.collectAsState().value,
         contactSearchQuery = viewModel.selectContactsViewModel.searchQuery.collectAsState().value,
         onContactSearchQueryChanged = viewModel.selectContactsViewModel::onSearchQueryChanged,
+        onContactSearchQueryClear = { viewModel.selectContactsViewModel.onSearchQueryChanged("") },
         onContactItemClicked = viewModel.selectContactsViewModel::onContactItemClicked,
         showLoading = viewModel.isLoading.collectAsState().value,
         items = viewModel.selectContactsViewModel.contacts.collectAsState().value,
@@ -99,6 +103,7 @@ fun CreateGroup(
     groupNameError: String,
     contactSearchQuery: String,
     onContactSearchQueryChanged: (String) -> Unit,
+    onContactSearchQueryClear: () -> Unit,
     onContactItemClicked: (accountID: AccountId) -> Unit,
     showLoading: Boolean,
     items: List<ContactItem>,
@@ -117,7 +122,6 @@ fun CreateGroup(
                 onBack = onBack,
             )
         },
-        contentWindowInsets = WindowInsets.safeContent
     ) { paddings ->
         Column(
             modifier = modifier.padding(paddings).consumeWindowInsets(paddings),
@@ -133,7 +137,7 @@ fun CreateGroup(
                 placeholder = stringResource(R.string.groupNameEnter),
                 textStyle = LocalType.current.base,
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                    .qaTag(stringResource(R.string.AccessibilityId_groupNameEnter)),
+                    .qaTag(R.string.AccessibilityId_groupNameEnter),
                 error = groupNameError.takeIf { it.isNotBlank() },
                 enabled = !showLoading,
                 innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
@@ -145,9 +149,10 @@ fun CreateGroup(
             SearchBar(
                 query = contactSearchQuery,
                 onValueChanged = onContactSearchQueryChanged,
+                onClear = onContactSearchQueryClear,
                 placeholder = stringResource(R.string.searchContacts),
                 modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
-                    .qaTag(stringResource(R.string.AccessibilityId_groupNameSearch)),
+                    .qaTag(R.string.AccessibilityId_groupNameSearch),
                 enabled = !showLoading
             )
 
@@ -185,8 +190,7 @@ fun CreateGroup(
                 onClick = onCreateClicked,
                 modifier = Modifier
                     .padding(horizontal = LocalDimensions.current.spacing)
-                    .widthIn(min = LocalDimensions.current.minButtonWidth)
-                    .qaTag(stringResource(R.string.AccessibilityId_groupCreate))
+                    .qaTag(R.string.AccessibilityId_groupCreate)
             ) {
                 LoadingArcOr(loading = showLoading) {
                     Text(stringResource(R.string.create))
@@ -206,8 +210,26 @@ private fun CreateGroupPreview(
 ) {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val previewMembers = listOf(
-        ContactItem(accountID = AccountId(random), name = "Alice", false),
-        ContactItem(accountID = AccountId(random), name = "Bob", true),
+        ContactItem(accountID = AccountId(random), name = "Alice", selected = false,
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
+        ),
+        ContactItem(accountID = AccountId(random), name = "Bob", selected = true,
+            avatarUIData = AvatarUIData(
+                listOf(
+                    AvatarUIElement(
+                        name = "TOTO",
+                        color = primaryBlue
+                    )
+                )
+            ),
+        ),
     )
 
     PreviewTheme {
@@ -217,6 +239,7 @@ private fun CreateGroupPreview(
             groupNameError = "",
             contactSearchQuery = "",
             onContactSearchQueryChanged = {},
+            onContactSearchQueryClear = {},
             onContactItemClicked = {},
             showLoading = false,
             items = previewMembers,
@@ -241,6 +264,7 @@ private fun CreateEmptyGroupPreview(
             groupNameError = "",
             contactSearchQuery = "",
             onContactSearchQueryChanged = {},
+            onContactSearchQueryClear = {},
             onContactItemClicked = {},
             showLoading = false,
             items = previewMembers,

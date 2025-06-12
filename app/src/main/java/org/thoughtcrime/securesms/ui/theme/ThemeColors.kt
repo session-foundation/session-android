@@ -203,6 +203,9 @@ private fun ThemeColors() {
         Box(Modifier.background(LocalColors.current.primary)) {
             Text("primary", style = LocalType.current.base)
         }
+        Box(Modifier.background(LocalColors.current.primaryText)) {
+            Text("primaryText", style = LocalType.current.base)
+        }
         Box(Modifier.background(LocalColors.current.background)) {
             Text("background", style = LocalType.current.base)
         }

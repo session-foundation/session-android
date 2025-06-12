@@ -12,15 +12,14 @@ import android.util.Size
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
-import androidx.annotation.ColorInt
-import androidx.annotation.DimenRes
-import network.loki.messenger.R
-import org.session.libsession.utilities.getColorFromAttr
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ScrollView
 import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
+import androidx.annotation.DimenRes
+import androidx.core.graphics.Insets
 import androidx.core.graphics.applyCanvas
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -28,6 +27,8 @@ import androidx.core.view.WindowInsetsCompat.Type.InsetsType
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
+import network.loki.messenger.R
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Log
 import kotlin.math.roundToInt
 
@@ -138,16 +139,21 @@ fun View.applySafeInsetsPaddings(
     @InsetsType
     typeMask: Int = WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime(),
     consumeInsets: Boolean = true,
+    applyTop: Boolean = true,
+    applyBottom: Boolean = true,
+    alsoApply: (Insets) -> Unit = {}
 ) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
         val insets = windowInsets.getInsets(typeMask)
 
         view.updatePadding(
             left = insets.left,
-            top = insets.top,
+            top = if(applyTop) insets.top else 0,
             right = insets.right,
-            bottom = insets.bottom
+            bottom = if(applyBottom) insets.bottom else 0
         )
+
+        alsoApply(insets)
 
         if (consumeInsets) {
             windowInsets.inset(insets)
@@ -159,7 +165,7 @@ fun View.applySafeInsetsPaddings(
 }
 
 /**
- * Applies the system insets to the view's paddings.
+ * Applies the system insets to the view's margins.
  */
 @JvmOverloads
 fun View.applySafeInsetsMargins(

@@ -26,15 +26,15 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.RadioButton
+import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.LocalColors
-import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.RadioButton
-import org.thoughtcrime.securesms.ui.contentDescription
-import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
 internal fun MessageNotificationsScreen(
@@ -80,7 +80,7 @@ internal fun MessageNotificationsScreen(
             R.string.notificationsFastMode,
             if(BuildConfig.FLAVOR == "huawei") R.string.notificationsFastModeDescriptionHuawei
             else R.string.notificationsFastModeDescription,
-            modifier = Modifier.contentDescription(R.string.AccessibilityId_notificationsFastMode),
+            modifier = Modifier.qaTag(R.string.AccessibilityId_notificationsFastMode),
             tag = R.string.recommended,
             checked = state.pushEnabled,
             onClick = { setEnabled(true) }
@@ -95,7 +95,7 @@ internal fun MessageNotificationsScreen(
         NotificationRadioButton(
             stringResource(R.string.notificationsSlowMode),
             explanationTxt,
-            modifier = Modifier.contentDescription(R.string.AccessibilityId_notificationsSlowMode),
+            modifier = Modifier.qaTag(R.string.AccessibilityId_notificationsSlowMode),
             checked = state.pushDisabled,
             onClick = { setEnabled(false) }
         )

@@ -437,10 +437,11 @@ class VisibleMessageContentView : ConstraintLayout {
     fun playHighlight() {
         // Show the highlight colour immediately then slowly fade out
         val targetColor = if (ThemeUtil.isDarkTheme(context)) context.getAccentColor() else resources.getColor(R.color.black, context.theme)
-        val clearTargetColor = ColorUtils.setAlphaComponent(targetColor, 0)
+        val startColor = ColorUtils.setAlphaComponent(targetColor, (0.5f * 255).toInt())
+        val endColor = ColorUtils.setAlphaComponent(targetColor, 0)
         binding.contentParent.numShadowRenders = if (ThemeUtil.isDarkTheme(context)) 3 else 1
         binding.contentParent.sessionShadowColor = targetColor
-        GlowViewUtilities.animateShadowColorChange(binding.contentParent, targetColor, clearTargetColor, 1600)
+        GlowViewUtilities.animateShadowColorChange(binding.contentParent, startColor, endColor, 1600)
     }
     // endregion
 
@@ -457,9 +458,13 @@ class VisibleMessageContentView : ConstraintLayout {
                 context = context
             )
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { BackgroundColorSpan(Color.WHITE) }, body, searchQuery)
+                {
+                    BackgroundColorSpan(context.getColorFromAttr(R.attr.colorPrimary))
+                }, body, searchQuery)
             body = SearchUtil.getHighlightedSpan(Locale.getDefault(),
-                { ForegroundColorSpan(Color.BLACK) }, body, searchQuery)
+                {
+                    ForegroundColorSpan(context.getColorFromAttr(android.R.attr.textColorPrimary))
+                }, body, searchQuery)
 
             Linkify.addLinks(body, Linkify.WEB_URLS)
 

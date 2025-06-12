@@ -31,9 +31,9 @@ class SelectContactsAdapter(private val context: Context, private val glide: Req
         viewHolder.view.bind(Recipient.from(
             context,
             Address.fromSerialized(member), false),
-            glide,
             UserView.ActionIndicator.Tick,
-            isSelected)
+            isSelected
+        )
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder,

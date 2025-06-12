@@ -5,11 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -48,35 +47,14 @@ import org.thoughtcrime.securesms.util.SaveAttachmentTask
 import org.thoughtcrime.securesms.util.asSequence
 import org.thoughtcrime.securesms.util.observeChanges
 
-class MediaOverviewViewModel(
-    private val address: Address,
+@HiltViewModel(assistedFactory = MediaOverviewViewModel.Factory::class)
+class MediaOverviewViewModel @AssistedInject constructor(
+    @Assisted private val address: Address,
     private val application: Application,
     private val threadDatabase: ThreadDatabase,
     private val mediaDatabase: MediaDatabase,
     private val dateUtils: DateUtils
 ) : AndroidViewModel(application) {
-
-    @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(address: Address): Factory
-    }
-
-    class Factory @AssistedInject constructor(
-        @Assisted private val address: Address,
-        private val application: Application,
-        private val threadDatabase: ThreadDatabase,
-        private val mediaDatabase: MediaDatabase,
-        private val dateUtils: DateUtils
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = MediaOverviewViewModel(
-            address,
-            application,
-            threadDatabase,
-            mediaDatabase,
-            dateUtils
-        ) as T
-    }
 
     private val timeBuckets by lazy { FixedTimeBuckets() }
     private val monthTimeBucketFormatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
@@ -112,6 +90,10 @@ class MediaOverviewViewModel(
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val conversationName: StateFlow<String> = recipient
+        .map { recipient -> recipient.name }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     private val mutableSelectedItemIDs = MutableStateFlow(emptySet<Long>())
     val selectedItemIDs: StateFlow<Set<Long>> get() = mutableSelectedItemIDs
@@ -373,6 +355,12 @@ class MediaOverviewViewModel(
             }
         }
     }
+
+    @dagger.assisted.AssistedFactory
+    interface Factory {
+        fun create(address: Address): MediaOverviewViewModel
+    }
+
 }
 
 

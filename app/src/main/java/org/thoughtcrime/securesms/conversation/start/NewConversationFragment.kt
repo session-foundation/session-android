@@ -79,6 +79,13 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
                 skipCollapsed = true
                 state = BottomSheetBehavior.STATE_EXPANDED
             }
+
+            // Set transparent navigation bar on older android version otherwise it colors the  navbar
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                window?.apply {
+                    navigationBarColor = android.graphics.Color.TRANSPARENT
+                }
+            }
         }
 
 

@@ -30,6 +30,9 @@ class JoinOpenGroupDialog(private val name: String, private val url: String) : D
     @Inject
     lateinit var storage: StorageProtocol
 
+    @Inject
+    lateinit var openGroupManager: OpenGroupManager
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         title(resources.getString(R.string.communityJoin))
         val explanation = Phrase.from(context, R.string.communityJoinDescription).put(COMMUNITY_NAME_KEY, name).format()
@@ -53,7 +56,7 @@ class JoinOpenGroupDialog(private val name: String, private val url: String) : D
         GlobalScope.launch(Dispatchers.Main) {
             try {
                 withContext(Dispatchers.Default) {
-                    OpenGroupManager.add(
+                    openGroupManager.add(
                         server = openGroup.server,
                         room = openGroup.room,
                         publicKey = openGroup.serverPublicKey,

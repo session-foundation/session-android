@@ -56,11 +56,16 @@ class VoiceMessageView @JvmOverloads constructor(
         cornerMask.setBottomRightRadius(cornerRadii[2])
         cornerMask.setBottomLeftRadius(cornerRadii[3])
 
-        // In the case of transmitting a voice message we extract and set the interim upload duration from the audio slide's `caption` field.
-        // Note: The UriAttachment `caption` field was previously always null for AudioSlides, so there is no harm in re-using it in this way.
-        // In the case of uploaded audio files we do not have a duration until file processing is complete, in which case we set a reasonable
-        // placeholder value while we determine the duration of the uploaded audio.
-        binding.voiceMessageViewDurationTextView.text = if (audioSlide.caption.isPresent) audioSlide.caption.get().toString() else "--:--"
+        // This sets the final duration of the uploaded voice message
+        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
+            if (attachment.audioDurationMs > 0) {
+                val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(attachment.audioDurationMs)
+                binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
+            } else {
+                Log.w(TAG, "For some reason attachment.audioDurationMs was NOT greater than zero!")
+                binding.voiceMessageViewDurationTextView.text = "--:--"
+            }
+        }
 
         // On initial upload (and while processing audio) we will exit at this point and then return when processing is complete
         if (audioSlide.isPendingDownload || audioSlide.isInProgress) {
@@ -69,29 +74,13 @@ class VoiceMessageView @JvmOverloads constructor(
         }
 
         this.player = AudioSlidePlayer.createFor(context.applicationContext, audioSlide, this)
-
-        // This sets the final duration of the uploaded voice message
-        (audioSlide.asAttachment() as? DatabaseAttachment)?.let { attachment ->
-            attachmentDb.getAttachmentAudioExtras(attachment.attachmentId)?.let { audioExtras ->
-
-                // When audio processing is complete we set the final audio duration. For recorded voice
-                // messages this will be identical to our interim duration, but for uploaded audio files
-                // it will update the placeholder to the actual audio duration now that we know it.
-                if (audioExtras.durationMs > 0) {
-                    durationMS = audioExtras.durationMs
-                    val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(durationMS)
-                    binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
-                } else {
-                    Log.w(TAG, "For some reason audioExtras.durationMs was NOT greater than zero!")
-                    binding.voiceMessageViewDurationTextView.text = "--:--"
-                }
-
-                binding.voiceMessageViewDurationTextView.visibility = VISIBLE
-            }
-        }
     }
 
-    override fun onPlayerStart(player: AudioSlidePlayer) { isPlaying = true  }
+    override fun onPlayerStart(player: AudioSlidePlayer) {
+        isPlaying = true
+        durationMS = player.duration
+    }
+
     override fun onPlayerStop(player: AudioSlidePlayer)  { isPlaying = false }
 
     override fun onPlayerProgress(player: AudioSlidePlayer, progress: Double, unused: Long) {
@@ -109,6 +98,7 @@ class VoiceMessageView @JvmOverloads constructor(
 
         // As playback progress increases the remaining duration of the audio decreases
         val remainingDurationMS = durationMS - (progress * durationMS.toDouble()).roundToLong()
+
         binding.voiceMessageViewDurationTextView.text = MediaUtil.getFormattedVoiceMessageDuration(remainingDurationMS)
 
         val layoutParams = binding.progressView.layoutParams as RelativeLayout.LayoutParams

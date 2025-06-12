@@ -93,11 +93,17 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                     }
                 }
             }
-            if (Build.VERSION.SDK_INT > 28) {
+
+            if (Build.VERSION.SDK_INT >= 29) {
                 updateValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
             }
+
             if (updateValues.size() > 0) {
-                context.contentResolver.update(mediaUri!!, updateValues, null, null)
+                try {
+                    context.contentResolver.update(mediaUri!!, updateValues, null, null)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to update MediaStore entry", e)
+                }
             }
 
             return outputUri.lastPathSegment
@@ -163,7 +169,16 @@ class SaveAttachmentTask @JvmOverloads constructor(context: Context, count: Int 
                 contentValues.put(MediaStore.MediaColumns.DATA, dataPath)
             }
 
-            return context.contentResolver.insert(outputUri, contentValues)
+            // making sure the inferred mimy type matches the destination collection
+            var targetUri = outputUri
+            if ((targetUri == ExternalStorageUtil.getImageUri() && (mimeType == null || !mimeType.startsWith("image/"))) ||
+                (targetUri == ExternalStorageUtil.getVideoUri() && (mimeType == null || !mimeType.startsWith("video/"))) ||
+                (targetUri == ExternalStorageUtil.getAudioUri() && (mimeType == null || !mimeType.startsWith("audio/")))) {
+                Log.w(TAG, "MIME type $mimeType does not match target collection $targetUri, using Downloads collection instead.")
+                targetUri = ExternalStorageUtil.getDownloadUri()
+            }
+
+            return context.contentResolver.insert(targetUri, contentValues)
         }
 
         private fun getExternalPathToFileForType(context: Context, contentType: String): String {

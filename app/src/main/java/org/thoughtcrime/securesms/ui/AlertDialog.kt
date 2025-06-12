@@ -51,6 +51,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 
 class DialogButtonModel(
     val text: GetString,
+    val qaTag: String? = null,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
     val enabled: Boolean = true,
@@ -126,7 +127,7 @@ fun AlertDialog(
                                 style = LocalType.current.h7,
                                 modifier = Modifier
                                     .padding(bottom = LocalDimensions.current.xxsSpacing)
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalTitle))
+                                    .qaTag(R.string.AccessibilityId_modalTitle)
                             )
                         }
                         text?.let {
@@ -149,7 +150,7 @@ fun AlertDialog(
                                 textAlign = TextAlign.Center,
                                 style = textStyle,
                                 modifier = textModifier
-                                    .qaTag(stringResource(R.string.AccessibilityId_modalMessage))
+                                    .qaTag(R.string.AccessibilityId_modalMessage)
                             )
                         }
                         content()
@@ -161,7 +162,7 @@ fun AlertDialog(
                                     text = it.text(),
                                     modifier = Modifier
                                         .fillMaxHeight()
-                                        .qaTag(it.text.string())
+                                        .qaTag(it.qaTag ?: it.text.string())
                                         .weight(1f),
                                     color = it.color,
                                     enabled = it.enabled
@@ -305,7 +306,7 @@ fun LoadingDialog(
                             title,
                             modifier = Modifier
                                 .align(Alignment.CenterHorizontally)
-                                .qaTag(stringResource(R.string.AccessibilityId_modalTitle)),
+                                .qaTag(R.string.AccessibilityId_modalTitle),
                             style = LocalType.current.large
                         )
                     }
@@ -330,7 +331,7 @@ fun PreviewSimpleDialog() {
                     onClick = { }
                 ),
                 DialogButtonModel(
-                    GetString(stringResource(R.string.ok))
+                    GetString(stringResource(android.R.string.ok))
                 )
             )
         )

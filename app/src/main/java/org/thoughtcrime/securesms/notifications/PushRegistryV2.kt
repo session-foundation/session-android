@@ -26,6 +26,7 @@ import org.session.libsession.snode.Version
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Device
 import org.session.libsignal.utilities.retryWithUniformInterval
+import org.session.libsignal.utilities.toHexString
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -58,7 +59,7 @@ class PushRegistryV2 @Inject constructor(
             service = device.service,
             sig_ts = timestamp,
             service_info = mapOf("token" to token),
-            enc_key = pnKey.asHexString,
+            enc_key = pnKey.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
 
         val response = retryResponseBody<SubscriptionResponse>(
