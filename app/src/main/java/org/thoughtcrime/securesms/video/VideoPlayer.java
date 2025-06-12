@@ -17,7 +17,6 @@
 package org.thoughtcrime.securesms.video;
 
 import android.content.Context;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.Window;
@@ -28,19 +27,18 @@ import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+import androidx.annotation.OptIn;
+import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.Player;
-import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
-import androidx.media3.ui.LegacyPlayerControlView;
 import androidx.media3.ui.PlayerView;
-
 
 import org.session.libsession.utilities.ViewUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.attachments.AttachmentServer;
+import org.thoughtcrime.securesms.components.ZoomingImageView;
 import org.thoughtcrime.securesms.mms.PartAuthority;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 
@@ -48,7 +46,6 @@ import java.io.IOException;
 
 import network.loki.messenger.R;
 
-@UnstableApi
 public class VideoPlayer extends FrameLayout {
 
   private static final String TAG = VideoPlayer.class.getSimpleName();
@@ -57,9 +54,15 @@ public class VideoPlayer extends FrameLayout {
   @Nullable private final PlayerView exoView;
 
   @Nullable private ExoPlayer exoPlayer;
-  @Nullable private LegacyPlayerControlView exoControls;
   @Nullable private       AttachmentServer    attachmentServer;
   @Nullable private       Window              window;
+
+  public interface VideoPlayerInteractions {
+    void onControllerVisibilityChanged(boolean visible);
+  }
+
+  @Nullable
+  private VideoPlayerInteractions interactor = null;
 
   public VideoPlayer(Context context) {
     this(context, null);
@@ -69,15 +72,28 @@ public class VideoPlayer extends FrameLayout {
     this(context, attrs, 0);
   }
 
-  public VideoPlayer(Context context, AttributeSet attrs, int defStyleAttr) {
+    @OptIn(markerClass = UnstableApi.class)
+    public VideoPlayer(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
 
     inflate(context, R.layout.video_player, this);
 
     this.exoView   = ViewUtil.findById(this, R.id.video_view);
+    exoView.setControllerShowTimeoutMs(2000);
+
+    // listen to changes in the controller visibility
+      exoView.setControllerVisibilityListener(new PlayerView.ControllerVisibilityListener() {
+        @Override
+        public void onVisibilityChanged(int visibility) {
+          if (interactor != null) interactor.onControllerVisibilityChanged(visibility == View.VISIBLE);
+        }
+      });
+
     this.videoView = null;
-    this.exoControls = new LegacyPlayerControlView(getContext());
-    this.exoControls.setShowTimeoutMs(-1);
+  }
+
+  public void setInteractor(@Nullable VideoPlayerInteractions interactor) {
+    this.interactor = interactor;
   }
 
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
@@ -94,19 +110,6 @@ public class VideoPlayer extends FrameLayout {
     }
   }
 
-  public void hideControls() {
-    if (this.exoView != null) {
-      this.exoView.hideController();
-    }
-  }
-
-  public @Nullable View getControlView() {
-    if (this.exoControls != null) {
-      return this.exoControls;
-    }
-    return null;
-  }
-
   public void cleanup() {
     if (this.attachmentServer != null) {
       this.attachmentServer.stop();
@@ -121,7 +124,8 @@ public class VideoPlayer extends FrameLayout {
     this.window = window;
   }
 
-  private void setExoViewSource(@NonNull VideoSlide videoSource, boolean autoplay)
+    @OptIn(markerClass = UnstableApi.class)
+    private void setExoViewSource(@NonNull VideoSlide videoSource, boolean autoplay)
       throws IOException
   {
     exoPlayer = new ExoPlayer.Builder(getContext()).build();
@@ -130,7 +134,6 @@ public class VideoPlayer extends FrameLayout {
     //noinspection ConstantConditions
     exoView.setPlayer(exoPlayer);
     //noinspection ConstantConditions
-    exoControls.setPlayer(exoPlayer);
 
     if(videoSource.getUri() != null){
       MediaItem mediaItem = MediaItem.fromUri(videoSource.getUri());
@@ -167,6 +170,7 @@ public class VideoPlayer extends FrameLayout {
     if (autoplay) this.videoView.start();
   }
 
+  @UnstableApi
   private static class ExoPlayerListener implements Player.Listener {
     private final Window window;
 

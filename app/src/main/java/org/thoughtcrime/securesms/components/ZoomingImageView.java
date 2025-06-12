@@ -42,6 +42,13 @@ public class ZoomingImageView extends FrameLayout {
   private final PhotoView                 photoView;
   private final SubsamplingScaleImageView subsamplingImageView;
 
+  public interface ZoomImageInteractions {
+    void onImageTapped();
+  }
+
+  @Nullable
+  private ZoomImageInteractions interactor = null;
+
   public ZoomingImageView(Context context) {
     this(context, null);
   }
@@ -56,9 +63,19 @@ public class ZoomingImageView extends FrameLayout {
     inflate(context, R.layout.zooming_image_view, this);
 
     this.photoView            = findViewById(R.id.image_view);
+    photoView.setOnPhotoTapListener(
+            (view, x, y) -> {
+              if(interactor != null) interactor.onImageTapped();
+            }
+    );
+
     this.subsamplingImageView = findViewById(R.id.subsampling_image_view);
 
     this.subsamplingImageView.setOrientation(SubsamplingScaleImageView.ORIENTATION_USE_EXIF);
+  }
+
+  public void setInteractor(@Nullable ZoomImageInteractions interactor) {
+    this.interactor = interactor;
   }
 
   @SuppressLint("StaticFieldLeak")

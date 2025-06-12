@@ -29,12 +29,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -84,6 +82,7 @@ import org.thoughtcrime.securesms.util.SaveAttachmentTask;
 import org.thoughtcrime.securesms.util.SaveAttachmentTask.Attachment;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Locale;
 import java.util.WeakHashMap;
 
@@ -101,8 +100,9 @@ import network.loki.messenger.databinding.MediaViewPageBinding;
  */
 @AndroidEntryPoint
 public class MediaPreviewActivity extends ScreenLockActionBarActivity implements RecipientModifiedListener,
-                                                                                 LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
-                                                                                 MediaRailAdapter.RailItemListener
+        LoaderManager.LoaderCallbacks<Pair<Cursor, Integer>>,
+        MediaRailAdapter.RailItemListener,
+        MediaView.FullscreenToggleListener
 {
   private final static String TAG = MediaPreviewActivity.class.getSimpleName();
 
@@ -135,12 +135,17 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   @Inject DateUtils dateUtils;
 
+  @Override
+  public boolean getApplyDefaultWindowInsets() {
+    return false;
+  }
+
   private final Runnable showRunnable = () -> {
     getSupportActionBar().show();
   };
   private final Runnable hideRunnable = () -> {
-      WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
-              .hide(WindowInsetsCompat.Type.systemBars());
+    WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+            .hide(WindowInsetsCompat.Type.systemBars());
   };
   private MediaItemAdapter adapter;
   private MediaRailAdapter albumRailAdapter;
@@ -179,12 +184,19 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     initializeObservers();
   }
 
-  private void toggleFullscreen() {
+  @Override
+  public void toggleFullscreen() {
     if (isFullscreen) {
       exitFullscreen();
     } else {
       enterFullscreen();
     }
+  }
+
+  @Override
+  public void setFullscreen(boolean displayFullscreen) {
+    if (displayFullscreen) enterFullscreen();
+    else         exitFullscreen();
   }
 
   private void enterFullscreen() {
@@ -276,10 +288,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     ActionBar actionBar = getSupportActionBar();
     actionBar.setDisplayHomeAsUpEnabled(true);
     actionBar.setHomeButtonEnabled(true);
-
-    binding.mediaPager.setOnClickListener((v) -> {
-      toggleFullscreen();
-    });
   }
 
   private void initializeResources() {
@@ -305,9 +313,13 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
         return;
       }
 
-      View playbackControls = ((MediaItemAdapter) binding.mediaPager.getAdapter()).getPlaybackControls(binding.mediaPager.getCurrentItem());
+      //todo VIDEO handle edge to edge better on this screen
+      //todo VIDEO handle rotation for video (maybe images) full view
+      //todo VIDEO see if we can add back videos from the image picker in convo and if so checks that it works fine across all steps, including the edit screen
+      //todo sharing from outside session brings up video in the edit media screen (might be broken)
 
-      if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null && playbackControls == null) {
+      //todo VIDEO we currently don't handle videos in the image picker but we used to. Might need a flag here once we add it back in
+      if (previewData.getAlbumThumbnails().isEmpty() && previewData.getCaption() == null){// && playbackControls == null) {
         binding.mediaPreviewDetailsContainer.setVisibility(View.GONE);
       } else {
         binding.mediaPreviewDetailsContainer.setVisibility(View.VISIBLE);
@@ -320,15 +332,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       binding.mediaPreviewCaptionContainer.setVisibility(previewData.getCaption() == null ? View.GONE : View.VISIBLE);
       binding.mediaPreviewCaption.setText(previewData.getCaption());
 
-      if (playbackControls != null) {
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        playbackControls.setLayoutParams(params);
-
-        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
-        binding.mediaPreviewPlaybackControlsContainer.addView(playbackControls);
-      } else {
-        binding.mediaPreviewPlaybackControlsContainer.removeAllViews();
-      }
     });
   }
 
@@ -342,16 +345,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     Log.i(TAG, "Loading Part URI: " + initialMediaUri);
 
     if (conversationRecipient != null) {
-      getSupportLoaderManager().restartLoader(0, null, this);
+      LoaderManager.getInstance(this).restartLoader(0, null, this);
     } else {
-      adapter = new SingleItemPagerAdapter(Glide.with(this), getWindow(), initialMediaUri, initialMediaType, initialMediaSize);
-      binding.mediaPager.setAdapter(adapter);
-
-      if (initialCaption != null) {
-        binding.mediaPreviewDetailsContainer.setVisibility(View.VISIBLE);
-        binding.mediaPreviewCaptionContainer.setVisibility(View.VISIBLE);
-        binding.mediaPreviewCaption.setText(initialCaption);
-      }
+      finish();
     }
   }
 
@@ -399,7 +395,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       mediaFilename = FilenameUtils.getFilenameFromUri(MediaPreviewActivity.this, mediaItem.uri, mediaItem.mimeType);
     }
 
-    final String outputFilename = mediaFilename; // We need a `final` value for the saveTask, below
+    final String outputFilename = mediaFilename; // We need a final value for the saveTask, below
     Log.i(TAG, "About to save media as: " + outputFilename);
 
     SaveAttachmentTask.showOneTimeWarningDialogOrSave(this, 1, () -> {
@@ -422,9 +418,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   }
 
   private String getPermanentlyDeniedStorageText(){
-      return Phrase.from(getApplicationContext(), R.string.permissionsStorageDeniedLegacy)
-              .put(APP_NAME_KEY, getString(R.string.app_name))
-              .format().toString();
+    return Phrase.from(getApplicationContext(), R.string.permissionsStorageDeniedLegacy)
+            .put(APP_NAME_KEY, getString(R.string.app_name))
+            .format().toString();
   }
 
   private void sendMediaSavedNotificationIfNeeded() {
@@ -441,16 +437,16 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     }
 
     DeleteMediaPreviewDialog.show(this, () -> {
-            new AsyncTask<Void, Void, Void>() {
-              @Override
-              protected Void doInBackground(Void... voids) {
-                DatabaseAttachment attachment = mediaItem.attachment;
-                if (attachment != null) {
-                  AttachmentUtil.deleteAttachment(getApplicationContext(), attachment);
-                }
-                return null;
-              }
-            }.execute();
+      new AsyncTask<Void, Void, Void>() {
+        @Override
+        protected Void doInBackground(Void... voids) {
+          DatabaseAttachment attachment = mediaItem.attachment;
+          if (attachment != null) {
+            AttachmentUtil.deleteAttachment(getApplicationContext(), attachment);
+          }
+          return null;
+        }
+      }.execute();
 
       finish();
     });
@@ -519,19 +515,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     adapter = new CursorPagerAdapter(this, Glide.with(this), getWindow(), data.first, data.second, leftIsRecent);
     binding.mediaPager.setAdapter(adapter);
 
-    final GestureDetector detector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-      @Override
-      public boolean onSingleTapConfirmed(@NonNull MotionEvent e) {
-        toggleFullscreen();
-        return super.onSingleTapConfirmed(e);
-      }
-    });
-
-    binding.observeTouchEventFrame.setOnTouchDispatchListener((view, event) -> {
-      detector.onTouchEvent(event);
-      return false;
-    });
-
     viewModel.setCursor(this, data.first, leftIsRecent);
 
     int item = restartItem >= 0  && restartItem < adapter.getItemCount() ? restartItem : Math.max(Math.min(data.second, adapter.getItemCount() - 1), 0);
@@ -591,64 +574,6 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
     public void onPageScrollStateChanged(int state) { /* Do nothing */ }
   }
 
-  private static class SingleItemPagerAdapter extends MediaItemAdapter {
-
-    private final RequestManager glideRequests;
-    private final Window        window;
-    private final Uri           uri;
-    private final String        mediaType;
-    private final long          size;
-
-
-    SingleItemPagerAdapter(@NonNull RequestManager glideRequests,
-                           @NonNull Window window, @NonNull Uri uri, @NonNull String mediaType,
-                           long size)
-    {
-      this.glideRequests = glideRequests;
-      this.window        = window;
-      this.uri           = uri;
-      this.mediaType     = mediaType;
-      this.size          = size;
-    }
-
-    @NonNull
-    @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-      return new RecyclerView.ViewHolder(
-              MediaViewPageBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false).getRoot()
-      ) {};
-    }
-
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-      final MediaViewPageBinding binding = MediaViewPageBinding.bind(holder.itemView);
-
-      try {
-        binding.mediaView.set(glideRequests, window, uri, mediaType, size, true);
-      } catch (IOException e) {
-        Log.w(TAG, e);
-      }
-    }
-
-    @Override
-    public int getItemCount() {
-      return 1;
-    }
-
-    @Override
-    public MediaItem getMediaItemFor(int position) {
-      return new MediaItem(null, null, uri, mediaType, -1, true);
-    }
-
-    @Override
-    public void pause(int position) { /* Do nothing */ }
-
-    @Override
-    public @Nullable View getPlaybackControls(int position) {
-      return null;
-    }
-  }
-
   private static class CursorPagerAdapter extends MediaItemAdapter {
 
     private final WeakHashMap<Integer, MediaView> mediaViews = new WeakHashMap<>();
@@ -661,6 +586,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
     private int     autoPlayPosition;
 
+    private final WeakReference<MediaPreviewActivity> activityReference;
+
     CursorPagerAdapter(@NonNull Context context, @NonNull RequestManager glideRequests,
                        @NonNull Window window, @NonNull Cursor cursor, int autoPlayPosition,
                        boolean leftIsRecent)
@@ -671,6 +598,7 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       this.cursor           = cursor;
       this.autoPlayPosition = autoPlayPosition;
       this.leftIsRecent     = leftIsRecent;
+      this.activityReference = new WeakReference<>((MediaPreviewActivity) context);
     }
 
     @NonNull
@@ -692,8 +620,10 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
       MediaRecord mediaRecord = MediaRecord.from(context, cursor);
 
+      // Set fullscreen toggle listener
+      binding.mediaView.setFullscreenToggleListener(activityReference.get());
+
       try {
-        //noinspection ConstantConditions
         binding.mediaView.set(glideRequests, window, mediaRecord.getAttachment().getDataUri(),
                 mediaRecord.getAttachment().getContentType(), mediaRecord.getAttachment().getSize(), autoplay);
       } catch (IOException e) {
@@ -716,11 +646,11 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       if (mediaRecord.getAttachment().getDataUri() == null) throw new AssertionError();
 
       return new MediaItem(address != null ? Recipient.from(context, address,true) : null,
-                           mediaRecord.getAttachment(),
-                           mediaRecord.getAttachment().getDataUri(),
-                           mediaRecord.getContentType(),
-                           mediaRecord.getDate(),
-                           mediaRecord.isOutgoing());
+              mediaRecord.getAttachment(),
+              mediaRecord.getAttachment().getDataUri(),
+              mediaRecord.getContentType(),
+              mediaRecord.getDate(),
+              mediaRecord.isOutgoing());
     }
 
     @Override
@@ -729,16 +659,9 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
       if (mediaView != null) mediaView.pause();
     }
 
-    @Override
-    public @Nullable View getPlaybackControls(int position) {
-      MediaView mediaView = mediaViews.get(position);
-      if (mediaView != null) return mediaView.getPlaybackControls();
-      return null;
-    }
-
     private int getCursorPosition(int position) {
-        int unclamped = leftIsRecent ? position : cursor.getCount() - 1 - position;
-        return Math.max(Math.min(unclamped, cursor.getCount() - 1), 0);
+      int unclamped = leftIsRecent ? position : cursor.getCount() - 1 - position;
+      return Math.max(Math.min(unclamped, cursor.getCount() - 1), 0);
     }
   }
 
@@ -769,6 +692,5 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
   abstract static class MediaItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     abstract MediaItem getMediaItemFor(int position);
     abstract void pause(int position);
-    @Nullable abstract View getPlaybackControls(int position);
   }
 }
