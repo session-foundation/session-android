@@ -12,5 +12,6 @@ object NonTranslatableStringConstants {
     const val TOKEN_NAME_SHORT           = "SESH"
     const val USD_NAME_SHORT             = "USD"
     const val SESSION_NETWORK_DATA_PRICE = "Price data powered by CoinGecko\nAccurate at {date_time}"
+    const val APP_PRO                    = "Session Pro"
 }
 
