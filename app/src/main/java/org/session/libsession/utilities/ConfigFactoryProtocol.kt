@@ -162,6 +162,7 @@ suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long 
  *
  * This function will check the group configs immediately, if nothing needs to be pushed, it will return immediately.
  *
+ * @param timeoutMills The maximum time to wait for the group configs to be pushed, in milliseconds. 0 means no timeout.
  * @return True if all group configs are pushed, false if the timeout is reached.
  */
 suspend fun ConfigFactoryProtocol.waitUntilGroupConfigsPushed(groupId: AccountId, timeoutMills: Long = 10_000L): Boolean {
@@ -169,12 +170,16 @@ suspend fun ConfigFactoryProtocol.waitUntilGroupConfigsPushed(groupId: AccountId
         configs.groupInfo.needsPush() || configs.groupMembers.needsPush()
     }
 
-    return withTimeoutOrNull(timeoutMills) {
-        configUpdateNotifications
-            .onStart { emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId)) } // Trigger the filtering immediately
-            .filter { it == ConfigUpdateNotification.GroupConfigsUpdated(groupId) && !needsPush() }
-            .first()
-    } != null
+    val pushed = configUpdateNotifications
+        .onStart { emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId, fromMerge = false)) } // Trigger the filtering immediately
+        .filter { it is ConfigUpdateNotification.GroupConfigsUpdated && it.groupId == groupId && !needsPush() }
+
+    if (timeoutMills > 0) {
+        return withTimeoutOrNull(timeoutMills) { pushed.first() } != null
+    } else {
+        pushed.first()
+        return true
+    }
 }
 
 interface UserConfigs {
@@ -235,5 +240,5 @@ sealed interface ConfigUpdateNotification {
      */
     data class UserConfigsMerged(val configType: UserConfigType) : ConfigUpdateNotification
 
-    data class GroupConfigsUpdated(val groupId: AccountId) : ConfigUpdateNotification
+    data class GroupConfigsUpdated(val groupId: AccountId, val fromMerge: Boolean) : ConfigUpdateNotification
 }
