@@ -29,7 +29,6 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.signal.IncomingEncryptedMessage
@@ -233,7 +232,8 @@ open class Storage @Inject constructor(
     }
 
     override fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?) {
-        val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
+        val address = fromSerialized(getUserPublicKey()!!)
+        val ourRecipient = address.let {
             Recipient.from(context, it, false)
         }
         ourRecipient.resolve().profileKey = newProfileKey
@@ -1267,48 +1267,6 @@ open class Storage @Inject constructor(
         }
         removedContacts.forEach {
             deleteContact(it.address.toString())
-        }
-    }
-
-    override fun addContacts(contacts: List<ConfigurationMessage.Contact>) {
-        val recipientDatabase = recipientDatabase
-        val threadDatabase = threadDatabase
-        val mappingDb = blindedIdMappingDatabase
-        val moreContacts = contacts.filter { contact ->
-            val id = AccountId(contact.publicKey)
-            id.prefix != IdPrefix.BLINDED || mappingDb.getBlindedIdMapping(contact.publicKey).none { it.accountId != null }
-        }
-        for (contact in moreContacts) {
-            val address = fromSerialized(contact.publicKey)
-            val recipient = Recipient.from(context, address, true)
-            if (!contact.profilePicture.isNullOrEmpty()) {
-                recipientDatabase.setProfileAvatar(recipient, contact.profilePicture)
-            }
-            if (contact.profileKey?.isNotEmpty() == true) {
-                recipientDatabase.setProfileKey(recipient, contact.profileKey)
-            }
-            if (contact.name.isNotEmpty()) {
-                recipientDatabase.setProfileName(recipient, contact.name)
-            }
-            recipientDatabase.setProfileSharing(recipient, true)
-            recipientDatabase.setRegistered(recipient, Recipient.RegisteredState.REGISTERED)
-            // create Thread if needed
-            val threadId = threadDatabase.getThreadIdIfExistsFor(recipient)
-            if (contact.didApproveMe == true) {
-                recipientDatabase.setApprovedMe(recipient, true)
-            }
-            if (contact.isApproved == true && threadId != -1L) {
-                setRecipientApproved(recipient, true)
-                threadDatabase.setHasSent(threadId, true)
-            }
-
-            val contactIsBlocked: Boolean? = contact.isBlocked
-            if (contactIsBlocked != null && recipient.isBlocked != contactIsBlocked) {
-                setBlocked(listOf(recipient), contactIsBlocked, fromConfigUpdate = true)
-            }
-        }
-        if (contacts.isNotEmpty()) {
-            threadDatabase.notifyConversationListListeners()
         }
     }
 

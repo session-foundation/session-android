@@ -28,8 +28,8 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.MultiEncrypt
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.ByteString.Companion.decodeBase64
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
@@ -662,12 +662,10 @@ private fun MutableUserProfile.initFrom(storage: StorageProtocol,
 ) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
     val displayName = usernameUtils.getCurrentUsername() ?: return
-    val profilePicture = textSecurePreferences.getProfilePictureURL()
-    val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
-    setName(config.displayName)
-    val picUrl = config.profilePicture
-    val picKey = config.profileKey
-    if (!picUrl.isNullOrEmpty() && picKey.isNotEmpty()) {
+    val picUrl = textSecurePreferences.getProfilePictureURL()
+    val picKey = textSecurePreferences.getProfileKey()?.decodeBase64()?.toByteArray()
+    setName(displayName)
+    if (!picUrl.isNullOrEmpty() && picKey != null && picKey.isNotEmpty()) {
         setPic(UserPic(picUrl, picKey))
     }
     val ownThreadId = storage.getThreadId(Address.fromSerialized(ownPublicKey))

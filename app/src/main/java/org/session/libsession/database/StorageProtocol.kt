@@ -11,7 +11,6 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -210,7 +209,6 @@ interface StorageProtocol {
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
-    fun addContacts(contacts: List<ConfigurationMessage.Contact>)
     fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
     fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
 
