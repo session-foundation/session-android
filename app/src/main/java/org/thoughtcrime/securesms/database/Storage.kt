@@ -26,7 +26,7 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.jobs.RetrieveProfileAvatarWork
+import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -232,8 +232,7 @@ open class Storage @Inject constructor(
     }
 
     override fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?) {
-        val address = fromSerialized(getUserPublicKey()!!)
-        val ourRecipient = address.let {
+        val ourRecipient = fromSerialized(getUserPublicKey()!!).let {
             Recipient.from(context, it, false)
         }
         ourRecipient.resolve().profileKey = newProfileKey
@@ -241,12 +240,7 @@ open class Storage @Inject constructor(
         preferences.setProfilePictureURL(newProfilePicture)
 
         if (newProfileKey != null) {
-            RetrieveProfileAvatarWork.schedule(
-                context,
-                recipientAddress = address,
-                profileAvatarUrl = newProfilePicture,
-                profileAvatarKey = newProfileKey
-            )
+            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address, newProfileKey))
         }
     }
 

@@ -100,7 +100,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   private           boolean        profileSharing;
   private           String         notificationChannel;
   private           boolean        forceSmsSelection;
-  private           String         wrapperHash;
   private           boolean        blocksCommunityMessageRequests;
 
   @SuppressWarnings("ConstantConditions")
@@ -286,7 +285,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     this.profileAvatar          = details.profileAvatar;
     this.profileSharing         = details.profileSharing;
     this.forceSmsSelection      = details.forceSmsSelection;
-    this.wrapperHash            = details.wrapperHash;
     this.blocksCommunityMessageRequests = details.blocksCommunityMessageRequests;
 
     this.participants.addAll(details.participants);
@@ -763,18 +761,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public String getWrapperHash() {
-    return wrapperHash;
-  }
-
-  public void setWrapperHash(String wrapperHash) {
-    this.wrapperHash = wrapperHash;
-  }
-
-  public synchronized boolean isSystemContact() {
-    return contactUri != null;
-  }
-
   public synchronized Recipient resolve() {
     while (resolving) Util.wait(this, 0);
     return this;
@@ -803,7 +789,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             && Arrays.equals(profileKey, recipient.profileKey)
             && Objects.equals(profileName, recipient.profileName)
             && Objects.equals(profileAvatar, recipient.profileAvatar)
-            && Objects.equals(wrapperHash, recipient.wrapperHash)
             && blocksCommunityMessageRequests == recipient.blocksCommunityMessageRequests;
   }
 
@@ -823,7 +808,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             expireMessages,
             profileName,
             profileAvatar,
-            wrapperHash,
             blocksCommunityMessageRequests
     );
     result = 31 * result + Arrays.hashCode(profileKey);
