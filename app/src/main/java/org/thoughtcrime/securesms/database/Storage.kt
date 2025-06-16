@@ -1061,6 +1061,11 @@ open class Storage @Inject constructor(
 
     override fun updateOpenGroup(openGroup: OpenGroup) {
         openGroupManager.get().updateOpenGroup(openGroup, context)
+
+        groupDatabase.updateTitle(
+            groupID = GroupUtil.getEncodedOpenGroupID(openGroup.groupId.toByteArray()),
+            newValue = openGroup.name
+        )
     }
 
     override fun getAllGroups(includeInactive: Boolean): List<GroupRecord> {
