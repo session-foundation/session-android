@@ -464,73 +464,11 @@ class GroupManagerV2Impl @Inject constructor(
     }
 
     override suspend fun leaveGroup(groupId: AccountId) {
-        scope.launchAndWait(groupId, "Leave group") {
-            withContext(SupervisorJob()) {
-                val group = configFactory.getGroup(groupId)
+        // Insert the control message immediately so we can see the leaving message
+        storage.insertGroupInfoLeaving(groupId)
 
-                storage.insertGroupInfoLeaving(groupId)
-
-                try {
-                    if (group?.destroyed != true) {
-                        // Only send the left/left notification group message when we are not kicked and we are not the only admin (only admin has a special treatment)
-                        val weAreTheOnlyAdmin = configFactory.withGroupConfigs(groupId) { config ->
-                            val allMembers = config.groupMembers.all()
-                            allMembers.count { it.admin } == 1 &&
-                                    allMembers.first { it.admin }
-                                        .accountId() == storage.getUserPublicKey()
-                        }
-
-                        if (group != null && !group.kicked && !weAreTheOnlyAdmin) {
-                            val address = Address.fromSerialized(groupId.hexString)
-
-                            // Always send a "XXX left" message to the group if we can
-                            MessageSender.send(
-                                GroupUpdated(
-                                    GroupUpdateMessage.newBuilder()
-                                        .setMemberLeftNotificationMessage(DataMessage.GroupUpdateMemberLeftNotificationMessage.getDefaultInstance())
-                                        .build()
-                                ),
-                                address
-                            )
-
-                            // If we are not the only admin, send a left message for other admin to handle the member removal
-                            MessageSender.send(
-                                GroupUpdated(
-                                    GroupUpdateMessage.newBuilder()
-                                        .setMemberLeftMessage(DataMessage.GroupUpdateMemberLeftMessage.getDefaultInstance())
-                                        .build()
-                                ),
-                                address,
-                            )
-                        }
-
-                        // If we are the only admin, leaving this group will destroy the group
-                        if (weAreTheOnlyAdmin) {
-                            configFactory.withMutableGroupConfigs(groupId) { configs ->
-                                configs.groupInfo.destroyGroup()
-                            }
-
-                            // Must wait until the config is pushed, otherwise if we go through the rest
-                            // of the code it will destroy the conversation, destroying the necessary configs
-                            // along the way, we won't be able to push the "destroyed" state anymore.
-                            configFactory.waitUntilGroupConfigsPushed(groupId)
-                        }
-                    }
-
-                    // Delete conversation and group configs
-                    storage.getThreadId(Address.fromSerialized(groupId.hexString))
-                        ?.let(storage::deleteConversation)
-                    configFactory.removeGroup(groupId)
-                    lokiAPIDatabase.clearLastMessageHashes(groupId.hexString)
-                    lokiAPIDatabase.clearReceivedMessageHashValues(groupId.hexString)
-                } catch (e: Exception) {
-                    storage.insertGroupInfoErrorQuit(groupId)
-                    throw e
-                } finally {
-                    storage.deleteGroupInfoMessages(groupId, UpdateMessageData.Kind.GroupLeaving::class.java)
-                }
-            }
-        }
+        // The group leaving work could start or wait depend on the network condition
+        GroupLeavingWorker.schedule(context = application, groupId)
     }
 
     override suspend fun promoteMember(
