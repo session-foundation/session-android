@@ -5,8 +5,7 @@ import dagger.Lazy
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.messaging.jobs.RetrieveProfileAvatarWork
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
@@ -26,7 +25,6 @@ class ProfileManager @Inject constructor(
     private val storage: Lazy<StorageProtocol>,
     private val contactDatabase: SessionContactDatabase,
     private val recipientDatabase: RecipientDatabase,
-    private val jobDatabase: SessionJobDatabase,
     private val preferences: TextSecurePreferences,
 ) : SSKEnvironment.ProfileManagerProtocol {
 
@@ -66,11 +64,6 @@ class ProfileManager @Inject constructor(
         profilePictureURL: String?,
         profileKey: ByteArray?
     ) {
-        val hasPendingDownload = jobDatabase
-            .getAllJobs(RetrieveProfileAvatarJob.KEY).any {
-                (it.value as? RetrieveProfileAvatarJob)?.recipientAddress == recipient.address
-            }
-
         recipient.resolve()
 
         val accountID = recipient.address.toString()
@@ -83,14 +76,26 @@ class ProfileManager @Inject constructor(
             contactDatabase.setContact(contact)
         }
         contactUpdatedInternal(contact)
-        if (!hasPendingDownload) {
-            val job = RetrieveProfileAvatarJob(profilePictureURL, recipient.address, profileKey)
-            JobQueue.shared.add(job)
-        }
-    }
 
-    override fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode) {
-        recipientDatabase.setUnidentifiedAccessMode(recipient, unidentifiedAccessMode)
+        RetrieveProfileAvatarWork.schedule(
+            context = context,
+            recipientAddress = recipient.address,
+            profileAvatarUrl = profilePictureURL,
+            profileAvatarKey = profileKey
+        )
+
+        if (profilePictureURL.isNullOrEmpty()) {
+            Log.w(TAG, "Removing profile avatar for: " + recipient.address.toString())
+
+            if (recipient.isLocalNumber) {
+                setProfileAvatarId(context, SECURE_RANDOM.nextInt())
+                setProfilePictureURL(context, null)
+            }
+
+            AvatarHelper.delete(context, recipient.address)
+            storage.setProfilePicture(recipient, null, null)
+            return
+        }
     }
 
     override fun contactUpdatedInternal(contact: Contact): String? {

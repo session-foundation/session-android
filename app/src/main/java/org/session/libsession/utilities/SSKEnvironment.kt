@@ -34,7 +34,6 @@ class SSKEnvironment(
         fun setNickname(context: Context, recipient: Recipient, nickname: String?)
         fun setName(context: Context, recipient: Recipient, name: String?)
         fun setProfilePicture(context: Context, recipient: Recipient, profilePictureURL: String?, profileKey: ByteArray?)
-        fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode)
         fun contactUpdatedInternal(contact: Contact): String?
     }
 

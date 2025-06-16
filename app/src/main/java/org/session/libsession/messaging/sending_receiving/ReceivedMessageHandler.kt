@@ -366,7 +366,6 @@ fun MessageReceiver.handleVisibleMessage(
 
             if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
                 context.profileManager.setProfilePicture(context.context, recipient, profile.profilePictureURL, newProfileKey)
-                context.profileManager.setUnidentifiedAccessMode(context.context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else if (newProfileKey == null || newProfileKey.isEmpty() || profile.profilePictureURL.isNullOrEmpty()) {
                 context.profileManager.setProfilePicture(context.context, recipient, null, null)
             }

@@ -26,7 +26,7 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.jobs.MessageReceiveJob
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.jobs.RetrieveProfileAvatarJob
+import org.session.libsession.messaging.jobs.RetrieveProfileAvatarWork
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
@@ -241,7 +241,12 @@ open class Storage @Inject constructor(
         preferences.setProfilePictureURL(newProfilePicture)
 
         if (newProfileKey != null) {
-            JobQueue.shared.add(RetrieveProfileAvatarJob(newProfilePicture, ourRecipient.address, newProfileKey))
+            RetrieveProfileAvatarWork.schedule(
+                context,
+                recipientAddress = address,
+                profileAvatarUrl = newProfilePicture,
+                profileAvatarKey = newProfileKey
+            )
         }
     }
 
@@ -1229,7 +1234,6 @@ open class Storage @Inject constructor(
                 val (url, key) = contact.profilePicture
                 if (key.data.size != ProfileKeyUtil.PROFILE_KEY_BYTES) return@forEach
                 profileManager.setProfilePicture(context, recipient, url, key.data)
-                profileManager.setUnidentifiedAccessMode(context, recipient, Recipient.UnidentifiedAccessMode.UNKNOWN)
             } else {
                 profileManager.setProfilePicture(context, recipient, null, null)
             }
@@ -1523,7 +1527,6 @@ open class Storage @Inject constructor(
 
                 if ((profileKeyValid && profileKeyChanged) || (profileKeyValid && needsProfilePicture)) {
                     profileManager.setProfilePicture(context, sender, profile.profilePictureURL!!, newProfileKey!!)
-                    profileManager.setUnidentifiedAccessMode(context, sender, Recipient.UnidentifiedAccessMode.UNKNOWN)
                 }
             }
             

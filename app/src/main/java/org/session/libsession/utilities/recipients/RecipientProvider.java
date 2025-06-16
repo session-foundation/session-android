@@ -34,7 +34,6 @@ import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient.DisappearingState;
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
 import org.session.libsession.utilities.recipients.Recipient.RegisteredState;
-import org.session.libsession.utilities.recipients.Recipient.UnidentifiedAccessMode;
 import org.session.libsession.utilities.recipients.Recipient.VibrateState;
 import org.session.libsignal.utilities.guava.Optional;
 
@@ -178,7 +177,6 @@ class RecipientProvider {
               final boolean                systemContact;
               final boolean                isLocalNumber;
     @Nullable final String                 notificationChannel;
-    @NonNull  final UnidentifiedAccessMode unidentifiedAccessMode;
               final boolean                forceSmsSelection;
               final String                 wrapperHash;
               final boolean                blocksCommunityMessageRequests;
@@ -214,7 +212,6 @@ class RecipientProvider {
       this.systemContact                   = systemContact;
       this.isLocalNumber                   = isLocalNumber;
       this.notificationChannel             = settings     != null ? settings.getNotificationChannel() : null;
-      this.unidentifiedAccessMode          = settings     != null ? settings.getUnidentifiedAccessMode() : UnidentifiedAccessMode.DISABLED;
       this.forceSmsSelection               = settings     != null && settings.isForceSmsSelection();
       this.wrapperHash                     = settings     != null ? settings.getWrapperHash() : null;
       this.blocksCommunityMessageRequests  = settings     != null && settings.getBlocksCommunityMessageRequests();
