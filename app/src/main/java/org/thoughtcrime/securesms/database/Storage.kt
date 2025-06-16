@@ -1167,9 +1167,7 @@ open class Storage @Inject constructor(
         sessionContactDatabase.setContact(contact)
         val address = fromSerialized(contact.accountID)
         if (!getRecipientApproved(address)) return
-        val recipientHash = profileManager.contactUpdatedInternal(contact)
-        val recipient = Recipient.from(context, address, false)
-        setRecipientHash(recipient, recipientHash)
+        profileManager.contactUpdatedInternal(contact)
     }
 
     override fun deleteContactAndSyncConfig(accountId: String) {
@@ -1248,7 +1246,6 @@ open class Storage @Inject constructor(
                     )
                 }
             }
-            setRecipientHash(recipient, contact.hashCode().toString())
         }
 
         // if we have contacts locally but that are missing from the config, remove their corresponding thread
@@ -1278,11 +1275,6 @@ open class Storage @Inject constructor(
     ) {
         val recipientDb = recipientDatabase
         recipientDb.setAutoDownloadAttachments(recipient, shouldAutoDownloadAttachments)
-    }
-
-    override fun setRecipientHash(recipient: Recipient, recipientHash: String?) {
-        val recipientDb = recipientDatabase
-        recipientDb.setRecipientHash(recipient, recipientHash)
     }
 
     override fun getLastUpdated(threadID: Long): Long {

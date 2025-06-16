@@ -178,7 +178,6 @@ class RecipientProvider {
               final boolean                isLocalNumber;
     @Nullable final String                 notificationChannel;
               final boolean                forceSmsSelection;
-              final String                 wrapperHash;
               final boolean                blocksCommunityMessageRequests;
 
     RecipientDetails(@Nullable String name, @Nullable Long groupAvatarId,
@@ -213,7 +212,6 @@ class RecipientProvider {
       this.isLocalNumber                   = isLocalNumber;
       this.notificationChannel             = settings     != null ? settings.getNotificationChannel() : null;
       this.forceSmsSelection               = settings     != null && settings.isForceSmsSelection();
-      this.wrapperHash                     = settings     != null ? settings.getWrapperHash() : null;
       this.blocksCommunityMessageRequests  = settings     != null && settings.getBlocksCommunityMessageRequests();
 
       if (name == null && settings != null) this.name = settings.getSystemDisplayName();

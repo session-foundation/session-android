@@ -60,6 +60,7 @@ public class RecipientDatabase extends Database {
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
+  @Deprecated(forRemoval = true)
   private static final String WRAPPER_HASH             = "wrapper_hash";
   private static final String BLOCKS_COMMUNITY_MESSAGE_REQUESTS = "blocks_community_message_requests";
   private static final String AUTO_DOWNLOAD            = "auto_download"; // 1 / 0 / -1 flag for whether to auto-download in a conversation, or if the user hasn't selected a preference
@@ -218,7 +219,6 @@ public class RecipientDatabase extends Database {
     boolean profileSharing          = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
     String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
     boolean forceSmsSelection       = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
-    String  wrapperHash            = cursor.getString(cursor.getColumnIndexOrThrow(WRAPPER_HASH));
     boolean blocksCommunityMessageRequests = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCKS_COMMUNITY_MESSAGE_REQUESTS)) == 1;
 
     MaterialColor color;
@@ -252,7 +252,7 @@ public class RecipientDatabase extends Database {
                                              systemPhoneLabel, systemContactUri,
                                              signalProfileName, signalProfileAvatar, profileSharing,
                                              notificationChannel,
-                                             forceSmsSelection, wrapperHash, blocksCommunityMessageRequests));
+                                             forceSmsSelection, blocksCommunityMessageRequests));
   }
 
   public boolean isAutoDownloadFlagSet(Recipient recipient) {
@@ -303,14 +303,6 @@ public class RecipientDatabase extends Database {
       }
     }
     return false;
-  }
-
-  public void setRecipientHash(@NonNull Recipient recipient, String recipientHash) {
-    ContentValues values = new ContentValues();
-    values.put(WRAPPER_HASH, recipientHash);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setWrapperHash(recipientHash);
-    notifyRecipientListeners();
   }
 
   public void setApproved(@NonNull Recipient recipient, boolean approved) {

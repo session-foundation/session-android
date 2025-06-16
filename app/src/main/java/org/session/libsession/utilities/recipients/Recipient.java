@@ -914,7 +914,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     private final boolean                profileSharing;
     private final String                 notificationChannel;
     private final boolean                forceSmsSelection;
-    private final String                 wrapperHash;
     private final boolean                blocksCommunityMessageRequests;
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
@@ -939,7 +938,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
                       boolean profileSharing,
                       @Nullable String notificationChannel,
                       boolean forceSmsSelection,
-                      String wrapperHash,
                              boolean blocksCommunityMessageRequests
     )
     {
@@ -968,7 +966,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       this.profileSharing          = profileSharing;
       this.notificationChannel     = notificationChannel;
       this.forceSmsSelection       = forceSmsSelection;
-      this.wrapperHash            = wrapperHash;
       this.blocksCommunityMessageRequests = blocksCommunityMessageRequests;
     }
 
@@ -1070,10 +1067,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
 
     public boolean isForceSmsSelection() {
       return forceSmsSelection;
-    }
-
-    public String getWrapperHash() {
-      return wrapperHash;
     }
 
     public boolean getBlocksCommunityMessageRequests() {
