@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 object MentionUtilities {
 
-    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]*") }
+    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]{66}") }
 
     /**
      * Highlights mentions in a given text.
