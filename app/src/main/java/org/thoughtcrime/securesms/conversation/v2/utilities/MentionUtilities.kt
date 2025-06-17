@@ -65,7 +65,7 @@ object MentionUtilities {
                 } else {
                     val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
                     @Suppress("NAME_SHADOWING") val context = if (openGroup != null) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
-                    contact?.displayName(context) ?: truncateIdForDisplay(publicKey)
+                    contact?.displayName(context)
                 }
                 if (userDisplayName != null) {
                     val mention = "@$userDisplayName"
