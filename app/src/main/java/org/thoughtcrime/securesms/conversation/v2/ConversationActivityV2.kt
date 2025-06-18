@@ -1449,6 +1449,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun callRecipient() {
         if(viewModel.recipient == null) return
 
+        // if the user is blocked, show unblock modal
+        if(viewModel.recipient?.isBlocked == true){
+            unblock()
+            return
+        }
+
         // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
             showSessionDialog {
@@ -2573,6 +2579,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun reply(messages: Set<MessageRecord>) {
         val recipient = viewModel.recipient ?: return
+
+        // hide search if open
+        if(binding.searchBottomBar.isVisible) onSearchClosed()
+
         messages.firstOrNull()?.let { binding.inputBar.draftQuote(recipient, it, glide) }
         endActionMode()
     }
@@ -2631,7 +2641,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.visibility = View.INVISIBLE
+        binding.inputBar.visibility = View.GONE
         binding.root.requestApplyInsets()
 
     }

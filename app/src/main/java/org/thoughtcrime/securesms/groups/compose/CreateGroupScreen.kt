@@ -163,7 +163,7 @@ fun CreateGroup(
                     .nestedScroll(rememberNestedScrollInteropConnection()),
                 fadingColor = LocalColors.current.backgroundSecondary
             ) { bottomContentPadding ->
-                if(items.isEmpty()){
+                if(items.isEmpty() && contactSearchQuery.isEmpty()){
                     Text(
                         modifier = Modifier.fillMaxWidth()
                             .padding(top = LocalDimensions.current.xsSpacing),
@@ -273,6 +273,29 @@ private fun CreateEmptyGroupPreview(
             modifier = Modifier.background(LocalColors.current.backgroundSecondary),
         )
     }
+}
 
+@Preview
+@Composable
+private fun CreateEmptyGroupPreviewWithSearch(
+) {
+    val previewMembers = emptyList<ContactItem>()
+
+    PreviewTheme {
+        CreateGroup(
+            groupName = "",
+            onGroupNameChanged = {},
+            groupNameError = "",
+            contactSearchQuery = "Test",
+            onContactSearchQueryChanged = {},
+            onContactSearchQueryClear = {},
+            onContactItemClicked = {},
+            showLoading = false,
+            items = previewMembers,
+            onCreateClicked = {},
+            onBack = {},
+            modifier = Modifier.background(LocalColors.current.backgroundSecondary),
+        )
+    }
 }
 

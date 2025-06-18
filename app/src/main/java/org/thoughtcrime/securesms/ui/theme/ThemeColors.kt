@@ -95,13 +95,17 @@ fun transparentButtonColors() = ButtonDefaults.buttonColors(
 @Composable
 fun dangerButtonColors() = ButtonDefaults.buttonColors(
     containerColor = Color.Transparent,
-    contentColor = LocalColors.current.danger
+    contentColor = LocalColors.current.danger,
+    disabledContainerColor = Color.Transparent,
+    disabledContentColor = LocalColors.current.disabled
 )
 
 @Composable
 fun primaryTextButtonColors() = ButtonDefaults.buttonColors(
     containerColor = Color.Transparent,
-    contentColor = LocalColors.current.primaryText
+    contentColor = LocalColors.current.primaryText,
+    disabledContainerColor = Color.Transparent,
+    disabledContentColor = LocalColors.current.disabled
 )
 
 // Our themes

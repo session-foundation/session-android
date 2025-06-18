@@ -505,7 +505,7 @@
     <string name="groupName">Group Name</string>
     <string name="groupNameEnter">Enter a group name</string>
     <string name="groupNameEnterPlease">Please enter a group name.</string>
-    <string name="groupNameEnterShorter">Please enter a shorter group name.</string>
+    <string name="groupNameEnterShorter">Please enter a shorter group name</string>
     <string name="groupNameNew">Group name is now {group_name}.</string>
     <string name="groupNameUpdated">Group name updated.</string>
     <string name="groupNameVisible">Group name is visible to all group members.</string>
@@ -681,6 +681,8 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Voice Message</string>
     <string name="messages">Messages</string>
     <string name="minimize">Minimize</string>
+    <string name="modalMessageTooLongDescription">Please shorten your message to {count} characters or less.</string>
+    <string name="modalMessageTooLongTitle">Your message is too long</string>
     <string name="next">Next</string>
     <string name="nicknameDescription">Choose a nickname for <b>{name}</b>. This will appear to you in your one-to-one and group conversations.</string>
     <string name="nicknameEnter">Enter nickname</string>
@@ -869,6 +871,8 @@
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="recreateGroup">Recreate Group</string>
     <string name="redo">Redo</string>
+    <string name="remainingCharactersOverTooltip">Message is too long</string>
+    <string name="remainingCharactersTooltip">{count} characters remaining</string>
     <string name="remove">Remove</string>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="reply">Reply</string>

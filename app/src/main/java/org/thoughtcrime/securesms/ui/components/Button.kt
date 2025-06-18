@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -103,9 +104,10 @@ fun Button(
     enabled: Boolean = true,
     style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
+    minWidth: Dp = LocalDimensions.current.minButtonWidth,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    Button(onClick, type, modifier, enabled, style, shape, interactionSource = interactionSource) {
+    Button(onClick, type, modifier, enabled, style, shape, minWidth = minWidth, interactionSource = interactionSource) {
         Text(text)
     }
 }
@@ -144,8 +146,9 @@ fun Button(
     )
 }
 
-@Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled)
+@Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true,
+                                     minWidth: Dp = LocalDimensions.current.minButtonWidth, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, minWidth = minWidth)
 }
 
 @Composable fun PrimaryOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {

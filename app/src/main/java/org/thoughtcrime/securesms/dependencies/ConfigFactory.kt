@@ -85,6 +85,7 @@ class ConfigFactory @Inject constructor(
         private const val CONFIG_CHANGE_BUFFER_PERIOD: Long = 2 * 60 * 1000L
 
         const val MAX_NAME_BYTES = 100 // max size in bytes for names
+        const val MAX_GROUP_DESCRIPTION_BYTES = 600 // max size in bytes for group descriptions
     }
 
     init {
@@ -319,6 +320,8 @@ class ConfigFactory @Inject constructor(
     }
 
     override fun removeContact(accountId: String) {
+        if(!accountId.startsWith(IdPrefix.STANDARD.value)) return
+
         withMutableUserConfigs {
             it.contacts.erase(accountId)
         }

@@ -23,7 +23,7 @@ import java.util.regex.Pattern
 
 object MentionUtilities {
 
-    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]*") }
+    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]{66}") }
 
     /**
      * Highlights mentions in a given text.
@@ -65,7 +65,7 @@ object MentionUtilities {
                 } else {
                     val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
                     @Suppress("NAME_SHADOWING") val context = if (openGroup != null) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
-                    contact?.displayName(context) ?: truncateIdForDisplay(publicKey)
+                    contact?.displayName(context)
                 }
                 if (userDisplayName != null) {
                     val mention = "@$userDisplayName"

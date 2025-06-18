@@ -498,7 +498,12 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
   private @Nullable MediaItem getCurrentMediaItem() {
     if (adapter == null) return null;
-    return adapter.getMediaItemFor(binding.mediaPager.getCurrentItem());
+    try {
+      return adapter.getMediaItemFor(binding.mediaPager.getCurrentItem());
+    } catch (Exception e) {
+      Log.w(TAG, "Error getting current media item", e);
+      return null;
+    }
   }
 
   public static boolean isContentTypeSupported(final String contentType) {
@@ -562,10 +567,14 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
 
       if (adapter == null) return;
 
-      MediaItem item = adapter.getMediaItemFor(position);
-      if (item.recipient != null) item.recipient.addListener(MediaPreviewActivity.this);
-      viewModel.setActiveAlbumRailItem(MediaPreviewActivity.this, position);
-      updateActionBar();
+      try {
+        MediaItem item = adapter.getMediaItemFor(position);
+        if (item.recipient != null) item.recipient.addListener(MediaPreviewActivity.this);
+        viewModel.setActiveAlbumRailItem(MediaPreviewActivity.this, position);
+        updateActionBar();
+      } catch (Exception e) {
+        finish();
+      }
     }
 
 
@@ -577,6 +586,8 @@ public class MediaPreviewActivity extends ScreenLockActionBarActivity implements
         if (item.recipient != null) item.recipient.removeListener(MediaPreviewActivity.this);
       } catch (CursorIndexOutOfBoundsException e) {
         throw new RuntimeException("position = " + position + " leftIsRecent = " + leftIsRecent, e);
+      } catch (Exception e){
+        finish();
       }
 
       adapter.pause(position);

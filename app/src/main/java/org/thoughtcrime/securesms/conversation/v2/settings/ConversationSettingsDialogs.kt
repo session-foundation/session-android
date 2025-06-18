@@ -211,7 +211,7 @@ fun GroupAdminClearMessagesDialog(
             // hide dialog
             sendCommand(HideGroupAdminClearMessagesDialog)
         },
-        title = annotatedStringResource(R.string.groupLeave),
+        title = annotatedStringResource(R.string.clearMessages),
         text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
             .put(GROUP_NAME_KEY, groupName)
             .format()),
@@ -219,7 +219,7 @@ fun GroupAdminClearMessagesDialog(
             DialogTitledRadioButton(
                 option = RadioOption(
                     value = Unit,
-                    title = GetString(stringResource(R.string.clearDeviceOnly)),
+                    title = GetString(stringResource(R.string.clearOnThisDevice)),
                     qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_device),
                     selected = !deleteForEveryone
                 )
@@ -333,6 +333,19 @@ fun PreviewBaseGroupDialog() {
                     errorName = null,
                     errorDescription = null,
                 )
+            ),
+            sendCommand = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewClearAllMsgGroupDialog() {
+    PreviewTheme {
+        ConversationSettingsDialogs(
+            dialogsState = ConversationSettingsViewModel.DialogsState(
+                groupAdminClearMessagesDialog = ConversationSettingsViewModel.GroupAdminClearMessageDialog("Testy")
             ),
             sendCommand = {}
         )

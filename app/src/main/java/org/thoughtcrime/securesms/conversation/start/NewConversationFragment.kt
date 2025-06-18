@@ -122,8 +122,8 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         childFragmentManager.commit {
             setCustomAnimations(
                 R.anim.slide_from_right,
-                R.anim.fade_scale_out,
-                0,
+                R.anim.slide_to_left,
+                R.anim.slide_from_left,
                 R.anim.slide_to_right
             )
             replace(R.id.new_conversation_fragment_container, fragment)

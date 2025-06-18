@@ -1391,7 +1391,7 @@ open class Storage @Inject constructor(
                 }
             } else {
                 // non-standard contact prefixes: 15, 00 etc shouldn't be stored in config
-                if (AccountId(recipientAddress.toString()).prefix != IdPrefix.STANDARD) return@withMutableUserConfigs
+                if(!recipientAddress.toString().startsWith(IdPrefix.STANDARD.value)) return@withMutableUserConfigs
                 configs.convoInfoVolatile.eraseOneToOne(recipientAddress.toString())
 
                 if (getUserPublicKey() != recipientAddress.toString()) {

@@ -84,7 +84,9 @@ private fun RecoveryPasswordCell(
                     style = LocalType.current.h8
                 )
                 Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-                SessionShieldIcon()
+                SessionShieldIcon(
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))

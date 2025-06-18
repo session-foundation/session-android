@@ -208,7 +208,8 @@ fun ConversationSettings(
                     if (!data.description.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                         ExpandableText(
-                            modifier = Modifier.safeContentWidth()
+                            modifier = Modifier.fillMaxWidth()
+                                .safeContentWidth()
                                 .qaTag(data.descriptionQaTag),
                             text = data.description,
                             textStyle = LocalType.current.base,
@@ -333,6 +334,7 @@ fun ConversationSettingsSubCategory(
                     text = option.name,
                     subtitle = option.subtitle,
                     subtitleQaTag = option.subtitleQaTag,
+                    enabled = option.enabled,
                     icon = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()

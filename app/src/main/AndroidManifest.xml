@@ -170,9 +170,6 @@
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name="org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity"
-            android:screenOrientation="portrait" />
-        <activity
             android:name="org.thoughtcrime.securesms.preferences.PrivacySettingsActivity"
             android:label="@string/sessionPrivacy"
             android:screenOrientation="portrait" />

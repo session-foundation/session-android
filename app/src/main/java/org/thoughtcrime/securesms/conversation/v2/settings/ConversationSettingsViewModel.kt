@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.icu.text.BreakIterator
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -65,6 +66,7 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
@@ -235,7 +237,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 dmTypeString,
                 TIME_KEY to durationAbbreviated
             )
-        } else null
+        } else context.getString(R.string.off)
 
         val pinned = threadDb.isPinned(threadId)
 
@@ -788,7 +790,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             showLoading()
             try {
-                val messagesDeleted = withContext(Dispatchers.Default) {
+                withContext(Dispatchers.Default) {
                     conversationRepository.clearAllMessages(
                         threadId,
                         if (clearForEveryoneGroupsV2 && groupV2 != null) AccountId(groupV2!!.groupAccountId) else null
@@ -797,8 +799,8 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                 Toast.makeText(context, context.resources.getQuantityString(
                     R.plurals.deleteMessageDeleted,
-                    messagesDeleted,
-                    messagesDeleted
+                    2, // as per the ACs, we decided to always show this message as plural
+                    2
                 ), Toast.LENGTH_LONG).show()
             } catch (e: Exception){
                 Toast.makeText(context, context.resources.getQuantityString(
@@ -882,6 +884,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             navigator.returnResult(ConversationActivityV2.SHOW_SEARCH, true)
         }
+    }
+
+    /**
+     * This returns the number of visible glyphs in a string, instead of its underlying length
+     * For example: 👨🏻‍❤️‍💋‍👨🏻 has a length of 15 as a string, but would return 1 here as it is only one visible element
+     */
+    private fun getDisplayedCharacterSize(text: String): Int {
+        val iterator = BreakIterator.getCharacterInstance()
+        iterator.setText(text)
+        var count = 0
+        while (iterator.next() != BreakIterator.DONE) {
+            count++
+        }
+        return count
     }
 
     fun onCommand(command: Commands) {
@@ -968,7 +984,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val trimmedDescription = command.description.trim()
 
                 val error: String? = when {
-                    trimmedDescription.length > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+                    // description should be less than 200 characters
+                    getDisplayedCharacterSize(trimmedDescription) > 200 -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
+
+                    // description should be less than max bytes
+                    trimmedDescription.textSizeInBytes() > MAX_GROUP_DESCRIPTION_BYTES -> context.getString(R.string.updateGroupInformationEnterShorterDescription)
 
                     else -> null
                 }
@@ -977,9 +997,9 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     it.copy(
                         groupEditDialog = it.groupEditDialog?.copy(
                             inputtedDescription = command.description,
-                            saveEnabled = trimmedDescription.isNotEmpty() && // can save if we have an input
-                                    trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
+                            saveEnabled = trimmedDescription != it.groupEditDialog.currentName && // ... and it isn't the same as what is already saved
                                     error == null && // ... and there are no description errors
+                                    it.groupEditDialog.inputName?.trim()?.isNotEmpty() ==  true && // ... and there is a name input
                                     it.groupEditDialog.errorName == null, // ... and there are no name errors
                             errorDescription = error
                         )
@@ -1003,10 +1023,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                     }
 
                     // save description if needed
-                    if(dialogData.inputtedDescription != dialogData.currentDescription && dialogData.inputtedDescription?.isNotEmpty() == true) {
+                    if(dialogData.inputtedDescription != dialogData.currentDescription) {
                         groupManager.setDescription(
                             AccountId(groupData.groupAccountId),
-                            dialogData.inputtedDescription
+                            dialogData.inputtedDescription ?: ""
                         )
                     }
 
@@ -1408,6 +1428,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         @StringRes val qaTag: Int? = null,
         val subtitle: String? = null,
         @StringRes val subtitleQaTag: Int? = null,
+        val enabled: Boolean = true,
         val onClick: () -> Unit
     )
 
