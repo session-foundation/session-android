@@ -453,7 +453,7 @@ class ConversationViewModel(
                     )
                 }
 
-                if (conversation.isGroupOrCommunityRecipient) {
+                if (conversation.isGroupOrCommunityRecipient && conversation.isApproved) {
                     val title = if (conversation.isCommunityRecipient) {
                         val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
                         application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
