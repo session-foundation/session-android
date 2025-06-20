@@ -30,13 +30,17 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.getSearchName
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 @OptIn(FlowPreview::class)
 @HiltViewModel(assistedFactory = SelectContactsViewModel.Factory::class)
-class SelectContactsViewModel @AssistedInject constructor(
+open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
+    private val avatarUtils: AvatarUtils,
     @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
+    @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
     @Assisted private val scope: CoroutineScope,
 ) : ViewModel() {
     // Input: The search query
@@ -82,7 +86,7 @@ class SelectContactsViewModel @AssistedInject constructor(
                             .asSequence()
                             .map { AccountId(it.id) } + manuallyAdded)
 
-                    if (excludingAccountIDs.isEmpty()) {
+                    val recipientContacts = if (excludingAccountIDs.isEmpty()) {
                         allContacts.toSet()
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
@@ -93,29 +97,36 @@ class SelectContactsViewModel @AssistedInject constructor(
                             false
                         )
                     }
+
+                    if(applyDefaultFiltering){
+                        recipientContacts.filter { !it.isBlocked && it.isApproved } // filter out blocked contacts and unapproved contacts
+                    } else recipientContacts
                 }
             }
         }
 
 
-    private fun filterContacts(
+    private suspend fun filterContacts(
         contacts: Collection<Recipient>,
         query: String,
         selectedAccountIDs: Set<AccountId>
     ): List<ContactItem> {
-        return contacts
-            .asSequence()
-            .filter { query.isBlank() || it.getSearchName().contains(query, ignoreCase = true) }
-            .map { contact ->
+        val items = mutableListOf<ContactItem>()
+        for (contact in contacts) {
+            if (query.isBlank() || contact.getSearchName().contains(query, ignoreCase = true)) {
                 val accountId = AccountId(contact.address.toString())
-                ContactItem(
-                    name = contact.getSearchName(),
-                    accountID = accountId,
-                    selected = selectedAccountIDs.contains(accountId),
+                val avatarData = avatarUtils.getUIDataFromRecipient(contact)
+                items.add(
+                    ContactItem(
+                        name = contact.getSearchName(),
+                        accountID = accountId,
+                        avatarUIData = avatarData,
+                        selected = selectedAccountIDs.contains(accountId)
+                    )
                 )
             }
-            .toList()
-            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+        }
+        return items.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     fun setManuallyAddedContacts(accountIDs: Set<AccountId>) {
@@ -138,10 +149,15 @@ class SelectContactsViewModel @AssistedInject constructor(
         mutableSelectedContactAccountIDs.value += accountIDs
     }
 
+    fun clearSelection(){
+        mutableSelectedContactAccountIDs.value = emptySet()
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(
             excludingAccountIDs: Set<AccountId> = emptySet(),
+            applyDefaultFiltering: Boolean = true,
             scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         ): SelectContactsViewModel
     }
@@ -150,5 +166,6 @@ class SelectContactsViewModel @AssistedInject constructor(
 data class ContactItem(
     val accountID: AccountId,
     val name: String,
+    val avatarUIData: AvatarUIData,
     val selected: Boolean,
 )

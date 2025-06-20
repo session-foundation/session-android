@@ -6,30 +6,6 @@
     android:layout_height="wrap_content">
 
     <FrameLayout
-        android:id="@+id/blockedBanner"
-        android:contentDescription="@string/AccessibilityId_blockedBanner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?danger"
-        android:visibility="gone"
-        tools:visibility="visible"
-        >
-
-        <TextView
-            android:id="@+id/blockedBannerTextView"
-            android:contentDescription="@string/AccessibilityId_blockedBannerText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="@dimen/medium_spacing"
-            android:textColor="@color/white"
-            android:textSize="@dimen/small_font_size"
-            android:textStyle="bold"
-            tools:text="Elon is blocked. Unblock them?" />
-
-    </FrameLayout>
-
-    <FrameLayout
         android:id="@+id/outdatedDisappearingBanner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

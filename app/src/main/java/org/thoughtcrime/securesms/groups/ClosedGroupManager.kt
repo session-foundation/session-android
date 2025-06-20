@@ -25,7 +25,6 @@ object ClosedGroupManager {
         // Notify the PN server
         PushRegistryV1.unsubscribeGroup(closedGroupPublicKey = groupPublicKey, publicKey = userPublicKey)
         // Stop polling
-        MessagingModuleConfiguration.shared.legacyClosedGroupPollerV2.stopPolling(groupPublicKey)
         storage.cancelPendingMessageSendJobs(threadId)
         ApplicationContext.getInstance(context).messageNotifier.updateNotification(context)
         if (delete) {

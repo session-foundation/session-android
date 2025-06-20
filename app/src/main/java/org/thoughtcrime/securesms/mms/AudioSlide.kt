@@ -35,7 +35,7 @@ class AudioSlide : Slide {
     override val thumbnailUri: Uri?
         get() = null
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean, duration: String)
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, voiceNote: Boolean, durationMills: Long)
         // Note: The `caption` field of `constructAttachmentFromUri` is repurposed to store the interim
         : super(context,
                 constructAttachmentFromUri(
@@ -47,12 +47,13 @@ class AudioSlide : Slide {
                     0,         // height
                     false,     // hasThumbnail
                     filename,
-                    duration,  // AudioSlides do not have captions, so we are re-purposing this field (in AudioSlides only) to store the interim audio duration displayed during upload.
+                    null,
                     voiceNote,
-                    false)     // quote
+                    false,
+                    durationMills)     // quote
                 )
 
-    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean, duration: String = "--:--")
+    constructor(context: Context, uri: Uri, filename: String?, dataSize: Long, contentType: String, voiceNote: Boolean, durationMills: Long)
         : super(context,
                 UriAttachment(
                     uri,
@@ -66,7 +67,8 @@ class AudioSlide : Slide {
                     null,        // fastPreflightId
                     voiceNote,
                     false,       // quote
-                    duration)    // AudioSlides do not have captions, so we are re-purposing this field (in AudioSlides only) to store the interim audio duration displayed during upload.
+                    null,
+                    durationMills)
                 )
 
     constructor(context: Context, attachment: Attachment) : super(context, attachment)

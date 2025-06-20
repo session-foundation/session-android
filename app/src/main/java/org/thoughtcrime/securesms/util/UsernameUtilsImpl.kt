@@ -49,6 +49,6 @@ class UsernameUtilsImpl(
         // if the username is actually set to the user's accountId, truncate it
         val validatedUsername = if(userName == accountID) truncateIdForDisplay(accountID) else userName
 
-        return validatedUsername ?: truncateIdForDisplay(accountID)
+        return if(validatedUsername.isNullOrEmpty()) truncateIdForDisplay(accountID) else validatedUsername
     }
 }

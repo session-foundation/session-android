@@ -27,6 +27,8 @@ import androidx.annotation.NonNull;
 import org.session.libsignal.crypto.IdentityKey;
 import org.session.libsignal.crypto.IdentityKeyPair;
 import org.session.libsignal.crypto.ecc.Curve;
+import org.session.libsignal.crypto.ecc.DjbECPrivateKey;
+import org.session.libsignal.crypto.ecc.DjbECPublicKey;
 import org.session.libsignal.crypto.ecc.ECKeyPair;
 import org.session.libsignal.crypto.ecc.ECPrivateKey;
 import org.session.libsignal.crypto.ecc.ECPublicKey;
@@ -40,6 +42,8 @@ import kotlinx.coroutines.channels.BufferOverflow;
 import kotlinx.coroutines.flow.MutableSharedFlow;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.SharedFlowKt;
+import network.loki.messenger.libsession_util.Curve25519;
+import network.loki.messenger.libsession_util.util.KeyPair;
 
 /**
  * Utility class for working with identity keys.
@@ -117,11 +121,14 @@ public class IdentityKeyUtil {
   }
 
   public static void generateIdentityKeyPair(@NonNull Context context) {
-    ECKeyPair keyPair = Curve.generateKeyPair();
-    ECPublicKey publicKey = keyPair.getPublicKey();
-    ECPrivateKey privateKey = keyPair.getPrivateKey();
-    save(context, IDENTITY_PUBLIC_KEY_PREF, Base64.encodeBytes(publicKey.serialize()));
-    save(context, IDENTITY_PRIVATE_KEY_PREF, Base64.encodeBytes(privateKey.serialize()));
+    KeyPair keyPair = Curve25519.INSTANCE.generateKeyPair();
+    ECKeyPair ecKeyPair = new ECKeyPair(
+        new DjbECPublicKey(keyPair.getPubKey().getData()),
+        new DjbECPrivateKey(keyPair.getSecretKey().getData())
+    );
+
+    save(context, IDENTITY_PUBLIC_KEY_PREF, Base64.encodeBytes(ecKeyPair.getPublicKey().serialize()));
+    save(context, IDENTITY_PRIVATE_KEY_PREF, Base64.encodeBytes(ecKeyPair.getPrivateKey().serialize()));
   }
 
   public static String retrieve(Context context, String key) {

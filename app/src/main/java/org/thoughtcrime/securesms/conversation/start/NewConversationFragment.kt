@@ -9,7 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -27,7 +26,6 @@ import org.thoughtcrime.securesms.conversation.start.newmessage.NewMessageFragme
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.groups.CreateGroupFragment
 import org.thoughtcrime.securesms.groups.JoinCommunityFragment
-import org.thoughtcrime.securesms.groups.legacy.CreateLegacyGroupFragment
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -79,6 +77,13 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
                 skipCollapsed = true
                 state = BottomSheetBehavior.STATE_EXPANDED
             }
+
+            // Set transparent navigation bar on older android version otherwise it colors the  navbar
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                window?.apply {
+                    navigationBarColor = android.graphics.Color.TRANSPARENT
+                }
+            }
         }
 
 
@@ -87,11 +92,7 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onCreateGroupSelected() {
-        val fragment = if (deprecationManager.deprecationState.value == LegacyGroupDeprecationManager.DeprecationState.NOT_DEPRECATING) {
-            CreateLegacyGroupFragment()
-        } else {
-            CreateGroupFragment()
-        }
+        val fragment = CreateGroupFragment()
 
         replaceFragment(fragment)
     }
@@ -123,8 +124,8 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
         childFragmentManager.commit {
             setCustomAnimations(
                 R.anim.slide_from_right,
-                R.anim.fade_scale_out,
-                0,
+                R.anim.slide_to_left,
+                R.anim.slide_from_left,
                 R.anim.slide_to_right
             )
             replace(R.id.new_conversation_fragment_container, fragment)

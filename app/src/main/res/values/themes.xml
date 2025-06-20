@@ -33,7 +33,7 @@
        <item name="colorOnSurface">?android:textColorPrimary</item>
        <item name="colorSurface">?backgroundSecondary</item>
        <item name="menu_trash_icon">@drawable/ic_trash_2</item>
-       <item name="menu_block_icon">@drawable/ic_ban</item>
+       <item name="menu_ban_icon">@drawable/ic_ban</item>
        <item name="menu_save_icon">@drawable/ic_arrow_down_to_line</item>=
        <item name="menu_copy_icon">@drawable/ic_copy</item>
        <item name="menu_reply_icon">@drawable/ic_reply</item>
@@ -632,5 +632,26 @@
         <item name="message_selected">@color/classic_dark_2</item>
     </style>
 
+    <style name="PrimaryGreen">
+        <item name="colorAccent">@color/accent_green</item>
+    </style>
+    <style name="PrimaryBlue">
+        <item name="colorAccent">@color/accent_blue</item>
+    </style>
+    <style name="PrimaryPurple">
+        <item name="colorAccent">@color/accent_purple</item>
+    </style>
+    <style name="PrimaryPink">
+        <item name="colorAccent">@color/accent_pink</item>
+    </style>
+    <style name="PrimaryRed">
+        <item name="colorAccent">@color/accent_red</item>
+    </style>
+    <style name="PrimaryOrange">
+        <item name="colorAccent">@color/accent_orange</item>
+    </style>
+    <style name="PrimaryYellow">
+        <item name="colorAccent">@color/accent_yellow</item>
+    </style>
 
 </resources>

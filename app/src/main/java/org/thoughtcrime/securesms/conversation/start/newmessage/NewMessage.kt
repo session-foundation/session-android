@@ -37,7 +37,6 @@ import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -105,7 +104,7 @@ private fun EnterAccountId(
                     text = state.newMessageIdOrOns,
                     modifier = Modifier
                         .padding(horizontal = LocalDimensions.current.spacing)
-                        .qaTag(stringResource(R.string.AccessibilityId_sessionIdInput)),
+                        .qaTag(R.string.AccessibilityId_sessionIdInput),
                     placeholder = stringResource(R.string.accountIdOrOnsEnter),
                     onChange = callbacks::onChange,
                     onContinue = callbacks::onContinue,
@@ -118,7 +117,7 @@ private fun EnterAccountId(
                 BorderlessButtonWithIcon(
                     text = stringResource(R.string.messageNewDescriptionMobile),
                     modifier = Modifier
-                        .contentDescription(R.string.AccessibilityId_messageNewDescriptionMobile)
+                        .qaTag(R.string.AccessibilityId_messageNewDescriptionMobile)
                         .padding(horizontal = LocalDimensions.current.mediumSpacing)
                         .fillMaxWidth(),
                     style = LocalType.current.small,
@@ -136,7 +135,7 @@ private fun EnterAccountId(
                     .padding(horizontal = LocalDimensions.current.xlargeSpacing)
                     .padding(bottom = LocalDimensions.current.smallSpacing)
                     .fillMaxWidth()
-                    .contentDescription(R.string.next),
+                    .qaTag(R.string.next),
                 enabled = state.isNextButtonEnabled,
                 onClick = callbacks::onContinue
             ) {

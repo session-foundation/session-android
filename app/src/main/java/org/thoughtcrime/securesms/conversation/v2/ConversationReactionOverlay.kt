@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.conversation.v2
 import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
@@ -29,15 +28,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil.toShortTwoPartString
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.TextSecurePreferences
@@ -45,17 +45,16 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocal
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView
 import org.thoughtcrime.securesms.components.emoji.RecentEmojiPageModel
 import org.thoughtcrime.securesms.components.menu.ActionItem
-import org.thoughtcrime.securesms.conversation.v2.menus.ConversationMenuItemHelper.userCanBanSelectedUsers
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.ReactionRecord
+import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.util.AnimationCompleteListener
 import org.thoughtcrime.securesms.util.DateUtils
@@ -105,8 +104,8 @@ class ConversationReactionOverlay : FrameLayout {
     @Inject lateinit var threadDatabase: ThreadDatabase
     @Inject lateinit var textSecurePreferences: TextSecurePreferences
     @Inject lateinit var deprecationManager: LegacyGroupDeprecationManager
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
-    private val scope = CoroutineScope(Dispatchers.Default)
     private var job: Job? = null
 
     private val iconMore by lazy {
@@ -168,10 +167,14 @@ class ConversationReactionOverlay : FrameLayout {
         this.activity = activity
         doOnLayout { showAfterLayout(messageRecord, lastSeenDownPoint, isMessageOnLeft) }
 
-        job = scope.launch(Dispatchers.IO) {
+        job = GlobalScope.launch {
+            // Wait for the message to be deleted
             repository.changes(messageRecord.threadId)
-                .filter { mmsSmsDatabase.getMessageForTimestamp(messageRecord.timestamp) == null }
-                .collect { withContext(Dispatchers.Main) { hide() } }
+                .first { mmsSmsDatabase.getMessageById(messageRecord.messageId) == null }
+
+            withContext(Dispatchers.Main) {
+                hide()
+            }
         }
     }
 
@@ -593,7 +596,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Ban user
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_block_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
+            items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
         }
         // Ban and delete all
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
@@ -631,6 +634,12 @@ class ConversationReactionOverlay : FrameLayout {
         backgroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         foregroundView.isVisible = !isDeleteOnly && !isDeprecatedLegacyGroup
         return items
+    }
+
+    private fun userCanBanSelectedUsers(context: Context, message: MessageRecord, openGroup: OpenGroup?, userPublicKey: String, blindedPublicKey: String?): Boolean {
+        if (openGroup == null)  return false
+        if (message.isOutgoing) return false // Users can't ban themselves
+        return openGroupManager.isUserModerator(openGroup.groupId, userPublicKey, blindedPublicKey)
     }
 
     private fun handleActionItemClicked(action: Action) {

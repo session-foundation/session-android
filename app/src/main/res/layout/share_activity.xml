@@ -50,7 +50,7 @@
               android:layout_below="@id/search_toolbar"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:name="org.thoughtcrime.securesms.contacts.ContactSelectionListFragment" />
+              android:name="org.thoughtcrime.securesms.contacts.ShareContactListFragment" />
 
     <org.thoughtcrime.securesms.components.SearchToolbar
             android:id="@+id/search_toolbar"

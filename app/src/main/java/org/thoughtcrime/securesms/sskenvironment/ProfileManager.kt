@@ -95,8 +95,7 @@ class ProfileManager @Inject constructor(
 
     override fun contactUpdatedInternal(contact: Contact): String? {
         if (contact.accountID == preferences.getLocalNumber()) return null
-        val accountId = AccountId(contact.accountID)
-        if (accountId.prefix != IdPrefix.STANDARD) return null // only internally store standard account IDs
+        if (IdPrefix.fromValue(contact.accountID) != IdPrefix.STANDARD) return null // only internally store standard account IDs
         return configFactory.withMutableUserConfigs {
             val contactConfig = it.contacts
             contactConfig.upsertContact(contact.accountID) {

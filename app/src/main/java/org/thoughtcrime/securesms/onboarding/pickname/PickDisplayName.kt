@@ -17,12 +17,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
-import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 @Preview
 @Composable
@@ -68,7 +67,7 @@ internal fun PickDisplayName(
 
             SessionOutlinedTextField(
                 text = state.displayName,
-                modifier = Modifier.fillMaxWidth().qaTag(stringResource(R.string.AccessibilityId_displayNameEnter)),
+                modifier = Modifier.fillMaxWidth().qaTag(R.string.AccessibilityId_displayNameEnter),
                 placeholder = stringResource(R.string.displayNameEnter),
                 onChange = onChange,
                 onContinue = onContinue,

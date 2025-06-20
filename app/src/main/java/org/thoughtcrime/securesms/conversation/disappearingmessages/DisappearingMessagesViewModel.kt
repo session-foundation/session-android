@@ -1,46 +1,44 @@
 package org.thoughtcrime.securesms.conversation.disappearingmessages
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.channels.Channel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.loki.messenger.BuildConfig
+import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.ExpiryCallbacks
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 
-class DisappearingMessagesViewModel(
-    private val threadId: Long,
-    private val application: Application,
+@HiltViewModel(assistedFactory = DisappearingMessagesViewModel.Factory::class)
+class DisappearingMessagesViewModel @AssistedInject constructor(
+    @Assisted("threadId")            private val threadId: Long,
+    @Assisted("isNewConfigEnabled")  private val isNewConfigEnabled: Boolean,
+    @Assisted("showDebugOptions")    private val showDebugOptions: Boolean,
+    @ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val disappearingMessages: DisappearingMessages,
     private val threadDb: ThreadDatabase,
     private val groupDb: GroupDatabase,
     private val storage: Storage,
-    isNewConfigEnabled: Boolean,
-    showDebugOptions: Boolean
-) : AndroidViewModel(application), ExpiryCallbacks {
-
-    private val _event = Channel<Event>()
-    val event = _event.receiveAsFlow()
+    private val navigator: ConversationSettingsNavigator,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(
         State(
@@ -85,48 +83,30 @@ class DisappearingMessagesViewModel(
         }
     }
 
-    override fun setValue(value: ExpiryMode) = _state.update { it.copy(expiryMode = value) }
+    fun onOptionSelected(value: ExpiryMode) = _state.update { it.copy(expiryMode = value) }
 
-    override fun onSetClick() = viewModelScope.launch {
+    fun onSetClicked() = viewModelScope.launch {
         val state = _state.value
         val mode = state.expiryMode
         val address = state.address
         if (address == null || mode == null) {
-            _event.send(Event.FAIL)
+            Toast.makeText(
+                context, context.getString(R.string.communityErrorDescription), Toast.LENGTH_SHORT
+            ).show()
             return@launch
         }
 
         disappearingMessages.set(threadId, address, mode, state.isGroup)
 
-        _event.send(Event.SUCCESS)
+        navigator.navigateUp()
     }
 
-    @dagger.assisted.AssistedFactory
-    interface AssistedFactory {
-        fun create(threadId: Long): Factory
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    class Factory @AssistedInject constructor(
-        @Assisted private val threadId: Long,
-        private val application: Application,
-        private val textSecurePreferences: TextSecurePreferences,
-        private val disappearingMessages: DisappearingMessages,
-        private val threadDb: ThreadDatabase,
-        private val groupDb: GroupDatabase,
-        private val storage: Storage
-    ) : ViewModelProvider.Factory {
-
-        override fun <T : ViewModel> create(modelClass: Class<T>): T = DisappearingMessagesViewModel(
-            threadId,
-            application,
-            textSecurePreferences,
-            disappearingMessages,
-            threadDb,
-            groupDb,
-            storage,
-            ExpirationConfiguration.isNewConfigEnabled,
-            BuildConfig.DEBUG
-        ) as T
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            @Assisted("threadId")           threadId: Long,
+            @Assisted("isNewConfigEnabled") isNewConfigEnabled: Boolean,
+            @Assisted("showDebugOptions")   showDebugOptions: Boolean
+        ): DisappearingMessagesViewModel
     }
 }

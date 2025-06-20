@@ -54,7 +54,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         ) {
             ActionSheetItem(
                 text = stringResource(R.string.block),
-                leadingIcon = R.drawable.ic_ban,
+                leadingIcon = R.drawable.ic_user_round_x,
                 qaTag = stringResource(R.string.AccessibilityId_block),
                 onClick = {
                     showBlockConfirmation()
@@ -99,7 +99,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         showSessionDialog {
             title(R.string.contactDelete)
             text(
-                Phrase.from(context, R.string.contactDeleteDescription)
+                Phrase.from(context, R.string.deleteContactDescription)
                     .put(NAME_KEY, contactName)
                     .put(NAME_KEY, contactName)
                     .format())

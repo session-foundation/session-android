@@ -15,7 +15,6 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
-import org.thoughtcrime.securesms.notifications.DefaultMessageNotifier
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
@@ -27,12 +26,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
-
-    @Provides
-    @Singleton
-    fun provideMessageNotifier(): MessageNotifier {
-        return OptimizedMessageNotifier(DefaultMessageNotifier())
-    }
 }
 
 @Module
@@ -56,6 +49,9 @@ abstract class AppBindings {
 
     @Binds
     abstract fun bindConfigFactory(configFactory: ConfigFactory): ConfigFactoryProtocol
+
+    @Binds
+    abstract fun bindMessageNotifier(notifier: OptimizedMessageNotifier): MessageNotifier
 
 }
 

@@ -20,36 +20,36 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/session_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp">
+                android:paddingHorizontal="@dimen/medium_spacing">
 
                 <org.thoughtcrime.securesms.components.ProfilePictureView
                     android:id="@+id/profileButton"
-                    android:layout_width="@dimen/small_profile_picture_size"
-                    android:layout_height="@dimen/small_profile_picture_size"
-                    android:layout_alignParentLeft="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginLeft="9dp"
+                    android:layout_width="@dimen/very_small_profile_picture_size"
+                    android:layout_height="@dimen/very_small_profile_picture_size"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     android:contentDescription="@string/AccessibilityId_profilePicture" />
 
                 <org.thoughtcrime.securesms.home.PathStatusView
                     android:id="@+id/pathStatusView"
                     android:layout_width="@dimen/path_status_view_size"
                     android:layout_height="@dimen/path_status_view_size"
-                    android:layout_alignEnd="@+id/profileButton"
-                    android:layout_alignBottom="@+id/profileButton" />
+                    app:layout_constraintBottom_toBottomOf="@+id/profileButton"
+                    app:layout_constraintEnd_toEndOf="@+id/profileButton"/>
 
                 <ImageView
                     android:id="@+id/sessionHeaderImage"
                     android:layout_width="0dp"
                     android:layout_height="16dp"
-                    android:layout_centerInParent="true"
-                    android:layout_toLeftOf="@+id/searchViewContainer"
-                    android:layout_toRightOf="@+id/profileButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/profileButton"
+                    app:layout_constraintEnd_toStartOf="@+id/searchViewContainer"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_session"
                     app:tint="?sessionLogoTint" />
@@ -58,21 +58,21 @@
                     android:id="@+id/searchViewContainer"
                     android:background="?selectableItemBackgroundBorderless"
                     android:contentDescription="@string/AccessibilityId_searchIcon"
-                    android:layout_width="@dimen/small_profile_picture_size"
-                    android:layout_height="@dimen/small_profile_picture_size"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true">
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
                     <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
                         android:src="@drawable/ic_search"
-                        app:tint="?sessionLogoTint" />
+                        app:tint="?android:textColorPrimary" />
 
                 </RelativeLayout>
 
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <RelativeLayout
                 android:id="@+id/search_toolbar"

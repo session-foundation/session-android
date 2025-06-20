@@ -22,6 +22,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 
 @HiltViewModel(assistedFactory = CreateGroupViewModel.Factory::class)
@@ -30,15 +31,19 @@ class CreateGroupViewModel @AssistedInject constructor(
     @ApplicationContext private val appContext: Context,
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
+    private val avatarUtils: AvatarUtils,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
 ): ViewModel() {
     // Child view model to handle contact selection logic
+    //todo we should probably extend this VM instead of instantiating it here
     val selectContactsViewModel = SelectContactsViewModel(
         configFactory = configFactory,
         excludingAccountIDs = emptySet(),
+        applyDefaultFiltering = true,
         scope = viewModelScope,
         appContext = appContext,
+        avatarUtils = avatarUtils
     )
 
     // Input: group name
@@ -91,7 +96,7 @@ class CreateGroupViewModel @AssistedInject constructor(
             }
 
             // validate name length (needs to be less than 100 bytes)
-            if(groupName.textSizeInBytes() > MAX_GROUP_NAME_BYTES){
+            if(groupName.textSizeInBytes() > ConfigFactory.MAX_NAME_BYTES){
                 mutableGroupNameError.value = appContext.getString(R.string.groupNameEnterShorter)
                 return@launch
             }

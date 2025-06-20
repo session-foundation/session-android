@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonColors
@@ -31,14 +32,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.LaunchedEffectAsync
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
@@ -60,6 +64,7 @@ fun Button(
     enabled: Boolean = true,
     style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
+    minWidth: Dp = LocalDimensions.current.minButtonWidth,
     border: BorderStroke? = type.border(enabled),
     colors: ButtonColors = type.buttonColors(),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -69,7 +74,8 @@ fun Button(
     style.applyButtonConstraints {
         androidx.compose.material3.Button(
             onClick = onClick,
-            modifier = modifier.heightIn(min = style.minHeight),
+            modifier = modifier.heightIn(min = style.minHeight)
+                .defaultMinSize(minWidth = minWidth),
             enabled = enabled,
             interactionSource = interactionSource,
             elevation = null,
@@ -98,9 +104,10 @@ fun Button(
     enabled: Boolean = true,
     style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
+    minWidth: Dp = LocalDimensions.current.minButtonWidth,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    Button(onClick, type, modifier, enabled, style, shape, interactionSource = interactionSource) {
+    Button(onClick, type, modifier, enabled, style, shape, minWidth = minWidth, interactionSource = interactionSource) {
         Text(text)
     }
 }
@@ -139,8 +146,9 @@ fun Button(
     )
 }
 
-@Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled)
+@Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true,
+                                     minWidth: Dp = LocalDimensions.current.minButtonWidth, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, minWidth = minWidth)
 }
 
 @Composable fun PrimaryOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
@@ -190,7 +198,7 @@ fun OutlineCopyButton(
     val interactionSource = remember { MutableInteractionSource() }
 
     Button(
-        modifier = modifier.contentDescription(R.string.AccessibilityId_copy),
+        modifier = modifier.qaTag(R.string.AccessibilityId_copy),
         interactionSource = interactionSource,
         style = style,
         type = ButtonType.Outline(color),

@@ -87,6 +87,7 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
     @Inject lateinit var usernameUtils: UsernameUtils
+    @Inject lateinit var openGroupManager: OpenGroupManager
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -229,7 +230,11 @@ class VisibleMessageView : FrameLayout {
                     } else {
                         standardPublicKey = senderAccountID
                     }
-                    val isModerator = OpenGroupManager.isUserModerator(context, openGroup.groupId, standardPublicKey, blindedPublicKey)
+                    val isModerator = openGroupManager.isUserModerator(
+                        openGroup.groupId,
+                        standardPublicKey,
+                        blindedPublicKey
+                    )
                     binding.moderatorIconImageView.isVisible = isModerator
                 }
                 else if (thread.isLegacyGroupRecipient) { // legacy groups
@@ -282,7 +287,7 @@ class VisibleMessageView : FrameLayout {
             val capabilities = lokiThreadDb.getOpenGroupChat(threadID)?.server?.let { lokiApiDb.getServerCapabilities(it) }
             if (capabilities.isNullOrEmpty() || capabilities.contains(OpenGroupApi.Capability.REACTIONS.name.lowercase())) {
                 emojiReactionsBinding.value.root.let { root ->
-                    root.setReactions(message.id, message.reactions, message.isOutgoing, delegate)
+                    root.setReactions(message.messageId, message.reactions, message.isOutgoing, delegate)
                     root.isVisible = true
                     (root.layoutParams as ConstraintLayout.LayoutParams).apply {
                         horizontalBias = if (message.isOutgoing) 1f else 0f

@@ -9,7 +9,7 @@
 
     <item
         android:id="@+id/menu_block_message_request"
-        android:icon="@drawable/ic_ban"
+        android:icon="@drawable/ic_user_round_x"
         android:contentDescription="@string/AccessibilityId_blockButton"
         android:title="@string/block"/>
 

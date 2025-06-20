@@ -9,9 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.ProgressArc
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 
 @Composable
@@ -20,7 +20,7 @@ internal fun LoadingScreen(progress: Float) {
         Spacer(modifier = Modifier.weight(1f))
         ProgressArc(
             progress,
-            modifier = Modifier.contentDescription(R.string.AccessibilityId_loadAccountProgressMessage)
+            modifier = Modifier.qaTag(R.string.AccessibilityId_loadAccountProgressMessage)
         )
         Text(
             stringResource(R.string.waitOneMoment),

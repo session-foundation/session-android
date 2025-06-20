@@ -20,6 +20,7 @@ import org.thoughtcrime.securesms.onboarding.manager.LoadAccountManager
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.setComposeContent
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.start
 
 @AndroidEntryPoint
@@ -32,8 +33,18 @@ class LoadAccountActivity : BaseActionBarActivity() {
 
     private val viewModel: LoadAccountViewModel by viewModels()
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // only apply inset padding at the top, so the compose children can choose how to handle the bottom
+        findViewById<View>(android.R.id.content).applySafeInsetsPaddings(
+            consumeInsets = false,
+            applyBottom = false,
+        )
+
         supportActionBar?.setTitle(R.string.loadAccount)
         prefs.setConfigurationMessageSynced(false)
         prefs.setRestorationTime(System.currentTimeMillis())

@@ -17,10 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.contentDescription
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -53,7 +54,9 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                         style = LocalType.current.h8
                     )
                     Spacer(Modifier.requiredWidth(LocalDimensions.current.xsSpacing))
-                    SessionShieldIcon()
+                    SessionShieldIcon(
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
                 }
                 Text(
                     stringResource(R.string.recoveryPasswordBannerDescription),
@@ -65,7 +68,8 @@ internal fun SeedReminder(startRecoveryPasswordActivity: () -> Unit) {
                 text = stringResource(R.string.theContinue),
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
-                    .contentDescription(R.string.AccessibilityId_recoveryPasswordBanner),
+                    .qaTag(R.string.AccessibilityId_recoveryPasswordBanner),
+                minWidth = 0.dp,
                 onClick = startRecoveryPasswordActivity
             )
         }
