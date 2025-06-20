@@ -628,6 +628,7 @@
     <string name="membersInviteShareNewMessagesOnly">Share new messages only</string>
     <string name="membersInviteTitle">Invite</string>
     <string name="message">Message</string>
+    <string name="messageBubbleReadMore">Read more</string>
     <string name="messageEmpty">This message is empty.</string>
     <string name="messageErrorDelivery">Message delivery failed</string>
     <string name="messageErrorLimit">Message limit reached</string>
@@ -681,8 +682,15 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Voice Message</string>
     <string name="messages">Messages</string>
     <string name="minimize">Minimize</string>
-    <string name="modalMessageTooLongDescription">Please shorten your message to {count} characters or less.</string>
-    <string name="modalMessageTooLongTitle">Your message is too long</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Messages have a character limit of %1$s characters. You have %2$d character remaining</item>
+        <item quantity="other">Messages have a character limit of %1$s characters. You have %2$d characters remaining</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">Message Length</string>
+    <string name="modalMessageCharacterTooLongDescription">You have exceeded the character limit for this message. Please shorten your message to {limit} characters or less.</string>
+    <string name="modalMessageCharacterTooLongTitle">Message Too Long</string>
+    <string name="modalMessageTooLongDescription">Please shorten your message to {limit} characters or less.</string>
+    <string name="modalMessageTooLongTitle">Message Too Long</string>
     <string name="next">Next</string>
     <string name="nicknameDescription">Choose a nickname for <b>{name}</b>. This will appear to you in your one-to-one and group conversations.</string>
     <string name="nicknameEnter">Enter nickname</string>
@@ -871,8 +879,11 @@
     <string name="recoveryPasswordWarningSendDescription">This is your recovery password. If you send it to someone they\'ll have full access to your account.</string>
     <string name="recreateGroup">Recreate Group</string>
     <string name="redo">Redo</string>
-    <string name="remainingCharactersOverTooltip">Message is too long</string>
-    <string name="remainingCharactersTooltip">{count} characters remaining</string>
+    <string name="remainingCharactersOverTooltip">Reduce message length by {count}</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d character remaining</item>
+        <item quantity="other">%1$d characters remaining</item>
+    </plurals>
     <string name="remove">Remove</string>
     <string name="removePasswordFail">Failed to remove password</string>
     <string name="reply">Reply</string>
