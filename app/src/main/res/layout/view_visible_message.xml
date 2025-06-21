@@ -137,6 +137,7 @@
                 android:layout_width="@dimen/message_spacing"
                 android:layout_height="@dimen/message_spacing"
                 android:layout_gravity="center"
+                tools:tint="?android:textColorPrimary"
                 android:src="@drawable/ic_circle_check" />
 
             <org.thoughtcrime.securesms.conversation.v2.components.ExpirationTimerView

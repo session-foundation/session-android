@@ -52,3 +52,4 @@ val disabledDark = Color(0xFFA1A2A1)
 val disabledLight = Color(0xFF6D6D6D)
 
 val blackAlpha40 = Color.Black.copy(alpha = 0.4f)
+val blackAlpha06 = Color.Black.copy(alpha = 0.06f)
