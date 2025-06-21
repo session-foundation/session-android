@@ -39,7 +39,7 @@ data class AccountId(
     }
 
     companion object {
-        fun fromString(accountId: String): AccountId? {
+        fun fromStringOrNull(accountId: String): AccountId? {
             return if (VALID_ACCOUNT_ID_PATTERN.matches(accountId)) {
                 AccountId(accountId)
             } else {

@@ -43,8 +43,8 @@ import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BorderlessHtmlButton
-import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentFillButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -164,7 +164,7 @@ internal fun LandingScreen(
         }
 
         Column(modifier = Modifier.padding(horizontal = LocalDimensions.current.xlargeSpacing)) {
-            PrimaryFillButton(
+            AccentFillButton(
                 text = stringResource(R.string.onboardingAccountCreate),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -173,7 +173,7 @@ internal fun LandingScreen(
                 onClick = createAccount
             )
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
-            PrimaryOutlineButton(
+            AccentOutlineButton(
                 stringResource(R.string.onboardingAccountExists),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -218,7 +218,7 @@ private fun MessageText(text: String, isOutgoing: Boolean, modifier: Modifier) {
     Box(modifier = modifier then Modifier.fillMaxWidth()) {
         MessageText(
             text,
-            color = if (isOutgoing) LocalColors.current.primary else LocalColors.current.backgroundBubbleReceived,
+            color = if (isOutgoing) LocalColors.current.accent else LocalColors.current.backgroundBubbleReceived,
             textColor = if (isOutgoing) LocalColors.current.textBubbleSent else LocalColors.current.textBubbleReceived,
             modifier = Modifier.align(if (isOutgoing) Alignment.TopEnd else Alignment.TopStart)
         )

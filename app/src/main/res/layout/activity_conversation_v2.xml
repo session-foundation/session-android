@@ -230,9 +230,18 @@
         tools:visibility="visible"
         android:visibility="gone" />
 
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/bottomWidgetBarrier"
+        app:barrierDirection="top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:constraint_referenced_ids="inputBar, searchBottomBar"
+        />
+
     <FrameLayout
         android:id="@+id/recreateGroupButtonContainer"
-        app:layout_constraintBottom_toTopOf="@+id/inputBar"
+        app:layout_constraintBottom_toTopOf="@+id/bottomWidgetBarrier"
         app:layout_constraintTop_toBottomOf="@+id/messageRequestBar"
         android:padding="@dimen/medium_spacing"
         android:visibility="gone"

@@ -276,7 +276,7 @@ private fun ActionProgressDialog(
             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CircularProgressIndicator(color = LocalColors.current.primary)
+            CircularProgressIndicator(color = LocalColors.current.accent)
             Text(
                 text,
                 style = LocalType.current.large,

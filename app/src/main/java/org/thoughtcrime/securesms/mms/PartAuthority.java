@@ -11,8 +11,8 @@ import java.io.InputStream;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
-import org.thoughtcrime.securesms.providers.BlobProvider;
-import org.thoughtcrime.securesms.providers.PartProvider;
+import org.thoughtcrime.securesms.providers.BlobUtils;
+import org.thoughtcrime.securesms.providers.PartAndBlobProvider;
 
 public class PartAuthority {
 
@@ -36,7 +36,7 @@ public class PartAuthority {
     uriMatcher.addURI("network.loki.provider.securesms", "part/*/#", PART_ROW);
     uriMatcher.addURI("network.loki.provider.securesms", "thumb/*/#", THUMB_ROW);
     uriMatcher.addURI("network.loki.provider.securesms", "sticker/#", STICKER_ROW);
-    uriMatcher.addURI(BlobProvider.AUTHORITY, BlobProvider.PATH, BLOB_ROW);
+    uriMatcher.addURI(BlobUtils.AUTHORITY, BlobUtils.PATH, BLOB_ROW);
   }
 
   public static InputStream getAttachmentStream(@NonNull Context context, @NonNull Uri uri)
@@ -47,7 +47,7 @@ public class PartAuthority {
       switch (match) {
       case PART_ROW:       return DatabaseComponent.get(context).attachmentDatabase().getAttachmentStream(new PartUriParser(uri).getPartId(), 0);
       case THUMB_ROW:      return DatabaseComponent.get(context).attachmentDatabase().getThumbnailStream(new PartUriParser(uri).getPartId());
-      case BLOB_ROW:       return BlobProvider.getInstance().getStream(context, uri);
+      case BLOB_ROW:       return BlobUtils.getInstance().getStream(context, uri);
       default:             return context.getContentResolver().openInputStream(uri);
       }
     } catch (SecurityException se) {
@@ -66,7 +66,7 @@ public class PartAuthority {
       if (attachment != null) return attachment.getFilename();
       else                    return null;
     case BLOB_ROW:
-      return BlobProvider.getFileName(uri);
+      return BlobUtils.getFileName(uri);
     default:
       return null;
     }
@@ -83,7 +83,7 @@ public class PartAuthority {
         if (attachment != null) return attachment.getSize();
         else                    return null;
       case BLOB_ROW:
-        return BlobProvider.getFileSize(uri);
+        return BlobUtils.getFileSize(uri);
       default:
         return null;
     }
@@ -100,7 +100,7 @@ public class PartAuthority {
         if (attachment != null) return attachment.getContentType();
         else                    return null;
       case BLOB_ROW:
-        return BlobProvider.getMimeType(uri);
+        return BlobUtils.getMimeType(uri);
       default:
         return null;
     }
@@ -108,7 +108,7 @@ public class PartAuthority {
 
   public static Uri getAttachmentPublicUri(Uri uri) {
     PartUriParser partUri = new PartUriParser(uri);
-    return PartProvider.getContentUri(partUri.getPartId());
+    return PartAndBlobProvider.getContentUri(partUri.getPartId());
   }
 
   public static Uri getAttachmentDataUri(AttachmentId attachmentId) {

@@ -27,7 +27,7 @@ import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
@@ -91,7 +91,7 @@ fun NotificationSettings(
             }
 
             val coroutineScope = rememberCoroutineScope()
-            PrimaryOutlineButton(
+            AccentOutlineButton(
                 stringResource(R.string.set),
                 modifier = Modifier
                     .qaTag(R.string.AccessibilityId_setButton)

@@ -85,6 +85,20 @@ fun PreviewSessionOutlinedTextField() {
             )
 
             SessionOutlinedTextField(
+                text = "text with clear",
+                placeholder = "",
+                showClear = true,
+                innerPadding = PaddingValues(LocalDimensions.current.smallSpacing)
+            )
+            SessionOutlinedTextField(
+                text = "text with clear \ntest\ntest\ntest\ntest",
+                placeholder = "",
+                showClear = true,
+                innerPadding = PaddingValues(LocalDimensions.current.smallSpacing)
+            )
+
+
+            SessionOutlinedTextField(
                 text = "",
                 placeholder = "placeholder"
             )
@@ -160,7 +174,9 @@ fun SessionOutlinedTextField(
             color = if (enabled) LocalColors.current.text(isTextErrorColor) else LocalColors.current.textSecondary),
         cursorBrush = SolidColor(LocalColors.current.text(isTextErrorColor)),
         enabled = enabled,
-        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = if (singleLine) ImeAction.Done else ImeAction.Default
+        ),
 
         keyboardActions = KeyboardActions(
             onDone = { onContinue() },
@@ -185,8 +201,7 @@ fun SessionOutlinedTextField(
                         .padding(innerPadding),
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Box(
                             modifier = Modifier.weight(1f),
@@ -203,7 +218,7 @@ fun SessionOutlinedTextField(
                                 ),
                                 modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
                                     .padding(start = LocalDimensions.current.smallSpacing)
-                                    .size(LocalDimensions.current.iconSmall)
+                                    .size(textStyle.fontSize.value.dp)
                                     .clickable {
                                         onChange("")
                                     }

@@ -130,12 +130,27 @@ class AvatarUtils @Inject constructor(
     }
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
+        // name
         val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
         else recipient.name
+
+        val defaultColor = Color(getColorFromKey(recipient.address.toString()))
+
+        // custom image
+        val (contactPhoto, customIcon, color) = when {
+            // use custom image if there is one
+            hasAvatar(recipient.contactPhoto) -> Triple(recipient.contactPhoto, null, defaultColor)
+
+            // communities without a custom image should use a default image
+            recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
+            else -> Triple(null, null, defaultColor)
+        }
+
         return AvatarUIElement(
             name = extractLabel(name),
-            color = Color(getColorFromKey(recipient.address.toString())),
-            contactPhoto = if(hasAvatar(recipient.contactPhoto)) recipient.contactPhoto else null
+            color = color,
+            icon = customIcon,
+            contactPhoto = contactPhoto
         )
     }
 
@@ -231,11 +246,19 @@ class AvatarUtils @Inject constructor(
 
 data class AvatarUIData(
     val elements: List<AvatarUIElement>,
-)
+){
+    /**
+     * Helper function to determine if an avatar is composed of a single element, which is
+     * a custom photo.
+     * This is used for example to know when to display a fullscreen avatar on tap
+     */
+    fun isSingleCustomAvatar() = elements.size == 1 && elements[0].contactPhoto != null
+}
 
 data class AvatarUIElement(
     val name: String? = null,
     val color: Color? = null,
+    @DrawableRes val icon: Int? = null,
     val contactPhoto: ContactPhoto? = null,
 )
 

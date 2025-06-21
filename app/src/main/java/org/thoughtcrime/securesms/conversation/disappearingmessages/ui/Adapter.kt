@@ -18,6 +18,7 @@ fun State.toUiState() = UiState(
     ),
     showGroupFooter = isGroup && isNewConfigEnabled,
     showSetButton = isSelfAdmin,
+    disableSetButton = persistedMode == expiryMode,
     subtitle = subtitle
 )
 

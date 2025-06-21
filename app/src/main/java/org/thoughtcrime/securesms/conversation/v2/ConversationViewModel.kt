@@ -112,7 +112,10 @@ class ConversationViewModel(
 ) : ViewModel() {
 
     val showSendAfterApprovalText: Boolean
-        get() = recipient?.run { isContactRecipient && !isLocalNumber && !hasApprovedMe() } ?: false
+        get() = recipient?.run {
+            // if the contact is a 1on1 or a blinded 1on1 that doesn't block requests - and is not the current user - and has not yet approved us
+            (getBlindedRecipient(recipient)?.blocksCommunityMessageRequests == false || isContactRecipient) && !isLocalNumber && !hasApprovedMe()
+        } ?: false
 
     private val _uiState = MutableStateFlow(ConversationUiState())
     val uiState: StateFlow<ConversationUiState> get() = _uiState
@@ -184,6 +187,8 @@ class ConversationViewModel(
             getBlindedRecipient(recipient)
         }
 
+    private var currentAppBarNotificationState: String? = null
+
     private fun getBlindedRecipient(recipient: Recipient?): Recipient? =
         when {
             recipient?.isCommunityOutboxRecipient == true -> recipient
@@ -243,8 +248,17 @@ class ConversationViewModel(
             return !recipient.isLocalNumber && !recipient.isLegacyGroupRecipient && !recipient.isCommunityRecipient && !recipient.isApproved
         }
 
+    /**
+     * returns true for outgoing message request, whether they are for 1 on 1 conversations or community outgoing MR
+     */
+    val isOutgoingMessageRequest: Boolean
+        get() {
+            val recipient = recipient ?: return false
+            return (recipient.is1on1 || recipient.isCommunityInboxRecipient) && !recipient.hasApprovedMe()
+        }
+
     val showOptionsMenu: Boolean
-        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup
+        get() = !isMessageRequestThread && !isDeprecatedLegacyGroup && !isOutgoingMessageRequest
 
     private val isDeprecatedLegacyGroup: Boolean
         get() = recipient?.isLegacyGroupRecipient == true && legacyGroupDeprecationManager.isDeprecated
@@ -332,6 +346,7 @@ class ConversationViewModel(
         // update state on recipient changes
         viewModelScope.launch(Dispatchers.Default) {
             recipientChangeSource.changes().collect {
+                updateAppBarData(recipient)
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
@@ -430,17 +445,18 @@ class ConversationViewModel(
                     )
                 }
 
+                currentAppBarNotificationState = null
                 if (conversation.isMuted || conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                    currentAppBarNotificationState = getNotificationStatusTitle(conversation)
                     pagerData += ConversationAppBarPagerData(
-                        title = if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
-                        else application.getString(R.string.notificationsHeaderMentionsOnly),
+                        title = currentAppBarNotificationState!!,
                         action = {
                             showNotificationSettings()
                         }
                     )
                 }
 
-                if (conversation.isGroupOrCommunityRecipient) {
+                if (conversation.isGroupOrCommunityRecipient && conversation.isApproved) {
                     val title = if (conversation.isCommunityRecipient) {
                         val userCount = openGroup?.let { lokiAPIDb.getUserCount(it.room, it.server) } ?: 0
                         application.resources.getQuantityString(R.plurals.membersActive, userCount, userCount)
@@ -468,6 +484,7 @@ class ConversationViewModel(
                 pagerData = pagerData,
                 showCall = conversation?.showCallMenu() ?: false,
                 showAvatar = showOptionsMenu,
+                showSearch = _appBarData.value.showSearch,
                 avatarUIData = avatarData
             )
             // also preload the larger version of the avatar in case the user goes to the settings
@@ -478,6 +495,11 @@ class ConversationViewModel(
                     .preload(loadSize, loadSize)
             }
         }
+    }
+
+    private fun getNotificationStatusTitle(conversation: Recipient): String{
+        return if(conversation.isMuted) application.getString(R.string.notificationsHeaderMute)
+        else application.getString(R.string.notificationsHeaderMentionsOnly)
     }
 
     /**
@@ -1265,6 +1287,16 @@ class ConversationViewModel(
 
     private fun showNotificationSettings() {
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
+    }
+
+    fun onResume() {
+        // when resuming we want to check if the app bar has notification status data, if so update it if it has changed
+        if(currentAppBarNotificationState != null && recipient!= null){
+            val newAppBarNotificationState = getNotificationStatusTitle(recipient!!)
+            if(currentAppBarNotificationState != newAppBarNotificationState){
+                updateAppBarData(recipient)
+            }
+        }
     }
 
     @dagger.assisted.AssistedFactory

@@ -68,7 +68,7 @@ class NotificationSettingsViewModel @AssistedInject constructor(
                 thread = it
 
                 // update the user's current choice of notification
-                currentMutedUntil = it?.mutedUntil
+                currentMutedUntil = if(it?.isMuted == true) it.mutedUntil else null
                 val hasMutedUntil = currentMutedUntil != null && currentMutedUntil!! > 0L
 
                 currentOption = when{

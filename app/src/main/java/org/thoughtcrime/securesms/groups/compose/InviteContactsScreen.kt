@@ -1,16 +1,12 @@
 package org.thoughtcrime.securesms.groups.compose
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -30,7 +26,7 @@ import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -70,7 +66,6 @@ fun InviteContacts(
     onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    @StringRes okButtonResId: Int = android.R.string.ok,
     banner: @Composable ()->Unit = {}
 ) {
     Scaffold(
@@ -106,7 +101,7 @@ fun InviteContacts(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
-                if(contacts.isEmpty()){
+                if(contacts.isEmpty() && searchQuery.isEmpty()){
                     Text(
                         text = stringResource(id = R.string.contactNone),
                         modifier = Modifier.padding(top = LocalDimensions.current.spacing)
@@ -132,14 +127,15 @@ fun InviteContacts(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                PrimaryOutlineButton(
+                AccentOutlineButton(
                     onClick = onDoneClicked,
+                    enabled = contacts.any { it.selected },
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.AccessibilityId_selectContactConfirm),
+                        .qaTag(R.string.qa_invite_button),
                 ) {
                     Text(
-                        stringResource(id = okButtonResId)
+                        stringResource(id = R.string.membersInviteTitle)
                     )
                 }
             }
@@ -191,6 +187,25 @@ private fun PreviewSelectEmptyContacts() {
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "",
+            onSearchQueryChanged = {},
+            onSearchQueryClear = {},
+            onDoneClicked = {},
+            onBack = {},
+            banner = { GroupMinimumVersionBanner() }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSelectEmptyContactsWithSearch() {
+    val contacts = emptyList<ContactItem>()
+
+    PreviewTheme {
+        InviteContacts(
+            contacts = contacts,
+            onContactItemClicked = {},
+            searchQuery = "Test",
             onSearchQueryChanged = {},
             onSearchQueryClear = {},
             onDoneClicked = {},

@@ -43,7 +43,7 @@ class MentionViewModelTest : BaseViewModelTest() {
         val isMe: Boolean
     )
 
-    private val myId = AccountId.fromString(
+    private val myId = AccountId.fromStringOrNull(
         "151234567890123456789012345678901234567890123456789012345678901234"
     )!!
 

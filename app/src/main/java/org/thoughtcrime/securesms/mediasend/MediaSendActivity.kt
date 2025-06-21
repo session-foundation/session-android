@@ -33,11 +33,9 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.mediasend.MediaSendViewModel.CountButtonState
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.providers.BlobProvider
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.FilenameUtils.constructPhotoFilename
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
-import java.io.IOException
 
 /**
  * Encompasses the entire flow of sending media, starting from the selection process to the actual

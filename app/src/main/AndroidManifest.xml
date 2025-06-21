@@ -38,6 +38,7 @@
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
@@ -52,6 +53,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -161,19 +163,12 @@
             android:label="@string/conversationsBlockedContacts"
             />
         <activity
-            android:name="org.thoughtcrime.securesms.groups.legacy.EditLegacyGroupActivity"
-            android:label="@string/groupEdit"
-            android:screenOrientation="portrait" />
-        <activity
             android:name="org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsActivity"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:label="@string/sessionSettings"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name="org.thoughtcrime.securesms.contacts.SelectContactsToInviteToGroupActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name="org.thoughtcrime.securesms.preferences.PrivacySettingsActivity"
@@ -285,7 +280,6 @@
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden" />
@@ -349,7 +343,7 @@
         </service>
         <service
             android:name="org.thoughtcrime.securesms.service.CallForegroundService"
-            android:foregroundServiceType="phoneCall"
+            android:foregroundServiceType="phoneCall|microphone"
             android:exported="false" />
 
         <receiver
@@ -388,7 +382,7 @@
             android:exported="false" />
 
         <provider
-            android:name="org.thoughtcrime.securesms.providers.PartProvider"
+            android:name="org.thoughtcrime.securesms.providers.PartAndBlobProvider"
             android:authorities="network.loki.provider.securesms"
             android:exported="false"
             android:grantUriPermissions="true" />

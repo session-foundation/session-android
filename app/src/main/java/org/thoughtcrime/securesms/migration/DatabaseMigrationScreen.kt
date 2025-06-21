@@ -1,15 +1,6 @@
 package org.thoughtcrime.securesms.migration
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.with
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,14 +37,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.thoughtcrime.securesms.preferences.ClearAllDataDialog
 import org.thoughtcrime.securesms.preferences.ShareLogsDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonModel
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.OutlineButton
-import org.thoughtcrime.securesms.ui.components.PrimaryFillButton
+import org.thoughtcrime.securesms.ui.components.AccentFillButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -150,7 +139,7 @@ private fun DatabaseMigration(
                         Spacer(Modifier.size(LocalDimensions.current.spacing))
 
                         Row {
-                            PrimaryFillButton(
+                            AccentFillButton(
                                 text = stringResource(R.string.retry),
                                 onClick = onRetry
                             )

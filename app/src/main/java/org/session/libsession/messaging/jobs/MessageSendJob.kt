@@ -129,7 +129,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
     }
 
     private fun handleFailure(dispatcherName: String, error: Exception) {
-        Log.w(TAG, "Failed to send $message::class.simpleName.", error)
+        Log.w(TAG, "Failed to send ${message::class.simpleName}.", error)
         val messageId = message.id
         if (message is VisibleMessage && messageId != null) {
             if (

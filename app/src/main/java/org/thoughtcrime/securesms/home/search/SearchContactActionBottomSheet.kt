@@ -54,7 +54,7 @@ class SearchContactActionBottomSheet : BottomSheetDialogFragment() {
         ) {
             ActionSheetItem(
                 text = stringResource(R.string.block),
-                leadingIcon = R.drawable.ic_ban,
+                leadingIcon = R.drawable.ic_user_round_x,
                 qaTag = stringResource(R.string.AccessibilityId_block),
                 onClick = {
                     showBlockConfirmation()

@@ -92,7 +92,12 @@ class MediaOverviewViewModel @AssistedInject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     val conversationName: StateFlow<String> = recipient
-        .map { recipient -> recipient.name }
+        .map { recipient ->
+            when {
+                recipient.isLocalNumber -> application.getString(R.string.noteToSelf)
+                else -> recipient.name
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     private val mutableSelectedItemIDs = MutableStateFlow(emptySet<Long>())

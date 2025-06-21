@@ -279,7 +279,12 @@ public class GroupDatabase extends Database implements LokiOpenGroupDatabaseProt
                                                 new String[] {groupID});
 
     Recipient recipient = Recipient.from(context, Address.fromSerialized(groupID), false);
+    final boolean nameChanged = !newValue.equals(recipient.getName());
     recipient.setName(newValue);
+
+    if (nameChanged) {
+      notifyConversationListListeners();
+    }
   }
 
   public void updateProfilePicture(String groupID, Bitmap newValue) {

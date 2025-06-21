@@ -181,7 +181,11 @@ class DefaultConversationRepository @Inject constructor(
                 expiresInMillis,
                 expireStartedAt
             )
-            smsDb.insertMessageOutbox(-1, outgoingTextMessage, message.sentTimestamp!!, true)
+            message.id = MessageId(
+                smsDb.insertMessageOutbox(-1, outgoingTextMessage, false, message.sentTimestamp!!, true),
+                false
+            )
+
             MessageSender.send(message, contact.address)
         }
     }

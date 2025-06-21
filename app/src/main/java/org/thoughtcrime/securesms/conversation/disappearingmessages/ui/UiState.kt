@@ -10,17 +10,20 @@ data class UiState(
     val cards: List<ExpiryOptionsCardData> = emptyList(),
     val showGroupFooter: Boolean = false,
     val showSetButton: Boolean = true,
+    val disableSetButton: Boolean = false,
     val subtitle: GetString? = null,
 ) {
     constructor(
         vararg cards: ExpiryOptionsCardData,
         showGroupFooter: Boolean = false,
         showSetButton: Boolean = true,
+        disableSetButton: Boolean = false,
         subtitle: GetString? = null,
     ): this(
-        cards.asList(),
-        showGroupFooter,
-        showSetButton,
-        subtitle,
+        cards = cards.asList(),
+        showGroupFooter = showGroupFooter,
+        showSetButton = showSetButton,
+        disableSetButton = disableSetButton,
+        subtitle = subtitle,
     )
 }

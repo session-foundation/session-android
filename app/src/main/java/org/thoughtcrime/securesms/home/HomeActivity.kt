@@ -278,8 +278,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         lifecycleScope.launchWhenStarted {
             launch(Dispatchers.Default) {
-                // Double check that the long poller is up
-                (applicationContext as ApplicationContext).startPollingIfNeeded()
                 // update things based on TextSecurePrefs (profile info etc)
                 // Set up remaining components if needed
                 if (textSecurePreferences.getLocalNumber() != null) {
@@ -762,7 +760,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             // Note to self
             if (recipient.isLocalNumber) {
                 title = getString(R.string.noteToSelfHide)
-                message = getString(R.string.noteToSelfHideDescription)
+                message = getText(R.string.hideNoteToSelfDescription)
                 positiveButtonId = R.string.hide
 
                 // change the action for Note To Self, as they should only be hidden and the messages should remain undeleted

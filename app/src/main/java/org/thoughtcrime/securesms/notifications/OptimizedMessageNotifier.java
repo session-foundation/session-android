@@ -8,25 +8,35 @@ import androidx.annotation.NonNull;
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier;
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager;
 import org.session.libsession.messaging.sending_receiving.pollers.Poller;
+import org.session.libsession.messaging.sending_receiving.pollers.PollerManager;
 import org.session.libsession.utilities.Debouncer;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.ThreadUtils;
 import org.thoughtcrime.securesms.ApplicationContext;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import kotlin.Unit;
 
+@Singleton
 public class OptimizedMessageNotifier implements MessageNotifier {
   private final MessageNotifier         wrapped;
   private final Debouncer               debouncer;
 
   private final OpenGroupPollerManager  openGroupPollerManager;
 
-  public OptimizedMessageNotifier(@NonNull MessageNotifier wrapped, OpenGroupPollerManager openGroupPollerManager) {
-    this.wrapped   = wrapped;
-      this.openGroupPollerManager = openGroupPollerManager;
-      this.debouncer = new Debouncer(TimeUnit.SECONDS.toMillis(2));
+  private final PollerManager pollerManager;
+
+  @Inject
+  public OptimizedMessageNotifier(AvatarUtils avatarUtils, OpenGroupPollerManager openGroupPollerManager, PollerManager pollerManager) {
+    this.wrapped   = new DefaultMessageNotifier(avatarUtils);
+    this.openGroupPollerManager = openGroupPollerManager;
+    this.debouncer = new Debouncer(TimeUnit.SECONDS.toMillis(2));
+    this.pollerManager = pollerManager;
   }
 
   @Override
@@ -50,11 +60,8 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
   @Override
   public void updateNotification(@NonNull Context context) {
-    Poller poller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
-    if (poller != null) {
-      isCaughtUp = isCaughtUp && !poller.isPolling();
-    }
+    isCaughtUp = isCaughtUp && !pollerManager.isPolling();
 
     isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 
@@ -67,11 +74,8 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
   @Override
   public void updateNotification(@NonNull Context context, long threadId) {
-    Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
-    if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
-    }
+    isCaughtUp = isCaughtUp && !pollerManager.isPolling();
 
     isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
     
@@ -84,11 +88,8 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
   @Override
   public void updateNotification(@NonNull Context context, long threadId, boolean signal) {
-    Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
-    if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
-    }
+    isCaughtUp = isCaughtUp && !pollerManager.isPolling();
 
     isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 
@@ -101,11 +102,8 @@ public class OptimizedMessageNotifier implements MessageNotifier {
 
   @Override
   public void updateNotification(@androidx.annotation.NonNull Context context, boolean signal, int reminderCount) {
-    Poller lokiPoller = ApplicationContext.getInstance(context).poller;
     boolean isCaughtUp = true;
-    if (lokiPoller != null) {
-      isCaughtUp = isCaughtUp && !lokiPoller.isPolling();
-    }
+    isCaughtUp = isCaughtUp && !pollerManager.isPolling();
 
     isCaughtUp = isCaughtUp && openGroupPollerManager.isAllCaughtUp();
 

@@ -11,13 +11,10 @@ import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.ParsedMessage
@@ -82,12 +79,9 @@ class BatchMessageReceiveJob(
         if (message is VisibleMessage) return true
         else { // message is control message otherwise
             return when(message) {
-                is SharedConfigurationMessage -> false
-                is LegacyGroupControlMessage -> false // message.kind is ClosedGroupControlMessage.Kind.New && !message.isSenderSelf
                 is DataExtractionNotification -> false
                 is MessageRequestResponse -> false
                 is ExpirationTimerUpdate -> false
-                is ConfigurationMessage -> false
                 is TypingIndicator -> false
                 is UnsendRequest -> false
                 is ReadReceipt -> false

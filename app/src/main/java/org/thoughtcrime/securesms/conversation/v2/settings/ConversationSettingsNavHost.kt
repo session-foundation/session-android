@@ -13,11 +13,15 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -179,6 +183,15 @@ fun ConversationSettingsNavHost(
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
                         factory.create(threadId)
                     }
+
+                val lifecycleOwner = LocalLifecycleOwner.current
+
+                // capture the moment we resume the settings page
+                LaunchedEffect(lifecycleOwner) {
+                    lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                        viewModel.onResume()
+                    }
+                }
 
                 ConversationSettingsScreen(
                     viewModel = viewModel,

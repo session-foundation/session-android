@@ -596,7 +596,7 @@ class ConversationReactionOverlay : FrameLayout {
 
         // Ban user
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {
-            items += ActionItem(R.attr.menu_block_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
+            items += ActionItem(R.attr.menu_ban_icon, R.string.banUser, { handleActionItemClicked(Action.BAN_USER) })
         }
         // Ban and delete all
         if (userCanBanSelectedUsers(context, message, openGroup, userPublicKey, blindedPublicKey) && !isDeleteOnly && !isDeprecatedLegacyGroup) {

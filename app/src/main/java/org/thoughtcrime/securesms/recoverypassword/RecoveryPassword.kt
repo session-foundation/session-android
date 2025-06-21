@@ -34,7 +34,6 @@ import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
 import org.thoughtcrime.securesms.ui.components.border
-import org.thoughtcrime.securesms.ui.contentDescription
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -84,7 +83,9 @@ private fun RecoveryPasswordCell(
                     style = LocalType.current.h8
                 )
                 Spacer(Modifier.width(LocalDimensions.current.xxsSpacing))
-                SessionShieldIcon()
+                SessionShieldIcon(
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
 
             Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
@@ -149,7 +150,7 @@ private fun RecoveryPassword(mnemonic: String) {
             .padding(LocalDimensions.current.spacing),
         textAlign = TextAlign.Center,
         style = LocalType.current.extraSmall.monospace(),
-        color = LocalColors.current.run { if (isLight) text else primary },
+        color = LocalColors.current.run { if (isLight) text else accent },
     )
 }
 

@@ -377,10 +377,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 handleSwipeToReply(message)
             },
             onItemLongPress = { message, position, view ->
-                if (!viewModel.isMessageRequestThread) {
-                    showConversationReaction(message, view)
-                } else {
-                    selectMessage(message, position)
+                // long pressing message for blocked users should show unblock dialog
+                if(viewModel.recipient?.isBlocked == true) unblock()
+                else {
+                    if (!viewModel.isMessageRequestThread) {
+                        showConversationReaction(message, view)
+                    } else {
+                        selectMessage(message, position)
+                    }
                 }
             },
             onDeselect = { message, position ->
@@ -569,7 +573,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         updateUnreadCountIndicator()
         updatePlaceholder()
-        setUpBlockedBanner()
         setUpExpiredGroupBanner()
         binding.searchBottomBar.setEventListener(this)
         updateSendAfterApprovalText()
@@ -720,6 +723,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             true,
             screenshotObserver
         )
+
+        viewModel.onResume()
     }
 
     override fun onPause() {
@@ -965,13 +970,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun tearDownRecipientObserver() = viewModel.recipient?.removeListener(this)
 
     // called from onCreate
-    private fun setUpBlockedBanner() {
-        val recipient = viewModel.recipient?.takeUnless { it.isGroupOrCommunityRecipient } ?: return
-        binding.conversationHeader.blockedBannerTextView.text = applicationContext.getString(R.string.blockBlockedDescription)
-        binding.conversationHeader.blockedBanner.isVisible = recipient.isBlocked
-        binding.conversationHeader.blockedBanner.setOnClickListener { unblock() }
-    }
-
     private fun setUpExpiredGroupBanner() {
         lifecycleScope.launch {
             viewModel.showExpiredGroupBanner
@@ -1172,10 +1170,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewModel.updateRecipient()
 
         runOnUiThread {
-            val threadRecipient = viewModel.recipient ?: return@runOnUiThread
-            if (threadRecipient.isContactRecipient) {
-                binding.conversationHeader.blockedBanner.isVisible = threadRecipient.isBlocked
-            }
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
         }
@@ -1404,8 +1398,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     .format()
             }
 
-            // 10n1 and groups
-            recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
+            // 10n1 and groups and blinded 1on1
+            recipient.isCommunityInboxRecipient || recipient.isCommunityOutboxRecipient ||
+                    recipient.is1on1 || recipient.isGroupOrCommunityRecipient -> {
                 Phrase.from(applicationContext, R.string.groupNoMessages)
                     .put(GROUP_NAME_KEY, recipient.name)
                     .format()
@@ -1443,6 +1438,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // region Interaction
     private fun callRecipient() {
         if(viewModel.recipient == null) return
+
+        // if the user is blocked, show unblock modal
+        if(viewModel.recipient?.isBlocked == true){
+            unblock()
+            return
+        }
 
         // if the user has not enabled voice/video calls
         if (!TextSecurePreferences.isCallNotificationsEnabled(this)) {
@@ -2568,6 +2569,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun reply(messages: Set<MessageRecord>) {
         val recipient = viewModel.recipient ?: return
+
+        // hide search if open
+        if(binding.searchBottomBar.isVisible) onSearchClosed()
+
         messages.firstOrNull()?.let { binding.inputBar.draftQuote(recipient, it, glide) }
         endActionMode()
     }
@@ -2626,7 +2631,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         searchViewModel.onSearchOpened()
         binding.searchBottomBar.visibility = View.VISIBLE
         binding.searchBottomBar.setData(0, 0, searchViewModel.searchQuery.value)
-        binding.inputBar.visibility = View.INVISIBLE
+        binding.inputBar.visibility = View.GONE
         binding.root.requestApplyInsets()
 
     }

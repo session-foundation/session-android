@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.ui
 
-import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -96,7 +94,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -213,6 +211,7 @@ fun LargeItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -223,6 +222,7 @@ fun LargeItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -238,6 +238,7 @@ fun LargeItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -248,6 +249,7 @@ fun LargeItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -261,6 +263,7 @@ fun LargeItemButton(
     annotatedStringText: AnnotatedString,
     @DrawableRes icon: Int,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
     shape: Shape = RectangleShape,
     onClick: () -> Unit
@@ -269,6 +272,7 @@ fun LargeItemButton(
         modifier = modifier,
         annotatedStringText = annotatedStringText,
         icon = icon,
+        enabled = enabled,
         minHeight = LocalDimensions.current.minLargeItemButtonHeight,
         textStyle = LocalType.current.h8,
         colors = colors,
@@ -284,6 +288,7 @@ fun ItemButton(
     modifier: Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -306,6 +311,7 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         onClick = onClick,
     )
 }
@@ -320,6 +326,7 @@ fun ItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -336,6 +343,7 @@ fun ItemButton(
         colors = colors,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         onClick = onClick
     )
 }
@@ -347,6 +355,7 @@ fun ItemButton(
     modifier: Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -358,6 +367,7 @@ fun ItemButton(
         modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
+        enabled = enabled,
         icon = {
             Icon(
                 painter = painterResource(id = icon),
@@ -386,6 +396,7 @@ fun ItemButton(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
+    enabled: Boolean = true,
     minHeight: Dp = LocalDimensions.current.minLargeItemButtonHeight,
     textStyle: TextStyle = LocalType.current.xl,
     colors: ButtonColors = transparentButtonColors(),
@@ -397,6 +408,7 @@ fun ItemButton(
         colors = colors,
         onClick = onClick,
         contentPadding = PaddingValues(),
+        enabled = enabled,
         shape = shape,
     ) {
         Box(
@@ -552,7 +564,7 @@ private fun BottomFadingEdgeBoxPreview() {
             },
         )
 
-        PrimaryOutlineButton(
+        AccentOutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             text = "Do stuff", onClick = {}
@@ -589,7 +601,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
-    fillColor: Color = LocalColors.current.primary,
+    fillColor: Color = LocalColors.current.accent,
     backgroundColor: Color = LocalColors.current.borders,
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
@@ -622,12 +634,13 @@ fun Arc(
 }
 
 @Composable
-fun RowScope.SessionShieldIcon() {
+fun SessionShieldIcon(
+    modifier: Modifier = Modifier
+) {
     Icon(
         painter = painterResource(R.drawable.ic_recovery_password_custom),
         contentDescription = null,
-        modifier = Modifier
-            .align(Alignment.CenterVertically)
+        modifier = modifier
             .size(16.dp)
             .wrapContentSize(unbounded = true)
     )
@@ -897,7 +910,7 @@ fun ExpandableText(
 
     val density = LocalDensity.current
 
-    val enableScrolling = expanded && maxHeight != Dp.Unspecified
+    val enableScrolling = expanded && maxHeight != Dp.Unspecified && expandedMaxLines != Int.MAX_VALUE
 
     BaseExpandableText(
         text = text,
@@ -921,9 +934,9 @@ fun ExpandableText(
             val px = textLayoutResult.getLineBottom(lastVisible)          // bottom of that line in px
             maxHeight = with(density) { px.toDp() }
         },
-        onTap = {
-            expanded = !expanded
-        }
+        onTap = if(showButton){ // only expand if there is enough text
+            { expanded = !expanded }
+        } else null
     )
 }
 
@@ -932,7 +945,7 @@ fun ExpandableText(
 private fun PreviewExpandedTextShort() {
     PreviewTheme {
         ExpandableText(
-            text = "This is a short description"
+            text = "This"
         )
     }
 }
@@ -979,7 +992,7 @@ fun BaseExpandableText(
     expanded: Boolean = false,
     showScroll: Boolean = false,
     onTextMeasured: (TextLayoutResult) -> Unit = {},
-    onTap: () -> Unit = {}
+    onTap: (() -> Unit)? = null
 ){
     var textModifier: Modifier = Modifier
     if(qaTag != null) textModifier = textModifier.qaTag(qaTag)
@@ -999,7 +1012,9 @@ fun BaseExpandableText(
     }
 
     Column(
-        modifier = modifier.clickable { onTap() },
+        modifier = modifier.then(
+            if(onTap != null) Modifier.clickable { onTap() } else Modifier
+        ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -1033,6 +1048,18 @@ private fun PreviewBaseExpandedTextShort() {
     PreviewTheme {
         BaseExpandableText(
             text = "This is a short description"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewBaseExpandedTextShortWithButton() {
+    PreviewTheme {
+        BaseExpandableText(
+            text = "Aaa",
+            showButton = true,
+            expanded = true
         )
     }
 }

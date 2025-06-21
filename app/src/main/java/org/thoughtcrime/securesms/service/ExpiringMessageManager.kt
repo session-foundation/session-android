@@ -16,7 +16,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
 import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage
 import org.session.libsession.snode.SnodeClock
@@ -247,7 +246,6 @@ class ExpiringMessageManager @Inject constructor(
     private fun scheduleMessageDeletion(message: Message) {
         if (
             message is ExpirationTimerUpdate && message.isGroup ||
-            message is LegacyGroupControlMessage ||
             message.openGroupServerMessageID != null || // ignore expiration on communities since they do not support disappearing mesasges
             message.expiryMode == ExpiryMode.NONE // no expiration mode set
         ) return

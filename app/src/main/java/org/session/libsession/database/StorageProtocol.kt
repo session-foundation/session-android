@@ -11,7 +11,6 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -160,16 +159,17 @@ interface StorageProtocol {
     // Closed Groups
     fun getMembers(groupPublicKey: String): List<LibSessionGroupMember>
     fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo?
-    fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long?
-    fun insertGroupInfoLeaving(closedGroup: AccountId): Long?
-    fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long?
+    fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
+    fun insertGroupInfoLeaving(closedGroup: AccountId)
+    fun insertGroupInfoErrorQuit(closedGroup: AccountId)
     fun insertGroupInviteControlMessage(
         sentTimestamp: Long,
         senderPublicKey: String,
         senderName: String?,
         closedGroup: AccountId,
         groupName: String
-    ): Long?
+    )
+
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
     fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>)
 
@@ -209,7 +209,6 @@ interface StorageProtocol {
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
-    fun addContacts(contacts: List<ConfigurationMessage.Contact>)
     fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
     fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
 
@@ -271,7 +270,6 @@ interface StorageProtocol {
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
-    fun setRecipientHash(recipient: Recipient, recipientHash: String?)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)

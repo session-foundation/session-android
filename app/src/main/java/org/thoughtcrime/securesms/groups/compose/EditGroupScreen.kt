@@ -1,11 +1,8 @@
 package org.thoughtcrime.securesms.groups.compose
 
 import android.widget.Toast
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -25,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -61,8 +55,7 @@ import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
 import org.thoughtcrime.securesms.ui.components.ActionSheetItemData
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
-import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -165,7 +158,7 @@ fun EditGroup(
                 )
 
                 if (showAddMembers) {
-                    PrimaryOutlineButton(
+                    AccentOutlineButton(
                         stringResource(R.string.membersInvite),
                         onClick = onAddMemberClick,
                         modifier = Modifier.qaTag(R.string.AccessibilityId_membersInvite)

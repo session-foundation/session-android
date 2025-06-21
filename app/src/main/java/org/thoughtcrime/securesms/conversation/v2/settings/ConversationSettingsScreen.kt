@@ -146,7 +146,17 @@ fun ConversationSettings(
                                 sharedTransitionScope.rememberSharedContentState(key = "avatar"),
                                 animatedVisibilityScope = animatedContentScope
                             )
-                            .clickable { showFullscreenAvatar() },
+                            .then(
+                                if(data.avatarUIData.isSingleCustomAvatar()){
+                                    Modifier.clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = ripple(bounded = false, radius = LocalDimensions.current.iconXXLarge/2),
+                                        onClick = showFullscreenAvatar
+                                    )
+                                } else {
+                                    Modifier
+                                }
+                            ),
                         size = LocalDimensions.current.iconXXLarge,
                         maxSizeLoad = LocalDimensions.current.iconXXLarge, // make sure we load the right size
                         data = data.avatarUIData,
@@ -198,7 +208,8 @@ fun ConversationSettings(
                     if (!data.description.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                         ExpandableText(
-                            modifier = Modifier.safeContentWidth()
+                            modifier = Modifier.fillMaxWidth()
+                                .safeContentWidth()
                                 .qaTag(data.descriptionQaTag),
                             text = data.description,
                             textStyle = LocalType.current.base,
@@ -323,6 +334,7 @@ fun ConversationSettingsSubCategory(
                     text = option.name,
                     subtitle = option.subtitle,
                     subtitleQaTag = option.subtitleQaTag,
+                    enabled = option.enabled,
                     icon = option.icon,
                     shape = when (index) {
                         0 -> getCellTopShape()

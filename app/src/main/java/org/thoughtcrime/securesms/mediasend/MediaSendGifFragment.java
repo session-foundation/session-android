@@ -54,11 +54,6 @@ public class MediaSendGifFragment extends Fragment implements MediaSendPageFragm
   }
 
   @Override
-  public @Nullable View getPlaybackControls() {
-    return null;
-  }
-
-  @Override
   public @Nullable Object saveState() {
     return null;
   }

@@ -28,7 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.CameraxFragmentBinding
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsMargins
 import org.thoughtcrime.securesms.util.setSafeOnClickListener
 import java.io.ByteArrayOutputStream
@@ -75,6 +75,8 @@ class CameraXFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // permissions should be handled prior to landing in this fragment
+        // but this is added for safety
         if (allPermissionsGranted()) {
             startCamera()
         } else {
@@ -222,7 +224,7 @@ class CameraXFragment : Fragment() {
                         bitmap.recycle()
                         if (correctedBitmap !== bitmap) correctedBitmap.recycle()
 
-                        val uri = BlobProvider.getInstance()
+                        val uri = BlobUtils.getInstance()
                             .forData(compressedBytes)
                             .withMimeType(MediaTypes.IMAGE_JPEG)
                             .createForSingleSessionInMemory()

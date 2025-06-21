@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnFocusChangeListener
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -40,7 +39,7 @@ import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboar
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter
 import org.thoughtcrime.securesms.mediapreview.MediaRailAdapter.RailItemListener
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
 import org.thoughtcrime.securesms.util.PushCharacterCalculator
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
@@ -235,19 +234,6 @@ class MediaSendFragment : Fragment(), RailItemListener,
             binding?.mediasendPager?.setCurrentItem(position, true)
             mediaRailAdapter?.setActivePosition(position)
             binding?.mediasendMediaRail?.smoothScrollToPosition(position)
-
-            val playbackControls = fragmentPagerAdapter?.getPlaybackControls(position)
-            if (playbackControls != null) {
-                val params = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                playbackControls.layoutParams = params
-                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
-                binding?.mediasendPlaybackControlsContainer?.addView(playbackControls)
-            } else {
-                binding?.mediasendPlaybackControlsContainer?.removeAllViews()
-            }
         }
 
         viewModel.getBucketId().observe(this) { bucketId: String? ->
@@ -328,7 +314,7 @@ class MediaSendFragment : Fragment(), RailItemListener,
 
                                                 // Once we have the JPEG file, save it as our blob
                                                 val jpegSize = jpegOut.length()
-                                                jpegSize to BlobProvider.getInstance()
+                                                jpegSize to BlobUtils.getInstance()
                                                     .forData(FileInputStream(jpegOut), jpegSize)
                                                     .withMimeType(MediaTypes.IMAGE_JPEG)
                                                     .withFileName(media.filename)
@@ -352,7 +338,7 @@ class MediaSendFragment : Fragment(), RailItemListener,
                                     }
                                 } else {
                                     // No changes to the original media, copy and return as is
-                                    val newUri = BlobProvider.getInstance()
+                                    val newUri = BlobUtils.getInstance()
                                         .forData(requireNotNull(context.contentResolver.openInputStream(media.uri)) {
                                             "Invalid URI"
                                         }, media.size)

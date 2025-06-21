@@ -70,7 +70,7 @@ import org.thoughtcrime.securesms.ui.SimplePopup
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButtonRect
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
@@ -125,7 +125,7 @@ fun TokenPage(
                     state = pullToRefreshState,
                     isRefreshing = uiState.isRefreshing,
                     containerColor = LocalColors.current.backgroundSecondary,
-                    color = LocalColors.current.primary,
+                    color = LocalColors.current.accent,
                     modifier = Modifier.align(TopCenter)
                 )
             }
@@ -233,7 +233,7 @@ fun SessionNetworkInfoSection(modifier: Modifier = Modifier) {
 
         // 2.) Session network description
         val sessionNetworkDetailsAnnotatedString = annotatedStringResource(
-            highlightColor = LocalColors.current.primaryText,
+            highlightColor = LocalColors.current.accentText,
             text = Phrase.from(context.getText(R.string.sessionNetworkDescription))
                 .put(NETWORK_NAME_KEY, NETWORK_NAME)
                 .put(TOKEN_NAME_LONG_KEY, TOKEN_NAME_LONG)
@@ -276,7 +276,7 @@ fun StatsImageBox(
             .aspectRatio(1.15f)
             .border(
                 width = 1.dp,
-                color = LocalColors.current.primary,
+                color = LocalColors.current.accent,
                 shape = MaterialTheme.shapes.extraSmall
             )
     ) {
@@ -320,7 +320,7 @@ fun StatsImageBox(
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.Fit,
-                colorFilter = ColorFilter.tint(LocalColors.current.primary)
+                colorFilter = ColorFilter.tint(LocalColors.current.accent)
             )
         }
     }
@@ -338,14 +338,14 @@ fun NodeDetailsBox(
     val appName = context.getString(R.string.app_name)
 
     val nodesInSwarmAS = annotatedStringResource(
-        highlightColor = LocalColors.current.primaryText,
+        highlightColor = LocalColors.current.accentText,
         text = Phrase.from(context, R.string.sessionNetworkNodesSwarm)
             .put(APP_NAME_KEY, appName)
             .format()
     )
 
     val nodesSecuringMessagesAS = annotatedStringResource(
-        highlightColor = LocalColors.current.primaryText,
+        highlightColor = LocalColors.current.accentText,
         text = Phrase.from(context, R.string.sessionNetworkNodesSecuring)
             .put(APP_NAME_KEY, appName)
             .format()
@@ -415,7 +415,7 @@ fun NodeDetailRow(
             Text(
                 text = display,
                 style = LocalType.current.h3,
-                color = LocalColors.current.primaryText,
+                color = LocalColors.current.accentText,
                 maxLines = maxLines,
                 onTextLayout = { result ->
                     if (result.hasVisualOverflow && !useShort) {
@@ -696,7 +696,7 @@ fun SessionTokenSection(
 
         // Finally, add a button that links us to the staging page to learn more
         var showTheOpenUrlModal by remember { mutableStateOf(false) }
-        PrimaryOutlineButtonRect(
+        AccentOutlineButtonRect(
             text = LocalContext.current.getString(R.string.sessionNetworkLearnAboutStaking),
             modifier = Modifier
                 .fillMaxWidth()
@@ -779,7 +779,7 @@ fun ThreeLineTextCell(
             Text(
                 text = secondLine,
                 style = LocalType.current.h5,
-                color = LocalColors.current.primaryText,
+                color = LocalColors.current.accentText,
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()

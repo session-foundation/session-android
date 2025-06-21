@@ -218,6 +218,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         val slide = mmsRecord.slideDeck.slides[index] ?: return
         // only open to downloaded images
         if (slide.isInProgress || slide.isFailed) return
+        if(state.thread == null) return
 
         viewModelScope.launch {
             MediaPreviewArgs(slide, state.mmsRecord, state.thread)

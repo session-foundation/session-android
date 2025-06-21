@@ -60,7 +60,7 @@
     <attr name="menu_copy_icon" format="reference" />
     <attr name="menu_save_icon" format="reference" />
     <attr name="menu_reply_icon" format="reference" />
-    <attr name="menu_block_icon" format="reference" />
+    <attr name="menu_ban_icon" format="reference" />
     <attr name="menu_info_icon" format="reference" />
 
     <attr name="home_gradient_start" format="color|reference" />

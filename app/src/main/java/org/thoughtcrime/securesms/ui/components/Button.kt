@@ -103,9 +103,10 @@ fun Button(
     enabled: Boolean = true,
     style: ButtonStyle = ButtonStyle.Large,
     shape: Shape = buttonShape,
+    minWidth: Dp = LocalDimensions.current.minButtonWidth,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    Button(onClick, type, modifier, enabled, style, shape, interactionSource = interactionSource) {
+    Button(onClick, type, modifier, enabled, style, shape, minWidth = minWidth, interactionSource = interactionSource) {
         Text(text)
     }
 }
@@ -114,24 +115,24 @@ fun Button(
     Button(text, onClick, ButtonType.Fill, modifier, enabled)
 }
 
-@Composable fun PrimaryFillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled)
+@Composable fun AccentFillButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.AccentFill, modifier, enabled)
 }
 
-@Composable fun PrimaryFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.PrimaryFill, modifier, enabled, shape = sessionShapes().extraSmall)
+@Composable fun AccentFillButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.AccentFill, modifier, enabled, shape = sessionShapes().extraSmall)
 }
 
-@Composable fun PrimaryFillButtonRect(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Button(onClick = onClick, ButtonType.PrimaryFill, modifier = modifier, enabled = enabled, shape = sessionShapes().extraSmall, content = content)
+@Composable fun AccentFillButtonRect(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Button(onClick = onClick, ButtonType.AccentFill, modifier = modifier, enabled = enabled, shape = sessionShapes().extraSmall, content = content)
 }
 
 @Composable fun OutlineButton(text: String, modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit) {
     Button(text, onClick, ButtonType.Outline(color), modifier, enabled)
 }
 
-@Composable fun PrimaryOutlineButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, shape = sessionShapes().extraSmall)
+@Composable fun AccentOutlineButtonRect(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, shape = sessionShapes().extraSmall)
 }
 
 @Composable fun OutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
@@ -144,12 +145,13 @@ fun Button(
     )
 }
 
-@Composable fun PrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled)
+@Composable fun AccentOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true,
+                                    minWidth: Dp = LocalDimensions.current.minButtonWidth, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, minWidth = minWidth)
 }
 
-@Composable fun PrimaryOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
-    Button(onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, content = content)
+@Composable fun AccentOutlineButton(modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
+    Button(onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, content = content)
 }
 
 @Composable fun SlimOutlineButton(modifier: Modifier = Modifier, color: Color = LocalColors.current.text, enabled: Boolean = true, onClick: () -> Unit, content: @Composable RowScope.() -> Unit) {
@@ -163,17 +165,17 @@ fun Button(
     Button(text, onClick, ButtonType.Outline(color), modifier, enabled, ButtonStyle.Slim)
 }
 
-@Composable fun SlimPrimaryOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
-    Button(text, onClick, ButtonType.Outline(LocalColors.current.primaryText), modifier, enabled, ButtonStyle.Slim)
+@Composable fun SlimAccentOutlineButton(text: String, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit) {
+    Button(text, onClick, ButtonType.Outline(LocalColors.current.accentText), modifier, enabled, ButtonStyle.Slim)
 }
 
 @Composable
-fun PrimaryOutlineCopyButton(
+fun AcccentOutlineCopyButton(
     modifier: Modifier = Modifier,
     style: ButtonStyle = ButtonStyle.Large,
     onClick: () -> Unit
 ) {
-    OutlineCopyButton(modifier, style, LocalColors.current.primaryText, onClick)
+    OutlineCopyButton(modifier, style, LocalColors.current.accentText, onClick)
 }
 
 @Composable
@@ -325,24 +327,24 @@ private fun VariousButtons(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             maxItemsInEachRow = 2
         ) {
-            PrimaryFillButton("Primary Fill") {}
-            PrimaryFillButton("Primary Fill Disabled", enabled = false) {}
+            AccentFillButton("Accent Fill") {}
+            AccentFillButton("Accent Fill Disabled", enabled = false) {}
             FillButton("Fill Button") {}
             FillButton("Fill Button Disabled", enabled = false) {}
-            PrimaryOutlineButton("Primary Outline Button") {}
-            PrimaryOutlineButton("Primary Outline Disabled", enabled = false) {}
+            AccentOutlineButton("Accent Outline Button") {}
+            AccentOutlineButton("Accent Outline Disabled", enabled = false) {}
             OutlineButton("Outline Button") {}
             OutlineButton("Outline Button Disabled", enabled = false) {}
             SlimOutlineButton("Slim Outline") {}
             SlimOutlineButton("Slim Outline Disabled", enabled = false) {}
-            SlimPrimaryOutlineButton("Slim Primary") {}
+            SlimAccentOutlineButton("Slim Accent") {}
             SlimOutlineButton("Slim Danger", color = LocalColors.current.danger) {}
             BorderlessButton("Borderless Button") {}
             BorderlessButton("Borderless Secondary", color = LocalColors.current.textSecondary) {}
-            PrimaryFillButtonRect("Primary Fill Rect") {}
-            PrimaryFillButtonRect("Primary Fill Rect Disabled", enabled = false) {}
-            PrimaryOutlineButtonRect("Outline Button Rect") {}
-            PrimaryOutlineButtonRect("Outline ButtonDisabled", enabled = false) {}
+            AccentFillButtonRect("Accent Fill Rect") {}
+            AccentFillButtonRect("Accent Fill Rect Disabled", enabled = false) {}
+            AccentOutlineButtonRect("Outline Button Rect") {}
+            AccentOutlineButtonRect("Outline ButtonDisabled", enabled = false) {}
         }
     }
 }

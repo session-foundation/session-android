@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.giph.ui;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -13,19 +12,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
 import org.session.libsession.utilities.MediaTypes;
 import org.session.libsession.utilities.NonTranslatableStringConstants;
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.providers.BlobProvider;
+import org.thoughtcrime.securesms.providers.BlobUtils;
 import org.session.libsession.utilities.ViewUtil;
 
 import java.io.IOException;
@@ -112,7 +107,7 @@ public class GiphyActivity extends ScreenLockActionBarActivity
         try {
           byte[] data = viewHolder.getData(forMms);
 
-          return BlobProvider.getInstance()
+          return BlobUtils.getInstance()
                              .forData(data)
                              .withMimeType(MediaTypes.IMAGE_GIF)
                              .createForSingleSessionOnDisk(GiphyActivity.this, e -> Log.w(TAG, "Failed to write to disk.", e))

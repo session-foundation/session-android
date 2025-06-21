@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <RelativeLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/session_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
@@ -30,24 +30,26 @@
                     android:id="@+id/profileButton"
                     android:layout_width="@dimen/very_small_profile_picture_size"
                     android:layout_height="@dimen/very_small_profile_picture_size"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     android:contentDescription="@string/AccessibilityId_profilePicture" />
 
                 <org.thoughtcrime.securesms.home.PathStatusView
                     android:id="@+id/pathStatusView"
                     android:layout_width="@dimen/path_status_view_size"
                     android:layout_height="@dimen/path_status_view_size"
-                    android:layout_alignEnd="@+id/profileButton"
-                    android:layout_alignBottom="@+id/profileButton" />
+                    app:layout_constraintBottom_toBottomOf="@+id/profileButton"
+                    app:layout_constraintEnd_toEndOf="@+id/profileButton"/>
 
                 <ImageView
                     android:id="@+id/sessionHeaderImage"
                     android:layout_width="0dp"
                     android:layout_height="16dp"
-                    android:layout_centerInParent="true"
-                    android:layout_toLeftOf="@+id/searchViewContainer"
-                    android:layout_toRightOf="@+id/profileButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/profileButton"
+                    app:layout_constraintEnd_toStartOf="@+id/searchViewContainer"
                     android:scaleType="centerInside"
                     android:src="@drawable/ic_session"
                     app:tint="?sessionLogoTint" />
@@ -58,20 +60,19 @@
                     android:contentDescription="@string/AccessibilityId_searchIcon"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true">
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
                     <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_centerInParent="true"
                         android:src="@drawable/ic_search"
-                        app:tint="?sessionLogoTint" />
+                        app:tint="?android:textColorPrimary" />
 
                 </RelativeLayout>
 
-            </RelativeLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <RelativeLayout
                 android:id="@+id/search_toolbar"

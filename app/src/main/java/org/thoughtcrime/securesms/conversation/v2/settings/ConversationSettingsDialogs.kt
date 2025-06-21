@@ -101,6 +101,8 @@ fun ConversationSettingsDialogs(
                     onChange = { updatedText ->
                         sendCommand(UpdateNickname(updatedText))
                     },
+                    showClear = true,
+                    singleLine = true,
                     onContinue = { sendCommand(SetNickname) },
                     error = dialogsState.nicknameDialog.error,
                 )
@@ -154,6 +156,8 @@ fun ConversationSettingsDialogs(
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupName(updatedText))
                         },
+                        showClear = true,
+                        singleLine = true,
                         error = dialogsState.groupEditDialog.errorName,
                     )
 
@@ -169,6 +173,7 @@ fun ConversationSettingsDialogs(
                         onChange = { updatedText ->
                              sendCommand(UpdateGroupDescription(updatedText))
                         },
+                        showClear = true,
                         error = dialogsState.groupEditDialog.errorDescription,
                     )
                 }
@@ -206,7 +211,7 @@ fun GroupAdminClearMessagesDialog(
             // hide dialog
             sendCommand(HideGroupAdminClearMessagesDialog)
         },
-        title = annotatedStringResource(R.string.groupLeave),
+        title = annotatedStringResource(R.string.clearMessages),
         text =  annotatedStringResource(Phrase.from(context, R.string.clearMessagesGroupAdminDescriptionUpdated)
             .put(GROUP_NAME_KEY, groupName)
             .format()),
@@ -214,7 +219,7 @@ fun GroupAdminClearMessagesDialog(
             DialogTitledRadioButton(
                 option = RadioOption(
                     value = Unit,
-                    title = GetString(stringResource(R.string.clearDeviceOnly)),
+                    title = GetString(stringResource(R.string.clearOnThisDevice)),
                     qaTag = GetString(R.string.qa_conversation_settings_clear_messages_radio_device),
                     selected = !deleteForEveryone
                 )
@@ -328,6 +333,19 @@ fun PreviewBaseGroupDialog() {
                     errorName = null,
                     errorDescription = null,
                 )
+            ),
+            sendCommand = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewClearAllMsgGroupDialog() {
+    PreviewTheme {
+        ConversationSettingsDialogs(
+            dialogsState = ConversationSettingsViewModel.DialogsState(
+                groupAdminClearMessagesDialog = ConversationSettingsViewModel.GroupAdminClearMessageDialog("Testy")
             ),
             sendCommand = {}
         )
