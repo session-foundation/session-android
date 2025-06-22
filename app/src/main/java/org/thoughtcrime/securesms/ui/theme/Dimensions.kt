@@ -46,4 +46,6 @@ data class Dimensions(
     val messageVerticalPadding: Dp = 10.dp,
 
     val maxContentWidth: Dp = 410.dp,
+
+    val quoteIconSize: Dp = 40.dp
 )

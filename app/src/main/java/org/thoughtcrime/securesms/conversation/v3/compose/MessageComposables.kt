@@ -1,8 +1,12 @@
+@file:OptIn(ExperimentalGlideComposeApi::class)
+
 package org.thoughtcrime.securesms.conversation.v3.compose
 
+import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,14 +34,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -49,8 +58,10 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.theme.blackAlpha06
+import androidx.core.net.toUri
 
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 highlight effect (needs to work on all types and shapes (how should it work for combos like message + image? overall effect?)
@@ -275,7 +286,7 @@ fun MessageQuote(
                             color = blackAlpha06,
                             shape = RoundedCornerShape(LocalDimensions.current.shapeXXS)
                         )
-                        .size(40.dp),
+                        .size(LocalDimensions.current.quoteIconSize),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
@@ -288,7 +299,15 @@ fun MessageQuote(
             }
 
             is MessageQuoteIcon.Image -> {
-                //todo CONVOv3 quote image
+                GlideImage(
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.background(
+                        color = blackAlpha06,
+                        shape = RoundedCornerShape(LocalDimensions.current.shapeXXS)
+                    ).size(LocalDimensions.current.quoteIconSize),
+                    model = DecryptableStreamUriLoader.DecryptableUri(quote.icon.uri),
+                    contentDescription = quote.icon.filename
+                )
             }
         }
 
@@ -407,7 +426,10 @@ data class MessageQuote(
 sealed class MessageQuoteIcon(){
     data object Bar: MessageQuoteIcon()
     data class Icon(@DrawableRes val icon: Int): MessageQuoteIcon()
-    data class Image(val uri: String): MessageQuoteIcon()
+    data class Image(
+        val uri: Uri,
+        val filename: String
+    ): MessageQuoteIcon()
 }
 
 data class MessageViewStatus(
@@ -600,7 +622,7 @@ fun QuoteMessagePreview(
             Message(data = MessageViewData(
                 author = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
-                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Image(""))
+                quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
             ))
         }
     }
@@ -667,6 +689,14 @@ private object PreviewMessageData {
         subtitle = subtitle
         ,
         icon = icon
+    )
+
+    fun quoteImage(
+        uri: Uri = "".toUri(),
+        filename: String = ""
+    ) = MessageQuoteIcon.Image(
+        uri = uri,
+        filename = filename
     )
 }
 
