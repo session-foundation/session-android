@@ -13,8 +13,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import androidx.compose.ui.unit.dp
-import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.ApplicationContext
 
@@ -74,7 +72,7 @@ val buttonShape = pillShape
 
 @Composable
 fun sessionShapes() = Shapes(
-    extraSmall = RoundedCornerShape(LocalDimensions.current.shapeExtraSmall),
+    extraSmall = RoundedCornerShape(LocalDimensions.current.shapeXS),
     small = RoundedCornerShape(LocalDimensions.current.shapeSmall),
     medium = RoundedCornerShape(LocalDimensions.current.shapeMedium)
 
