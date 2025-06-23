@@ -37,7 +37,8 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import network.loki.messenger.libsession_util.util.Logger.initLogger
+import network.loki.messenger.libsession_util.util.LogLevel
+import network.loki.messenger.libsession_util.util.Logger
 import nl.komponents.kovenant.android.startKovenant
 import nl.komponents.kovenant.android.stopKovenant
 import org.conscrypt.Conscrypt
@@ -137,7 +138,6 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         private set
     private var conversationListHandlerThread: HandlerThread? = null
     private var conversationListHandler: Handler? = null
-    lateinit var persistentLogger: PersistentLogger
 
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
     @Inject lateinit var lokiAPIDatabase: Lazy<LokiAPIDatabase>
@@ -162,6 +162,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var snodeClock: Lazy<SnodeClock>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
     @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
+    @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
@@ -420,9 +421,22 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     }
 
     private fun initializeLogging() {
-        persistentLogger = PersistentLogger(this)
-        Log.initialize(AndroidLogger(), persistentLogger)
-        initLogger()
+        Log.initialize(AndroidLogger(), persistentLogger.get())
+        Logger.addLogger(object : Logger {
+            private val tag = "LibSession"
+
+            override fun log(message: String, category: String, level: LogLevel) {
+                when (level) {
+                    Logger.LOG_LEVEL_INFO -> Log.i(tag, "$category: $message")
+                    Logger.LOG_LEVEL_DEBUG -> Log.d(tag, "$category: $message")
+                    Logger.LOG_LEVEL_WARN -> Log.w(tag, "$category: $message")
+                    Logger.LOG_LEVEL_ERROR -> Log.e(tag, "$category: $message")
+                    Logger.LOG_LEVEL_CRITICAL -> Log.wtf(tag, "$category: $message")
+                    Logger.LOG_LEVEL_OFF -> {}
+                    else -> Log.v(tag, "$category: $message")
+                }
+            }
+        })
     }
 
     private fun initializeCrashHandling() {
