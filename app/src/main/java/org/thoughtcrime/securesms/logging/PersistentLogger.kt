@@ -296,7 +296,7 @@ class PersistentLogger @Inject constructor(
         private val PERM_LOG_FILE_PATTERN by lazy { Pattern.compile("^(\\d+?)\\.permlog$") }
 
         // Maximum size of a single log file
-        private const val MAX_SINGLE_LOG_FILE_SIZE = 1 * 1024 * 1024 // 1 MB
+        private const val MAX_SINGLE_LOG_FILE_SIZE = 2 * 1024 * 1024
 
         // Maximum number of log files to keep
         private const val MAX_LOG_FILE_COUNT = 10
