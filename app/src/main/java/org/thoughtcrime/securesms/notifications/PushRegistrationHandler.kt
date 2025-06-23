@@ -74,7 +74,6 @@ constructor(
                 .scan(emptySet<SubscriptionKey>() to emptySet<SubscriptionKey>()) { acc, current ->
                     acc.second to current
                 }
-                .filterNotNull()
                 .collect { (prev, current) ->
                     val added = current - prev
                     val removed = prev - current
