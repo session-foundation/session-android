@@ -25,12 +25,12 @@ class ShareContactListLoader(
                 if(it.first.isLegacyGroupRecipient && deprecationManager.isDeprecated) return@filter false // ignore legacy group when deprecated
                 if(it.first.isCommunityRecipient) { // ignore communities without write access
                     val storage = MessagingModuleConfiguration.shared.storage
-                    val threadId = storage.getThreadId(it.first) ?: return@filter false
+                    val threadId = storage.getThreadId(it.first.address) ?: return@filter false
                     val openGroup = storage.getOpenGroup(threadId) ?: return@filter false
                     return@filter openGroup.canWrite
                 }
                 if (filter.isNullOrEmpty()) return@filter true
-                it.first.name.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
+                it.first.displayName.contains(filter.trim(), true) || it.first.address.toString().contains(filter.trim(), true)
             }.sortedWith(
                 compareBy<Pair<Recipient, LastMessageSentTimestamp>> { !it.first.isLocalNumber } // NTS come first
                     .thenByDescending { it.second } // then order by last message time

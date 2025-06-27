@@ -18,6 +18,7 @@ import org.session.libsignal.streams.AttachmentCipherInputStream
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageId
 import java.io.File
 import java.io.FileInputStream
@@ -56,9 +57,11 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
          */
         fun eligibleForDownload(threadID: Long,
                                 storage: StorageProtocol,
+                                recipientRepository: RecipientRepository,
                                 messageDataProvider: MessageDataProvider,
                                 mmsId: Long): Boolean {
-            val threadRecipient = storage.getRecipientForThread(threadID) ?: return false
+            val threadRecipient = storage.getRecipientForThread(threadID)
+                ?.let(recipientRepository::getRecipientSync) ?: return false
 
             // if we are the sender we are always eligible
             val selfSend = messageDataProvider.isOutgoingMessage(MessageId(mmsId, true))
@@ -66,7 +69,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
                 return true
             }
 
-            return storage.shouldAutoDownloadAttachments(threadRecipient)
+            return threadRecipient.autoDownloadAttachments == true
         }
     }
 
@@ -124,7 +127,13 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
             return
         }
 
-        if (!eligibleForDownload(threadID, storage, messageDataProvider, mmsMessageId)) {
+        if (!eligibleForDownload(
+                threadID = threadID,
+                storage = storage,
+                recipientRepository = MessagingModuleConfiguration.shared.recipientRepository,
+                messageDataProvider = messageDataProvider,
+                mmsId = mmsMessageId
+            )) {
             handleFailure(Error.NoSender, null)
             return
         }

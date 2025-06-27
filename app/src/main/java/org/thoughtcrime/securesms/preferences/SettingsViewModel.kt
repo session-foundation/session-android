@@ -9,11 +9,8 @@ import com.canhub.cropper.CropImageView
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -25,12 +22,12 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
@@ -49,8 +46,8 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
-    private val usernameUtils: UsernameUtils,
-    private val avatarUtils: AvatarUtils
+    private val avatarUtils: AvatarUtils,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -59,7 +56,7 @@ class SettingsViewModel @Inject constructor(
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
     private val userRecipient by lazy {
-        Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
+        recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
     }
 
     private val _avatarDialogState: MutableStateFlow<AvatarDialogState> = MutableStateFlow(
@@ -97,9 +94,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+    fun getDisplayName(): String = configFactory.currentUserName
 
-    fun hasAvatar() = prefs.getProfileAvatarId() != 0
+    fun hasAvatar() = configFactory.withUserConfigs { it.userProfile.getPic().url.isNotBlank() }
 
     fun createTempFile(): File? {
         try {
@@ -214,12 +211,13 @@ class SettingsViewModel @Inject constructor(
 
                 // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
                 if (profilePicture.isEmpty()) {
-                    MessagingModuleConfiguration.shared.storage.clearUserPic()
+                    configFactory.withMutableUserConfigs {
+                        it.userProfile.setPic(UserPic.DEFAULT)
+                    }
 
                     // update dialog state
                     _avatarDialogState.value = AvatarDialogState.NoAvatar
                 } else {
-                    prefs.setProfileAvatarId(SECURE_RANDOM.nextInt())
                     ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
 
                     // Attempt to grab the details we require to update the profile picture
@@ -251,7 +249,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateName(displayName: String) {
-        usernameUtils.saveCurrentUserName(displayName)
+        configFactory.withMutableUserConfigs { it.userProfile.setName(displayName) }
     }
 
     fun permanentlyHidePassword() {

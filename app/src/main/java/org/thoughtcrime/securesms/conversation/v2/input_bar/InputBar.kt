@@ -32,7 +32,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
-import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.

@@ -12,6 +12,7 @@ import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Provider
 
+@Deprecated("We no longer store contacts in the database, use the one from config instead")
 class SessionContactDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {

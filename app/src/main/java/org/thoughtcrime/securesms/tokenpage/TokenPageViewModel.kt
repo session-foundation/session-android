@@ -23,12 +23,9 @@ import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_NETWORK_DATA_PRICE
 import org.session.libsession.utilities.NonTranslatableStringConstants.TOKEN_NAME_SHORT
 import org.session.libsession.utilities.NonTranslatableStringConstants.USD_NAME_SHORT
-import org.session.libsession.utilities.StringSubstitutionConstants.DATE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.RELATIVE_TIME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Snode

@@ -3,19 +3,19 @@ package org.thoughtcrime.securesms.search
 import android.content.Context
 import android.database.Cursor
 import android.database.MergeCursor
-import com.annimon.stream.Stream
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
+import org.session.libsession.utilities.concurrent.SignalExecutors
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.contacts.ContactAccessor
 import org.thoughtcrime.securesms.database.CursorList
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.MmsSmsColumns
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SearchDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -23,20 +23,22 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.search.model.SearchResult
 import org.thoughtcrime.securesms.util.Stopwatch
-import java.util.concurrent.Executor
+import javax.inject.Inject
+import javax.inject.Singleton
 
 // Class to manage data retrieval for search
-class SearchRepository(
-    context: Context,
+@Singleton
+class SearchRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val searchDatabase: SearchDatabase,
     private val threadDatabase: ThreadDatabase,
     private val groupDatabase: GroupDatabase,
     private val contactDatabase: SessionContactDatabase,
     private val contactAccessor: ContactAccessor,
     private val configFactory: ConfigFactory,
-    private val executor: Executor
+    private val recipientRepository: RecipientRepository,
 ) {
-    private val context: Context = context.applicationContext
+    private val executor = SignalExecutors.SERIAL
 
     fun query(query: String, callback: (SearchResult) -> Unit) {
         // If the sanitized search is empty then abort without search
@@ -133,7 +135,7 @@ class SearchRepository(
         query: String,
     ): CursorList<GroupRecord> {
         val numbers = contactAccessor.getNumbersForThreadSearchFilter(context, query)
-        val addresses = numbers.map { fromExternal(context, it) }
+        val addresses = numbers.map { fromSerialized(it) }
 
         val conversations = threadDatabase.getFilteredConversationList(addresses)
         return if (conversations != null)
@@ -208,14 +210,14 @@ class SearchRepository(
         }
     }
 
-    private class MessageModelBuilder(private val context: Context) : CursorList.ModelBuilder<MessageResult> {
+    private inner class MessageModelBuilder(private val context: Context) : CursorList.ModelBuilder<MessageResult> {
         override fun build(cursor: Cursor): MessageResult {
             val conversationAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.CONVERSATION_ADDRESS)))
             val messageAddress =
                 fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.MESSAGE_ADDRESS)))
-            val conversationRecipient = Recipient.from(context, conversationAddress, false)
-            val messageRecipient = Recipient.from(context, messageAddress, false)
+            val conversationRecipient = recipientRepository.getRecipientSync(conversationAddress) ?: Recipient.empty(conversationAddress)
+            val messageRecipient = recipientRepository.getRecipientSync(messageAddress) ?: Recipient.empty(messageAddress)
             val body = cursor.getString(cursor.getColumnIndexOrThrow(SearchDatabase.SNIPPET))
             val sentMs =
                 cursor.getLong(cursor.getColumnIndexOrThrow(MmsSmsColumns.NORMALIZED_DATE_SENT))

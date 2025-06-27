@@ -67,7 +67,7 @@ class ConversationActionModeCallback(
             )?.pubKey?.data }
             ?.let { AccountId(IdPrefix.BLINDED, it) }?.hexString
 
-        val isDeprecatedLegacyGroup = thread.isLegacyGroupRecipient &&
+        val isDeprecatedLegacyGroup = thread.isLegacyGroup &&
                 deprecationManager.isDeprecated
 
         // Embedded function
@@ -95,7 +95,7 @@ class ConversationActionModeCallback(
         menu.findItem(R.id.menu_context_copy).isVisible = !containsControlMessage && hasText
         // Copy Account ID
         menu.findItem(R.id.menu_context_copy_public_key).isVisible =
-             (thread.isGroupOrCommunityRecipient && !thread.isCommunityRecipient && selectedItems.size == 1 && firstMessage.individualRecipient.address.toString() != userPublicKey)
+             (thread.isGroupOrCommunity && !thread.isCommunity && selectedItems.size == 1 && firstMessage.individualRecipient.address.toString() != userPublicKey)
         // Message detail
         menu.findItem(R.id.menu_message_details).isVisible = selectedItems.size == 1 && !isDeprecatedLegacyGroup
         // Resend

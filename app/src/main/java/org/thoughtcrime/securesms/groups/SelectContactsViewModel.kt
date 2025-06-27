@@ -1,13 +1,11 @@
 package org.thoughtcrime.securesms.groups
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +26,7 @@ import kotlinx.coroutines.withContext
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -38,10 +37,10 @@ import org.thoughtcrime.securesms.util.AvatarUtils
 open class SelectContactsViewModel @AssistedInject constructor(
     private val configFactory: ConfigFactory,
     private val avatarUtils: AvatarUtils,
-    @ApplicationContext private val appContext: Context,
     @Assisted private val excludingAccountIDs: Set<AccountId>,
     @Assisted private val applyDefaultFiltering: Boolean, // true by default - If true will filter out blocked and unapproved contacts
     @Assisted private val scope: CoroutineScope,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     // Input: The search query
     private val mutableSearchQuery = MutableStateFlow("")
@@ -91,15 +90,12 @@ open class SelectContactsViewModel @AssistedInject constructor(
                     } else {
                         allContacts.filterNotTo(mutableSetOf()) { it in excludingAccountIDs }
                     }.map {
-                        Recipient.from(
-                            appContext,
-                            Address.fromSerialized(it.hexString),
-                            false
-                        )
+                        val address = Address.fromSerialized(it.hexString)
+                        recipientRepository.getRecipient(address) ?: Recipient.empty(address)
                     }
 
                     if(applyDefaultFiltering){
-                        recipientContacts.filter { !it.isBlocked && it.isApproved } // filter out blocked contacts and unapproved contacts
+                        recipientContacts.filter { !it.blocked && it.approved } // filter out blocked contacts and unapproved contacts
                     } else recipientContacts
                 }
             }

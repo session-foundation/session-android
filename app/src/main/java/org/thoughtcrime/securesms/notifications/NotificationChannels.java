@@ -6,30 +6,18 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.provider.Settings;
-import android.text.TextUtils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
-
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 
 import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
-import org.thoughtcrime.securesms.database.RecipientDatabase;
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import network.loki.messenger.BuildConfig;
 import network.loki.messenger.R;
@@ -68,10 +56,6 @@ public class NotificationChannels {
     }
 
     onCreate(context, notificationManager);
-
-    AsyncTask.SERIAL_EXECUTOR.execute(() -> {
-      ensureCustomChannelConsistency(context);
-    });
   }
 
   /**
@@ -80,23 +64,6 @@ public class NotificationChannels {
   public static synchronized @NonNull String getMessagesChannel(@NonNull Context context) {
     return getMessagesChannelId(TextSecurePreferences.getNotificationMessagesChannelVersion(context));
   }
-
-  /**
-   * @return A name suitable to be displayed as the notification channel title.
-   */
-  public static @NonNull String getChannelDisplayNameFor(@NonNull Context context, @Nullable String systemName, @Nullable String profileName, @NonNull Address address) {
-    if (!TextUtils.isEmpty(systemName)) {
-      return systemName;
-    } else if (!TextUtils.isEmpty(profileName)) {
-      return profileName;
-    } else if (!TextUtils.isEmpty(address.toString())) {
-      return address.toString();
-    } else {
-      return context.getString(R.string.unknown);
-    }
-  }
-
-
 
 
   /**
@@ -112,7 +79,7 @@ public class NotificationChannels {
     NotificationChannel channel             = notificationManager.getNotificationChannel(recipient.getNotificationChannel());
 
     if (!channelExists(channel)) {
-      Log.w(TAG, "Recipient had no channel. Returning null.");
+      Log.w(TAG, "RecipientV2 had no channel. Returning null.");
       return null;
     }
 
@@ -147,36 +114,6 @@ public class NotificationChannels {
     updateMessageChannel(context, channel -> channel.enableVibration(enabled));
   }
 
-  @WorkerThread
-  public static synchronized void ensureCustomChannelConsistency(@NonNull Context context) {
-    NotificationManager notificationManager = ServiceUtil.getNotificationManager(context);
-    RecipientDatabase   db                  = DatabaseComponent.get(context).recipientDatabase();
-    List<Recipient>     customRecipients    = new ArrayList<>();
-    Set<String>         customChannelIds    = new HashSet<>();
-    Set<String>         existingChannelIds  = Stream.of(notificationManager.getNotificationChannels()).map(NotificationChannel::getId).collect(Collectors.toSet());
-
-    try (RecipientDatabase.RecipientReader reader = db.getRecipientsWithNotificationChannels()) {
-      Recipient recipient;
-      while ((recipient = reader.getNext()) != null) {
-        customRecipients.add(recipient);
-        customChannelIds.add(recipient.getNotificationChannel());
-      }
-    }
-
-    for (NotificationChannel existingChannel : notificationManager.getNotificationChannels()) {
-      if (existingChannel.getId().startsWith(CONTACT_PREFIX) && !customChannelIds.contains(existingChannel.getId())) {
-        notificationManager.deleteNotificationChannel(existingChannel.getId());
-      } else if (existingChannel.getId().startsWith(MESSAGES_PREFIX) && !existingChannel.getId().equals(getMessagesChannel(context))) {
-        notificationManager.deleteNotificationChannel(existingChannel.getId());
-      }
-    }
-
-    for (Recipient customRecipient : customRecipients) {
-      if (!existingChannelIds.contains(customRecipient.getNotificationChannel())) {
-        db.setNotificationChannel(customRecipient, null);
-      }
-    }
-  }
 
   private static void onCreate(@NonNull Context context, @NonNull NotificationManager notificationManager) {
     NotificationChannelGroup messagesGroup = new NotificationChannelGroup(CATEGORY_MESSAGES, context.getResources().getString(R.string.messages));

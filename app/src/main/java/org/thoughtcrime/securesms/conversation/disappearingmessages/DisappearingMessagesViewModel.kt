@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
@@ -38,6 +39,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     private val groupDb: GroupDatabase,
     private val storage: Storage,
     private val navigator: ConversationSettingsNavigator,
+    private val configFactory: ConfigFactoryProtocol,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -54,27 +56,28 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode ?: ExpiryMode.NONE
-            val recipient = threadDb.getRecipientForThreadId(threadId)?: return@launch
+            val expiryMode = storage.getExpirationConfiguration(threadId)
+            val address = threadDb.getRecipientForThreadId(threadId)?: return@launch
 
             val isAdmin = when {
-                recipient.isGroupV2Recipient -> {
+                address.isGroupV2 -> {
                     // Handle the new closed group functionality
-                    storage.getMembers(recipient.address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
+                    storage.getMembers(address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
                 }
-                recipient.isLegacyGroupRecipient -> {
-                    val groupRecord = groupDb.getGroup(recipient.address.toGroupString()).orNull()
+
+                address.isLegacyGroup -> {
+                    val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()
                     // Handle as legacy group
                     groupRecord?.admins?.any{ it.toString() == textSecurePreferences.getLocalNumber() } == true
                 }
-                else -> !recipient.isGroupOrCommunityRecipient
+                else -> !address.isGroupOrCommunity
             }
 
             _state.update {
                 it.copy(
-                    address = recipient.address,
-                    isGroup = recipient.isGroupRecipient,
-                    isNoteToSelf = recipient.address.toString() == textSecurePreferences.getLocalNumber(),
+                    address = address,
+                    isGroup = address.isGroup,
+                    isNoteToSelf = address.toString() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = isAdmin,
                     expiryMode = expiryMode,
                     persistedMode = expiryMode

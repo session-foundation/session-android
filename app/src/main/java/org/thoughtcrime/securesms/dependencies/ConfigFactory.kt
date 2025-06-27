@@ -14,21 +14,15 @@ import network.loki.messenger.libsession_util.Curve25519
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
-import network.loki.messenger.libsession_util.MutableContacts
 import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
 import network.loki.messenger.libsession_util.MutableUserGroupsConfig
-import network.loki.messenger.libsession_util.MutableUserProfile
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
 import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ConfigPush
-import network.loki.messenger.libsession_util.util.Contact
-import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.MultiEncrypt
-import network.loki.messenger.libsession_util.util.UserPic
-import okio.ByteString.Companion.decodeBase64
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
@@ -45,7 +39,6 @@ import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
@@ -75,7 +68,6 @@ class ConfigFactory @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
-    private val usernameUtils: Lazy<UsernameUtils>
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -129,11 +121,9 @@ class ConfigFactory @Inject constructor(
         val instance = ReentrantReadWriteLock() to UserConfigsImpl(
             userEd25519SecKey = requiresCurrentUserED25519SecKey(),
             userAccountId = userAccountId,
-            threadDb = threadDb,
             configDatabase = configDatabase,
             storage = storage.get(),
-            textSecurePreferences = textSecurePreferences,
-            usernameUtils = usernameUtils.get()
+            threadDb = threadDb
         )
 
         return synchronized(userConfigs) {
@@ -659,70 +649,11 @@ private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol,
     }
 }
 
-private fun MutableUserProfile.initFrom(storage: StorageProtocol,
-                                        usernameUtils: UsernameUtils,
-                                        textSecurePreferences: TextSecurePreferences
-) {
-    val ownPublicKey = storage.getUserPublicKey() ?: return
-    val displayName = usernameUtils.getCurrentUsername() ?: return
-    val picUrl = textSecurePreferences.getProfilePictureURL()
-    val picKey = textSecurePreferences.getProfileKey()?.decodeBase64()?.toByteArray()
-    setName(displayName)
-    if (!picUrl.isNullOrEmpty() && picKey != null && picKey.isNotEmpty()) {
-        setPic(UserPic(picUrl, picKey))
-    }
-    val ownThreadId = storage.getThreadId(Address.fromSerialized(ownPublicKey))
-    setNtsPriority(
-        if (ownThreadId != null)
-            if (storage.isPinned(ownThreadId)) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE
-        else ConfigBase.PRIORITY_HIDDEN
-    )
-}
-
-private fun MutableContacts.initFrom(storage: StorageProtocol) {
-    val localUserKey = storage.getUserPublicKey() ?: return
-    val contactsWithSettings = storage.getAllContacts().filter { recipient ->
-        recipient.accountID != localUserKey && recipient.accountID.startsWith(IdPrefix.STANDARD.value)
-                && storage.getThreadId(recipient.accountID) != null
-    }.map { contact ->
-        val address = Address.fromSerialized(contact.accountID)
-        val thread = storage.getThreadId(address)
-        val isPinned = if (thread != null) {
-            storage.isPinned(thread)
-        } else false
-
-        Triple(contact, storage.getRecipientSettings(address)!!, isPinned)
-    }
-    for ((contact, settings, isPinned) in contactsWithSettings) {
-        val url = contact.profilePictureURL
-        val key = contact.profilePictureEncryptionKey
-        val userPic = if (url.isNullOrEmpty() || key?.isNotEmpty() != true) {
-            null
-        } else {
-            UserPic(url, key)
-        }
-
-        val contactInfo = Contact(
-            id = contact.accountID,
-            name = contact.name.orEmpty(),
-            nickname = contact.nickname.orEmpty(),
-            blocked = settings.isBlocked,
-            approved = settings.isApproved,
-            approvedMe = settings.hasApprovedMe(),
-            profilePicture = userPic ?: UserPic.DEFAULT,
-            priority = if (isPinned) 1 else 0,
-            expiryMode = if (settings.expireMessages == 0) ExpiryMode.NONE else ExpiryMode.AfterRead(settings.expireMessages.toLong())
-        )
-        set(contactInfo)
-    }
-}
 
 private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
     private val configDatabase: ConfigDatabase,
-    textSecurePreferences: TextSecurePreferences,
-    usernameUtils: UsernameUtils,
     storage: StorageProtocol,
     threadDb: ThreadDatabase,
     contactsDump: ByteArray? = configDatabase.retrieveConfigAndHashes(
@@ -761,16 +692,8 @@ private class UserConfigsImpl(
     )
 
     init {
-        if (contactsDump == null) {
-            contacts.initFrom(storage)
-        }
-
         if (userGroupsDump == null) {
             userGroups.initFrom(storage)
-        }
-
-        if (userProfileDump == null) {
-            userProfile.initFrom(storage, usernameUtils, textSecurePreferences)
         }
 
         if (convoInfoDump == null) {

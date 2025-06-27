@@ -27,8 +27,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.session.libsession.avatars.ContactPhoto;
-import org.session.libsession.messaging.MessagingModuleConfiguration;
-import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.utilities.NotificationPrivacyPreference;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
@@ -76,11 +74,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setChannelId(channelId != null ? channelId : NotificationChannels.getMessagesChannel(context));
 
     if (privacy.isDisplayContact()) {
-      setContentTitle(recipient.getName());
-
-      if (recipient.getContactUri() != null) {
-        addPerson(recipient.getContactUri().toString());
-      }
+      setContentTitle(recipient.getDisplayName());
 
       ContactPhoto contactPhoto = recipient.getContactPhoto();
       if (contactPhoto != null) {
@@ -115,16 +109,15 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     setNumber(messageCount);
   }
 
-  public void setPrimaryMessageBody(@NonNull  Recipient threadRecipient,
-                                    @NonNull  Recipient individualRecipient,
+  public void setPrimaryMessageBody(@NonNull Recipient threadRecipient,
+                                    @NonNull Recipient individualRecipient,
                                     @NonNull  CharSequence message,
                                     @Nullable SlideDeck slideDeck)
   {
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      String displayName = getGroupDisplayName(individualRecipient, threadRecipient.isCommunityRecipient());
-      stringBuilder.append(Util.getBoldedString(displayName + ": "));
+      stringBuilder.append(Util.getBoldedString(individualRecipient.getDisplayName() + ": "));
     }
 
     if (privacy.isDisplayMessage()) {
@@ -211,8 +204,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
     SpannableStringBuilder stringBuilder = new SpannableStringBuilder();
 
     if (privacy.isDisplayContact() && threadRecipient.isGroupOrCommunityRecipient()) {
-      String displayName = getGroupDisplayName(individualRecipient, threadRecipient.isCommunityRecipient());
-      stringBuilder.append(Util.getBoldedString(displayName + ": "));
+      stringBuilder.append(Util.getBoldedString(individualRecipient.getDisplayName() + ": "));
     }
 
     if (privacy.isDisplayMessage()) {
@@ -325,19 +317,7 @@ public class SingleRecipientNotificationBuilder extends AbstractNotificationBuil
 
   private static Drawable getPlaceholderDrawable(AvatarUtils avatarUtils, Recipient recipient) {
     String publicKey = recipient.getAddress().toString();
-    String displayName = recipient.getName();
+    String displayName = recipient.getDisplayName();
     return avatarUtils.generateTextBitmap(ICON_SIZE, publicKey, displayName);
-  }
-
-  /**
-   * @param recipient          the * individual * recipient for which to get the display name.
-   * @param openGroupRecipient whether in an open group context
-   */
-  private String getGroupDisplayName(Recipient recipient, boolean openGroupRecipient) {
-    return MessagingModuleConfiguration.getShared().getUsernameUtils().getContactNameWithAccountID(
-            recipient.getAddress().toString(),
-            null,
-            openGroupRecipient ? Contact.ContactContext.OPEN_GROUP : Contact.ContactContext.REGULAR
-        );
   }
 }

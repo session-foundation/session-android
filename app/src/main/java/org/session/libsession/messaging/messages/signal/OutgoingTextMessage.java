@@ -2,11 +2,11 @@ package org.session.libsession.messaging.messages.signal;
 
 import org.session.libsession.messaging.messages.visible.OpenGroupInvitation;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
-import org.session.libsession.utilities.recipients.Recipient;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.messaging.utilities.UpdateMessageData;
 
 public class OutgoingTextMessage {
-  private final Recipient recipient;
+  private final Address  recipient;
   private final String    message;
   private final int       subscriptionId;
   private final long      expiresIn;
@@ -14,7 +14,7 @@ public class OutgoingTextMessage {
   private final long      sentTimestampMillis;
   private boolean         isOpenGroupInvitation = false;
 
-  public OutgoingTextMessage(Recipient recipient, String message, long expiresIn, long expireStartedAt, int subscriptionId, long sentTimestampMillis) {
+  public OutgoingTextMessage(Address recipient, String message, long expiresIn, long expireStartedAt, int subscriptionId, long sentTimestampMillis) {
     this.recipient      = recipient;
     this.message        = message;
     this.expiresIn      = expiresIn;
@@ -23,11 +23,11 @@ public class OutgoingTextMessage {
     this.sentTimestampMillis = sentTimestampMillis;
   }
 
-  public static OutgoingTextMessage from(VisibleMessage message, Recipient recipient, long expiresInMillis, long expireStartedAt) {
+  public static OutgoingTextMessage from(VisibleMessage message, Address recipient, long expiresInMillis, long expireStartedAt) {
     return new OutgoingTextMessage(recipient, message.getText(), expiresInMillis, expireStartedAt, -1, message.getSentTimestamp());
   }
 
-  public static OutgoingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation, Recipient recipient, Long sentTimestamp, long expiresInMillis, long expireStartedAt) {
+  public static OutgoingTextMessage fromOpenGroupInvitation(OpenGroupInvitation openGroupInvitation, Address recipient, Long sentTimestamp, long expiresInMillis, long expireStartedAt) {
     String url = openGroupInvitation.getUrl();
     String name = openGroupInvitation.getName();
     if (url == null || name == null) { return null; }
@@ -54,7 +54,7 @@ public class OutgoingTextMessage {
     return message;
   }
 
-  public Recipient getRecipient() {
+  public Address getRecipient() {
     return recipient;
   }
 

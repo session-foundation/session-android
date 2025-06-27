@@ -11,7 +11,7 @@ import androidx.annotation.Nullable;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import org.session.libsession.utilities.recipients.Recipient.VibrateState;
+
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
@@ -51,14 +51,6 @@ public class NotificationState {
     }
 
     return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-  }
-
-  public VibrateState getVibrate() {
-    if (!notifications.isEmpty()) {
-      Recipient recipient = notifications.getFirst().getRecipient();
-      return recipient.resolve().getMessageVibrate();
-    }
-    return VibrateState.DEFAULT;
   }
 
   public boolean hasMultipleThreads()              { return threads.size() > 1; }

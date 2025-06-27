@@ -33,7 +33,7 @@ public class MessageResult {
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof MessageResult that)) return false;
-      return threadId == that.threadId && sentTimestampMs == that.sentTimestampMs && Objects.equals(conversationRecipient, that.conversationRecipient) && Objects.equals(messageRecipient, that.messageRecipient) && Objects.equals(bodySnippet, that.bodySnippet);
+    return threadId == that.threadId && sentTimestampMs == that.sentTimestampMs && Objects.equals(conversationRecipient, that.conversationRecipient) && Objects.equals(messageRecipient, that.messageRecipient) && Objects.equals(bodySnippet, that.bodySnippet);
   }
 
   @Override

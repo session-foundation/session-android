@@ -91,14 +91,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getProfileKey(): String?
-    fun setProfileKey(key: String?)
-    fun setProfileName(name: String?)
-    fun getProfileName(): String?
-    fun setProfileAvatarId(id: Int)
-    fun getProfileAvatarId(): Int
-    fun setProfilePictureURL(url: String?)
-    fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
@@ -1176,39 +1168,6 @@ class AppTextSecurePreferences @Inject constructor(
 
     override fun setIsGifSearchInGridLayout(isGrid: Boolean) {
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
-    }
-
-    override fun getProfileKey(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, null)
-    }
-
-    override fun setProfileKey(key: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, key)
-    }
-
-    override fun setProfileName(name: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
-    }
-
-    override fun getProfileName(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, null)
-    }
-
-    override fun setProfileAvatarId(id: Int) {
-        setIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, id)
-    }
-
-    override fun getProfileAvatarId(): Int {
-        return getIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, 0)
-    }
-
-    override fun setProfilePictureURL(url: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, url)
-    }
-
-    override fun getProfilePictureURL(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, null)
     }
 
     override fun getNotificationPriority(): Int {

@@ -41,7 +41,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.ViewUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
@@ -53,6 +52,7 @@ import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -86,8 +86,8 @@ class VisibleMessageView : FrameLayout {
     @Inject lateinit var mmsDb: MmsDatabase
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var configFactory: ConfigFactoryProtocol
-    @Inject lateinit var usernameUtils: UsernameUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var recipientRepository: RecipientRepository
 
     private val binding = ViewVisibleMessageBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -180,7 +180,7 @@ class VisibleMessageView : FrameLayout {
         isOutgoing = message.isOutgoing
         replyDisabled = message.isOpenGroupInvitation
         val threadID = message.threadId
-        val thread = threadDb.getRecipientForThreadId(threadID) ?: return
+        val thread = threadDb.getRecipientForThreadId(threadID)?.let(recipientRepository::getRecipientSync) ?: return
         val isGroupThread = thread.isGroupOrCommunityRecipient
         val isStartOfMessageCluster = isStartOfMessageCluster(message, previous, isGroupThread)
         val isEndOfMessageCluster = isEndOfMessageCluster(message, next, isGroupThread)
@@ -257,12 +257,7 @@ class VisibleMessageView : FrameLayout {
         binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
         val contactContext =
             if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
-            contact = contact,
-            accountID = senderAccountID,
-            contactContext = contactContext,
-            groupId = groupId
-        )
+        binding.senderNameTextView.text = recipientRepository.getRecipientDisplayNameSync(Address.fromSerialized(senderAccountID))
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing

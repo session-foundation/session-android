@@ -6,23 +6,30 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
+import org.thoughtcrime.securesms.database.RecipientRepository;
 import org.thoughtcrime.securesms.database.model.MessageId;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
+import dagger.hilt.android.lifecycle.HiltViewModel;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
+@HiltViewModel(assistedFactory = ReactionsViewModel.Factory.class)
 public class ReactionsViewModel extends ViewModel {
 
   private final MessageId           messageId;
   private final ReactionsRepository repository;
 
-  public ReactionsViewModel(@NonNull MessageId messageId) {
+  @AssistedInject
+  public ReactionsViewModel(@Assisted @NonNull MessageId messageId, final ReactionsRepository repository) {
     this.messageId  = messageId;
-    this.repository = new ReactionsRepository();
+    this.repository = repository;
   }
 
   public @NonNull
@@ -65,17 +72,9 @@ public class ReactionsViewModel extends ViewModel {
     return reactions.get(reactions.size() - 1).getDisplayEmoji();
   }
 
-  static final class Factory implements ViewModelProvider.Factory {
+  @AssistedFactory
+  public interface Factory {
 
-    private final MessageId messageId;
-
-    Factory(@NonNull MessageId messageId) {
-      this.messageId = messageId;
-    }
-
-    @Override
-    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-      return modelClass.cast(new ReactionsViewModel(messageId));
-    }
+    ReactionsViewModel create(@NonNull MessageId messageId);
   }
 }

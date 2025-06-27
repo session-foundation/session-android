@@ -13,9 +13,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.FragmentConversationBottomSheetBinding
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.isGroupDestroyed
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
@@ -78,8 +75,8 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
 
         if (!recipient.isGroupOrCommunityRecipient && !recipient.isLocalNumber) {
             binding.detailsTextView.visibility = View.VISIBLE
-            binding.unblockTextView.visibility = if (recipient.isBlocked) View.VISIBLE else View.GONE
-            binding.blockTextView.visibility = if (recipient.isBlocked) View.GONE else View.VISIBLE
+            binding.unblockTextView.visibility = if (recipient.blocked) View.VISIBLE else View.GONE
+            binding.blockTextView.visibility = if (recipient.blocked) View.GONE else View.VISIBLE
             binding.detailsTextView.setOnClickListener(this)
             binding.blockTextView.setOnClickListener(this)
             binding.unblockTextView.setOnClickListener(this)
@@ -99,7 +96,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
         binding.copyCommunityUrl.setOnClickListener(this)
 
         val notificationIconRes = when{
-            recipient.isMuted -> R.drawable.ic_volume_off
+            recipient.isMuted() -> R.drawable.ic_volume_off
             recipient.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
                 R.drawable.ic_at_sign
             else -> R.drawable.ic_volume_2

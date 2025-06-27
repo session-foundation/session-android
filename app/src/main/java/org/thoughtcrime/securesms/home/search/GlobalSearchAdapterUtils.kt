@@ -7,6 +7,7 @@ import android.text.style.StyleSpan
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
@@ -89,7 +90,9 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultSubtitle.isVisible = model.isLegacy
     binding.searchResultTimestamp.isVisible = false
-    val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupId), false)
+    val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
+        Address.fromSerialized(model.groupId)
+    )
     binding.searchResultProfilePicture.update(threadRecipient)
     val nameString = model.title
     binding.searchResultTitle.text = getHighlight(query, nameString)
@@ -104,7 +107,9 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultSubtitle.isVisible = false
     searchResultTimestamp.isVisible = false
     searchResultSubtitle.text = null
-    val recipient = Recipient.from(root.context, Address.fromSerialized(model.contact.hexString), false)
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(
+        Address.fromSerialized(model.contact.hexString)
+    )
     searchResultProfilePicture.update(recipient)
     val nameString = if (model.isSelf) root.context.getString(R.string.noteToSelf)
         else model.name
@@ -132,7 +137,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
-        val text = "${model.messageResult.messageRecipient.name}: "
+        val text = "${model.messageResult.messageRecipient.displayName}: "
         textSpannable.append(text)
     }
     textSpannable.append(getHighlight(
@@ -146,7 +151,7 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
 }
 
 fun Recipient.getSearchName(): String =
-    name.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
+    displayName.takeIf { it.isNotEmpty() && !it.looksLikeAccountId }
     ?: address.toString().let(::truncateIdForDisplay)
 
 fun Contact.getSearchName(): String =

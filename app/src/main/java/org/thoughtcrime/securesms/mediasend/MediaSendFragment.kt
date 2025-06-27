@@ -31,9 +31,9 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendFragmentBinding
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isEnterSendsEnabled
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardHiddenListener
 import org.thoughtcrime.securesms.components.KeyboardAwareLinearLayout.OnKeyboardShownListener
@@ -435,9 +435,9 @@ class MediaSendFragment : Fragment(), RailItemListener,
 
         private const val KEY_ADDRESS = "address"
 
-        fun newInstance(recipient: Recipient): MediaSendFragment {
+        fun newInstance(address: Address): MediaSendFragment {
             val args = Bundle()
-            args.putParcelable(KEY_ADDRESS, recipient.address)
+            args.putParcelable(KEY_ADDRESS, address)
 
             val fragment = MediaSendFragment()
             fragment.arguments = args

@@ -71,9 +71,9 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
+import org.session.libsession.messaging.messages.ProfileUpdateHandler
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
-import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
@@ -378,7 +378,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             return false
         }
 
-        if (displayName.toByteArray().size > ProfileManagerProtocol.NAME_PADDED_LENGTH) {
+        if (displayName.toByteArray().size > ProfileUpdateHandler.MAX_PROFILE_NAME_LENGTH) {
             Toast.makeText(this, R.string.displayNameErrorDescriptionShorter, Toast.LENGTH_SHORT).show()
             return false
         }

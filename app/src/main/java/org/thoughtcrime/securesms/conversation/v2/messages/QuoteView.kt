@@ -67,8 +67,8 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     // region Updating
     fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: Recipient,
-        isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
-        isOriginalMissing: Boolean, glide: RequestManager) {
+             isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
+             isOriginalMissing: Boolean, glide: RequestManager) {
         // Author
         val author = contactDb.getContactWithAccountID(authorPublicKey)
         val localNumber = TextSecurePreferences.getLocalNumber(context)

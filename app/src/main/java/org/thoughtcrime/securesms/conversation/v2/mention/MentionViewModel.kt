@@ -32,7 +32,6 @@ import network.loki.messenger.libsession_util.allWithStatus
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -40,7 +39,6 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
-import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.observeChanges
 
 /**
@@ -89,31 +87,31 @@ class MentionViewModel(
             .debounce(500L)
             .onStart { emit(Unit) }
             .mapLatest {
-                val recipient = checkNotNull(threadDatabase.getRecipientForThreadId(threadID)) {
+                val address = checkNotNull(threadDatabase.getRecipientForThreadId(threadID)) {
                     "Recipient not found for thread ID: $threadID"
                 }
 
                 val memberIDs = when {
-                    recipient.isLegacyGroupRecipient -> {
-                        groupDatabase.getGroupMemberAddresses(recipient.address.toGroupString(), false)
+                    address.isLegacyGroup -> {
+                        groupDatabase.getGroupMemberAddresses(address.toGroupString(), false)
                             .map { it.toString() }
                     }
-                    recipient.isGroupV2Recipient -> {
-                        storage.getMembers(recipient.address.toString()).map { it.accountId() }
+                    address.isGroupV2 -> {
+                        storage.getMembers(address.toString()).map { it.accountId() }
                     }
 
-                    recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
-                    recipient.isContactRecipient -> listOf(recipient.address.toString())
+                    address.isCommunity -> mmsDatabase.getRecentChatMemberIDs(threadID, 20)
+                    address.isContact -> listOf(address.address)
                     else -> listOf()
                 }
 
-                val openGroup = if (recipient.isCommunityRecipient) {
+                val openGroup = if (address.isCommunity) {
                     storage.getOpenGroup(threadID)
                 } else {
                     null
                 }
 
-                val moderatorIDs = if (recipient.isCommunityRecipient) {
+                val moderatorIDs = if (address.isCommunity) {
                     val groupId = openGroup?.id
                     if (groupId.isNullOrBlank()) {
                         emptySet()
@@ -123,8 +121,8 @@ class MentionViewModel(
                                 memberId.takeIf { roles.any { it.isModerator } }
                             }
                     }
-                } else if (recipient.isGroupV2Recipient) {
-                    configFactory.withGroupConfigs(AccountId(recipient.address.toString())) {
+                } else if (address.isGroupV2) {
+                    configFactory.withGroupConfigs(AccountId(address.toString())) {
                         it.groupMembers.allWithStatus()
                             .filter { (member, status) -> member.isAdminOrBeingPromoted(status) }
                             .mapTo(hashSetOf()) { (member, _) -> member.accountId() }
@@ -133,7 +131,7 @@ class MentionViewModel(
                     emptySet()
                 }
 
-                val contactContext = if (recipient.isCommunityRecipient) {
+                val contactContext = if (address.isCommunity) {
                     Contact.ContactContext.OPEN_GROUP
                 } else {
                     Contact.ContactContext.REGULAR
