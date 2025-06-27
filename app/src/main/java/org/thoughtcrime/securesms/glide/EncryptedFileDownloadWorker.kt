@@ -10,12 +10,15 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
@@ -133,7 +136,7 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
             )
         }
 
-        fun enqueue(context: Context, fileId: String, cacheFolderName: String): Operation {
+        fun enqueue(context: Context, fileId: String, cacheFolderName: String): Flow<WorkInfo> {
             val request = OneTimeWorkRequestBuilder<EncryptedFileDownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, Duration.ofSeconds(5))
@@ -146,12 +149,18 @@ class EncryptedFileDownloadWorker @AssistedInject constructor(
                 )
                 .build()
 
-            return WorkManager.getInstance(context)
+            val name = uniqueWorkName(fileId, cacheFolderName)
+
+            WorkManager.getInstance(context)
                 .enqueueUniqueWork(
-                    uniqueWorkName(fileId, cacheFolderName),
+                    name,
                     ExistingWorkPolicy.REPLACE,
                     request
                 )
+
+            return WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWorkFlow(name)
+                .mapNotNull { it.firstOrNull() }
         }
     }
 }

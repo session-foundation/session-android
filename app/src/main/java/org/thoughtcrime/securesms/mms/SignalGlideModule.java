@@ -69,7 +69,7 @@ public class SignalGlideModule extends AppGlideModule {
     registry.prepend(Bitmap.class, new EncryptedBitmapResourceEncoder(secret));
     registry.prepend(GifDrawable.class, new EncryptedGifDrawableResourceEncoder(secret));
 
-    registry.append(RemoteFile.class, byte[].class, new RemoteFileLoader.Factory(context));
+    registry.append(RemoteFile.class, InputStream.class, new RemoteFileLoader.Factory(context));
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
     registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());

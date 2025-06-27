@@ -14,37 +14,27 @@ import network.loki.messenger.libsession_util.Curve25519
 import network.loki.messenger.libsession_util.GroupInfoConfig
 import network.loki.messenger.libsession_util.GroupKeysConfig
 import network.loki.messenger.libsession_util.GroupMembersConfig
-import network.loki.messenger.libsession_util.MutableConversationVolatileConfig
-import network.loki.messenger.libsession_util.MutableUserGroupsConfig
 import network.loki.messenger.libsession_util.UserGroupsConfig
 import network.loki.messenger.libsession_util.UserProfile
-import network.loki.messenger.libsession_util.util.BaseCommunityInfo
-import network.loki.messenger.libsession_util.util.Bytes
 import network.loki.messenger.libsession_util.util.ConfigPush
-import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.MultiEncrypt
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigMessage
 import org.session.libsession.utilities.ConfigPushResult
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupConfigs
-import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.MutableGroupConfigs
 import org.session.libsession.utilities.MutableUserConfigs
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.UserConfigs
 import org.session.libsession.utilities.getGroup
-import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
-import org.session.libsignal.utilities.toHexString
 import org.thoughtcrime.securesms.configs.ConfigToDatabaseSync
 import org.thoughtcrime.securesms.database.ConfigDatabase
 import org.thoughtcrime.securesms.database.ConfigVariant
@@ -564,92 +554,6 @@ private val UserConfigType.configVariant: ConfigVariant
         UserConfigType.USER_GROUPS -> ConfigDatabase.USER_GROUPS_VARIANT
     }
 
-/**
- * Sync group data from our local database
- */
-private fun MutableUserGroupsConfig.initFrom(storage: StorageProtocol) {
-    storage
-        .getAllOpenGroups()
-        .values
-        .asSequence()
-        .mapNotNull { openGroup ->
-            val (baseUrl, room, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: return@mapNotNull null
-            val pubKeyHex = Hex.toStringCondensed(pubKey)
-            val baseInfo = BaseCommunityInfo(baseUrl, room, pubKeyHex)
-            val threadId = storage.getThreadId(openGroup) ?: return@mapNotNull null
-            val isPinned = storage.isPinned(threadId)
-            GroupInfo.CommunityGroupInfo(baseInfo, if (isPinned) 1 else 0)
-        }
-        .forEach(this::set)
-
-    storage
-        .getAllGroups(includeInactive = false)
-        .asSequence().filter { it.isLegacyGroup && it.isActive && it.members.size > 1 }
-        .mapNotNull { group ->
-            val groupAddress = Address.fromSerialized(group.encodedId)
-            val groupPublicKey = GroupUtil.doubleDecodeGroupID(groupAddress.toString()).toHexString()
-            val recipient = storage.getRecipientSettings(groupAddress) ?: return@mapNotNull null
-            val encryptionKeyPair = storage.getLatestClosedGroupEncryptionKeyPair(groupPublicKey) ?: return@mapNotNull null
-            val threadId = storage.getThreadId(group.encodedId)
-            val isPinned = threadId?.let { storage.isPinned(threadId) } ?: false
-            val admins = group.admins.associate { it.toString() to true }
-            val members = group.members.filterNot { it.toString() !in admins.keys }.associate { it.toString() to false }
-            GroupInfo.LegacyGroupInfo(
-                accountId = groupPublicKey,
-                name = group.title,
-                members = admins + members,
-                priority = if (isPinned) ConfigBase.PRIORITY_PINNED else ConfigBase.PRIORITY_VISIBLE,
-                encPubKey = Bytes((encryptionKeyPair.publicKey as DjbECPublicKey).publicKey),  // 'serialize()' inserts an extra byte
-                encSecKey = Bytes(encryptionKeyPair.privateKey.serialize()),
-                disappearingTimer = recipient.expireMessages.toLong(),
-                joinedAtSecs = (group.formationTimestamp / 1000L)
-            )
-        }
-        .forEach(this::set)
-}
-
-private fun MutableConversationVolatileConfig.initFrom(storage: StorageProtocol, threadDb: ThreadDatabase) {
-    threadDb.approvedConversationList.use { cursor ->
-        val reader = threadDb.readerFor(cursor, false)
-        var current = reader.next
-        while (current != null) {
-            val recipient = current.recipient
-            val contact = when {
-                recipient.isCommunityRecipient -> {
-                    val openGroup = storage.getOpenGroup(current.threadId) ?: continue
-                    val (base, room, pubKey) = BaseCommunityInfo.parseFullUrl(openGroup.joinURL) ?: continue
-                    getOrConstructCommunity(base, room, pubKey)
-                }
-                recipient.isGroupV2Recipient -> {
-                    // It's probably safe to assume there will never be a case where new closed groups will ever be there before a dump is created...
-                    // but just in case...
-                    getOrConstructClosedGroup(recipient.address.toString())
-                }
-                recipient.isLegacyGroupRecipient -> {
-                    val groupPublicKey = GroupUtil.doubleDecodeGroupId(recipient.address.toString())
-                    getOrConstructLegacyGroup(groupPublicKey)
-                }
-                recipient.isContactRecipient -> {
-                    if (recipient.isLocalNumber) null // this is handled by the user profile NTS data
-                    else if (recipient.isCommunityInboxRecipient) null // specifically exclude
-                    else if (!recipient.address.toString().startsWith(IdPrefix.STANDARD.value)) null
-                    else getOrConstructOneToOne(recipient.address.toString())
-                }
-                else -> null
-            }
-            if (contact == null) {
-                current = reader.next
-                continue
-            }
-            contact.lastRead = current.lastSeen
-            contact.unread = false
-            set(contact)
-            current = reader.next
-        }
-    }
-}
-
-
 private class UserConfigsImpl(
     userEd25519SecKey: ByteArray,
     private val userAccountId: AccountId,
@@ -690,16 +594,6 @@ private class UserConfigsImpl(
         ed25519SecretKey = userEd25519SecKey,
         initialDump = convoInfoDump,
     )
-
-    init {
-        if (userGroupsDump == null) {
-            userGroups.initFrom(storage)
-        }
-
-        if (convoInfoDump == null) {
-            convoInfoVolatile.initFrom(storage, threadDb)
-        }
-    }
 }
 
 private class GroupConfigsImpl(
