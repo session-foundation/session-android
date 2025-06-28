@@ -1,6 +1,7 @@
  package org.thoughtcrime.securesms.preferences
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -91,7 +92,7 @@ import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
@@ -210,7 +211,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                 hideUrlDialog = { urlToOPen = null },
                 onSheetDismissRequest = { showAvatarPickerOptions = false },
                 onGalleryPicked = {
-                    pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    try {
+                        pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 onCameraPicked = {
                     viewModel.createTempFile()?.let{
@@ -556,7 +561,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
             Cell {
                 Column {
-                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole) { push<PrivacySettingsActivity>() }
+                    LargeItemButton(R.string.sessionPrivacy, R.drawable.ic_lock_keyhole, Modifier.qaTag(R.string.AccessibilityId_sessionPrivacy)) { push<PrivacySettingsActivity>() }
                     Divider()
 
                     LargeItemButton(R.string.sessionNotifications, R.drawable.ic_volume_2, Modifier.qaTag(R.string.AccessibilityId_notifications)) { push<NotificationSettingsActivity>() }
@@ -823,12 +828,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             },
             showCloseButton = true, // display the 'x' button
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.save),
                     enabled = state is TempAvatar,
                     onClick = saveAvatar
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.remove),
                     color = LocalColors.current.danger,
                     enabled = state is UserAvatar || // can remove is the user has an avatar set

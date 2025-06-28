@@ -65,6 +65,18 @@ interface ButtonType {
         )
     }
 
+    object TertiaryFill: ButtonType {
+        @Composable
+        override fun border(enabled: Boolean) = if (enabled) null else disabledBorder
+        @Composable
+        override fun buttonColors() = ButtonDefaults.buttonColors(
+            contentColor = LocalColors.current.text,
+            containerColor = LocalColors.current.backgroundTertiary,
+            disabledContentColor = LocalColors.current.disabled,
+            disabledContainerColor = Color.Transparent
+        )
+    }
+
     class Borderless(private val color: Color): ButtonType {
         override val contentPadding: PaddingValues
             get() = PaddingValues(horizontal = 16.dp, vertical = 12.dp)

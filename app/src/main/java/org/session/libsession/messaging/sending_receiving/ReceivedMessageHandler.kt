@@ -470,7 +470,12 @@ fun MessageReceiver.handleVisibleMessage(
     } ?: run {
         // A user is mentioned if their public key is in the body of a message or one of their messages
         // was quoted
-        val messageText = message.text
+
+        // Verify the incoming message length and truncate it if needed, before saving it to the db
+        val proStatusManager = MessagingModuleConfiguration.shared.proStatusManager
+        val maxChars = proStatusManager.getIncomingMessageMaxLength(message)
+        val messageText = message.text?.take(maxChars) // truncate to max char limit for this message
+        message.text = messageText
         message.hasMention = listOf(userPublicKey, context.userBlindedKey)
             .filterNotNull()
             .any { key ->

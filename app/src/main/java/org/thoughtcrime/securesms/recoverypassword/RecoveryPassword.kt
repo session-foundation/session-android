@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SessionShieldIcon
 import org.thoughtcrime.securesms.ui.components.QrImage
@@ -197,12 +197,12 @@ private fun HideRecoveryPasswordCell(
             title = stringResource(R.string.recoveryPasswordHidePermanently),
             text = stringResource(R.string.recoveryPasswordHidePermanentlyDescription1),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(R.string.theContinue),
                     color = LocalColors.current.danger,
                     onClick = { showHideRecoveryConfirmationDialog = true }
                 ),
-                DialogButtonModel(GetString(android.R.string.cancel))
+                DialogButtonData(GetString(android.R.string.cancel))
             )
         )
     }
@@ -214,12 +214,12 @@ private fun HideRecoveryPasswordCell(
             title = stringResource(R.string.recoveryPasswordHidePermanently),
             text = stringResource(R.string.recoveryPasswordHidePermanentlyDescription2),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(R.string.yes),
                     color = LocalColors.current.danger,
                     onClick = confirmHideRecovery
                 ),
-                DialogButtonModel(GetString(android.R.string.cancel))
+                DialogButtonData(GetString(android.R.string.cancel))
             )
         )
     }

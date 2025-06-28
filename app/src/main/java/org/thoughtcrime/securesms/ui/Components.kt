@@ -13,9 +13,11 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,9 +35,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -67,6 +71,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -80,6 +85,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
@@ -89,18 +95,29 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideSubcomposition
+import com.bumptech.glide.integration.compose.RequestState
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
+import org.thoughtcrime.securesms.openUrl
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
@@ -537,7 +554,7 @@ fun BottomFadingEdgeBox(
                 .background(
                     Brush.verticalGradient(
                         0f to Color.Transparent,
-                        1f to fadingColor,
+                        0.9f to fadingColor,
                         tileMode = TileMode.Repeated
                     )
                 )
@@ -568,6 +585,218 @@ private fun BottomFadingEdgeBoxPreview() {
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             text = "Do stuff", onClick = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionProCTA(
+    content: @Composable () -> Unit,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = onCancel,
+        content = {
+            DialogBg {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // hero image
+                    BottomFadingEdgeBox(
+                        fadingEdgeHeight = 70.dp,
+                        fadingColor = LocalColors.current.backgroundSecondary,
+                        content = { _ ->
+                            content()
+                        },
+                    )
+
+                    // content
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(LocalDimensions.current.smallSpacing)
+                    ) {
+                        // title
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Text(
+                                text = stringResource(R.string.upgradeTo),
+                                style = LocalType.current.h5
+                            )
+
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // main message
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = text,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // features
+                        features.forEachIndexed { index, feature ->
+                            ProCTAFeature(text = feature)
+                            if(index < features.size - 1){
+                                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                            }
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // buttons
+                        Row(
+                            Modifier.height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
+                        ) {
+                            AccentFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.upgradeTo),
+                                onClick = onUpgrade
+                            )
+
+                            TertiaryFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.cancel),
+                                onClick = onCancel
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun SimpleSessionProCTA(
+    @DrawableRes heroImage: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+        Image(
+            modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+            contentScale = ContentScale.FillWidth,
+            painter = painterResource(id = heroImage),
+            contentDescription = null,
+        )
+    })
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AnimatedSessionProCTA(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+            Image(
+                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+                contentScale = ContentScale.FillWidth,
+                painter = painterResource(id = heroImageBg),
+                contentDescription = null,
+            )
+
+            GlideSubcomposition(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                model = heroImageAnimatedFg,
+            ){
+                when (state) {
+                    is RequestState.Success -> {
+                        Image(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth,
+                            painter = painter,
+                            contentDescription = null,
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+        })
+}
+
+@Preview
+@Composable
+private fun PreviewProCTA(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        SimpleSessionProCTA(
+            heroImage = R.drawable.cta_hero_char_limit,
+            text = "This is a description of this Pro feature",
+            features = listOf(
+                "Feature one",
+                "Feature two",
+                "Feature three",
+            ),
+            onUpgrade = {},
+            onCancel = {}
+        )
+    }
+}
+
+@Composable
+fun ProCTAFeature(
+    text: String,
+    modifier: Modifier = Modifier
+){
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_circle_check),
+            colorFilter = ColorFilter.tint(LocalColors.current.accent),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+
+        Text(
+            text = text,
+            style = LocalType.current.base
         )
     }
 }

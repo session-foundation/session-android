@@ -234,6 +234,10 @@ class MentionViewModel(
      * As "@123456" is the standard format for mentioning a user, this method will replace "@Alice" with "@123456"
      */
     fun normalizeMessageBody(): String {
+        return deconstructMessageMentions().trim()
+    }
+
+    fun deconstructMessageMentions(): String {
         val spansWithRanges = editable.getSpans<MentionSpan>()
             .mapTo(mutableListOf()) { span ->
                 span to (editable.getSpanStart(span)..editable.getSpanEnd(span))
@@ -244,22 +248,27 @@ class MentionViewModel(
         val sb = StringBuilder()
         var offset = 0
         for ((span, range) in spansWithRanges) {
-            // Add content before the mention span. There's a possibility of overlapping spans so we need to
-            // safe guard the start offset here to not go over our span's start.
+            // Add content before the mention span
             val thisMentionStart = range.first
             val lastMentionEnd = offset.coerceAtMost(thisMentionStart)
             sb.append(editable, lastMentionEnd, thisMentionStart)
 
             // Replace the mention span with "@public key"
-            sb.append('@').append(span.member.publicKey).append(' ')
+            sb.append('@').append(span.member.publicKey)
 
-            // Safe guard offset to not go over the end of the editable.
+            // Check if the original mention span ended with a space
+            // The span includes the space, so we need to preserve it in the deconstructed version
+            if (range.last < editable.length && editable[range.last] == ' ') {
+                sb.append(' ')
+            }
+
+            // Move offset to after the mention span (including the space)
             offset = (range.last + 1).coerceAtMost(editable.length)
         }
 
         // Add the remaining content
         sb.append(editable, offset, editable.length)
-        return sb.toString().trim()
+        return sb.toString()
     }
 
     data class Member(

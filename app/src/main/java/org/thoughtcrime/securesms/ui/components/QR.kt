@@ -64,7 +64,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -146,11 +146,11 @@ fun QRScannerScreen(
                 text = context.getSubbedString(R.string.permissionsCameraDenied,
                     APP_NAME_KEY to context.getString(R.string.app_name)),
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.sessionSettings)),
                         onClick = onClickSettings
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )

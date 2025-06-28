@@ -49,7 +49,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
 import org.thoughtcrime.securesms.groups.GroupMemberState
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.ActionSheet
@@ -259,13 +259,13 @@ private fun ConfirmRemovingMemberDialog(
 ) {
     val context = LocalContext.current
     val buttons = buildList {
-        this += DialogButtonModel(
+        this += DialogButtonData(
             text = GetString(R.string.remove),
             color = LocalColors.current.danger,
             onClick = { onConfirmed(member.accountId, false) }
         )
 
-        this += DialogButtonModel(
+        this += DialogButtonData(
             text = GetString(R.string.cancel),
             onClick = onDismissRequest,
         )

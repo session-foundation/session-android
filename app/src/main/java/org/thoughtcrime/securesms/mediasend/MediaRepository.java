@@ -194,6 +194,11 @@ class MediaRepository {
                 long   size        = cursor.getLong(cursor.getColumnIndexOrThrow(Images.Media.SIZE));
                 String filename    = cursor.getString(cursor.getColumnIndexOrThrow(Images.Media.DISPLAY_NAME));
 
+                // skip media if the filename or mimetype is null here
+                if (filename == null || mimetype == null) {
+                    continue;
+                }
+
                 media.add(new Media(uri, filename, mimetype, date, width, height, size, bucketId, null));
             }
         }

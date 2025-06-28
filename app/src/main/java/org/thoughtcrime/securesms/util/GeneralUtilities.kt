@@ -1,8 +1,6 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.res.Resources
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
@@ -24,36 +22,17 @@ fun toDp(px: Float, resources: Resources): Float {
     return (px / scale)
 }
 
-val RecyclerView.isScrolledToBottom: Boolean
+/**
+ * Returns true if the recyclerview is scrolled within 50dp of the bottom
+ */
+val RecyclerView.isNearBottom: Boolean
     get() = computeVerticalScrollOffset().coerceAtLeast(0) +
             computeVerticalScrollExtent() +
             toPx(50, resources) >= computeVerticalScrollRange()
 
-val RecyclerView.isScrolledToWithin30dpOfBottom: Boolean
-    get() {
-        // Retrieve the bottom inset from the window insets, if available.
-        val bottomInset = ViewCompat.getRootWindowInsets(this)
-            ?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
-
-        return computeVerticalScrollOffset().coerceAtLeast(0) +
-                computeVerticalScrollExtent() +
-                toPx(30, resources) +
-                bottomInset >= computeVerticalScrollRange()
-    }
-
-
 val RecyclerView.isFullyScrolled: Boolean
     get() {
-        val scrollOffset = computeVerticalScrollOffset().coerceAtLeast(0)
-        val scrollExtent = computeVerticalScrollExtent()
-        val scrollRange = computeVerticalScrollRange()
-
-        /// Retrieve the bottom inset from the window insets, if available.
-        val bottomInset = ViewCompat.getRootWindowInsets(this)
-            ?.getInsets(WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
-
-        // We're at the bottom if the offset + extent equals the range (accounting for insets)
-        return scrollOffset + scrollExtent >= scrollRange - bottomInset
+        return scrollAmount == 0
     }
 
 val RecyclerView.scrollAmount: Int

@@ -25,6 +25,7 @@ interface ThemeColors {
     val disabled: Color
     val background: Color
     val backgroundSecondary: Color
+    val backgroundTertiary: Color
     val text: Color
     val textSecondary: Color
     val borders: Color
@@ -116,6 +117,7 @@ data class ClassicDark(override val accent: Color = primaryGreen) : ThemeColors 
     override val disabled = disabledDark
     override val background = classicDark0
     override val backgroundSecondary = classicDark1
+    override val backgroundTertiary = classicDark2
     override val onInvertedBackgroundAccent = background
     override val text = classicDark6
     override val textSecondary = classicDark5
@@ -137,6 +139,7 @@ data class ClassicLight(override val accent: Color = primaryGreen) : ThemeColors
     override val disabled = disabledLight
     override val background = classicLight6
     override val backgroundSecondary = classicLight5
+    override val backgroundTertiary = classicLight4
     override val onInvertedBackgroundAccent = accent
     override val text = classicLight0
     override val textSecondary = classicLight1
@@ -158,6 +161,7 @@ data class OceanDark(override val accent: Color = primaryBlue) : ThemeColors {
     override val disabled = disabledDark
     override val background = oceanDark2
     override val backgroundSecondary = oceanDark1
+    override val backgroundTertiary = oceanDark0
     override val onInvertedBackgroundAccent = background
     override val text = oceanDark7
     override val textSecondary = oceanDark5
@@ -179,6 +183,7 @@ data class OceanLight(override val accent: Color = primaryBlue) : ThemeColors {
     override val disabled = disabledLight
     override val background = oceanLight7
     override val backgroundSecondary = oceanLight6
+    override val backgroundTertiary = oceanLight5
     override val onInvertedBackgroundAccent = background
     override val text = oceanLight1
     override val textSecondary = oceanLight2
@@ -215,6 +220,9 @@ private fun ThemeColors() {
         }
         Box(Modifier.background(LocalColors.current.backgroundSecondary)) {
             Text("backgroundSecondary", style = LocalType.current.base)
+        }
+        Box(Modifier.background(LocalColors.current.backgroundTertiary)) {
+            Text("backgroundTertiary", style = LocalType.current.base)
         }
         Box(Modifier.background(LocalColors.current.text)) {
             Text("text", style = LocalType.current.base)

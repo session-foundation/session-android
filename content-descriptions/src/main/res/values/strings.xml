@@ -125,7 +125,7 @@
     <string name="qa_conversation_settings_manage_members">manage-members-menu-option</string>
     <string name="qa_conversation_settings_group_members">group-members-menu-option</string>
     <string name="qa_conversation_settings_invite_contacts">invite-contacts-menu-option</string>
-    <string name="qa_conversation_settings_leave_group">leave-group-confirm-button</string>
+    <string name="qa_conversation_settings_leave_group">leave-group-menu-option</string>
     <string name="qa_conversation_settings_delete_group">delete-group-menu-option</string>
     <string name="qa_conversation_settings_dialog_hide_nts_confirm">hide-nts-confirm-button</string>
     <string name="qa_conversation_settings_dialog_hide_nts_cancel">hide-nts-cancel-button</string>
@@ -223,10 +223,6 @@
     <!-- Modals -->
     <string name="AccessibilityId_modalTitle">Modal heading</string>
     <string name="AccessibilityId_modalMessage">Modal description</string>
-    <!-- Delete message modal-->
-    <string name="AccessibilityId_deleteMessageCancel">Cancel deletion</string>
-    <string name="AccessibilityId_deleteMessageEveryone">Delete for everyone</string>   <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForEveryone"? -->
-    <string name="AccessibilityId_deleteMessageDeviceOnly">Delete just for me</string>  <!-- ACL: Perhaps should be "AccessibilityId_clearMessagesForMe"?       -->
     <!--Settings Page-->
     <string name="AccessibilityId_sessionAppearance">Appearance</string>
     <string name="AccessibilityId_apply">Apply</string>
@@ -259,5 +255,8 @@
     <string name="AccessibilityId_remove">Remove</string>
     <string name="qa_input_error">error-message</string>
     <string name="qa_button_submit">submit-button</string>
+    <string name="qa_blocked_banner">blocked-banner</string>
+    <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
+    <string name="qa_delete_message_everyone">delete-for-everyone</string>
 
 </resources>

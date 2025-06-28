@@ -58,7 +58,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvi
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.BackAppBar
@@ -127,11 +127,11 @@ fun DebugMenu(
                 text = "This will restart the app...",
                 showCloseButton = false, // don't display the 'x' button
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = { sendCommand(HideDeprecationChangeDialog) }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = { sendCommand(OverrideDeprecationState) }
                     )
@@ -146,11 +146,11 @@ fun DebugMenu(
                 text = "Changing this setting will result in all conversations and Snode data being cleared...",
                 showCloseButton = false, // don't display the 'x' button
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = { sendCommand(HideEnvironmentWarningDialog) }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = { sendCommand(ChangeEnvironment) }
                     )
@@ -199,6 +199,33 @@ fun DebugMenu(
                     values = uiState.environments,
                     onValueSelected = {
                         sendCommand(ShowEnvironmentWarningDialog(it))
+                    }
+                )
+            }
+
+            // Session Pro
+            DebugCell("Session Pro") {
+                DebugSwitchRow(
+                    text = "Set current user as Pro",
+                    checked = uiState.forceCurrentUserAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceCurrentUserAsPro(it))
+                    }
+                )
+
+                DebugSwitchRow(
+                    text = "Set all incoming messages as Pro",
+                    checked = uiState.forceIncomingMessagesAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceIncomingMessagesAsPro(it))
+                    }
+                )
+
+                DebugSwitchRow(
+                    text = "Set app as post Pro launch",
+                    checked = uiState.forcePostPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
                     }
                 )
             }
@@ -394,14 +421,14 @@ fun DebugMenu(
                 },
                 title = "Set Time",
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(R.string.cancel),
                         onClick = {
                             showingDeprecatedTimePicker = false
                             showingDeprecatingStartTimePicker = false
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(android.R.string.ok),
                         onClick = {
                             if (showingDeprecatedTimePicker) {
@@ -530,7 +557,10 @@ fun PreviewDebugMenu() {
                 forceDeprecationState = null,
                 deprecatedTime = ZonedDateTime.now(),
                 availableDeprecationState = emptyList(),
-                deprecatingStartTime = ZonedDateTime.now()
+                deprecatingStartTime = ZonedDateTime.now(),
+                forceCurrentUserAsPro = false,
+                forceIncomingMessagesAsPro = false,
+                forcePostPro = false,
             ),
             sendCommand = {},
             onClose = {}

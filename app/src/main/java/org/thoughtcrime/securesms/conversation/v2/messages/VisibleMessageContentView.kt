@@ -4,9 +4,10 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Rect
+import android.text.Layout
 import android.text.Spannable
+import android.text.StaticLayout
 import android.text.style.BackgroundColorSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.URLSpan
@@ -15,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -22,6 +24,9 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import androidx.core.text.toSpannable
 import androidx.core.view.children
+import androidx.core.view.doOnAttach
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -33,6 +38,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAt
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
+import org.session.libsession.utilities.needsCollapsing
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView.AttachmentType.AUDIO
@@ -43,6 +49,7 @@ import org.thoughtcrime.securesms.conversation.v2.messages.AttachmentControlView
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.conversation.v2.utilities.ModalURLSpan
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.getIntersectedModalSpans
+import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.PartAuthority
@@ -57,6 +64,8 @@ class VisibleMessageContentView : ConstraintLayout {
     var onContentDoubleTap: (() -> Unit)? = null
     var delegate: VisibleMessageViewDelegate? = null
     var indexInAdapter: Int = -1
+
+    private val MAX_COLLAPSED_LINE_COUNT = 25
 
     // region Lifecycle
     constructor(context: Context) : super(context)
@@ -74,7 +83,9 @@ class VisibleMessageContentView : ConstraintLayout {
         searchQuery: String? = null,
         downloadPendingAttachment: (DatabaseAttachment) -> Unit,
         retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
-        suppressThumbnails: Boolean = false
+        suppressThumbnails: Boolean = false,
+        isTextExpanded: Boolean = false,
+        onTextExpanded: ((MessageId) -> Unit)? = null
     ) {
         // Background
         val color = if (message.isOutgoing) context.getAccentColor()
@@ -115,6 +126,7 @@ class VisibleMessageContentView : ConstraintLayout {
             binding.deletedMessageView.root.isVisible = true
             binding.deletedMessageView.root.bind(message, getTextColor(context, message))
             binding.bodyTextView.isVisible = false
+            binding.readMore.isVisible = false
             binding.quoteView.root.isVisible = false
             binding.linkPreviewView.root.isVisible = false
             binding.voiceMessageView.root.isVisible = false
@@ -324,6 +336,11 @@ class VisibleMessageContentView : ConstraintLayout {
         }
 
         binding.bodyTextView.isVisible = message.body.isNotEmpty() && !hideBody
+        // set a max lines
+        binding.bodyTextView.maxLines = if(isTextExpanded) Int.MAX_VALUE else MAX_COLLAPSED_LINE_COUNT
+
+        binding.readMore.isVisible = false
+
         binding.contentParent.apply { isVisible = children.any { it.isVisible } }
 
         if (message.body.isNotEmpty() && !hideBody) {
@@ -336,6 +353,30 @@ class VisibleMessageContentView : ConstraintLayout {
                 binding.bodyTextView.getIntersectedModalSpans(e).iterator().forEach { span ->
                     span.onClick(binding.bodyTextView)
                 }
+            }
+
+            // if the text was already manually expanded, we can skip this logic
+            if(!isTextExpanded && binding.bodyTextView.needsCollapsing(
+                    availableWidthPx = context.resources.getDimensionPixelSize(R.dimen.max_bubble_width),
+                    maxLines = MAX_COLLAPSED_LINE_COUNT)
+            ){
+                // show the "Read mode" button
+                binding.readMore.setTextColor(color)
+                binding.readMore.isVisible = true
+
+                // add read more click listener
+                val readMoreClickHandler: (MotionEvent) -> Unit = { event ->
+                    val r = Rect()
+                    binding.readMore.getGlobalVisibleRect(r)
+                    if (r.contains(event.rawX.roundToInt(), event.rawY.roundToInt())) {
+                        binding.bodyTextView.maxLines = Int.MAX_VALUE
+                        binding.readMore.isVisible = false
+                        onTextExpanded?.invoke(message.messageId) // Notify that text was expanded
+                    }
+                }
+                onContentClick.add(readMoreClickHandler)
+            } else {
+                binding.readMore.isVisible = false
             }
         }
 

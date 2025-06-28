@@ -43,7 +43,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -237,8 +237,8 @@ private fun SaveAttachmentWarningDialog(
         title = context.getString(R.string.warning),
         text = context.resources.getString(R.string.attachmentsWarning),
         buttons = listOf(
-            DialogButtonModel(GetString(R.string.save), color = LocalColors.current.danger, onClick = onAccepted),
-            DialogButtonModel(GetString(android.R.string.cancel), dismissOnClick = true)
+            DialogButtonData(GetString(R.string.save), color = LocalColors.current.danger, onClick = onAccepted),
+            DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
         )
     )
 }
@@ -255,8 +255,8 @@ private fun DeleteConfirmationDialog(
         title = stringResource(R.string.delete),
         text = stringResource(R.string.deleteMessageDeviceOnly),
         buttons = listOf(
-            DialogButtonModel(GetString(R.string.delete), color = LocalColors.current.danger, onClick = onAccepted),
-            DialogButtonModel(GetString(android.R.string.cancel), dismissOnClick = true)
+            DialogButtonData(GetString(R.string.delete), color = LocalColors.current.danger, onClick = onAccepted),
+            DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
         )
     )
 }

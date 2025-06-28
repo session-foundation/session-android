@@ -140,7 +140,12 @@ public class BlobUtils {
    */
   public synchronized void onSessionStart(@NonNull Context context) {
     File directory = getOrCreateCacheDirectory(context, SINGLE_SESSION_DIRECTORY);
-    for (File file : directory.listFiles()) {
+    File[] files = directory.listFiles();
+    if (files == null) {
+      return; 
+    }
+
+    for (File file : files) {
       file.delete();
     }
   }

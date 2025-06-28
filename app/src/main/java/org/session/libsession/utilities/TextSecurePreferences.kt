@@ -35,6 +35,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
@@ -169,6 +172,12 @@ interface TextSecurePreferences {
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
+    fun forceCurrentUserAsPro(): Boolean
+    fun setForceCurrentUserAsPro(hidden: Boolean)
+    fun forceIncomingMessagesAsPro(): Boolean
+    fun setForceIncomingMessagesAsPro(hidden: Boolean)
+    fun forcePostPro(): Boolean
+    fun setForcePostPro(hidden: Boolean)
     fun hasHiddenNoteToSelf(): Boolean
     fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
@@ -286,6 +295,9 @@ interface TextSecurePreferences {
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
+        const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
+        const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -1590,6 +1602,33 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasHiddenNoteToSelf(hidden: Boolean) {
         setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
         _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
+    }
+
+    override fun forceCurrentUserAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
+    }
+
+    override fun setForceCurrentUserAsPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, hidden)
+        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
+    }
+
+    override fun forceIncomingMessagesAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
+    }
+
+    override fun setForceIncomingMessagesAsPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, hidden)
+        _events.tryEmit(SET_FORCE_INCOMING_MESSAGE_PRO)
+    }
+
+    override fun forcePostPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+    }
+
+    override fun setForcePostPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_POST_PRO, hidden)
+        _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

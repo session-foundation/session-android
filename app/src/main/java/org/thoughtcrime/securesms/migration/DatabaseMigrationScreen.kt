@@ -39,7 +39,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.preferences.ShareLogsDialog
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.OutlineButton
 import org.thoughtcrime.securesms.ui.components.AccentFillButton
@@ -202,12 +202,12 @@ private fun DatabaseMigration(
             onDismissRequest = { showingClearDeviceRestartWarning = false },
             text = stringResource(R.string.databaseErrorClearDataWarning),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString.FromResId(R.string.clear),
                     color = LocalColors.current.danger,
                     onClick = onClearData
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString.FromResId(R.string.cancel),
                     onClick = { showingClearDeviceRestartWarning = false }
                 )
@@ -220,12 +220,12 @@ private fun DatabaseMigration(
             onDismissRequest = { showingClearDeviceRestoreWarning = false },
             text = stringResource(R.string.databaseErrorRestoreDataWarning),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString.FromResId(R.string.clear),
                     color = LocalColors.current.danger,
                     onClick = onClearDataWithoutLoggingOut
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString.FromResId(R.string.cancel),
                     onClick = { showingClearDeviceRestoreWarning = false }
                 )
