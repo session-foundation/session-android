@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -36,12 +37,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
+import com.bumptech.glide.integration.compose.CrossFade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import network.loki.messenger.R
@@ -65,7 +68,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 text formatting in bubble including mentions and links
 //todo CONVOv3 images
 //todo CONVOv3 audio
-//todo CONVOv3 links handling
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
 //todo CONVOv3 reactions
@@ -106,7 +108,7 @@ fun MessageBubble(
 }
 
 /**
- * A message content: Bubble with content, avatar, status
+ * All the content of a message: Bubble with its internal content, avatar, status
  */
 @Composable
 fun MessageContent(
@@ -154,6 +156,15 @@ fun MessageContent(
                             )
                         }
 
+                        // display link data if any
+                        if(data.link != null){
+                            MessageLink(
+                                modifier = Modifier.padding(top = if(data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
+                                data = data.link,
+                                outgoing = data.type.outgoing
+                            )
+                        }
+
                         // Apply content based on message type
                         when (data.type) {
                             // Text messages
@@ -196,6 +207,7 @@ fun MessageContent(
 
 /**
  * The overall Message composable
+ * This controls the width and position of the message as a whole
  */
 @Composable
 fun Message(
@@ -325,8 +337,6 @@ fun MessageQuote(
     }
 }
 
-
-
 @Composable
 fun MessageText(
     data: MessageType.Text,
@@ -395,6 +405,53 @@ fun DocumentMessage(
 }
 
 @Composable
+fun MessageLink(
+    data: MessageLinkData,
+    outgoing: Boolean,
+    modifier: Modifier = Modifier
+){
+    Row(
+        modifier = modifier.fillMaxWidth().background(
+            color = blackAlpha06
+        ),
+    ) {
+        Box(
+            modifier = Modifier.size(100.dp)
+                .background(color = blackAlpha06)
+        ){
+            if(data.imageUri == null){
+                Image(
+                    painter = painterResource(id = R.drawable.ic_link),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                GlideImage(
+                    model = data.imageUri,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    contentDescription = null,
+                    transition = CrossFade,
+                )
+            }
+        }
+
+        Text(
+            modifier = Modifier.weight(1f)
+                .align(Alignment.CenterVertically)
+                .padding(horizontal = LocalDimensions.current.xsSpacing),
+            text = data.title,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Start,
+            style = LocalType.current.base.bold(),
+            color = getTextColor(outgoing)
+        )
+    }
+}
+
+@Composable
 private fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
@@ -411,6 +468,7 @@ data class MessageViewData(
     val avatar: AvatarUIData? = null,
     val status: MessageViewStatus? = null,
     val quote: MessageQuote? = null,
+    val link: MessageLinkData? = null
 )
 
 data class MessageQuote(
@@ -431,6 +489,12 @@ sealed class MessageQuoteIcon(){
 data class MessageViewStatus(
     val name: String,
     val icon: MessageViewStatusIcon
+)
+
+data class MessageLinkData(
+    val url: String,
+    val title: String,
+    val imageUri: String? = null
 )
 
 sealed interface MessageViewStatusIcon{
@@ -619,6 +683,64 @@ fun QuoteMessagePreview(
                 author = "Toto",
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
                 quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
+            ))
+        }
+    }
+}
+
+@Preview
+@Composable
+fun LinkMessagePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing),
+            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.spacing)
+
+        ) {
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
+                link = MessageLinkData(
+                    url = "https://getsession.org/",
+                    title = "Welcome to Session",
+                    imageUri = null
+                )
+            ))
+
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.text(text="Quoting text"),
+                link = MessageLinkData(
+                    url = "https://picsum.photos/id/0/367/267",
+                    title = "Welcome to Session with a very long name",
+                    imageUri = "https://picsum.photos/id/1/200/300"
+                )
+            ))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.text(outgoing = false, text="Quoting text"),
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                link = MessageLinkData(
+                    url = "https://getsession.org/",
+                    title = "Welcome to Session",
+                    imageUri = null
+                )
+            ))
+
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.text(text="Quoting text"),
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                link = MessageLinkData(
+                    url = "https://picsum.photos/id/0/367/267",
+                    title = "Welcome to Session with a very long name",
+                    imageUri = "https://picsum.photos/id/1/200/300"
+                )
             ))
         }
     }
