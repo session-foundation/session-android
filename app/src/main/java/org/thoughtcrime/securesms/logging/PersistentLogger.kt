@@ -59,25 +59,23 @@ class PersistentLogger @Inject constructor(
                 while (true) {
                     channel.receiveBulkLogs(bulk)
 
-                    if (bulk.isEmpty()) {
-                        continue
-                    }
+                    if (bulk.isNotEmpty()) {
+                        if (logWriter == null) {
+                            logWriter = LogFile.Writer(secret, File(logFolder, CURRENT_LOG_FILE_NAME))
+                        }
 
-                    if (logWriter == null) {
-                        logWriter = LogFile.Writer(secret, File(logFolder, CURRENT_LOG_FILE_NAME))
-                    }
+                        bulkWrite(entryBuilder, logWriter, bulk)
 
-                    bulkWrite(entryBuilder, logWriter, bulk)
+                        // Release entries back to the pool
+                        freeLogEntryPool.release(bulk)
+                        bulk.clear()
 
-                    // Release entries back to the pool
-                    freeLogEntryPool.release(bulk)
-                    bulk.clear()
-
-                    // Rotate the log file if necessary
-                    if (logWriter.logSize > MAX_SINGLE_LOG_FILE_SIZE) {
-                        rotateAndTrimLogFiles(logWriter.file)
-                        logWriter.close()
-                        logWriter = null
+                        // Rotate the log file if necessary
+                        if (logWriter.logSize > MAX_SINGLE_LOG_FILE_SIZE) {
+                            rotateAndTrimLogFiles(logWriter.file)
+                            logWriter.close()
+                            logWriter = null
+                        }
                     }
 
                     // Notify that the log channel is idle
@@ -179,7 +177,9 @@ class PersistentLogger @Inject constructor(
 
     override fun blockUntilAllWritesFinished() {
         runBlocking {
-            logChannelIdleSignal.first()
+            withTimeoutOrNull(1000) {
+                logChannelIdleSignal.first()
+            }
         }
     }
 
