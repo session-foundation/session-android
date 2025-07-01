@@ -59,25 +59,23 @@ class PersistentLogger @Inject constructor(
                 while (true) {
                     channel.receiveBulkLogs(bulk)
 
-                    if (bulk.isEmpty()) {
-                        continue
-                    }
+                    if (bulk.isNotEmpty()) {
+                        if (logWriter == null) {
+                            logWriter = LogFile.Writer(secret, File(logFolder, CURRENT_LOG_FILE_NAME))
+                        }
 
-                    if (logWriter == null) {
-                        logWriter = LogFile.Writer(secret, File(logFolder, CURRENT_LOG_FILE_NAME))
-                    }
+                        bulkWrite(entryBuilder, logWriter, bulk)
 
-                    bulkWrite(entryBuilder, logWriter, bulk)
+                        // Release entries back to the pool
+                        freeLogEntryPool.release(bulk)
+                        bulk.clear()
 
-                    // Release entries back to the pool
-                    freeLogEntryPool.release(bulk)
-                    bulk.clear()
-
-                    // Rotate the log file if necessary
-                    if (logWriter.logSize > MAX_SINGLE_LOG_FILE_SIZE) {
-                        rotateAndTrimLogFiles(logWriter.file)
-                        logWriter.close()
-                        logWriter = null
+                        // Rotate the log file if necessary
+                        if (logWriter.logSize > MAX_SINGLE_LOG_FILE_SIZE) {
+                            rotateAndTrimLogFiles(logWriter.file)
+                            logWriter.close()
+                            logWriter = null
+                        }
                     }
 
                     // Notify that the log channel is idle
@@ -124,9 +122,9 @@ class PersistentLogger @Inject constructor(
                 .append(' ')
                 .append(entry.logLevel)
                 .append(' ')
-                .append(entry.tag)
+                .append(entry.tag.orEmpty())
                 .append(": ")
-                .append(entry.message)
+                .append(entry.message.orEmpty())
             entry.err?.let {
                 sb.append('\n')
                 sb.append(it.stackTraceToString())
@@ -149,8 +147,8 @@ class PersistentLogger @Inject constructor(
 
     private fun sendLogEntry(
         level: String,
-        tag: String,
-        message: String,
+        tag: String?,
+        message: String?,
         t: Throwable? = null
     ) {
         val entry = freeLogEntryPool.createLogEntry(level, tag, message, t)
@@ -159,27 +157,29 @@ class PersistentLogger @Inject constructor(
         }
     }
 
-    override fun v(tag: String, message: String, t: Throwable?) =
+    override fun v(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_V, tag, message, t)
 
-    override fun d(tag: String, message: String, t: Throwable?) =
+    override fun d(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_D, tag, message, t)
 
-    override fun i(tag: String, message: String, t: Throwable?) =
+    override fun i(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_I, tag, message, t)
 
-    override fun w(tag: String, message: String, t: Throwable?) =
+    override fun w(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_W, tag, message, t)
 
-    override fun e(tag: String, message: String, t: Throwable?) =
+    override fun e(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_E, tag, message, t)
 
-    override fun wtf(tag: String, message: String, t: Throwable?) =
+    override fun wtf(tag: String?, message: String?, t: Throwable?) =
         sendLogEntry(LOG_WTF, tag, message, t)
 
     override fun blockUntilAllWritesFinished() {
         runBlocking {
-            logChannelIdleSignal.first()
+            withTimeoutOrNull(1000) {
+                logChannelIdleSignal.first()
+            }
         }
     }
 
@@ -236,8 +236,8 @@ class PersistentLogger @Inject constructor(
 
     private class LogEntry(
         var logLevel: String,
-        var tag: String,
-        var message: String,
+        var tag: String?,
+        var message: String?,
         var err: Throwable?,
         var timestampMills: Long,
     )
@@ -248,7 +248,7 @@ class PersistentLogger @Inject constructor(
     private class LogEntryPool {
         private val pool = ArrayList<LogEntry>(MAX_LOG_ENTRIES_POOL_SIZE)
 
-        fun createLogEntry(level: String, tag: String, message: String, t: Throwable?): LogEntry {
+        fun createLogEntry(level: String, tag: String?, message: String?, t: Throwable?): LogEntry {
             val fromPool = synchronized(pool) { pool.removeLastOrNull() }
 
             val now = System.currentTimeMillis()
