@@ -31,9 +31,9 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Allows for the creation and retrieval of blobs.
  */
-public class BlobProvider {
+public class BlobUtils {
 
-  private static final String TAG = BlobProvider.class.getSimpleName();
+  private static final String TAG = BlobUtils.class.getSimpleName();
 
   private static final String MULTI_SESSION_DIRECTORY  = "multi_session_blobs";
   private static final String SINGLE_SESSION_DIRECTORY = "single_session_blobs";
@@ -53,12 +53,12 @@ public class BlobProvider {
     addURI(AUTHORITY, PATH, MATCH);
   }};
 
-  private static final BlobProvider INSTANCE = new BlobProvider();
+  private static final BlobUtils INSTANCE = new BlobUtils();
 
   private final Map<Uri, byte[]> memoryBlobs = new HashMap<>();
 
 
-  public static BlobProvider getInstance() {
+  public static BlobUtils getInstance() {
     return INSTANCE;
   }
 
@@ -277,7 +277,7 @@ public class BlobProvider {
 
     /**
      * Create a blob that will exist for multiple app sessions. It is the caller's responsibility to
-     * eventually call {@link BlobProvider#delete(Context, Uri)} when the blob is no longer in use.
+     * eventually call {@link BlobUtils#delete(Context, Uri)} when the blob is no longer in use.
      */
     @WorkerThread
     public CompletableFuture<Uri> createForMultipleSessionsOnDisk(@NonNull Context context, @Nullable ErrorListener errorListener) throws IOException {
@@ -316,7 +316,7 @@ public class BlobProvider {
 
     /**
      * Create a blob that is stored in memory. Will persist for a single app session. You should
-     * always try to call {@link BlobProvider#delete(Context, Uri)} after you're done with the blob
+     * always try to call {@link BlobUtils#delete(Context, Uri)} after you're done with the blob
      * to free up memory.
      */
     public Uri createForSingleSessionInMemory() {

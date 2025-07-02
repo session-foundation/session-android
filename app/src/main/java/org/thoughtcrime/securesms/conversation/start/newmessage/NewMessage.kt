@@ -33,7 +33,7 @@ import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BorderlessButtonWithIcon
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.QRScannerScreen
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionTabRow
@@ -129,7 +129,7 @@ private fun EnterAccountId(
 
             Spacer(Modifier.weight(1f).heightIn(min = LocalDimensions.current.smallSpacing))
 
-            PrimaryOutlineButton(
+            AccentOutlineButton(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(horizontal = LocalDimensions.current.xlargeSpacing)

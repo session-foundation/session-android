@@ -18,8 +18,8 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.YELLOW_A
 fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
     val selectedTheme = getThemeStyle()
 
-    // get the chosen primary color from the preferences
-    val selectedPrimary = primaryColor()
+    // get the chosen accent color from the preferences
+    val selectedAccent = accentColor()
 
     val isOcean = "ocean" in selectedTheme
 
@@ -28,15 +28,15 @@ fun TextSecurePreferences.getColorsProvider(): ThemeColorsProvider {
 
     return when {
         getFollowSystemSettings() -> FollowSystemThemeColorsProvider(
-            light = createLight(selectedPrimary),
-            dark = createDark(selectedPrimary)
+            light = createLight(selectedAccent),
+            dark = createDark(selectedAccent)
         )
-        "light" in selectedTheme -> ThemeColorsProvider(createLight(selectedPrimary))
-        else -> ThemeColorsProvider(createDark(selectedPrimary))
+        "light" in selectedTheme -> ThemeColorsProvider(createLight(selectedAccent))
+        else -> ThemeColorsProvider(createDark(selectedAccent))
     }
 }
 
-fun TextSecurePreferences.primaryColor(): Color = when(getSelectedAccentColor()) {
+fun TextSecurePreferences.accentColor(): Color = when(getSelectedAccentColor()) {
     BLUE_ACCENT -> primaryBlue
     PURPLE_ACCENT -> primaryPurple
     PINK_ACCENT -> primaryPink

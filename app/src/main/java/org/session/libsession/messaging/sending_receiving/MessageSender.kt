@@ -6,8 +6,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
+import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_VISIBLE
 import network.loki.messenger.libsession_util.Namespace
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
@@ -19,12 +19,9 @@ import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.applyExpiryMode
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.LinkPreview
 import org.session.libsession.messaging.messages.visible.Quote
@@ -39,7 +36,6 @@ import org.session.libsession.snode.SnodeMessage
 import org.session.libsession.snode.SnodeModule
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsignal.crypto.PushTransportDetails
@@ -89,15 +85,6 @@ object MessageSender {
         }
     }
 
-    fun buildConfigMessageToSnode(destinationPubKey: String, message: SharedConfigurationMessage): SnodeMessage {
-        return SnodeMessage(
-            destinationPubKey,
-            Base64.encodeBytes(message.data),
-            ttl = message.ttl,
-            SnodeAPI.nowWithOffset
-        )
-    }
-
     // One-on-One Chats & Closed Groups
     @Throws(Exception::class)
     fun buildWrappedMessageToSnode(destination: Destination, message: Message, isSyncMessage: Boolean): SnodeMessage {
@@ -129,15 +116,9 @@ object MessageSender {
         // • a configuration message
         // • a sync message
         // • a closed group control message of type `new`
-        var isNewClosedGroupControlMessage = false
-        if (message is LegacyGroupControlMessage && message.kind is LegacyGroupControlMessage.Kind.New) isNewClosedGroupControlMessage =
-            true
         if (isSelfSend
-            && message !is ConfigurationMessage
             && !isSyncMessage
-            && !isNewClosedGroupControlMessage
             && message !is UnsendRequest
-            && message !is SharedConfigurationMessage
         ) {
             throw Error.InvalidMessage
         }
@@ -296,13 +277,12 @@ object MessageSender {
         isSyncMessage: Boolean
     ): Long? {
         // For ClosedGroupControlMessage or GroupUpdateMemberLeftMessage, the expiration timer doesn't apply
-        if (message is LegacyGroupControlMessage || (
-                    message is GroupUpdated && (
-                            message.inner.hasMemberLeftMessage() ||
-                            message.inner.hasInviteMessage() ||
-                            message.inner.hasInviteResponse() ||
-                            message.inner.hasDeleteMemberContent() ||
-                            message.inner.hasPromoteMessage()))) {
+        if (message is GroupUpdated && (
+                message.inner.hasMemberLeftMessage() ||
+                message.inner.hasInviteMessage() ||
+                message.inner.hasInviteResponse() ||
+                message.inner.hasDeleteMemberContent() ||
+                message.inner.hasPromoteMessage())) {
             return null
         }
 
@@ -494,7 +474,7 @@ object MessageSender {
             storage.markAsSent(messageId)
 
             // Start the disappearing messages timer if needed
-            SSKEnvironment.shared.messageExpirationManager.maybeStartExpiration(message, startDisappearAfterRead = true)
+            SSKEnvironment.shared.messageExpirationManager.onMessageSent(message)
         } ?: run {
             storage.updateReactionIfNeeded(message, message.sender?:userPublicKey, openGroupSentTimestamp)
         }
@@ -589,22 +569,4 @@ object MessageSender {
         val destination = Destination.from(address)
         return sendNonDurably(message, destination, isSyncMessage)
     }
-
-    // Closed groups
-    fun createClosedGroup(device: Device, name: String, members: Collection<String>): Promise<String, Exception> {
-        return create(device, name, members)
-    }
-
-    fun explicitNameChange(groupPublicKey: String, newName: String) {
-        return setName(groupPublicKey, newName)
-    }
-
-    fun explicitAddMembers(groupPublicKey: String, membersToAdd: List<String>) {
-        return addMembers(groupPublicKey, membersToAdd)
-    }
-
-    fun explicitRemoveMembers(groupPublicKey: String, membersToRemove: List<String>) {
-        return removeMembers(groupPublicKey, membersToRemove)
-    }
-
 }

@@ -4,14 +4,11 @@ import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.VisibleMessage
@@ -161,14 +158,11 @@ object MessageReceiver {
         // Parse the message
         val message: Message = ReadReceipt.fromProto(proto) ?:
             TypingIndicator.fromProto(proto) ?:
-            LegacyGroupControlMessage.fromProto(proto) ?:
             DataExtractionNotification.fromProto(proto) ?:
             ExpirationTimerUpdate.fromProto(proto, closedGroupSessionId != null) ?:
-            ConfigurationMessage.fromProto(proto) ?:
             UnsendRequest.fromProto(proto) ?:
             MessageRequestResponse.fromProto(proto) ?:
             CallMessage.fromProto(proto) ?:
-            SharedConfigurationMessage.fromProto(proto) ?:
             GroupUpdated.fromProto(proto) ?:
             VisibleMessage.fromProto(proto) ?: throw Error.UnknownMessage
         // Don't process the envelope any further if the sender is blocked
@@ -211,17 +205,8 @@ object MessageReceiver {
         if (groupPublicKey != null && groupPublicKey !in (currentClosedGroups ?: emptySet()) && IdPrefix.fromValue(groupPublicKey) != IdPrefix.GROUP) {
             throw Error.NoGroupThread
         }
-        if ((message is LegacyGroupControlMessage && message.kind is LegacyGroupControlMessage.Kind.New) || message is SharedConfigurationMessage) {
-            // Allow duplicates in this case to avoid the following situation:
-            // • The app performed a background poll or received a push notification
-            // • This method was invoked and the received message timestamps table was updated
-            // • Processing wasn't finished
-            // • The user doesn't see the new closed group
-            // also allow shared configuration messages to be duplicates since we track hashes separately use seqno for conflict resolution
-        } else {
-            if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
-            storage.addReceivedMessageTimestamp(envelope.timestamp)
-        }
+        if (storage.isDuplicateMessage(envelope.timestamp)) { throw Error.DuplicateMessage }
+        storage.addReceivedMessageTimestamp(envelope.timestamp)
         // Return
         return Pair(message, proto)
     }

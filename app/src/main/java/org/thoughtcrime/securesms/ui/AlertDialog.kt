@@ -25,6 +25,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.takeOrElse
@@ -49,13 +50,29 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.bold
 
-class DialogButtonModel(
+data class DialogButtonData(
     val text: GetString,
     val qaTag: String? = null,
     val color: Color = Color.Unspecified,
     val dismissOnClick: Boolean = true,
     val enabled: Boolean = true,
     val onClick: () -> Unit = {},
+)
+
+/**
+ * Data to display a simple dialog
+ */
+data class SimpleDialogData(
+    val title: String,
+    val message: CharSequence,
+    val positiveText: String? = null,
+    val positiveStyleDanger: Boolean = true,
+    val showXIcon: Boolean = false,
+    val negativeText: String? = null,
+    val positiveQaTag: String? = null,
+    val negativeQaTag: String? = null,
+    val onPositive: () -> Unit = {},
+    val onNegative: () -> Unit = {}
 )
 
 @Composable
@@ -65,7 +82,7 @@ fun AlertDialog(
     title: String? = null,
     text: String? = null,
     maxLines:  Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -89,7 +106,7 @@ fun AlertDialog(
     title: AnnotatedString? = null,
     text: AnnotatedString? = null,
     maxLines: Int? = null,
-    buttons: List<DialogButtonModel>? = null,
+    buttons: List<DialogButtonData>? = null,
     showCloseButton: Boolean = false,
     content: @Composable () -> Unit = {}
 ) {
@@ -155,9 +172,9 @@ fun AlertDialog(
                         }
                         content()
                     }
-                    buttons?.takeIf { it.isNotEmpty() }?.let {
+                    if(buttons?.isNotEmpty() == true) {
                         Row(Modifier.height(IntrinsicSize.Min)) {
-                            it.forEach {
+                            buttons.forEach {
                                 DialogButton(
                                     text = it.text(),
                                     modifier = Modifier
@@ -172,6 +189,8 @@ fun AlertDialog(
                                 }
                             }
                         }
+                    } else {
+                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
                     }
                 }
             }
@@ -198,12 +217,12 @@ fun OpenURLAlertDialog(
         maxLines = 5,
         showCloseButton = true, // display the 'x' button
         buttons = listOf(
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(R.string.open),
                 color = LocalColors.current.danger,
                 onClick = { context.openUrl(url) }
             ),
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(android.R.string.copyUrl),
                 onClick = {
                     context.copyURLToClipboard(url)
@@ -263,6 +282,7 @@ fun DialogBg(
                 color = LocalColors.current.borders,
                 shape = MaterialTheme.shapes.small
             )
+            .clip(MaterialTheme.shapes.small)
 
     ) {
         content()
@@ -325,12 +345,12 @@ fun PreviewSimpleDialog() {
             title = stringResource(R.string.warning),
             text = stringResource(R.string.onboardingBackAccountCreation),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(stringResource(R.string.cancel)),
                     color = LocalColors.current.danger,
                     onClick = { }
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     GetString(stringResource(android.R.string.ok))
                 )
             )
@@ -347,15 +367,28 @@ fun PreviewXCloseDialog() {
             text = stringResource(R.string.urlOpenBrowser),
             showCloseButton = true, // display the 'x' button
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingTos),
                     onClick = {}
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.onboardingPrivacy),
                     onClick = {}
                 )
             ),
+            onDismissRequest = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewXCloseNoButtonsDialog() {
+    PreviewTheme {
+        AlertDialog(
+            title = stringResource(R.string.urlOpen),
+            text = stringResource(R.string.urlOpenBrowser),
+            showCloseButton = true, // display the 'x' button
             onDismissRequest = {}
         )
     }

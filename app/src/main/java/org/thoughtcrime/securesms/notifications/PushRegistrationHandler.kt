@@ -1,14 +1,15 @@
 package org.thoughtcrime.securesms.notifications
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -16,15 +17,14 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
-import network.loki.messenger.libsession_util.Namespace
+import kotlinx.coroutines.supervisorScope
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SwarmAuth
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import javax.inject.Inject
@@ -40,11 +40,12 @@ private const val TAG = "PushRegistrationHandler"
 class PushRegistrationHandler
 @Inject
 constructor(
-    private val pushRegistry: PushRegistryV2,
     private val configFactory: ConfigFactory,
     private val preferences: TextSecurePreferences,
-    private val storage: Storage,
     private val tokenFetcher: TokenFetcher,
+    @ApplicationContext private val context: Context,
+    private val registry: PushRegistryV2,
+    private val storage: Storage,
 ) {
     @OptIn(DelicateCoroutinesApi::class)
     private val scope: CoroutineScope = GlobalScope
@@ -60,124 +61,85 @@ constructor(
                 (configFactory.configUpdateNotifications as Flow<Any>)
                     .debounce(500L)
                     .onStart { emit(Unit) },
-                IdentityKeyUtil.CHANGES.onStart { emit(Unit) },
+                preferences.watchLocalNumber(),
                 preferences.pushEnabled,
                 tokenFetcher.token,
-            ) { _, _, enabled, token ->
-                if (!enabled || token.isNullOrEmpty()) {
-                    return@combine emptyMap<SubscriptionKey, Subscription>()
+            ) { _, myAccountId, enabled, token ->
+                if (!enabled || myAccountId == null || token.isNullOrEmpty()) {
+                    return@combine emptySet<SubscriptionKey>()
                 }
 
-                val userAuth =
-                    storage.userAuth ?: return@combine emptyMap<SubscriptionKey, Subscription>()
-                getGroupSubscriptions(
-                    token = token
-                ) + mapOf(
-                    SubscriptionKey(userAuth.accountId, token) to Subscription(userAuth, listOf(
-                        Namespace.DEFAULT()))
-                )
+                setOf(SubscriptionKey(AccountId(myAccountId), token)) + getGroupSubscriptions(token)
             }
-                .scan<Map<SubscriptionKey, Subscription>, Pair<Map<SubscriptionKey, Subscription>, Map<SubscriptionKey, Subscription>>?>(
-                    null
-                ) { acc, current ->
-                    val prev = acc?.second.orEmpty()
-                    prev to current
+                .scan(emptySet<SubscriptionKey>() to emptySet<SubscriptionKey>()) { acc, current ->
+                    acc.second to current
                 }
-                .filterNotNull()
                 .collect { (prev, current) ->
-                    val addedAccountIds = current.keys - prev.keys
-                    val removedAccountIDs = prev.keys - current.keys
-                    if (addedAccountIds.isNotEmpty()) {
-                        Log.d(TAG, "Adding ${addedAccountIds.size} new subscriptions")
+                    val added = current - prev
+                    val removed = prev - current
+                    if (added.isNotEmpty()) {
+                        Log.d(TAG, "Adding ${added.size} new subscriptions")
                     }
 
-                    if (removedAccountIDs.isNotEmpty()) {
-                        Log.d(TAG, "Removing ${removedAccountIDs.size} subscriptions")
+                    if (removed.isNotEmpty()) {
+                        Log.d(TAG, "Removing ${removed.size} subscriptions")
                     }
 
-                    val deferred = mutableListOf<Deferred<*>>()
+                    for (key in added) {
+                        PushRegistrationWorker.schedule(
+                            context = context,
+                            token = key.token,
+                            accountId = key.accountId,
+                        )
+                    }
 
-                    addedAccountIds.mapTo(deferred) { key ->
-                        val subscription = current.getValue(key)
-                        async {
-                            try {
-                                pushRegistry.register(
-                                    token = key.token,
-                                    swarmAuth = subscription.auth,
-                                    namespaces = subscription.namespaces.toList()
-                                )
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to register for push notification", e)
+                    supervisorScope {
+                        for (key in removed) {
+                            PushRegistrationWorker.cancelRegistration(
+                                context = context,
+                                accountId = key.accountId,
+                            )
+
+                            launch {
+                                Log.d(TAG, "Unregistering push token for account: ${key.accountId}")
+                                try {
+                                    val swarmAuth = swarmAuthForAccount(key.accountId)
+                                        ?: throw IllegalStateException("No SwarmAuth found for account: ${key.accountId}")
+
+                                    registry.unregister(
+                                        token = key.token,
+                                        swarmAuth = swarmAuth,
+                                    )
+
+                                    Log.d(TAG, "Successfully unregistered push token for account: ${key.accountId}")
+                                } catch (e: Exception) {
+                                    if (e !is CancellationException) {
+                                        Log.e(TAG, "Failed to unregister push token for account: ${key.accountId}", e)
+                                    }
+                                }
                             }
                         }
                     }
-
-                    removedAccountIDs.mapTo(deferred) { key ->
-                        val subscription = prev.getValue(key)
-                        async {
-                            try {
-                                pushRegistry.unregister(
-                                    token = key.token,
-                                    swarmAuth = subscription.auth,
-                                )
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Failed to unregister for push notification", e)
-                            }
-                        }
-                    }
-
-                    deferred.awaitAll()
                 }
+        }
+    }
+
+    private fun swarmAuthForAccount(accountId: AccountId): SwarmAuth? {
+        return when (accountId.prefix) {
+            IdPrefix.STANDARD -> storage.userAuth?.takeIf { it.accountId == accountId }
+            IdPrefix.GROUP -> configFactory.getGroupAuth(accountId)
+            else -> null // Unsupported account ID prefix
         }
     }
 
     private fun getGroupSubscriptions(
         token: String
-    ): Map<SubscriptionKey, Subscription> {
-        return buildMap {
-            val groups = configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
-                .filter { it.shouldPoll }
-
-            val namespaces = listOf(
-                Namespace.GROUP_MESSAGES(),
-                Namespace.GROUP_INFO(),
-                Namespace.GROUP_MEMBERS(),
-                Namespace.GROUP_KEYS(),
-                Namespace.REVOKED_GROUP_MESSAGES(),
-            )
-
-            for (group in groups) {
-                val adminKey = group.adminKey?.data
-                val groupId = AccountId(group.groupAccountId)
-                if (adminKey != null && adminKey.isNotEmpty()) {
-                    put(
-                        SubscriptionKey(groupId, token),
-                        Subscription(
-                            auth = OwnedSwarmAuth.ofClosedGroup(groupId, adminKey),
-                            namespaces = namespaces
-                        )
-                    )
-                    continue
-                }
-
-                val authData = group.authData?.data
-                if (authData != null && authData.isNotEmpty()) {
-                    val subscription = configFactory.getGroupAuth(groupId)
-                        ?.let {
-                            Subscription(
-                                auth = it,
-                                namespaces = namespaces
-                            )
-                        }
-
-                    if (subscription != null) {
-                        put(SubscriptionKey(groupId, token), subscription)
-                    }
-                }
-            }
-        }
+    ): Set<SubscriptionKey> {
+        return configFactory.withUserConfigs { it.userGroups.allClosedGroupInfo() }
+            .asSequence()
+            .filter { it.shouldPoll }
+            .mapTo(hashSetOf()) { SubscriptionKey(accountId = AccountId(it.groupAccountId), token = token) }
     }
 
     private data class SubscriptionKey(val accountId: AccountId, val token: String)
-    private data class Subscription(val auth: SwarmAuth, val namespaces: List<Int>)
 }

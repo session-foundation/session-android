@@ -6,27 +6,24 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import network.loki.messenger.libsession_util.ConfigBase
-import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.Message.Companion.senderOrSync
 import org.session.libsession.messaging.messages.control.CallMessage
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.DataExtractionNotification
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.control.ReadReceipt
-import org.session.libsession.messaging.messages.control.SharedConfigurationMessage
 import org.session.libsession.messaging.messages.control.TypingIndicator
 import org.session.libsession.messaging.messages.control.UnsendRequest
 import org.session.libsession.messaging.messages.visible.ParsedMessage
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
+import org.session.libsession.messaging.sending_receiving.VisibleMessageHandlerContext
+import org.session.libsession.messaging.sending_receiving.constructReactionRecords
 import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
 import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
@@ -34,10 +31,9 @@ import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsignal.protos.UtilProtos
 import org.session.libsignal.utilities.AccountId
-import org.session.libsignal.utilities.Hex
-import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import kotlin.math.max
 
 data class MessageReceiveParameters(
@@ -83,12 +79,9 @@ class BatchMessageReceiveJob(
         if (message is VisibleMessage) return true
         else { // message is control message otherwise
             return when(message) {
-                is SharedConfigurationMessage -> false
-                is LegacyGroupControlMessage -> false // message.kind is ClosedGroupControlMessage.Kind.New && !message.isSenderSelf
                 is DataExtractionNotification -> false
                 is MessageRequestResponse -> false
                 is ExpirationTimerUpdate -> false
-                is ConfigurationMessage -> false
                 is TypingIndicator -> false
                 is UnsendRequest -> false
                 is ReadReceipt -> false
@@ -175,33 +168,37 @@ class BatchMessageReceiveJob(
         }
 
         // iterate over threads and persist them (persistence is the longest constant in the batch process operation)
-        fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
+        suspend fun processMessages(threadId: Long, messages: List<ParsedMessage>) {
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
-            var newLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
+            var updatedLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
+            val handlerContext = VisibleMessageHandlerContext(
+                module = MessagingModuleConfiguration.shared,
+                threadId = threadId,
+                openGroupID = openGroupID,
+            )
+
+            val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
+
             messages.forEach { (parameters, message, proto) ->
                 try {
                     when (message) {
                         is VisibleMessage -> {
                             val isUserBlindedSender =
-                                message.sender == serverPublicKey?.let {
-                                    BlindKeyAPI.blind15KeyPairOrNull(
-                                        ed25519SecretKey = storage.getUserED25519KeyPair()!!
-                                            .secretKey.data,
-                                        serverPubKey = Hex.fromStringCondensed(it),
-                                    )
-                                }?.let {
-                                    AccountId(IdPrefix.BLINDED, it.pubKey.data).hexString
-                                }
+                                message.sender == handlerContext.userBlindedKey
+
                             if (message.sender == localUserPublicKey || isUserBlindedSender) {
                                 // use sent timestamp here since that is technically the last one we have
-                                newLastSeen = max(newLastSeen, message.sentTimestamp!!)
+                                updatedLastSeen = max(updatedLastSeen, message.sentTimestamp!!)
                             }
-                            val messageId = MessageReceiver.handleVisibleMessage(message, proto, openGroupID,
-                                threadId,
+                            val messageId = MessageReceiver.handleVisibleMessage(
+                                message = message,
+                                proto = proto,
+                                context = handlerContext,
                                 runThreadUpdate = false,
-                                runProfileUpdate = true)
+                                runProfileUpdate = true
+                            )
 
                             if (messageId != null && message.reaction == null) {
                                 messageIds[messageId] = Pair(
@@ -209,11 +206,13 @@ class BatchMessageReceiveJob(
                                     message.hasMention
                                 )
                             }
+
                             parameters.openGroupMessageServerID?.let {
-                                MessageReceiver.handleOpenGroupReactions(
-                                    threadId,
-                                    it,
-                                    parameters.reactions
+                                constructReactionRecords(
+                                    openGroupMessageServerID = it,
+                                    context = handlerContext,
+                                    reactions = parameters.reactions,
+                                    out = communityReactions
                                 )
                             }
                         }
@@ -248,13 +247,20 @@ class BatchMessageReceiveJob(
             // increment unreads, notify, and update thread
             // last seen will be the current last seen if not changed (re-computes the read counts for thread record)
             // might have been updated from a different thread at this point
-            val currentLastSeen = storage.getLastSeen(threadId).let { if (it == -1L) 0 else it }
-            newLastSeen = max(newLastSeen, currentLastSeen)
-            if (newLastSeen > 0 || currentLastSeen == 0L) {
-                storage.markConversationAsRead(threadId, newLastSeen, force = true)
+            val storedLastSeen = storage.getLastSeen(threadId).let { if (it == -1L) 0 else it }
+            updatedLastSeen = max(updatedLastSeen, storedLastSeen)
+            // Only call markConversationAsRead() when lastSeen actually advanced (we sent a message).
+            // For incoming-only batches (like reactions), skip this to preserve REACTIONS_UNREAD flags
+            // so the notification system can detect them. Thread updates happen separately below.
+            if (updatedLastSeen > storedLastSeen) {
+                storage.markConversationAsRead(threadId, updatedLastSeen, force = true)
             }
             storage.updateThread(threadId, true)
             SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)
+
+            if (communityReactions.isNotEmpty()) {
+                storage.addReactions(communityReactions, replaceAll = true, notifyUnread = false)
+            }
         }
 
         coroutineScope {

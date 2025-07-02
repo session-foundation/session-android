@@ -33,15 +33,20 @@ public class NotificationState {
     }
   }
 
-  public void addNotification(NotificationItem item) {
-    // Add this new notification at the beginning of the list
-    notifications.addFirst(item);
+  public void addNotification(@NonNull NotificationItem item) {
+    // find the index to insert the message based on their timestamp
+    int i = 0;
+    while (i < notifications.size() &&
+            notifications.get(i).getTimestamp() > item.getTimestamp()) {
+      i++;
+    }
+    notifications.add(i, item);
 
     // Put a notification at the front by removing it then re-adding it?
     threads.remove(item.getThreadId());
     threads.add(item.getThreadId());
 
-    notificationCount++;
+    notificationCount = notifications.size();
   }
 
   public @Nullable Uri getRingtone(@NonNull Context context) {

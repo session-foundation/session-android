@@ -155,10 +155,7 @@ class ConversationReactionOverlay : FrameLayout {
         val conversationItemSnapshot = selectedConversationModel.bitmap
         conversationBubble.layoutParams = LinearLayout.LayoutParams(conversationItemSnapshot.width, conversationItemSnapshot.height)
         conversationBubble.background = BitmapDrawable(resources, conversationItemSnapshot)
-        conversationTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(
-            Locale.getDefault(),
-            messageRecord.timestamp
-        )
+        conversationTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(messageRecord.timestamp)
         updateConversationTimestamp(messageRecord)
         val isMessageOnLeft = selectedConversationModel.isOutgoing xor ViewUtil.isLtr(this)
         conversationItem.scaleX = LONG_PRESS_SCALE_FACTOR

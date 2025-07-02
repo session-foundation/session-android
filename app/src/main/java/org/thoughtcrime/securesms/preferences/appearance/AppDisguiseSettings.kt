@@ -47,7 +47,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.qaTag
@@ -175,11 +175,11 @@ private fun AppDisguiseSettings(
                 .toString(),
             title = stringResource(R.string.appIconAndNameChange),
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(R.string.closeApp),
                     color = LocalColors.current.danger,
                 ) { onCommand(AppDisguiseSettingsViewModel.Command.IconSelectConfirmed(dialogState.id)) },
-                DialogButtonModel(text = GetString(R.string.cancel), dismissOnClick = true)
+                DialogButtonData(text = GetString(R.string.cancel), dismissOnClick = true)
             )
         )
     }

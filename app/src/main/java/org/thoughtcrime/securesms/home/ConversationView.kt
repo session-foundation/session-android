@@ -93,7 +93,6 @@ class ConversationView : LinearLayout {
         val senderDisplayName = getTitle(thread.recipient)
         binding.conversationViewDisplayNameTextView.text = senderDisplayName
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
-            Locale.getDefault(),
             it
         ) }
 

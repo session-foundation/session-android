@@ -18,10 +18,17 @@
         app:layout_constraintBottom_toTopOf="@+id/conversation_header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-    <!--
-    Add this to the below recycler view if you need to debug activity `adjustResize` issues:
-    android:background="@drawable/cross"
-    -->
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/conversationLoader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/conversationAppBar"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="?colorAccent"
+        app:trackThickness="4dp"/>
+
     <org.thoughtcrime.securesms.conversation.v2.ConversationRecyclerView
         android:focusable="false"
         android:id="@+id/conversationRecyclerView"
@@ -216,6 +223,8 @@
         android:layout_marginHorizontal="@dimen/large_spacing"
         app:layout_constraintTop_toBottomOf="@+id/conversation_header"
         android:contentDescription="@string/AccessibilityId_empty_conversation"
+        android:visibility="gone"
+        tools:visibility="visible"
         tools:text="Some Control Message Text"
         />
 

@@ -8,7 +8,6 @@ package org.session.libsignal.messages;
 
 import org.session.libsignal.utilities.guava.Optional;
 import org.session.libsignal.utilities.SignalServiceAddress;
-import org.session.libsignal.protos.SignalServiceProtos.DataMessage.ClosedGroupControlMessage;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,8 +26,6 @@ public class SignalServiceDataMessage {
   private final Optional<Quote>                         quote;
   public  final Optional<List<SharedContact>>           contacts;
   private final Optional<List<Preview>>                 previews;
-  // Loki
-  private final Optional<ClosedGroupControlMessage>     closedGroupControlMessage;
   private final Optional<String>                        syncTarget;
 
   /**
@@ -121,16 +118,16 @@ public class SignalServiceDataMessage {
                                   boolean expirationUpdate, byte[] profileKey,
                                   Quote quote, List<SharedContact> sharedContacts, List<Preview> previews)
   {
-    this(timestamp, group, attachments, body, expiresInSeconds, expirationUpdate, profileKey, quote, sharedContacts, previews, null, null);
+    this(timestamp, group, attachments, body, expiresInSeconds, expirationUpdate, profileKey, quote, sharedContacts, previews, null);
   }
 
   /**
    * Construct a SignalServiceDataMessage.
    *
-   * @param timestamp The sent timestamp.
-   * @param group The group information (or null if none).
-   * @param attachments The attachments (or null if none).
-   * @param body The message contents.
+   * @param timestamp        The sent timestamp.
+   * @param group            The group information (or null if none).
+   * @param attachments      The attachments (or null if none).
+   * @param body             The message contents.
    * @param expiresInSeconds Number of seconds in which the message should disappear after being seen.
    */
   public SignalServiceDataMessage(long timestamp, SignalServiceGroup group,
@@ -138,7 +135,6 @@ public class SignalServiceDataMessage {
                                   String body, int expiresInSeconds,
                                   boolean expirationUpdate, byte[] profileKey,
                                   Quote quote, List<SharedContact> sharedContacts, List<Preview> previews,
-                                  ClosedGroupControlMessage closedGroupControlMessage,
                                   String syncTarget)
   {
     this.timestamp                   = timestamp;
@@ -148,7 +144,6 @@ public class SignalServiceDataMessage {
     this.expirationUpdate            = expirationUpdate;
     this.profileKey                  = Optional.fromNullable(profileKey);
     this.quote                       = Optional.fromNullable(quote);
-    this.closedGroupControlMessage   = Optional.fromNullable(closedGroupControlMessage);
     this.syncTarget                  = Optional.fromNullable(syncTarget);
 
     if (attachments != null && !attachments.isEmpty()) {
@@ -236,9 +231,6 @@ public class SignalServiceDataMessage {
     return previews;
   }
 
-  // Loki
-  public Optional<ClosedGroupControlMessage> getClosedGroupControlMessage() { return closedGroupControlMessage; }
-
   public boolean hasVisibleContent() {
     return (body.isPresent() && !body.get().isEmpty())
         || (attachments.isPresent() && !attachments.get().isEmpty());
@@ -323,7 +315,7 @@ public class SignalServiceDataMessage {
       if (timestamp == 0) timestamp = fallbackTimestamp;
       // closedGroupUpdate is always null because we don't use SignalServiceDataMessage to send them (we use ClosedGroupUpdateMessageSendJob)
       return new SignalServiceDataMessage(timestamp, group, attachments, body, expiresInSeconds, expirationUpdate, profileKey, quote, sharedContacts, previews,
-                                          null, syncTarget);
+              syncTarget);
     }
   }
 

@@ -42,4 +42,5 @@ object StringSubstitutionConstants {
     const val URL_KEY                        = "url"
     const val VALUE_KEY                      = "value"
     const val VERSION_KEY                    = "version"
+    const val LIMIT_KEY                      = "limit"
 }

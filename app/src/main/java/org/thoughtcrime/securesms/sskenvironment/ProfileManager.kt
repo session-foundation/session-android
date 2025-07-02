@@ -89,9 +89,6 @@ class ProfileManager @Inject constructor(
         }
     }
 
-    override fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode) {
-        recipientDatabase.setUnidentifiedAccessMode(recipient, unidentifiedAccessMode)
-    }
 
     override fun contactUpdatedInternal(contact: Contact): String? {
         if (contact.accountID == preferences.getLocalNumber()) return null

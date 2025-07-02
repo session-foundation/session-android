@@ -4,19 +4,17 @@ import android.app.Dialog
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Intent
-import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Objects
 import java.util.concurrent.TimeUnit
@@ -30,15 +28,19 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.ExternalStorageUtil
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.createSessionDialog
+import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.util.FileProviderUtil
-import org.thoughtcrime.securesms.util.StreamUtil
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragment() {
 
     private val TAG = "ShareLogsDialog"
     private var shareJob: Job? = null
+
+    @Inject
+    lateinit var persistentLogger: PersistentLogger
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog = createSessionDialog {
         title(R.string.helpReportABugExportLogs)
@@ -64,31 +66,15 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
         updateCallback(true)
 
         shareJob = lifecycleScope.launch(Dispatchers.IO) {
-            val persistentLogger = ApplicationContext.getInstance(requireContext()).persistentLogger
             try {
                 Log.d(TAG, "Starting share logs job...")
 
                 val context = requireContext()
-                val outputUri: Uri = ExternalStorageUtil.getDownloadUri()
                 val mediaUri = getExternalFile() ?: return@launch
 
-                val inputStream = persistentLogger.logs.get().byteInputStream()
                 val updateValues = ContentValues()
 
-                // Add details into the output or media files as appropriate
-                if (outputUri.scheme == ContentResolver.SCHEME_FILE) {
-                    FileOutputStream(mediaUri.path).use { outputStream ->
-                        StreamUtil.copy(inputStream, outputStream)
-                        MediaScannerConnection.scanFile(context, arrayOf(mediaUri.path), arrayOf("text/plain"), null)
-                    }
-                } else {
-                    context.contentResolver.openOutputStream(mediaUri, "w").use { outputStream ->
-                        val total: Long = StreamUtil.copy(inputStream, outputStream)
-                        if (total > 0) {
-                            updateValues.put(MediaStore.MediaColumns.SIZE, total)
-                        }
-                    }
-                }
+                persistentLogger.readAllLogsCompressed(mediaUri)
 
                 if (Build.VERSION.SDK_INT > 28) {
                     updateValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
@@ -161,13 +147,12 @@ class ShareLogsDialog(private val updateCallback: (Boolean)->Unit): DialogFragme
     private fun getExternalFile(): Uri? {
         val context = requireContext()
         val base = "${Build.MANUFACTURER}-${Build.DEVICE}-API${Build.VERSION.SDK_INT}-v${BuildConfig.VERSION_NAME}-${System.currentTimeMillis()}"
-        val extension = "txt"
+        val extension = "zip"
         val fileName = "$base.$extension"
-        val mimeType = MimeTypeMap.getSingleton().getExtensionFromMimeType("text/plain")
         val outputUri: Uri = ExternalStorageUtil.getDownloadUri()
         val contentValues = ContentValues()
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip")
         contentValues.put(MediaStore.MediaColumns.DATE_ADDED, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))
         contentValues.put(MediaStore.MediaColumns.DATE_MODIFIED, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))
         if (Build.VERSION.SDK_INT > 28) {

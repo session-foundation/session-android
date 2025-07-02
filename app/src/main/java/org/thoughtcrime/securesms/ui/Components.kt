@@ -1,25 +1,29 @@
 package org.thoughtcrime.securesms.ui
 
-import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,9 +39,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -59,9 +65,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
@@ -69,6 +77,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -76,12 +86,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
@@ -91,18 +102,33 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideSubcomposition
+import com.bumptech.glide.integration.compose.RequestState
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
+import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
+import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
+import org.thoughtcrime.securesms.ui.theme.ThemeColors
+import org.thoughtcrime.securesms.ui.theme.primaryBlue
+import org.thoughtcrime.securesms.ui.theme.primaryGreen
+import org.thoughtcrime.securesms.ui.theme.primaryOrange
+import org.thoughtcrime.securesms.ui.theme.primaryPink
+import org.thoughtcrime.securesms.ui.theme.primaryPurple
+import org.thoughtcrime.securesms.ui.theme.primaryRed
+import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
 
@@ -539,7 +565,7 @@ fun BottomFadingEdgeBox(
                 .background(
                     Brush.verticalGradient(
                         0f to Color.Transparent,
-                        1f to fadingColor,
+                        0.9f to fadingColor,
                         tileMode = TileMode.Repeated
                     )
                 )
@@ -566,10 +592,222 @@ private fun BottomFadingEdgeBoxPreview() {
             },
         )
 
-        PrimaryOutlineButton(
+        AccentOutlineButton(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             text = "Do stuff", onClick = {}
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionProCTA(
+    content: @Composable () -> Unit,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = onCancel,
+        content = {
+            DialogBg {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // hero image
+                    BottomFadingEdgeBox(
+                        fadingEdgeHeight = 70.dp,
+                        fadingColor = LocalColors.current.backgroundSecondary,
+                        content = { _ ->
+                            content()
+                        },
+                    )
+
+                    // content
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(LocalDimensions.current.smallSpacing)
+                    ) {
+                        // title
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Text(
+                                text = stringResource(R.string.upgradeTo),
+                                style = LocalType.current.h5
+                            )
+
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // main message
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = text,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // features
+                        features.forEachIndexed { index, feature ->
+                            ProCTAFeature(text = feature)
+                            if(index < features.size - 1){
+                                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+                            }
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // buttons
+                        Row(
+                            Modifier.height(IntrinsicSize.Min),
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
+                        ) {
+                            AccentFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.upgradeTo),
+                                onClick = onUpgrade
+                            )
+
+                            TertiaryFillButtonRect(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.cancel),
+                                onClick = onCancel
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun SimpleSessionProCTA(
+    @DrawableRes heroImage: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+        Image(
+            modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+            contentScale = ContentScale.FillWidth,
+            painter = painterResource(id = heroImage),
+            contentDescription = null,
+        )
+    })
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AnimatedSessionProCTA(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+    text: String,
+    features: List<String>,
+    modifier: Modifier = Modifier,
+    onUpgrade: () -> Unit,
+    onCancel: () -> Unit,
+){
+    SessionProCTA(
+        modifier = modifier,
+        text = text,
+        features = features,
+        onUpgrade = onUpgrade,
+        onCancel = onCancel,
+        content = {
+            Image(
+                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+                contentScale = ContentScale.FillWidth,
+                painter = painterResource(id = heroImageBg),
+                contentDescription = null,
+            )
+
+            GlideSubcomposition(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                model = heroImageAnimatedFg,
+            ){
+                when (state) {
+                    is RequestState.Success -> {
+                        Image(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.FillWidth,
+                            painter = painter,
+                            contentDescription = null,
+                        )
+                    }
+
+                    else -> {}
+                }
+            }
+        })
+}
+
+@Preview
+@Composable
+private fun PreviewProCTA(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        SimpleSessionProCTA(
+            heroImage = R.drawable.cta_hero_char_limit,
+            text = "This is a description of this Pro feature",
+            features = listOf(
+                "Feature one",
+                "Feature two",
+                "Feature three",
+            ),
+            onUpgrade = {},
+            onCancel = {}
+        )
+    }
+}
+
+@Composable
+fun ProCTAFeature(
+    text: String,
+    modifier: Modifier = Modifier
+){
+    Row(
+        modifier = modifier.fillMaxWidth()
+            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_circle_check),
+            colorFilter = ColorFilter.tint(LocalColors.current.accent),
+            contentDescription = null,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
+
+        Text(
+            text = text,
+            style = LocalType.current.base
         )
     }
 }
@@ -603,7 +841,7 @@ fun ProgressArc(progress: Float, modifier: Modifier = Modifier) {
 fun Arc(
     modifier: Modifier = Modifier,
     percentage: Float = 0.25f,
-    fillColor: Color = LocalColors.current.primary,
+    fillColor: Color = LocalColors.current.accent,
     backgroundColor: Color = LocalColors.current.borders,
     strokeWidth: Dp = 18.dp,
     sweepAngle: Float = 310f,
@@ -1123,4 +1361,48 @@ fun Modifier.safeContentWidth(
                 else -> regularExtraPadding
             }
         )
+}
+
+/**
+ * Animated gradient drawable that cycle through the gradient colors in a linear animation
+ */
+@Composable
+fun AnimatedGradientDrawable(
+    @DrawableRes vectorRes: Int,
+    modifier: Modifier = Modifier,
+    gradientColors: List<Color> = listOf(
+        primaryGreen, primaryBlue, primaryPurple,
+        primaryPink, primaryRed, primaryOrange, primaryYellow
+    )
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "vector_vertical")
+    val animatedOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 200f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    Icon(
+        painter = painterResource(id = vectorRes),
+        contentDescription = null,
+        modifier = modifier
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                val gradientBrush = Brush.linearGradient(
+                    colors = gradientColors,
+                    start = Offset(0f, animatedOffset),
+                    end = Offset(0f, animatedOffset + 100f),
+                    tileMode = TileMode.Mirror
+                )
+
+                drawContent()
+                drawRect(
+                    brush = gradientBrush,
+                    blendMode = BlendMode.SrcAtop
+                )
+            }
+    )
 }

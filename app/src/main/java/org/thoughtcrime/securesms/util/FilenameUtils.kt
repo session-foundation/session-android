@@ -123,7 +123,7 @@ object FilenameUtils {
         if (extractedFilename.isNullOrEmpty()) {
 
             if (attachment == null) {
-                val timestamp = if (uri?.path.isNullOrEmpty()) null else getTimestampFromUri(uri.path!!)
+                val timestamp = if (uri?.path.isNullOrEmpty()) null else getTimestampFromUri(uri!!.path!!)
                 extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, timestamp)
             } else {
                 // If the mimetype is audio then we generate a filename which contain "VoiceMessage" or "Audio"

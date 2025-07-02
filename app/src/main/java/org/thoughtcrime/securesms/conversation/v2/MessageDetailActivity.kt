@@ -64,7 +64,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.thoughtcrime.securesms.MediaPreviewActivity.getPreviewIntent
+import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
@@ -127,7 +127,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
                 when (it) {
                     Event.Finish -> finish()
                     is Event.StartMediaPreview -> startActivity(
-                        getPreviewIntent(this@MessageDetailActivity, it.args)
+                        MediaPreviewActivity.getPreviewIntent(this@MessageDetailActivity, it.args)
                     )
                 }
             }

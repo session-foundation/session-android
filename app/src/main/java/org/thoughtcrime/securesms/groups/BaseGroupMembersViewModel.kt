@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -39,12 +40,12 @@ abstract class BaseGroupMembersViewModel (
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
-        configFactory.configUpdateNotifications
+        (configFactory.configUpdateNotifications
             .filter {
                 it is ConfigUpdateNotification.GroupConfigsUpdated && it.groupId == groupId ||
                         it is ConfigUpdateNotification.UserConfigsMerged
-            }
-            .onStart { emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId)) }
+            } as Flow<*>)
+            .onStart { emit(Unit) }
             .map { _ ->
                 withContext(Dispatchers.Default) {
                     val currentUserId = AccountId(checkNotNull(storage.getUserPublicKey()) {

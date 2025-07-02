@@ -53,6 +53,7 @@
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -279,7 +280,6 @@
         <activity
             android:name="org.thoughtcrime.securesms.MediaPreviewActivity"
             android:configChanges="touchscreen|keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.Session.DayNight.NoActionBar"
             android:launchMode="singleTask"
             android:windowSoftInputMode="stateHidden" />
@@ -382,7 +382,7 @@
             android:exported="false" />
 
         <provider
-            android:name="org.thoughtcrime.securesms.providers.PartProvider"
+            android:name="org.thoughtcrime.securesms.providers.PartAndBlobProvider"
             android:authorities="network.loki.provider.securesms"
             android:exported="false"
             android:grantUriPermissions="true" />

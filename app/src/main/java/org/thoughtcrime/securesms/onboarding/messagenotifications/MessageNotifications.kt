@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +24,7 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
 import org.thoughtcrime.securesms.onboarding.messagenotifications.MessageNotificationsViewModel.UiState
-import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinueAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.RadioButton
 import org.thoughtcrime.securesms.ui.qaTag
@@ -49,7 +48,7 @@ internal fun MessageNotificationsScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = LocalColors.current.primary)
+            CircularProgressIndicator(color = LocalColors.current.accent)
         }
 
         return
@@ -102,7 +101,7 @@ internal fun MessageNotificationsScreen(
 
         Spacer(Modifier.weight(1f))
 
-        ContinuePrimaryOutlineButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinueAccentOutlineButton(Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }
 
@@ -167,7 +166,7 @@ private fun NotificationRadioButton(
                     Text(
                         stringResource(it),
                         modifier = Modifier.padding(top = LocalDimensions.current.xxsSpacing),
-                        color = LocalColors.current.primary,
+                        color = LocalColors.current.accent,
                         style = LocalType.current.h9
                     )
                 }

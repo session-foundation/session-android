@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
+import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import java.util.Date
 import java.util.Locale
@@ -61,6 +62,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val deprecationManager: LegacyGroupDeprecationManager,
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
+    private val dateUtils: DateUtils,
     messageDataProvider: MessageDataProvider,
     storage: Storage
 ) : ViewModel() {
@@ -149,15 +151,15 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     sent = if (messageRecord.isSending && errorString == null) {
                         val sendingWithEllipsisString = context.getString(R.string.sending) + ellipsis // e.g., "Sending…"
                         TitledText(sendingWithEllipsisString, null)
-                    } else if (messageRecord.isSent && errorString == null) {
-                        dateReceived.let(::Date).toString().let { TitledText(R.string.sent, it) }
+                    } else if (dateSent > 0L && errorString == null) {
+                        TitledText(R.string.sent, dateUtils.getMessageDateTimeFormattedString(dateSent))
                     } else {
                         null // Not sending or sent? Don't display anything for the "Sent" element.
                     },
 
                     // Set the "Received" message info TitledText appropriately
-                    received = if (messageRecord.isIncoming && errorString == null) {
-                        dateReceived.let(::Date).toString().let { TitledText(R.string.received, it) }
+                    received = if (dateReceived > 0L && messageRecord.isIncoming && errorString == null) {
+                        TitledText(R.string.received, dateUtils.getMessageDateTimeFormattedString(dateReceived))
                     } else {
                         null // Not incoming? Then don't display anything for the "Received" element.
                     },
@@ -218,6 +220,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         val slide = mmsRecord.slideDeck.slides[index] ?: return
         // only open to downloaded images
         if (slide.isInProgress || slide.isFailed) return
+        if(state.thread == null) return
 
         viewModelScope.launch {
             MediaPreviewArgs(slide, state.mmsRecord, state.thread)

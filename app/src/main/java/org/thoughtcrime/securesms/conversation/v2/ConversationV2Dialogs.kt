@@ -11,28 +11,35 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideDeleteEveryoneDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideRecreateGroupConfirm
+import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideSimpleDialog
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedForEveryone
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
+import org.thoughtcrime.securesms.openUrl
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -54,6 +61,42 @@ fun ConversationV2Dialogs(
                     // hide dialog
                     sendCommand(ShowOpenUrlDialog(null))
                 }
+            )
+        }
+
+        //  Simple dialogs
+        if (dialogsState.showSimpleDialog != null) {
+            val buttons = mutableListOf<DialogButtonData>()
+            if(dialogsState.showSimpleDialog.positiveText != null) {
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.positiveText),
+                        color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                        else LocalColors.current.text,
+                        qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                        onClick = dialogsState.showSimpleDialog.onPositive
+                    )
+                )
+            }
+            if(dialogsState.showSimpleDialog.negativeText != null){
+                buttons.add(
+                    DialogButtonData(
+                        text = GetString(dialogsState.showSimpleDialog.negativeText),
+                        qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                        onClick = dialogsState.showSimpleDialog.onNegative
+                    )
+                )
+            }
+
+            AlertDialog(
+                onDismissRequest = {
+                    // hide dialog
+                    sendCommand(HideSimpleDialog)
+                },
+                title = annotatedStringResource(dialogsState.showSimpleDialog.title),
+                text = annotatedStringResource(dialogsState.showSimpleDialog.message),
+                showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+                buttons = buttons
             )
         }
 
@@ -116,7 +159,7 @@ fun ConversationV2Dialogs(
                     }
                 },
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.delete)),
                         color = LocalColors.current.danger,
                         onClick = {
@@ -129,7 +172,7 @@ fun ConversationV2Dialogs(
                             )
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -147,7 +190,7 @@ fun ConversationV2Dialogs(
                     Phrase.from(txt).put(EMOJI_KEY, dialogsState.clearAllEmoji.emoji).format().toString()
                 },
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.clear)),
                         color = LocalColors.current.danger,
                         onClick = {
@@ -157,7 +200,7 @@ fun ConversationV2Dialogs(
                             )
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -173,14 +216,14 @@ fun ConversationV2Dialogs(
                 title = stringResource(R.string.recreateGroup),
                 text = stringResource(R.string.legacyGroupChatHistory),
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.theContinue)),
                         color = LocalColors.current.danger,
                         onClick = {
                             sendCommand(ConfirmRecreateGroup)
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -210,6 +253,29 @@ fun ConversationV2Dialogs(
                     },
                 )
             }
+        }
+
+        // Pro CTA
+        if (dialogsState.sessionProCharLimitCTA) {
+            val context = LocalContext.current
+
+            SimpleSessionProCTA(
+                heroImage = R.drawable.cta_hero_char_limit,
+                text = stringResource(R.string.proCallToActionLongerMessages),
+                features = listOf(
+                    stringResource(R.string.proFeatureListLongerMessages),
+                    stringResource(R.string.proFeatureListLargerGroups),
+                    stringResource(R.string.proFeatureListLoadsMore),
+                ),
+                onUpgrade = {
+                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+                    context.openUrl(NonTranslatableStringConstants.SESSION_DOWNLOAD_URL) //todo PRO get the proper UR: once we have it
+                },
+                onCancel = {
+                    sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
+                }
+            )
+
         }
     }
 }

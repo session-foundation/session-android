@@ -3,8 +3,11 @@ package org.thoughtcrime.securesms.messagerequests
 import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import com.bumptech.glide.Glide
@@ -23,6 +26,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.DateUtils
+import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
 
 @AndroidEntryPoint
@@ -40,6 +44,9 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         MessageRequestsAdapter(context = this, cursor = null, dateUtils = dateUtils, listener = this)
     }
 
+    override val applyDefaultWindowInsets: Boolean
+        get() = false
+
     override fun onCreate(savedInstanceState: Bundle?, ready: Boolean) {
         super.onCreate(savedInstanceState, ready)
         binding = ActivityMessageRequestsBinding.inflate(layoutInflater)
@@ -52,6 +59,10 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         binding.recyclerView.adapter = adapter
 
         binding.clearAllMessageRequestsButton.setOnClickListener { deleteAll() }
+
+        binding.root.applySafeInsetsPaddings(
+            applyBottom = false,
+        )
     }
 
     override fun onResume() {

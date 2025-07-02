@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.onboarding.OnboardingBackPressAlertDialog
-import org.thoughtcrime.securesms.onboarding.ui.ContinuePrimaryOutlineButton
+import org.thoughtcrime.securesms.onboarding.ui.ContinueAccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -79,6 +79,6 @@ internal fun PickDisplayName(
         Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
         Spacer(Modifier.weight(2f))
 
-        ContinuePrimaryOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
+        ContinueAccentOutlineButton(modifier = Modifier.align(Alignment.CenterHorizontally), onContinue)
     }
 }

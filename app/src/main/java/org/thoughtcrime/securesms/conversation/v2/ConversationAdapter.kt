@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 
 class ConversationAdapter(
     context: Context,
-    cursor: Cursor,
+    cursor: Cursor?,
     conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
@@ -70,6 +70,8 @@ class ConversationAdapter(
     private val groupId = if(conversation?.isGroupV2Recipient == true)
         AccountId(conversation.address.toString())
     else null
+
+    private val expandedMessageIds = mutableSetOf<MessageId>()
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -140,6 +142,7 @@ class ConversationAdapter(
                     }
                 }
                 val contact = contactCache[senderIdHash]
+                val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(
                     message = message,
@@ -155,7 +158,11 @@ class ConversationAdapter(
                     lastSentMessageId = lastSentMessageId,
                     delegate = visibleMessageViewDelegate,
                     downloadPendingAttachment = downloadPendingAttachment,
-                    retryFailedAttachments = retryFailedAttachments
+                    retryFailedAttachments = retryFailedAttachments,
+                    isTextExpanded = isExpanded,
+                    onTextExpanded = { messageId ->
+                        expandedMessageIds.add(messageId)
+                    }
                 )
 
                 if (!message.isDeleted) {

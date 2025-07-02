@@ -38,7 +38,7 @@ fun SessionTabRow(pagerState: PagerState, titles: List<Int>) {
             indicator = { tabPositions ->
                 TabRowDefaults.SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
-                    color = LocalColors.current.primary,
+                    color = LocalColors.current.accent,
                     height = LocalDimensions.current.indicatorHeight
                 )
             },

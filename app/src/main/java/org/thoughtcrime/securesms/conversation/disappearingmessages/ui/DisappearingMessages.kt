@@ -25,7 +25,7 @@ import org.thoughtcrime.securesms.ui.OptionsCard
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.AppBarBackIcon
 import org.thoughtcrime.securesms.ui.components.AppBarText
-import org.thoughtcrime.securesms.ui.components.PrimaryOutlineButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.appBarColors
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -110,7 +110,7 @@ fun DisappearingMessages(
             }
 
             if (state.showSetButton) {
-                PrimaryOutlineButton(
+                AccentOutlineButton(
                     stringResource(R.string.set),
                     modifier = Modifier
                         .qaTag(R.string.AccessibilityId_setButton)

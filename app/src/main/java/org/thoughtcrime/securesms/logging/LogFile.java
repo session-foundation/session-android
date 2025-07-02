@@ -10,6 +10,7 @@ import org.session.libsession.utilities.Util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,7 +48,7 @@ class LogFile {
     private final GrowingBuffer ciphertextBuffer = new GrowingBuffer();
 
     private final byte[]               secret;
-    private final File                 file;
+    final File                 file;
     private final Cipher               cipher;
     private final BufferedOutputStream outputStream;
 
@@ -63,7 +64,7 @@ class LogFile {
       }
     }
 
-    void writeEntry(@NonNull String entry) throws IOException {
+    void writeEntry(@NonNull String entry, boolean flush) throws IOException {
       SECURE_RANDOM.nextBytes(ivBuffer);
 
       byte[] plaintext = entry.getBytes();
@@ -80,10 +81,16 @@ class LogFile {
           outputStream.write(ciphertext, 0, cipherLength);
         }
 
-        outputStream.flush();
+        if (flush) {
+          outputStream.flush();
+        }
       } catch (ShortBufferException | InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
         throw new AssertionError(e);
       }
+    }
+
+    void flush() throws IOException {
+      outputStream.flush();
     }
 
     long getLogSize() {
@@ -95,7 +102,7 @@ class LogFile {
     }
   }
 
-  static class Reader {
+  static class Reader implements Closeable {
 
     private final byte[]        ivBuffer         = new byte[16];
     private final byte[]        intBuffer        = new byte[4];
@@ -127,7 +134,20 @@ class LogFile {
       return builder.toString();
     }
 
+    @Override
+    public void close() throws IOException {
+      Util.close(inputStream);
+    }
+
     String readEntry() throws IOException {
+      byte[] plaintext = readEntryBytes();
+      if (plaintext == null) {
+        return null;
+      }
+      return new String(plaintext);
+    }
+
+    byte[] readEntryBytes() throws IOException {
       try {
         // Read the IV and length
         Util.readFully(inputStream, ivBuffer);
@@ -151,7 +171,7 @@ class LogFile {
         synchronized (CIPHER_LOCK) {
           cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secret, "AES"), new IvParameterSpec(ivBuffer));
           byte[] plaintext = cipher.doFinal(ciphertext, 0, length);
-          return new String(plaintext);
+          return plaintext;
         }
       } catch (BadPaddingException e) {
         // Bad padding likely indicates a corrupted or incomplete entry.
