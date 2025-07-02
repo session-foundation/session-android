@@ -41,7 +41,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import network.loki.messenger.R;
-import org.session.libsession.utilities.recipients.Recipient;
+
+import org.session.libsession.utilities.Address;
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
@@ -264,7 +265,7 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull String body) {
+    public static void selectGallery(Activity activity, int requestCode, @NonNull Address recipient, @NonNull String body) {
 
         Context c = activity.getApplicationContext();
 
@@ -318,7 +319,7 @@ public class AttachmentManager {
         return captureUri;
     }
 
-    public void capturePhoto(Activity activity, int requestCode, Recipient recipient) {
+    public void capturePhoto(Activity activity, int requestCode, Address recipient) {
 
         String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
                 .put(APP_NAME_KEY, context.getString(R.string.app_name))

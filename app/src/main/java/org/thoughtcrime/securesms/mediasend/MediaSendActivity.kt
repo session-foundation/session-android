@@ -23,6 +23,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediasendActivityBinding
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.MediaTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
@@ -31,6 +32,7 @@ import org.session.libsession.utilities.concurrent.SimpleTask
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mediasend.MediaSendViewModel.CountButtonState
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.scribbles.ImageEditorFragment
@@ -53,6 +55,8 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
 
     private lateinit var binding: MediasendActivityBinding
 
+    lateinit var recipientRepository: RecipientRepository
+
 
     override val applyDefaultWindowInsets: Boolean
         get() = false // we want to handle window insets manually here for fullscreen fragments like the camera screen
@@ -74,11 +78,9 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         // Apply windowInsets for our own UI (not the fragment ones because they will want to do their own things)
         binding.mediasendBottomBar.applySafeInsetsPaddings()
 
-        recipient = Recipient.from(
-            this, fromSerialized(
-                intent.getStringExtra(KEY_ADDRESS)!!
-            ), true
-        )
+        recipient = recipientRepository.getRecipientSync(fromSerialized(
+            intent.getStringExtra(KEY_ADDRESS)!!
+        ))
 
         viewModel.onBodyChanged(intent.getStringExtra(KEY_BODY)!!)
 
@@ -93,7 +95,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         } else if (!isEmpty(media)) {
             viewModel.onSelectedMediaChanged(this, media!!)
 
-            val fragment: Fragment = MediaSendFragment.newInstance(recipient!!)
+            val fragment: Fragment = MediaSendFragment.newInstance(recipient!!.address)
             supportFragmentManager.beginTransaction()
                 .replace(R.id.mediasend_fragment_container, fragment, TAG_SEND)
                 .commit()
@@ -168,7 +170,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
     override fun onMediaSelected(media: Media) {
         try {
             viewModel.onSingleMediaSelected(this, media)
-            navigateToMediaSend(recipient!!)
+            navigateToMediaSend(recipient!!.address)
         } catch (e: Exception){
             Log.e(TAG, "Error selecting media", e)
             Toast.makeText(this, R.string.errorUnknown, Toast.LENGTH_LONG).show()
@@ -263,7 +265,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             Log.i(TAG, "Camera capture stored: " + media.uri.toString())
 
             viewModel.onImageCaptured(media)
-            navigateToMediaSend(recipient!!)
+            navigateToMediaSend(recipient!!.address)
         })
     }
 
@@ -282,7 +284,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
             if (buttonState.count > 0) {
                 binding.mediasendCountButton.setOnClickListener { v: View? ->
                     navigateToMediaSend(
-                        recipient!!
+                        recipient!!.address
                     )
                 }
                 if (buttonState.isVisible) {
@@ -330,7 +332,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         }
     }
 
-    private fun navigateToMediaSend(recipient: Recipient) {
+    private fun navigateToMediaSend(recipient: Address) {
         val fragment = MediaSendFragment.newInstance(recipient)
         var backstackTag: String? = null
 
@@ -511,9 +513,9 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
          * Get an intent to launch the media send flow starting with the picker.
          */
         @JvmStatic
-        fun buildGalleryIntent(context: Context, recipient: Recipient, body: String): Intent {
+        fun buildGalleryIntent(context: Context, recipient: Address, body: String): Intent {
             val intent = Intent(context, MediaSendActivity::class.java)
-            intent.putExtra(KEY_ADDRESS, recipient.address.toString())
+            intent.putExtra(KEY_ADDRESS, recipient.toString())
             intent.putExtra(KEY_BODY, body)
             return intent
         }
@@ -522,7 +524,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
          * Get an intent to launch the media send flow starting with the camera.
          */
         @JvmStatic
-        fun buildCameraIntent(context: Context, recipient: Recipient): Intent {
+        fun buildCameraIntent(context: Context, recipient: Address): Intent {
             val intent = buildGalleryIntent(context, recipient, "")
             intent.putExtra(KEY_IS_CAMERA, true)
             return intent
@@ -535,7 +537,7 @@ class MediaSendActivity : ScreenLockActionBarActivity(), MediaPickerFolderFragme
         fun buildEditorIntent(
             context: Context,
             media: List<Media>,
-            recipient: Recipient,
+            recipient: Address,
             body: String
         ): Intent {
             val intent = buildGalleryIntent(context, recipient, body)

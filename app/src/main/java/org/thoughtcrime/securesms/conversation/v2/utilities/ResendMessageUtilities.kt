@@ -10,14 +10,13 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.messaging.sending_receiving.MessageSender
 import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 
 object ResendMessageUtilities {
 
     fun resend(context: Context, messageRecord: MessageRecord, userBlindedKey: String?, isResync: Boolean = false) {
-        val recipient: Recipient = messageRecord.recipient
+        val recipient = messageRecord.recipient.address
         val message = VisibleMessage()
         message.id = messageRecord.messageId
         if (messageRecord.isOpenGroupInvitation) {
@@ -34,8 +33,8 @@ object ResendMessageUtilities {
             message.text = messageRecord.body
         }
         message.sentTimestamp = messageRecord.timestamp
-        if (recipient.isGroupOrCommunityRecipient) {
-            message.groupPublicKey = recipient.address.toGroupString()
+        if (recipient.isGroupOrCommunity) {
+            message.groupPublicKey = recipient.toGroupString()
         } else {
             message.recipient = messageRecord.recipient.address.toString()
         }
@@ -56,10 +55,10 @@ object ResendMessageUtilities {
         if (sentTimestamp != null && sender != null) {
             if (isResync) {
                 MessagingModuleConfiguration.shared.storage.markAsResyncing(messageRecord.messageId)
-                MessageSender.sendNonDurably(message, Destination.from(recipient.address), isSyncMessage = true)
+                MessageSender.sendNonDurably(message, Destination.from(recipient), isSyncMessage = true)
             } else {
                 MessagingModuleConfiguration.shared.storage.markAsSending(messageRecord.messageId)
-                MessageSender.send(message, recipient.address)
+                MessageSender.send(message, recipient)
             }
         }
     }

@@ -3,16 +3,26 @@ package org.thoughtcrime.securesms.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import androidx.collection.LruCache
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsignal.utilities.JsonUtil
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
+@Singleton
+class LokiThreadDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    helper: Provider<SQLCipherOpenHelper>
+) : Database(context, helper) {
 
     companion object {
         private val sessionResetTable = "loki_thread_session_reset_database"
-        val publicChatTable = "loki_public_chat_database"
+        private val publicChatTable = "loki_public_chat_database"
         val threadID = "thread_id"
         private val sessionResetStatus = "session_reset_status"
         val publicChat = "public_chat"
@@ -21,6 +31,12 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         @JvmStatic
         val createPublicChatTableCommand = "CREATE TABLE $publicChatTable ($threadID INTEGER PRIMARY KEY, $publicChat TEXT);"
     }
+
+    private val mutableChangeNotification = MutableSharedFlow<Unit>()
+
+    val changeNotification: SharedFlow<Unit> get() = mutableChangeNotification
+
+    private val cacheByThreadId = LruCache<Long, OpenGroup>(32)
 
     fun getAllOpenGroups(): Map<Long, OpenGroup> {
         val database = readableDatabase
@@ -39,6 +55,12 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         } finally {
             cursor?.close()
         }
+
+        // Update the cache with the results
+        for ((id, group) in result) {
+            cacheByThreadId.put(id, group)
+        }
+
         return result
     }
 
@@ -46,6 +68,12 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         if (threadID < 0) {
             return null
         }
+
+        // Check the cache first
+        cacheByThreadId[threadID]?.let {
+            return it
+        }
+
         val database = readableDatabase
         return database.get(publicChatTable, "${Companion.threadID} = ?", arrayOf(threadID.toString())) { cursor ->
             val json = cursor.getString(publicChat)
@@ -53,22 +81,25 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
         }
     }
 
-    fun getThreadId(openGroup: OpenGroup): Long? {
-        val database = readableDatabase
-        return database.get(publicChatTable, "$publicChat = ?", arrayOf(JsonUtil.toJson(openGroup.toJson()))) { cursor ->
-            cursor.getLong(threadID)
-        }
-    }
-
     fun setOpenGroupChat(openGroup: OpenGroup, threadID: Long) {
         if (threadID < 0) {
             return
         }
+
+        // Check if the group has really changed
+        val cache = cacheByThreadId[threadID]
+        if (cache == openGroup) {
+            return
+        } else {
+            cacheByThreadId.put(threadID, openGroup)
+        }
+
         val database = writableDatabase
         val contentValues = ContentValues(2)
         contentValues.put(Companion.threadID, threadID)
         contentValues.put(publicChat, JsonUtil.toJson(openGroup.toJson()))
         database.insertOrUpdate(publicChatTable, contentValues, "${Companion.threadID} = ?", arrayOf(threadID.toString()))
+        mutableChangeNotification.tryEmit(Unit)
     }
 
     fun removeOpenGroupChat(threadID: Long) {
@@ -76,6 +107,9 @@ class LokiThreadDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>
 
         val database = writableDatabase
         database.delete(publicChatTable,"${Companion.threadID} = ?", arrayOf(threadID.toString()))
+
+        cacheByThreadId.remove(threadID)
+        mutableChangeNotification.tryEmit(Unit)
     }
 
 }

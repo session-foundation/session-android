@@ -3,11 +3,8 @@ package org.thoughtcrime.securesms.messagerequests
 import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
-import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import com.bumptech.glide.Glide
@@ -19,7 +16,6 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -30,7 +26,7 @@ import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
 
 @AndroidEntryPoint
-class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor?> {
 
     private lateinit var binding: ActivityMessageRequestsBinding
     private lateinit var glide: RequestManager
@@ -70,16 +66,16 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         LoaderManager.getInstance(this).restartLoader(0, null, this)
     }
 
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return MessageRequestsLoader(this@MessageRequestsActivity)
+    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor?> {
+        return MessageRequestsLoader(threadDb, this)
     }
 
-    override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
+    override fun onLoadFinished(loader: Loader<Cursor?>, cursor: Cursor?) {
         adapter.changeCursor(cursor)
         updateEmptyState()
     }
 
-    override fun onLoaderReset(cursor: Loader<Cursor>) {
+    override fun onLoaderReset(cursor: Loader<Cursor?>) {
         adapter.changeCursor(null)
     }
 
@@ -92,8 +88,8 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     override fun onBlockConversationClick(thread: ThreadRecord) {
         fun doBlock() {
             val recipient = thread.invitingAdminId?.let {
-                Recipient.from(this, Address.fromSerialized(it), false)
-            } ?: thread.recipient
+                Address.fromSerialized(it)
+            } ?: thread.recipient.address
             viewModel.blockMessageRequest(thread, recipient)
             LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
@@ -101,7 +97,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.name)
+                .put(NAME_KEY, thread.recipient.displayName)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 doBlock()

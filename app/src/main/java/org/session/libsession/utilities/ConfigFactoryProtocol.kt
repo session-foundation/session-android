@@ -24,8 +24,8 @@ import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
 import network.loki.messenger.libsession_util.util.ConfigPush
 import network.loki.messenger.libsession_util.util.GroupInfo
+import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.snode.SwarmAuth
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 
 interface ConfigFactoryProtocol {
@@ -112,6 +112,11 @@ enum class UserConfigType(val namespace: Int) {
     USER_GROUPS(Namespace.USER_GROUPS()),
 }
 
+val ConfigFactoryProtocol.currentUserName: String get() = withUserConfigs { it.userProfile.getName().orEmpty() }
+val ConfigFactoryProtocol.currentUserProfile: UserPic? get() = withUserConfigs { configs ->
+    configs.userProfile.getPic().takeIf { it.url.isNotBlank() }
+}
+
 /**
  * Shortcut to get the group info for a closed group. Equivalent to: `withUserConfigs { it.userGroups.getClosedGroup(groupId) }`
  */
@@ -120,39 +125,10 @@ fun ConfigFactoryProtocol.getGroup(groupId: AccountId): GroupInfo.ClosedGroupInf
 }
 
 /**
- * Shortcut to check if the current user was kicked from a given group V2 (as a Recipient)
+ * Flow that emits when the user configs are modified or merged.
  */
-fun ConfigFactoryProtocol.wasKickedFromGroupV2(group: Recipient) =
-    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.kicked == true
-
-/**
- * Shortcut to check if the a given group is destroyed
- */
-fun ConfigFactoryProtocol.isGroupDestroyed(group: Recipient) =
-    group.isGroupV2Recipient && getGroup(AccountId(group.address.toString()))?.destroyed == true
-
-/**
- * Wait until all user configs are pushed to the server.
- *
- * This function is not essential to the pushing of the configs, the config push will schedule
- * itself upon changes, so this function is purely observatory.
- *
- * This function will check the user configs immediately, if nothing needs to be pushed, it will return immediately.
- *
- * @return True if all user configs are pushed, false if the timeout is reached.
- */
-suspend fun ConfigFactoryProtocol.waitUntilUserConfigsPushed(timeoutMills: Long = 10_000L): Boolean {
-    fun needsPush() = withUserConfigs { configs ->
-        UserConfigType.entries.any { configs.getConfig(it).needsPush() }
-    }
-
-    return withTimeoutOrNull(timeoutMills){
-        configUpdateNotifications
-            .onStart { emit(ConfigUpdateNotification.UserConfigsModified) } // Trigger the filtering immediately
-            .filter { it == ConfigUpdateNotification.UserConfigsModified && !needsPush() }
-            .first()
-    } != null
-}
+fun ConfigFactoryProtocol.userConfigsChanged(): Flow<*> =
+    configUpdateNotifications.filter { it is ConfigUpdateNotification.UserConfigsModified || it is ConfigUpdateNotification.UserConfigsMerged }
 
 /**
  * Wait until all configs of given group are pushed to the server.

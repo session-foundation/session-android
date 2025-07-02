@@ -17,8 +17,6 @@
  */
 package org.thoughtcrime.securesms.database;
 
-import static org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX;
-import static org.session.libsession.utilities.GroupUtil.LEGACY_CLOSED_GROUP_PREFIX;
 import static org.thoughtcrime.securesms.database.GroupDatabase.GROUP_ID;
 import static org.thoughtcrime.securesms.database.UtilKt.generatePlaceholders;
 
@@ -41,16 +39,13 @@ import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.ConfigFactoryProtocolKt;
 import org.session.libsession.utilities.DelimiterUtil;
 import org.session.libsession.utilities.DistributionTypes;
-import org.session.libsession.utilities.GroupRecord;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
 import org.session.libsignal.utilities.AccountId;
 import org.session.libsignal.utilities.IdPrefix;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.Pair;
-import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.GroupThreadStatus;
@@ -66,16 +61,18 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+import dagger.Lazy;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
+@Singleton
 public class ThreadDatabase extends Database {
 
   public interface ConversationThreadUpdateListener {
@@ -85,7 +82,6 @@ public class ThreadDatabase extends Database {
   private static final String TAG = ThreadDatabase.class.getSimpleName();
 
   // Map of threadID -> Address
-  private final Map<Long, Address> addressCache = new HashMap<>();
 
   public  static final String TABLE_NAME             = "thread";
   public  static final String ID                     = "_id";
@@ -157,8 +153,14 @@ public class ThreadDatabase extends Database {
 
   private ConversationThreadUpdateListener updateListener;
 
-  public ThreadDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  private final Lazy<RecipientRepository> recipientRepository;
+
+  @Inject
+  public ThreadDatabase(@dagger.hilt.android.qualifiers.ApplicationContext Context context,
+                        Provider<SQLCipherOpenHelper> databaseHelper,
+                        Lazy<RecipientRepository> recipientRepository) {
     super(context, databaseHelper);
+    this.recipientRepository = recipientRepository;
   }
 
   public void setUpdateListener(ConversationThreadUpdateListener updateListener) {
@@ -234,7 +236,6 @@ public class ThreadDatabase extends Database {
   public void deleteThread(long threadId) {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, ID_WHERE, new String[] {threadId + ""});
-    addressCache.remove(threadId);
     notifyConversationListListeners();
   }
 
@@ -247,16 +248,12 @@ public class ThreadDatabase extends Database {
     where = where.substring(0, where.length() - 4);
 
     db.delete(TABLE_NAME, where, null);
-    for (long threadId: threadIds) {
-      addressCache.remove(threadId);
-    }
     notifyConversationListListeners();
   }
 
   private void deleteAllThreads() {
     SQLiteDatabase db = getWritableDatabase();
     db.delete(TABLE_NAME, null, null);
-    addressCache.clear();
     notifyConversationListListeners();
   }
 
@@ -427,8 +424,9 @@ public class ThreadDatabase extends Database {
   }
 
 
+  @Nullable
   public Cursor getFilteredConversationList(@Nullable List<Address> filter) {
-    if (filter == null || filter.size() == 0)
+    if (filter == null || filter.isEmpty())
       return null;
 
     SQLiteDatabase      db                   = getReadableDatabase();
@@ -465,38 +463,79 @@ public class ThreadDatabase extends Database {
   }
 
   public Cursor getConversationList() {
-    return getConversationList(ARCHIVED + " = 0 ");
+    // Conversations will come from two different sources:
+    // 1. Config based conversations
+    // 2. Blinded conversations stored in the database
+    final List<Address> blindedConversations = getBlindedConversations(null, false);
+    final List<Address> configBasedConversations = recipientRepository.get().getConfigBasedConversations(
+            c -> true,
+            c -> !c.getBlocked(),
+            value -> true,
+            value -> true,
+            value -> true
+    );
+
+    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
+    allAddresses.addAll(blindedConversations);
+    allAddresses.addAll(configBasedConversations);
+
+    return getFilteredConversationList(allAddresses);
   }
 
-  public Cursor getBlindedConversationList() {
-    String where  = TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.BLINDED.getValue() + "%' ";
-    return getConversationList(where);
+  private List<Address> getBlindedConversations(@Nullable Boolean approved, @Nullable Boolean blocked) {
+    String query = "SELECT " + TABLE_NAME + "." + ADDRESS + " FROM " + TABLE_NAME +
+            " INNER JOIN " + RecipientDatabase.TABLE_NAME + " ON " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS + " = " + TABLE_NAME + "." + ADDRESS +
+            " WHERE " + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.BLINDED.getValue() + "%'";
+
+    if (approved != null) {
+      query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = " + (approved ? 1 : 0);
+    }
+
+    if (blocked != null) {
+      query += " AND " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = " + (blocked ? 1 : 0);
+    }
+
+    try(final Cursor cursor = getReadableDatabase().rawQuery(query)) {
+      final ArrayList<Address> addresses = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+        String address = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+        if (address != null && !address.isEmpty()) {
+          addresses.add(Address.fromSerialized(address));
+        }
+      }
+
+      return addresses;
+    }
   }
 
+  @Nullable
   public Cursor getApprovedConversationList() {
-    String where  = "((" + HAS_SENT + " = 1 OR " + RecipientDatabase.APPROVED + " = 1 OR "+ GroupDatabase.TABLE_NAME +"."+GROUP_ID+" LIKE '"+ LEGACY_CLOSED_GROUP_PREFIX +"%') " +
-            "OR " + GroupDatabase.TABLE_NAME + "." + GROUP_ID + " LIKE '" + COMMUNITY_PREFIX + "%') " +
-            "AND " + ARCHIVED + " = 0 ";
-    return getConversationList(where);
+    // Approved conversations will come from two different sources:
+    // 1. Config based conversations
+    // 2. Blinded conversations stored in the database
+    final List<Address> blindedConversations = getBlindedConversations(true, false);
+    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedApprovedConversations();
+
+    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
+    allAddresses.addAll(blindedConversations);
+    allAddresses.addAll(configBasedConversations);
+
+    return getFilteredConversationList(allAddresses);
   }
 
+  @Nullable
   public Cursor getUnapprovedConversationList() {
-    String where  = "("+MESSAGE_COUNT + " != 0 OR "+ThreadDatabase.TABLE_NAME+"."+ThreadDatabase.ADDRESS+" LIKE '"+IdPrefix.GROUP.getValue()+"%')" +
-            " AND " + ARCHIVED + " = 0 AND " + HAS_SENT + " = 0 AND " +
-            RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0 AND " +
-            RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
-            GroupDatabase.TABLE_NAME + "." + GROUP_ID + " IS NULL";
-    return getConversationList(where);
-  }
+    // Unapproved conversations will come from two different sources:
+    // 1. Config based conversations
+    // 2. Blinded conversations stored in the database
+    final List<Address> blindedConversations = getBlindedConversations(false, false);
+    final List<Address> configBasedConversations = recipientRepository.get().getAllConfigBasedUnapprovedConversations();
 
-  private Cursor getConversationList(String where) {
-    SQLiteDatabase db     = getReadableDatabase();
-    String         query  = createQuery(where, 0);
-    Cursor         cursor = db.rawQuery(query, null);
+    final List<Address> allAddresses = new ArrayList<>(blindedConversations.size() + configBasedConversations.size());
+    allAddresses.addAll(blindedConversations);
+    allAddresses.addAll(configBasedConversations);
 
-    setNotifyConversationListListeners(cursor);
-
-    return cursor;
+    return getFilteredConversationList(allAddresses);
   }
 
   public Cursor getDirectShareList() {
@@ -514,8 +553,8 @@ public class ThreadDatabase extends Database {
   public boolean setLastSeen(long threadId, long timestamp) {
     // edge case where we set the last seen time for a conversation before it loads messages (joining community for example)
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
-    Recipient forThreadId = getRecipientForThreadId(threadId);
-    if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunityRecipient()) return false;
+    Address forThreadId = getRecipientForThreadId(threadId);
+    if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && forThreadId != null && forThreadId.isCommunity()) return false;
 
     SQLiteDatabase db = getWritableDatabase();
 
@@ -614,12 +653,12 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public long getThreadIdIfExistsFor(Recipient recipient) {
-    return getThreadIdIfExistsFor(recipient.getAddress().toString());
+  public long getThreadIdIfExistsFor(Address address) {
+    return getThreadIdIfExistsFor(address.toString());
   }
 
-  public long getOrCreateThreadIdFor(Recipient recipient) {
-    return getOrCreateThreadIdFor(recipient, DistributionTypes.DEFAULT);
+  public long getOrCreateThreadIdFor(Address address) {
+    return getOrCreateThreadIdFor(address, DistributionTypes.DEFAULT);
   }
 
   public void setThreadArchived(long threadId) {
@@ -633,10 +672,10 @@ public class ThreadDatabase extends Database {
     notifyConversationListeners(threadId);
   }
 
-  public long getOrCreateThreadIdFor(Recipient recipient, int distributionType) {
+  public long getOrCreateThreadIdFor(Address address, int distributionType) {
     SQLiteDatabase db            = getReadableDatabase();
     String         where         = ADDRESS + " = ?";
-    String[]       recipientsArg = new String[]{recipient.getAddress().toString()};
+    String[]       recipientsArg = new String[]{address.toString()};
     Cursor         cursor        = null;
 
     boolean created = false;
@@ -650,16 +689,14 @@ public class ThreadDatabase extends Database {
             if (cursor != null && cursor.moveToFirst()) {
               threadId = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
             } else {
-              threadId = createThreadForRecipient(recipient.getAddress(), recipient.isGroupOrCommunityRecipient(), distributionType);
+              threadId = createThreadForRecipient(address, address.isGroupOrCommunity(), distributionType);
               created = true;
             }
         }
 
         if (created) {
-          DatabaseComponent.get(context).recipientDatabase().setProfileSharing(recipient, true);
-
           if (updateListener != null) {
-              updateListener.threadCreated(recipient.getAddress(), threadId);
+              updateListener.threadCreated(address, threadId);
           }
         }
 
@@ -670,25 +707,13 @@ public class ThreadDatabase extends Database {
     }
   }
 
-  public @Nullable Recipient getRecipientForThreadId(long threadId) {
-    if (addressCache.containsKey(threadId) && addressCache.get(threadId) != null) {
-      return Recipient.from(context, addressCache.get(threadId), false);
-    }
-
+  public @Nullable Address getRecipientForThreadId(long threadId) {
     SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor     = null;
 
-    try {
-      cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null);
-
+    try(final Cursor cursor = db.query(TABLE_NAME, null, ID + " = ?", new String[] {threadId+""}, null, null, null)) {
       if (cursor != null && cursor.moveToFirst()) {
-        Address address = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS)));
-        addressCache.put(threadId, address);
-        return Recipient.from(context, address, false);
+        return Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS)));
       }
-    } finally {
-      if (cursor != null)
-        cursor.close();
     }
 
     return null;
@@ -868,18 +893,7 @@ public class ThreadDatabase extends Database {
       int     distributionType = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.DISTRIBUTION_TYPE));
       Address address          = Address.fromSerialized(cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.ADDRESS)));
 
-      Optional<RecipientSettings> settings;
-      Optional<GroupRecord>       groupRecord;
-
-      if (distributionType != DistributionTypes.ARCHIVE && distributionType != DistributionTypes.INBOX_ZERO) {
-        settings    = DatabaseComponent.get(context).recipientDatabase().getRecipientSettings(cursor);
-        groupRecord = DatabaseComponent.get(context).groupDatabase().getGroup(cursor);
-      } else {
-        settings    = Optional.absent();
-        groupRecord = Optional.absent();
-      }
-
-      Recipient          recipient            = Recipient.from(context, address, settings, groupRecord, true);
+      Recipient recipient            = recipientRepository.get().getRecipientSyncOrEmpty(address);
       String             body                 = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET));
       long               date                 = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.THREAD_CREATION_DATE));
       long               count                = cursor.getLong(cursor.getColumnIndexOrThrow(ThreadDatabase.MESSAGE_COUNT));

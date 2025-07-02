@@ -20,6 +20,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONException
@@ -37,7 +38,6 @@ import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.UNKNOWN
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.Contact
 import org.session.libsession.utilities.IdentityKeyMismatch
@@ -49,7 +49,6 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.ThreadUtils.queue
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
@@ -64,9 +63,16 @@ import org.thoughtcrime.securesms.util.asSequence
 import java.io.Closeable
 import java.io.IOException
 import java.util.LinkedList
+import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 
-class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper>) : MessagingDatabase(context, databaseHelper) {
+@Singleton
+class MmsDatabase @Inject constructor(
+    @ApplicationContext context: Context,
+    databaseHelper: Provider<SQLCipherOpenHelper>,
+    private val recipientRepository: RecipientRepository,
+) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
     override fun getTableName() = TABLE_NAME
@@ -459,7 +465,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     .asSequence()
                     .filterNot { obj: DatabaseAttachment -> obj.isQuote || contactAttachments.contains(obj) || previewAttachments.contains(obj) }
                     .toList()
-                val recipient = Recipient.from(context, fromSerialized(address), false)
                 var networkFailures: List<NetworkFailure?>? = LinkedList()
                 var mismatches: List<IdentityKeyMismatch?>? = LinkedList()
                 var quote: QuoteModel? = null
@@ -491,7 +496,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     }
                 }
                 val message = OutgoingMediaMessage(
-                    recipient,
+                    fromSerialized(address),
                     body,
                     attachments,
                     timestamp,
@@ -741,7 +746,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         contentValues.put(SUBSCRIPTION_ID, message.subscriptionId)
         contentValues.put(EXPIRES_IN, message.expiresIn)
         contentValues.put(EXPIRE_STARTED, message.expireStartedAt)
-        contentValues.put(ADDRESS, message.recipient.address.toString())
+        contentValues.put(ADDRESS, message.recipient.toString())
         contentValues.put(
             DELIVERY_RECEIPT_COUNT,
             Stream.of(earlyDeliveryReceipts.values).mapToLong { obj: Long -> obj }
@@ -769,12 +774,11 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             message.linkPreviews,
             contentValues,
         )
-        if (message.recipient.address.isGroupOrCommunity) {
+        if (message.recipient.isGroupOrCommunity) {
             val members = get(context).groupDatabase()
-                .getGroupMembers(message.recipient.address.toGroupString(), false)
+                .getGroupMembers(message.recipient.toGroupString(), false)
             val receiptDatabase = get(context).groupReceiptDatabase()
-            receiptDatabase.insert(Stream.of(members).map { obj: Recipient -> obj.address }
-                .toList(),
+            receiptDatabase.insert(members,
                 messageId, GroupReceiptDatabase.STATUS_UNDELIVERED, message.sentTimeMillis
             )
             for (address in earlyDeliveryReceipts.keys) receiptDatabase.update(
@@ -1256,8 +1260,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
 
-    fun readerFor(message: OutgoingMediaMessage?, threadId: Long) = OutgoingMessageReader(message, threadId)
-
     fun setQuoteMissing(messageId: Long): Int {
         val contentValues = ContentValues()
         contentValues.put(QUOTE_MISSING, 1)
@@ -1288,36 +1290,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         const val DOWNLOAD_INITIALIZED = 1
         const val DOWNLOAD_NO_CONNECTIVITY = 2
         const val DOWNLOAD_CONNECTING = 3
-    }
-
-    inner class OutgoingMessageReader(private val message: OutgoingMediaMessage?,
-                                      private val threadId: Long) {
-        private val id = SECURE_RANDOM.nextLong()
-        val current: MessageRecord
-            get() {
-                val slideDeck = SlideDeck(context, message!!.attachments)
-                return MediaMmsMessageRecord(
-                    id, message.recipient, message.recipient,
-                    1, SnodeAPI.nowWithOffset, SnodeAPI.nowWithOffset,
-                    0, threadId, message.body,
-                    slideDeck, slideDeck.slides.size,
-                    if (message.isSecure) MmsSmsColumns.Types.getOutgoingEncryptedMessageType() else MmsSmsColumns.Types.getOutgoingSmsMessageType(),
-                    LinkedList(),
-                    LinkedList(),
-                    message.subscriptionId,
-                    message.expiresIn,
-                    SnodeAPI.nowWithOffset, 0,
-                    if (message.outgoingQuote != null) Quote(
-                        message.outgoingQuote!!.id,
-                        message.outgoingQuote!!.author,
-                        message.outgoingQuote!!.text, // TODO: use the referenced message's content
-                        message.outgoingQuote!!.missing,
-                        SlideDeck(context, message.outgoingQuote!!.attachments!!)
-                    ) else null,
-                    message.sharedContacts, message.linkPreviews, listOf(), false
-                )
-            }
-
     }
 
     inner class Reader(private val cursor: Cursor?, private val getQuote: Boolean = true) : Closeable {
@@ -1384,7 +1356,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             } else {
                 fromSerialized(serialized)
             }
-            return Recipient.from(context, address, true)
+            return recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
         }
 
         private fun getMismatchedIdentities(document: String?): List<IdentityKeyMismatch?>? {
@@ -1432,7 +1404,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             )
             return Quote(
                 quoteId,
-                fromExternal(context, quoteAuthor),
+                fromSerialized(quoteAuthor),
                 quoteText,
                 quoteMissing,
                 quoteDeck

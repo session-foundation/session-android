@@ -29,18 +29,13 @@ import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
-import org.session.libsession.avatars.ProfileContactPhoto
-import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.classicDark3
-import org.thoughtcrime.securesms.ui.theme.classicLight1
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
@@ -319,10 +314,7 @@ fun PreviewAvatarSinglePhoto(){
                 listOf(AvatarUIElement(
                 name = "AT",
                 color = primaryGreen,
-                contactPhoto = ProfileContactPhoto(
-                    Address.fromSerialized("05c0d6db0f2d400c392a745105dc93b666642b9dd43993e97c2c4d7440c453b620"),
-                    "305422957"
-                )
+                contactPhoto = null
             )))
         )
     }

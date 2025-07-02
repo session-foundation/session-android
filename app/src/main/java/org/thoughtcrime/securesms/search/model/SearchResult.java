@@ -1,13 +1,11 @@
 package org.thoughtcrime.securesms.search.model;
 
-import android.database.ContentObserver;
-
 import androidx.annotation.NonNull;
 
-import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.utilities.GroupRecord;
+import org.session.libsession.utilities.recipients.BasicRecipient;
+import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.CursorList;
-import org.thoughtcrime.securesms.database.model.ThreadRecord;
 
 import java.util.List;
 
@@ -20,12 +18,12 @@ public class SearchResult {
   public static final SearchResult EMPTY = new SearchResult("", CursorList.emptyList(), CursorList.emptyList(), CursorList.emptyList());
 
   private final String                    query;
-  private final CursorList<Contact>     contacts;
+  private final List<BasicRecipient.Contact>     contacts;
   private final CursorList<GroupRecord>  conversations;
   private final CursorList<MessageResult> messages;
 
   public SearchResult(@NonNull String                    query,
-                      @NonNull CursorList<Contact>     contacts,
+                      @NonNull List<BasicRecipient.Contact>     contacts,
                       @NonNull CursorList<GroupRecord>  conversations,
                       @NonNull CursorList<MessageResult> messages)
   {
@@ -35,7 +33,7 @@ public class SearchResult {
     this.messages      = messages;
   }
 
-  public List<Contact> getContacts() {
+  public List<BasicRecipient.Contact> getContacts() {
     return contacts;
   }
 
@@ -59,20 +57,7 @@ public class SearchResult {
     return size() == 0;
   }
 
-  public void registerContentObserver(@NonNull ContentObserver observer) {
-    contacts.registerContentObserver(observer);
-    conversations.registerContentObserver(observer);
-    messages.registerContentObserver(observer);
-  }
-
-  public void unregisterContentObserver(@NonNull ContentObserver observer) {
-    contacts.unregisterContentObserver(observer);
-    conversations.unregisterContentObserver(observer);
-    messages.unregisterContentObserver(observer);
-  }
-
   public void close() {
-    contacts.close();
     conversations.close();
     messages.close();
   }

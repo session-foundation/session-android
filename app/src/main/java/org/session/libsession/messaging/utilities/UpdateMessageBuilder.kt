@@ -2,41 +2,51 @@ package org.session.libsession.messaging.utilities
 
 import android.content.Context
 import com.squareup.phrase.Phrase
-import network.loki.messenger.libsession_util.getOrNull
 import network.loki.messenger.R
+import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.calls.CallMessageType
 import org.session.libsession.messaging.calls.CallMessageType.CALL_FIRST_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_INCOMING
 import org.session.libsession.messaging.calls.CallMessageType.CALL_MISSED
 import org.session.libsession.messaging.calls.CallMessageType.CALL_OUTGOING
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED
 import org.session.libsession.messaging.sending_receiving.data_extraction.DataExtractionNotificationInfoMessage.Kind.SCREENSHOT
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ExpirationUtil
-import org.session.libsession.utilities.getExpirationTypeDisplayValue
-import org.session.libsession.utilities.truncateIdForDisplay
-import org.session.libsignal.utilities.Log
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.DISAPPEARING_MESSAGES_TYPE_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
+import org.session.libsession.utilities.getExpirationTypeDisplayValue
 import org.session.libsession.utilities.getGroup
 import org.session.libsignal.utilities.AccountId
+import org.session.libsignal.utilities.Log
 
 object UpdateMessageBuilder {
     const val TAG = "UpdateMessageBuilder"
 
 
     val storage = MessagingModuleConfiguration.shared.storage
-    val usernameUtils = MessagingModuleConfiguration.shared.usernameUtils
+    val recipientRepository = MessagingModuleConfiguration.shared.recipientRepository
 
-    private fun getGroupMemberName(memberId: String, groupId: AccountId? = null) =
-        usernameUtils.getContactNameWithAccountID(memberId, groupId)
+    private fun getGroupMemberName(senderAddress: String, groupV2Id: AccountId? = null): String {
+        return recipientRepository.getRecipientDisplayNameSync(
+            address = Address.fromSerialized(senderAddress),
+            // There's additional way to getting a group member's name via config system.
+            fallbackName = {
+                groupV2Id?.let { gid ->
+                    MessagingModuleConfiguration.shared.configFactory.withGroupConfigs(gid) {
+                        it.groupMembers.getOrNull(senderAddress)?.name
+                    }
+                }
+            }
+        )
+    }
 
     @JvmStatic
     fun buildGroupUpdateMessage(
@@ -402,7 +412,7 @@ object UpdateMessageBuilder {
     }
 
     fun buildCallMessage(context: Context, type: CallMessageType, senderId: String): String {
-        val senderName = usernameUtils.getContactNameWithAccountID(senderId)
+        val senderName = recipientRepository.getRecipientDisplayNameSync(Address.fromSerialized(senderId))
 
         return when (type) {
             CALL_INCOMING -> Phrase.from(context, R.string.callsCalledYou).put(NAME_KEY, senderName)

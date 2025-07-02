@@ -45,7 +45,7 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
     }
 
     interface OnContactSelectedListener {
-        fun onContactSelected(number: String?)
+        fun onContactSelected(number: String)
         fun onContactDeselected(number: String?)
     }
 

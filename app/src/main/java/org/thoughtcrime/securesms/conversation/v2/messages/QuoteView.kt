@@ -13,13 +13,12 @@ import com.bumptech.glide.RequestManager
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
-import org.session.libsession.messaging.contacts.Contact
-import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.truncateIdForDisplay
+import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
-import org.thoughtcrime.securesms.database.SessionContactDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.toPx
@@ -34,7 +33,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ConstraintLayout(context, attrs) {
 
-    @Inject lateinit var contactDb: SessionContactDatabase
+    @Inject lateinit var recipientRepository: RecipientRepository
 
     private val binding: ViewQuoteBinding by lazy { ViewQuoteBinding.bind(this) }
     private val vPadding by lazy { toPx(6, resources) }
@@ -67,16 +66,15 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
 
     // region Updating
     fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: Recipient,
-        isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
-        isOriginalMissing: Boolean, glide: RequestManager) {
+             isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
+             isOriginalMissing: Boolean, glide: RequestManager) {
         // Author
-        val author = contactDb.getContactWithAccountID(authorPublicKey)
-        val localNumber = TextSecurePreferences.getLocalNumber(context)
-        val quoteIsLocalUser = localNumber != null && authorPublicKey == localNumber
+        val author = recipientRepository.getRecipientSyncOrEmpty(Address.fromSerialized(authorPublicKey))
 
         val authorDisplayName =
-            if (quoteIsLocalUser) context.getString(R.string.you)
-            else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
+            if (author.isLocalNumber) context.getString(R.string.you)
+            else author.displayNameOrFallback(address = authorPublicKey)
+
         binding.quoteViewAuthorTextView.text = authorDisplayName
         val textColor = getTextColor(isOutgoingMessage)
         binding.quoteViewAuthorTextView.setTextColor(textColor)

@@ -12,7 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
@@ -50,11 +49,11 @@ class NewMessageFragment : Fragment() {
     }
 
     private fun createPrivateChat(hexEncodedPublicKey: String) {
-        val recipient = Recipient.from(requireContext(), Address.fromSerialized(hexEncodedPublicKey), false)
+        val address = Address.fromSerialized(hexEncodedPublicKey)
         Intent(requireContext(), ConversationActivityV2::class.java).apply {
-            putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+            putExtra(ConversationActivityV2.ADDRESS, address)
             setDataAndType(requireActivity().intent.data, requireActivity().intent.type)
-            putExtra(ConversationActivityV2.THREAD_ID, DatabaseComponent.get(requireContext()).threadDatabase().getThreadIdIfExistsFor(recipient))
+            putExtra(ConversationActivityV2.THREAD_ID, DatabaseComponent.get(requireContext()).threadDatabase().getThreadIdIfExistsFor(address))
         }.let(requireContext()::startActivity)
         delegate.onDialogClosePressed()
     }

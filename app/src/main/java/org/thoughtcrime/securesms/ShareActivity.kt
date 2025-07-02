@@ -32,11 +32,9 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromExternal
 import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.SearchToolbar
 import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener
@@ -242,10 +240,9 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         return MediaUtil.getJpegCorrectedMimeTypeIfRequired(intent.type)
     }
 
-    override fun onContactSelected(number: String?) {
-        val recipient = Recipient.from(this, fromExternal(this, number), true)
-        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(recipient)
-        createConversation(existingThread, recipient.address, DistributionTypes.DEFAULT)
+    override fun onContactSelected(number: String) {
+        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(number)
+        createConversation(existingThread, Address.fromSerialized(number), DistributionTypes.DEFAULT)
     }
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }

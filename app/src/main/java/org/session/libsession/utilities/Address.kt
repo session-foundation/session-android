@@ -1,23 +1,13 @@
 package org.session.libsession.utilities
 
-import android.content.Context
-import android.os.Parcel
 import android.os.Parcelable
-import android.util.Pair
-import androidx.annotation.VisibleForTesting
+import kotlinx.parcelize.Parcelize
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Util
-import org.session.libsignal.utilities.guava.Optional
 import java.util.LinkedList
-import java.util.concurrent.atomic.AtomicReference
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
-class Address private constructor(address: String) : Parcelable, Comparable<Address?> {
-    private val address: String = address.lowercase()
-
-    constructor(`in`: Parcel) : this(`in`.readString()!!) {}
-
+@Parcelize
+data class Address private constructor(val address: String) : Parcelable, Comparable<Address> {
     val isLegacyGroup: Boolean
         get() = GroupUtil.isLegacyClosedGroup(address)
     val isGroupV2: Boolean
@@ -50,97 +40,16 @@ class Address private constructor(address: String) : Parcelable, Comparable<Addr
 
     override fun toString(): String = address
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        return if (other == null || other !is Address) false else address == other.address
-    }
+    override fun compareTo(other: Address): Int = address.compareTo(other.address)
 
-    override fun hashCode(): Int = address.hashCode()
-    override fun describeContents(): Int = 0
-    override fun writeToParcel(dest: Parcel, flags: Int) = dest.writeString(address)
-    override fun compareTo(other: Address?): Int = address.compareTo(other?.address!!)
-
-    @VisibleForTesting
-    class ExternalAddressFormatter internal constructor(localCountryCode: String, countryCode: Boolean) {
-        private val localNumber: Optional<PhoneNumber>
-        private val localCountryCode: String
-        private val ALPHA_PATTERN = Pattern.compile("[a-zA-Z]")
-        fun format(number: String?): String {
-            return number ?: "Unknown"
-        }
-
-        private fun parseAreaCode(e164Number: String, countryCode: Int): String? {
-            when (countryCode) {
-                1 -> return e164Number.substring(2, 5)
-                55 -> return e164Number.substring(3, 5)
-            }
-            return null
-        }
-
-        private fun applyAreaCodeRules(localNumber: Optional<PhoneNumber>, testNumber: String): String {
-            if (!localNumber.isPresent || !localNumber.get().areaCode.isPresent) {
-                return testNumber
-            }
-            val matcher: Matcher
-            when (localNumber.get().countryCode) {
-                1 -> {
-                    matcher = US_NO_AREACODE.matcher(testNumber)
-                    if (matcher.matches()) {
-                        return localNumber.get().areaCode.toString() + matcher.group()
-                    }
-                }
-                55 -> {
-                    matcher = BR_NO_AREACODE.matcher(testNumber)
-                    if (matcher.matches()) {
-                        return localNumber.get().areaCode.toString() + matcher.group()
-                    }
-                }
-            }
-            return testNumber
-        }
-
-        private class PhoneNumber internal constructor(val e164Number: String, val countryCode: Int, areaCode: String?) {
-            val areaCode: Optional<String?>
-
-            init {
-                this.areaCode = Optional.fromNullable(areaCode)
-            }
-        }
-
-        companion object {
-            private val TAG = ExternalAddressFormatter::class.java.simpleName
-            private val SHORT_COUNTRIES: HashSet<String?> = object : HashSet<String?>() {
-                init {
-                    add("NU")
-                    add("TK")
-                    add("NC")
-                    add("AC")
-                }
-            }
-            private val US_NO_AREACODE = Pattern.compile("^(\\d{7})$")
-            private val BR_NO_AREACODE = Pattern.compile("^(9?\\d{8})$")
-        }
-
-        init {
-            localNumber = Optional.absent()
-            this.localCountryCode = localCountryCode
-        }
-    }
+    val debugString: String
+        get() = "Address(address=${address.substring(0, address.length.coerceAtMost(5))}...)"
 
     companion object {
-        @JvmField val CREATOR: Parcelable.Creator<Address?> = object : Parcelable.Creator<Address?> {
-            override fun createFromParcel(`in`: Parcel): Address = Address(`in`)
-            override fun newArray(size: Int): Array<Address?> = arrayOfNulls(size)
-        }
         val UNKNOWN = Address("Unknown")
-        private val TAG = Address::class.java.simpleName
-        private val cachedFormatter = AtomicReference<Pair<String, ExternalAddressFormatter>>()
 
         @JvmStatic
-        fun fromSerialized(serialized: String): Address = Address(serialized)
-
-        @JvmStatic
-        fun fromExternal(context: Context, external: String?): Address = fromSerialized(external!!)
+        fun fromSerialized(serialized: String): Address = Address(serialized.lowercase())
 
         @JvmStatic
         fun fromSerializedList(serialized: String, delimiter: Char): List<Address> {

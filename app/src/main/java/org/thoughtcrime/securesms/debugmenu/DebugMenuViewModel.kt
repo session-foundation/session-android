@@ -288,7 +288,7 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
-                recipientDatabase.setAutoDownloadAttachments(it.recipient, false)
+                recipientDatabase.setAutoDownloadAttachments(it.recipient.address, false)
             }
 
             // set all attachments back to pending

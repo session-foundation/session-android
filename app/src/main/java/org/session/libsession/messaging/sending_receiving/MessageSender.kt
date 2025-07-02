@@ -293,10 +293,9 @@ object MessageSender {
                 ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
         }
             ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it.isEnabled }
-            ?.expiryMode
             ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
             ?.expiryMillis
+            ?.takeIf { it > 0 }
     }
 
     // Open Groups

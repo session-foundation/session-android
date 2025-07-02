@@ -21,14 +21,12 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
-import org.session.libsession.avatars.ContactPhoto
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.IdPrefix
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Locale
@@ -38,9 +36,9 @@ import javax.inject.Singleton
 @Singleton
 class AvatarUtils @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val usernameUtils: UsernameUtils,
     private val groupDatabase: GroupDatabase, // for legacy groups
     private val storage: Lazy<StorageProtocol>,
+    private val recipientRepository: RecipientRepository,
 ) {
     // Hardcoded possible bg colors for avatar backgrounds
     private val avatarBgColors = arrayOf(
@@ -55,7 +53,7 @@ class AvatarUtils @Inject constructor(
 
     suspend fun getUIDataFromAccountId(accountId: String): AvatarUIData =
         withContext(Dispatchers.Default) {
-            getUIDataFromRecipient(Recipient.from(context, Address.fromSerialized(accountId), false))
+            getUIDataFromRecipient(recipientRepository.getRecipient(Address.fromSerialized(accountId)))
         }
 
     suspend fun getUIDataFromRecipient(recipient: Recipient?): AvatarUIData {
@@ -72,7 +70,7 @@ class AvatarUtils @Inject constructor(
                 // if the group has a custom image, use that
                 // other wise make up a double avatar from the first two members
                 // if there is only one member then use that member + an unknown icon coloured based on the group id
-                if (recipient.profileAvatar != null) {
+                if (recipient.avatar != null) {
                     elements.add(getUIElementForRecipient(recipient))
                 } else {
                     val members = if (recipient.isLegacyGroupRecipient) {
@@ -93,11 +91,7 @@ class AvatarUtils @Inject constructor(
                             // and the second should be the unknown icon with a colour based on the group id
                             elements.add(
                                 getUIElementForRecipient(
-                                    Recipient.from(
-                                        context, Address.fromSerialized(
-                                            members[0].toString()
-                                        ), false
-                                    )
+                                    recipientRepository.getRecipientOrEmpty(Address.fromSerialized(members[0].toString()))
                                 )
                             )
 
@@ -111,9 +105,7 @@ class AvatarUtils @Inject constructor(
                         else -> {
                             members.forEach {
                                 elements.add(
-                                    getUIElementForRecipient(
-                                        Recipient.from(context, it, false)
-                                    )
+                                    getUIElementForRecipient(recipientRepository.getRecipientOrEmpty(it))
                                 )
                             }
                         }
@@ -131,15 +123,14 @@ class AvatarUtils @Inject constructor(
 
     private fun getUIElementForRecipient(recipient: Recipient): AvatarUIElement {
         // name
-        val name = if(recipient.isLocalNumber) usernameUtils.getCurrentUsernameWithAccountIdFallback()
-        else recipient.name
+        val name = recipient.displayName
 
         val defaultColor = Color(getColorFromKey(recipient.address.toString()))
 
         // custom image
         val (contactPhoto, customIcon, color) = when {
             // use custom image if there is one
-            hasAvatar(recipient.contactPhoto) -> Triple(recipient.contactPhoto, null, defaultColor)
+            recipient.avatar != null -> Triple(recipient.avatar!!, null, defaultColor)
 
             // communities without a custom image should use a default image
             recipient.isCommunityRecipient -> Triple(null, R.drawable.session_logo, null)
@@ -152,11 +143,6 @@ class AvatarUtils @Inject constructor(
             icon = customIcon,
             contactPhoto = contactPhoto
         )
-    }
-
-    private fun hasAvatar(contactPhoto: ContactPhoto?): Boolean {
-        val avatar = (contactPhoto as? ProfileContactPhoto)?.avatarObject
-        return contactPhoto != null && avatar != "0" && avatar != ""
     }
 
     fun getColorFromKey(hashString: String): Int {
@@ -259,7 +245,7 @@ data class AvatarUIElement(
     val name: String? = null,
     val color: Color? = null,
     @DrawableRes val icon: Int? = null,
-    val contactPhoto: ContactPhoto? = null,
+    val contactPhoto: Any? = null,
 )
 
 sealed class AvatarBadge(@DrawableRes val icon: Int){

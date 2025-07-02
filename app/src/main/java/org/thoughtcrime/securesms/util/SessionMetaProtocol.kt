@@ -47,13 +47,9 @@ object SessionMetaProtocol {
         return hasBody || hasAttachment || hasLinkPreview
     }
 
-    @JvmStatic
-    fun shouldSendReadReceipt(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
-    }
 
     @JvmStatic
     fun shouldSendTypingIndicator(recipient: Recipient): Boolean {
-        return !recipient.isGroupOrCommunityRecipient && recipient.isApproved && !recipient.isBlocked
+        return !recipient.isGroupOrCommunityRecipient && recipient.approved && !recipient.blocked
     }
 }

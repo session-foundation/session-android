@@ -67,7 +67,7 @@ public class ThreadRecord extends DisplayRecord {
   public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
                       @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                      long snippetType,  int distributionType, boolean archived, long expiresIn,
+                      long snippetType, int distributionType, boolean archived, long expiresIn,
                       long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
                       @NonNull GroupThreadStatus groupThreadStatus)
   {
@@ -89,9 +89,8 @@ public class ThreadRecord extends DisplayRecord {
   }
 
     private String getName() {
-        return getRecipient().getName();
+        return getRecipient().getDisplayName();
     }
-
 
     @Override
     public CharSequence getDisplayBody(@NonNull Context context) {
@@ -198,7 +197,7 @@ public class ThreadRecord extends DisplayRecord {
         // The logic will differ depending on the type.
         // 1-1, note to self and control messages (we shouldn't have any in here, but leaving the
         // logic to be safe) do not need author details
-        if (recipient.isLocalNumber() || recipient.is1on1() ||
+        if (recipient.isLocalNumber() || recipient.getAddress().isContact() ||
                 (lastMessage != null && lastMessage.isControlMessage())
         ) {
             return getBody();
@@ -208,7 +207,7 @@ public class ThreadRecord extends DisplayRecord {
                 prefix = context.getString(R.string.you);
             }
             else if(lastMessage != null){
-                prefix = lastMessage.getIndividualRecipient().getName();
+                prefix = lastMessage.getIndividualRecipient().getDisplayName();
             }
 
             return Phrase.from(context.getString(R.string.messageSnippetGroup))

@@ -21,6 +21,7 @@ import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.util.AvatarUtils
 
@@ -34,6 +35,7 @@ class CreateGroupViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
+    recipientRepository: RecipientRepository,
 ): ViewModel() {
     // Child view model to handle contact selection logic
     //todo we should probably extend this VM instead of instantiating it here
@@ -42,8 +44,8 @@ class CreateGroupViewModel @AssistedInject constructor(
         excludingAccountIDs = emptySet(),
         applyDefaultFiltering = true,
         scope = viewModelScope,
-        appContext = appContext,
-        avatarUtils = avatarUtils
+        avatarUtils = avatarUtils,
+        recipientRepository = recipientRepository,
     )
 
     // Input: group name

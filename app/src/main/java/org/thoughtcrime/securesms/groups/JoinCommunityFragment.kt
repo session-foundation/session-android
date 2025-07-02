@@ -23,7 +23,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -119,12 +118,7 @@ class JoinCommunityFragment : Fragment() {
                         val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
 
                         withContext(Dispatchers.Main) {
-                            val recipient = Recipient.from(
-                                requireContext(),
-                                Address.fromSerialized(groupID),
-                                false
-                            )
-                            openConversationActivity(requireContext(), threadID, recipient)
+                            openConversationActivity(requireContext(), threadID, Address.fromSerialized(groupID))
                             delegate.onDialogClosePressed()
                         }
                     } catch (e: Exception) {
@@ -155,10 +149,10 @@ class JoinCommunityFragment : Fragment() {
         mediator.attach()
     }
 
-    private fun openConversationActivity(context: Context, threadId: Long, recipient: Recipient) {
+    private fun openConversationActivity(context: Context, threadId: Long, address: Address) {
         val intent = Intent(context, ConversationActivityV2::class.java)
         intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-        intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
+        intent.putExtra(ConversationActivityV2.ADDRESS, address)
         context.startActivity(intent)
     }
 
