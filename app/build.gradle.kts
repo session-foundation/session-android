@@ -44,6 +44,12 @@ val getGitHash = providers
     .asText
     .map { it.trim() }
 
+kotlin {
+    compilerOptions {
+        jvmToolchain(17)
+    }
+}
+
 android {
     namespace = "network.loki.messenger"
     useLibrary("org.apache.http.legacy")
