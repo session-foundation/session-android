@@ -58,7 +58,6 @@ public class VideoPlayer extends FrameLayout {
 
   @Nullable private ExoPlayer exoPlayer;
   @Nullable private LegacyPlayerControlView exoControls;
-  @Nullable private       AttachmentServer    attachmentServer;
   @Nullable private       Window              window;
 
   public VideoPlayer(Context context) {
@@ -87,7 +86,7 @@ public class VideoPlayer extends FrameLayout {
   }
 
   public void pause() {
-    if (this.attachmentServer != null && this.videoView != null) {
+    if (this.videoView != null) {
       this.videoView.stopPlayback();
     } else if (this.exoPlayer != null) {
       this.exoPlayer.setPlayWhenReady(false);
@@ -108,10 +107,6 @@ public class VideoPlayer extends FrameLayout {
   }
 
   public void cleanup() {
-    if (this.attachmentServer != null) {
-      this.attachmentServer.stop();
-    }
-
     if (this.exoPlayer != null) {
       this.exoPlayer.release();
     }
@@ -144,18 +139,7 @@ public class VideoPlayer extends FrameLayout {
   private void setVideoViewSource(@NonNull VideoSlide videoSource, boolean autoplay)
     throws IOException
   {
-    if (this.attachmentServer != null) {
-      this.attachmentServer.stop();
-    }
-
-    if (videoSource.getUri() != null && PartAuthority.isLocalUri(videoSource.getUri())) {
-      Log.i(TAG, "Starting video attachment server for part provider Uri...");
-      this.attachmentServer = new AttachmentServer(getContext(), videoSource.asAttachment());
-      this.attachmentServer.start();
-
-      //noinspection ConstantConditions
-      this.videoView.setVideoURI(this.attachmentServer.getUri());
-    } else if (videoSource.getUri() != null) {
+   if (videoSource.getUri() != null) {
       Log.i(TAG, "Playing video directly from non-local Uri...");
       //noinspection ConstantConditions
       this.videoView.setVideoURI(videoSource.getUri());

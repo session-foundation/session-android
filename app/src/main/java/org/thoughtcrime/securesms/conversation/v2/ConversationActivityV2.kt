@@ -2335,7 +2335,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     Uri.fromFile(result.file),
                     voiceMessageFilename,
                     result.length,
-                    MediaTypes.AUDIO_AAC,
+                    MediaTypes.AUDIO_MP4,
                     true,
                     result.duration.inWholeMilliseconds)
 
