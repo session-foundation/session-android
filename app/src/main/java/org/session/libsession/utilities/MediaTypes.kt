@@ -5,7 +5,7 @@ object MediaTypes {
     const val IMAGE_JPEG        = "image/jpeg"
     const val IMAGE_WEBP        = "image/webp"
     const val IMAGE_GIF         = "image/gif"
-    const val AUDIO_AAC         = "audio/aac"
+    const val AUDIO_MP4         = "audio/mp4"
     const val AUDIO_UNSPECIFIED = "audio/*"
     const val VIDEO_UNSPECIFIED = "video/*"
     const val VCARD             = "text/x-vcard"

@@ -8,13 +8,11 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -62,7 +59,6 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
@@ -79,13 +75,10 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -448,7 +441,8 @@ fun ItemButton(
         )
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .align(Alignment.CenterVertically)
         ) {
             Text(
@@ -461,7 +455,8 @@ fun ItemButton(
             subtitle?.let {
                 Text(
                     text = it,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .qaTag(subtitleQaTag),
                     style = LocalType.current.small,
                 )
@@ -529,25 +524,6 @@ fun getCellBottomShape() = RoundedCornerShape(
 )
 
 @Composable
-fun Modifier.contentDescription(text: GetString?): Modifier {
-    return text?.let {
-        val context = LocalContext.current
-        semantics { contentDescription = it(context) }
-    } ?: this
-}
-
-@Composable
-fun Modifier.contentDescription(@StringRes id: Int?): Modifier {
-    val context = LocalContext.current
-    return id?.let { semantics { contentDescription = context.getString(it) } } ?: this
-}
-
-@Composable
-fun Modifier.contentDescription(text: String?): Modifier {
-    return text?.let { semantics { contentDescription = it } } ?: this
-}
-
-@Composable
 fun BottomFadingEdgeBox(
     modifier: Modifier = Modifier,
     fadingEdgeHeight: Dp = LocalDimensions.current.spacing,
@@ -605,7 +581,7 @@ private fun BottomFadingEdgeBoxPreview() {
 fun SessionProCTA(
     content: @Composable () -> Unit,
     text: String,
-    features: List<String>,
+    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
     onUpgrade: () -> Unit,
     onCancel: () -> Unit,
@@ -627,7 +603,8 @@ fun SessionProCTA(
 
                     // content
                     Column(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .padding(LocalDimensions.current.smallSpacing)
                     ) {
                         // title
@@ -665,7 +642,7 @@ fun SessionProCTA(
 
                         // features
                         features.forEachIndexed { index, feature ->
-                            ProCTAFeature(text = feature)
+                            ProCTAFeature(data = feature)
                             if(index < features.size - 1){
                                 Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
                             }
@@ -679,8 +656,8 @@ fun SessionProCTA(
                             horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
                         ) {
                             AccentFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.upgradeTo),
+                                modifier = Modifier.weight(1f).shimmerOverlay(),
+                                text = stringResource(R.string.theContinue),
                                 onClick = onUpgrade
                             )
 
@@ -697,11 +674,25 @@ fun SessionProCTA(
     )
 }
 
+sealed interface CTAFeature {
+    val text: String
+
+    data class Icon(
+        override val text: String,
+        @DrawableRes val icon: Int = R.drawable.ic_circle_check,
+    ): CTAFeature
+
+    data class RainbowIcon(
+        override val text: String,
+        @DrawableRes val icon: Int = R.drawable.ic_pro_sparkle_custom,
+    ): CTAFeature
+}
+
 @Composable
 fun SimpleSessionProCTA(
     @DrawableRes heroImage: Int,
     text: String,
-    features: List<String>,
+    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
     onUpgrade: () -> Unit,
     onCancel: () -> Unit,
@@ -714,7 +705,9 @@ fun SimpleSessionProCTA(
         onCancel = onCancel,
         content = {
         Image(
-            modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(LocalColors.current.accent),
             contentScale = ContentScale.FillWidth,
             painter = painterResource(id = heroImage),
             contentDescription = null,
@@ -728,7 +721,7 @@ fun AnimatedSessionProCTA(
     @DrawableRes heroImageBg: Int,
     @DrawableRes heroImageAnimatedFg: Int,
     text: String,
-    features: List<String>,
+    features: List<CTAFeature>,
     modifier: Modifier = Modifier,
     onUpgrade: () -> Unit,
     onCancel: () -> Unit,
@@ -741,14 +734,18 @@ fun AnimatedSessionProCTA(
         onCancel = onCancel,
         content = {
             Image(
-                modifier = Modifier.fillMaxWidth().background(LocalColors.current.accent),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(LocalColors.current.accent),
                 contentScale = ContentScale.FillWidth,
                 painter = painterResource(id = heroImageBg),
                 contentDescription = null,
             )
 
             GlideSubcomposition(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min),
                 model = heroImageAnimatedFg,
             ){
                 when (state) {
@@ -777,9 +774,9 @@ private fun PreviewProCTA(
             heroImage = R.drawable.cta_hero_char_limit,
             text = "This is a description of this Pro feature",
             features = listOf(
-                "Feature one",
-                "Feature two",
-                "Feature three",
+                CTAFeature.Icon("Feature one"),
+                CTAFeature.Icon("Feature two", R.drawable.ic_eye),
+                CTAFeature.RainbowIcon("Feature three"),
             ),
             onUpgrade = {},
             onCancel = {}
@@ -789,24 +786,34 @@ private fun PreviewProCTA(
 
 @Composable
 fun ProCTAFeature(
-    text: String,
+    data: CTAFeature,
     modifier: Modifier = Modifier
 ){
     Row(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .padding(horizontal = LocalDimensions.current.xxxsSpacing),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.ic_circle_check),
-            colorFilter = ColorFilter.tint(LocalColors.current.accent),
-            contentDescription = null,
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
+        when(data){
+            is CTAFeature.Icon -> {
+                Image(
+                    painter = painterResource(id = data.icon),
+                    colorFilter = ColorFilter.tint(LocalColors.current.accent),
+                    contentDescription = null,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+            is CTAFeature.RainbowIcon -> {
+                AnimatedGradientDrawable(
+                    vectorRes = data.icon
+                )
+            }
+        }
 
         Text(
-            text = text,
+            text = data.text,
             style = LocalType.current.base
         )
     }
@@ -900,74 +907,6 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     AnimatedVisibility(!loading) {
         content()
     }
-}
-
-// Permanently visible vertical scrollbar.
-// Note: This scrollbar modifier was adapted from Mardann's fantastic solution at: https://stackoverflow.com/a/78453760/24337669
-@Composable
-fun Modifier.verticalScrollbar(
-    state: ScrollState,
-    scrollbarWidth: Dp = 6.dp,
-    barColour: Color = LocalColors.current.textSecondary,
-    backgroundColour: Color = LocalColors.current.borders,
-    edgePadding: Dp = LocalDimensions.current.xxsSpacing
-): Modifier {
-    // Calculate the viewport and content heights
-    val viewHeight    = state.viewportSize.toFloat()
-    val contentHeight = state.maxValue + viewHeight
-
-    // Determine if the scrollbar is needed
-    val isScrollbarNeeded = contentHeight > viewHeight
-
-    // Set the target alpha based on whether scrolling is possible
-    val alphaTarget = when {
-        !isScrollbarNeeded       -> 0f // No scrollbar needed, set alpha to 0f
-        state.isScrollInProgress -> 1f
-        else                     -> 0.2f
-    }
-
-    // Animate the alpha value smoothly
-    val alpha by animateFloatAsState(
-        targetValue   = alphaTarget,
-        animationSpec = tween(400, delayMillis = if (state.isScrollInProgress) 0 else 700),
-        label         = "VerticalScrollbarAnimation"
-    )
-
-    return this.then(Modifier.drawWithContent {
-        drawContent()
-
-        // Only proceed if the scrollbar is needed
-        if (isScrollbarNeeded) {
-            val minScrollBarHeight = 10.dp.toPx()
-            val maxScrollBarHeight = viewHeight
-            val scrollbarHeight = (viewHeight * (viewHeight / contentHeight)).coerceIn(
-                minOf(minScrollBarHeight, maxScrollBarHeight)..maxOf(minScrollBarHeight, maxScrollBarHeight)
-            )
-            val variableZone = viewHeight - scrollbarHeight
-            val scrollbarYoffset = (state.value.toFloat() / state.maxValue) * variableZone
-
-            // Calculate the horizontal offset with padding
-            val scrollbarXOffset = size.width - scrollbarWidth.toPx() - edgePadding.toPx()
-
-            // Draw the missing section of the scrollbar track
-            drawRoundRect(
-                color = backgroundColour,
-                topLeft = Offset(scrollbarXOffset, 0f),
-                size = Size(scrollbarWidth.toPx(), viewHeight),
-                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
-                alpha = alpha
-            )
-
-            // Draw the scrollbar thumb
-            drawRoundRect(
-                color = barColour,
-                topLeft = Offset(scrollbarXOffset, scrollbarYoffset),
-                size = Size(scrollbarWidth.toPx(), scrollbarHeight),
-                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
-                alpha = alpha
-            )
-        }
-    })
 }
 
 @Composable
@@ -1095,7 +1034,8 @@ fun SearchBar(
                     colorFilter = ColorFilter.tint(
                         LocalColors.current.textSecondary
                     ),
-                    modifier = Modifier.qaTag(R.string.qa_conversation_search_clear)
+                    modifier = Modifier
+                        .qaTag(R.string.qa_conversation_search_clear)
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing
@@ -1248,7 +1188,7 @@ fun BaseExpandableText(
                 edgePadding = scrollEdge
             )
             .verticalScroll(scrollState)
-            .padding(end = scrollWidth + scrollEdge*2)
+            .padding(end = scrollWidth + scrollEdge * 2)
     }
 
     Column(
@@ -1339,28 +1279,6 @@ private fun PreviewBaseExpandedTextLongExpandedMaxLines() {
             showScroll = true
         )
     }
-}
-
-/**
- * Applies an opinionated safety width on content based our design decisions:
- * - Max width of maxContentWidth
- * - Extra horizontal padding
- * - Smaller extra padding for small devices (arbitrarily decided as devices below 380 width
- */
-@Composable
-fun Modifier.safeContentWidth(
-    regularExtraPadding: Dp = LocalDimensions.current.mediumSpacing,
-    smallExtraPadding: Dp = LocalDimensions.current.xsSpacing,
-): Modifier {
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
-
-    return this.widthIn(max = LocalDimensions.current.maxContentWidth)
-        .padding(
-            horizontal = when {
-                screenWidthDp < 380.dp -> smallExtraPadding
-                else -> regularExtraPadding
-            }
-        )
 }
 
 /**

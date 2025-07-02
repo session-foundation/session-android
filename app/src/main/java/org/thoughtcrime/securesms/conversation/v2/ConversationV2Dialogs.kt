@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.openUrl
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
@@ -263,9 +264,9 @@ fun ConversationV2Dialogs(
                 heroImage = R.drawable.cta_hero_char_limit,
                 text = stringResource(R.string.proCallToActionLongerMessages),
                 features = listOf(
-                    stringResource(R.string.proFeatureListLongerMessages),
-                    stringResource(R.string.proFeatureListLargerGroups),
-                    stringResource(R.string.proFeatureListLoadsMore),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+                    CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
                 ),
                 onUpgrade = {
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)

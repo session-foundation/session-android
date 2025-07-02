@@ -94,7 +94,7 @@ public class VideoPlayer extends FrameLayout {
   public void setInteractor(@Nullable VideoPlayerInteractions interactor) {
     this.interactor = interactor;
   }
-  
+
   public void setVideoSource(@NonNull VideoSlide videoSource, boolean autoplay)
       throws IOException
   {
