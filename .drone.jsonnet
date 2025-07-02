@@ -73,7 +73,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     trigger: [
         {
             event: ['push'],
-            branch: ['master', 'dev']
+            branch: ['master', 'dev', 'release/*']
         },
         {
             event: ['custom']
