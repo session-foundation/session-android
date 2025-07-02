@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.view.View
 import android.view.ViewTreeObserver
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -17,10 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -81,26 +76,6 @@ inline fun <T : View> T.afterMeasured(crossinline block: T.() -> Unit) {
             }
         }
     })
-}
-
-/**
- * This is used to set the test tag that the QA team can use to retrieve an element in appium
- * In order to do so we need to set the testTagsAsResourceId to true, which ideally should be done only once
- * in the root composable, but our app is currently made up of  multiple isolated composables
- * set up in the old activity/fragment view system
- * As such we need to repeat it for every component that wants to use testTag, until such
- * a time as we have one root composable
- */
-@Composable
-fun Modifier.qaTag(tag: String?): Modifier {
-    if (tag == null) return this
-    return this.semantics { testTagsAsResourceId = true }.testTag(tag)
-}
-
-@Composable
-fun Modifier.qaTag(@StringRes tagResId: Int?): Modifier {
-    if (tagResId == null) return this
-    return this.semantics { testTagsAsResourceId = true }.testTag(stringResource(tagResId))
 }
 
 /**

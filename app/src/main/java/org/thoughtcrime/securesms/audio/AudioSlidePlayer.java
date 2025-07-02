@@ -29,7 +29,6 @@ import org.session.libsession.utilities.ServiceUtil;
 import org.session.libsession.utilities.Util;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.attachments.AttachmentServer;
 import org.thoughtcrime.securesms.mms.AudioSlide;
 
 public class AudioSlidePlayer implements SensorEventListener {
@@ -48,7 +47,6 @@ public class AudioSlidePlayer implements SensorEventListener {
 
   private @NonNull  WeakReference<Listener> listener;
   private @Nullable ExoPlayer mediaPlayer;
-  private @Nullable AttachmentServer        audioAttachmentServer;
   private           long                    startTime;
 
   public synchronized static AudioSlidePlayer createFor(@NonNull Context context,
@@ -92,12 +90,9 @@ public class AudioSlidePlayer implements SensorEventListener {
     if (this.mediaPlayer != null) { stop(); }
 
     this.mediaPlayer = new ExoPlayer.Builder(context).build();
-    this.audioAttachmentServer = new AttachmentServer(context, slide.asAttachment());
     this.startTime             = System.currentTimeMillis();
 
-    audioAttachmentServer.start();
-
-    MediaItem mediaItem = MediaItem.fromUri(audioAttachmentServer.getUri());
+    MediaItem mediaItem = MediaItem.fromUri(slide.asAttachment().getDataUri());
     mediaPlayer.setMediaItem(mediaItem);
 
     mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
@@ -149,11 +144,6 @@ public class AudioSlidePlayer implements SensorEventListener {
               mediaPlayer.release();
               mediaPlayer = null;
 
-              if (audioAttachmentServer != null) {
-                audioAttachmentServer.stop();
-                audioAttachmentServer = null;
-              }
-
               sensorManager.unregisterListener(AudioSlidePlayer.this);
 
               if (wakeLock != null && wakeLock.isHeld()) {
@@ -173,11 +163,6 @@ public class AudioSlidePlayer implements SensorEventListener {
 
         synchronized (AudioSlidePlayer.this) {
           mediaPlayer = null;
-
-          if (audioAttachmentServer != null) {
-            audioAttachmentServer.stop();
-            audioAttachmentServer = null;
-          }
 
           sensorManager.unregisterListener(AudioSlidePlayer.this);
 
@@ -205,12 +190,9 @@ public class AudioSlidePlayer implements SensorEventListener {
       this.mediaPlayer.release();
     }
 
-    if (this.audioAttachmentServer != null) { this.audioAttachmentServer.stop(); }
-
     sensorManager.unregisterListener(AudioSlidePlayer.this);
 
     this.mediaPlayer           = null;
-    this.audioAttachmentServer = null;
   }
 
   public synchronized static void stopAll() {

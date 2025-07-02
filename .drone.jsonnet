@@ -70,7 +70,10 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     type: 'docker',
     name: 'Debug APK Build',
     platform: { arch: 'amd64' },
-    trigger: { event: { exclude: [ 'pull_request' ] } },
+    trigger: {
+        event: ['push'],
+        branch: ['master', 'dev', 'release/*']
+    },
     steps: [
       version_info,
       clone_submodules,

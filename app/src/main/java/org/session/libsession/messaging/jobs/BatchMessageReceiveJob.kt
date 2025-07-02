@@ -172,7 +172,7 @@ class BatchMessageReceiveJob(
             // The LinkedHashMap should preserve insertion order
             val messageIds = linkedMapOf<MessageId, Pair<Boolean, Boolean>>()
             val myLastSeen = storage.getLastSeen(threadId)
-            var newLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
+            var updatedLastSeen = myLastSeen.takeUnless { it == -1L } ?: 0
             val handlerContext = VisibleMessageHandlerContext(
                 module = MessagingModuleConfiguration.shared,
                 threadId = threadId,
@@ -190,7 +190,7 @@ class BatchMessageReceiveJob(
 
                             if (message.sender == localUserPublicKey || isUserBlindedSender) {
                                 // use sent timestamp here since that is technically the last one we have
-                                newLastSeen = max(newLastSeen, message.sentTimestamp!!)
+                                updatedLastSeen = max(updatedLastSeen, message.sentTimestamp!!)
                             }
                             val messageId = MessageReceiver.handleVisibleMessage(
                                 message = message,
@@ -247,10 +247,13 @@ class BatchMessageReceiveJob(
             // increment unreads, notify, and update thread
             // last seen will be the current last seen if not changed (re-computes the read counts for thread record)
             // might have been updated from a different thread at this point
-            val currentLastSeen = storage.getLastSeen(threadId).let { if (it == -1L) 0 else it }
-            newLastSeen = max(newLastSeen, currentLastSeen)
-            if (newLastSeen > 0 || currentLastSeen == 0L) {
-                storage.markConversationAsRead(threadId, newLastSeen, force = true)
+            val storedLastSeen = storage.getLastSeen(threadId).let { if (it == -1L) 0 else it }
+            updatedLastSeen = max(updatedLastSeen, storedLastSeen)
+            // Only call markConversationAsRead() when lastSeen actually advanced (we sent a message).
+            // For incoming-only batches (like reactions), skip this to preserve REACTIONS_UNREAD flags
+            // so the notification system can detect them. Thread updates happen separately below.
+            if (updatedLastSeen > storedLastSeen) {
+                storage.markConversationAsRead(threadId, updatedLastSeen, force = true)
             }
             storage.updateThread(threadId, true)
             SSKEnvironment.shared.notificationManager.updateNotification(context, threadId)

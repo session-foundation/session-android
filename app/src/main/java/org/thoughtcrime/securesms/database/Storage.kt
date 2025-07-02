@@ -1297,6 +1297,48 @@ open class Storage @Inject constructor(
         return mmsSmsDb.getConversationCount(threadID)
     }
 
+    override fun getTotalPinned(): Int {
+        return configFactory.withUserConfigs {
+            var totalPins = 0
+
+            // check if the note to self is pinned
+            if (it.userProfile.getNtsPriority() == PRIORITY_PINNED) {
+                totalPins ++
+            }
+
+            // check for 1on1
+            it.contacts.all().forEach { contact ->
+                if (contact.priority == PRIORITY_PINNED) {
+                    totalPins ++
+                }
+            }
+
+            // check groups and communities
+            it.userGroups.all().forEach { group ->
+                when(group){
+                    is GroupInfo.ClosedGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+                    is GroupInfo.CommunityGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+
+                    is GroupInfo.LegacyGroupInfo -> {
+                        if (group.priority == PRIORITY_PINNED) {
+                            totalPins ++
+                        }
+                    }
+                }
+            }
+
+            totalPins
+        }
+    }
+
     override fun setPinned(threadID: Long, isPinned: Boolean) {
         val threadDB = threadDatabase
         threadDB.setPinned(threadID, isPinned)

@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.widget.RelativeLayout
 import androidx.core.view.isVisible
+import androidx.media3.common.C
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVoiceMessageBinding
@@ -78,7 +79,9 @@ class VoiceMessageView @JvmOverloads constructor(
 
     override fun onPlayerStart(player: AudioSlidePlayer) {
         isPlaying = true
-        durationMS = player.duration
+        if (player.duration != C.TIME_UNSET) {
+            durationMS = player.duration
+        }
     }
 
     override fun onPlayerStop(player: AudioSlidePlayer)  { isPlaying = false }

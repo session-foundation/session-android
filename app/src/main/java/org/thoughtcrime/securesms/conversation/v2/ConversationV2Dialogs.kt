@@ -11,14 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
@@ -30,9 +28,8 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.MarkAsDeletedLocally
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
-import org.thoughtcrime.securesms.openUrl
-import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
@@ -257,25 +254,22 @@ fun ConversationV2Dialogs(
 
         // Pro CTA
         if (dialogsState.sessionProCharLimitCTA) {
-            val context = LocalContext.current
-
             SimpleSessionProCTA(
                 heroImage = R.drawable.cta_hero_char_limit,
                 text = stringResource(R.string.proCallToActionLongerMessages),
                 features = listOf(
-                    stringResource(R.string.proFeatureListLongerMessages),
-                    stringResource(R.string.proFeatureListLargerGroups),
-                    stringResource(R.string.proFeatureListLoadsMore),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
+                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+                    CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
                 ),
                 onUpgrade = {
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
-                    context.openUrl(NonTranslatableStringConstants.SESSION_DOWNLOAD_URL) //todo PRO get the proper UR: once we have it
+                    //todo PRO go to screen once it exists
                 },
                 onCancel = {
                     sendCommand(ConversationViewModel.Commands.HideSessionProCTA)
                 }
             )
-
         }
     }
 }

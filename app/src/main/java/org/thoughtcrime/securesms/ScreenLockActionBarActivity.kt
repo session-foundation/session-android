@@ -10,6 +10,7 @@ import android.os.Bundle
 import androidx.annotation.IdRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.content.IntentCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -226,15 +227,17 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
 
         // Clear original clipData
         rewrittenIntent.clipData = null
-
-        // If we couldn't find one then we have nothing to re-write and we'll just return the original intent
-        if (!rewrittenIntent.hasExtra(Intent.EXTRA_STREAM)) {
-            Log.i(TAG, "No stream to rewrite - returning original intent")
-            return@withContext originalIntent
-        }
+        rewrittenIntent.removeExtra(Intent.EXTRA_STREAM)
 
         // Grab and rewrite the original intent's clipData - adding it to our rewrittenIntent as we go
         val originalClipData = originalIntent.clipData
+            ?: IntentCompat.getParcelableExtra(originalIntent, Intent.EXTRA_STREAM, Uri::class.java)?.let { uri ->
+                // If the original intent has a single Uri in the Intent.EXTRA_STREAM extra, we create a ClipData
+                // with that Uri to mimic the original clipData structure.
+                ClipData.newUri(contentResolver, "Shared data", uri)
+            }
+
+
         originalClipData?.let { clipData ->
             var newClipData: ClipData? = null
             for (i in 0 until clipData.itemCount) {
@@ -267,10 +270,6 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
                 Log.i(TAG, "Adding newClipData to rewrittenIntent.")
                 rewrittenIntent.clipData = newClipData
                 rewrittenIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            } else {
-                // If no newClipData was created, clear it to prevent referencing the old inaccessible URIs
-                Log.i(TAG, "There was no newClipData - setting the clipData to null.")
-                rewrittenIntent.clipData = null
             }
         }
 

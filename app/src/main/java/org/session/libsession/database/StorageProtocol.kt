@@ -191,6 +191,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun getTotalPinned(): Int
     fun setPinned(threadID: Long, isPinned: Boolean)
     fun isPinned(threadID: Long): Boolean
     fun deleteConversation(threadID: Long)

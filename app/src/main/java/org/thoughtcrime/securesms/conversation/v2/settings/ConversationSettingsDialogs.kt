@@ -24,6 +24,7 @@ import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsV
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
@@ -203,6 +204,20 @@ fun ConversationSettingsDialogs(
                     qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_cancel),
                 )
             )
+        )
+    }
+
+    // pin CTA
+    if(dialogsState.pinCTA != null){
+        PinProCTA(
+            overTheLimit = dialogsState.pinCTA.overTheLimit,
+            onUpgrade = {
+                sendCommand(GoToProUpgradeScreen)
+            },
+
+            onCancel = {
+                sendCommand(HidePinCTADialog)
+            }
         )
     }
 }

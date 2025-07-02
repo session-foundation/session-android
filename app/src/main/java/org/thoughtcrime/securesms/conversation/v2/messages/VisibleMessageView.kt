@@ -276,7 +276,6 @@ class VisibleMessageView : FrameLayout {
         // Date break
         val showDateBreak = isStartOfMessageCluster || snIsSelected
         binding.dateBreakTextView.text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
-            Locale.getDefault(),
             message.timestamp
         ) else null
         binding.dateBreakTextView.isVisible = showDateBreak

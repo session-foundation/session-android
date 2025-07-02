@@ -2306,7 +2306,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     Uri.fromFile(result.file),
                     voiceMessageFilename,
                     result.length,
-                    MediaTypes.AUDIO_AAC,
+                    MediaTypes.AUDIO_MP4,
                     true,
                     result.duration.inWholeMilliseconds)
 
@@ -2382,7 +2382,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (TextUtils.isEmpty(body)) { continue }
             if (messageSize > 1) {
                 val formattedTimestamp = dateUtils.getDisplayFormattedTimeSpanString(
-                    Locale.getDefault(),
                     message.timestamp
                 )
                 builder.append("$formattedTimestamp: ")
