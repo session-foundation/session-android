@@ -23,9 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.blackAlpha06
+import org.thoughtcrime.securesms.ui.theme.blackAlpha12
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
@@ -67,7 +68,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 highlight effect (needs to work on all types and shapes (how should it work for combos like message + image? overall effect?)
 //todo CONVOv3 text formatting in bubble including mentions and links
 //todo CONVOv3 images
-//todo CONVOv3 audio
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
 //todo CONVOv3 reactions
@@ -115,8 +115,6 @@ fun MessageContent(
     data: MessageViewData,
     modifier: Modifier = Modifier
 ) {
-    //todo CONVOv3 update composable in Landing
-
     Column(
         modifier = modifier,
     ) {
@@ -179,9 +177,9 @@ fun MessageContent(
                             )
 
                             // Audio messages
-                            is MessageType.Audio -> {
-                                //todo CONVOv3 audio message
-                            }
+                            is MessageType.Audio -> AudioMessage(
+                                data = data.type
+                            )
 
                             // Media messages
                             is MessageType.Media -> {
@@ -452,6 +450,74 @@ fun MessageLink(
 }
 
 @Composable
+fun AudioMessage(
+    data: MessageType.Audio,
+    modifier: Modifier = Modifier
+){
+    Box(
+        modifier = modifier.width(160.dp)
+            .height(IntrinsicSize.Min),
+    ) {
+        // progress background
+        Box(
+          modifier = Modifier.fillMaxHeight()
+              .wrapContentWidth()
+              .fillMaxWidth(data.progress)
+              .background(blackAlpha12)
+              .align(Alignment.CenterStart)
+        )
+
+        // content
+        Row(
+            modifier = Modifier.padding(defaultMessageBubblePadding()),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if(data.audioState == MessageAudioState.Loading){
+                SmallCircularProgressIndicator(color = LocalColors.current.background)
+            } else {
+                Image(
+                    painter = painterResource(
+                        id = if (data.audioState == MessageAudioState.Paused)
+                            R.drawable.exo_icon_play else R.drawable.exo_icon_pause
+                    ),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(LocalColors.current.text),
+                    modifier = Modifier.size(LocalDimensions.current.iconMedium)
+                        .background(
+                            color = LocalColors.current.background,
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        .padding(2.dp)
+                )
+            }
+
+            Box(
+                modifier = Modifier.weight(1f)
+                    .height(1.dp)
+                    .background(LocalColors.current.background)
+
+            )
+
+            Text(
+                modifier = Modifier.background(
+                    color = LocalColors.current.background,
+                    shape = MaterialTheme.shapes.medium
+                    )
+                    .padding(
+                        horizontal = LocalDimensions.current.xxsSpacing,
+                        vertical = LocalDimensions.current.xxxsSpacing
+                    ),
+                text = data.time,
+                style = LocalType.current.base,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = LocalColors.current.text
+            )
+        }
+    }
+}
+
+@Composable
 private fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
@@ -589,6 +655,17 @@ fun MessagePreview(
                     text = "Hello, this is a message with multiple lines To test out styling and making sure it looks good but also continues for even longer as we are testing various screen width and I need to see how far it will go before reaching the max available width so there is a lot to say but also none of this needs to mean anything and yet here we are, are you still reading this by the way?"
                 ),
                 status = PreviewMessageData.sentStatus
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                avatar = PreviewMessageData.sampleAvatar,
+                type = PreviewMessageData.text(
+                    outgoing = false,
+                    text = "Hello"
+                )
             ))
         }
     }
@@ -746,6 +823,45 @@ fun LinkMessagePreview(
     }
 }
 
+@Preview
+@Composable
+fun AudioMessagePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
+
+        ) {
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.audio()
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                avatar = PreviewMessageData.sampleAvatar,
+                type = PreviewMessageData.audio(
+                    outgoing = false,
+                    state = MessageAudioState.Loading,
+                    name = "Audio with a really long name that should ellepsize once it reaches the max width"
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = PreviewMessageData.audio(
+                    state = MessageAudioState.Paused
+                ))
+            )
+        }
+    }
+}
+
 private object PreviewMessageData {
 
     // Common data
@@ -777,7 +893,7 @@ private object PreviewMessageData {
         name: String = "Audio",
         time: String = "1:23",
         outgoing: Boolean = true,
-        progress: Float = 0.5f,
+        progress: Float = 0.3f,
         state: MessageAudioState = MessageAudioState.Playing
     ) = MessageType.Audio(
         outgoing = outgoing,
