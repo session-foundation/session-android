@@ -219,7 +219,7 @@ fun Message(
     ) {
         val maxMessageWidth = max(
             LocalDimensions.current.minMessageWidth,
-            maxWidth * 0.8f // 80% of available width
+            this.maxWidth * 0.8f // 80% of available width
         )
 
         MessageContent(
