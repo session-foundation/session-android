@@ -75,12 +75,6 @@ public class MediaSendVideoFragment extends Fragment implements MediaSendPageFra
   public @NonNull Uri getUri() { return uri; }
 
   @Override
-  public @Nullable View getPlaybackControls() {
-    VideoPlayer player = (VideoPlayer) getView();
-    return player != null ? player.getControlView() : null;
-  }
-
-  @Override
   public @Nullable Object saveState() { return null; }
 
   @Override

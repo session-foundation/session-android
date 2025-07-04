@@ -33,7 +33,6 @@ import org.session.libsession.avatars.GroupRecordContactPhoto;
 import org.session.libsession.avatars.ProfileContactPhoto;
 import org.session.libsession.avatars.SystemContactPhoto;
 import org.session.libsession.avatars.TransparentContactPhoto;
-import org.session.libsession.database.StorageProtocol;
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.messaging.contacts.Contact;
 import org.session.libsession.utilities.Address;
@@ -101,10 +100,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
   private           boolean        profileSharing;
   private           String         notificationChannel;
   private           boolean        forceSmsSelection;
-  private           String         wrapperHash;
   private           boolean        blocksCommunityMessageRequests;
-
-  private @NonNull  UnidentifiedAccessMode unidentifiedAccessMode = UnidentifiedAccessMode.ENABLED;
 
   @SuppressWarnings("ConstantConditions")
   public static @NonNull Recipient from(@NonNull Context context, @NonNull Address address, boolean asynchronous) {
@@ -162,7 +158,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       this.profileName            = stale.profileName;
       this.profileAvatar          = stale.profileAvatar;
       this.profileSharing         = stale.profileSharing;
-      this.unidentifiedAccessMode = stale.unidentifiedAccessMode;
       this.forceSmsSelection      = stale.forceSmsSelection;
       this.notifyType             = stale.notifyType;
       this.disappearingState      = stale.disappearingState;
@@ -194,7 +189,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       this.profileName             = details.get().profileName;
       this.profileAvatar           = details.get().profileAvatar;
       this.profileSharing          = details.get().profileSharing;
-      this.unidentifiedAccessMode  = details.get().unidentifiedAccessMode;
       this.forceSmsSelection       = details.get().forceSmsSelection;
       this.notifyType              = details.get().notifyType;
       this.autoDownloadAttachments = details.get().autoDownloadAttachments;
@@ -233,7 +227,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             Recipient.this.profileName            = result.profileName;
             Recipient.this.profileAvatar          = result.profileAvatar;
             Recipient.this.profileSharing         = result.profileSharing;
-            Recipient.this.unidentifiedAccessMode = result.unidentifiedAccessMode;
             Recipient.this.forceSmsSelection      = result.forceSmsSelection;
             Recipient.this.notifyType             = result.notifyType;
             Recipient.this.disappearingState      = result.disappearingState;
@@ -291,9 +284,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     this.profileName            = details.profileName;
     this.profileAvatar          = details.profileAvatar;
     this.profileSharing         = details.profileSharing;
-    this.unidentifiedAccessMode = details.unidentifiedAccessMode;
     this.forceSmsSelection      = details.forceSmsSelection;
-    this.wrapperHash            = details.wrapperHash;
     this.blocksCommunityMessageRequests = details.blocksCommunityMessageRequests;
 
     this.participants.addAll(details.participants);
@@ -770,30 +761,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     notifyListeners();
   }
 
-  public @NonNull synchronized UnidentifiedAccessMode getUnidentifiedAccessMode() {
-    return unidentifiedAccessMode;
-  }
-
-  public String getWrapperHash() {
-    return wrapperHash;
-  }
-
-  public void setWrapperHash(String wrapperHash) {
-    this.wrapperHash = wrapperHash;
-  }
-
-  public void setUnidentifiedAccessMode(@NonNull UnidentifiedAccessMode unidentifiedAccessMode) {
-    synchronized (this) {
-      this.unidentifiedAccessMode = unidentifiedAccessMode;
-    }
-
-    notifyListeners();
-  }
-
-  public synchronized boolean isSystemContact() {
-    return contactUri != null;
-  }
-
   public synchronized Recipient resolve() {
     while (resolving) Util.wait(this, 0);
     return this;
@@ -822,7 +789,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             && Arrays.equals(profileKey, recipient.profileKey)
             && Objects.equals(profileName, recipient.profileName)
             && Objects.equals(profileAvatar, recipient.profileAvatar)
-            && Objects.equals(wrapperHash, recipient.wrapperHash)
             && blocksCommunityMessageRequests == recipient.blocksCommunityMessageRequests;
   }
 
@@ -842,7 +808,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
             expireMessages,
             profileName,
             profileAvatar,
-            wrapperHash,
             blocksCommunityMessageRequests
     );
     result = 31 * result + Arrays.hashCode(profileKey);
@@ -923,24 +888,6 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     }
   }
 
-  public enum UnidentifiedAccessMode {
-    UNKNOWN(0), DISABLED(1), ENABLED(2), UNRESTRICTED(3);
-
-    private final int mode;
-
-    UnidentifiedAccessMode(int mode) {
-      this.mode = mode;
-    }
-
-    public int getMode() {
-      return mode;
-    }
-
-    public static UnidentifiedAccessMode fromMode(int mode) {
-      return values()[mode];
-    }
-  }
-
   public static class RecipientSettings {
     private final boolean                blocked;
     private final boolean                approved;
@@ -966,9 +913,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     private final String                 signalProfileAvatar;
     private final boolean                profileSharing;
     private final String                 notificationChannel;
-    private final UnidentifiedAccessMode unidentifiedAccessMode;
     private final boolean                forceSmsSelection;
-    private final String                 wrapperHash;
     private final boolean                blocksCommunityMessageRequests;
 
     public RecipientSettings(boolean blocked, boolean approved, boolean approvedMe, long muteUntil,
@@ -992,9 +937,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
                       @Nullable String signalProfileAvatar,
                       boolean profileSharing,
                       @Nullable String notificationChannel,
-                      @NonNull UnidentifiedAccessMode unidentifiedAccessMode,
                       boolean forceSmsSelection,
-                      String wrapperHash,
                              boolean blocksCommunityMessageRequests
     )
     {
@@ -1022,9 +965,7 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       this.signalProfileAvatar     = signalProfileAvatar;
       this.profileSharing          = profileSharing;
       this.notificationChannel     = notificationChannel;
-      this.unidentifiedAccessMode  = unidentifiedAccessMode;
       this.forceSmsSelection       = forceSmsSelection;
-      this.wrapperHash            = wrapperHash;
       this.blocksCommunityMessageRequests = blocksCommunityMessageRequests;
     }
 
@@ -1124,16 +1065,8 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
       return notificationChannel;
     }
 
-    public @NonNull UnidentifiedAccessMode getUnidentifiedAccessMode() {
-      return unidentifiedAccessMode;
-    }
-
     public boolean isForceSmsSelection() {
       return forceSmsSelection;
-    }
-
-    public String getWrapperHash() {
-      return wrapperHash;
     }
 
     public boolean getBlocksCommunityMessageRequests() {

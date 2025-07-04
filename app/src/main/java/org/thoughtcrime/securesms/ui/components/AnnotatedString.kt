@@ -61,7 +61,7 @@ private fun resources(): Resources {
 @Composable
 fun annotatedStringResource(
     @StringRes id: Int,
-    highlightColor: Color = LocalColors.current.primary
+    highlightColor: Color = LocalColors.current.accent
 ): AnnotatedString {
     val resources = resources()
     val density = LocalDensity.current
@@ -74,7 +74,7 @@ fun annotatedStringResource(
 @Composable
 fun annotatedStringResource(
     text: CharSequence,
-    highlightColor: Color = LocalColors.current.primary
+    highlightColor: Color = LocalColors.current.accent
 ): AnnotatedString {
     val density = LocalDensity.current
     return remember(text.hashCode()) {
@@ -260,7 +260,7 @@ fun inlineContentMap(textSize: TextUnit = 15.sp) = mapOf(
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_square_arrow_up_right),
-            colorFilter = ColorFilter.tint(LocalColors.current.primaryText),
+            colorFilter = ColorFilter.tint(LocalColors.current.accentText),
             contentDescription = null,
             modifier = Modifier.fillMaxSize()
         )

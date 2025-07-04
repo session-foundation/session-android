@@ -46,7 +46,6 @@ import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.SettableFuture;
 import org.session.libsignal.utilities.guava.Optional;
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2;
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity;
 import org.thoughtcrime.securesms.mediasend.MediaSendActivity;
 import org.thoughtcrime.securesms.mms.AudioSlide;
@@ -59,7 +58,7 @@ import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.mms.VideoSlide;
 import org.thoughtcrime.securesms.permissions.Permissions;
-import org.thoughtcrime.securesms.providers.BlobProvider;
+import org.thoughtcrime.securesms.providers.BlobUtils;
 import org.thoughtcrime.securesms.util.FilenameUtils;
 import org.thoughtcrime.securesms.util.MediaUtil;
 
@@ -104,13 +103,13 @@ public class AttachmentManager {
     }
 
     private void cleanup(final @Nullable Uri uri) {
-        if (uri != null && BlobProvider.isAuthority(uri)) {
-            BlobProvider.getInstance().delete(context, uri);
+        if (uri != null && BlobUtils.isAuthority(uri)) {
+            BlobUtils.getInstance().delete(context, uri);
         }
     }
 
     private void markGarbage(@Nullable Uri uri) {
-        if (uri != null && BlobProvider.isAuthority(uri)) {
+        if (uri != null && BlobUtils.isAuthority(uri)) {
             Log.d(TAG, "Marking garbage that needs cleaning: " + uri);
             garbage.add(uri);
         }
@@ -240,9 +239,9 @@ public class AttachmentManager {
         // The READ_EXTERNAL_STORAGE permission is deprecated (and will AUTO-FAIL if requested!) on
         // Android 13 and above (API 33 - 'Tiramisu') we must ask for READ_MEDIA_VIDEO/IMAGES/AUDIO instead.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO)
-                    .request(Manifest.permission.READ_MEDIA_IMAGES)
-                    .request(Manifest.permission.READ_MEDIA_AUDIO)
+            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO,
+                                    Manifest.permission.READ_MEDIA_IMAGES,
+                                    Manifest.permission.READ_MEDIA_AUDIO)
                     .withRationaleDialog(
                             Phrase.from(c, R.string.permissionsMusicAudio)
                                     .put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
@@ -270,9 +269,19 @@ public class AttachmentManager {
         Context c = activity.getApplicationContext();
 
         Permissions.PermissionsBuilder builder = Permissions.with(activity);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO)
-                    .request(Manifest.permission.READ_MEDIA_IMAGES)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34+
+            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO,
+                                    Manifest.permission.READ_MEDIA_IMAGES,
+                                    Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+                    .withPermanentDenialDialog(
+                            Phrase.from(c, R.string.permissionsStorageDenied)
+                                    .put(APP_NAME_KEY, c.getString(R.string.app_name))
+                                    .format().toString()
+                    );
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {   // API 33
+            builder = builder.request(Manifest.permission.READ_MEDIA_VIDEO,
+                                    Manifest.permission.READ_MEDIA_IMAGES)
                     .withPermanentDenialDialog(
                             Phrase.from(c, R.string.permissionsStorageDenied)
                                     .put(APP_NAME_KEY, c.getString(R.string.app_name))
@@ -286,6 +295,7 @@ public class AttachmentManager {
                                     .format().toString()
                     );
         }
+
         builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
                 .execute();
     }

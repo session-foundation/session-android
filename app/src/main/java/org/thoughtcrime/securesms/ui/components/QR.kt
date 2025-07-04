@@ -2,9 +2,7 @@ package org.thoughtcrime.securesms.ui.components
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.camera.core.CameraSelector
@@ -47,8 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -68,7 +64,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.findActivity
 import org.thoughtcrime.securesms.ui.getSubbedString
@@ -120,7 +116,7 @@ fun QRScannerScreen(
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
-                PrimaryOutlineButton(
+                AccentOutlineButton(
                     stringResource(R.string.cameraGrantAccess),
                     modifier = Modifier.fillMaxWidth(),
                     onClick = {
@@ -150,11 +146,11 @@ fun QRScannerScreen(
                 text = context.getSubbedString(R.string.permissionsCameraDenied,
                     APP_NAME_KEY to context.getString(R.string.app_name)),
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.sessionSettings)),
                         onClick = onClickSettings
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )

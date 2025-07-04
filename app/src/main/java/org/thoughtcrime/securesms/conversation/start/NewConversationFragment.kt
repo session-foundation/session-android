@@ -92,9 +92,7 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onCreateGroupSelected() {
-        val fragment = CreateGroupFragment()
-
-        replaceFragment(fragment)
+        replaceFragment(CreateGroupFragment())
     }
 
     override fun onJoinCommunitySelected() {

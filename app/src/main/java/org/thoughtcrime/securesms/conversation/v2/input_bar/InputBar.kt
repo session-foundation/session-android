@@ -20,6 +20,7 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.InputBarState
@@ -96,6 +97,14 @@ class InputBar @JvmOverloads constructor(
 
     private val sendButton = InputBarButton(context, R.drawable.ic_arrow_up, isSendButton = true).apply {
         contentDescription = context.getString(R.string.AccessibilityId_send)
+    }
+
+    private val textColor: Int by lazy {
+        context.getColorFromAttr(android.R.attr.textColorPrimary)
+    }
+
+    private val dangerColor: Int by lazy {
+        context.getColorFromAttr(R.attr.danger)
     }
 
     init {
@@ -178,8 +187,6 @@ class InputBar @JvmOverloads constructor(
         sendButton.isVisible = microphoneButton.isGone
         delegate?.inputBarEditTextContentChanged(text)
     }
-
-    override fun inputBarEditTextHeightChanged(newValue: Int) { }
 
     override fun commitInputContent(contentUri: Uri) { delegate?.commitInputContent(contentUri) }
 
@@ -309,6 +316,22 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+
+        // handle char limit
+        if(state.charLimitState != null){
+            binding.characterLimitText.text = state.charLimitState.count.toString()
+            binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+            binding.characterLimitContainer.setOnClickListener {
+                delegate?.onCharLimitTapped()
+            }
+
+            binding.badgePro.isVisible = state.charLimitState.showProBadge
+
+            binding.characterLimitContainer.isVisible = true
+        } else {
+            binding.characterLimitContainer.setOnClickListener(null)
+            binding.characterLimitContainer.isVisible = false
+        }
     }
 }
 
@@ -322,4 +345,5 @@ interface InputBarDelegate {
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
     fun commitInputContent(contentUri: Uri)
+    fun onCharLimitTapped()
 }

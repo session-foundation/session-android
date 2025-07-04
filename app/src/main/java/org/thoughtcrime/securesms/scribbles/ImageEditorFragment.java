@@ -166,12 +166,6 @@ public final class ImageEditorFragment extends Fragment implements ImageEditorHu
     return imageUri;
   }
 
-  @Nullable
-  @Override
-  public View getPlaybackControls() {
-    return null;
-  }
-
   @Override
   public Object saveState() {
     Data data = new Data();

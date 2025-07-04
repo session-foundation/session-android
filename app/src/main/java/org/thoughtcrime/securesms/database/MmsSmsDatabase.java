@@ -17,6 +17,8 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -77,7 +79,7 @@ public class MmsSmsDatabase extends Database {
                                               MmsSmsColumns.SUBSCRIPTION_ID,
                                               MmsSmsColumns.EXPIRES_IN,
                                               MmsSmsColumns.EXPIRE_STARTED,
-                                              MmsSmsColumns.NOTIFIED,
+                                              NOTIFIED,
                                               TRANSPORT,
                                               AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                                               MmsDatabase.QUOTE_ID,
@@ -377,15 +379,67 @@ public class MmsSmsDatabase extends Database {
     }
   }
 
-  public Cursor getUnread() {
-    String order           = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-    String selection       = "(" + MmsSmsColumns.READ + " = 0 OR " + MmsSmsColumns.REACTIONS_UNREAD + " = 1) AND " + MmsSmsColumns.NOTIFIED + " = 0";
+  /**
+   * Get all incoming unread + unnotified messages
+   * or
+   * all outgoing messages with unread reactions
+   */
+  public Cursor getUnreadOrUnseenReactions() {
 
+    // ──────────────────────────────────────────────────────────────
+    // 1) Build “is-outgoing” condition that works for both MMS & SMS
+    // ──────────────────────────────────────────────────────────────
+    //   MMS rows  → use MESSAGE_BOX
+    //   SMS rows  → use TYPE
+    //
+    //   TRANSPORT lets us be sure we’re looking at the right column,
+    //   so an incoming MMS/SMS can never be mistaken for outgoing.
+    //
+    String outgoingCondition =
+            /* MMS */
+            "(" + TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
+                    "(" + MESSAGE_BOX + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))" +
+
+                    " OR " +
+
+                    /* SMS */
+                    "(" + TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
+                    "(" + SmsDatabase.TYPE + " & " +
+                    MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
+                    buildOutgoingTypesList() + "))";
+
+    // ──────────────────────────────────────────────────────────────
+    // 2) Selection:
+    //    A) incoming  unread+un-notified,      NOT outgoing
+    //    B) outgoing  with unseen reactions,   IS  outgoing
+    // ──────────────────────────────────────────────────────────────
+    String selection =
+            "(" + READ + " = 0 AND " +
+                    NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
+                    " OR " +
+                    "(" + MmsSmsColumns.REACTIONS_UNREAD + " = 1 AND (" +            // B
+                    outgoingCondition + "))";
+
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
   }
 
+  /** Builds the comma-separated list of base types that represent
+   *  *outgoing* messages (same helper as before). */
+  private String buildOutgoingTypesList() {
+    long[] types = MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES;
+    StringBuilder sb = new StringBuilder(types.length * 3);
+    for (int i = 0; i < types.length; i++) {
+      if (i > 0) sb.append(',');
+      sb.append(types[i]);
+    }
+    return sb.toString();
+  }
+
   public int getUnreadCount(long threadId) {
-    String selection = MmsSmsColumns.READ + " = 0 AND " + MmsSmsColumns.NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String selection = READ + " = 0 AND " + NOTIFIED + " = 0 AND " + MmsSmsColumns.THREAD_ID + " = " + threadId;
     Cursor cursor    = queryTables(PROJECTION, selection, null, null);
 
     try {
@@ -489,7 +543,7 @@ public class MmsSmsDatabase extends Database {
                                   "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
                                   ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, MmsSmsColumns.READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY, READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
@@ -497,7 +551,7 @@ public class MmsSmsDatabase extends Database {
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
-                              MmsSmsColumns.NOTIFIED,
+                              NOTIFIED,
                               MmsDatabase.NETWORK_FAILURE, TRANSPORT,
                               MmsDatabase.QUOTE_ID,
                               MmsDatabase.QUOTE_AUTHOR,
@@ -518,7 +572,7 @@ public class MmsSmsDatabase extends Database {
                                   + " AS " + MmsSmsColumns.UNIQUE_ROW_ID,
                               "NULL AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, MmsSmsColumns.READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY, READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
@@ -526,7 +580,7 @@ public class MmsSmsDatabase extends Database {
                               MmsSmsColumns.DELIVERY_RECEIPT_COUNT, MmsSmsColumns.READ_RECEIPT_COUNT,
                               MmsSmsColumns.MISMATCHED_IDENTITIES,
                               MmsSmsColumns.SUBSCRIPTION_ID, MmsSmsColumns.EXPIRES_IN, MmsSmsColumns.EXPIRE_STARTED,
-                              MmsSmsColumns.NOTIFIED,
+                              NOTIFIED,
                               MmsDatabase.NETWORK_FAILURE, TRANSPORT,
                               MmsDatabase.QUOTE_ID,
                               MmsDatabase.QUOTE_AUTHOR,
@@ -561,7 +615,7 @@ public class MmsSmsDatabase extends Database {
 
     Set<String> mmsColumnsPresent = new HashSet<>();
     mmsColumnsPresent.add(MmsSmsColumns.ID);
-    mmsColumnsPresent.add(MmsSmsColumns.READ);
+    mmsColumnsPresent.add(READ);
     mmsColumnsPresent.add(MmsSmsColumns.THREAD_ID);
     mmsColumnsPresent.add(MmsSmsColumns.BODY);
     mmsColumnsPresent.add(MmsSmsColumns.ADDRESS);
@@ -581,7 +635,7 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsDatabase.TRANSACTION_ID);
     mmsColumnsPresent.add(MmsDatabase.MESSAGE_SIZE);
     mmsColumnsPresent.add(MmsDatabase.EXPIRY);
-    mmsColumnsPresent.add(MmsDatabase.NOTIFIED);
+    mmsColumnsPresent.add(NOTIFIED);
     mmsColumnsPresent.add(MmsDatabase.STATUS);
     mmsColumnsPresent.add(MmsDatabase.NETWORK_FAILURE);
     mmsColumnsPresent.add(MmsSmsColumns.HAS_MENTION);
@@ -633,7 +687,7 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(MmsSmsColumns.BODY);
     smsColumnsPresent.add(MmsSmsColumns.ADDRESS);
     smsColumnsPresent.add(MmsSmsColumns.ADDRESS_DEVICE_ID);
-    smsColumnsPresent.add(MmsSmsColumns.READ);
+    smsColumnsPresent.add(READ);
     smsColumnsPresent.add(MmsSmsColumns.THREAD_ID);
     smsColumnsPresent.add(MmsSmsColumns.DELIVERY_RECEIPT_COUNT);
     smsColumnsPresent.add(MmsSmsColumns.READ_RECEIPT_COUNT);
@@ -641,7 +695,7 @@ public class MmsSmsDatabase extends Database {
     smsColumnsPresent.add(MmsSmsColumns.SUBSCRIPTION_ID);
     smsColumnsPresent.add(MmsSmsColumns.EXPIRES_IN);
     smsColumnsPresent.add(MmsSmsColumns.EXPIRE_STARTED);
-    smsColumnsPresent.add(MmsSmsColumns.NOTIFIED);
+    smsColumnsPresent.add(NOTIFIED);
     smsColumnsPresent.add(SmsDatabase.TYPE);
     smsColumnsPresent.add(SmsDatabase.SUBJECT);
     smsColumnsPresent.add(SmsDatabase.DATE_SENT);

@@ -15,7 +15,6 @@ import org.session.libsession.utilities.Util;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
 import org.session.libsession.utilities.recipients.Recipient.RegisteredState;
-import org.session.libsession.utilities.recipients.Recipient.UnidentifiedAccessMode;
 import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -57,9 +56,11 @@ public class RecipientDatabase extends Database {
   private static final String CALL_RINGTONE            = "call_ringtone";
   private static final String CALL_VIBRATE             = "call_vibrate";
   private static final String NOTIFICATION_CHANNEL     = "notification_channel";
+  @Deprecated(forRemoval = true)
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
+  @Deprecated(forRemoval = true)
   private static final String WRAPPER_HASH             = "wrapper_hash";
   private static final String BLOCKS_COMMUNITY_MESSAGE_REQUESTS = "blocks_community_message_requests";
   private static final String AUTO_DOWNLOAD            = "auto_download"; // 1 / 0 / -1 flag for whether to auto-download in a conversation, or if the user hasn't selected a preference
@@ -217,9 +218,7 @@ public class RecipientDatabase extends Database {
     String  signalProfileAvatar     = cursor.getString(cursor.getColumnIndexOrThrow(SESSION_PROFILE_AVATAR));
     boolean profileSharing          = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
     String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
-    int     unidentifiedAccessMode  = cursor.getInt(cursor.getColumnIndexOrThrow(UNIDENTIFIED_ACCESS_MODE));
     boolean forceSmsSelection       = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
-    String  wrapperHash            = cursor.getString(cursor.getColumnIndexOrThrow(WRAPPER_HASH));
     boolean blocksCommunityMessageRequests = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCKS_COMMUNITY_MESSAGE_REQUESTS)) == 1;
 
     MaterialColor color;
@@ -252,8 +251,8 @@ public class RecipientDatabase extends Database {
                                              profileKey, systemDisplayName, systemContactPhoto,
                                              systemPhoneLabel, systemContactUri,
                                              signalProfileName, signalProfileAvatar, profileSharing,
-                                             notificationChannel, Recipient.UnidentifiedAccessMode.fromMode(unidentifiedAccessMode),
-                                             forceSmsSelection, wrapperHash, blocksCommunityMessageRequests));
+                                             notificationChannel,
+                                             forceSmsSelection, blocksCommunityMessageRequests));
   }
 
   public boolean isAutoDownloadFlagSet(Recipient recipient) {
@@ -304,14 +303,6 @@ public class RecipientDatabase extends Database {
       }
     }
     return false;
-  }
-
-  public void setRecipientHash(@NonNull Recipient recipient, String recipientHash) {
-    ContentValues values = new ContentValues();
-    values.put(WRAPPER_HASH, recipientHash);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setWrapperHash(recipientHash);
-    notifyRecipientListeners();
   }
 
   public void setApproved(@NonNull Recipient recipient, boolean approved) {
@@ -389,14 +380,6 @@ public class RecipientDatabase extends Database {
     updateOrInsert(recipient.getAddress(), values);
     recipient.resolve().setNotifyType(notifyType);
     notifyConversationListListeners();
-    notifyRecipientListeners();
-  }
-
-  public void setUnidentifiedAccessMode(@NonNull Recipient recipient, @NonNull UnidentifiedAccessMode unidentifiedAccessMode) {
-    ContentValues values = new ContentValues(1);
-    values.put(UNIDENTIFIED_ACCESS_MODE, unidentifiedAccessMode.getMode());
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setUnidentifiedAccessMode(unidentifiedAccessMode);
     notifyRecipientListeners();
   }
 

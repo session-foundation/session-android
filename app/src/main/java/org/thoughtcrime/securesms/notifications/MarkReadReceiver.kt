@@ -25,7 +25,6 @@ import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.ExpirationInfo
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
-import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 
@@ -76,7 +75,7 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .filter { mmsSmsDatabase.getMessageById(it.expirationInfo.id)?.run {
                     isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
-                .forEach { messageExpirationManager.startDisappearAfterRead(it.syncMessageId.timetamp, it.syncMessageId.address.toString()) }
+                .forEach { messageExpirationManager.startExpiringNow(it.expirationInfo.id) }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
                 GlobalScope.launch {
@@ -162,8 +161,7 @@ class MarkReadReceiver : BroadcastReceiver() {
             }
 
             ApplicationContext.getInstance(context).expiringMessageManager.get().scheduleDeletion(
-                expirationInfo.id.id,
-                expirationInfo.id.mms,
+                expirationInfo.id,
                 now,
                 expiresIn
             )

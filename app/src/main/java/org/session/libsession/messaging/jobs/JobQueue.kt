@@ -1,7 +1,6 @@
 package org.session.libsession.messaging.jobs
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
@@ -9,7 +8,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsignal.utilities.Log
-import java.lang.RuntimeException
 import java.util.Timer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -127,7 +125,6 @@ class JobQueue : JobDelegate {
                     is InviteContactsJob,
                     is NotifyPNServerJob,
                     is AttachmentUploadJob,
-                    is GroupLeavingJob,
                     is MessageSendJob -> {
                         txQueue.send(job)
                     }
@@ -237,7 +234,6 @@ class JobQueue : JobDelegate {
             BackgroundGroupAddJob.KEY,
             OpenGroupDeleteJob.KEY,
             RetrieveProfileAvatarJob.KEY,
-            GroupLeavingJob.KEY,
             InviteContactsJob.KEY,
         )
         allJobTypes.forEach { type ->

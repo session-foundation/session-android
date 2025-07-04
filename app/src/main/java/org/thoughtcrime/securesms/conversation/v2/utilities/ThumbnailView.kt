@@ -178,7 +178,7 @@ open class ThumbnailView @JvmOverloads constructor(
         .diskCacheStrategy(DiskCacheStrategy.NONE)
         .overrideDimensions()
         .transition(DrawableTransitionOptions.withCrossFade())
-        .transform(CenterCrop())
+        .optionalTransform(CenterCrop())
         .missingThumbnailPicture(slide.isInProgress, errorDrawable)
 
     private fun buildPlaceholderGlideRequest(

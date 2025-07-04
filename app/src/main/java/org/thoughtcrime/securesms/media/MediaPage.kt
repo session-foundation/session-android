@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -30,7 +29,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -191,7 +189,7 @@ private fun ThumbnailRow(
                                     modifier = Modifier.padding(start = LocalDimensions.current.xxxsSpacing),
                                     painter = painterResource(R.drawable.triangle_right),
                                     contentDescription = null,
-                                    colorFilter = ColorFilter.tint(LocalColors.current.primary)
+                                    colorFilter = ColorFilter.tint(LocalColors.current.accent)
                                 )
                             }
                         }

@@ -22,8 +22,9 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
@@ -42,6 +43,28 @@ fun ConversationSettingsDialogs(
 
     //  Simple dialogs
     if (dialogsState.showSimpleDialog != null) {
+        val buttons = mutableListOf<DialogButtonData>()
+        if(dialogsState.showSimpleDialog.positiveText != null) {
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.positiveText),
+                    color = if (dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
+                    else LocalColors.current.text,
+                    qaTag = dialogsState.showSimpleDialog.positiveQaTag,
+                    onClick = dialogsState.showSimpleDialog.onPositive
+                )
+            )
+        }
+        if(dialogsState.showSimpleDialog.negativeText != null){
+            buttons.add(
+                DialogButtonData(
+                    text = GetString(dialogsState.showSimpleDialog.negativeText),
+                    qaTag = dialogsState.showSimpleDialog.negativeQaTag,
+                    onClick = dialogsState.showSimpleDialog.onNegative
+                )
+            )
+        }
+
         AlertDialog(
             onDismissRequest = {
                 // hide dialog
@@ -49,18 +72,8 @@ fun ConversationSettingsDialogs(
             },
             title = annotatedStringResource(dialogsState.showSimpleDialog.title),
             text = annotatedStringResource(dialogsState.showSimpleDialog.message),
-            buttons = listOf(
-                DialogButtonModel(
-                    text = GetString(dialogsState.showSimpleDialog.positiveText),
-                    color = if(dialogsState.showSimpleDialog.positiveStyleDanger) LocalColors.current.danger
-                    else LocalColors.current.text,
-                    onClick = dialogsState.showSimpleDialog.onPositive
-                ),
-                DialogButtonModel(
-                    text = GetString(dialogsState.showSimpleDialog.negativeText),
-                    onClick = dialogsState.showSimpleDialog.onNegative
-                )
-            )
+            showCloseButton = dialogsState.showSimpleDialog.showXIcon,
+            buttons = buttons
         )
     }
 
@@ -108,13 +121,13 @@ fun ConversationSettingsDialogs(
                 )
             },
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(stringResource(id = R.string.save)),
                     enabled = dialogsState.nicknameDialog.setEnabled,
                     qaTag = stringResource(R.string.qa_conversation_settings_dialog_nickname_set),
                     onClick = { sendCommand(SetNickname) }
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(stringResource(R.string.remove)),
                     color = LocalColors.current.danger,
                     enabled = dialogsState.nicknameDialog.removeEnabled,
@@ -179,18 +192,32 @@ fun ConversationSettingsDialogs(
                 }
             },
             buttons = listOf(
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(stringResource(id = R.string.save)),
                     enabled = dialogsState.groupEditDialog.saveEnabled,
                     qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_save),
                     onClick = { sendCommand(SetGroupText) }
                 ),
-                DialogButtonModel(
+                DialogButtonData(
                     text = GetString(stringResource(R.string.cancel)),
                     color = LocalColors.current.danger,
                     qaTag = stringResource(R.string.qa_conversation_settings_dialog_groupname_cancel),
                 )
             )
+        )
+    }
+
+    // pin CTA
+    if(dialogsState.pinCTA != null){
+        PinProCTA(
+            overTheLimit = dialogsState.pinCTA.overTheLimit,
+            onUpgrade = {
+                sendCommand(GoToProUpgradeScreen)
+            },
+
+            onCancel = {
+                sendCommand(HidePinCTADialog)
+            }
         )
     }
 }
@@ -239,7 +266,7 @@ fun GroupAdminClearMessagesDialog(
             }
         },
         buttons = listOf(
-            DialogButtonModel(
+            DialogButtonData(
                 text = GetString(stringResource(id = R.string.clear)),
                 color = LocalColors.current.danger,
                 onClick = {
@@ -250,7 +277,7 @@ fun GroupAdminClearMessagesDialog(
                     )
                 }
             ),
-            DialogButtonModel(
+            DialogButtonData(
                 GetString(stringResource(R.string.cancel))
             )
         )

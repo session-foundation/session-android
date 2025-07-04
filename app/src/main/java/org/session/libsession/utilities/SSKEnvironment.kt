@@ -1,14 +1,12 @@
 package org.session.libsession.utilities
 
 import android.content.Context
-import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.LegacyGroupControlMessage
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
-import org.session.libsession.snode.SnodeAPI.nowWithOffset
 import org.session.libsession.utilities.recipients.Recipient
+import org.thoughtcrime.securesms.database.model.MessageId
 
 class SSKEnvironment(
     val typingIndicators: TypingIndicatorsProtocol,
@@ -36,46 +34,21 @@ class SSKEnvironment(
         fun setNickname(context: Context, recipient: Recipient, nickname: String?)
         fun setName(context: Context, recipient: Recipient, name: String?)
         fun setProfilePicture(context: Context, recipient: Recipient, profilePictureURL: String?, profileKey: ByteArray?)
-        fun setUnidentifiedAccessMode(context: Context, recipient: Recipient, unidentifiedAccessMode: Recipient.UnidentifiedAccessMode)
         fun contactUpdatedInternal(contact: Contact): String?
     }
 
     interface MessageExpirationManagerProtocol {
         fun insertExpirationTimerMessage(message: ExpirationTimerUpdate)
-        fun startAnyExpiration(timestamp: Long, author: String, expireStartedAt: Long)
 
-        fun maybeStartExpiration(message: Message, startDisappearAfterRead: Boolean = false) {
-            if (
-                message is ExpirationTimerUpdate && message.isGroup ||
-                message is LegacyGroupControlMessage ||
-                message.openGroupServerMessageID != null // ignore expiration on communities since they do not support disappearing mesasges
-            ) return
+        /**
+         * Starts the expiration timer for a message, regardless of it has been sent, read or not.
+         *
+         * However, the timer will not start if it doesn't have its expiryMode set.
+         */
+        fun startExpiringNow(id: MessageId)
 
-            maybeStartExpiration(
-                message.sentTimestamp ?: return,
-                message.sender ?: return,
-                message.expiryMode,
-                startDisappearAfterRead || message.isSenderSelf
-            )
-        }
-
-        fun startDisappearAfterRead(timestamp: Long, sender: String) {
-            startAnyExpiration(
-                timestamp,
-                sender,
-                expireStartedAt = nowWithOffset.coerceAtLeast(timestamp + 1)
-            )
-        }
-
-        fun maybeStartExpiration(timestamp: Long, sender: String, mode: ExpiryMode, startDisappearAfterRead: Boolean = false) {
-            val expireStartedAt = when (mode) {
-                is ExpiryMode.AfterSend -> timestamp
-                is ExpiryMode.AfterRead -> if (startDisappearAfterRead) nowWithOffset.coerceAtLeast(timestamp + 1) else return
-                else -> return
-            }
-
-            startAnyExpiration(timestamp, sender, expireStartedAt)
-        }
+        fun onMessageSent(message: Message)
+        fun onMessageReceived(message: Message)
     }
 
     companion object {
