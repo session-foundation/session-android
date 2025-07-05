@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +38,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -129,7 +132,9 @@ fun MessageContent(
                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
             }
 
-            Column {
+            Column(
+                horizontalAlignment = if(data.type.outgoing) Alignment.End else Alignment.Start
+            ) {
                 if (data.displayName) {
                     Text(
                         modifier = Modifier.padding(start = LocalDimensions.current.smallSpacing),
@@ -141,36 +146,65 @@ fun MessageContent(
                     Spacer(modifier = Modifier.height(LocalDimensions.current.xxsSpacing))
                 }
 
-                MessageBubble(
-                    color = if (data.type.outgoing) LocalColors.current.accent
-                    else LocalColors.current.backgroundBubbleReceived
-                ) {
-                    Column {
-                        // Display quote if there is one
-                        if(data.quote != null){
-                            MessageQuote(
-                                outgoing = data.type.outgoing,
-                                quote = data.quote
-                            )
-                        }
+                // There can be two bubbles in a message: First one contains quotes, links and message text
+                // The second one contains images, audio, video or documents
+                val hasFirstBubble = data.quote != null || data.link != null || data.type.text != null
+                val hasSecondBubble = data.type !is MessageType.Text
 
-                        // display link data if any
-                        if(data.link != null){
-                            MessageLink(
-                                modifier = Modifier.padding(top = if(data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
-                                data = data.link,
-                                outgoing = data.type.outgoing
-                            )
-                        }
+                // First bubble
+                if (hasFirstBubble) {
+                    MessageBubble(
+                        color = if (data.type.outgoing) LocalColors.current.accent
+                        else LocalColors.current.backgroundBubbleReceived
+                    ) {
+                        Column {
+                            // Display quote if there is one
+                            if (data.quote != null) {
+                                MessageQuote(
+                                    modifier = Modifier.padding(bottom =
+                                        if (data.link == null && data.type.text == null)
+                                            defaultMessageBubblePadding().calculateBottomPadding()
+                                        else 0.dp
+                                    ),
+                                    outgoing = data.type.outgoing,
+                                    quote = data.quote
+                                )
+                            }
 
+                            // display link data if any
+                            if (data.link != null) {
+                                MessageLink(
+                                    modifier = Modifier.padding(top = if (data.quote != null) LocalDimensions.current.xxsSpacing else 0.dp),
+                                    data = data.link,
+                                    outgoing = data.type.outgoing
+                                )
+                            }
+
+                            if(data.type.text != null){
+                                // Text messages
+                                MessageText(
+                                    modifier = Modifier.padding(defaultMessageBubblePadding()),
+                                    text = data.type.text!!,
+                                    outgoing = data.type.outgoing
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Second bubble
+                if(hasSecondBubble){
+                    // add spacing if there is a first bubble
+                    if(hasFirstBubble){
+                        Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
+                    }
+
+                    MessageBubble(
+                        color = if (data.type.outgoing) LocalColors.current.accent
+                        else LocalColors.current.backgroundBubbleReceived
+                    ) {
                         // Apply content based on message type
                         when (data.type) {
-                            // Text messages
-                            is MessageType.Text -> MessageText(
-                                modifier = Modifier.padding(defaultMessageBubblePadding()),
-                                data = data.type
-                            )
-
                             // Document messages
                             is MessageType.Document -> DocumentMessage(
                                 data = data.type
@@ -183,11 +217,13 @@ fun MessageContent(
 
                             // Media messages
                             is MessageType.Media -> {
-                                //todo CONVOv3 media message
+
                             }
+
+                            else -> {}
                         }
                     }
-                }
+                    }
             }
         }
 
@@ -337,14 +373,15 @@ fun MessageQuote(
 
 @Composable
 fun MessageText(
-    data: MessageType.Text,
+    text: AnnotatedString,
+    outgoing: Boolean,
     modifier: Modifier = Modifier
 ){
     Text(
         modifier = modifier,
-        text = data.text,
+        text = text,
         style = LocalType.current.large,
-        color = getTextColor(data.outgoing),
+        color = getTextColor(outgoing),
     )
 }
 
@@ -518,6 +555,21 @@ fun AudioMessage(
 }
 
 @Composable
+private fun MediaItems(
+    data: MessageType.Media,
+    modifier: Modifier = Modifier
+){
+    //todo CONVOv3 media items (1 vs 2 vs 3 items)
+    GlideImage(
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .aspectRatio(1f),
+        model =DecryptableStreamUriLoader.DecryptableUri(data.items[0].uri),
+        contentDescription = data.items[0].filename
+    )
+}
+
+@Composable
 private fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
 else LocalColors.current.textBubbleReceived
 
@@ -570,9 +622,11 @@ sealed interface MessageViewStatusIcon{
 
 sealed class MessageType(){
     abstract val outgoing: Boolean
+    abstract val text: AnnotatedString?
+
     data class Text(
         override val outgoing: Boolean,
-        val text: AnnotatedString
+        override val text: AnnotatedString
     ): MessageType()
 
     data class Document(
@@ -580,7 +634,8 @@ sealed class MessageType(){
         val name: String,
         val size: String,
         val uri: String,
-        val loading: Boolean
+        val loading: Boolean,
+        override val text: AnnotatedString? = null
     ): MessageType()
 
     data class Audio(
@@ -589,27 +644,29 @@ sealed class MessageType(){
         val time: String,
         val uri: String,
         val progress: Float,
-        val audioState: MessageAudioState
+        val audioState: MessageAudioState,
+        override val text: AnnotatedString? = null
     ): MessageType()
 
     data class Media(
         override val outgoing: Boolean,
         val items: List<MessageMediaItem>,
-        val loading: Boolean
+        val loading: Boolean,
+        override val text: AnnotatedString? = null
     ): MessageType()
 }
 
 sealed class MessageMediaItem(){
-    abstract val uri: String
+    abstract val uri: Uri
     abstract val filename: String
 
     data class Image(
-        override val uri: String,
+        override val uri: Uri,
         override val filename: String
     ): MessageMediaItem()
 
     data class Video(
-        override val uri: String,
+        override val uri: Uri,
         override val filename: String
     ): MessageMediaItem()
 }
@@ -705,6 +762,27 @@ fun DocumentMessagePreview(
                     loading = true
                 ))
             )
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = PreviewMessageData.document(
+                    loading = true
+                ))
+            )
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = PreviewMessageData.document(
+                    outgoing = false,
+                    loading = true
+                ))
+            )
         }
     }
 }
@@ -761,6 +839,7 @@ fun QuoteMessagePreview(
                 type = MessageType.Text(outgoing = true, AnnotatedString("Quoting an image")),
                 quote = PreviewMessageData.quote(icon = PreviewMessageData.quoteImage())
             ))
+
         }
     }
 }
@@ -862,6 +941,180 @@ fun AudioMessagePreview(
     }
 }
 
+@Preview
+@Composable
+fun MediaMessagePreview(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(LocalDimensions.current.spacing)
+
+        ) {
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.video()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.video()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.image(), PreviewMessageData.video()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    text = AnnotatedString("This also has text"),
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                type = MessageType.Media(
+                    text = AnnotatedString("This also has text"),
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = MessageType.Media(
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = MessageType.Media(
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = MessageType.Media(
+                    text = AnnotatedString("This also has text"),
+                    outgoing = true,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+
+            Spacer(modifier = Modifier.height(LocalDimensions.current.spacing))
+
+            Message(data = MessageViewData(
+                author = "Toto",
+                quote = PreviewMessageData.quote(icon = MessageQuoteIcon.Bar),
+                type = MessageType.Media(
+                    text = AnnotatedString("This also has text"),
+                    outgoing = false,
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    loading = false
+                )
+            ))
+        }
+    }
+}
+
 private object PreviewMessageData {
 
     // Common data
@@ -877,7 +1130,7 @@ private object PreviewMessageData {
     ) = MessageType.Text(outgoing = outgoing, AnnotatedString(text))
 
     fun document(
-        name: String = "Document",
+        name: String = "Document name",
         size: String = "5.4MB",
         outgoing: Boolean = true,
         loading: Boolean = false
@@ -905,12 +1158,12 @@ private object PreviewMessageData {
     )
 
     fun image() = MessageMediaItem.Image(
-        "",
+        "".toUri(),
         ""
     )
 
     fun video() = MessageMediaItem.Video(
-        "",
+        "".toUri(),
         ""
     )
 
