@@ -21,6 +21,7 @@ import org.session.libsignal.utilities.hexEncodedPublicKey
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 
 class ClearDataUtils @Inject constructor(
@@ -29,6 +30,7 @@ class ClearDataUtils @Inject constructor(
     private val tokenFetcher: TokenFetcher,
     private val storage: Storage,
     private val prefs: TextSecurePreferences,
+    private val persistentLogger: PersistentLogger,
 ) {
     // Method to clear the local data - returns true on success otherwise false
     @SuppressLint("ApplySharedPref")
@@ -49,6 +51,8 @@ class ClearDataUtils @Inject constructor(
             TextSecurePreferences.clearAll(application)
             application.getSharedPreferences(ApplicationContext.PREFERENCES_NAME, 0).edit(commit = true) { clear() }
             configFactory.clearAll()
+
+            persistentLogger.deleteAllLogs()
 
             // The token deletion is nice but not critical, so don't let it block the rest of the process
             runCatching {
