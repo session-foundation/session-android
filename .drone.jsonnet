@@ -37,6 +37,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         image: docker_base + 'android',
         pull: 'always',
         environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
+        mem_limit: "8g",
         commands: [
           'apt-get update --allow-releaseinfo-change',
           'apt-get install -y ninja-build openjdk-21-jdk',
