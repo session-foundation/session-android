@@ -18,6 +18,7 @@ import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.toHexString
+import java.util.regex.Pattern
 import kotlin.time.Duration.Companion.milliseconds
 
 object FileServerApi {
@@ -27,6 +28,10 @@ object FileServerApi {
     const val MAX_FILE_SIZE = 10_000_000 // 10 MB
 
     val fileServerUrl: HttpUrl by lazy { FILE_SERVER_URL.toHttpUrl() }
+
+    val FILE_SERVER_FILE_URL_PATTERN: Pattern by lazy {
+        Pattern.compile("^https?://filev2\\.getsession\\.org/file/([a-zA-Z0-9]+)$", Pattern.CASE_INSENSITIVE)
+    }
 
     sealed class Error(message: String) : Exception(message) {
         object ParsingFailed    : Error("Invalid response.")
@@ -47,6 +52,15 @@ object FileServerApi {
          */
         val useOnionRouting: Boolean = true
     )
+
+    fun getFileIdFromUrl(url: String): String? {
+        val matcher = FILE_SERVER_FILE_URL_PATTERN.matcher(url)
+        return if (matcher.matches()) {
+            matcher.group(1)
+        } else {
+            null
+        }
+    }
 
     private fun createBody(body: ByteArray?, parameters: Any?): RequestBody? {
         if (body != null) return RequestBody.create("application/octet-stream".toMediaType(), body)

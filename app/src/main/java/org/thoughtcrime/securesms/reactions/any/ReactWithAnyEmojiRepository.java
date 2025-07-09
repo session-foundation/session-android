@@ -17,7 +17,7 @@ import java.util.List;
 
 import network.loki.messenger.R;
 
-final class ReactWithAnyEmojiRepository {
+public final class ReactWithAnyEmojiRepository {
 
   private static final String TAG = Log.tag(ReactWithAnyEmojiRepository.class);
 

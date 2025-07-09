@@ -13,12 +13,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.LocalisedTimeUtil
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.DATE_TIME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.TIME_LARGE_KEY
 import org.session.libsession.utilities.recipients.Recipient
@@ -26,25 +28,24 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_MENTIONS
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OptionsCardData
 import org.thoughtcrime.securesms.ui.RadioOption
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.DateUtils
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel(assistedFactory = NotificationSettingsViewModel.Factory::class)
 class NotificationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val threadId: Long,
+    @Assisted private val address: Address,
     @ApplicationContext private val context: Context,
     private val recipientDatabase: RecipientDatabase,
     private val repository: ConversationRepository,
     private val dateUtils: DateUtils,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private var thread: Recipient? = null
 
@@ -64,11 +65,11 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
         viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId).collect {
+            recipientRepository.observeRecipient(address).collectLatest {
                 thread = it
 
                 // update the user's current choice of notification
-                currentMutedUntil = if(it?.isMuted == true) it.mutedUntil else null
+                currentMutedUntil = if(it?.isMuted() == true) it.mutedUntilMills else null
                 val hasMutedUntil = currentMutedUntil != null && currentMutedUntil!! > 0L
 
                 currentOption = when{
@@ -250,21 +251,21 @@ class NotificationSettingsViewModel @AssistedInject constructor(
     private suspend fun unmute() {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation, 0)
+            recipientDatabase.setMuted(conversation.address, 0)
         }
     }
 
     private suspend fun mute(until: Long) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setMuted(conversation, until)
+            recipientDatabase.setMuted(conversation.address, until)
         }
     }
 
     private suspend fun setNotifyType(notifyType: Int) {
         val conversation = thread ?: return
         withContext(Dispatchers.Default) {
-            recipientDatabase.setNotifyType(conversation, notifyType)
+            recipientDatabase.setNotifyType(conversation.address, notifyType)
         }
     }
 
@@ -295,6 +296,6 @@ class NotificationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): NotificationSettingsViewModel
+        fun create(address: Address): NotificationSettingsViewModel
     }
 }

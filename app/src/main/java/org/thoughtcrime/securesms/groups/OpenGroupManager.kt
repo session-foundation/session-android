@@ -3,8 +3,6 @@ package org.thoughtcrime.securesms.groups
 import android.content.Context
 import android.widget.Toast
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import network.loki.messenger.R
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.StorageProtocol
@@ -34,13 +32,6 @@ class OpenGroupManager @Inject constructor(
     private val groupMemberDatabase: GroupMemberDatabase,
     private val pollerManager: OpenGroupPollerManager,
 ) {
-
-    // flow holding information on write access for our current communities
-    private val _communityWriteAccess: MutableStateFlow<Map<String, Boolean>> = MutableStateFlow(emptyMap())
-
-
-    fun getCommunitiesWriteAccessFlow() = _communityWriteAccess.asStateFlow()
-
     suspend fun add(server: String, room: String, publicKey: String, context: Context) {
         val openGroupID = "$server.$room"
         val threadID = GroupManager.getOpenGroupThreadID(openGroupID, context)
@@ -117,11 +108,6 @@ class OpenGroupManager @Inject constructor(
     fun updateOpenGroup(openGroup: OpenGroup, context: Context) {
         val threadID = GroupManager.getOpenGroupThreadID(openGroup.groupId, context)
         lokiThreadDB.setOpenGroupChat(openGroup, threadID)
-
-        // update write access for this community
-        val writeAccesses = _communityWriteAccess.value.toMutableMap()
-        writeAccesses[openGroup.groupId] = openGroup.canWrite
-        _communityWriteAccess.value = writeAccesses
     }
 
     fun isUserModerator(

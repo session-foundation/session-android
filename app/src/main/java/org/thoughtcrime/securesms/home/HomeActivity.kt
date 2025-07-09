@@ -15,8 +15,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.os.bundleOf
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -39,9 +37,6 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityHomeBinding
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
-import org.greenrobot.eventbus.ThreadMode
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -49,12 +44,9 @@ import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.ProfilePictureModifiedEvent
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -141,47 +133,35 @@ class HomeActivity : ScreenLockActionBarActivity(),
         GlobalSearchAdapter(
             dateUtils = dateUtils,
             onContactClicked = { model ->
-                when (model) {
-                    is GlobalSearchAdapter.Model.Message -> push<ConversationActivityV2> {
-                        model.messageResult.run {
-                            putExtra(ConversationActivityV2.THREAD_ID, threadId)
-                            putExtra(ConversationActivityV2.SCROLL_MESSAGE_ID, sentTimestampMs)
-                            putExtra(
-                                ConversationActivityV2.SCROLL_MESSAGE_AUTHOR,
-                                messageRecipient.address
-                            )
-                        }
-                    }
-
-                    is GlobalSearchAdapter.Model.SavedMessages -> push<ConversationActivityV2> {
-                        putExtra(
-                            ConversationActivityV2.ADDRESS,
-                            Address.fromSerialized(model.currentUserPublicKey)
+                val intent = when (model) {
+                    is GlobalSearchAdapter.Model.Message -> ConversationActivityV2
+                        .createIntent(this,
+                            address = model.messageResult.conversationRecipient.address,
+                            scrollToMessage = model.messageResult.sentTimestampMs to model.messageResult.messageRecipient.address
                         )
-                    }
 
-                    is GlobalSearchAdapter.Model.Contact -> push<ConversationActivityV2> {
-                        putExtra(
-                            ConversationActivityV2.ADDRESS,
-                            model.contact.hexString.let(Address::fromSerialized)
+                    is GlobalSearchAdapter.Model.SavedMessages -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.currentUserPublicKey)
                         )
+
+                    is GlobalSearchAdapter.Model.Contact -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.contact.hexString)
+                        )
+
+                    is GlobalSearchAdapter.Model.GroupConversation -> ConversationActivityV2
+                        .createIntent(this,
+                            address = Address.fromSerialized(model.groupId)
+                        )
+
+                    else -> {
+                        Log.d("Loki", "callback with model: $model")
+                        return@GlobalSearchAdapter
                     }
-
-                    is GlobalSearchAdapter.Model.GroupConversation -> model.groupId
-                        .let { Recipient.from(this, Address.fromSerialized(it), false) }
-                        .let(threadDb::getThreadIdIfExistsFor)
-                        .takeIf { it >= 0 }
-                        ?.let {
-                            push<ConversationActivityV2> {
-                                putExtra(
-                                    ConversationActivityV2.THREAD_ID,
-                                    it
-                                )
-                            }
-                        }
-
-                    else -> Log.d("Loki", "callback with model: $model")
                 }
+
+                push(intent)
             },
             onContactLongPressed = { model ->
                 onSearchContactLongPress(model.contact.hexString, model.name)
@@ -341,7 +321,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }.collectLatest(globalSearchAdapter::setNewData)
             }
         }
-        EventBus.getDefault().register(this@HomeActivity)
         if (isFromOnboarding) {
             if (Build.VERSION.SDK_INT >= 33 &&
                 (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).areNotificationsEnabled().not()) {
@@ -416,11 +395,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         return contacts
             // Remove ourself, we're shown above.
-            .filter { it.accountID != publicKey }
+            .filter { it.address.address != publicKey }
             // Get the name that we will display and sort by, and uppercase it to
             // help with sorting and we need the char uppercased later.
-            .map { (it.nickname?.takeIf(String::isNotEmpty) ?: it.name?.takeIf(String::isNotEmpty))
-                .let { name -> NamedValue(name?.uppercase(), it) } }
+            .map { NamedValue(it.displayName.uppercase(), it) }
             // Digits are all grouped under a #, the rest are grouped by their first character.uppercased()
             // If there is no name, they go under Unknown
             .groupBy { it.name?.run { first().takeUnless(Char::isDigit)?.toString() ?: numbersTitle } ?: unknownTitle }
@@ -436,14 +414,20 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .flatMap { (key, contacts) ->
                 listOf(
                     GlobalSearchAdapter.Model.SubHeader(key)
-                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
+                ) + contacts.sortedBy { it.name ?: it.value.address.address }
+                    .map {
+                        GlobalSearchAdapter.Model.Contact(
+                            contact = it.value,
+                            isSelf = it.value.address.address == publicKey
+                        )
+                    }
             }
     }
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
-        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.address.address == publicKey) } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(this@HomeActivity, it)
+                GlobalSearchAdapter.Model.GroupConversation(it)
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
@@ -503,11 +487,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
         ApplicationContext.getInstance(this).messageNotifier.setHomeScreenVisible(false)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        EventBus.getDefault().unregister(this)
-    }
-
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         Permissions.onRequestPermissionsResult(this, requestCode, permissions, grantResults)
@@ -515,15 +494,6 @@ class HomeActivity : ScreenLockActionBarActivity(),
     // endregion
 
     // region Updating
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onUpdateProfileEvent(event: ProfilePictureModifiedEvent) {
-        if (event.recipient.isLocalNumber) {
-            updateProfileButton()
-        } else {
-            homeViewModel.tryReload()
-        }
-    }
-
     private fun updateProfileButton() {
         binding.profileButton.publicKey = publicKey
         binding.profileButton.displayName = homeViewModel.getCurrentUsername()
@@ -545,9 +515,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        val intent = Intent(this, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
-        push(intent)
+        push(ConversationActivityV2.createIntent(this, address = thread.recipient.address))
     }
 
     override fun onLongConversationClick(thread: ThreadRecord) {
@@ -574,7 +542,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show()
             }
             else if (thread.recipient.isCommunityRecipient) {
-                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient)
+                val threadId = threadDb.getThreadIdIfExistsFor(thread.recipient.address)
                 val openGroup = lokiThreadDatabase.getOpenGroupChat(threadId) ?: return@onCopyConversationId Unit
 
                 val clip = ClipData.newPlainText("Community URL", openGroup.joinURL)
@@ -585,13 +553,13 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
         bottomSheet.onBlockTapped = {
             bottomSheet.dismiss()
-            if (!thread.recipient.isBlocked) {
+            if (!thread.recipient.blocked) {
                 blockConversation(thread)
             }
         }
         bottomSheet.onUnblockTapped = {
             bottomSheet.dismiss()
-            if (thread.recipient.isBlocked) {
+            if (thread.recipient.blocked) {
                 unblockConversation(thread)
             }
         }
@@ -603,17 +571,17 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             // go to the notification settings
             val intent = Intent(this, NotificationSettingsActivity::class.java).apply {
-                putExtra(NotificationSettingsActivity.THREAD_ID, thread.threadId)
+                putExtra(NotificationSettingsActivity.ARG_ADDRESS, thread.recipient.address)
             }
             startActivity(intent)
         }
         bottomSheet.onPinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.threadId, true)
+            setConversationPinned(thread.recipient.address, true)
         }
         bottomSheet.onUnpinTapped = {
             bottomSheet.dismiss()
-            setConversationPinned(thread.threadId, false)
+            setConversationPinned(thread.recipient.address, false)
         }
         bottomSheet.onMarkAllAsReadTapped = {
             bottomSheet.dismiss()
@@ -630,18 +598,18 @@ class HomeActivity : ScreenLockActionBarActivity(),
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.name)
+                .put(NAME_KEY, thread.recipient.displayName)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
-                    storage.setBlocked(listOf(thread.recipient), true)
+                    storage.setBlocked(listOf(thread.recipient.address), true)
 
                     withContext(Dispatchers.Main) {
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
                 }
                 // Block confirmation toast added as per SS-64
-                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.name).format().toString()
+                val txt = Phrase.from(context, R.string.blockBlockedUser).put(NAME_KEY, thread.recipient.displayName).format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
             cancelButton()
@@ -651,10 +619,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun unblockConversation(thread: ThreadRecord) {
         showSessionDialog {
             title(R.string.blockUnblock)
-            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.name).format())
+            text(Phrase.from(context, R.string.blockUnblockName).put(NAME_KEY, thread.recipient.displayName).format())
             dangerButton(R.string.blockUnblock, R.string.AccessibilityId_unblockConfirm) {
                 lifecycleScope.launch(Dispatchers.Default) {
-                    storage.setBlocked(listOf(thread.recipient), false)
+                    storage.setBlocked(listOf(thread.recipient.address), false)
                     withContext(Dispatchers.Main) {
                         binding.conversationsRecyclerView.adapter!!.notifyDataSetChanged()
                     }
@@ -669,8 +637,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             title(R.string.contactDelete)
             text(
                 Phrase.from(context, R.string.deleteContactDescription)
-                    .put(NAME_KEY, thread.recipient?.name ?: "")
-                    .put(NAME_KEY, thread.recipient?.name ?: "")
+                    .put(NAME_KEY, thread.recipient?.displayName ?: "")
                     .format()
             )
             dangerButton(R.string.delete, R.string.qa_conversation_settings_dialog_delete_contact_confirm) {
@@ -680,8 +647,8 @@ class HomeActivity : ScreenLockActionBarActivity(),
         }
     }
 
-    private fun setConversationPinned(threadId: Long, pinned: Boolean) {
-        homeViewModel.setPinned(threadId, pinned)
+    private fun setConversationPinned(address: Address, pinned: Boolean) {
+        homeViewModel.setPinned(address, pinned)
     }
 
     private fun markAllAsRead(thread: ThreadRecord) {
@@ -783,7 +750,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
                 message = Phrase.from(this, R.string.conversationsDeleteDescription)
-                    .put(NAME_KEY, recipient.name)
+                    .put(NAME_KEY, recipient.displayName)
                     .format()
             }
         }

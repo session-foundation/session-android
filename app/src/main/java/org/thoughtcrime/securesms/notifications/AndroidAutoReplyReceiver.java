@@ -33,7 +33,6 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.MessageSender;
 import org.session.libsession.snode.SnodeAPI;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.recipients.Recipient;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.database.MarkedMessageInfo;
@@ -69,7 +68,6 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
     final Address      address      = intent.getParcelableExtra(ADDRESS_EXTRA);
     final long         threadId     = intent.getLongExtra(THREAD_ID_EXTRA, -1);
     final CharSequence responseText = getMessageText(intent);
-    final Recipient    recipient    = Recipient.from(context, address, false);
 
     if (responseText != null) {
       new AsyncTask<Void, Void, Void>() {
@@ -79,7 +77,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           long replyThreadId;
 
           if (threadId == -1) {
-            replyThreadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(recipient);
+            replyThreadId = DatabaseComponent.get(context).threadDatabase().getOrCreateThreadIdFor(address);
           } else {
             replyThreadId = threadId;
           }
@@ -87,15 +85,14 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
           VisibleMessage message = new VisibleMessage();
           message.setText(responseText.toString());
           message.setSentTimestamp(SnodeAPI.getNowWithOffset());
-          MessageSender.send(message, recipient.getAddress());
-          ExpirationConfiguration config = DatabaseComponent.get(context).storage().getExpirationConfiguration(threadId);
-          ExpiryMode expiryMode = config == null ? null : config.getExpiryMode();
-          long expiresInMillis = expiryMode == null ? 0 : expiryMode.getExpiryMillis();
+          MessageSender.send(message, address);
+          ExpiryMode expiryMode = DatabaseComponent.get(context).storage().getExpirationConfiguration(threadId);
+          long expiresInMillis = expiryMode.getExpiryMillis();
           long expireStartedAt = expiryMode instanceof ExpiryMode.AfterSend ? message.getSentTimestamp() : 0L;
 
-          if (recipient.isGroupOrCommunityRecipient()) {
+          if (address.isGroupOrCommunity()) {
             Log.w("AndroidAutoReplyReceiver", "GroupRecipient, Sending media message");
-            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, recipient, Collections.emptyList(), null, null, expiresInMillis, 0);
+            OutgoingMediaMessage reply = OutgoingMediaMessage.from(message, address, Collections.emptyList(), null, null, expiresInMillis, 0);
             try {
               DatabaseComponent.get(context).mmsDatabase().insertMessageOutbox(reply, replyThreadId, false, true);
             } catch (MmsException e) {
@@ -103,7 +100,7 @@ public class AndroidAutoReplyReceiver extends BroadcastReceiver {
             }
           } else {
             Log.w("AndroidAutoReplyReceiver", "Sending regular message ");
-            OutgoingTextMessage reply = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt);
+            OutgoingTextMessage reply = OutgoingTextMessage.from(message, address, expiresInMillis, expireStartedAt);
             DatabaseComponent.get(context).smsDatabase().insertMessageOutbox(replyThreadId, reply, false, SnodeAPI.getNowWithOffset(), true);
           }
 

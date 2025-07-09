@@ -25,7 +25,6 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
@@ -33,6 +32,7 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
 import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -54,6 +54,7 @@ class ExpiringMessageManager @Inject constructor(
     private val clock: SnodeClock,
     private val storage: Lazy<Storage>,
     private val preferences: TextSecurePreferences,
+    private val recipientRepository: RecipientRepository,
 ) : MessageExpirationManagerProtocol {
 
     private val scheduleDeletionChannel: SendChannel<ExpiringMessageReference>
@@ -102,10 +103,10 @@ class ExpiringMessageManager @Inject constructor(
         val expiresInMillis = message.expiryMode.expiryMillis
         var groupInfo = Optional.absent<SignalServiceGroup?>()
         val address = fromSerialized(senderPublicKey!!)
-        var recipient = Recipient.from(context, address, false)
+        var recipient = recipientRepository.getRecipientSync(address)
 
         // if the sender is blocked, we don't display the update, except if it's in a closed group
-        if (recipient.isBlocked && groupId == null) return null
+        if (recipient?.blocked == true && groupId == null) return null
         return try {
             if (groupId != null) {
                 val groupAddress: Address
@@ -120,9 +121,9 @@ class ExpiringMessageManager @Inject constructor(
                         Optional.of(SignalServiceGroup(GroupUtil.getDecodedGroupIDAsData(doubleEncoded), SignalServiceGroup.GroupType.SIGNAL))
                     }
                 }
-                recipient = Recipient.from(context, groupAddress, false)
+                recipient = recipientRepository.getRecipientSync(groupAddress)
             }
-            val threadId = storage.get().getThreadId(recipient) ?: return null
+            val threadId = recipient?.address?.let(storage.get()::getThreadId) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
                 expiresInMillis, expireStartedAt, true,
@@ -163,11 +164,10 @@ class ExpiringMessageManager @Inject constructor(
                 else -> doubleEncodeGroupID(groupId)
             }
             val address = fromSerialized(serializedAddress)
-            val recipient = Recipient.from(context, address, false)
 
             message.threadID = storage.get().getOrCreateThreadIdFor(address)
             val timerUpdateMessage = OutgoingExpirationUpdateMessage(
-                recipient,
+                address,
                 sentTimestamp!!,
                 duration,
                 expireStartedAt,

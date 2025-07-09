@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.home.search
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +10,9 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewGlobalSearchHeaderBinding
 import network.loki.messenger.databinding.ViewGlobalSearchResultBinding
 import network.loki.messenger.databinding.ViewGlobalSearchSubheaderBinding
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.GroupRecord
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.recipients.BasicRecipient
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.search.model.MessageResult
 import org.thoughtcrime.securesms.ui.GetString
@@ -165,8 +165,8 @@ class GlobalSearchAdapter(
 
         data class SavedMessages(val currentUserPublicKey: String): Model // Note: "Note to Self" counts as SavedMessages rather than a Contact where `isSelf` is true.
         data class Contact(val contact: AccountId, val name: String, val isSelf: Boolean) : Model {
-            constructor(contact: org.session.libsession.messaging.contacts.Contact, isSelf: Boolean):
-                    this(AccountId(contact.accountID), contact.getSearchName(), isSelf)
+            constructor(contact: BasicRecipient.Contact, isSelf: Boolean):
+                    this(AccountId(contact.address.address), contact.searchName, isSelf)
         }
         data class GroupConversation(
             val isLegacy: Boolean,
@@ -174,14 +174,16 @@ class GlobalSearchAdapter(
             val title: String,
             val legacyMembersString: String?,
         ) : Model {
-            constructor(context: Context, groupRecord: GroupRecord):
+            constructor(groupRecord: GroupRecord):
                     this(
                         isLegacy = groupRecord.isLegacyGroup,
                         groupId = groupRecord.encodedId,
                         title = groupRecord.title,
                         legacyMembersString = if (groupRecord.isLegacyGroup) {
-                            val recipients = groupRecord.members.map { Recipient.from(context, it, false) }
-                            recipients.joinToString(transform = Recipient::getSearchName)
+                            val recipients = groupRecord.members.map {
+                                MessagingModuleConfiguration.shared.recipientRepository.getRecipientSyncOrEmpty(it)
+                            }
+                            recipients.joinToString(transform = { it.searchName })
                         } else {
                             null
                         }

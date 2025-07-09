@@ -2,8 +2,8 @@ package org.thoughtcrime.securesms.onboarding.manager
 
 import android.app.Application
 import org.session.libsession.snode.SnodeModule
+import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.KeyHelper
 import org.session.libsignal.utilities.hexEncodedPublicKey
@@ -16,15 +16,13 @@ import javax.inject.Singleton
 class CreateAccountManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
-    private val usernameUtils: UsernameUtils,
-    private val versionDataFetcher: VersionDataFetcher
+    private val versionDataFetcher: VersionDataFetcher,
+    private val configFactory: ConfigFactoryProtocol
 ) {
     private val database: LokiAPIDatabaseProtocol
         get() = SnodeModule.shared.storage
 
     fun createAccount(displayName: String) {
-        prefs.setProfileName(displayName)
-
         // This is here to resolve a case where the app restarts before a user completes onboarding
         // which can result in an invalid database state
         database.clearAllLastMessageHashes()
@@ -42,7 +40,7 @@ class CreateAccountManager @Inject constructor(
         prefs.setLocalNumber(userHexEncodedPublicKey)
         prefs.setRestorationTime(0)
 
-        usernameUtils.saveCurrentUserName(displayName)
+        configFactory.withMutableUserConfigs { it.userProfile.setName(displayName) }
 
         versionDataFetcher.startTimedVersionCheck()
     }

@@ -34,7 +34,7 @@ import org.thoughtcrime.securesms.database.SmsDatabase;
 
 public abstract class DisplayRecord {
   protected final long type;
-  private final Recipient  recipient;
+  private final Recipient recipient;
   private final long       dateSent;
   private final long       dateReceived;
   private final long       threadId;
@@ -44,8 +44,8 @@ public abstract class DisplayRecord {
   private final int        readReceiptCount;
 
   DisplayRecord(String body, Recipient recipient, long dateSent,
-    long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
-    long type, int readReceiptCount)
+                long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
+                long type, int readReceiptCount)
   {
     this.threadId             = threadId;
     this.recipient            = recipient;

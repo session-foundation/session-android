@@ -11,6 +11,7 @@ import org.session.libsession.utilities.GroupUtil.COMMUNITY_PREFIX
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import javax.inject.Provider
 
+@Deprecated("We no longer store the expiration configuration in the database. ")
 class ExpirationConfigurationDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) : Database(context, helper) {
 
     companion object {

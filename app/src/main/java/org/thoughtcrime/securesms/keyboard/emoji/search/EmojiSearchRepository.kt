@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.keyboard.emoji.search
 
 import android.content.Context
 import android.net.Uri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import org.session.libsession.utilities.TextSecurePreferences
@@ -13,6 +14,7 @@ import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.emoji.EmojiSource
 import java.util.function.Consumer
+import javax.inject.Inject
 
 private const val MINIMUM_QUERY_THRESHOLD = 1
 private const val MINIMUM_INLINE_QUERY_THRESHOLD = 2
@@ -20,9 +22,9 @@ private const val EMOJI_SEARCH_LIMIT = 20
 
 private val NOT_PUNCTUATION = "[A-Za-z0-9 ]".toRegex()
 
-class EmojiSearchRepository(private val context: Context) {
-
-  private val emojiSearchDatabase: EmojiSearchDatabase = DatabaseComponent.get(context).emojiSearchDatabase()
+class EmojiSearchRepository @Inject constructor(
+  private val emojiSearchDatabase: EmojiSearchDatabase
+) {
 
   fun submitQuery(query: String, limit: Int = EMOJI_SEARCH_LIMIT): Single<List<String>> {
     val result = if (query.length >= MINIMUM_INLINE_QUERY_THRESHOLD && NOT_PUNCTUATION.matches(query.substring(query.lastIndex))) {

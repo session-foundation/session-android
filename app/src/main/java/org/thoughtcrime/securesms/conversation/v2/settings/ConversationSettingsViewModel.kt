@@ -11,7 +11,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity.CLIPBOARD_SERVICE
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.cash.copper.flow.observeQuery
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -22,16 +21,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,12 +34,11 @@ import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.ExpirationUtil
 import org.session.libsession.utilities.StringSubstitutionConstants.COMMUNITY_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
@@ -56,16 +47,16 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getGroup
 import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.upsertContact
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
-import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
 import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP_DESCRIPTION_BYTES
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -77,15 +68,14 @@ import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
-import org.thoughtcrime.securesms.util.observeChanges
 import kotlin.math.min
 
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = ConversationSettingsViewModel.Factory::class)
 class ConversationSettingsViewModel @AssistedInject constructor(
-    @Assisted private val threadId: Long,
-    @ApplicationContext private val context: Context,
+    @Assisted private val address: Address,
+    @param:ApplicationContext private val context: Context,
     private val avatarUtils: AvatarUtils,
     private val repository: ConversationRepository,
     private val configFactory: ConfigFactoryProtocol,
@@ -93,14 +83,20 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val conversationRepository: ConversationRepository,
     private val textSecurePreferences: TextSecurePreferences,
     private val navigator: ConversationSettingsNavigator,
-    private val threadDb: ThreadDatabase,
     private val groupManagerV2: GroupManagerV2,
     private val prefs: TextSecurePreferences,
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
+    private val recipientRepository: RecipientRepository,
     private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
+
+    private val threadId by lazy {
+        requireNotNull(storage.getThreadId(address)) {
+            "Thread doesn't exist for this conversation"
+        }
+    }
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
         UIState(
@@ -336,26 +332,12 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     init {
         // update data when we have a recipient and update when there are changes from the thread or recipient
-        viewModelScope.launch(Dispatchers.Default) {
-            repository.recipientUpdateFlow(threadId) // get the recipient
-                .flatMapLatest { recipient -> // get updates from the thread or recipient
-                    merge(
-                        context.contentResolver
-                            .observeQuery(DatabaseContentProviders.Recipient.CONTENT_URI), // recipient updates
-                        (context.contentResolver.observeChanges(
-                            DatabaseContentProviders.Conversation.getUriForThread(threadId)
-                        ) as Flow<*>), // thread updates
-                        configFactory.configUpdateNotifications.filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
-                            .filter { it.groupId.hexString == recipient?.address?.toString() }
-                    ).map {
-                        recipient // return the recipient
-                    }
-                        .debounce(200L)
-                        .onStart { emit(recipient) } // make sure there's a value straight away
-                }
+        viewModelScope.launch {
+            recipientRepository.observeRecipient(address)
+                .filterNotNull()
                 .collect {
                     recipient = it
-                    getStateFromRecipient()
+                    getStateFromRecipient(it)
                 }
         }
     }
@@ -401,8 +383,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private suspend fun getStateFromRecipient(){
-        val conversation = recipient ?: return
+    private suspend fun getStateFromRecipient(conversation: Recipient){
         val configContact = configFactory.withUserConfigs { configs ->
             configs.contacts.get(conversation.address.toString())
         }
@@ -467,10 +448,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         // name
         val name = when {
             conversation.isLocalNumber -> context.getString(R.string.noteToSelf)
-
-            conversation.isGroupV2Recipient -> getGroupName()
-
-            else -> conversation.name
+            else -> conversation.displayName
         }
 
         // account ID
@@ -480,15 +458,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // disappearing message type
-        val expiration = storage.getExpirationConfiguration(threadId)
-        val disappearingSubtitle = if(expiration?.isEnabled == true) {
+        val expiryMode = recipient?.expiryMode
+        val disappearingSubtitle = if(expiryMode != null && expiryMode != ExpiryMode.NONE) {
             // Get the type of disappearing message and the abbreviated duration..
-            val dmTypeString = when (expiration.expiryMode) {
+            val dmTypeString = when (expiryMode) {
                 is ExpiryMode.AfterRead -> R.string.disappearingMessagesDisappearAfterReadState
                 else -> R.string.disappearingMessagesDisappearAfterSendState
             }
             val durationAbbreviated =
-                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiration.expiryMode.expirySeconds)
+                ExpirationUtil.getExpirationAbbreviatedDisplayValue(expiryMode.expirySeconds)
 
             // ..then substitute into the string..
             context.getSubbedString(
@@ -497,7 +475,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             )
         } else context.getString(R.string.off)
 
-        val pinned = threadDb.isPinned(threadId)
+        val pinned = recipient?.isPinned == true
 
         val (notificationIconRes, notificationSubtitle) = getNotificationsData(conversation)
 
@@ -507,7 +485,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 val mainOptions = mutableListOf<OptionsItem>()
                 val dangerOptions = mutableListOf<OptionsItem>()
 
-                val ntsHidden = prefs.hasHiddenNoteToSelf()
+                val ntsHidden = conversation.priority == PRIORITY_HIDDEN
 
                 mainOptions.addAll(listOf(
                     optionCopyAccountId,
@@ -547,7 +525,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 ))
 
                 // these options are only for users who aren't blocked
-                if(!conversation.isBlocked) {
+                if(!conversation.blocked) {
                     mainOptions.addAll(listOf(
                         optionDisappearingMessage(disappearingSubtitle),
                         if(pinned) optionUnpin else optionPin,
@@ -559,7 +537,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 mainOptions.add(optionAttachments)
 
                 dangerOptions.addAll(listOf(
-                    if(recipient?.isBlocked == true) optionUnblock else optionBlock,
+                    if(recipient?.blocked == true) optionUnblock else optionBlock,
                     optionClearMessages,
                     optionDeleteConversation,
                     optionDeleteContact
@@ -736,7 +714,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     private fun getNotificationsData(conversation: Recipient): Pair<Int, String> {
         return when{
-            conversation.isMuted -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
+            conversation.isMuted() -> R.drawable.ic_volume_off to context.getString(R.string.notificationsMuted)
             conversation.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS ->
                 R.drawable.ic_at_sign to context.getString(R.string.notificationsMentionsOnly)
             else -> R.drawable.ic_volume_2 to context.getString(R.string.notificationsAllMessages)
@@ -785,15 +763,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             }
         } else {
             viewModelScope.launch {
-                storage.setPinned(threadId, true)
+                storage.setPinned(address, true)
             }
         }
     }
 
     private fun unpinConversation(){
-        viewModelScope.launch {
-            storage.setPinned(threadId, false)
-        }
+        storage.setPinned(address, false)
     }
 
     private fun confirmBlockUser(){
@@ -802,7 +778,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.block),
                     message = Phrase.from(context, R.string.blockDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.block),
                     negativeText = context.getString(R.string.cancel),
@@ -821,7 +797,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.blockUnblock),
                     message = Phrase.from(context, R.string.blockUnblockName)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.blockUnblock),
                     negativeText = context.getString(R.string.cancel),
@@ -838,7 +814,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val conversation = recipient ?: return
         viewModelScope.launch {
             if (conversation.isContactRecipient || conversation.isGroupV2Recipient) {
-                repository.setBlocked(conversation, true)
+                repository.setBlocked(conversation.address, true)
             }
 
             if (conversation.isGroupV2Recipient) {
@@ -850,7 +826,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun unblockUser() {
         if(recipient == null) return
         viewModelScope.launch {
-            repository.setBlocked(recipient!!, false)
+            repository.setBlocked(recipient!!.address, false)
         }
     }
 
@@ -890,24 +866,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun hideNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(true)
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_HIDDEN)
-        }
-        // update state to reflect the change
-        viewModelScope.launch {
-            getStateFromRecipient()
         }
     }
 
     fun showNoteToSelf() {
-        prefs.setHasHiddenNoteToSelf(false)
         configFactory.withMutableUserConfigs {
             it.userProfile.setNtsPriority(PRIORITY_VISIBLE)
-        }
-        // update state to reflect the change
-        viewModelScope.launch {
-            getStateFromRecipient()
         }
     }
 
@@ -917,8 +883,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.contactDelete),
                     message = Phrase.from(context, R.string.deleteContactDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -950,7 +915,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.conversationsDelete),
                     message = Phrase.from(context, R.string.deleteConversationDescription)
-                        .put(NAME_KEY, recipient?.name ?: "")
+                        .put(NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.delete),
                     negativeText = context.getString(R.string.cancel),
@@ -981,7 +946,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.communityLeave),
                     message = Phrase.from(context, R.string.groupLeaveDescription)
-                        .put(GROUP_NAME_KEY, recipient?.name ?: "")
+                        .put(GROUP_NAME_KEY, recipient?.displayName ?: "")
                         .format(),
                     positiveText = context.getString(R.string.leave),
                     negativeText = context.getString(R.string.cancel),
@@ -1014,26 +979,26 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         // default to 1on1
         var message: CharSequence = Phrase.from(context, R.string.clearMessagesChatDescriptionUpdated)
-            .put(NAME_KEY,conversation.name)
+            .put(NAME_KEY,conversation.displayName)
             .format()
 
         when{
             conversation.isGroupV2Recipient -> {
                 if(groupV2?.hasAdminKey() == true){
                     // group admin clearing messages have a dedicated custom dialog
-                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(getGroupName())) }
+                    _dialogState.update { it.copy(groupAdminClearMessagesDialog = GroupAdminClearMessageDialog(conversation.displayName)) }
                     return
 
                 } else {
                     message = Phrase.from(context, R.string.clearMessagesGroupDescriptionUpdated)
-                        .put(GROUP_NAME_KEY, getGroupName())
+                        .put(GROUP_NAME_KEY, conversation.displayName)
                         .format()
                 }
             }
 
             conversation.isCommunityRecipient -> {
                 message = Phrase.from(context, R.string.clearMessagesCommunityUpdated)
-                    .put(COMMUNITY_NAME_KEY, conversation.name)
+                    .put(COMMUNITY_NAME_KEY, conversation.displayName)
                     .format()
             }
 
@@ -1086,15 +1051,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-
-    private fun getGroupName(): String {
-        val conversation = recipient ?: return ""
-        val accountId = AccountId(conversation.address.toString())
-        return configFactory.withGroupConfigs(accountId) {
-            it.groupInfo.getName()
-        } ?: groupV2?.name ?: ""
-    }
-
     private fun confirmLeaveGroup(){
         val groupData = groupV2 ?: return
         _dialogState.update { state ->
@@ -1133,7 +1089,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 hideLoading()
 
                 val txt = Phrase.from(context, R.string.groupLeaveErrorFailed)
-                    .put(GROUP_NAME_KEY, getGroupName())
+                    .put(GROUP_NAME_KEY, conversation.displayName)
                     .format().toString()
                 Toast.makeText(context, txt, Toast.LENGTH_LONG).show()
             }
@@ -1326,9 +1282,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             val publicKey = conversation.address.toString()
 
-            val contact = storage.getContactWithAccountID(publicKey) ?: Contact(publicKey)
-            contact.nickname = nickname
-            storage.setContact(contact)
+            if (AccountId.fromStringOrNull(publicKey)?.prefix == IdPrefix.STANDARD) {
+                configFactory.withMutableUserConfigs { configs ->
+                    configs.contacts.upsertContact(publicKey) {
+                        this.nickname = nickname.orEmpty()
+                    }
+                }
+            }
         }
     }
 
@@ -1407,7 +1367,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             try {
                 withContext(Dispatchers.Default) {
                     val recipients = contacts.map { contact ->
-                        Recipient.from(context, fromSerialized(contact.hexString), true)
+                        fromSerialized(contact.hexString)
                     }
 
                     repository.inviteContactsToCommunity(threadId, recipients)
@@ -1456,7 +1416,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(threadId: Long): ConversationSettingsViewModel
+        fun create(address: Address): ConversationSettingsViewModel
     }
 
     data class UIState(

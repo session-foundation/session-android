@@ -30,6 +30,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CALL_NOT
 import org.session.libsession.utilities.getColorFromAttr
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessages
 import org.thoughtcrime.securesms.conversation.disappearingmessages.expiryMode
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.permissions.Permissions
@@ -68,6 +69,7 @@ class ControlMessageView : LinearLayout {
 
     @Inject lateinit var disappearingMessages: DisappearingMessages
     @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var recipientRepository: RecipientRepository
 
     val controlContentView: View get() = binding.controlContentView
 
@@ -91,7 +93,7 @@ class ControlMessageView : LinearLayout {
 
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
 
-                    if (threadRecipient?.isGroupRecipient == true) {
+                    if (threadRecipient?.isGroup == true) {
                         expirationTimerView.setTimerIcon()
                     } else {
                         expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
@@ -99,8 +101,8 @@ class ControlMessageView : LinearLayout {
 
                     followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
                         && !message.isOutgoing
-                        && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && threadRecipient?.isGroupOrCommunityRecipient != true
+                        && message.expiryMode != MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)
+                        && threadRecipient?.isGroupOrCommunity != true
 
                     if (followSetting.isVisible) {
                         binding.controlContentView.setOnClickListener { disappearingMessages.showFollowSettingDialog(context, message) }
@@ -130,9 +132,10 @@ class ControlMessageView : LinearLayout {
                 val me = TextSecurePreferences.getLocalNumber(context)
                 binding.textView.text =  if(me == msgRecipient) { // you accepted the user's request
                     val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
+                        ?.let { recipientRepository.getRecipientSync(it) }
                     context.getSubbedCharSequence(
                         R.string.messageRequestYouHaveAccepted,
-                        NAME_KEY to (threadRecipient?.name ?: "")
+                        NAME_KEY to (threadRecipient?.displayName ?: "")
                     )
                 } else { // they accepted your request
                     context.getString(R.string.messageRequestsAccepted)
@@ -187,13 +190,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.name
+                                        NAME_KEY to message.individualRecipient.displayName
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsYouMissedCallPermissions,
-                                        NAME_KEY to message.individualRecipient.name
+                                        NAME_KEY to message.individualRecipient.displayName
                                     )
                                     text(bodyTxt)
 
@@ -216,13 +219,13 @@ class ControlMessageView : LinearLayout {
                                 context.showSessionDialog {
                                     val titleTxt = context.getSubbedString(
                                         R.string.callsMissedCallFrom,
-                                        NAME_KEY to message.individualRecipient.name
+                                        NAME_KEY to message.individualRecipient.displayName
                                     )
                                     title(titleTxt)
 
                                     val bodyTxt = context.getSubbedCharSequence(
                                         R.string.callsMicrophonePermissionsRequired,
-                                        NAME_KEY to message.individualRecipient.name
+                                        NAME_KEY to message.individualRecipient.displayName
                                     )
                                     text(bodyTxt)
 

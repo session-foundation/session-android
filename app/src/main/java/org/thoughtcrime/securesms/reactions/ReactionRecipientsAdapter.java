@@ -161,7 +161,7 @@ final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecip
         this.recipient.setText(R.string.you);
         this.remove.setVisibility(canRemove ? View.VISIBLE : View.GONE);
       } else {
-        String name = reaction.getSender().getName();
+        String name = reaction.getSender().getDisplayName();
         this.recipient.setText(name);
         this.remove.setVisibility(View.GONE);
       }

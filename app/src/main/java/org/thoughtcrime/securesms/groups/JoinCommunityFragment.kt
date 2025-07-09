@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.groups
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,7 +22,6 @@ import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.OpenGroupUrlParser
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
@@ -114,17 +112,13 @@ class JoinCommunityFragment : Fragment() {
                         )
                         val storage = MessagingModuleConfiguration.shared.storage
                         storage.onOpenGroupAdded(sanitizedServer, openGroup.room)
-                        val threadID =
-                            GroupManager.getOpenGroupThreadID(openGroupID, requireContext())
                         val groupID = GroupUtil.getEncodedOpenGroupID(openGroupID.toByteArray())
 
                         withContext(Dispatchers.Main) {
-                            val recipient = Recipient.from(
+                            openConversationActivity(
                                 requireContext(),
-                                Address.fromSerialized(groupID),
-                                false
+                                Address.fromSerialized(groupID)
                             )
-                            openConversationActivity(requireContext(), threadID, recipient)
                             delegate.onDialogClosePressed()
                         }
                     } catch (e: Exception) {
@@ -155,11 +149,10 @@ class JoinCommunityFragment : Fragment() {
         mediator.attach()
     }
 
-    private fun openConversationActivity(context: Context, threadId: Long, recipient: Recipient) {
-        val intent = Intent(context, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-        intent.putExtra(ConversationActivityV2.ADDRESS, recipient.address)
-        context.startActivity(intent)
+    private fun openConversationActivity(context: Context, address: Address) {
+        context.startActivity(
+            ConversationActivityV2.createIntent(context, address)
+        )
     }
 
 }

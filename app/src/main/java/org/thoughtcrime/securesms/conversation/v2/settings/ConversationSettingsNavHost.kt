@@ -102,8 +102,7 @@ sealed interface ConversationSettingsDestination {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ConversationSettingsNavHost(
-    threadId: Long,
-    threadAddress: Address?,
+    address: Address,
     navigator: ConversationSettingsNavigator,
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
@@ -181,7 +180,7 @@ fun ConversationSettingsNavHost(
             ) {
                 val viewModel =
                     hiltViewModel<ConversationSettingsViewModel, ConversationSettingsViewModel.Factory> { factory ->
-                        factory.create(threadId)
+                        factory.create(address)
                     }
 
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -316,7 +315,7 @@ fun ConversationSettingsNavHost(
                 val viewModel: DisappearingMessagesViewModel =
                     hiltViewModel<DisappearingMessagesViewModel, DisappearingMessagesViewModel.Factory> { factory ->
                         factory.create(
-                            threadId = threadId,
+                            address = address,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
                             showDebugOptions = BuildConfig.DEBUG
                         )
@@ -332,14 +331,9 @@ fun ConversationSettingsNavHost(
 
             // All Media
             horizontalSlideComposable<RouteAllMedia> {
-                if (threadAddress == null) {
-                    navController.popBackStack()
-                    return@horizontalSlideComposable
-                }
-
                 val viewModel =
                     hiltViewModel<MediaOverviewViewModel, MediaOverviewViewModel.Factory> { factory ->
-                        factory.create(threadAddress)
+                        factory.create(address)
                     }
 
                 MediaOverviewScreen(
@@ -354,7 +348,7 @@ fun ConversationSettingsNavHost(
             horizontalSlideComposable<RouteNotifications> {
                 val viewModel =
                     hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
-                        factory.create(threadId)
+                        factory.create(address)
                     }
 
                 NotificationSettingsScreen(

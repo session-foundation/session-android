@@ -35,14 +35,14 @@ import java.util.List;
 public class SmsMessageRecord extends MessageRecord {
 
   public SmsMessageRecord(long id,
-    String body, Recipient recipient,
-    Recipient individualRecipient,
-    long dateSent, long dateReceived,
-    int deliveryReceiptCount,
-    long type, long threadId,
-    int status, List<IdentityKeyMismatch> mismatches,
-    long expiresIn, long expireStarted,
-    int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
+                          String body, Recipient recipient,
+                          Recipient individualRecipient,
+                          long dateSent, long dateReceived,
+                          int deliveryReceiptCount,
+                          long type, long threadId,
+                          int status, List<IdentityKeyMismatch> mismatches,
+                          long expiresIn, long expireStarted,
+                          int readReceiptCount, List<ReactionRecord> reactions, boolean hasMention)
   {
     super(id, body, recipient, individualRecipient,
       dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,

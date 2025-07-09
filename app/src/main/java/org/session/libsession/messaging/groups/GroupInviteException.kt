@@ -3,13 +3,12 @@ package org.session.libsession.messaging.groups
 import android.content.Context
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
-import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.COUNT_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.OTHER_NAME_KEY
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.truncateIdForDisplay
+import org.thoughtcrime.securesms.database.RecipientRepository
 
 /**
  * Exception that occurs during a group invite.
@@ -31,9 +30,9 @@ class GroupInviteException(
         }
     }
 
-    fun format(context: Context, usernameUtils: UsernameUtils): CharSequence {
+    fun format(context: Context, recipientRepository: RecipientRepository): CharSequence {
         val getInviteeName = { accountId: String ->
-            usernameUtils.getContactNameWithAccountID(accountId)
+            recipientRepository.getRecipientDisplayNameSync(Address.fromSerialized(accountId))
         }
 
         val first = inviteeAccountIds.first().let(getInviteeName)

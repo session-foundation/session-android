@@ -14,19 +14,27 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.databinding.ShareContactListFragmentBinding
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<ContactSelectionListItem>>, ContactClickListener {
+class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<Recipient>>, ContactClickListener {
     private lateinit var binding: ShareContactListFragmentBinding
     private var cursorFilter: String? = null
     var onContactSelectedListener: OnContactSelectedListener? = null
 
     @Inject
     lateinit var deprecationManager: LegacyGroupDeprecationManager
+
+    @Inject
+    lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var conversationRepository: ConversationRepository
 
     private val multiSelect: Boolean by lazy {
         requireActivity().intent.getBooleanExtra(MULTI_SELECT, false)
@@ -45,7 +53,7 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
     }
 
     interface OnContactSelectedListener {
-        fun onContactSelected(number: String?)
+        fun onContactSelected(number: String)
         fun onContactDeselected(number: String?)
     }
 
@@ -88,24 +96,25 @@ class ShareContactListFragment : Fragment(), LoaderManager.LoaderCallbacks<List<
         setQueryFilter(null)
     }
 
-    override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<ContactSelectionListItem>> {
+    override fun onCreateLoader(id: Int, args: Bundle?): Loader<List<Recipient>> {
         return ShareContactListLoader(
             context = requireActivity(),
-            mode = ContactsCursorLoader.DisplayMode.FLAG_ALL,
             filter = cursorFilter,
-            deprecationManager = deprecationManager
+            deprecationManager = deprecationManager,
+            storage = storage,
+            repo = conversationRepository,
         )
     }
 
-    override fun onLoadFinished(loader: Loader<List<ContactSelectionListItem>>, items: List<ContactSelectionListItem>) {
+    override fun onLoadFinished(loader: Loader<List<Recipient>>, items: List<Recipient>) {
         update(items)
     }
 
-    override fun onLoaderReset(loader: Loader<List<ContactSelectionListItem>>) {
+    override fun onLoaderReset(loader: Loader<List<Recipient>>) {
         update(listOf())
     }
 
-    private fun update(items: List<ContactSelectionListItem>) {
+    private fun update(items: List<Recipient>) {
         if (activity?.isDestroyed == true) {
             Log.e(ShareContactListFragment::class.java.name,
                     "Received a loader callback after the fragment was detached from the activity.",

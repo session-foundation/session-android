@@ -1,8 +1,8 @@
 package org.session.libsession.messaging.messages.signal;
 
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.DistributionTypes;
-import org.session.libsession.utilities.recipients.Recipient;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -11,7 +11,7 @@ public class OutgoingExpirationUpdateMessage extends OutgoingSecureMediaMessage 
 
   private final String groupId;
 
-  public OutgoingExpirationUpdateMessage(Recipient recipient,  long sentTimeMillis, long expiresIn, long expireStartedAt, String groupId) {
+  public OutgoingExpirationUpdateMessage(Address recipient, long sentTimeMillis, long expiresIn, long expireStartedAt, String groupId) {
     super(recipient, "", new LinkedList<Attachment>(), sentTimeMillis,
           DistributionTypes.CONVERSATION, expiresIn, expireStartedAt, null, Collections.emptyList(),
           Collections.emptyList());

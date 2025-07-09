@@ -25,7 +25,6 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.CLASSIC_
 import org.session.libsession.utilities.TextSecurePreferences.Companion.ENVIRONMENT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.FOLLOW_SYSTEM_SETTINGS
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_MESSAGE_REQUESTS
-import org.session.libsession.utilities.TextSecurePreferences.Companion.HAS_HIDDEN_NOTE_TO_SELF
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HAVE_SHOWN_A_NOTIFICATION_ABOUT_TOKEN_PAGE
 import org.session.libsession.utilities.TextSecurePreferences.Companion.HIDE_PASSWORD
 import org.session.libsession.utilities.TextSecurePreferences.Companion.LAST_VACUUM_TIME
@@ -91,14 +90,6 @@ interface TextSecurePreferences {
     fun setHasSeenGIFMetaDataWarning()
     fun isGifSearchInGridLayout(): Boolean
     fun setIsGifSearchInGridLayout(isGrid: Boolean)
-    fun getProfileKey(): String?
-    fun setProfileKey(key: String?)
-    fun setProfileName(name: String?)
-    fun getProfileName(): String?
-    fun setProfileAvatarId(id: Int)
-    fun getProfileAvatarId(): Int
-    fun setProfilePictureURL(url: String?)
-    fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
     fun setPreferredCameraDirection(value: CameraSelector)
@@ -178,8 +169,6 @@ interface TextSecurePreferences {
     fun setForceIncomingMessagesAsPro(hidden: Boolean)
     fun forcePostPro(): Boolean
     fun setForcePostPro(hidden: Boolean)
-    fun hasHiddenNoteToSelf(): Boolean
-    fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
     fun setShownCallNotification(): Boolean
     fun isCallNotificationsEnabled(): Boolean
@@ -294,7 +283,6 @@ interface TextSecurePreferences {
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
-        const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
         const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
         const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
         const val SET_FORCE_POST_PRO = "pref_force_post_pro"
@@ -541,46 +529,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setIsGifSearchInGridLayout(context: Context, isGrid: Boolean) {
             setBooleanPreference(context, GIF_GRID_LAYOUT, isGrid)
-        }
-
-        @JvmStatic
-        fun getProfileKey(context: Context): String? {
-            return getStringPreference(context, PROFILE_KEY_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileKey(context: Context, key: String?) {
-            setStringPreference(context, PROFILE_KEY_PREF, key)
-        }
-
-        @JvmStatic
-        fun setProfileName(context: Context, name: String?) {
-            setStringPreference(context, PROFILE_NAME_PREF, name)
-            _events.tryEmit(PROFILE_NAME_PREF)
-        }
-
-        @JvmStatic
-        fun getProfileName(context: Context): String? {
-            return getStringPreference(context, PROFILE_NAME_PREF, null)
-        }
-
-        @JvmStatic
-        fun setProfileAvatarId(context: Context, id: Int) {
-            setIntegerPreference(context, PROFILE_AVATAR_ID_PREF, id)
-        }
-
-        @JvmStatic
-        fun getProfileAvatarId(context: Context): Int {
-            return getIntegerPreference(context, PROFILE_AVATAR_ID_PREF, 0)
-        }
-
-        fun setProfilePictureURL(context: Context, url: String?) {
-            setStringPreference(context, PROFILE_AVATAR_URL_PREF, url)
-        }
-
-        @JvmStatic
-        fun getProfilePictureURL(context: Context): String? {
-            return getStringPreference(context, PROFILE_AVATAR_URL_PREF, null)
         }
 
         @JvmStatic
@@ -1178,39 +1126,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(TextSecurePreferences.GIF_GRID_LAYOUT, isGrid)
     }
 
-    override fun getProfileKey(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, null)
-    }
-
-    override fun setProfileKey(key: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_KEY_PREF, key)
-    }
-
-    override fun setProfileName(name: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, name)
-        _events.tryEmit(TextSecurePreferences.PROFILE_NAME_PREF)
-    }
-
-    override fun getProfileName(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_NAME_PREF, null)
-    }
-
-    override fun setProfileAvatarId(id: Int) {
-        setIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, id)
-    }
-
-    override fun getProfileAvatarId(): Int {
-        return getIntegerPreference(TextSecurePreferences.PROFILE_AVATAR_ID_PREF, 0)
-    }
-
-    override fun setProfilePictureURL(url: String?) {
-        setStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, url)
-    }
-
-    override fun getProfilePictureURL(): String? {
-        return getStringPreference(TextSecurePreferences.PROFILE_AVATAR_URL_PREF, null)
-    }
-
     override fun getNotificationPriority(): Int {
         return getStringPreference(
             TextSecurePreferences.NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
@@ -1594,16 +1509,6 @@ class AppTextSecurePreferences @Inject constructor(
         setBooleanPreference(HAS_HIDDEN_MESSAGE_REQUESTS, hidden)
         _events.tryEmit(HAS_HIDDEN_MESSAGE_REQUESTS)
     }
-
-    override fun hasHiddenNoteToSelf(): Boolean {
-        return getBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, false)
-    }
-
-    override fun setHasHiddenNoteToSelf(hidden: Boolean) {
-        setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
-        _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
-    }
-
     override fun forceCurrentUserAsPro(): Boolean {
         return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
     }

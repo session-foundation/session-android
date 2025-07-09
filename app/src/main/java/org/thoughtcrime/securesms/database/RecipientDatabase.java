@@ -7,25 +7,41 @@ import android.content.Context;
 import android.database.Cursor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.collection.LruCache;
+
 import com.annimon.stream.Stream;
+
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import org.session.libsession.utilities.Address;
-import org.session.libsession.utilities.MaterialColor;
-import org.session.libsession.utilities.Util;
-import org.session.libsession.utilities.recipients.Recipient;
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings;
-import org.session.libsession.utilities.recipients.Recipient.RegisteredState;
+import org.session.libsession.utilities.recipients.RecipientSettings;
 import org.session.libsignal.utilities.Base64;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
-import java.io.Closeable;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.inject.Provider;
 
+import kotlinx.coroutines.channels.BufferOverflow;
+import kotlinx.coroutines.flow.MutableSharedFlow;
+import kotlinx.coroutines.flow.SharedFlow;
+import kotlinx.coroutines.flow.SharedFlowKt;
+import network.loki.messenger.libsession_util.util.UserPic;
+
+/**
+ * The database(table) where some recipient data is stored, including names, avatars, notification settings, etc.
+ *
+ * Note: We have moved a large chunk of recipient data into the config system, so most of the time you
+ * should really get them from {@link org.session.libsession.utilities.ConfigFactoryProtocol} instead.
+ *
+ * This database is only used for data that is not in the config system, such as blinded contacts,
+ * the people who are not your contacts or not your blinded convo, such as unknown people in groups,
+ * communities, etc. Their data will be stored here instead.
+ */
 public class RecipientDatabase extends Database {
 
   private static final String TAG = RecipientDatabase.class.getSimpleName();
@@ -36,28 +52,42 @@ public class RecipientDatabase extends Database {
           static final String BLOCK                    = "block";
           static final String APPROVED                 = "approved";
   private static final String APPROVED_ME              = "approved_me";
+  @Deprecated(forRemoval = true)
   private static final String NOTIFICATION             = "notification";
+  @Deprecated(forRemoval = true)
   private static final String VIBRATE                  = "vibrate";
   private static final String MUTE_UNTIL               = "mute_until";
+  @Deprecated(forRemoval = true)
   private static final String COLOR                    = "color";
   private static final String SEEN_INVITE_REMINDER     = "seen_invite_reminder";
+  @Deprecated(forRemoval = true)
   private static final String DEFAULT_SUBSCRIPTION_ID  = "default_subscription_id";
           static final String EXPIRE_MESSAGES          = "expire_messages";
-  private static final String DISAPPEARING_STATE       = "disappearing_state";
+  @Deprecated(forRemoval = true)
+          private static final String DISAPPEARING_STATE       = "disappearing_state";
+  @Deprecated(forRemoval = true)
   private static final String REGISTERED               = "registered";
   private static final String PROFILE_KEY              = "profile_key";
   private static final String SYSTEM_DISPLAY_NAME      = "system_display_name";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_PHOTO_URI         = "system_contact_photo";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_PHONE_LABEL       = "system_phone_label";
+  @Deprecated(forRemoval = true)
   private static final String SYSTEM_CONTACT_URI       = "system_contact_uri";
   private static final String SIGNAL_PROFILE_NAME      = "signal_profile_name";
   private static final String SESSION_PROFILE_AVATAR = "signal_profile_avatar";
+  @Deprecated(forRemoval = true)
   private static final String PROFILE_SHARING          = "profile_sharing_approval";
+  @Deprecated(forRemoval = true)
   private static final String CALL_RINGTONE            = "call_ringtone";
+  @Deprecated(forRemoval = true)
   private static final String CALL_VIBRATE             = "call_vibrate";
+  @Deprecated(forRemoval = true)
   private static final String NOTIFICATION_CHANNEL     = "notification_channel";
   @Deprecated(forRemoval = true)
   private static final String UNIDENTIFIED_ACCESS_MODE = "unidentified_access_mode";
+  @Deprecated(forRemoval = true)
   private static final String FORCE_SMS_SELECTION      = "force_sms_selection";
   private static final String NOTIFY_TYPE              = "notify_type"; // all, mentions only, none
   @Deprecated(forRemoval = true)
@@ -83,7 +113,7 @@ public class RecipientDatabase extends Database {
           ADDRESS + " TEXT UNIQUE, " +
           BLOCK + " INTEGER DEFAULT 0," +
           NOTIFICATION + " TEXT DEFAULT NULL, " +
-          VIBRATE + " INTEGER DEFAULT " + Recipient.VibrateState.DEFAULT.getId() + ", " +
+          VIBRATE + " INTEGER DEFAULT 0, " +
           MUTE_UNTIL + " INTEGER DEFAULT 0, " +
           COLOR + " TEXT DEFAULT NULL, " +
           SEEN_INVITE_REMINDER + " INTEGER DEFAULT 0, " +
@@ -96,10 +126,10 @@ public class RecipientDatabase extends Database {
           SYSTEM_CONTACT_URI + " TEXT DEFAULT NULL, " +
           PROFILE_KEY + " TEXT DEFAULT NULL, " +
           SIGNAL_PROFILE_NAME + " TEXT DEFAULT NULL, " +
-              SESSION_PROFILE_AVATAR + " TEXT DEFAULT NULL, " +
+          SESSION_PROFILE_AVATAR + " TEXT DEFAULT NULL, " +
           PROFILE_SHARING + " INTEGER DEFAULT 0, " +
           CALL_RINGTONE + " TEXT DEFAULT NULL, " +
-          CALL_VIBRATE + " INTEGER DEFAULT " + Recipient.VibrateState.DEFAULT.getId() + ", " +
+          CALL_VIBRATE + " INTEGER DEFAULT 0, " +
           NOTIFICATION_CHANNEL + " TEXT DEFAULT NULL, " +
           UNIDENTIFIED_ACCESS_MODE + " INTEGER DEFAULT 0, " +
           FORCE_SMS_SELECTION + " INTEGER DEFAULT 0);";
@@ -168,68 +198,63 @@ public class RecipientDatabase extends Database {
   public static final int NOTIFY_TYPE_MENTIONS = 1;
   public static final int NOTIFY_TYPE_NONE = 2;
 
+  @NonNull
+  private final MutableSharedFlow<Address> updateNotifications = SharedFlowKt.MutableSharedFlow(0, 256, BufferOverflow.DROP_OLDEST);
+
+  @NonNull
+  private final LruCache<Address, RecipientSettings> recipientSettingsCache = new LruCache<>(512);
+
   public RecipientDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);
   }
 
-  public RecipientReader getRecipientsWithNotificationChannels() {
-    SQLiteDatabase database = getReadableDatabase();
-    Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, NOTIFICATION_CHANNEL  + " NOT NULL",
-                                             null, null, null, null, null);
-
-    return new RecipientReader(context, cursor);
+  @NonNull
+  public SharedFlow<Address> getUpdateNotifications() {
+    return updateNotifications;
   }
 
-  public Optional<RecipientSettings> getRecipientSettings(@NonNull Address address) {
+  @Nullable
+  public RecipientSettings getRecipientSettings(@NonNull Address address) {
+    final RecipientSettings cachedSettings = recipientSettingsCache.get(address);
+    if (cachedSettings != null) {
+      return cachedSettings;
+    }
+
     SQLiteDatabase database = getReadableDatabase();
 
     try (Cursor cursor = database.query(TABLE_NAME, null, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
 
       if (cursor != null && cursor.moveToNext()) {
-        return getRecipientSettings(cursor);
+        RecipientSettings settings = getRecipientSettings(cursor);
+        recipientSettingsCache.put(address, settings);
+        return settings;
       }
 
-      return Optional.absent();
+      return null;
     }
   }
 
-  Optional<RecipientSettings> getRecipientSettings(@NonNull Cursor cursor) {
+  @NonNull
+  private RecipientSettings getRecipientSettings(@NonNull Cursor cursor) {
     boolean blocked                 = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCK))                == 1;
     boolean approved                = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED))             == 1;
     boolean approvedMe              = cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED_ME))          == 1;
-    String  messageRingtone         = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION));
-    String  callRingtone            = cursor.getString(cursor.getColumnIndexOrThrow(CALL_RINGTONE));
-    int     disappearingState       = cursor.getInt(cursor.getColumnIndexOrThrow(DISAPPEARING_STATE));
-    int     messageVibrateState     = cursor.getInt(cursor.getColumnIndexOrThrow(VIBRATE));
-    int     callVibrateState        = cursor.getInt(cursor.getColumnIndexOrThrow(CALL_VIBRATE));
     long    muteUntil               = cursor.getLong(cursor.getColumnIndexOrThrow(MUTE_UNTIL));
     int     notifyType              = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFY_TYPE));
-    boolean autoDownloadAttachments = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))        == 1;
-    String  serializedColor         = cursor.getString(cursor.getColumnIndexOrThrow(COLOR));
-    int     defaultSubscriptionId   = cursor.getInt(cursor.getColumnIndexOrThrow(DEFAULT_SUBSCRIPTION_ID));
+    Boolean autoDownloadAttachments = switch (cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD))) {
+        case 1 -> true;
+        case -1 -> null;
+        default -> false;
+    };
+
     int     expireMessages          = cursor.getInt(cursor.getColumnIndexOrThrow(EXPIRE_MESSAGES));
-    int     registeredState         = cursor.getInt(cursor.getColumnIndexOrThrow(REGISTERED));
     String  profileKeyString        = cursor.getString(cursor.getColumnIndexOrThrow(PROFILE_KEY));
     String  systemDisplayName       = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_DISPLAY_NAME));
-    String  systemContactPhoto      = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHOTO_URI));
-    String  systemPhoneLabel        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_PHONE_LABEL));
-    String  systemContactUri        = cursor.getString(cursor.getColumnIndexOrThrow(SYSTEM_CONTACT_URI));
     String  signalProfileName       = cursor.getString(cursor.getColumnIndexOrThrow(SIGNAL_PROFILE_NAME));
     String  signalProfileAvatar     = cursor.getString(cursor.getColumnIndexOrThrow(SESSION_PROFILE_AVATAR));
-    boolean profileSharing          = cursor.getInt(cursor.getColumnIndexOrThrow(PROFILE_SHARING))      == 1;
-    String  notificationChannel     = cursor.getString(cursor.getColumnIndexOrThrow(NOTIFICATION_CHANNEL));
-    boolean forceSmsSelection       = cursor.getInt(cursor.getColumnIndexOrThrow(FORCE_SMS_SELECTION))  == 1;
     boolean blocksCommunityMessageRequests = cursor.getInt(cursor.getColumnIndexOrThrow(BLOCKS_COMMUNITY_MESSAGE_REQUESTS)) == 1;
 
-    MaterialColor color;
     byte[] profileKey = null;
-
-    try {
-      color = serializedColor == null ? null : MaterialColor.fromSerialized(serializedColor);
-    } catch (MaterialColor.UnknownColorException e) {
-      Log.w(TAG, e);
-      color = null;
-    }
 
     if (profileKeyString != null) {
       try {
@@ -240,133 +265,88 @@ public class RecipientDatabase extends Database {
       }
     }
 
-    return Optional.of(new RecipientSettings(blocked, approved, approvedMe, muteUntil,
-                                             notifyType, autoDownloadAttachments,
-                                             Recipient.DisappearingState.fromId(disappearingState),
-                                             Recipient.VibrateState.fromId(messageVibrateState),
-                                             Recipient.VibrateState.fromId(callVibrateState),
-                                             Util.uri(messageRingtone), Util.uri(callRingtone),
-                                             color, defaultSubscriptionId, expireMessages,
-                                             Recipient.RegisteredState.fromId(registeredState),
-                                             profileKey, systemDisplayName, systemContactPhoto,
-                                             systemPhoneLabel, systemContactUri,
-                                             signalProfileName, signalProfileAvatar, profileSharing,
-                                             notificationChannel,
-                                             forceSmsSelection, blocksCommunityMessageRequests));
+    return new RecipientSettings(blocked, approved, approvedMe, muteUntil,
+            notifyType, autoDownloadAttachments,
+            expireMessages,
+            profileKey, systemDisplayName,
+            signalProfileName, signalProfileAvatar,
+            blocksCommunityMessageRequests);
   }
 
-  public boolean isAutoDownloadFlagSet(Recipient recipient) {
-    SQLiteDatabase db = getReadableDatabase();
-    Cursor cursor = db.query(TABLE_NAME, new String[]{ AUTO_DOWNLOAD }, ADDRESS+" = ?", new String[]{ recipient.getAddress().toString() }, null, null, null);
-    boolean flagUnset = false;
-    try {
-      if (cursor.moveToFirst()) {
-        // flag isn't set if it is -1
-        flagUnset = cursor.getInt(cursor.getColumnIndexOrThrow(AUTO_DOWNLOAD)) == -1;
-      }
-    } finally {
-      cursor.close();
-    }
-    // negate result (is flag set)
-    return !flagUnset;
+  private void invalidateCache(@NonNull Address recipient) {
+    recipientSettingsCache.remove(recipient);
   }
 
-  public void setColor(@NonNull Recipient recipient, @NonNull MaterialColor color) {
-    ContentValues values = new ContentValues();
-    values.put(COLOR, color.serialize());
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setColor(color);
-    notifyRecipientListeners();
-  }
-
-  public void setDefaultSubscriptionId(@NonNull Recipient recipient, int defaultSubscriptionId) {
-    ContentValues values = new ContentValues();
-    values.put(DEFAULT_SUBSCRIPTION_ID, defaultSubscriptionId);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setDefaultSubscriptionId(Optional.of(defaultSubscriptionId));
-    notifyRecipientListeners();
-  }
-
-  public void setForceSmsSelection(@NonNull Recipient recipient, boolean forceSmsSelection) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(FORCE_SMS_SELECTION, forceSmsSelection ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setForceSmsSelection(forceSmsSelection);
-    notifyRecipientListeners();
-  }
-
-  public boolean getApproved(@NonNull Address address) {
-    SQLiteDatabase db = getReadableDatabase();
-    try (Cursor cursor = db.query(TABLE_NAME, new String[]{APPROVED}, ADDRESS + " = ?", new String[]{address.toString()}, null, null, null)) {
-      if (cursor != null && cursor.moveToNext()) {
-        return cursor.getInt(cursor.getColumnIndexOrThrow(APPROVED)) == 1;
-      }
-    }
-    return false;
-  }
-
-  public void setApproved(@NonNull Recipient recipient, boolean approved) {
+  public void setApproved(@NonNull Address recipient, boolean approved) {
     ContentValues values = new ContentValues();
     values.put(APPROVED, approved ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setApproved(approved);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
+
+    invalidateCache(recipient);
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setApprovedMe(@NonNull Recipient recipient, boolean approvedMe) {
+  public void setApprovedMe(@NonNull Address recipient, boolean approvedMe) {
     ContentValues values = new ContentValues();
     values.put(APPROVED_ME, approvedMe ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setHasApprovedMe(approvedMe);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
+
+    invalidateCache(recipient);
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setBlocked(@NonNull Iterable<Recipient> recipients, boolean blocked) {
+  public void setBlocked(@NonNull Iterable<Address> recipients, boolean blocked) {
     SQLiteDatabase db = getWritableDatabase();
     db.beginTransaction();
     try {
       ContentValues values = new ContentValues();
       values.put(BLOCK, blocked ? 1 : 0);
-      for (Recipient recipient : recipients) {
-        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.getAddress().toString()});
-        recipient.resolve().setBlocked(blocked);
+      for (Address recipient : recipients) {
+        db.update(TABLE_NAME, values, ADDRESS + " = ?", new String[]{recipient.toString()});
       }
       db.setTransactionSuccessful();
     } finally {
       db.endTransaction();
     }
+
+    for (Address recipient : recipients) {
+        invalidateCache(recipient);
+        updateNotifications.tryEmit(recipient);
+    }
+
     notifyRecipientListeners();
   }
 
   // Delete a recipient with the given address from the database
   public void deleteRecipient(@NonNull String recipientAddress) {
+    Address address = Address.fromSerialized(recipientAddress);
     SQLiteDatabase db = getWritableDatabase();
     int rowCount = db.delete(TABLE_NAME, ADDRESS + " = ?", new String[] { recipientAddress });
     if (rowCount == 0) { Log.w(TAG, "Could not find to delete recipient with address: " + recipientAddress); }
+
+    invalidateCache(address);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(address);
   }
 
-  public void setAutoDownloadAttachments(@NonNull Recipient recipient, boolean shouldAutoDownloadAttachments) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.beginTransaction();
-    try {
-      ContentValues values = new ContentValues();
-      values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
-      db.update(TABLE_NAME, values, ADDRESS+ " = ?", new String[]{recipient.getAddress().toString()});
-      recipient.resolve().setAutoDownloadAttachments(shouldAutoDownloadAttachments);
-      db.setTransactionSuccessful();
-    } finally {
-      db.endTransaction();
-    }
+  public void setAutoDownloadAttachments(@NonNull Address recipient, boolean shouldAutoDownloadAttachments) {
+    ContentValues values = new ContentValues(1);
+    values.put(AUTO_DOWNLOAD, shouldAutoDownloadAttachments ? 1 : 0);
+    updateOrInsert(recipient, values);
+
+    invalidateCache(recipient);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setMuted(@NonNull Recipient recipient, long until) {
+  public void setMuted(@NonNull Address recipient, long until) {
     ContentValues values = new ContentValues();
     values.put(MUTE_UNTIL, until);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setMuted(until);
+    updateOrInsert(recipient, values);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   /**
@@ -374,70 +354,71 @@ public class RecipientDatabase extends Database {
    * @param recipient to modify notifications for
    * @param notifyType the new notification type {@link #NOTIFY_TYPE_ALL}, {@link #NOTIFY_TYPE_MENTIONS} or {@link #NOTIFY_TYPE_NONE}
    */
-  public void setNotifyType(@NonNull Recipient recipient, int notifyType) {
+  public void setNotifyType(@NonNull Address recipient, int notifyType) {
     ContentValues values = new ContentValues();
     values.put(NOTIFY_TYPE, notifyType);
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setNotifyType(notifyType);
+    updateOrInsert(recipient, values);
+
+    invalidateCache(recipient);
     notifyConversationListListeners();
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setProfileKey(@NonNull Recipient recipient, @Nullable byte[] profileKey) {
-    ContentValues values = new ContentValues(1);
-    values.put(PROFILE_KEY, profileKey == null ? null : Base64.encodeBytes(profileKey));
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setProfileKey(profileKey);
-    notifyRecipientListeners();
+  public void updateProfile(@NonNull Address recipient,
+                            @Nullable String newName,
+                            @Nullable UserPic profilePic,
+                            @Nullable Boolean acceptsCommunityRequests) {
+    if (newName == null && profilePic == null) {
+      return; // nothing to update
+    }
+
+    // This call could be called with a lot of same data so it's worth checking if we
+    // actually need to update the database.
+    final RecipientSettings cached = recipientSettingsCache.get(recipient);
+    if (cached != null &&
+            Objects.equals(cached.getSystemDisplayName(), newName) &&
+            Objects.equals(cached.getProfilePic(), profilePic) &&
+            (acceptsCommunityRequests == null || !cached.getBlocksCommunityMessagesRequests() == acceptsCommunityRequests)
+    ) {
+        Log.w(TAG, "No changes to update for recipient: " + recipient);
+        return;
+    }
+
+    ContentValues contentValues = new ContentValues(4);
+    if (newName != null) {
+      contentValues.put(SYSTEM_DISPLAY_NAME, newName);
+    }
+    if (profilePic != null) {
+      contentValues.put(SESSION_PROFILE_AVATAR, profilePic.getUrl());
+      contentValues.put(PROFILE_KEY, Base64.encodeBytes(profilePic.getKeyAsByteArray()));
+    }
+
+    if (acceptsCommunityRequests != null) {
+      contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, acceptsCommunityRequests ? 0 : 1);
+    }
+
+    updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setProfileAvatar(@NonNull Recipient recipient, @Nullable String profileAvatar) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(SESSION_PROFILE_AVATAR, profileAvatar);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setProfileAvatar(profileAvatar);
-    notifyRecipientListeners();
-  }
-
-  public void setProfileName(@NonNull Recipient recipient, @Nullable String profileName) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(SYSTEM_DISPLAY_NAME, profileName);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setName(profileName);
-    recipient.resolve().setProfileName(profileName);
-    notifyRecipientListeners();
-  }
-
-  public void setProfileSharing(@NonNull Recipient recipient, boolean enabled) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(PROFILE_SHARING, enabled ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setProfileSharing(enabled);
-    notifyRecipientListeners();
-  }
-
-  public void setNotificationChannel(@NonNull Recipient recipient, @Nullable String notificationChannel) {
+  public void setNotificationChannel(@NonNull Address recipient, @Nullable String notificationChannel) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(NOTIFICATION_CHANNEL, notificationChannel);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setNotificationChannel(notificationChannel);
+    updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
-  public void setRegistered(@NonNull Recipient recipient, RegisteredState registeredState) {
-    ContentValues contentValues = new ContentValues(1);
-    contentValues.put(REGISTERED, registeredState.getId());
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.setRegistered(registeredState);
-    notifyRecipientListeners();
-  }
-
-  public void setBlocksCommunityMessageRequests(@NonNull Recipient recipient, boolean isBlocked) {
+  public void setBlocksCommunityMessageRequests(@NonNull Address recipient, boolean isBlocked) {
     ContentValues contentValues = new ContentValues(1);
     contentValues.put(BLOCKS_COMMUNITY_MESSAGE_REQUESTS, isBlocked ? 1 : 0);
-    updateOrInsert(recipient.getAddress(), contentValues);
-    recipient.resolve().setBlocksCommunityMessageRequests(isBlocked);
+    updateOrInsert(recipient, contentValues);
+    invalidateCache(recipient);
     notifyRecipientListeners();
+    updateNotifications.tryEmit(recipient);
   }
 
   private void updateOrInsert(Address address, ContentValues contentValues) {
@@ -457,20 +438,18 @@ public class RecipientDatabase extends Database {
     database.endTransaction();
   }
 
-  public List<Recipient> getBlockedContacts() {
+  public List<Address> getBlockedContacts() {
     SQLiteDatabase database = getReadableDatabase();
 
-    Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, BLOCK + " = 1",
-            null, null, null, null, null);
-
-    RecipientReader reader = new RecipientReader(context, cursor);
-    List<Recipient> returnList = new ArrayList<>();
-    Recipient current;
-    while ((current = reader.getNext()) != null) {
-      returnList.add(current);
+    try (Cursor         cursor   = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, BLOCK + " = 1",
+            null, null, null, null, null)) {
+      List<Address> blockedContacts = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+          blockedContacts.add(Address.fromSerialized(serialized));
+      }
+      return blockedContacts;
     }
-    reader.close();
-    return returnList;
   }
 
   /**
@@ -478,57 +457,17 @@ public class RecipientDatabase extends Database {
    *
    * @return A list of all recipients
    */
-  public List<Recipient> getAllRecipients() {
+  public List<Address> getAllRecipients() {
     SQLiteDatabase database = getReadableDatabase();
 
-    Cursor cursor = database.query(TABLE_NAME, new String[] {ID, ADDRESS}, null,
-            null, null, null, null, null);
-
-    RecipientReader reader = new RecipientReader(context, cursor);
-    List<Recipient> returnList = new ArrayList<>();
-    Recipient current;
-
-    while ((current = reader.getNext()) != null) {
-      returnList.add(current);
-    }
-
-    reader.close();
-    return returnList;
-  }
-
-  public void setDisappearingState(@NonNull Recipient recipient, @NonNull Recipient.DisappearingState disappearingState) {
-    ContentValues values = new ContentValues();
-    values.put(DISAPPEARING_STATE, disappearingState.getId());
-    updateOrInsert(recipient.getAddress(), values);
-    recipient.resolve().setDisappearingState(disappearingState);
-    notifyRecipientListeners();
-  }
-
-  public static class RecipientReader implements Closeable {
-
-    private final Context context;
-    private final Cursor  cursor;
-
-    RecipientReader(Context context, Cursor cursor) {
-      this.context = context;
-      this.cursor  = cursor;
-    }
-
-    public @NonNull Recipient getCurrent() {
-      String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
-      return Recipient.from(context, Address.fromSerialized(serialized), false);
-    }
-
-    public @Nullable Recipient getNext() {
-      if (cursor != null && !cursor.moveToNext()) {
-        return null;
+    try(final Cursor cursor = database.query(TABLE_NAME, new String[] {ADDRESS}, null,
+            null, null, null, null, null)) {
+      final List<Address> recipients = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          String serialized = cursor.getString(cursor.getColumnIndexOrThrow(ADDRESS));
+          recipients.add(Address.fromSerialized(serialized));
       }
-
-      return getCurrent();
-    }
-
-    public void close() {
-      cursor.close();
+      return recipients;
     }
   }
 }

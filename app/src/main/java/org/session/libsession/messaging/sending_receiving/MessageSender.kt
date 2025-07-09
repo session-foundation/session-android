@@ -293,10 +293,9 @@ object MessageSender {
                 ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
         }
             ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it.isEnabled }
-            ?.expiryMode
             ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
             ?.expiryMillis
+            ?.takeIf { it > 0 }
     }
 
     // Open Groups
@@ -548,8 +547,6 @@ object MessageSender {
             // only show the NTS if it is currently marked as hidden
             MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
-            // make sure note to self is not hidden
-            MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             // update config in case it was marked as hidden there
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)

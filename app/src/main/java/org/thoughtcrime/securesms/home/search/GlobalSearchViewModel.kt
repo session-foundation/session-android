@@ -60,7 +60,7 @@ class GlobalSearchViewModel @Inject constructor(
                         // without a nickname/name who haven't approved us.
                         GlobalSearchResult(
                             query,
-                            searchRepository.queryContacts("05").toList()
+                            searchRepository.queryContacts().toList()
                         )
                     }
                 } else {

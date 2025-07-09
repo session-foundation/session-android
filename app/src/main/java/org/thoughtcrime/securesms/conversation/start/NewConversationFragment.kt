@@ -1,7 +1,6 @@
 package org.thoughtcrime.securesms.conversation.start
 
 import android.app.Dialog
-import android.content.Intent
 import android.content.res.Resources
 import android.os.Build
 import android.os.Bundle
@@ -100,9 +99,7 @@ class StartConversationFragment : BottomSheetDialogFragment(), StartConversation
     }
 
     override fun onContactSelected(address: String) {
-        val intent = Intent(requireContext(), ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(address))
-        requireContext().startActivity(intent)
+        startActivity(ConversationActivityV2.createIntent(requireContext(), Address.fromSerialized(address)))
         requireActivity().overridePendingTransition(R.anim.slide_from_bottom, R.anim.fade_scale_out)
     }
 

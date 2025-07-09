@@ -7,7 +7,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_HIDDEN
-import network.loki.messenger.libsession_util.ConfigBase.Companion.PRIORITY_PINNED
 import network.loki.messenger.libsession_util.ReadableGroupInfoConfig
 import network.loki.messenger.libsession_util.ReadableUserGroupsConfig
 import network.loki.messenger.libsession_util.ReadableUserProfile
@@ -17,11 +16,9 @@ import network.loki.messenger.libsession_util.util.Conversation
 import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.UserPic
-import network.loki.messenger.libsession_util.util.afterSend
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.BackgroundGroupAddJob
 import org.session.libsession.messaging.jobs.JobQueue
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.sending_receiving.notifications.PushRegistryV1
 import org.session.libsession.snode.OwnedSwarmAuth
@@ -30,11 +27,9 @@ import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol.Companion.NAME_PADDED_LENGTH
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UserConfigType
 import org.session.libsession.utilities.getGroup
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.crypto.ecc.DjbECPrivateKey
 import org.session.libsignal.crypto.ecc.DjbECPublicKey
 import org.session.libsignal.crypto.ecc.ECKeyPair
@@ -46,7 +41,6 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.ClosedGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -63,7 +57,6 @@ class ConfigToDatabaseSync @Inject constructor(
     private val storage: StorageProtocol,
     private val threadDatabase: ThreadDatabase,
     private val clock: SnodeClock,
-    private val profileManager: ProfileManager,
     private val preferences: TextSecurePreferences,
     private val conversationRepository: ConversationRepository,
     private val mmsSmsDatabase: MmsSmsDatabase,
@@ -100,7 +93,7 @@ class ConfigToDatabaseSync @Inject constructor(
         }
 
         when (configUpdate) {
-            is UpdateUserInfo -> updateUser(configUpdate, updateTimestamp)
+            is UpdateUserInfo -> updateUser(configUpdate)
             is UpdateUserGroupsInfo -> updateUserGroups(configUpdate, updateTimestamp)
             is UpdateContacts -> updateContacts(configUpdate, updateTimestamp)
             is UpdateConvoVolatile -> updateConvoVolatile(configUpdate)
@@ -122,48 +115,16 @@ class ConfigToDatabaseSync @Inject constructor(
         )
     }
 
-    private fun updateUser(userProfile: UpdateUserInfo, messageTimestamp: Long?) {
+    private fun updateUser(userProfile: UpdateUserInfo) {
         val userPublicKey = storage.getUserPublicKey() ?: return
-        // would love to get rid of recipient and context from this
-        val recipient = Recipient.from(context, fromSerialized(userPublicKey), false)
+        val address = fromSerialized(userPublicKey)
 
-        // Update profile name
-        userProfile.name?.takeUnless { it.isEmpty() }?.truncate(NAME_PADDED_LENGTH)?.let {
-            preferences.setProfileName(it)
-            profileManager.setName(context, recipient, it)
-        }
-
-        // Update profile picture
-        if (userProfile.userPic == UserPic.DEFAULT) {
-            storage.clearUserPic(clearConfig = false)
-        } else if (userProfile.userPic.key.data.isNotEmpty() && userProfile.userPic.url.isNotEmpty()
-            && preferences.getProfilePictureURL() != userProfile.userPic.url
-        ) {
-            storage.setUserProfilePicture(userProfile.userPic.url, userProfile.userPic.key.data)
-        }
-
-        if (userProfile.ntsPriority == PRIORITY_HIDDEN) {
-            // hide nts thread if needed
-            preferences.setHasHiddenNoteToSelf(true)
-        } else {
+        if (userProfile.ntsPriority != PRIORITY_HIDDEN) {
             // create note to self thread if needed (?)
-            val address = recipient.address
             val ourThread = storage.getThreadId(address) ?: storage.getOrCreateThreadIdFor(address).also {
                 storage.setThreadCreationDate(it, 0)
             }
             threadDatabase.setHasSent(ourThread, true)
-            storage.setPinned(ourThread, userProfile.ntsPriority > 0)
-            preferences.setHasHiddenNoteToSelf(false)
-        }
-
-        // Set or reset the shared library to use latest expiration config
-        if (messageTimestamp != null) {
-            storage.getThreadId(recipient)?.let { theadId ->
-                storage.setExpirationConfiguration(
-                    storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp } ?:
-                    ExpirationConfiguration(theadId, userProfile.ntsExpiry, messageTimestamp)
-                )
-            }
         }
     }
 
@@ -186,14 +147,8 @@ class ConfigToDatabaseSync @Inject constructor(
     }
 
     private fun updateGroup(groupInfoConfig: UpdateGroupInfo) {
-        val threadId = storage.getThreadId(fromSerialized(groupInfoConfig.id.hexString)) ?: return
-        val recipient = storage.getRecipientForThread(threadId) ?: return
-        profileManager.setName(context, recipient, groupInfoConfig.name.orEmpty())
-        profileManager.setProfilePicture(
-            context, recipient,
-            profilePictureURL = groupInfoConfig.profilePic?.url,
-            profileKey = groupInfoConfig.profilePic?.key?.data
-        )
+        val address = fromSerialized(groupInfoConfig.id.hexString)
+        val threadId = storage.getThreadId(address) ?: return
 
         // Also update the name in the user groups config
         configFactory.withMutableUserConfigs { configs ->
@@ -300,36 +255,17 @@ class ConfigToDatabaseSync @Inject constructor(
             }
         }
 
-        for (groupInfo in userGroups.communityInfo) {
-            val groupBaseCommunity = groupInfo.community
-            if (groupBaseCommunity.fullUrl() in existingJoinUrls) {
-                // add it
-                val (threadId, _) = existingCommunities.entries.first { (_, v) -> v.joinURL == groupInfo.community.fullUrl() }
-                threadDatabase.setPinned(threadId, groupInfo.priority == PRIORITY_PINNED)
-            }
-        }
+        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.allThreads
+            .asSequence()
+            .filter { (address, _) -> address.isGroupV2 }
+            .associate { (address, threadId) -> AccountId(address.toString()) to threadId }
 
-        val existingClosedGroupThreads: Map<AccountId, Long> = threadDatabase.readerFor(threadDatabase.conversationList).use { reader ->
-            buildMap(reader.count) {
-                var current = reader.next
-                while (current != null) {
-                    if (current.recipient?.isGroupV2Recipient == true) {
-                        put(AccountId(current.recipient.address.toString()), current.threadId)
-                    }
-
-                    current = reader.next
-                }
-            }
-        }
 
         val groupThreadsToKeep = hashMapOf<AccountId, Long>()
 
         for (closedGroup in userGroups.closedGroupInfo) {
-            val recipient = Recipient.from(context, fromSerialized(closedGroup.groupAccountId), false)
-            storage.setRecipientApprovedMe(recipient, true)
-            storage.setRecipientApproved(recipient, !closedGroup.invited)
-            profileManager.setName(context, recipient, closedGroup.name)
-            val threadId = storage.getOrCreateThreadIdFor(recipient.address)
+            val address = fromSerialized(closedGroup.groupAccountId)
+            val threadId = storage.getOrCreateThreadIdFor(address)
 
             // If we don't already have a date and the config has a date, use it
             if (closedGroup.joinedAtSecs > 0L && threadDatabase.getLastUpdated(threadId) <= 0L) {
@@ -340,8 +276,6 @@ class ConfigToDatabaseSync @Inject constructor(
             }
 
             groupThreadsToKeep[AccountId(closedGroup.groupAccountId)] = threadId
-
-            storage.setPinned(threadId, closedGroup.priority == PRIORITY_PINNED)
 
             if (closedGroup.destroyed) {
                 handleDestroyedGroup(threadId = threadId)
@@ -362,11 +296,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 if (group.priority == PRIORITY_HIDDEN && existingThread != null) {
                     ClosedGroupManager.silentlyRemoveGroup(context,existingThread,
                         GroupUtil.doubleDecodeGroupId(existingGroup.encodedId), existingGroup.encodedId, localUserPublicKey, delete = true)
-                } else if (existingThread == null) {
-                    Log.w(TAG, "Existing group had no thread to hide")
-                } else {
-                    Log.d(TAG, "Setting existing group pinned status to ${group.priority}")
-                    threadDatabase.setPinned(existingThread, group.priority == PRIORITY_PINNED)
                 }
             } else {
                 val members = group.members.keys.map { fromSerialized(it) }
@@ -374,7 +303,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 val title = group.name
                 val formationTimestamp = (group.joinedAtSecs * 1000L)
                 storage.createGroup(groupId, title, admins + members, null, null, admins, formationTimestamp)
-                storage.setProfileSharing(fromSerialized(groupId), true)
                 // Add the group to the user's set of public keys to poll for
                 storage.addClosedGroupPublicKey(group.accountId)
                 // Store the encryption key pair
@@ -389,15 +317,6 @@ class ConfigToDatabaseSync @Inject constructor(
                 // Note: Commenting out this line prevents the timestamp of room creation being added to a new closed group,
                 // which in turn allows us to show the `groupNoMessages` control message text.
                 //insertOutgoingInfoMessage(context, groupId, SignalServiceGroup.Type.CREATION, title, members.map { it.serialize() }, admins.map { it.serialize() }, threadID, formationTimestamp)
-            }
-
-            if (messageTimestamp != null) {
-                storage.getThreadId(fromSerialized(groupId))?.let { theadId ->
-                    storage.setExpirationConfiguration(
-                        storage.getExpirationConfiguration(theadId)?.takeIf { it.updatedTimestampMs > messageTimestamp }
-                            ?: ExpirationConfiguration(theadId, afterSend(group.disappearingTimer), messageTimestamp)
-                    )
-                }
             }
         }
     }
@@ -428,11 +347,3 @@ class ConfigToDatabaseSync @Inject constructor(
         }
     }
 }
-
-/**
- * Truncate a string to a specified number of bytes
- *
- * This could split multi-byte characters/emojis.
- */
-private fun String.truncate(sizeInBytes: Int): String =
-    toByteArray().takeIf { it.size > sizeInBytes }?.take(sizeInBytes)?.toByteArray()?.let(::String) ?: this

@@ -52,11 +52,7 @@ class ConversationView : LinearLayout {
     // region Updating
     fun bind(thread: ThreadRecord, isTyping: Boolean) {
         this.thread = thread
-        if (thread.isPinned) {
-            binding.iconPinned.isVisible = true
-        } else {
-            binding.iconPinned.isVisible = false
-        }
+        binding.iconPinned.isVisible = thread.isPinned
 
         binding.root.background = if (thread.unreadCount > 0) {
             ContextCompat.getDrawable(context, R.drawable.conversation_unread_background)
@@ -65,7 +61,7 @@ class ConversationView : LinearLayout {
         }
 
         val unreadCount = thread.unreadCount
-        if (thread.recipient.isBlocked) {
+        if (thread.recipient.blocked) {
             binding.accentView.setBackgroundColor(ThemeUtil.getThemedColor(context, R.attr.danger))
             binding.accentView.visibility = View.VISIBLE
         } else {
@@ -97,9 +93,9 @@ class ConversationView : LinearLayout {
         ) }
 
         val recipient = thread.recipient
-        binding.muteIndicatorImageView.isVisible = recipient.isMuted || recipient.notifyType != NOTIFY_TYPE_ALL
+        binding.muteIndicatorImageView.isVisible = recipient.isMuted() || recipient.notifyType != NOTIFY_TYPE_ALL
 
-        val drawableRes = if (recipient.isMuted || recipient.notifyType == NOTIFY_TYPE_NONE) {
+        val drawableRes = if (recipient.isMuted() || recipient.notifyType == NOTIFY_TYPE_NONE) {
             R.drawable.ic_volume_off
         } else {
             R.drawable.ic_at_sign
@@ -146,7 +142,7 @@ class ConversationView : LinearLayout {
 
     private fun getTitle(recipient: Recipient): String = when {
         recipient.isLocalNumber -> context.getString(R.string.noteToSelf)
-        else -> recipient.name // Internally uses the Contact API
+        else -> recipient.displayName // Internally uses the Contact API
     }
     // endregion
 }

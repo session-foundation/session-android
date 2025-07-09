@@ -21,22 +21,24 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
-import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.recipients.displayNameOrFallback
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
 
-abstract class BaseGroupMembersViewModel (
+abstract class BaseGroupMembersViewModel(
     private val groupId: AccountId,
     @ApplicationContext private val context: Context,
     private val storage: StorageProtocol,
-    private val usernameUtils: UsernameUtils,
     private val configFactory: ConfigFactoryProtocol,
-    private val avatarUtils: AvatarUtils
+    private val avatarUtils: AvatarUtils,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
@@ -100,7 +102,8 @@ abstract class BaseGroupMembersViewModel (
         val name = if (isMyself) {
             context.getString(R.string.you)
         } else {
-            usernameUtils.getContactNameWithAccountID(memberAccountId.hexString, groupId)
+            recipientRepository.getRecipient(Address.fromSerialized(memberAccountId.hexString))
+                .displayNameOrFallback(fallbackName = { member.name }, address = memberAccountId.hexString)
         }
 
         val highlightStatus = status in EnumSet.of(
