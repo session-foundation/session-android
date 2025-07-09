@@ -426,7 +426,7 @@ public class MmsSmsDatabase extends Database {
             "(" + READ + " = 0 AND " +
                     NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
                     " OR (" +
-                      ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_RECEIVED + " > (" + lastSeenQuery +") AND (" +
+                      ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery +") AND (" +
                       outgoingCondition + "))";             // B
 
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
