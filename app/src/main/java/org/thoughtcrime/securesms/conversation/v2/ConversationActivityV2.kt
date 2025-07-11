@@ -1997,10 +1997,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.expirationConfiguration?.expiryMode?.expiryMillis ?: 0
-        val expireStartedAt = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
-            message.sentTimestamp
-        } else 0
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, 0)
 
         // Clear the input bar
         binding.inputBar.text = ""

@@ -19,10 +19,12 @@ public class DatabaseContentProviders {
   }
 
   public static class Conversation extends NoopContentProvider {
-    private static final String CONTENT_URI_STRING = "content://network.loki.securesms.database.conversation/";
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversation");
 
     public static Uri getUriForThread(long threadId) {
-      return Uri.parse(CONTENT_URI_STRING + threadId);
+      return CONTENT_URI.buildUpon()
+              .appendPath(String.valueOf(threadId))
+              .build();
     }
   }
 

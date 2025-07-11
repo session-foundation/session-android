@@ -209,13 +209,17 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         }
     }
 
-    fun updateSentTimestamp(messageId: Long, newTimestamp: Long, threadId: Long) {
+    fun updateSentTimestamp(messageId: Long, newTimestamp: Long) {
         val db = writableDatabase
-        db.execSQL(
-            "UPDATE $TABLE_NAME SET $DATE_SENT = ? WHERE $ID = ?",
-            arrayOf(newTimestamp.toString(), messageId.toString())
-        )
-        notifyConversationListeners(threadId)
+        val threadId = db.rawQuery(
+            "UPDATE $TABLE_NAME SET $DATE_SENT = ? WHERE $ID = ? RETURNING $THREAD_ID",
+            newTimestamp.toString(),
+            messageId.toString()
+        ).use {
+            if (it.moveToFirst()) it.getLong(0) else null
+        }
+
+        threadId?.let(::notifyConversationListeners)
         notifyConversationListListeners()
     }
 
@@ -274,6 +278,34 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
             val where = "$EXPIRES_IN > 0 AND $EXPIRE_STARTED = 0"
             return readerFor(rawQuery(where, null))!!
         }
+
+    override fun getExpiredMessageIDs(nowMills: Long): List<Long> {
+        val query = "SELECT " + ID + " FROM " + TABLE_NAME +
+                " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?"
+
+        return readableDatabase.rawQuery(query, nowMills).use { cursor ->
+            cursor.asSequence()
+                .map { it.getLong(0) }
+                .toList()
+        }
+    }
+
+    /**
+     * @return the next expiring timestamp for messages that have started expiring. 0 if no messages are expiring.
+     */
+    override fun getNextExpiringTimestamp(): Long {
+        val query =
+            "SELECT MIN(" + EXPIRE_STARTED + " + " + EXPIRES_IN + ") FROM " + TABLE_NAME +
+                    " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0"
+
+        return readableDatabase.rawQuery(query).use { cursor ->
+            if (cursor.moveToFirst()) {
+                cursor.getLong(0)
+            } else {
+                0L
+            }
+        }
+    }
 
     private fun updateMailboxBitmask(
         id: Long,
@@ -1306,7 +1338,7 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
                     LinkedList(),
                     message.subscriptionId,
                     message.expiresIn,
-                    SnodeAPI.nowWithOffset, 0,
+                    message.expireStartedAt, 0,
                     if (message.outgoingQuote != null) Quote(
                         message.outgoingQuote!!.id,
                         message.outgoingQuote!!.author,
