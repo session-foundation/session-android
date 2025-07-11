@@ -17,15 +17,20 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
@@ -33,6 +38,7 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
+import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
@@ -234,6 +240,10 @@ class MentionViewModel(
      * As "@123456" is the standard format for mentioning a user, this method will replace "@Alice" with "@123456"
      */
     fun normalizeMessageBody(): String {
+        return deconstructMessageMentions().trim()
+    }
+
+    fun deconstructMessageMentions(): String {
         val spansWithRanges = editable.getSpans<MentionSpan>()
             .mapTo(mutableListOf()) { span ->
                 span to (editable.getSpanStart(span)..editable.getSpanEnd(span))
@@ -244,22 +254,40 @@ class MentionViewModel(
         val sb = StringBuilder()
         var offset = 0
         for ((span, range) in spansWithRanges) {
-            // Add content before the mention span. There's a possibility of overlapping spans so we need to
-            // safe guard the start offset here to not go over our span's start.
+            // Add content before the mention span
             val thisMentionStart = range.first
             val lastMentionEnd = offset.coerceAtMost(thisMentionStart)
             sb.append(editable, lastMentionEnd, thisMentionStart)
 
             // Replace the mention span with "@public key"
-            sb.append('@').append(span.member.publicKey).append(' ')
+            sb.append('@').append(span.member.publicKey)
 
-            // Safe guard offset to not go over the end of the editable.
+            // Check if the original mention span ended with a space
+            // The span includes the space, so we need to preserve it in the deconstructed version
+            if (range.last < editable.length && editable[range.last] == ' ') {
+                sb.append(' ')
+            }
+
+            // Move offset to after the mention span (including the space)
             offset = (range.last + 1).coerceAtMost(editable.length)
         }
 
         // Add the remaining content
         sb.append(editable, offset, editable.length)
-        return sb.toString().trim()
+        return sb.toString()
+    }
+
+    suspend fun reconstructMentions(raw: String): Editable {
+        editable.replace(0, editable.length, raw)
+
+        val memberList = members.filterNotNull().first()
+
+        MentionUtilities.substituteIdsInPlace(
+            editable,
+            memberList.associateBy { it.publicKey }
+        )
+
+        return editable
     }
 
     data class Member(

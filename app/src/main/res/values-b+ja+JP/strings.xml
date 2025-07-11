@@ -40,6 +40,7 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> と <b>{other_name}</b> がアドミンに昇格しました</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">匿名</string>
+    <string name="appIcon">アプリアイコン</string>
     <string name="appearanceAutoDarkMode">オートダークモード</string>
     <string name="appearanceHideMenuBar">メニューバーを隠す</string>
     <string name="appearanceLanguage">言語</string>
@@ -147,6 +148,7 @@
     <string name="callsNotificationsRequired">音声とビデオ通話を使用するには、デバイスのシステム設定で通知を有効にする必要があります。</string>
     <string name="callsPermissionsRequired">通話の権限が必要です</string>
     <string name="callsPermissionsRequiredDescription">プライバシー設定で「音声とビデオ通話」の許可を有効にできます。</string>
+    <string name="callsPermissionsRequiredDescription1">「音声とビデオ通話」はプライバシー設定で有効にできます。</string>
     <string name="callsReconnecting">再接続しています...</string>
     <string name="callsRinging">呼び出し中...</string>
     <string name="callsSessionCall">{app_name} 電話</string>
@@ -253,6 +255,8 @@
     <string name="copy">コピーする</string>
     <string name="create">作成する</string>
     <string name="cut">切り取り</string>
+    <string name="databaseErrorGeneric">データベースエラーが発生しました。\n\n
+トラブルシューティングのために、アプリのログをエクスポートして共有してください。この操作が失敗した場合は、{app_name} を再インストールし、アカウントを復元してください。</string>
     <string name="databaseErrorTimeout">{app_name}が起動するのに時間がかかっていることを確認しました。\n\n引き続きお待ちいただくか、トラブルシューティングのためにデバイスログをエクスポートして共有するか、{app_name}を再起動してみてください。</string>
     <string name="databaseErrorUpdate">お使いのアプリデータベースはこのバージョンの {app_name} と互換性がありません。アプリを再インストールしてアカウントを復元し、新しいデータベースを生成して {app_name} を使用し続けてください。\n\n警告: これにより、2週間以上前のすべてのメッセージと添付ファイルが失われます。</string>
     <string name="databaseOptimizing">データベースを更新中</string>
@@ -277,11 +281,17 @@
     <plurals name="deleteMessage">
         <item quantity="other">メッセージを削除</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="other">メッセージを削除します。本当によろしいいですか？</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="other">メッセージが削除されました</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">このメッセージは削除されました</string>
     <string name="deleteMessageDeletedLocally">このメッセージはこのデバイス上で削除されました</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="other">このデバイスでのみ、メッセージを削除します。本当によろしいですか？</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">本当にこのメッセージを全員に対して削除しますか？</string>
     <string name="deleteMessageDeviceOnly">このデバイスのみを削除</string>
     <string name="deleteMessageDevicesAll">すべてのデバイスから削除</string>
@@ -388,6 +398,9 @@
     <string name="groupCreate">グループを作成</string>
     <string name="groupCreateErrorNoMembers">他のグループメンバーも選択してください</string>
     <string name="groupDelete">グループを削除</string>
+    <string name="groupDeleteDescription">本当に<b>{group_name}</b>を削除してもよろしいですか?\n\nこれにより、すべてのメンバーが削除され、グループ内にある全コンテンツも削除されます。</string>
+    <string name="groupDeleteDescriptionMember">本当に <b>{group_name}</b> を退出しますか？</string>
+    <string name="groupDeletedMemberDescription">{group_name} はグループの管理者によって削除されました。これ以上メッセージを送信することはできません。</string>
     <string name="groupDescriptionEnter">グループ説明を入力してください</string>
     <string name="groupDisplayPictureUpdated">グループ表示画像を更新しました</string>
     <string name="groupEdit">グループを編集</string>
@@ -423,6 +436,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> と <b>{count}名</b> がグループに招待されました。</string>
     <string name="groupMemberNewTwo"><b>{name}</b> と <b>{other_name}</b> がグループに招待されました。</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>あなた</b> と <b>{count}名</b> がグループに招待されました。チャット履歴が共有されました。</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>あなた</b> と <b>{other_name}</b> はグループに招待されました。チャット履歴が共有されました。</string>
     <string name="groupMemberYouLeft"><b>You</b>がグループを退会しました</string>
     <string name="groupMembers">グループメンバー</string>
     <string name="groupMembersNone">このグループには他のメンバーがいません。</string>
@@ -437,6 +451,7 @@
     <string name="groupOnlyAdmin">あなたは<b>{group_name}</b>で唯一の管理者です。\n\n管理者がいないと、グループメンバーと設定は変更できません。</string>
     <string name="groupPromotedYou"><b>You</b> はアドミンに昇格しました</string>
     <string name="groupPromotedYouMultiple"><b>あなた</b> と <b>{count}名</b> はAdminに昇格しました。</string>
+    <string name="groupPromotedYouTwo"><b>あなた</b> と <b>{other_name}</b> は管理者になりました。</string>
     <string name="groupRemoveDescription"><b>{group_name}</b>から<b>{name}</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b>から<b>{name}</b>と<b>{count}人</b>を削除しますか？</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b>から<b>{name}</b>と<b>{other_name}</b>を削除しますか？</string>
@@ -479,6 +494,11 @@
     <string name="learnMore">詳細を知る</string>
     <string name="leave">抜ける</string>
     <string name="leaving">終了しています...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">このグループは読み取り専用になりました。チャットを続けるには、このグループを再作成してください。</string>
+    <string name="legacyGroupAfterDeprecationMember">このグループは読み取り専用になりました。チャットを続けるために、このグループを再作成するようグループ管理者に依頼してください。</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">グループ機能はアップグレードされました！信頼性を向上させるために、このグループを再作成してください。このグループは {date} に読み取り専用となります。</string>
+    <string name="legacyGroupBeforeDeprecationMember">グループ機能はアップグレードされました！信頼性を向上させるために、グループ管理者にこのグループを再作成するよう依頼してください。グループは {date} に読み取り専用になります。</string>
+    <string name="legacyGroupChatHistory">新しくグループにはチャットの履歴は転送されません。古いグループでチャット履歴を確認できます。</string>
     <string name="legacyGroupMemberNew"><b>{name}</b>がグループに加わりました</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> と <b>{count}人</b> がグループに加わりました</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>あなた</b> と <b>{count}名</b> がグループに加わりました。</string>
@@ -543,6 +563,9 @@
     <plurals name="messageNewYouveGot">
         <item quantity="other">%1$d 件の新規メッセージがあります</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="other">%1$s から新しいメッセージが %2$d あります。</item>
+    </plurals>
     <string name="messageReplyingTo">返信</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> があなたを <b>{group_name}</b> に招待しました</string>
     <string name="messageRequestGroupInviteDescription">このグループにメッセージを送ると、グループ招待が自動的に受け入れられます。</string>
@@ -571,6 +594,9 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} 音声メッセージ</string>
     <string name="messages">メッセージ</string>
     <string name="minimize">最小化する</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="other">メッセージに入力できる最大文字数は %1$s 字までです。残り %2$d 字です</item>
+    </plurals>
     <string name="next">次</string>
     <string name="nicknameDescription"><b>{name}</b>のニックネームを選んでください。これが1対1およびグループ会話で表示されます。</string>
     <string name="nicknameEnter">ニックネームを入力してください</string>
@@ -716,6 +742,7 @@
     <string name="recoveryPasswordBannerTitle">リカバリーパスワードを保存してください</string>
     <string name="recoveryPasswordDescription">リカバリパスワードを使用して、新しいデバイスでアカウントを読み込みます。\n\n リカバリパスワードがないとアカウントを復元できません。 安全な場所に保管し、他の人と共有しないでください。</string>
     <string name="recoveryPasswordEnter">リカバリーフレーズを入力してください</string>
+    <string name="recoveryPasswordErrorLoad">リカバリパスワードの読み込み中にエラーが発生しました。\n\nログをエクスポートし、 {app_name} のヘルプデスクにファイルをアップロードしてこの問題の解決に役立ててください。</string>
     <string name="recoveryPasswordErrorMessageGeneric">リカバリーパスワードを確認してもう一度やり直してください</string>
     <string name="recoveryPasswordErrorMessageIncorrect">いくつかのリカバリパスワードの単語が間違っています。確認して再試行してください。</string>
     <string name="recoveryPasswordErrorMessageShort">入力したリカバリーパスワードが十分な長さではありません。確認して再試行してください。</string>
@@ -730,6 +757,9 @@
     <string name="recoveryPasswordView">パスワードを見る</string>
     <string name="recoveryPasswordWarningSendDescription">これはあなたのリカバリーパスワードです。誰かに送信すると、その人はあなたのアカウントにフルアクセスできます。</string>
     <string name="redo">やり直す</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="other">残り %1$d 字</item>
+    </plurals>
     <string name="remove">削除</string>
     <string name="removePasswordFail">パスワードを削除できませんでした</string>
     <string name="reply">返信</string>
@@ -780,6 +810,7 @@
     <string name="shareAccountIdDescription">友達を{app_name} に招待して、チャットを始めましょう。アカウントIDを共有して招待できます。</string>
     <string name="shareAccountIdDescriptionCopied">いつでもどこでも友達と共有 — ここで会話を始めましょう</string>
     <string name="shareExtensionDatabaseError">データベースを開く際に問題が発生しました。アプリを再起動して再度お試しください。</string>
+    <string name="shareExtensionNoAccountError">{app_name} のアカウントをまだお持ちでないようです。\n\n共有するには、 {app_name} アプリで作成する必要があります。</string>
     <string name="shareToSession">{app_name}に共有</string>
     <string name="show">表示</string>
     <string name="showAll">すべて表示</string>
@@ -801,6 +832,7 @@
     <string name="updateError">更新できませんでした</string>
     <string name="updateErrorDescription">{app_name}の更新に失敗しました。{session_download_url}にアクセスして新しいバージョンを手動でインストールしてください。その後、この問題についてヘルプセンターにご連絡ください。</string>
     <string name="updateNewVersion">{app_name} のバージョンアップが利用可能です。タップすると更新します。</string>
+    <string name="updateNewVersionDescription">{app_name}の新しいバージョン({version})が利用可能です。</string>
     <string name="updateReleaseNotes">リリースノートを閲覧</string>
     <string name="updateSession">{app_name}アップデート</string>
     <string name="updateVersion">バージョン {version}</string>

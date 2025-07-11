@@ -74,6 +74,7 @@ import java.util.Set;
 
 import javax.inject.Provider;
 
+import kotlin.collections.CollectionsKt;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
 public class ThreadDatabase extends Database {
@@ -323,10 +324,6 @@ public class ThreadDatabase extends Database {
     final List<MarkedMessageInfo> smsRecords = DatabaseComponent.get(context).smsDatabase().setMessagesRead(threadId, lastReadTime);
     final List<MarkedMessageInfo> mmsRecords = DatabaseComponent.get(context).mmsDatabase().setMessagesRead(threadId, lastReadTime);
 
-    if (smsRecords.isEmpty() && mmsRecords.isEmpty()) {
-      return Collections.emptyList();
-    }
-
     ContentValues contentValues = new ContentValues(2);
     contentValues.put(READ, smsRecords.isEmpty() && mmsRecords.isEmpty());
     contentValues.put(LAST_SEEN, lastReadTime);
@@ -336,10 +333,7 @@ public class ThreadDatabase extends Database {
 
     notifyConversationListListeners();
 
-    return new LinkedList<MarkedMessageInfo>() {{
-      addAll(smsRecords);
-      addAll(mmsRecords);
-    }};
+    return CollectionsKt.plus(smsRecords, mmsRecords);
   }
 
   public List<MarkedMessageInfo> setRead(long threadId, boolean lastSeen) {
@@ -544,13 +538,6 @@ public class ThreadDatabase extends Database {
     return true;
   }
 
-  /**
-   * @param threadId
-   * @return true if we have set the last seen for the thread, false if there were no messages in the thread
-   */
-  public boolean setLastSeen(long threadId) {
-    return setLastSeen(threadId, -1);
-  }
 
   public Pair<Long, Boolean> getLastSeenAndHasSent(long threadId) {
     SQLiteDatabase db     = getReadableDatabase();
@@ -759,11 +746,10 @@ public class ThreadDatabase extends Database {
 
   /**
    * @param threadId
-   * @param isGroupRecipient
    * @param lastSeenTime
    * @return true if we have set the last seen for the thread, false if there were no messages in the thread
    */
-  public boolean markAllAsRead(long threadId, boolean isGroupRecipient, long lastSeenTime, boolean force) {
+  public boolean markAllAsRead(long threadId, long lastSeenTime, boolean force) {
     MmsSmsDatabase mmsSmsDatabase = DatabaseComponent.get(context).mmsSmsDatabase();
     if (mmsSmsDatabase.getConversationCount(threadId) <= 0 && !force) return false;
     List<MarkedMessageInfo> messages = setRead(threadId, lastSeenTime);

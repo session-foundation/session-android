@@ -29,6 +29,7 @@ public interface MmsSmsColumns {
   public static final String UNIDENTIFIED             = "unidentified";
 
   public static final String MESSAGE_REQUEST_RESPONSE = "message_request_response";
+  @Deprecated(forRemoval = true)
   public static final String REACTIONS_UNREAD         = "reactions_unread";
   public static final String REACTIONS_LAST_SEEN      = "reactions_last_seen";
 

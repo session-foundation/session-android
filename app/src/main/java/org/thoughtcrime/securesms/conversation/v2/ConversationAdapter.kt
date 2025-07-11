@@ -31,10 +31,11 @@ import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import kotlin.math.max
 
 class ConversationAdapter(
     context: Context,
-    cursor: Cursor,
+    cursor: Cursor?,
     conversation: Recipient?,
     originalLastSeen: Long,
     private val isReversed: Boolean,
@@ -70,6 +71,8 @@ class ConversationAdapter(
     private val groupId = if(conversation?.isGroupV2Recipient == true)
         AccountId(conversation.address.toString())
     else null
+
+    private val expandedMessageIds = mutableSetOf<MessageId>()
 
     init {
         lifecycleCoroutineScope.launch(IO) {
@@ -140,6 +143,7 @@ class ConversationAdapter(
                     }
                 }
                 val contact = contactCache[senderIdHash]
+                val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(
                     message = message,
@@ -155,7 +159,11 @@ class ConversationAdapter(
                     lastSentMessageId = lastSentMessageId,
                     delegate = visibleMessageViewDelegate,
                     downloadPendingAttachment = downloadPendingAttachment,
-                    retryFailedAttachments = retryFailedAttachments
+                    retryFailedAttachments = retryFailedAttachments,
+                    isTextExpanded = isExpanded,
+                    onTextExpanded = { messageId ->
+                        expandedMessageIds.add(messageId)
+                    }
                 )
 
                 if (!message.isDeleted) {
@@ -295,6 +303,13 @@ class ConversationAdapter(
         val cursor = this.cursor ?: return null
         if (!cursor.moveToPosition(firstVisiblePosition)) return null
         val message = messageDB.readerFor(cursor).current ?: return null
-        return message.timestamp
+        if (message.reactions.isEmpty()) {
+            // If the message has no reactions, we can use the timestamp directly
+            return message.timestamp
+        }
+
+        // Otherwise, we will need to take the reaction timestamp into account
+        val maxReactionTimestamp = message.reactions.maxOf { it.dateReceived }
+        return max(message.timestamp, maxReactionTimestamp)
     }
 }

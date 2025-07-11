@@ -18,6 +18,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.thoughtcrime.securesms.InputBarDialogs
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ClearEmoji
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ConfirmRecreateGroup
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.HideClearEmoji
@@ -28,11 +30,14 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.DialogButtonModel
+import org.thoughtcrime.securesms.ui.CTAFeature
+import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -43,9 +48,17 @@ import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 @Composable
 fun ConversationV2Dialogs(
     dialogsState: ConversationViewModel.DialogsState,
-    sendCommand: (ConversationViewModel.Commands) -> Unit
+    inputBarDialogsState: InputbarViewModel.InputBarDialogsState,
+    sendCommand: (ConversationViewModel.Commands) -> Unit,
+    sendInputBarCommand: (InputbarViewModel.Commands) -> Unit
 ){
     SessionMaterialTheme {
+        // inputbar dialogs
+        InputBarDialogs(
+            inputBarDialogsState = inputBarDialogsState,
+            sendCommand = sendInputBarCommand
+        )
+
         // open link confirmation
         if(!dialogsState.openLinkDialogUrl.isNullOrEmpty()){
             OpenURLAlertDialog(
@@ -116,7 +129,7 @@ fun ConversationV2Dialogs(
                     }
                 },
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.delete)),
                         color = LocalColors.current.danger,
                         onClick = {
@@ -129,7 +142,7 @@ fun ConversationV2Dialogs(
                             )
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -147,7 +160,7 @@ fun ConversationV2Dialogs(
                     Phrase.from(txt).put(EMOJI_KEY, dialogsState.clearAllEmoji.emoji).format().toString()
                 },
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.clear)),
                         color = LocalColors.current.danger,
                         onClick = {
@@ -157,7 +170,7 @@ fun ConversationV2Dialogs(
                             )
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -173,14 +186,14 @@ fun ConversationV2Dialogs(
                 title = stringResource(R.string.recreateGroup),
                 text = stringResource(R.string.legacyGroupChatHistory),
                 buttons = listOf(
-                    DialogButtonModel(
+                    DialogButtonData(
                         text = GetString(stringResource(id = R.string.theContinue)),
                         color = LocalColors.current.danger,
                         onClick = {
                             sendCommand(ConfirmRecreateGroup)
                         }
                     ),
-                    DialogButtonModel(
+                    DialogButtonData(
                         GetString(stringResource(R.string.cancel))
                     )
                 )
@@ -222,7 +235,9 @@ fun PreviewURLDialog(){
             dialogsState = ConversationViewModel.DialogsState(
                 openLinkDialogUrl = "https://google.com"
             ),
-            sendCommand = {}
+            inputBarDialogsState = InputbarViewModel.InputBarDialogsState(),
+            sendCommand = {},
+            sendInputBarCommand = {}
         )
     }
 }

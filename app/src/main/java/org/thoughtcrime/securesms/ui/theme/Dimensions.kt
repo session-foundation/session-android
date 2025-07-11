@@ -11,6 +11,7 @@ data class Dimensions(
     val xxsSpacing: Dp = 8.dp,
     val xsSpacing: Dp = 12.dp,
     val smallSpacing: Dp = 16.dp,
+    val contentSpacing: Dp = 20.dp,
     val spacing: Dp = 24.dp,
     val mediumSpacing: Dp = 36.dp,
     val xlargeSpacing: Dp = 64.dp,

@@ -28,8 +28,8 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.GroupInfo
 import network.loki.messenger.libsession_util.util.MultiEncrypt
 import network.loki.messenger.libsession_util.util.UserPic
+import okio.ByteString.Companion.decodeBase64
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.snode.OwnedSwarmAuth
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.snode.SwarmAuth
@@ -292,6 +292,7 @@ class ConfigFactory @Inject constructor(
 
     private fun <T> doWithMutableGroupConfigs(
         groupId: AccountId,
+        fromMerge: Boolean,
         cb: (GroupConfigsImpl) -> Pair<T, Boolean>): T {
         val (lock, configs) = ensureGroupConfigsInitialized(groupId)
         val (result, changed) = lock.write {
@@ -302,7 +303,7 @@ class ConfigFactory @Inject constructor(
             coroutineScope.launch {
                 // Config change notifications are important so we must use suspend version of
                 // emit (not tryEmit)
-                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId))
+                _configUpdateNotifications.emit(ConfigUpdateNotification.GroupConfigsUpdated(groupId, fromMerge = fromMerge))
             }
         }
 
@@ -313,7 +314,7 @@ class ConfigFactory @Inject constructor(
         groupId: AccountId,
         cb: (MutableGroupConfigs) -> T
     ): T {
-        return doWithMutableGroupConfigs(groupId = groupId) {
+        return doWithMutableGroupConfigs(groupId = groupId, fromMerge = false) {
             cb(it) to it.dumpIfNeeded(clock)
         }
     }
@@ -364,7 +365,7 @@ class ConfigFactory @Inject constructor(
         info: List<ConfigMessage>,
         members: List<ConfigMessage>
     ) {
-        val changed = doWithMutableGroupConfigs(groupId) { configs ->
+        val changed = doWithMutableGroupConfigs(groupId, fromMerge = true) { configs ->
             // Keys must be loaded first as they are used to decrypt the other config messages
             val keysLoaded = keys.fold(false) { acc, msg ->
                 configs.groupKeys.loadKey(msg.data, msg.hash, msg.timestamp, configs.groupInfo.pointer, configs.groupMembers.pointer) || acc
@@ -434,7 +435,7 @@ class ConfigFactory @Inject constructor(
             return
         }
 
-        doWithMutableGroupConfigs(groupId) { configs ->
+        doWithMutableGroupConfigs(groupId, fromMerge = false) { configs ->
             members?.let { (push, result) -> configs.groupMembers.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             info?.let { (push, result) -> configs.groupInfo.confirmPushed(push.seqNo, result.hashes.toTypedArray()) }
             keysPush?.let { (hashes, timestamp) ->
@@ -664,12 +665,10 @@ private fun MutableUserProfile.initFrom(storage: StorageProtocol,
 ) {
     val ownPublicKey = storage.getUserPublicKey() ?: return
     val displayName = usernameUtils.getCurrentUsername() ?: return
-    val profilePicture = textSecurePreferences.getProfilePictureURL()
-    val config = ConfigurationMessage.getCurrent(displayName, profilePicture, listOf()) ?: return
-    setName(config.displayName)
-    val picUrl = config.profilePicture
-    val picKey = config.profileKey
-    if (!picUrl.isNullOrEmpty() && picKey.isNotEmpty()) {
+    val picUrl = textSecurePreferences.getProfilePictureURL()
+    val picKey = textSecurePreferences.getProfileKey()?.decodeBase64()?.toByteArray()
+    setName(displayName)
+    if (!picUrl.isNullOrEmpty() && picKey != null && picKey.isNotEmpty()) {
         setPic(UserPic(picUrl, picKey))
     }
     val ownThreadId = storage.getThreadId(Address.fromSerialized(ownPublicKey))

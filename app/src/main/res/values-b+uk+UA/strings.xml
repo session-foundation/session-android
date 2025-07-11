@@ -16,6 +16,7 @@
     <string name="actualSize">Актуальний розмір</string>
     <string name="add">Додати</string>
     <string name="addAdmins">Додати адміністраторів</string>
+    <string name="addAdminsDescription">Введіть ідентифікатор облікового запису користувача, якого ви призначаєте адміністратором.\n\nЩоб додати кількох користувачів, введіть ідентифікатори їхніх облікових записів, розділяючи їх комами. Одночасно можна вказати до 20 ідентифікаторів облікових записів.</string>
     <string name="adminCannotBeRemoved">Адміністратори не можуть бути видалені.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> та ще <b>{count} інших</b> було підвищено до адміністраторів.</string>
     <string name="adminPromote">Підвищити адміністратора</string>
@@ -146,9 +147,11 @@
     <string name="banErrorFailed">Не вдалося додати до чорного списку</string>
     <string name="banUnbanErrorFailed">Не вдалося видалити з чорного списку</string>
     <string name="banUnbanUser">Видалити користувача з чорного списку</string>
+    <string name="banUnbanUserDescription">Введіть ідентифікатор облікового запису користувача, якого ви розблоковуєте</string>
     <string name="banUnbanUserUnbanned">Користувача розблоковано</string>
     <string name="banUser">Додати користувача до чорного списку</string>
     <string name="banUserBanned">Користувач заблокований</string>
+    <string name="banUserDescription">Введіть ідентифікатор облікового запису користувача, якого ви блокуєте</string>
     <string name="block">Заблокувати</string>
     <string name="blockBlockedNone">Немає заблокованих контактів</string>
     <string name="blockBlockedUser">Заблоковано {name}</string>
@@ -215,12 +218,18 @@
     <string name="clearDeviceRestore">Очистити пристрій та відновити</string>
     <string name="clearMessages">Очистити всі повідомлення</string>
     <string name="clearMessagesChatDescription">Ви впевнені, що хочете стерти всі повідомлення з вашої розмови з <b>{name}</b> з вашого пристрою?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Ви впевнені, що хочете видалити всі повідомлення з вашої розмови з <b>{name}</b> на цьому пристрої?</string>
     <string name="clearMessagesCommunity">Ви впевнені, що хочете стерти всі повідомлення <b>{community_name}</b> з вашого пристрою?</string>
+    <string name="clearMessagesCommunityUpdated">Ви впевнені, що хочете видалити всі повідомлення від <b>{community_name}</b> на цьому пристрої?</string>
     <string name="clearMessagesForEveryone">Очистити для всіх</string>
     <string name="clearMessagesForMe">Очистити для мене</string>
     <string name="clearMessagesGroupAdminDescription">Ви впевнені, що хочете стерти всі повідомлення <b>{group_name}</b>?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Ви впевнені, що хочете видалити всі повідомлення з <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Ви впевнені, що хочете стерти всі повідомлення <b>{group_name}</b> з вашого пристрою?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Ви впевнені, що хочете видалити всі повідомлення з <b>{group_name}</b> на цьому пристрої?</string>
     <string name="clearMessagesNoteToSelfDescription">Ви впевнені, що хочете стерти всі повідомлення Note to Self з вашого пристрою?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Ви впевнені, що хочете видалити всі повідомлення в <b>Нотатці для себе</b> на цьому пристрої?</string>
+    <string name="clearOnThisDevice">Очистити на цьому пристрої</string>
     <string name="close">Закрити</string>
     <string name="closeApp">Закрити застосунок</string>
     <string name="closeWindow">Закрити вікно</string>
@@ -289,6 +298,9 @@
     <string name="create">Створити</string>
     <string name="creatingCall">Викликаємо</string>
     <string name="cut">Вирізати</string>
+    <string name="databaseErrorClearDataWarning">Ви впевнені, що хочете видалити всі повідомлення, вкладення та дані облікового запису з цього пристрою та створити новий обліковий запис?</string>
+    <string name="databaseErrorGeneric">Сталася помилка бази даних.\n\nЕкспортуйте журнали програми, щоб надати їх для усунення несправностей. Якщо це не допоможе, перевстановіть {app_name} та відновіть свій обліковий запис.</string>
+    <string name="databaseErrorRestoreDataWarning">Ви впевнені, що хочете видалити всі повідомлення, вкладення та дані облікового запису з цього пристрою та відновити свій обліковий запис із мережі?</string>
     <string name="databaseErrorTimeout">Ми помітили, що {app_name} довго запускається.\n\nВи можете продовжити чекати, експортувати журнали вашого пристрою для аналізу або спробувати перезапустити {app_name}.</string>
     <string name="databaseErrorUpdate">База даних вашого додатку несумісна з цією версією {app_name}. Перевстановіть додаток та відновіть свій обліковий запис, щоб створити нову базу даних і продовжувати користуватися {app_name}.\n\nУвага: Це призведе до втрати всіх повідомлень та вкладень, старших двох тижнів.</string>
     <string name="databaseOptimizing">Оптимізація бази даних</string>
@@ -310,6 +322,7 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Будь ласка, зачекайте поки створюється група...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Не вдалося оновити групу</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">У вас немає прав на видалення інших повідомлень</string>
+    <string name="deleteContactDescription">Ви впевнені, що хочете видалити <b>{name}</b> зі своїх контактів?\n\nЦе призведе до видалення вашої розмови, включно з усіма повідомленнями та вкладеннями. Майбутні повідомлення від <b>{name}</b> відображатимуться як запит на повідомлення.</string>
     <string name="deleteConversationDescription">Ви дійсно хочете видалити розмову з <b>{name}</b>?\n Це назавжди видалить усі повідомлення та вкладення.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Видалити повідомлення</item>
@@ -407,6 +420,7 @@
     <string name="displayNameSet">Застосувати ім\'я, що показуватиметься</string>
     <string name="displayNameVisible">Ваше відображуване ім\'я видно користувачам, групам і спільнотам, з якими ви взаємодієте.</string>
     <string name="document">Документ</string>
+    <string name="donate">Підтримати</string>
     <string name="done">Готово</string>
     <string name="download">Завантажити</string>
     <string name="downloading">Завантаження...</string>
@@ -458,6 +472,7 @@
     <string name="groupCreate">Створити групу</string>
     <string name="groupCreateErrorNoMembers">Будь ласка, виберіть принаймні 1 учасника групи.</string>
     <string name="groupDelete">Видалити групу</string>
+    <string name="groupDeleteDescription">Ви впевнені, що хочете видалити <b>{group_name}</b>?\n\nЦе призведе до видалення всіх учасників та всього вмісту групи.</string>
     <string name="groupDeleteDescriptionMember">Ви дійсно бажаєте видалити <b>{group_name}</b>?</string>
     <string name="groupDeletedMemberDescription">{group_name} видалено адміністратором групи. Ви більше не зможете надсилати повідомлення.</string>
     <string name="groupDescriptionEnter">Введіть опис групи</string>
@@ -515,6 +530,7 @@
     <string name="groupNameUpdated">Назву групи оновлено.</string>
     <string name="groupNameVisible">Назва групи видима всім учасникам групи.</string>
     <string name="groupNoMessages">У вас немає повідомлень від <b>{group_name}</b>. Надішліть повідомлення, щоб розпочати розмову!</string>
+    <string name="groupNotUpdatedWarning">Ця група не оновлювалася понад 30 днів. У вас можуть виникнути проблеми з надсиланням повідомлень або переглядом інформації про групу.</string>
     <string name="groupOnlyAdmin">Ви — єдиний адміністратор у <b>{group_name}</b>.\n\nУчасники групи та налаштування не можуть бути змінені без адміністратора.</string>
     <string name="groupPendingRemoval">Очікує видалення</string>
     <string name="groupPromotedYou"><b>Вас</b> підвищили до адміністратора.</string>
@@ -558,6 +574,7 @@
     <string name="helpWedLoveYourFeedback">Будемо раді, якщо залишите нам відгук</string>
     <string name="hide">Приховати</string>
     <string name="hideMenuBarDescription">Увімкнути або вимкнути видимість панелі меню</string>
+    <string name="hideNoteToSelfDescription">Ви впевнені, що хочете приховати <b>Нотатку для себе</b> зі свого списку розмов?</string>
     <string name="hideOthers">Сховати інші</string>
     <string name="image">Зображення</string>
     <string name="images">зображення</string>
@@ -645,6 +662,7 @@
     <string name="membersInviteShareNewMessagesOnly">Ділитися тільки новими повідомленнями</string>
     <string name="membersInviteTitle">Запросити</string>
     <string name="message">Повідомлення</string>
+    <string name="messageBubbleReadMore">Читати далі</string>
     <string name="messageEmpty">Це повідомлення порожнє.</string>
     <string name="messageErrorDelivery">Збій доставки повідомлення</string>
     <string name="messageErrorLimit">Досягнуто ліміту повідомлення</string>
@@ -686,6 +704,7 @@
     <string name="messageRequestsClearAllExplanation">Ви впевнені, що бажаєте очистити всі запити на повідомлення та запрошення до груп?</string>
     <string name="messageRequestsCommunities">Запити на повідомлення зі спільнот</string>
     <string name="messageRequestsCommunitiesDescription">Дозволити запити на повідомлення зі спільнот.</string>
+    <string name="messageRequestsContactDelete">Ви дійсно хочете видалити цей запит на надіслання повідомлення та пов\'язаний з ним контакт?</string>
     <string name="messageRequestsDelete">Ви дійсно бажаєте видалити цей запит?</string>
     <string name="messageRequestsNew">У вас є новий запит на повідомлення</string>
     <string name="messageRequestsNonePending">Немає запитів на повідомлення</string>
@@ -703,6 +722,11 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Голосове повідомлення</string>
     <string name="messages">Повідомлення</string>
     <string name="minimize">Згорнути в трей</string>
+    <string name="modalMessageCharacterDisplayTitle">Довжина повідомлення</string>
+    <string name="modalMessageCharacterTooLongDescription">Ви перевищили максимальну кількість символів для цього повідомлення. Будь ласка, скоротіть ваше повідомлення до {limit} символів або менше.</string>
+    <string name="modalMessageCharacterTooLongTitle">Задовге повідомлення</string>
+    <string name="modalMessageTooLongDescription">Будь ласка, скоротіть повідомлення до {limit} символів або менше.</string>
+    <string name="modalMessageTooLongTitle">Задовге повідомлення</string>
     <string name="next">Далі</string>
     <string name="nicknameDescription">Виберіть псевдонім для <b>{name}</b>. Він з\'являтиметься в особистих та групових розмовах.</string>
     <string name="nicknameEnter">Введіть псевдонім</string>
@@ -834,11 +858,27 @@
     <string name="permissionsStorageSave">{app_name} потребує доступу до сховища для збереження вкладень та медіа.</string>
     <string name="permissionsStorageSaveDenied">{app_name} потребує дозволу \"Зберігання\", щоб зберігати файли, але наразі цей дозвіл ви постійно відхиляли. Будь ласка, перейдіть до налаштувань додатку, оберіть \"Дозволи\", та увімкніть \"Зберігання\".</string>
     <string name="permissionsStorageSend">{app_name} потребує доступу до сховища для відправлення фотографій та відео.</string>
+    <string name="permissionsWriteCommunity">Вам не надано дозвіл на дописування у цій спільноті</string>
     <string name="pin">Закріпити</string>
     <string name="pinConversation">Закріпити розмову</string>
     <string name="pinUnpin">Відкріпити</string>
     <string name="pinUnpinConversation">Відкріпити розмову</string>
     <string name="preview">Попередній перегляд</string>
+    <string name="proActivated">активовано</string>
+    <string name="proAlreadyPurchased">У вас вже є</string>
+    <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з Session Pro</string>
+    <string name="proAnimatedDisplayPictureModalDescription">користувачі можуть завантажувати GIF</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">Завантажувати GIF з</string>
+    <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
+    <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з Session Pro</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Потрібно понад 5 закріплених бесід? Впорядкуйте свої бесіди та розблокуйте преміальні функції з Session Pro</string>
+    <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
+    <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
+    <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
+    <string name="proFeatureListLongerMessages">Повідомлення до 10 000 символів</string>
+    <string name="proFeatureListPinnedConversations">Закріплюйте необмежену кількість бесід</string>
+    <string name="proSendMore">Надсилайте довші повідомлення з</string>
     <string name="profile">Профіль</string>
     <string name="profileDisplayPicture">Встановити зображення для показу</string>
     <string name="profileDisplayPictureRemoveError">Не вдалося видалити зображення профілю</string>
@@ -894,6 +934,8 @@
     <string name="recoveryPasswordWarningSendDescription">Це ваш Recovery password. Якщо ви надішлете його комусь, він матиме повний доступ до вашого облікового запису.</string>
     <string name="recreateGroup">Оновити групу</string>
     <string name="redo">Вперед</string>
+    <string name="remainingCharactersOverTooltip">Скоротіть довжину повідомлення на {count}</string>
+    <string name="remainingCharactersTooltip">{count} символів залишилось</string>
     <string name="remove">Видалити</string>
     <string name="removePasswordFail">Не вдалося видалити пароль</string>
     <string name="reply">Відповісти</string>
@@ -939,7 +981,15 @@
     <string name="sessionHelp">Допомога</string>
     <string name="sessionInviteAFriend">Запросити друга</string>
     <string name="sessionMessageRequests">Запити на повідомлення</string>
+    <string name="sessionNetworkCurrentPrice">Поточна ціна {token_name_short}</string>
+    <string name="sessionNetworkDescription">Повідомлення надсилаються за допомогою {network_name}. Мережа складається з вузлів, заохочуваних {token_name_long}, що забезпечує децентралізацію та безпеку {app_name}. <font color="0"><b>Дізнатися більше</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Дізнайтеся про стейкінг</string>
+    <string name="sessionNetworkMarketCap">Ринкова капіталізація</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} Вузли, що захищають <font color="0">ваші повідомлення</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} Вузли у <font color="0">вашому рої</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} запущено! Ознайомтеся з новим розділом {network_name} у Налаштуваннях, щоб дізнатися, як {token_name_long} забезпечує роботу Session.</string>
     <string name="sessionNetworkSecuredBy">Мережа захищена</string>
+    <string name="sessionNetworkTokenDescription">Коли ви робите стейкінг {token_name_long}, щоб захистити мережу, ви заробляєте винагороди у {token_name_short} з {staking_reward_pool}.</string>
     <string name="sessionNotifications">Сповіщення</string>
     <string name="sessionPermissions">Дозволи</string>
     <string name="sessionPrivacy">Конфіденційність</string>
@@ -957,6 +1007,8 @@
     <string name="show">Перегляд</string>
     <string name="showAll">Показати все</string>
     <string name="showLess">Показати менше</string>
+    <string name="showNoteToSelf">Показати нотатку для себе</string>
+    <string name="showNoteToSelfDescription">Ви впевнені, що хочете показувати <b>Нотатку для себе</b> у вашому списку розмов?</string>
     <string name="stickers">Стікери</string>
     <string name="supportGoTo">Перейти на сторінку підтримки</string>
     <string name="systemInformationDesktop">Про систему: {information}</string>
@@ -984,6 +1036,7 @@
     <string name="updateSession">Оновлення {app_name}</string>
     <string name="updateVersion">Версія {version}</string>
     <string name="updated">Останнє оновлення {relative_time} тому</string>
+    <string name="upgradeTo">Підвищити до</string>
     <string name="uploading">Вивантаження</string>
     <string name="urlCopy">Копіювати URL</string>
     <string name="urlOpen">Відкрити URL-адресу</string>

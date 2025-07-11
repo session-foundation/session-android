@@ -371,10 +371,10 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public List<MarkedMessageInfo> setMessagesRead(long threadId, long beforeTime) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
   }
   public List<MarkedMessageInfo> setMessagesRead(long threadId) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1)", new String[] {String.valueOf(threadId)});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0)", new String[] {String.valueOf(threadId)});
   }
 
   public List<MarkedMessageInfo> setAllMessagesRead() {
@@ -453,8 +453,7 @@ public class SmsDatabase extends MessagingDatabase {
       groupRecipient = Recipient.from(context, message.getGroupId(), true);
     }
 
-    boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-            message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
+    boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 

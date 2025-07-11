@@ -3,6 +3,7 @@
     <string name="about">Névjegy</string>
     <string name="accept">Elfogadás</string>
     <string name="accountIDCopy">Felhasználó ID másolása</string>
+    <string name="accountId">Fiókazonosító</string>
     <string name="accountIdCopied">Felhasználó ID másolva</string>
     <string name="accountIdCopyDescription">Másold ki a Felhasználó ID-dat, majd oszd meg barátaiddal, hogy üzenetet küldhessenek neked.</string>
     <string name="accountIdEnter">Add meg a Felhasználó ID-t</string>
@@ -14,6 +15,8 @@
     <string name="accountIdYoursDescription">Ez a te Felhasználó ID-d. Más felhasználók beszkennelhetik, hogy egy beszélgetést indítsanak el veled.</string>
     <string name="actualSize">Eredeti méret</string>
     <string name="add">Hozzáadás</string>
+    <string name="addAdmins">Adminisztrátorok hozzáadása</string>
+    <string name="addAdminsDescription">Adja meg a felhasználó fiókazonosítóját, akit adminisztrátorrá kíván kinevezni.\n\nEgyszerre több felhasználó hozzáadásához adja meg az egyes fiókazonosítókat vesszővel elválasztva. Egyszerre legfeljebb 20 fiókazonosító adható meg.</string>
     <string name="adminCannotBeRemoved">Adminokat nem lehet eltávolítani.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> és <b>{count} másik személy</b> adminisztrátorrá lettek előléptetve.</string>
     <string name="adminPromote">Adminisztrátorok előléptetése</string>
@@ -26,7 +29,9 @@
     <string name="adminPromotionFailedDescription">Nem sikerült {name}-t adminisztrátorrá léptetni a {group_name} csoportban</string>
     <string name="adminPromotionFailedDescriptionMultiple">Nem sikerült {name}-t és {count} másik személyt adminisztrátorrá léptetni a {group_name} csoportban</string>
     <string name="adminPromotionFailedDescriptionTwo">Nem sikerült {name}-t és {other_name}-t adminisztrátorrá léptetni a {group_name} csoportban</string>
+    <string name="adminPromotionNotSent">Az előléptetés nem lett elküldve</string>
     <string name="adminPromotionSent">Adminisztrátori előléptetés elküldve</string>
+    <string name="adminPromotionStatusUnknown">Az előléptetés állapota ismeretlen</string>
     <string name="adminRemove">Adminok eltávolítása</string>
     <string name="adminRemoveAsAdmin">Admin jogosultság eltávolítása</string>
     <string name="adminRemoveCommunityNone">Nincsenek adminisztrátorok ebben a közösségben.</string>
@@ -36,10 +41,31 @@
     <string name="adminRemovedUser"><b>{name}</b> el lett távolítva mint adminisztrátor.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> és <b>{count} másik személy</b> el lettek távolítva adminisztrátorként.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> és <b>{other_name}</b> el lettek távolítva adminisztrátorként.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Adminisztrátori kinevezés küldése</item>
+        <item quantity="other">Adminisztrátori kinevezés küldése</item>
+    </plurals>
     <string name="adminSettings">Adminisztrátor beállítások</string>
-    <string name="adminTwoPromotedToAdmin"><b>{name}</b> és <b>{other_name}</b> adminisztrátorrá lettek előléptetve.</string>
+    <string name="adminTwoPromotedToAdmin"><b>{name}</b> és <b>{other_name}</b> adminisztrátorrá lett előléptetve.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Névtelen</string>
+    <string name="appIcon">Alkalmazásikon</string>
+    <string name="appIconAndNameChange">Az alkalmazás ikonjának és nevének módosítása</string>
+    <string name="appIconAndNameChangeConfirmation">Az alkalmazás ikonjának és nevének módosításához be kell zárni a Session alkalmazást. Az értesítések továbbra is az alapértelmezett Session ikont és nevet fogják használni.</string>
+    <string name="appIconAndNameDescription">Az alternatív alkalmazásikon és név megjelenik a kezdőképernyőn és az alkalmazásfiókban.</string>
+    <string name="appIconAndNameSelectionDescription">A kiválasztott alkalmazás ikonja és neve megjelenik a kezdőképernyőn és az alkalmazásfiókban.</string>
+    <string name="appIconAndNameSelectionTitle">Ikon és név</string>
+    <string name="appIconDescription">Az alternatív alkalmazásikon megjelenik a kezdőképernyőn és az alkalmazáskönyvtárban. Az alkalmazás neve továbbra is „{app_name}” néven jelenik meg.</string>
+    <string name="appIconEnableIcon">Alternatív alkalmazásikon használata</string>
+    <string name="appIconEnableIconAndName">Alternatív alkalmazásikon és -név használata</string>
+    <string name="appIconSelect">Válasszon alternatív alkalmazásikont</string>
+    <string name="appIconSelectionTitle">Ikon</string>
+    <string name="appNameCalculator">Számológép</string>
+    <string name="appNameMeetingSE">Találkozók</string>
+    <string name="appNameNews">Hírek</string>
+    <string name="appNameNotes">Jegyzetek</string>
+    <string name="appNameStocks">Részvények</string>
+    <string name="appNameWeather">Időjárás</string>
     <string name="appearanceAutoDarkMode">Automatikus sötét mód</string>
     <string name="appearanceHideMenuBar">Menüsor elrejtése</string>
     <string name="appearanceLanguage">Nyelv</string>
@@ -57,6 +83,7 @@
     <string name="appearanceZoomIn">Nagyítás növelése</string>
     <string name="appearanceZoomOut">Nagyítás csökkentése</string>
     <string name="attachment">Melléklet</string>
+    <string name="attachments">Mellékletek</string>
     <string name="attachmentsAdd">Melléklet hozzáadása</string>
     <string name="attachmentsAlbumUnnamed">Névtelen album</string>
     <string name="attachmentsAutoDownload">Mellékletek automatikus letöltése</string>
@@ -118,9 +145,11 @@
     <string name="banErrorFailed">A kitiltás sikertelen</string>
     <string name="banUnbanErrorFailed">A kitiltás feloldása sikertelen</string>
     <string name="banUnbanUser">Felhasználó kitiltásának feloldása</string>
+    <string name="banUnbanUserDescription">Adja meg annak a felhasználónak a fiókazonosítóját, amelyiknek a kitiltását fel akarja oldani</string>
     <string name="banUnbanUserUnbanned">Kitiltás feloldva</string>
     <string name="banUser">Felhasználó kitiltása</string>
     <string name="banUserBanned">Felhasználó kitiltva</string>
+    <string name="banUserDescription">Adja meg annak a felhasználónak a fiókazonosítóját, amelyiket ki akarja tiltani</string>
     <string name="block">Letiltás</string>
     <string name="blockBlockedNone">Nincsenek blokkolt kontaktok</string>
     <string name="blockBlockedUser">{name} letiltva</string>
@@ -147,6 +176,7 @@
     <string name="callsNotificationsRequired">A hang- és videóhívásokhoz szükséges, hogy az értesítések engedélyezve legyenek az eszköz rendszerbeállításaiban.</string>
     <string name="callsPermissionsRequired">Hívási engedély szükséges</string>
     <string name="callsPermissionsRequiredDescription">A hang és videó hívásokat az adatvédelmi beállításokban engedélyezheted.</string>
+    <string name="callsPermissionsRequiredDescription1">A „Hang- és videóhívások” engedélyt a Jogosultságbeállításokban adhatja meg.</string>
     <string name="callsReconnecting">Újracsatlakozás…</string>
     <string name="callsRinging">Kicseng...</string>
     <string name="callsSessionCall">{app_name} Hívás</string>
@@ -180,15 +210,24 @@
     <string name="clearDeviceAndNetworkConfirm">Biztos, hogy törölni szeretnéd az adataidat a hálózatról? Ezután nem fogod tudni visszaállítani az üzeneteidet vagy kapcsolataidat.</string>
     <string name="clearDeviceDescription">Biztos, hogy törölni szeretnéd a készülékedet?</string>
     <string name="clearDeviceOnly">Törlés csak az eszközről</string>
+    <string name="clearDeviceRestart">Eszköz törlése és újraindítás</string>
+    <string name="clearDeviceRestore">Eszköz törlése és visszaállítás</string>
     <string name="clearMessages">Összes üzenet törlése</string>
     <string name="clearMessagesChatDescription">Biztos, hogy az összes <b>{name}</b> üzenetet törölni szeretnéd az eszközödről?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Biztosan törli az összes üzenetet a(z) <b>{name}</b> nevű partnerével való beszélgetésből ezen az eszközön?</string>
     <string name="clearMessagesCommunity">Biztos, hogy az összes <b>{community_name}</b> üzenetet törölni szeretnéd az eszközödről?</string>
+    <string name="clearMessagesCommunityUpdated">Biztosan törli a(z) <b>{community_name}</b> összes üzenetét ezen az eszközön?</string>
     <string name="clearMessagesForEveryone">Törlés mindenkinek</string>
     <string name="clearMessagesForMe">Törlés nekem</string>
     <string name="clearMessagesGroupAdminDescription">Biztos, hogy az összes <b>{group_name}</b> üzenetet törölni szeretnéd?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Biztosan törli a(z) <b>{group_name}</b> összes üzenetét?</string>
     <string name="clearMessagesGroupDescription">Biztos, hogy az összes <b>{group_name}</b> üzenetet törölni szeretnéd az eszközödről?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Biztosan törli a(z) <b>{group_name}</b> összes üzenetét ezen az eszközön?</string>
     <string name="clearMessagesNoteToSelfDescription">Biztos, hogy az összes \'Privát feljegyzés\' üzenetet törölni szeretnéd az eszközödről?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Biztosan törli az összes <b>Jegyzet magamnak</b> üzenetet ezen az eszközön?</string>
+    <string name="clearOnThisDevice">Törlés ezen az eszközön</string>
     <string name="close">Bezárás</string>
+    <string name="closeApp">Alkalmazás bezárása</string>
     <string name="closeWindow">Ablak bezárása</string>
     <string name="commitHashDesktop">Commit Hash: {hash}</string>
     <string name="communityBanDeleteDescription">Ez ki fogja tiltani a kiválasztott felhasználót ebből a közösségből és törölni fogja az összes üzenetét. Biztosan folytatni akarod?</string>
@@ -254,6 +293,8 @@
     <string name="copy">Másolás</string>
     <string name="create">Létrehozás</string>
     <string name="cut">Kivágás</string>
+    <string name="databaseErrorClearDataWarning">Biztosan törli az összes üzenetet, mellékletet és fiókadatot erről az eszközről, és új fiókot hoz létre?</string>
+    <string name="databaseErrorRestoreDataWarning">Biztosan törli az összes üzenetet, mellékletet és fiókadatot erről az eszközről, és vissza állítja a fiókját a hálózatról?</string>
     <string name="databaseErrorTimeout">Észrevettük, hogy {app_name} indítása sokáig tart.\n\nTovábbra is várhatsz, exportálhatod az eszköz naplóit a hibaelhárításhoz, vagy megpróbálhatod újraindítani {app_name}-t.</string>
     <string name="databaseErrorUpdate">Az alkalmazás adatbázisa nem kompatibilis a {app_name} jelenlegi verziójával. Telepítsd újra az alkalmazást, és állítsd vissza fiókját egy új adatbázis létrehozásához és a {app_name} további használathoz.\n\nFigyelmeztetés: Ez minden két hétnél régebbi üzenet és melléklet elvesztését eredményezi.</string>
     <string name="databaseOptimizing">Adatbázis optimalizálása</string>
@@ -275,9 +316,15 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Várj amíg a csoport elkészül...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Nem sikerült frissíteni a csoportot</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nincs jogod mások üzeneteit törölni</string>
+    <string name="deleteContactDescription">Biztosan törli a névjegyek közül a következőt: <b>{name}</b>?\n\nEzzel törli a beszélgetést, beleértve az összes üzenetet és mellékletet. A jövőben a(z) <b>{name}</b> nevű partnerétől érkező üzenetek üzenetkérésként fognak megjelenni.</string>
+    <string name="deleteConversationDescription">Biztosan törli a következő partnerével folytatott beszélgetést: <b>{name}</b>?\nEz véglegesen törli az összes üzenetet és mellékletet.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Üzenet törlése</item>
         <item quantity="other">Üzenetek törlése</item>
+    </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Biztosan törölni akarja ezt az üzenetet?</item>
+        <item quantity="other">Biztosan törölni akarja ezeket az üzeneteket?</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Üzenet törölve</item>
@@ -285,6 +332,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Ez az üzenet törölve lett</string>
     <string name="deleteMessageDeletedLocally">Ez az üzenet törölve lett ezen az eszközön</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Biztosan csak erről az eszközről szeretné törölni ezt az üzenetet?</item>
+        <item quantity="other">Biztosan csak erről az eszközről szeretné törölni ezeket az üzeneteket?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Biztos, hogy törölni szeretnéd ezt az üzenetet mindenki számára?</string>
     <string name="deleteMessageDeviceOnly">Törlés csak ezen az eszközön</string>
     <string name="deleteMessageDevicesAll">Törlés minden eszközömön</string>
@@ -292,6 +343,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Nem sikerült az üzenet törlése</item>
         <item quantity="other">Nem sikerült az üzenetek törlése</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Ez az üzenet nem törölhető az összes eszközéről</item>
+        <item quantity="other">A kiválasztott üzenetek közül néhány nem törölhető az összes eszközéről</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Ez az üzenet nem törölhető mindenki számára</item>
+        <item quantity="other">A kiválasztott üzenetek közül néhányat nem lehet mindenki számára törölni</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Biztos, hogy törölni szeretnéd ezeket az üzeneteket mindenki számára?</string>
     <string name="deleting">Törlés</string>
@@ -322,7 +381,7 @@
     <string name="disappearingMessagesSet"><b>{name}</b> beállította, hogy az üzenetek eltűnjenek {time} után, miután el lettek {disappearing_messages_type}.</string>
     <string name="disappearingMessagesSetYou"><b>Te</b> beállítottad, hogy az üzenetek eltűnjenek {time} után, miután el lettek {disappearing_messages_type}.</string>
     <string name="disappearingMessagesTimer">Időzítő</string>
-    <string name="disappearingMessagesTurnedOff"><b>{name}</b> kikapcsolta az eltűnő üzeneteket. Az általuk küldött üzenetek többé nem fognak eltűnni.</string>
+    <string name="disappearingMessagesTurnedOff"><b>{name}</b> kikapcsolta az eltűnő üzeneteket. Az általa küldött üzenetek többé nem tűnnek el.</string>
     <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> <b>kikapcsolta</b> az eltűnő üzeneteket.</string>
     <string name="disappearingMessagesTurnedOffYou"><b>Te</b> <b>kikapcsoltad</b> az eltűnő üzeneteket. Az általad küldött üzenetek többé nem fognak eltűnni.</string>
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Te</b> <b>kikapcsoltad</b> az eltűnő üzeneteket.</string>
@@ -339,7 +398,9 @@
     <string name="displayNameNew">Válassz új felhasználónevet</string>
     <string name="displayNamePick">Válassz egy felhasználónevet</string>
     <string name="displayNameSet">Megjelenítendő név beállítása</string>
+    <string name="displayNameVisible">Az Ön megjelenítendő neve látható a felhaszálók, a csoportok és a közösségek számára, amelyekkel interakcióba lép.</string>
     <string name="document">Dokumentum</string>
+    <string name="donate">Adományozás</string>
     <string name="done">Kész</string>
     <string name="download">Letöltés</string>
     <string name="downloading">Letöltés...</string>
@@ -372,11 +433,14 @@
     <string name="errorConnection">Ellenőrizd az internetkapcsolatot, majd próbáld újra.</string>
     <string name="errorCopyAndQuit">Hiba másolása és kilépés</string>
     <string name="errorDatabase">Adatbázishiba</string>
+    <string name="errorGeneric">Valami hiba történt. Próbálja meg később újra.</string>
     <string name="errorUnknown">Ismeretlen hiba történt.</string>
+    <string name="failedToDownload">Sikertelen letöltés</string>
     <string name="failures">Hibák</string>
     <string name="file">Fájl</string>
     <string name="files">Fájlok</string>
     <string name="followSystemSettings">Rendszerbeállítások követése</string>
+    <string name="forever">Örökre</string>
     <string name="from">Feladó:</string>
     <string name="fullScreenToggle">Teljes képernyő be-/kikapcsolása</string>
     <string name="gif">GIF</string>
@@ -386,6 +450,8 @@
     <string name="groupCreate">Csoport létrehozása</string>
     <string name="groupCreateErrorNoMembers">Válassz legalább 1 csoporttagot.</string>
     <string name="groupDelete">Csoport törlése</string>
+    <string name="groupDeleteDescriptionMember">Biztosan törölni szeretné a(z) <b>{group_name}</b> nevű csoportot?</string>
+    <string name="groupDeletedMemberDescription">A(z) {group_name} nevű csoportot egy csoport-adminisztrátor törölte. További üzeneteket már nem küldhet.</string>
     <string name="groupDescriptionEnter">Adj meg egy csoportleírást</string>
     <string name="groupDisplayPictureUpdated">A csoport képe frissítve lett.</string>
     <string name="groupEdit">Csoport szerkesztése</string>
@@ -398,19 +464,28 @@
     <string name="groupInviteFailedMultiple">Nem sikerült meghívni {name}-t és {count} másik személyt a {group_name} csoportba</string>
     <string name="groupInviteFailedTwo">Nem sikerült meghívni {name}-t és {other_name}-t a {group_name} csoportba</string>
     <string name="groupInviteFailedUser">Nem sikerült meghívni {name}-t a {group_name} csoportba</string>
+    <string name="groupInviteNotSent">A meghívó nem lett elküldve</string>
+    <string name="groupInviteReinvite"><b>{name}</b> meghívta Önt, hogy csatlakozzon újra a(z) <b>{group_name}</b> nevű csoporthoz, ahol Ön adminisztrátor.</string>
+    <string name="groupInviteReinviteYou">Ön meghívást kapott, hogy csatlakozzon a(z) <b>{group_name}</b> nevű csoporthoz, ahol Ön adminisztrátor.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Meghívó küldése</item>
+        <item quantity="other">Meghívók küldése</item>
+    </plurals>
     <string name="groupInviteSent">Meghívás elküldve</string>
+    <string name="groupInviteStatusUnknown">A meghívó állapota ismeretlen</string>
     <string name="groupInviteSuccessful">A meghívás sikeres volt.</string>
     <string name="groupInviteVersion">A felhasználóknak a legújabb verzióval kell rendelkezniük, hogy meghívásokat kaphassanak</string>
     <string name="groupInviteYou"><b>Te</b> meghívást kaptál a csoportba.</string>
     <string name="groupInviteYouAndMoreNew"><b>Te</b> és <b>{count} másik személy</b> meghívást kaptatok a csoportba.</string>
     <string name="groupInviteYouAndOtherNew"><b>Te</b> és <b>{other_name}</b> meghívást kaptatok a csoportba.</string>
+    <string name="groupInviteYouHistory"><b>Önt</b> meghívták a csoportba. A csevegési előzmények meg lettek osztva.</string>
     <string name="groupLeave">Kilépés a csoportból</string>
     <string name="groupLeaveDescription">Biztos, hogy ki akarsz lépni a(z) <b>{group_name}</b> csoportból?</string>
     <string name="groupLeaveDescriptionAdmin">Biztos, hogy ki akarsz lépni a <b>{group_name}</b> csoportból?\n\nEz az összes tag eltávolításával és a csoport teljes tartalmának törlésével jár.</string>
     <string name="groupLeaveErrorFailed">Nem sikerült kilépni a {group_name} csoportból</string>
-    <string name="groupMemberLeft"><b>{name}</b> kilépett a csoportból.</string>
+    <string name="groupMemberLeft"><b>{name}</b> elhagyta a csoportot.</string>
     <string name="groupMemberLeftMultiple"><b>{name}</b> és <b>{count} másik személy</b> kiléptek a csoportból.</string>
-    <string name="groupMemberLeftTwo"><b>{name}</b> és <b>{other_name}</b> kiléptek a csoportból.</string>
+    <string name="groupMemberLeftTwo"><b>{name}</b> és <b>{other_name}</b> kilépett a csoportból.</string>
     <string name="groupMemberNew"><b>{name}</b> meghívást kapott a csoportba.</string>
     <string name="groupMemberNewHistory"><b>{name}</b> meg lett hívva a csoportba. A beszélgetési előzményeket megosztottuk.</string>
     <string name="groupMemberNewHistoryMultiple"><b>{name}</b> és <b>{count} másik személy</b> meg lettek hívva a csoportba. A beszélgetési előzményeket megosztottuk.</string>
@@ -418,7 +493,8 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> és <b>{count} másik személy</b> meghívást kaptak a csoportba.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> és <b>{other_name}</b> meghívást kaptak a csoportba.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Te</b> és <b>{count} másik személy</b> meg lettetek hívva a csoportba. A beszélgetési előzményeket megosztottuk.</string>
-    <string name="groupMemberYouLeft"><b>Te</b> kiléptél a csoportból.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Önt</b> és <b>{other_name}-t</b> meghívták a csoportba. A csevegési előzmények meg lettek osztva.</string>
+    <string name="groupMemberYouLeft"><b>Ön</b> elhagyta a csoportot.</string>
     <string name="groupMembers">Csoporttagok</string>
     <string name="groupMembersNone">Nincsenek más tagok ebben a csoportban.</string>
     <string name="groupName">Csoport neve</string>
@@ -427,10 +503,14 @@
     <string name="groupNameEnterShorter">Adj meg egy rövidebb csoportnevet.</string>
     <string name="groupNameNew">A csoport neve mostantól {group_name}.</string>
     <string name="groupNameUpdated">Csoport neve frissítve lett.</string>
+    <string name="groupNameVisible">A csoport neve minden csoporttag számára látható.</string>
     <string name="groupNoMessages">Nincsenek üzenetek a <b>{group_name}</b> csoportban. Küldj egy üzenetet a beszélgetés megkezdéséhez!</string>
+    <string name="groupNotUpdatedWarning">A csoportot több mint 30 napja nem frissítették. Előfordulhat, hogy problémák merülnek fel az üzenetek küldésével vagy a csoportinformációk megtekintésével kapcsolatban.</string>
     <string name="groupOnlyAdmin">Te vagy az egyetlen adminisztrátor a <b>{group_name}</b> csoportban.\n\nA csoporttagok és beállítások nem változtathatók adminisztrátor nélkül.</string>
+    <string name="groupPendingRemoval">Eltávolításra vár</string>
     <string name="groupPromotedYou"><b>Te</b> adminisztrátorrá lettél előléptetve.</string>
     <string name="groupPromotedYouMultiple"><b>Te</b> és <b>{count} másik személy</b> adminisztrátorrá lettetek előléptetve.</string>
+    <string name="groupPromotedYouTwo"><b>Ön</b> és <b>{other_name}</b> elő lett léptetve adminisztrátorrá.</string>
     <string name="groupRemoveDescription">El szeretnéd távolítani <b>{name}</b>-t a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionMultiple">El szeretnéd távolítani <b>{name}</b>-t és <b>{count} másik személyt</b> a <b>{group_name}</b> csoportból?</string>
     <string name="groupRemoveDescriptionTwo">El szeretnéd távolítani <b>{name}</b>-t és <b>{other_name}</b>-t a <b>{group_name}</b> csoportból?</string>
@@ -443,9 +523,10 @@
         <item quantity="other">Felhasználók eltávolítása</item>
     </plurals>
     <string name="groupRemoved"><b>{name}</b> el lett távolítva a csoportból.</string>
-    <string name="groupRemovedMultiple"><b>{name}</b> és <b>{count} mások</b> el lettek távolítva a csoportból.</string>
-    <string name="groupRemovedTwo"><b>{name}</b> és <b>{other_name}</b> el lettek távolítva a csoportból.</string>
+    <string name="groupRemovedMultiple"><b>{name}</b> és <b>{count} másik személy</b> el lett távolítva a csoportból.</string>
+    <string name="groupRemovedTwo"><b>{name}</b> és <b>{other_name}</b> el lett távolítva a csoportból.</string>
     <string name="groupRemovedYou">El lettél távolítva <b>{group_name}</b> csoportból.</string>
+    <string name="groupRemovedYouGeneral">Ön el lett távolítva a csoportból.</string>
     <string name="groupRemovedYouMultiple"><b>Te</b> és <b>{count} másik személy</b> el lettetek távolítva a csoportból.</string>
     <string name="groupRemovedYouTwo"><b>Te</b> és <b>{other_name}</b> el lettetek távolítva a csoportból.</string>
     <string name="groupSetDisplayPicture">Csoportprofilkép beállítása</string>
@@ -463,22 +544,37 @@
     <string name="helpWedLoveYourFeedback">Örülnénk a visszajelzésednek</string>
     <string name="hide">Elrejtés</string>
     <string name="hideMenuBarDescription">A rendszer menüsor láthatóságának be-/kikapcsolása</string>
+    <string name="hideNoteToSelfDescription">Biztosan el akarja rejteni a <b>Jegyzet magamnak</b> jegyzetet a beszélgetési listából?</string>
     <string name="hideOthers">Többi elrejtése</string>
     <string name="image">Kép</string>
+    <string name="images">képek</string>
     <string name="incognitoKeyboard">Inkognitó billentyűzet</string>
     <string name="incognitoKeyboardDescription">Inkognitó mód igénylése, ha elérhető. A használt billentyűzettől függően előfordulhat, hogy a billentyűzet figyelmen kívül hagyja ezt a kérést.</string>
     <string name="info">Üzenet adatai</string>
     <string name="invalidShortcut">Érvénytelen parancsikon</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Sikertelen meghívás</item>
+        <item quantity="other">Sikertelen meghívások</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">A meghívót nem lehetett elküldeni. Szeretné újra megpróbálni?</item>
+        <item quantity="other">A meghívókat nem lehetett elküldeni. Szeretné újra megpróbálni?</item>
+    </plurals>
     <string name="join">Csatlakozás</string>
     <string name="later">Később</string>
     <string name="learnMore">További információ</string>
     <string name="leave">Kilépés</string>
     <string name="leaving">Kilépés...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Ez a csoport most csak olvasható. A csevegés folytatásához hozza létre újra ezt a csoportot.</string>
+    <string name="legacyGroupAfterDeprecationMember">Ez a csoport most csak olvasható. Kérje meg a csoport adminisztrátorát, hogy hozza létre újra ezt a csoportot a csevegés folytatásához.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">A csoportok fejlesztése megtörtént! A nagyobb megbízhatóság érdekében hozza létre újra ezt a csoportot. Ez a csoport csak-olvashatóvá válik ekkor: {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">A csoportok fejlesztése megtörtént! Kérje meg a csoport adminisztrátorát, hogy hozza létre újra ezt a csoportot a nagyobb megbízhatóság érdekében. Ez a csoport csak-olvashatóvá válik ekkor: {date}.</string>
+    <string name="legacyGroupChatHistory">A csevegési előzmények nem kerülnek át az új csoportba. Továbbra is megtekintheti az előzményeket a régi csoportban.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> csatlakozott a csoporthoz.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> és <b>{count} másik személy</b> csatlakozott a csoporthoz.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Te</b> és <b>{count} másik személy</b> csatlakoztatok a csoporthoz.</string>
     <string name="legacyGroupMemberNewYouOther"><b>Te</b> és <b>{other_name}</b> csatlakoztatok a csoporthoz.</string>
-    <string name="legacyGroupMemberTwoNew"><b>{name}</b> és <b>{other_name}</b> csatlakoztak a csoporthoz.</string>
+    <string name="legacyGroupMemberTwoNew"><b>{name}</b> és <b>{other_name}</b> csatlakozott a csoporthoz.</string>
     <string name="legacyGroupMemberYouNew"><b>Te</b> csatlakoztál a csoporthoz.</string>
     <string name="linkPreviews">Linkelőnézetek</string>
     <string name="linkPreviewsDescription">Hivatkozás előnézet készítése támogatott URL-ekhez.</string>
@@ -502,6 +598,7 @@
     <string name="lockAppStatus">Zár státusza</string>
     <string name="lockAppUnlock">Koppintson a feloldáshoz</string>
     <string name="lockAppUnlocked">{app_name} feloldva</string>
+    <string name="manageMembers">Tagok kezelése</string>
     <string name="max">Maximum</string>
     <string name="media">Média</string>
     <plurals name="members">
@@ -525,6 +622,7 @@
     <string name="membersInviteShareNewMessagesOnly">Csak új üzenetek megosztása</string>
     <string name="membersInviteTitle">Meghívás</string>
     <string name="message">Üzenet</string>
+    <string name="messageBubbleReadMore">Tudjon meg többet</string>
     <string name="messageEmpty">Ez az üzenet üres.</string>
     <string name="messageErrorDelivery">Üzenet kézbesítése sikertelen</string>
     <string name="messageErrorLimit">Üzenethossz-korlát elérve</string>
@@ -540,8 +638,12 @@
     <string name="messageNewDescriptionDesktop">Új beszélgetés indítása az ismerősöd Felhasználó ID-jának megadásával.</string>
     <string name="messageNewDescriptionMobile">Új beszélgetés indítása úgy, hogy beírja ismerősöd Felhasználó ID-ját, ONS-t vagy beolvassa a QR kódját.</string>
     <plurals name="messageNewYouveGot">
-        <item quantity="one">Új üzeneted érkezett.</item>
-        <item quantity="other">%1$d új üzeneted érkezett.</item>
+        <item quantity="one">Új üzenete érkezett</item>
+        <item quantity="other">%1$d új üzenete érkezett.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Egy új üzenet érkezett a(z) %1$s nevű csoportban.</item>
+        <item quantity="other">%1$d új üzenet érkezett a(z) %2$s nevű csoportban.</item>
     </plurals>
     <string name="messageReplyingTo">Válasz erre</string>
     <string name="messageRequestDisabledToastAttachments">Addig nem küldhet mellékleteket, amíg az üzenetkérelmét el nem fogadják</string>
@@ -556,10 +658,11 @@
     <string name="messageRequestsClearAllExplanation">Biztos, hogy törölni szeretnéd az összes üzenetkérelmet és csoportmeghívót?</string>
     <string name="messageRequestsCommunities">Közösségi üzenetkérelmek</string>
     <string name="messageRequestsCommunitiesDescription">A közösségi beszélgetésekből származó üzenetek engedélyezése.</string>
+    <string name="messageRequestsContactDelete">Biztosan törölni szeretné ezt az üzenetkérést és a hozzá tartozó kapcsolatot?</string>
     <string name="messageRequestsDelete">Biztos, hogy törölni szeretnéd ezt az üzenetkérelmet?</string>
     <string name="messageRequestsNew">Új üzeneted érkezett</string>
     <string name="messageRequestsNonePending">Nincsenek függőben lévő üzenetkérelmek</string>
-    <string name="messageRequestsTurnedOff"><b>{name}</b> kikapcsolta a Közösségi üzenetkérelmek funkciót, így nem küldhetsz neki üzenetet.</string>
+    <string name="messageRequestsTurnedOff"><b>{name}</b> kikapcsolta az üzenetkéréseket a közösségi beszélgetéseknél, ezért nem küldhet neki üzenetet.</string>
     <string name="messageSelect">Üzenet kiválasztása</string>
     <string name="messageSnippetGroup">{author}: {message_snippet}</string>
     <string name="messageStatusFailedToSend">Küldés sikertelen</string>
@@ -573,9 +676,19 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Hangüzenet</string>
     <string name="messages">Üzenetek</string>
     <string name="minimize">Minimalizálás</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Az üzenetek karakterkorlátja %1$s karakter. %2$d maradt</item>
+        <item quantity="other">Az üzenetek karakterkorlátja %1$s karakter. %2$d maradt</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">Üzenet hossza</string>
+    <string name="modalMessageCharacterTooLongDescription">Az üzenet karakterszáma túllépte a megadott. Rövidítse le az üzenetet {limit} karakterekre vagy kevesebbre.</string>
+    <string name="modalMessageCharacterTooLongTitle">Az üzenet túl hosszú</string>
+    <string name="modalMessageTooLongDescription">Rövidítse le az üzenetét {limit} karakterekre vagy kevesebbre.</string>
+    <string name="modalMessageTooLongTitle">Az üzenet túl hosszú</string>
     <string name="next">Tovább</string>
     <string name="nicknameDescription">Válasszon becenevet <b>{name}</b> számára. Ez fog megjelenni az egyéni és csoportos beszélgetésekben.</string>
     <string name="nicknameEnter">Add meg a becenevet</string>
+    <string name="nicknameErrorShorter">Adjon meg egy rövidebb becenevet</string>
     <string name="nicknameRemove">Becenév eltávolítása</string>
     <string name="nicknameSet">Becenév beállítása</string>
     <string name="no">Nem</string>
@@ -594,6 +707,7 @@
     <string name="notificationsContentShowNoNameOrContent">Se név, se üzenet</string>
     <string name="notificationsFastMode">Gyors mód</string>
     <string name="notificationsFastModeDescription">A Google értesítési szerverein keresztül megbízhatóan és azonnal értesítést kapsz az új üzenetekről.</string>
+    <string name="notificationsFastModeDescriptionHuawei">A Huawei értesítési kiszolgálóinak segítségével megbízhatóan és azonnal értesítést fog kapni az új üzenetekről.</string>
     <string name="notificationsFastModeDescriptionIos">Az Apple értesítési szerverein keresztül megbízhatóan és azonnal értesítést kapsz az új üzenetekről.</string>
     <string name="notificationsGoToDevice">Rendszerbeállítások megnyitása</string>
     <string name="notificationsHeaderAllMessages">Értesítések - Összes</string>
@@ -609,6 +723,8 @@
     <string name="notificationsMuteFor">Némítás: {time_large}</string>
     <string name="notificationsMuteUnmute">Némítás feloldása</string>
     <string name="notificationsMuted">Némítva</string>
+    <string name="notificationsMutedFor">Elnémítva: {time_large}</string>
+    <string name="notificationsMutedForTime">Némítva eddig: {date_time}</string>
     <string name="notificationsSlowMode">Lassított mód</string>
     <string name="notificationsSlowModeDescription">{app_name} időnként a háttérben ellenőrizni fogja, hogy vannak-e új üzenetek.</string>
     <string name="notificationsSound">Hang</string>
@@ -667,20 +783,29 @@
     <string name="passwordSet">Jelszó beállítása</string>
     <string name="passwordSetDescription">A jelszó be lett állítva. Tartsd biztonságos helyen!</string>
     <string name="paste">Beillesztés</string>
+    <string name="permissionChange">Engedélyváltozás</string>
     <string name="permissionMusicAudioDenied">{app_name} alkalmazásnak zene és hang-hozzáférésre van szüksége a fájlok és zenék küldéséhez, de ez nem lett megadva. Kérlek, lépj tovább az alkalmazás beállításokhoz, válaszd az \"Engedélyek\" lehetőséget, majd engedélyezd a \"Zene és hang\" hozzáférést.</string>
     <string name="permissionsAppleMusic">{app_name}-nak szüksége van az Apple Music használatára a média mellékletek lejátszásához.</string>
     <string name="permissionsAutoUpdate">Automatikus frissítés</string>
     <string name="permissionsAutoUpdateDescription">Indításkor automatikusan ellenőrzi a frissítéseket.</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">A videohívások indításához kamerához való hozzáférés szükséges. Kapcsolja be a „Kamera” engedélyt a Beállításokban a folytatáshoz.</string>
     <string name="permissionsCameraDenied">{app_name} alkalmazásnak kamera-hozzáférésre van szüksége képek és videók felvételéhez, de ez nem lett megadva. Kérlek, lépj tovább az alkalmazás beállításokhoz, válaszd az \"Engedélyek\" lehetőséget, majd engedélyezd a \"Kamera\" hozzáférést.</string>
+    <string name="permissionsCameraDescriptionIos">Engedélyezze a kamerához való hozzáférést videohívásokhoz.</string>
     <string name="permissionsFaceId">A {app_name} képernyőzár funkciója Face ID-t használ.</string>
     <string name="permissionsKeepInSystemTray">Rendszertálcán tartás</string>
-    <string name="permissionsKeepInSystemTrayDescription">{app_name} továbbra is fut a háttérben, amikor bezárja az ablakot</string>
+    <string name="permissionsKeepInSystemTrayDescription">A(z) {app_name} az ablak bezárása után is tovább fut a háttérben</string>
     <string name="permissionsLibrary">{app_name} alkalmazásnak fotótár-hozzáférésre van szüksége a folytatáshoz. A hozzáférést az iOS beállításokban engedélyezheted.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">A hívások lehetővé tételéhez szükséges a helyi hálózathoz való hozzáférés. Kapcsolja be a „Helyi hálózat” engedélyt a Beállításokban a folytatáshoz.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">A(z) {app_name} alkalmazásnak hozzáférésre van szüksége a helyi hálózathoz a hang- és videohívások indításához.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Engedélyezze a helyi hálózathoz való hozzáférést a hang- és videohívások lehetővé tételéhez.</string>
+    <string name="permissionsLocalNetworkIos">Helyi hálózat</string>
     <string name="permissionsMicrophone">Mikrofon</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} alkalmazásnak mikrofon-hozzáférésre van szüksége hívások bonyolítására és hangüzeneteket rögzítésére, de ez nem lett megadva. Koppints a Beállítások → Engedélyek lehetőségre, és kapcsold be a \"Mikrofon\" lehetőséget.</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">A hívások indításához és hangüzenetek rögzítéséhez mikrofonhoz való hozzáférés szükséges. Kapcsolja be a „Mikrofon” engedélyt a Beállításokban a folytatáshoz.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">A mikrofon engedélyeinek beállításait a {app_name} adatvédelmi beállításaiban engedélyezheted</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} alkalmazásnak mikrofon-hozzáférésre van szüksége hívások bonyolítására és hangüzeneteket rögzítésére.</string>
     <string name="permissionsMicrophoneDescription">Mikrofon hozzáférés engedélyezése.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Engedélyezze a mikrofonhoz való hozzáférést hanghívások és hangüzenetek küldéséhez.</string>
     <string name="permissionsMusicAudio">{app_name} alkalmazásnak zene és hang-hozzáférésre van szüksége a fájlok és zenék küldéséhez.</string>
     <string name="permissionsRequired">Engedély szükséges</string>
     <string name="permissionsStorageDenied">{app_name} alkalmazásnak fotótár-hozzáférésre van szüksége a képek és videók küldéséhez, de ez nem lett megadva. Kérlek, lépj tovább az alkalmazás beállításokhoz, válaszd az \"Engedélyek\" lehetőséget, majd engedélyezd a \"Fotók és videók\" hozzáférést.</string>
@@ -688,11 +813,17 @@
     <string name="permissionsStorageSave">{app_name} alkalmazásnak tárhely-hozzáférésre van szüksége a mellékletek és médiák mentéséhez.</string>
     <string name="permissionsStorageSaveDenied">{app_name} alkalmazásnak tárhely-hozzáférésre van szüksége a fotók és videók mentéséhez, de ez nem lett megadva. Kérlek, lépj tovább az alkalmazás beállításokhoz, válaszd az \"Engedélyek\" lehetőséget, majd engedélyezd a \"Tárhely\" hozzáférést.</string>
     <string name="permissionsStorageSend">{app_name} alkalmazásnak tárhely-hozzáférésre van szüksége a fotók és videók elküldéséhez.</string>
+    <string name="permissionsWriteCommunity">Nincs írási jogosultsága ebben a közösségben</string>
     <string name="pin">Kitűzés</string>
     <string name="pinConversation">Beszélgetés kitűzése</string>
     <string name="pinUnpin">Kitűzés eltávolítása</string>
     <string name="pinUnpinConversation">Beszélgetés kitűzésének eltávolítása</string>
     <string name="preview">Előnézet</string>
+    <string name="proCallToActionLongerMessages">Szeretne hosszabb üzeneteket küldeni? Küldjön több szöveget és oldja fel a prémium funkciókat a Session Pro szolgáltatással</string>
+    <string name="proFeatureListLargerGroups">Nagyobb csoportos beszélgetések akár 300 taggal</string>
+    <string name="proFeatureListLoadsMore">Plusz még több exkluzív funkció</string>
+    <string name="proFeatureListLongerMessages">Legfeljebb 10 000 karakteres üzenetek</string>
+    <string name="proSendMore">Küldjön többet ezzel:</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Profilkép</string>
     <string name="profileDisplayPictureRemoveError">Nem sikerült törölni a profilképet.</string>
@@ -700,6 +831,14 @@
     <string name="profileDisplayPictureSizeError">Válassz egy kisebb fájlt.</string>
     <string name="profileErrorUpdate">Nem sikerült frissíteni a profilt.</string>
     <string name="promote">Előléptetés</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Sikertelen előléptetés</item>
+        <item quantity="other">Sikertelen előléptetések</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Az előléptetést nem lehetett alkalmazni. Szeretné újra megpróbálni?</item>
+        <item quantity="other">Az előléptetést nem lehetett alkalmazni. Szeretné újra megpróbálni?</item>
+    </plurals>
     <string name="qrCode">QR-kód</string>
     <string name="qrNotAccountId">Ez a QR-kód nem tartalmaz Felhasználó ID-t</string>
     <string name="qrNotRecoveryPassword">Ez a QR-kód nem tartalmaz visszaállítási jelszót</string>
@@ -717,6 +856,7 @@
     <string name="recoveryPasswordBannerTitle">Visszaállítási jelszó elmentése</string>
     <string name="recoveryPasswordDescription">A visszaállítási jelszavaddal új eszközökön is betöltheted a felhasználódat.\n\nA felhasználód nem állítható vissza a visszaálltási jelszó nélkül. Gondoskodj róla, hogy biztonságos helyen tárolod — és ne oszd meg senkivel.</string>
     <string name="recoveryPasswordEnter">Add meg a visszaálltási jelszavad</string>
+    <string name="recoveryPasswordErrorLoad">Hiba történt a helyreállítási jelszó betöltése közben.\n\nExportálja a naplófájlokat, majd töltse fel azokat a(z) {app_name} segítségével az ügyfélszolgálatnak a probléma megoldása érdekében.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Ellenőrizd a visszaállítási jelszavad és próbáld újra.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">A visszaállítási jelszó néhány szava helytelenül lett megadva. Ellenőrizd őket és próbáld újra.</string>
     <string name="recoveryPasswordErrorMessageShort">A megadott visszaállítási jelszó nem elég hosszú. Ellenőrizd és próbáld újra.</string>
@@ -730,7 +870,13 @@
     <string name="recoveryPasswordRestoreDescription">Írd be a visszaállítási jelszavad a fiókod betöltéséhez. Ha nem mentetted el, az alkalmazás beállításai között találhatod meg.</string>
     <string name="recoveryPasswordView">Jelszó megtekintése</string>
     <string name="recoveryPasswordWarningSendDescription">Ez a visszaállítási jelszavad. Ha elküldöd valakinek, teljes hozzáférést kap a fiókodhoz.</string>
+    <string name="recreateGroup">Csoport újra-létrehozása</string>
     <string name="redo">Újra</string>
+    <string name="remainingCharactersOverTooltip">Az üzenet hosszának csökkentése ennyivel: {count}</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d karakter maradt</item>
+        <item quantity="other">%1$d karakter maradt</item>
+    </plurals>
     <string name="remove">Eltávolítás</string>
     <string name="removePasswordFail">Jelszó eltávolítása sikertelen</string>
     <string name="reply">Válasz</string>
@@ -762,6 +908,7 @@
     <string name="searchSearching">Keresés...</string>
     <string name="select">Kiválasztás</string>
     <string name="selectAll">Összes kiválasztása</string>
+    <string name="selectAppIcon">Alkalmazásikon kiválasztása</string>
     <string name="send">Küldés</string>
     <string name="sending">Küldés</string>
     <string name="sent">Elküldve:</string>
@@ -771,30 +918,46 @@
     <string name="sessionHelp">Segítség</string>
     <string name="sessionInviteAFriend">Ismerős meghívása</string>
     <string name="sessionMessageRequests">Üzenetkérelmek</string>
+    <string name="sessionNetworkCurrentPrice">Jelenlegi {token_name_short} ára</string>
+    <string name="sessionNetworkDescription">Az üzenetek küldése a(z) {network_name} hálózaton keresztül történik. A hálózat a(z) {token_name_long} tokennel ösztönzött csomópontokat tartalmaz, amelyek decentralizálttá és biztonságossá teszik a(z) {app_name} alkalmazást.<font color="0"><b>Tudjon meg többet</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Ismerje meg a lekötést</string>
+    <string name="sessionNetworkMarketCap">Piaci sapka</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} csomópontok védik az <font color="0">Ön üzeneteit</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} csomópontok vannak a <font color="0">saját bolyban</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} aktív! Fedezze fel az új {network_name} menüpontot a beállításokban, hogy megtudja, hogyan működteti a(z) {token_name_long} a Sessiont.</string>
+    <string name="sessionNetworkSecuredBy">A hálózat a következővel van biztosítva:</string>
+    <string name="sessionNetworkTokenDescription">Amikor leköti a(z) {token_name_long} tokent, hogy biztosítsa a hálózatot, akkor {token_name_short} tokenben fog jutalmat kapni a(z) {staking_reward_pool} gyűjtőből.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Új</font></string>
     <string name="sessionNotifications">Értesítések</string>
     <string name="sessionPermissions">Engedélyek</string>
     <string name="sessionPrivacy">Adatvédelem</string>
     <string name="sessionRecoveryPassword">Visszaállítási Jelszó</string>
     <string name="sessionSettings">Beállítások</string>
     <string name="set">Beállít</string>
+    <string name="setCommunityDisplayPicture">Közösség megjelenítendő képének beállítása</string>
     <string name="settingsRestartDescription">Újra kell indítanod a {app_name}-t a beállítások érvényesítéséhez.</string>
     <string name="share">Megosztás</string>
     <string name="shareAccountIdDescription">Oszd meg a Felhasználó ID-dat ismerőseiddel, hogy a {app_name} alkalmazáson csevegjetek.</string>
     <string name="shareAccountIdDescriptionCopied">Ossza meg barátaival ott, ahol általában beszélgetni szokott velük - majd helyezze át a beszélgetést ide.</string>
     <string name="shareExtensionDatabaseError">Hiba történt az adatbázis megnyitásakor. Indítsd újra az alkalmazást, majd próbáld újra.</string>
+    <string name="shareExtensionNoAccountError">Úgy tűnik, még nincs {app_name} fiókja.\n\nA megosztás előtt létre kell hoznia egyet a(z) {app_name} alkalmazásban.</string>
     <string name="shareToSession">Megosztás {app_name}-en</string>
     <string name="show">Megjelenítés</string>
     <string name="showAll">Összes megjelenítése</string>
     <string name="showLess">Kevesebb mutatása</string>
+    <string name="showNoteToSelf">„Jegyzet magamnak” megjelenítése</string>
+    <string name="showNoteToSelfDescription">Biztosan meg akarja jeleníteni a <b>Jegyzet magamnak</b> jegyzetet a beszélgetési listában?</string>
     <string name="stickers">Matricák</string>
     <string name="supportGoTo">Támogatási oldal megnyitása</string>
     <string name="systemInformationDesktop">Rendszerinformáció: {information}</string>
+    <string name="tapToRetry">Érintse meg az újrapróbálkozáshoz</string>
     <string name="theContinue">Folytatás</string>
     <string name="theDefault">Alapértelmezett</string>
     <string name="theError">Hiba</string>
     <string name="tryAgain">Próbáld újra</string>
     <string name="typingIndicators">Gépelés-indikátorok</string>
     <string name="typingIndicatorsDescription">Gépelés-indikátorok küldése és fogadása.</string>
+    <string name="unavailable">Nem elérhető</string>
     <string name="undo">Visszavonás</string>
     <string name="unknown">Ismeretlen</string>
     <string name="updateApp">App frissítések</string>
@@ -802,10 +965,15 @@
     <string name="updateDownloading">Frissítés letöltése: {percent_loader}%</string>
     <string name="updateError">A frissítés sikertelen</string>
     <string name="updateErrorDescription">{app_name} frissítése sikertelen. Kérlek, látogass el a {session_download_url} oldalra és telepítsd manuálisan az új verziót, majd vedd fel a kapcsolatot az ügyfélszolgálatunkkal, hogy többet tudhassunk a problémáról.</string>
+    <string name="updateGroupInformation">Csoportinformációk frissítése</string>
+    <string name="updateGroupInformationDescription">A csoport neve és leírása minden csoporttag számára látható.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Adjon meg egy rövidebb csoportleírást</string>
     <string name="updateNewVersion">A(z) {app_name} új verziója elérhető, koppints a frissítéshez</string>
     <string name="updateReleaseNotes">Verzióinformáció megnyitása</string>
     <string name="updateSession">{app_name} Frissítés</string>
     <string name="updateVersion">Verzió {version}</string>
+    <string name="updated">Utoljára frissítve {relative_time}</string>
+    <string name="upgradeTo">Frissítés erre:</string>
     <string name="uploading">Feltöltés</string>
     <string name="urlCopy">URL másolása</string>
     <string name="urlOpen">URL megnyitása</string>

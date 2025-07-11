@@ -20,9 +20,10 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.utilities.TextSecurePreferences
+import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
-import org.thoughtcrime.securesms.conversation.v2.InputBarContentState
-import org.thoughtcrime.securesms.conversation.v2.InputBarState
+import org.thoughtcrime.securesms.InputbarViewModel
+import org.thoughtcrime.securesms.InputbarViewModel.InputBarContentState
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftView
 import org.thoughtcrime.securesms.conversation.v2.components.LinkPreviewDraftViewDelegate
 import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView
@@ -31,7 +32,6 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.util.addTextChangedListener
 import org.thoughtcrime.securesms.util.contains
-import org.thoughtcrime.securesms.util.setSafeOnClickListener
 
 // TODO: A lot of the logic regarding voice messages is currently performed in the ConversationActivity
 // TODO: and here - it would likely be best to move this into the CA's ViewModel.
@@ -84,6 +84,10 @@ class InputBar @JvmOverloads constructor(
         get() = binding.inputBarEditText.text?.toString() ?: ""
         set(value) { binding.inputBarEditText.setText(value) }
 
+    fun setText(text: CharSequence, type: TextView.BufferType){
+        binding.inputBarEditText.setText(text, type)
+    }
+
     var voiceRecorderState = VoiceRecorderState.Idle
 
     private val attachmentsButton = InputBarButton(context, R.drawable.ic_plus).apply {
@@ -98,54 +102,30 @@ class InputBar @JvmOverloads constructor(
         contentDescription = context.getString(R.string.AccessibilityId_send)
     }
 
+    private val textColor: Int by lazy {
+        context.getColorFromAttr(android.R.attr.textColorPrimary)
+    }
+
+    private val dangerColor: Int by lazy {
+        context.getColorFromAttr(R.attr.danger)
+    }
+
+    var sendOnly: Boolean = false
+
     init {
-        // Attachments button
-        binding.attachmentsButtonContainer.addView(attachmentsButton)
-        attachmentsButton.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        attachmentsButton.onPress = { toggleAttachmentOptions() }
-
-        // Microphone button
-        binding.microphoneOrSendButtonContainer.addView(microphoneButton)
-        microphoneButton.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-
-        microphoneButton.onMove = { delegate?.onMicrophoneButtonMove(it) }
-        microphoneButton.onCancel = { delegate?.onMicrophoneButtonCancel(it) }
-
-        // Use a separate 'raw' OnTouchListener to record the microphone button down/up timestamps because
-        // they don't get delayed by any multi-threading or delegates which throw off the timestamp accuracy.
-        // For example: If we bind something to `microphoneButton.onPress` and also log something in
-        // `microphoneButton.onUp` and tap the button then the logged output order is onUp and THEN onPress!
-        microphoneButton.setOnTouchListener(object : OnTouchListener {
-            override fun onTouch(v: View, event: MotionEvent): Boolean {
-
-                // We only handle single finger touch events so just consume the event and bail if there are more
-                if (event.pointerCount > 1) return true
-
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-
-                        // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
-                        if (voiceRecorderState == VoiceRecorderState.Idle) {
-                            startRecordingVoiceMessage()
-                        }
-                    }
-                    MotionEvent.ACTION_UP -> {
-
-                        // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
-                        // on, or finishing recording if just hold-to-record.
-                        delegate?.onMicrophoneButtonUp(event)
-                    }
-                }
-
-                // Return false to propagate the event rather than consuming it
-                return false
+        // Parse custom attributes
+        attrs?.let { attributeSet ->
+            val typedArray = context.obtainStyledAttributes(attributeSet, R.styleable.InputBar)
+            try {
+                sendOnly = typedArray.getBoolean(R.styleable.InputBar_sendOnly, false)
+            } finally {
+                typedArray.recycle()
             }
-        })
+        }
 
         // Send button
         binding.microphoneOrSendButtonContainer.addView(sendButton)
         sendButton.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        sendButton.isVisible = false
         sendButton.onUp = { e ->
             if (sendButton.contains(PointF(e.x, e.y))) {
                 delegate?.sendMessage()
@@ -162,6 +142,60 @@ class InputBar @JvmOverloads constructor(
         val incognitoFlag = if (TextSecurePreferences.isIncognitoKeyboardEnabled(context)) 16777216 else 0
         binding.inputBarEditText.imeOptions = binding.inputBarEditText.imeOptions or incognitoFlag // Always use incognito keyboard if setting enabled
         binding.inputBarEditText.delegate = this
+
+        if(sendOnly){
+            sendButton.isVisible = true
+            binding.attachmentsButtonContainer.isVisible = false
+            microphoneButton.isVisible = false
+        } else {
+            sendButton.isVisible = false
+
+            // Attachments button
+            binding.attachmentsButtonContainer.addView(attachmentsButton)
+            attachmentsButton.layoutParams =
+                LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            attachmentsButton.onPress = { toggleAttachmentOptions() }
+
+            // Microphone button
+            binding.microphoneOrSendButtonContainer.addView(microphoneButton)
+            microphoneButton.layoutParams =
+                LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+
+            microphoneButton.onMove = { delegate?.onMicrophoneButtonMove(it) }
+            microphoneButton.onCancel = { delegate?.onMicrophoneButtonCancel(it) }
+
+            // Use a separate 'raw' OnTouchListener to record the microphone button down/up timestamps because
+            // they don't get delayed by any multi-threading or delegates which throw off the timestamp accuracy.
+            // For example: If we bind something to `microphoneButton.onPress` and also log something in
+            // `microphoneButton.onUp` and tap the button then the logged output order is onUp and THEN onPress!
+            microphoneButton.setOnTouchListener(object : OnTouchListener {
+                override fun onTouch(v: View, event: MotionEvent): Boolean {
+
+                    // We only handle single finger touch events so just consume the event and bail if there are more
+                    if (event.pointerCount > 1) return true
+
+                    when (event.action) {
+                        MotionEvent.ACTION_DOWN -> {
+
+                            // Only start spinning up the voice recorder if we're not already recording, setting up, or tearing down
+                            if (voiceRecorderState == VoiceRecorderState.Idle) {
+                                startRecordingVoiceMessage()
+                            }
+                        }
+
+                        MotionEvent.ACTION_UP -> {
+
+                            // Handle the pointer up event appropriately, whether that's to keep recording if recording was locked
+                            // on, or finishing recording if just hold-to-record.
+                            delegate?.onMicrophoneButtonUp(event)
+                        }
+                    }
+
+                    // Return false to propagate the event rather than consuming it
+                    return false
+                }
+            })
+        }
     }
 
     override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
@@ -174,12 +208,10 @@ class InputBar @JvmOverloads constructor(
     }
 
     override fun inputBarEditTextContentChanged(text: CharSequence) {
-        microphoneButton.isVisible = text.trim().isEmpty()
-        sendButton.isVisible = microphoneButton.isGone
+        microphoneButton.isVisible = text.trim().isEmpty() && !sendOnly
+        sendButton.isVisible = microphoneButton.isGone || sendOnly
         delegate?.inputBarEditTextContentChanged(text)
     }
-
-    override fun inputBarEditTextHeightChanged(newValue: Int) { }
 
     override fun commitInputContent(contentUri: Uri) { delegate?.commitInputContent(contentUri) }
 
@@ -260,9 +292,9 @@ class InputBar @JvmOverloads constructor(
         }
 
         binding.inputBarEditText.isVisible = showInput
-        attachmentsButton.isVisible = showInput
-        microphoneButton.isVisible = showInput && text.isEmpty()
-        sendButton.isVisible = showInput && text.isNotEmpty()
+        attachmentsButton.isVisible = showInput && !sendOnly
+        microphoneButton.isVisible = showInput && text.isEmpty() && !sendOnly
+        sendButton.isVisible = showInput && text.isNotEmpty() || sendOnly
     }
 
     private fun updateMultimediaButtonsState() {
@@ -279,7 +311,7 @@ class InputBar @JvmOverloads constructor(
         binding.inputBarEditText.setEditableFactory(factory)
     }
 
-    fun setState(state: InputBarState){
+    fun setState(state: InputbarViewModel.InputBarState){
         // handle content state
         when(state.contentState){
             is InputBarContentState.Hidden ->{
@@ -309,6 +341,22 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+
+        // handle char limit
+        if(state.charLimitState != null){
+            binding.characterLimitText.text = state.charLimitState.countFormatted
+            binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+            binding.characterLimitContainer.setOnClickListener {
+                delegate?.onCharLimitTapped()
+            }
+
+            binding.badgePro.isVisible = state.charLimitState.showProBadge
+
+            binding.characterLimitContainer.isVisible = true
+        } else {
+            binding.characterLimitContainer.setOnClickListener(null)
+            binding.characterLimitContainer.isVisible = false
+        }
     }
 }
 
@@ -322,4 +370,5 @@ interface InputBarDelegate {
     fun onMicrophoneButtonUp(event: MotionEvent)
     fun sendMessage()
     fun commitInputContent(contentUri: Uri)
+    fun onCharLimitTapped()
 }

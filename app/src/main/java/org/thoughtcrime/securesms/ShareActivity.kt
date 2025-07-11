@@ -45,7 +45,7 @@ import org.thoughtcrime.securesms.contacts.ShareContactListFragment.OnContactSel
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.PartAuthority
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import java.io.FileInputStream
@@ -106,7 +106,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     public override fun onPause() {
         super.onPause()
         if (!isPassingAlongMedia && resolvedExtra != null) {
-            BlobProvider.getInstance().delete(this, resolvedExtra!!)
+            BlobUtils.getInstance().delete(this, resolvedExtra!!)
             if (!isFinishing) { finish() }
         }
     }
@@ -295,11 +295,11 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
                     cursor?.close()
                 }
 
-                return BlobProvider.getInstance()
+                return BlobUtils.getInstance()
                     .forData(inputStream, if (fileSize == null) 0 else fileSize)
                     .withMimeType(mimeType!!)
                     .withFileName(fileName!!)
-                    .createForMultipleSessionsOnDisk(context, BlobProvider.ErrorListener { e: IOException? -> Log.w(TAG, "Failed to write to disk.", e) })
+                    .createForMultipleSessionsOnDisk(context, BlobUtils.ErrorListener { e: IOException? -> Log.w(TAG, "Failed to write to disk.", e) })
                     .get()
             } catch (ioe: Exception) {
                 Log.w(TAG, ioe)

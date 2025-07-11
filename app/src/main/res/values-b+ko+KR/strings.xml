@@ -3,6 +3,7 @@
     <string name="about">정보</string>
     <string name="accept">수락</string>
     <string name="accountIDCopy">계정 ID 복사</string>
+    <string name="accountId">계정 ID</string>
     <string name="accountIdCopied">계정 ID 복사됨</string>
     <string name="accountIdCopyDescription">계정 ID를 복사한 후 친구들에게 공유하여 메시지를 받을 수 있도록 하세요.</string>
     <string name="accountIdEnter">Account ID 입력</string>
@@ -14,7 +15,9 @@
     <string name="accountIdYoursDescription">이는 당신의 계정 ID입니다. 다른 사용자가 이를 스캔하여 당신과 대화를 시작할 수 있습니다.</string>
     <string name="actualSize">실제 크기</string>
     <string name="add">추가</string>
-    <string name="adminCannotBeRemoved">Admins cannot be removed.</string>
+    <string name="addAdmins">관리자 추가</string>
+    <string name="addAdminsDescription">관리자로 승격할 유저의 계정 ID를 입력하세요.\n\n한번에 여러 유저를 추가하려면 각 계정 ID를 쉼표로 구분하여 최대 20명까지 추가할 수 있습니다.</string>
+    <string name="adminCannotBeRemoved">관리자는 추방될 수 없습니다.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}님</b>과 <b>{count}명</b>이 관리자(Admin)로 승격되었습니다.</string>
     <string name="adminPromote">관리자 승격</string>
     <string name="adminPromoteDescription">정말 <b>{name}</b>를 관리자(Admin)로 승격하시겠습니까? 관리자는 제거될 수 없습니다.</string>
@@ -22,18 +25,18 @@
     <string name="adminPromoteToAdmin">관리자로 승격</string>
     <string name="adminPromoteTwoDescription">정말 <b>{name}</b>과 <b>{other_name}</b>를 관리자(Admin)로 승격하시겠습니까? 관리자는 제거될 수 없습니다.</string>
     <string name="adminPromotedToAdmin"><b>{name}님</b>이 관리자(Admin)로 승격되었습니다.</string>
-    <string name="adminPromotionFailed">Admin promotion failed</string>
+    <string name="adminPromotionFailed">관리자 승격 실패</string>
     <string name="adminPromotionFailedDescription">{name}님을 {group_name}의 관리자로 승격하지 못했습니다.</string>
     <string name="adminPromotionFailedDescriptionMultiple">{name}님 및 {count}명의 다른 사람들을 {group_name}의 관리자로 승격하지 못했습니다.</string>
     <string name="adminPromotionFailedDescriptionTwo">{name}님과 {other_name}님을 {group_name}의 관리자로 승격하지 못했습니다.</string>
     <string name="adminPromotionNotSent">권한 부여가 되지 않았습니다</string>
-    <string name="adminPromotionSent">Admin promotion sent</string>
+    <string name="adminPromotionSent">관리자 승격 전송됨</string>
     <string name="adminPromotionStatusUnknown">관리자 권한 부여 상태를 알 수 없음</string>
     <string name="adminRemove">관리자 제거</string>
     <string name="adminRemoveAsAdmin">관리자에서 제거</string>
     <string name="adminRemoveCommunityNone">이 커뮤니티에 관리자가 없습니다.</string>
     <string name="adminRemoveFailed">{name}님을 관리자로 제거하지 못했습니다.</string>
-    <string name="adminRemoveFailedMultiple"><b>{name}</b> 님과 <b>{count}</b> 명의 사람들의 관리자 직책을 제거하지 못했습니다.</string>
+    <string name="adminRemoveFailedMultiple">{name} 님과 {count} 명의 사람들의 관리자 직책을 제거하지 못했습니다.</string>
     <string name="adminRemoveFailedOther"><b>{name}</b>님과 <b>{other_name}</b>님의 관리자 직책을 제거하지 못했습니다.</string>
     <string name="adminRemovedUser"><b>{name}님</b>이 관리자에서 제거되었습니다.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b>님과 <b>{count} 명의 사람들</b>의 관리자 직책이 제거되었습니다</string>
@@ -41,10 +44,27 @@
     <plurals name="adminSendingPromotion">
         <item quantity="other">관리자 권한 부여 중</item>
     </plurals>
-    <string name="adminSettings">Admin Settings</string>
+    <string name="adminSettings">관리자 설정</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}님</b>과 <b>{other_name}님</b>이 관리자(Admin)로 승격되었습니다.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">익명</string>
+    <string name="appIcon">앱 아이콘</string>
+    <string name="appIconAndNameChange">앱 아이콘 및 이름 변경</string>
+    <string name="appIconAndNameChangeConfirmation">앱 아이콘 및 이름을 변경하려면 {app_name}의 재시작이 필요합니다. 알림은 {app_name}의 기본 아이콘 및 이름으로 표시됩니다.</string>
+    <string name="appIconAndNameDescription">대체 앱 아이콘 및 이름이 홈 화면과 앱 서랍에 표시됩니다.</string>
+    <string name="appIconAndNameSelectionDescription">선택된 앱 아이콘 및 이름이 홈 화면과 앱 서랍에 표시됩니다.</string>
+    <string name="appIconAndNameSelectionTitle">아이콘 및 이름</string>
+    <string name="appIconDescription">대체 앱 아이콘이 홈 화면 및 앱 보관함에 표시됩니다. 앱 이름은 여전히 \'{app_name}\'으로 표시됩니다.</string>
+    <string name="appIconEnableIcon">대체 앱 아이콘 사용</string>
+    <string name="appIconEnableIconAndName">대체 앱 아이콘 및 이름 사용</string>
+    <string name="appIconSelect">대체 앱 아이콘을 선택</string>
+    <string name="appIconSelectionTitle">아이콘</string>
+    <string name="appNameCalculator">계산기</string>
+    <string name="appNameMeetingSE">미팅</string>
+    <string name="appNameNews">뉴스</string>
+    <string name="appNameNotes">노트</string>
+    <string name="appNameStocks">주식</string>
+    <string name="appNameWeather">날씨</string>
     <string name="appearanceAutoDarkMode">자동 다크 모드</string>
     <string name="appearanceHideMenuBar">메뉴 바 숨기기</string>
     <string name="appearanceLanguage">언어</string>
@@ -62,6 +82,7 @@
     <string name="appearanceZoomIn">확대</string>
     <string name="appearanceZoomOut">축소</string>
     <string name="attachment">첨부파일</string>
+    <string name="attachments">첨부 파일</string>
     <string name="attachmentsAdd">첨부</string>
     <string name="attachmentsAlbumUnnamed">이름 없는 앨범</string>
     <string name="attachmentsAutoDownload">첨부파일 자동 다운로드</string>
@@ -123,13 +144,16 @@
     <string name="banErrorFailed">차단 실패</string>
     <string name="banUnbanErrorFailed">차단 해제 실패</string>
     <string name="banUnbanUser">사용자 금지 해제</string>
+    <string name="banUnbanUserDescription">밴을 해제할 유저의 계정 ID를 입력하세요</string>
     <string name="banUnbanUserUnbanned">사용자 금지 해제됨</string>
     <string name="banUser">사용자 차단</string>
     <string name="banUserBanned">사용자 금지됨</string>
+    <string name="banUserDescription">밴할 유저의 계정 ID를 입력하세요</string>
     <string name="block">차단</string>
+    <string name="blockBlockedDescription">이 사용자에게 메시지를 보내려면 먼저 차단을 해제하세요</string>
     <string name="blockBlockedNone">차단된 연락처가 없습니다.</string>
     <string name="blockBlockedUser">{name} 차단됨</string>
-    <string name="blockDescription">Are you sure you want to block <b>{name}?</b> Blocked users cannot send you message requests, group invites or call you.</string>
+    <string name="blockDescription">정말로 <b>{name}</b>님을 차단하시겠습니까? 차단된 유저는 당신에게 메시지를 보내거나 그룹 초대, 전화를 할 수 없습니다.</string>
     <string name="blockUnblock">차단 해제</string>
     <string name="blockUnblockName">정말 <b>{name}</b>의 차단을 해제할까요?</string>
     <string name="blockUnblockNameMultiple">정말 <b>{name}</b>과 <b>{count}</b>명의 차단을 해제하시겠습니까?</string>
@@ -179,21 +203,30 @@
     <plurals name="clearDataErrorDescription">
         <item quantity="other">%1$d Service Node가 데이터를 삭제하지 않았습니다. Service Node ID: %2$s.</item>
     </plurals>
-    <string name="clearDataErrorDescriptionGeneric">An unknown error occurred and your data was not deleted. Do you want to delete your data from just this device instead?</string>
+    <string name="clearDataErrorDescriptionGeneric">데이터를 삭제하는 도중 알 수 없는 에러가 발생했습니다. 이 기기에서만 데이터를 삭제하시겠습니까?</string>
     <string name="clearDevice">디바이스 삭제</string>
     <string name="clearDeviceAndNetwork">디바이스와 네트워크 삭제</string>
     <string name="clearDeviceAndNetworkConfirm">정말 네트워크에서 데이터를 삭제하시겠습니까? 계속하면 메시지나 연락처를 복원할 수 없습니다.</string>
     <string name="clearDeviceDescription">Are you sure you want to clear your device?</string>
     <string name="clearDeviceOnly">디바이스만 삭제</string>
+    <string name="clearDeviceRestart">기기 초기화 및 재시작</string>
+    <string name="clearDeviceRestore">디바이스 삭제 및 복원</string>
     <string name="clearMessages">모든 메시지 삭제</string>
     <string name="clearMessagesChatDescription">Are you sure you want to clear all messages from your conversation with <b>{name}</b> from your device?</string>
-    <string name="clearMessagesCommunity">Are you sure you want to clear all <b>{community_name}</b> messages from your device?</string>
+    <string name="clearMessagesChatDescriptionUpdated">정말로 이 기기에서 <b>{name}</b>와의 대화 메시지를 모두 삭제하시겠습니까?</string>
+    <string name="clearMessagesCommunity">정말 디바이스에 있는 <b>{community_name}</b>의 모든 메시지를 지우시겠습니까?</string>
+    <string name="clearMessagesCommunityUpdated">정말로 <b>{community_name}</b>의 모든 메시지를 이 기기에서 삭제하시겠습니까?</string>
     <string name="clearMessagesForEveryone">모두에게서 삭제</string>
     <string name="clearMessagesForMe">내 게서만 삭제</string>
     <string name="clearMessagesGroupAdminDescription">Are you sure you want to clear all <b>{group_name}</b> messages?</string>
-    <string name="clearMessagesGroupDescription">Are you sure you want to clear all <b>{group_name}</b> messages from your device?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">정말로 <b>{group_name}</b>의 모든 메시지를 삭제하시겠습니까?</string>
+    <string name="clearMessagesGroupDescription">정말 디바이스에 있는 <b>{group_name}</b> 그룹의 모든 메시지를 지우시겠습니까?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">정말로 이 기기에서 <b>{group_name}</b>의 모든 매세지를 삭제하시겠습니까?</string>
     <string name="clearMessagesNoteToSelfDescription">Are you sure you want to clear all Note to Self messages from your device?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">정말로 이 기기에서 모든 <b>개인용 메모</b> 매시지를 삭제하시겠습니까?</string>
+    <string name="clearOnThisDevice">이 기기에서 삭제</string>
     <string name="close">닫기</string>
+    <string name="closeApp">앱 닫기</string>
     <string name="closeWindow">닫기</string>
     <string name="commitHashDesktop">커밋 해시: {hash}</string>
     <string name="communityBanDeleteDescription">선택한 사용자를 이 커뮤니티에서 차단하고 모든 메시지를 삭제합니다. 계속하시겠습니까?</string>
@@ -258,7 +291,11 @@
     <string name="copied">복사됨</string>
     <string name="copy">복사</string>
     <string name="create">만들기</string>
+    <string name="creatingCall">통화 생성 중</string>
     <string name="cut">잘라내기</string>
+    <string name="databaseErrorClearDataWarning">정말로 이 기기에서 모든 메시지, 첨부 파일, 계정 데이터를 삭제하고 새 계정을 생성하시겠습니까?</string>
+    <string name="databaseErrorGeneric">데이터베이스 오류가 발생했습니다.\n\n문제 해결을 위해 애플리케이션 로그를 내보내서 공유하십시오. 실패할 경우, {app_name}을 다시 설치하고 계정을 복원하십시오.</string>
+    <string name="databaseErrorRestoreDataWarning">정말로 이 기기에서 모든 메시지, 첨부 파일, 계정 데이터를 삭제하고 네트워크에서 계정을 복원하시겠습니까?</string>
     <string name="databaseErrorTimeout">{app_name} 이 오랜 시간동안 응답하지 않은 것으로 보입니다. \n\n계속 기다리거나, 기기의 로그를 내보내 도움을 요청하거나, {app_name} 을 재시작 해보세요.</string>
     <string name="databaseErrorUpdate">{app_name}의 이 버전은 앱 데이터베이스와 호환되지 않습니다. 앱을 재설치하고 계정을 복원하여 새 데이터베이스를 생성하고 {app_name}을 계속 사용하십시오.\n\n경고: 이렇게 하면 2주 이상 된 모든 메시지와 첨부 파일이 손실됩니다.</string>
     <string name="databaseOptimizing">데이터베이스 최적화</string>
@@ -280,6 +317,8 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">그룹 생성 중...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">그룹 업데이트 실패</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">다른 사람의 메시지를 삭제할 수 있는 권한이 없습니다</string>
+    <string name="deleteContactDescription">연락처에서 <b>{name}</b>을(를) 삭제하시겠습니까?\n\n모든 대화 내역이 삭제되며, 이후에 오는 <b>{name}</b>의 메시지는 메시지 요청으로 오게 됩니다.</string>
+    <string name="deleteConversationDescription"><b>{name}</b>간의 대화 내역을 삭제하시겠습니까?\n이 결정은 영구적이며 모든 메시지와 첨부 파일이 삭제됩니다.</string>
     <plurals name="deleteMessage">
         <item quantity="other">메시지 삭제</item>
     </plurals>
@@ -287,7 +326,7 @@
         <item quantity="other">정말 해당 메시지들을 삭제하시겠습니까?</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
-        <item quantity="other">메시지가 삭제되었습니다.</item>
+        <item quantity="other">메시지가 삭제되었습니다</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">이 메시지는 삭제되었습니다.</string>
     <string name="deleteMessageDeletedLocally">이 장치에서 이 메시지가 삭제되었습니다.</string>
@@ -330,7 +369,7 @@
     <string name="disappearingMessagesFollowSetting">설정 따라가기</string>
     <string name="disappearingMessagesFollowSettingOff">보내는 메시지가 더 이상 사라지지 않습니다. 소멸 메시지를 <b>끄시겠습니까?</b></string>
     <string name="disappearingMessagesFollowSettingOn">메시지를 <b>{disappearing_messages_type}</b> 후 <b>{time}</b> 후에 사라지도록 설정하시겠습니까?</string>
-    <string name="disappearingMessagesLegacy">{name}가 구식 클라이언트를 사용하고 있습니다. 사라지는 메시지가 예상대로 작동하지 않을 수 있습니다.</string>
+    <string name="disappearingMessagesLegacy">{name} 님이 이전 버전의 클라이언트를 사용하고 있습니다. 사라지는 메시지가 예상대로 작동하지 않을 수 있습니다.</string>
     <string name="disappearingMessagesOnlyAdmins">그룹 관리자만 이 설정을 변경할 수 있습니다.</string>
     <string name="disappearingMessagesSent">보냄</string>
     <string name="disappearingMessagesSet"><b>{name}님</b>이 메시지가 {disappearing_messages_type} 이후 {time} 후에 사라지는 설정을 했습니다.</string>
@@ -355,6 +394,7 @@
     <string name="displayNameSet">표시 이름 설정</string>
     <string name="displayNameVisible">사용자 이름은 당신이 상호작용하는 사용자, 그룹 및 커뮤니티에 공개됩니다.</string>
     <string name="document">문서</string>
+    <string name="donate">후원하기</string>
     <string name="done">완료</string>
     <string name="download">다운로드</string>
     <string name="downloading">다운로드 중...</string>
@@ -362,7 +402,7 @@
     <string name="edit">편집</string>
     <string name="emojiAndSymbols">이모지와 기호</string>
     <string name="emojiCategoryActivities">활동</string>
-    <string name="emojiCategoryAnimals">동물 &amp;amp; 자연</string>
+    <string name="emojiCategoryAnimals">동물과 자연</string>
     <string name="emojiCategoryFlags">깃발</string>
     <string name="emojiCategoryFood">음식 &amp; 음료</string>
     <string name="emojiCategoryObjects">오브젝트</string>
@@ -370,14 +410,14 @@
     <string name="emojiCategorySmileys">스마일리 &amp;amp; 사람들</string>
     <string name="emojiCategorySymbols">기호</string>
     <string name="emojiCategoryTravel">여행 &amp; 장소</string>
-    <string name="emojiReactsClearAll">Are you sure you want to clear all {emoji}?</string>
+    <string name="emojiReactsClearAll">정말로 모든 {emoji}를 지우시겠습니까?</string>
     <string name="emojiReactsCoolDown">속도를 줄이세요! 너무 많은 이모지 반응을 보냈습니다. 잠시 후 다시 시도해 주세요</string>
     <plurals name="emojiReactsCountOthers">
         <item quantity="other">그리고 %1$d명이 이 메시지에 %2$s로 반응했습니다.</item>
     </plurals>
-    <string name="emojiReactsHoverNameDesktop">{name}이(가) {emoji_name}으로 반응했습니다</string>
-    <string name="emojiReactsHoverNameTwoDesktop">{name} 및 {other_name}이(가) {emoji_name}으로 반응했습니다</string>
-    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name}과 <font color="0">{count}명</font>이(가) {emoji_name}으로 반응했습니다</string>
+    <string name="emojiReactsHoverNameDesktop">{name} 님이 {emoji_name}으로 반응했습니다</string>
+    <string name="emojiReactsHoverNameTwoDesktop">{name} 및 {other_name} 님이 {emoji_name}으로 반응했습니다</string>
+    <string name="emojiReactsHoverTwoNameMultipleDesktop">{name} 님과 <font color="0">{count}명</font>이 {emoji_name}으로 반응했습니다</string>
     <string name="emojiReactsHoverYouNameDesktop">사용자님이 {emoji_name}으로 반응했습니다</string>
     <string name="emojiReactsHoverYouNameMultipleDesktop">사용자님과 <font color="0">{count}명</font>이(가) {emoji_name}으로 반응했습니다</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">사용자 및 {name}님이 {emoji_name}으로 반응했습니다</string>
@@ -386,20 +426,24 @@
     <string name="errorConnection">인터넷 연결을 확인하시고 다시 시도해주세요.</string>
     <string name="errorCopyAndQuit">복사 오류 및 종료</string>
     <string name="errorDatabase">데이터베이스 오류</string>
+    <string name="errorGeneric">문제가 발생했습니다. 나중에 다시 시도해 주세요.</string>
     <string name="errorUnknown">알 수 없는 오류가 발생했습니다.</string>
+    <string name="failedToDownload">다운로드에 실패했습니다</string>
     <string name="failures">실패</string>
     <string name="file">파일</string>
     <string name="files">파일들</string>
     <string name="followSystemSettings">시스템 설정 따르기</string>
+    <string name="forever">영원히</string>
     <string name="from">보낸 사람:</string>
     <string name="fullScreenToggle">Toggle Full Screen</string>
     <string name="gif">GIF</string>
     <string name="giphyWarning">Giphy</string>
-    <string name="giphyWarningDescription">{app_name}는 검색 결과를 제공하기 위해 Giphy에 연결됩니다. GIF를 보낼 때 전체 메타데이터 보호가 제공되지 않습니다.</string>
+    <string name="giphyWarningDescription">{app_name}은 검색 결과를 제공하기 위해 Giphy에 연결됩니다. GIF를 보낼 때 전체 메타데이터 보호가 제공되지 않습니다.</string>
     <string name="groupAddMemberMaximum">그룹은 최대 100명까지 멤버를 추가할 수 있습니다</string>
     <string name="groupCreate">그룹 만들기</string>
     <string name="groupCreateErrorNoMembers">적어도 한 명의 추가 그룹 멤버를 선택해 주세요.</string>
     <string name="groupDelete">그룹 삭제하기</string>
+    <string name="groupDeleteDescription">정말로 <b>{group_name}</b>을 제거하시겠습니까?\n\n모든 멤버가 제거되고 모든 그룹 컨텐츠가 삭제됩니다.</string>
     <string name="groupDeleteDescriptionMember">정말로 <b>{group_name}</b> 그룹을 삭제 하시겠습니까?</string>
     <string name="groupDeletedMemberDescription">{group_name} 그룹은 관리자에 의해 삭제 되었습니다. 더 이상 메시지를 보낼 수 없습니다.</string>
     <string name="groupDescriptionEnter">그룹 설명 입력</string>
@@ -442,7 +486,6 @@
     <string name="groupMemberNewMultiple"><b>{name}님</b>과 <b>{count}명</b>이 그룹에 초대되었습니다.</string>
     <string name="groupMemberNewTwo"><b>{name}님</b>과 <b>{other_name}</b>님이 그룹 초대를 받았습니다.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>당신</b>과 <b>{count} 명의 사람들이</b> 그룹으로 초대받았습니다. 대화 내역이 공개됩니다.</string>
-    <string name="groupMemberNewYouHistoryTwo"><b>당신</b>과 <b>{other_name}</b>이 그룹에 초대 되었습니다. 대화 내용이 공유 되었습니다.</string>
     <string name="groupMemberYouLeft"><b>당신</b>이 그룹을 나갔습니다.</string>
     <string name="groupMembers">그룹 멤버</string>
     <string name="groupMembersNone">이 그룹에 다른 멤버가 없습니다.</string>
@@ -454,10 +497,12 @@
     <string name="groupNameUpdated">그룹 이름이 업데이트되었습니다.</string>
     <string name="groupNameVisible">그룹 이름은 모든 그룹 멤버에게 보입니다.</string>
     <string name="groupNoMessages"><b>{group_name}</b>님으로부터 받은 메시지가 없습니다.대화를 시작하려면 메시지를 보내세요!</string>
+    <string name="groupNotUpdatedWarning">이 그룹은 30일 이상 업데이트 되지 않았습니다. 메시지를 보내거나 그룹 정보를 보는데 문제가 있을 수 있습니다.</string>
     <string name="groupOnlyAdmin">당신은 <b>{group_name}</b>의 유일한 관리자입니다.\n\n관리자가 없으면 그룹 구성원 및 설정을 변경할 수 없습니다.</string>
     <string name="groupPendingRemoval">추방 대기 중</string>
     <string name="groupPromotedYou"><b>당신</b>이 관리자(Admin)로 승격되었습니다.</string>
     <string name="groupPromotedYouMultiple"><b>당신</b>과 <b>{count}명</b>이 관리자(Admin)로 승격되었습니다.</string>
+    <string name="groupPromotedYouTwo"><b>당신</b>과 <b>{other_name}</b>님이 관리자로 승격되었습니다.</string>
     <string name="groupRemoveDescription"><b>{group_name}</b>에서 <b>{name}</b>님을 제거하시겠습니까?</string>
     <string name="groupRemoveDescriptionMultiple"><b>{group_name}</b>에서 <b>{name}</b>님과 <b>{count}명</b>을 제거하시겠습니까?</string>
     <string name="groupRemoveDescriptionTwo"><b>{group_name}</b>에서 <b>{name}</b>님과 <b>{other_name}</b>님을 제거하시겠습니까?</string>
@@ -477,6 +522,7 @@
     <string name="groupSetDisplayPicture">그룹 프로필 사진 설정</string>
     <string name="groupUnknown">알 수 없는 그룹</string>
     <string name="groupUpdated">그룹 정보가 업데이트되었습니다.</string>
+    <string name="handlingConnectionCandidates">연결 후보 처리 중</string>
     <string name="helpFAQ">자주 묻는 질문</string>
     <string name="helpHelpUsTranslateSession">{app_name} 번역 돕기</string>
     <string name="helpReportABug">버그 제보</string>
@@ -489,17 +535,30 @@
     <string name="helpWedLoveYourFeedback">여러분의 의견을 기다리고 있습니다</string>
     <string name="hide">숨기기</string>
     <string name="hideMenuBarDescription">시스템 메뉴 바를 끄거나 켜기</string>
+    <string name="hideNoteToSelfDescription">정말로 대화 목록에서 <b>개인용 메모</b>를 숨기시겠습니까?</string>
     <string name="hideOthers">나머지 숨기기</string>
     <string name="image">이미지</string>
+    <string name="images">이미지</string>
     <string name="incognitoKeyboard">사생활 키보드</string>
     <string name="incognitoKeyboardDescription">사용 가능한 경우 시크릿 모드를 요청합니다. 사용 중인 키보드에 따라 이 요청을 무시할 수도 있습니다.</string>
     <string name="info">정보</string>
     <string name="invalidShortcut">잘못된 바로 가기</string>
+    <plurals name="inviteFailed">
+        <item quantity="other">초대 실패</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="other">초대를 보내지 못했습니다. 다시 시도하시겠습니까?</item>
+    </plurals>
     <string name="join">가입</string>
     <string name="later">나중에</string>
     <string name="learnMore">더 알아보기</string>
     <string name="leave">나가기</string>
     <string name="leaving">떠나는 중...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">이 그룹은 이제 읽기 전용입니다. 계속 채팅하려면 이 그룹을 다시 생성하세요.</string>
+    <string name="legacyGroupAfterDeprecationMember">이 그룹은 이제 읽기 전용입니다. 계속 채팅하려면 그룹 관리자에게 이 그룹을 다시 생성하도록 요청하세요.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">그룹이 업그레이드 되었습니다! 안정성을 위해 이 그룹을 다시 생성하세요. 이 그룹은 {date}에 읽기 전용으로 전환됩니다.</string>
+    <string name="legacyGroupBeforeDeprecationMember">그룹이 업그레이드 되었습니다! 안정성을 위해 그룹 관리자에게 이 그룹을 다시 생성하도록 요청하세요. 이 그룹은 {date}에 읽기 전용으로 전환됩니다.</string>
+    <string name="legacyGroupChatHistory">새 그룹으로 채팅 기록이 이전되지 않습니다. 이전 그룹에서 모든 채팅 기록을 계속 확인할 수 있습니다.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b>님이 그룹에 참여했습니다.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}님</b>님과 <b>{count}명</b>이 그룹에 참여했습니다.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>당신</b>님과 <b>{count}명</b>이 그룹에 참여했습니다.</string>
@@ -515,7 +574,7 @@
     <string name="linkPreviewsSend">링크 미리보기 보내기</string>
     <string name="linkPreviewsSendModalDescription">링크 미리보기를 보낼 때 모든 메타데이터 보호가 이루어지지 않습니다.</string>
     <string name="linkPreviewsTurnedOff">링크 미리보기 꺼짐</string>
-    <string name="linkPreviewsTurnedOffDescription">{app_name}는 송수신 링크 프리뷰를 생성하기 위해 연결된 웹사이트에 접속해야 합니다.\n\n{app_name}의 설정에서 이를 켤 수 있습니다.</string>
+    <string name="linkPreviewsTurnedOffDescription">{app_name}은 송수신 링크 프리뷰를 생성하기 위해 연결된 웹사이트에 접속해야 합니다.\n\n{app_name}의 설정에서 이를 켤 수 있습니다.</string>
     <string name="loadAccount">계정 불러오기</string>
     <string name="loadAccountProgressMessage">계정 불러오는 중</string>
     <string name="loading">불러오는 중...</string>
@@ -523,20 +582,21 @@
     <string name="lockAppDescription">{app_name} 을 열때마다 지문, PIN, 패턴 또는 비밀번호를 요구합니다</string>
     <string name="lockAppDescriptionIos">{app_name} 잠금 해제를 위해 Touch ID, Face ID 또는 비밀번호가 필요합니다.</string>
     <string name="lockAppEnablePasscode">화면 잠금을 사용하기 위해 iOS 설정에서 암호를 활성화해야 합니다.</string>
-    <string name="lockAppLocked">{app_name}가 잠겼습니다</string>
+    <string name="lockAppLocked">{app_name}이 잠겼습니다</string>
     <string name="lockAppQuickResponse">{app_name} 이 잠겨 있어 빠른 답변을 사용할 수 없습니다</string>
     <string name="lockAppStatus">잠금 상태</string>
     <string name="lockAppUnlock">탭하여 잠금 해제</string>
-    <string name="lockAppUnlocked">{app_name}의 잠금을 해제했습니다</string>
+    <string name="lockAppUnlocked">{app_name}이 잠금 해제되었습니다.</string>
+    <string name="manageMembers">구성원 관리</string>
     <string name="max">최대</string>
     <string name="media">미디어</string>
     <plurals name="members">
         <item quantity="other">%1$d명의 멤버</item>
     </plurals>
     <plurals name="membersActive">
-        <item quantity="other">%1$d인 온라인</item>
+        <item quantity="other">%1$d명의 온라인 멤버</item>
     </plurals>
-    <string name="membersAddAccountIdOrOns">Add Account ID or ONS</string>
+    <string name="membersAddAccountIdOrOns">Account ID 또는 ONS로 초대</string>
     <string name="membersInvite">연락처에서 초대</string>
     <plurals name="membersInviteSend">
         <item quantity="other">초대 전송</item>
@@ -562,9 +622,14 @@
     <string name="messageNewDescriptionDesktop">친구의 Account ID 또는 ONS를 입력하여 새로운 대화를 시작하세요.</string>
     <string name="messageNewDescriptionMobile">친구의 Account ID, ONS를 입력하거나 QR 코드를 스캔하여 새 대화를 시작하십시오.</string>
     <plurals name="messageNewYouveGot">
-        <item quantity="other">%1$d 님에게 새 메시지가 도착했습니다.</item>
+        <item quantity="other">%1$d개의 새 메시지가 도착했습니다.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="other">%1$s에 %2$d개의 새로운 메시지가 있습니다.</item>
     </plurals>
     <string name="messageReplyingTo">답장 중</string>
+    <string name="messageRequestDisabledToastAttachments">메시지 요청이 수락되기 전까지는 첨부 파일을 보낼 수 없습니다</string>
+    <string name="messageRequestDisabledToastVoiceMessages">메시지 요청이 수락되기 전까지는 음성 메시지를 보낼 수 없습니다</string>
     <string name="messageRequestGroupInvite"><b>{name}님</b>이 <b>{group_name}</b>에 참여하도록 초대했습니다.</string>
     <string name="messageRequestGroupInviteDescription">이 그룹에 메시지를 보내면 초대가 자동으로 수락됩니다.</string>
     <string name="messageRequestPending">당신의 메시지 요청이 현재 보류 중입니다.</string>
@@ -574,7 +639,8 @@
     <string name="messageRequestsAccepted">당신의 메시지 요청이 수락되었습니다.</string>
     <string name="messageRequestsClearAllExplanation">모든 메세지 요청과 그룹 초대를 삭제하시겠습니까?</string>
     <string name="messageRequestsCommunities">커뮤니티 메시지 요청</string>
-    <string name="messageRequestsCommunitiesDescription">Allow message requests from Community conversations.</string>
+    <string name="messageRequestsCommunitiesDescription">커뮤니티 대화에서 메시지 요청 허용.</string>
+    <string name="messageRequestsContactDelete">정말로 이 메시지 요청과 연결된 연락처를 삭제하시겠습니까?</string>
     <string name="messageRequestsDelete">정말 이 메시지 요청을 삭제하시겠습니까?</string>
     <string name="messageRequestsNew">새로운 메시지 요청이 있습니다.</string>
     <string name="messageRequestsNonePending">보류중인 메세지 요청이 없습니다.</string>
@@ -606,7 +672,7 @@
     <string name="noteToSelfEmpty">개인용 메모에 메시지가 없습니다.</string>
     <string name="noteToSelfHide">개인용 메모 숨기기</string>
     <string name="noteToSelfHideDescription">정말 개인용 메모를 숨기시겠습니까?</string>
-    <string name="notificationsAllMessages">All Messages</string>
+    <string name="notificationsAllMessages">모든 메시지</string>
     <string name="notificationsContent">알림 내용</string>
     <string name="notificationsContentDescription">알림에서 표시되는 정보</string>
     <string name="notificationsContentShowNameAndContent">이름 및 내용</string>
@@ -614,12 +680,13 @@
     <string name="notificationsContentShowNoNameOrContent">이름 또는 내용 없음</string>
     <string name="notificationsFastMode">Fast 모드</string>
     <string name="notificationsFastModeDescription">Google의 알림 서버를 사용하여 새 메시지를 확실하고 즉각적으로 알려드립니다.</string>
+    <string name="notificationsFastModeDescriptionHuawei">Huawei의 알림 서버를 사용하여 새 메시지를 확실하고 즉각적으로 알려드립니다.</string>
     <string name="notificationsFastModeDescriptionIos">Apple의 알림 서버를 사용하여 새 메시지를 확실하고 즉각적으로 알려드립니다.</string>
     <string name="notificationsGoToDevice">기기 알림 설정으로 이동</string>
     <string name="notificationsHeaderAllMessages">알림 - 전체</string>
     <string name="notificationsHeaderMentionsOnly">알림 - 멘션만</string>
     <string name="notificationsHeaderMute">알림 - 음소거</string>
-    <string name="notificationsIosGroup">{name}이(가) {conversation_name}에 보냈습니다</string>
+    <string name="notificationsIosGroup">{name} 님이 {conversation_name}에 보냈습니다</string>
     <string name="notificationsIosRestart">{device}가 재시동되는 동안 메시지를 수신했을 수 있습니다.</string>
     <string name="notificationsLedColor">알림등 색상</string>
     <string name="notificationsMentionsOnly">언급만 알림</string>
@@ -629,6 +696,8 @@
     <string name="notificationsMuteFor">{time_large} 동안 음소거</string>
     <string name="notificationsMuteUnmute">알림 켜기</string>
     <string name="notificationsMuted">알림 꺼짐</string>
+    <string name="notificationsMutedFor">{time_large} 동안 음소거됨</string>
+    <string name="notificationsMutedForTime">{date_time}까지 음소거됨</string>
     <string name="notificationsSlowMode">Slow 모드</string>
     <string name="notificationsSlowModeDescription">{app_name}은 때때로 백그라운드에서 새 메시지를 확인합니다.</string>
     <string name="notificationsSound">소리</string>
@@ -649,7 +718,7 @@
     <string name="onboardingBubbleCreatingAnAccountIsEasy">계정 생성은 즉시, 무료이며 익명입니다 {emoji}</string>
     <string name="onboardingBubbleNoPhoneNumber">가입할 때 전화번호가 필요하지 않습니다.</string>
     <string name="onboardingBubblePrivacyInYourPocket">당신의 주머니 속 개인정보 보호.</string>
-    <string name="onboardingBubbleSessionIsEngineered">{app_name}는 개인 정보를 보호하기 위해 설계되었습니다.</string>
+    <string name="onboardingBubbleSessionIsEngineered">{app_name}은 개인 정보를 보호하기 위해 설계되었습니다.</string>
     <string name="onboardingBubbleWelcomeToSession">{app_name}에 오신 것을 환영합니다 {emoji}</string>
     <string name="onboardingHitThePlusButton">채팅을 시작하거나, 그룹을 생성하거나, 공식 커뮤니티에 참여하려면 플러스 버튼을 눌러보세요!</string>
     <string name="onboardingMessageNotificationExplanation">{app_name}이 새 메시지를 알릴 수 있는 두 가지 방법이 있습니다.</string>
@@ -657,7 +726,7 @@
     <string name="onboardingTos">Terms of Service</string>
     <string name="onboardingTosPrivacy">서비스를 사용함으로써, 귀하는 우리의 <b>서비스 약관</b> 및 <b>개인정보 보호정책</b>에 동의하게 됩니다.</string>
     <string name="onionRoutingPath">경로</string>
-    <string name="onionRoutingPathDescription">{app_name}는 {app_name}의 탈중앙화된 네트워크에서 여러 서비스 노드를 통해 메시지를 라우팅하여 IP를 숨깁니다. 이것이 현재 경로입니다:</string>
+    <string name="onionRoutingPathDescription">{app_name}은 {app_name}의 탈중앙화된 네트워크에서 여러 서비스 노드를 통해 메시지를 라우팅하여 IP를 숨깁니다. 이것이 현재 경로입니다:</string>
     <string name="onionRoutingPathDestination">목적지</string>
     <string name="onionRoutingPathEntryNode">출구 노드</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -687,20 +756,32 @@
     <string name="passwordSet">비밀번호 설정</string>
     <string name="passwordSetDescription">비밀번호 설정이 완료되었습니다. 안전히 관리하시기 바랍니다.</string>
     <string name="paste">붙여넣기</string>
+    <string name="permissionChange">권한 변경</string>
     <string name="permissionMusicAudioDenied">{app_name}은(는) 파일, 음악 및 오디오를 전송하기 위해 음악 및 오디오 접근이 필요하지만, 접근이 영구적으로 거부되었습니다. 설정 → 권한으로 이동하여 \"음악 및 오디오\"를 켜십시오.</string>
     <string name="permissionsAppleMusic">{app_name}은 미디어 첨부 파일을 재생하기 위해 Apple Music을 사용해야 합니다.</string>
     <string name="permissionsAutoUpdate">자동 업데이트</string>
     <string name="permissionsAutoUpdateDescription">시작 시 자동으로 업데이트를 확인</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">영상 통화를 위해 “카메라” 접근이 필요합니다. 계속하려면 설정에서 “카메라” 권한을 켜세요.</string>
+    <string name="permissionsCameraChangeDescriptionIos">카메라 접근이 현재 활성화되어 있습니다. 비활성화하려면 설정에서 “카메라” 권한을 끄세요.</string>
     <string name="permissionsCameraDenied">{app_name}은 사진과 동영상을 찍기 위해 카메라 접근이 필요하지만 영구적으로 거부되었습니다. 설정 - 권한을 누르고 \'카메라\'를 켜십시오.</string>
+    <string name="permissionsCameraDescriptionIos">영상 통화를 위해 카메라 접근을 허용하세요.</string>
     <string name="permissionsFaceId">{app_name}의 화면 잠금 기능은 Face ID를 사용합니다.</string>
     <string name="permissionsKeepInSystemTray">트레이 아이콘 유지</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} 창을 닫아도 백그라운드에서 실행됩니다.</string>
     <string name="permissionsLibrary">{app_name}은 포토 라이브러리 접근권한이 필요합니다. iOS 설정에서 접근 권한을 허용할 수 있습니다.</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">통화를 위해 “로컬 네트워크” 접근이 필요합니다. 계속하려면 설정에서 “로컬 네트워크” 권한을 켜세요.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name}이 음성 및 영상 통화를 하기 위해 로컬 네트워크에 접근해야 합니다.</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">로컬 네트워크 접근이 현재 활성화되어 있습니다. 비활성화하려면 설정에서 “로컬 네트워크” 권한을 끄세요.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">음성 및 영상 통화를 위해 로컬 네트워크 접근을 허용하세요.</string>
+    <string name="permissionsLocalNetworkIos">로컬 네트워크</string>
     <string name="permissionsMicrophone">마이크</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name}은 통화 및 음성 메시지를 보내기 위해 마이크 접근 권한이 필요하지만 영구적으로 거부되었습니다. 설정에서 \'권한\'으로 이동하여 \'마이크\'를 켜십시오.</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">통화 및 오디오 메시지 녹음을 위해 “마이크” 접근이 필요합니다. 계속하려면 설정에서 “마이크” 권한을 켜세요.</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">{app_name}의 프라이버시 설정에서 마이크 접근을 허용할 수 있습니다</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name}은 통화를 하고 음성 메시지를 녹음하기 위해 마이크 접근이 필요합니다.</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">마이크 접근이 현재 활성화되어 있습니다. 비활성화하려면 설정에서 “마이크” 권한을 끄세요.</string>
     <string name="permissionsMicrophoneDescription">마이크 접근 권한을 허용해주세요.</string>
+    <string name="permissionsMicrophoneDescriptionIos">음성 통화 및 오디오 메시지를 위해 마이크 접근을 허용하세요.</string>
     <string name="permissionsMusicAudio">{app_name}는 파일, 음악 및 오디오를 전송하려면 음악 및 오디오 접근이 필요합니다.</string>
     <string name="permissionsRequired">권한 필요</string>
     <string name="permissionsStorageDenied">{app_name}에서 사진과 동영상을 전송하려면 사진 보관함 접근 권한이 필요하지만 영구적으로 거부되었습니다. 설정 → 권한으로 이동하여 \"사진 및 동영상\"을 켜십시오.</string>
@@ -708,6 +789,7 @@
     <string name="permissionsStorageSave">{app_name}은 첨부 파일과 미디어를 저장하기 위해 저장 공간 접근이 필요합니다.</string>
     <string name="permissionsStorageSaveDenied">{app_name}은 사진과 동영상을 저장하기 위해 저장 공간 접근이 필요하지만 영구적으로 거부되었습니다. 앱 설정에서 \"권한\"을 선택하고, \"저장 공간\" 권한을 활성화하세요.</string>
     <string name="permissionsStorageSend">{app_name}은 사진과 동영상을 전송하기 위해 저장공간 접근이 필요합니다.</string>
+    <string name="permissionsWriteCommunity">이 커뮤니티에서 작정 권한이 없습니다</string>
     <string name="pin">고정</string>
     <string name="pinConversation">대화 고정하기</string>
     <string name="pinUnpin">고정 해제</string>
@@ -720,6 +802,12 @@
     <string name="profileDisplayPictureSizeError">더 작은 파일을 선택해 주세요.</string>
     <string name="profileErrorUpdate">프로필 업데이트 실패.</string>
     <string name="promote">승격</string>
+    <plurals name="promotionFailed">
+        <item quantity="other">승격 실패</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="other">승격 시키지 못했습니다. 다시 시도하시겠습니까?</item>
+    </plurals>
     <string name="qrCode">QR 코드</string>
     <string name="qrNotAccountId">이 QR 코드는 계정 ID를 포함하고 있지 않습니다.</string>
     <string name="qrNotRecoveryPassword">이 QR 코드는 복구 비밀번호를 포함하고 있지 않습니다.</string>
@@ -732,11 +820,15 @@
     <string name="readReceipts">읽음 표시</string>
     <string name="readReceiptsDescription">보낸 모든 메시지와 받는 모든 메시지에 읽음 확인을 표시합니다.</string>
     <string name="received">수신됨:</string>
+    <string name="receivedAnswer">응답 수신됨</string>
+    <string name="receivingCallOffer">통화 제안 받는 중</string>
+    <string name="receivingPreOffer">사전 제안 수신 중</string>
     <string name="recommended">권장</string>
     <string name="recoveryPasswordBannerDescription">계정에 접근 권한을 잃지 않도록 회복 비밀번호를 저장하세요.</string>
     <string name="recoveryPasswordBannerTitle">회복 비밀번호 저장</string>
     <string name="recoveryPasswordDescription">새 장치에서 계정을 로드하려면 복구 비밀번호를 사용하십시오.\n\n복구 비밀번호 없이는 계정을 복구할 수 없습니다. 안전하게 보관하고 타인과 공유하지 않도록 주의하세요.</string>
     <string name="recoveryPasswordEnter">복구 비밀번호 입력</string>
+    <string name="recoveryPasswordErrorLoad">복구 비밀번호를 불러오는 도중 오류가 발생했습니다.\n\n문제를 해결하기 위해 로그를 내보낸 후 {app_name} 고객 지원 센터에 첨부하여 문의 해주세요.</string>
     <string name="recoveryPasswordErrorMessageGeneric">복구 비밀번호를 확인하시고 다시 시도해주세요.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">복구 암호의 일부 단어가 잘못되었습니다. 확인하고 다시 시도해 주세요.</string>
     <string name="recoveryPasswordErrorMessageShort">입력한 복구 비밀번호가 충분하지 않습니다. 확인 후 다시 시도해주세요.</string>
@@ -750,7 +842,9 @@
     <string name="recoveryPasswordRestoreDescription">계정을 로드하려면 복구 비밀번호를 입력하세요. 저장되지 않았다면, 앱 설정에서 찾을 수 있습니다.</string>
     <string name="recoveryPasswordView">비밀번호 보기</string>
     <string name="recoveryPasswordWarningSendDescription">이것은 당신의 복구 비밀번호입니다. 다른 사람에게 보내면 그들이 당신의 계정에 완전히 접근할 수 있게 됩니다.</string>
+    <string name="recreateGroup">그룹 다시 만들기</string>
     <string name="redo">다시 실행</string>
+    <string name="remainingCharactersTooltip">{count}자 입력 가능</string>
     <string name="remove">삭제</string>
     <string name="removePasswordFail">비밀번호를 제거하지 못했습니다</string>
     <string name="reply">답장</string>
@@ -781,8 +875,11 @@
     <string name="searchSearching">검색 중...</string>
     <string name="select">선택</string>
     <string name="selectAll">Select All</string>
+    <string name="selectAppIcon">앱 아이콘 변경</string>
     <string name="send">전송</string>
     <string name="sending">전송 중</string>
+    <string name="sendingCallOffer">통화 제안 전송 중</string>
+    <string name="sendingConnectionCandidates">연결 후보 전송 중</string>
     <string name="sent">보냄:</string>
     <string name="sessionAppearance">디자인</string>
     <string name="sessionClearData">데이터 삭제</string>
@@ -790,30 +887,46 @@
     <string name="sessionHelp">도움말</string>
     <string name="sessionInviteAFriend">친구 초대</string>
     <string name="sessionMessageRequests">메시지 요청</string>
+    <string name="sessionNetworkCurrentPrice">현재 {token_name_short} 가격</string>
+    <string name="sessionNetworkDescription">메시지는 {network_name}를 통해 전송됩니다. 네트워크는 {token_name_long}으로 인센티브를 받은 노드들로 구성되며, 이 노드들은 {app_name}을 분산되고 안전하게 유지합니다. <font color="0"><b>더 알아보기</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">스테이킹에 대해 알아보기</string>
+    <string name="sessionNetworkMarketCap">시가 총액</string>
+    <string name="sessionNetworkNodesSecuring"><font color="0">내 메시지를</font> 보호하는 {app_name} 노드</string>
+    <string name="sessionNetworkNodesSwarm"><font color="0">내 스웜의</font> {app_name} 노드</string>
+    <string name="sessionNetworkNotificationLive">{token_name_long}이 출시되었습니다! 설정에서 새로 추가된 {network_name} 섹션을 확인하고, {token_name_long}이 Session을 어떻게 구동하는지 알아보세요.</string>
+    <string name="sessionNetworkSecuredBy">보호 중인 네트워크 수</string>
+    <string name="sessionNetworkTokenDescription">네트워크 보안을 위해 {token_name_long}을 스테이킹 하면, {staking_reward_pool}에서 {token_name_short}로 보상을 받습니다.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> 신규</font></string>
     <string name="sessionNotifications">알림</string>
     <string name="sessionPermissions">권한</string>
     <string name="sessionPrivacy">개인정보 보호</string>
     <string name="sessionRecoveryPassword">Recovery Password</string>
     <string name="sessionSettings">설정</string>
     <string name="set">설정</string>
+    <string name="setCommunityDisplayPicture">커뮤니티 프로필 사진 설정</string>
     <string name="settingsRestartDescription">새 설정을 적용하려면 {app_name}을 재시작해야 합니다.</string>
     <string name="share">공유</string>
     <string name="shareAccountIdDescription">친구에게 계정 ID를 공유하고 {app_name} 에서 친구들과 대화하세요.</string>
     <string name="shareAccountIdDescriptionCopied">친구들이 자주 사용하는 곳에서 공유해 주세요 — 그러면 여기로 대화를 이동하십시오.</string>
     <string name="shareExtensionDatabaseError">데이터베이스를 열 때 문제가 발생했습니다. 앱을 재시작하고 다시 시도해주세요.</string>
+    <string name="shareExtensionNoAccountError">앗! 아직 {app_name} 계정이 없는 것 같아요.\n\n{app_name} 앱에서 계정을 생성해야 공유할 수 있습니다.</string>
     <string name="shareToSession">{app_name}에 공유</string>
     <string name="show">보기</string>
     <string name="showAll">모두 보기</string>
     <string name="showLess">간략히 보기</string>
+    <string name="showNoteToSelf">개인용 메모 표시하기</string>
+    <string name="showNoteToSelfDescription"><b>개인용 메모</b>를 대화 리스트에 표시하겠습니까?</string>
     <string name="stickers">스티커</string>
     <string name="supportGoTo">지원 페이지로 이동</string>
     <string name="systemInformationDesktop">시스템 정보: {information}</string>
+    <string name="tapToRetry">탭하여 재시도</string>
     <string name="theContinue">계속</string>
     <string name="theDefault">기본값</string>
     <string name="theError">에러</string>
     <string name="tryAgain">다시 시도</string>
     <string name="typingIndicators">입력 지시자 깜박임</string>
     <string name="typingIndicatorsDescription">입력 중 아이콘 보고 공유.</string>
+    <string name="unavailable">사용 불가</string>
     <string name="undo">실행 취소</string>
     <string name="unknown">알 수 없음</string>
     <string name="updateApp">앱 업데이트</string>
@@ -821,10 +934,15 @@
     <string name="updateDownloading">업데이트 다운로드 중: {percent_loader}%</string>
     <string name="updateError">업데이트 불가능</string>
     <string name="updateErrorDescription">{app_name} 업데이트에 실패했습니다. {session_download_url}에서 새 버전을 수동으로 설치한 후, 이 문제를 알려주시기 위해 고객 지원 센터에 연락해 주세요.</string>
+    <string name="updateGroupInformation">그룹 정보 업데이트</string>
+    <string name="updateGroupInformationDescription">그룹 이름과 설명은 모든 그룹 멤버에게 보입니다.</string>
+    <string name="updateGroupInformationEnterShorterDescription">더 짧은 그룹 설명을 입력해주세요.</string>
     <string name="updateNewVersion">새 버전의 {app_name}이 사용 가능합니다. 눌러서 업데이트 하세요.</string>
+    <string name="updateNewVersionDescription">{app_name}의 새 버전({version})을 사용할 수 있습니다.</string>
     <string name="updateReleaseNotes">패치 노트 보기</string>
     <string name="updateSession">{app_name} 업데이트</string>
     <string name="updateVersion">버전 {version}</string>
+    <string name="updated">{relative_time} 전에 마지막 업데이트됨</string>
     <string name="uploading">업로드 중</string>
     <string name="urlCopy">URL 복사</string>
     <string name="urlOpen">URL 열기</string>
@@ -834,6 +952,8 @@
     <string name="video">동영상</string>
     <string name="videoErrorPlay">동영상을 재생할 수 없습니다.</string>
     <string name="view">보기</string>
+    <string name="viewLess">덜 보기</string>
+    <string name="viewMore">더 보기</string>
     <string name="waitFewMinutes">이 작업은 몇 분 정도 소요될 수 있습니다.</string>
     <string name="waitOneMoment">잠시만 기다려주세요...</string>
     <string name="warning">경고</string>

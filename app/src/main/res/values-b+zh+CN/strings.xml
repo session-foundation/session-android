@@ -14,6 +14,8 @@
     <string name="accountIdYoursDescription">这是您的账户ID。其他用户可以扫描它来与您开始会话。</string>
     <string name="actualSize">实际尺寸</string>
     <string name="add">添加</string>
+    <string name="addAdmins">添加管理员</string>
+    <string name="addAdminsDescription">请输入您正在授权为管理员的用户的帐户 ID。\n\n要添加多个用户，请输入用逗号分隔的每个帐户 ID。一次最多可以指定20个帐户 ID。</string>
     <string name="adminCannotBeRemoved">管理员无法被移除。</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b>和其他<b>{count}名</b>成员被设置为管理员。</string>
     <string name="adminPromote">授权为管理员</string>
@@ -26,7 +28,9 @@
     <string name="adminPromotionFailedDescription">将{name}授权为{group_name}的管理员失败</string>
     <string name="adminPromotionFailedDescriptionMultiple">将{name}和其他{count}人授权为{group_name}的管理员失败</string>
     <string name="adminPromotionFailedDescriptionTwo">将{name}和{other_name}授权为{group_name}的管理员失败</string>
+    <string name="adminPromotionNotSent">授权未发送</string>
     <string name="adminPromotionSent">管理员授权已发送</string>
+    <string name="adminPromotionStatusUnknown">授权状态未知</string>
     <string name="adminRemove">移除管理员</string>
     <string name="adminRemoveAsAdmin">作为管理员移除</string>
     <string name="adminRemoveCommunityNone">此社群没有管理员。</string>
@@ -43,6 +47,20 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}</b>和<b>{other_name}</b>被设置为管理员。</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">匿名用戶</string>
+    <string name="appIcon">应用图标</string>
+    <string name="appIconAndNameDescription">替代的应用图标与应用名会显示在主页和应用抽屉中。</string>
+    <string name="appIconAndNameSelectionTitle">图标与应用名</string>
+    <string name="appIconDescription">替代的应用图标会显示在主页和应用列表中。应用名仍会显示为“{app_name}”。</string>
+    <string name="appIconEnableIcon">使用替代的应用图标</string>
+    <string name="appIconEnableIconAndName">使用替代的应用图标与应用名</string>
+    <string name="appIconSelect">选择替代的应用图标</string>
+    <string name="appIconSelectionTitle">图标</string>
+    <string name="appNameCalculator">计算器</string>
+    <string name="appNameMeetingSE">SE云会议</string>
+    <string name="appNameNews">新闻</string>
+    <string name="appNameNotes">笔记</string>
+    <string name="appNameStocks">股票</string>
+    <string name="appNameWeather">天气</string>
     <string name="appearanceAutoDarkMode">自动开启深色模式</string>
     <string name="appearanceHideMenuBar">隐藏菜单栏</string>
     <string name="appearanceLanguage">语言</string>
@@ -60,6 +78,7 @@
     <string name="appearanceZoomIn">放大</string>
     <string name="appearanceZoomOut">缩小</string>
     <string name="attachment">附件</string>
+    <string name="attachments">附件</string>
     <string name="attachmentsAdd">添加附件</string>
     <string name="attachmentsAlbumUnnamed">未命名的相册</string>
     <string name="attachmentsAutoDownload">自动下载附件</string>
@@ -121,10 +140,13 @@
     <string name="banErrorFailed">禁言失败</string>
     <string name="banUnbanErrorFailed">解封失败</string>
     <string name="banUnbanUser">解封用户</string>
+    <string name="banUnbanUserDescription">输入您想取消封禁的用户的帐户 ID</string>
     <string name="banUnbanUserUnbanned">用户已被解封</string>
     <string name="banUser">禁言该用户</string>
     <string name="banUserBanned">用户已被封禁</string>
+    <string name="banUserDescription">输入您想封禁的用户的帐户 ID</string>
     <string name="block">屏蔽</string>
+    <string name="blockBlockedDescription">取消屏蔽此联系人以发送消息</string>
     <string name="blockBlockedNone">没有屏蔽的联系人</string>
     <string name="blockBlockedUser">已屏蔽{name}</string>
     <string name="blockDescription">您确定要屏蔽<b>{name}</b>吗？被屏蔽的用户将无法向您发送消息请求、群聊邀请或者语音通话。</string>
@@ -256,7 +278,9 @@
     <string name="copied">已复制</string>
     <string name="copy">复制</string>
     <string name="create">创建</string>
+    <string name="creatingCall">正在创建通话</string>
     <string name="cut">剪切</string>
+    <string name="databaseErrorGeneric">发生数据库错误。\n\n请导出您的应用日志以进行故障排除。如果不成功，请重新安装{app_name}并恢复您的帐户。</string>
     <string name="databaseErrorTimeout">我们注意到{app_name}启动时间过长。\n\n您可以选择继续等待，导出设备日志以分享故障排除，或尝试重新启动{app_name}。</string>
     <string name="databaseErrorUpdate">您的应用数据库与此版本的{app_name}不兼容。请重新安装应用并恢复您的账户以生成新的数据库并继续使用{app_name}。\n\n警告：该操作将导致两周前的所有消息和附件丢失。</string>
     <string name="databaseOptimizing">正在优化数据库</string>
@@ -278,6 +302,8 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">正在创建群组，请稍候...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">更新群组失败</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">您无权删除他人的消息</string>
+    <string name="deleteContactDescription">您确定要删除联系人<b>{name}</b>吗？\n\n该操作将删除你们的会话，包括所有消息和附件。来自<b>{name}</b>的新消息将被视为消息请求。</string>
+    <string name="deleteConversationDescription">您确定要删除您与<b>{name}</b>的会话吗？\n该操作将永久删除所有消息和附件。</string>
     <plurals name="deleteMessage">
         <item quantity="other">删除消息</item>
     </plurals>
@@ -385,10 +411,12 @@
     <string name="errorCopyAndQuit">复制错误并退出</string>
     <string name="errorDatabase">数据库错误</string>
     <string name="errorUnknown">发生了未知错误。</string>
+    <string name="failedToDownload">下载失败</string>
     <string name="failures">失败</string>
     <string name="file">文件</string>
     <string name="files">文件</string>
     <string name="followSystemSettings">匹配系统设置</string>
+    <string name="forever">永久</string>
     <string name="from">发送自：</string>
     <string name="fullScreenToggle">全屏</string>
     <string name="gif">GIF</string>
@@ -398,6 +426,7 @@
     <string name="groupCreate">创建群组</string>
     <string name="groupCreateErrorNoMembers">请至少选择一名群组成员。</string>
     <string name="groupDelete">删除群组</string>
+    <string name="groupDeleteDescription">您确定要删除<b>{group_name}</b>吗？\n\n这将移除所有成员并删除所有群组内容。</string>
     <string name="groupDeleteDescriptionMember">你确定要删除群组 <b>{group_name}</b>吗?</string>
     <string name="groupDeletedMemberDescription">{group_name} 已被群组管理员删除。您将无法再发送任何信息。</string>
     <string name="groupDescriptionEnter">输入群组描述</string>
@@ -412,12 +441,14 @@
     <string name="groupInviteFailedMultiple">邀请{name}和其他{count}位成员加入{group_name}失败</string>
     <string name="groupInviteFailedTwo">邀请{name}和{other_name}加入{group_name}失败</string>
     <string name="groupInviteFailedUser">邀请{name}加入{group_name}失败</string>
+    <string name="groupInviteNotSent">邀请未发送</string>
     <string name="groupInviteReinvite"><b>{name}</b>邀请您重新加入<b>{group_name}</b>，您是该群组的管理员。</string>
     <string name="groupInviteReinviteYou">有人邀请您重新加入<b>{group_name}</b>，您是该群的管理员。</string>
     <plurals name="groupInviteSending">
         <item quantity="other">正在发送邀请</item>
     </plurals>
     <string name="groupInviteSent">邀请已发送</string>
+    <string name="groupInviteStatusUnknown">邀请状态未知</string>
     <string name="groupInviteSuccessful">群组邀请成功</string>
     <string name="groupInviteVersion">用户必须使用最新版本才能接受邀请</string>
     <string name="groupInviteYou"><b>您</b>被邀请加入群组。</string>
@@ -450,10 +481,12 @@
     <string name="groupNameUpdated">群组名称已更新。</string>
     <string name="groupNameVisible">群组名称对所有群组成员可见。</string>
     <string name="groupNoMessages">您没有来自<b>{group_name}</b>的消息。发送一条消息开始会话！</string>
+    <string name="groupNotUpdatedWarning">此群组已超过 30 天未更新。您可能在发送消息或查看群组信息时遇到问题。</string>
     <string name="groupOnlyAdmin">您是<b>{group_name}</b>中唯一的管理员。\n\n没有管理员，群组成员和设置将无法被更改。</string>
     <string name="groupPendingRemoval">待移除</string>
     <string name="groupPromotedYou"><b>您</b>被设置为管理员。</string>
     <string name="groupPromotedYouMultiple"><b>您</b>和其他<b>{count}人</b>被授权为管理员。</string>
+    <string name="groupPromotedYouTwo"><b>您</b>和<b>{other_name}</b>已被授权为管理员。</string>
     <string name="groupRemoveDescription">你想将 <b>{name}</b> 从 <b>{group_name}</b> 中移除吗？</string>
     <string name="groupRemoveDescriptionMultiple">您希望将<b>{name}</b>和其他<b>{count}人</b>从<b>{group_name}</b>中移除吗？</string>
     <string name="groupRemoveDescriptionTwo">您希望将<b>{name}</b>和<b>{other_name}</b>从<b>{group_name}</b>中移除吗？</string>
@@ -487,15 +520,24 @@
     <string name="hideMenuBarDescription">切换系统菜单栏可见性</string>
     <string name="hideOthers">隐藏其它</string>
     <string name="image">图片</string>
+    <string name="images">图片</string>
     <string name="incognitoKeyboard">无痕键盘</string>
     <string name="incognitoKeyboardDescription">启用隐身模式（如果可用）。您正在使用的键盘可能会忽略此请求。</string>
     <string name="info">信息</string>
     <string name="invalidShortcut">无效的快捷方式</string>
+    <plurals name="inviteFailedDescription">
+        <item quantity="other">无法发送邀请。您想重试吗？</item>
+    </plurals>
     <string name="join">加入</string>
     <string name="later">稍后</string>
     <string name="learnMore">了解更多</string>
     <string name="leave">离开</string>
     <string name="leaving">退出中...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">此群组目前为只读状态。请重新创建此群组以继续聊天。</string>
+    <string name="legacyGroupAfterDeprecationMember">此群组目前为只读状态。请要求管理员重新创建此群组以继续聊天。</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">群组已升级！请重新创建此群组以提高可靠性。此群组将于{date}变为只读状态。</string>
+    <string name="legacyGroupBeforeDeprecationMember">群组已升级！请要求群组管理员重新创建此群组以提高可靠性。此群组将于{date}变为只读状态。</string>
+    <string name="legacyGroupChatHistory">聊天记录被不会转移到新群组。您仍然可以查看旧群组中的所有聊天记录。</string>
     <string name="legacyGroupMemberNew"><b>{name}</b>加入了群组。</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b>和其他<b>{count}名</b>成员加入了群组。</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>您</b>和其他<b>{count}人</b>加入了群组。</string>
@@ -524,6 +566,7 @@
     <string name="lockAppStatus">锁定状态</string>
     <string name="lockAppUnlock">点击解锁</string>
     <string name="lockAppUnlocked">{app_name}已解锁</string>
+    <string name="manageMembers">管理成员</string>
     <string name="max">最大</string>
     <string name="media">媒体</string>
     <plurals name="members">
@@ -559,6 +602,9 @@
     <string name="messageNewDescriptionMobile">通过输入朋友的账户ID、ONS或扫描他们的二维码来开始新的对话。</string>
     <plurals name="messageNewYouveGot">
         <item quantity="other">您有%1$d条新消息。</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="other">您在%1$s中收到了%2$d条新消息。</item>
     </plurals>
     <string name="messageReplyingTo">回复</string>
     <string name="messageRequestGroupInvite"><b>{name}</b>邀请您加入<b>{group_name}</b>。</string>
@@ -610,6 +656,7 @@
     <string name="notificationsContentShowNoNameOrContent">不显示发送者和信息内容</string>
     <string name="notificationsFastMode">高速模式</string>
     <string name="notificationsFastModeDescription">您将会收到由Google的通知服务器发出的即时可靠的新消息通知。</string>
+    <string name="notificationsFastModeDescriptionHuawei">您将会收到由华为的通知服务器发出的即时可靠的新消息通知。</string>
     <string name="notificationsFastModeDescriptionIos">您将会收到由Apple的通知服务器发出的即时可靠的新消息通知。</string>
     <string name="notificationsGoToDevice">跳转到设备通知设置</string>
     <string name="notificationsHeaderAllMessages">通知 - 所有</string>
@@ -625,6 +672,7 @@
     <string name="notificationsMuteFor">免打扰{time_large}</string>
     <string name="notificationsMuteUnmute">关闭免打扰</string>
     <string name="notificationsMuted">免打扰</string>
+    <string name="notificationsMutedFor">已设置免打扰{time_large}</string>
     <string name="notificationsSlowMode">慢速模式</string>
     <string name="notificationsSlowModeDescription">{app_name}将不时在后台获取新消息。</string>
     <string name="notificationsSound">提示音</string>
@@ -683,20 +731,32 @@
     <string name="passwordSet">设置密码</string>
     <string name="passwordSetDescription">您的密码已设定。请妥善保管。</string>
     <string name="paste">粘帖</string>
+    <string name="permissionChange">授权变更</string>
     <string name="permissionMusicAudioDenied">{app_name}需要音乐和音频权限才能发送文件、音乐和音频，但该权限已被永久拒绝。请进入应用程序设置→权限，打开“音乐和音频”权限。</string>
     <string name="permissionsAppleMusic">{app_name}需要使用Apple Music来播放媒体附件。</string>
     <string name="permissionsAutoUpdate">自动更新</string>
     <string name="permissionsAutoUpdateDescription">启动时自动检查更新</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">需要摄像头访问权限才能进行通话。在设置中允许“摄像头”权限以继续。</string>
+    <string name="permissionsCameraChangeDescriptionIos">摄像头访问权限已允许。如需禁用，请在设置中禁用“摄像头”权限。</string>
     <string name="permissionsCameraDenied">{app_name}需要相机权限来拍摄照片和视频，但是该权限已被永久拒绝。请点击设置 → 权限，并启用\"相机\"。</string>
+    <string name="permissionsCameraDescriptionIos">请允许访问摄像头以进行视频通话。</string>
     <string name="permissionsFaceId">{app_name}的屏幕锁功能使用 Face ID。</string>
     <string name="permissionsKeepInSystemTray">保留在系统托盘</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name}会在您关闭窗口后继续在后台运行</string>
     <string name="permissionsLibrary">{app_name}需要照片库访问权限以继续。您可以在iOS设置中启用访问。</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">需要本地网络访问权限才能进行通话。在设置中允许“本地网络”权限以继续。</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name}需要访问本地网络才能进行语音和视频通话。</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">本地网络访问权限已允许。如需禁用，请在设置中禁用“本地网络”权限。</string>
+    <string name="permissionsLocalNetworkDescriptionIos">请允许访问本地网络访问以进行语音和视频通话。</string>
+    <string name="permissionsLocalNetworkIos">本地网络</string>
     <string name="permissionsMicrophone">麦克风</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name}需要麦克风权限来进行语音通话和发送语音消息，但是该权限已被永久拒绝。请点击设置 → 权限，并启用\"麦克风\"。</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">需要麦克风访问权限以进行通话和录制语音消息。在设置中打开“麦克风”权限以继续。</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">您可以在{app_name}的隐私设置中启用麦克风访问权限。</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name}需要麦克风访问权限来进行语音通话及录制语音消息。</string>
+    <string name="permissionsMicrophoneChangeDescriptionIos">麦克风访问权限已允许。如需禁用，请在设置中禁用“麦克风”权限。</string>
     <string name="permissionsMicrophoneDescription">允许访问麦克风。</string>
+    <string name="permissionsMicrophoneDescriptionIos">请允许访问麦克风以进行语音通话和录制语音消息。</string>
     <string name="permissionsMusicAudio">{app_name}需要音乐和音频访问才能发送文件、音乐和音频。</string>
     <string name="permissionsRequired">需要相应权限</string>
     <string name="permissionsStorageDenied">{app_name}需要照片权限才能发送照片和视频，但该权限已被永久拒绝。请进入应用程序设置→权限，打开“照片与视频”权限。</string>
@@ -716,6 +776,12 @@
     <string name="profileDisplayPictureSizeError">请选择一个更小的文件。</string>
     <string name="profileErrorUpdate">更新资料失败。</string>
     <string name="promote">授权</string>
+    <plurals name="promotionFailed">
+        <item quantity="other">授权失败</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="other">无法授权。您想重试吗？</item>
+    </plurals>
     <string name="qrCode">二维码</string>
     <string name="qrNotAccountId">此二维码不含账户ID</string>
     <string name="qrNotRecoveryPassword">此二维码不含恢复密码</string>
@@ -728,11 +794,14 @@
     <string name="readReceipts">已读回执</string>
     <string name="readReceiptsDescription">显示您发送和接收的所有消息的已读回执。</string>
     <string name="received">已接收:</string>
+    <string name="receivedAnswer">已收到应答</string>
+    <string name="receivingCallOffer">正在接收通话邀请</string>
     <string name="recommended">推荐选项</string>
     <string name="recoveryPasswordBannerDescription">保存您的恢复密码以确保您不会失去对账户的访问权限。</string>
     <string name="recoveryPasswordBannerTitle">保存您的恢复密码</string>
     <string name="recoveryPasswordDescription">使用您的恢复密码在新设备上加载您的帐户。\n\n没有您的恢复密码，您的帐户将无法恢复。请确保将它存储在安全的地方，并且不要与任何人分享。</string>
     <string name="recoveryPasswordEnter">输入您的恢复密码</string>
+    <string name="recoveryPasswordErrorLoad">尝试加载您的恢复密码时发生错误。\n\n请导出您的日志，然后通过{app_name}帮助服务台上传文件以帮助解决此问题。</string>
     <string name="recoveryPasswordErrorMessageGeneric">请检查您的恢复密码并重试。</string>
     <string name="recoveryPasswordErrorMessageIncorrect">你的恢复密码中的一些词语不正确。请检查后重试。</string>
     <string name="recoveryPasswordErrorMessageShort">您输入的恢复密码长度不够。请检查后重试。</string>
@@ -746,6 +815,7 @@
     <string name="recoveryPasswordRestoreDescription">输入您的恢复密码以加载您的账户。如果您没有保存它，您可以在应用设置中找到该恢复密码。</string>
     <string name="recoveryPasswordView">查看密码</string>
     <string name="recoveryPasswordWarningSendDescription">这是您的恢复密码。如果您发送给他人，他们将能够完全访问您的账户。</string>
+    <string name="recreateGroup">重新创建群组</string>
     <string name="redo">重做</string>
     <string name="remove">移除</string>
     <string name="removePasswordFail">移除密码失败</string>
@@ -779,6 +849,7 @@
     <string name="selectAll">全选</string>
     <string name="send">发送</string>
     <string name="sending">发送中</string>
+    <string name="sendingCallOffer">正在发送通话邀请</string>
     <string name="sent">发送:</string>
     <string name="sessionAppearance">外观</string>
     <string name="sessionClearData">清除数据</string>
@@ -792,11 +863,13 @@
     <string name="sessionRecoveryPassword">恢复密码</string>
     <string name="sessionSettings">设置</string>
     <string name="set">设置</string>
+    <string name="setCommunityDisplayPicture">设置社群头像</string>
     <string name="settingsRestartDescription">您必须重新启动{app_name}以应用您的新设置。</string>
     <string name="share">分享</string>
     <string name="shareAccountIdDescription">通过与好友分享您的账号ID来邀请他们与您在{app_name}上聊天</string>
     <string name="shareAccountIdDescriptionCopied">随时随地和朋友分享，并将会话移到此处。</string>
     <string name="shareExtensionDatabaseError">打开数据库时出现问题。请重新启动应用程序并重试。</string>
+    <string name="shareExtensionNoAccountError">哎呀！您似乎还没有{app_name}帐户。\n\n您需要先在{app_name}应用中创建一个帐户，然后才能分享。</string>
     <string name="shareToSession">分享到{app_name}</string>
     <string name="show">显示</string>
     <string name="showAll">全部显示</string>
@@ -804,6 +877,7 @@
     <string name="stickers">贴图</string>
     <string name="supportGoTo">跳转到支持页面</string>
     <string name="systemInformationDesktop">系统信息：{information}</string>
+    <string name="tapToRetry">点击以重试</string>
     <string name="theContinue">继续</string>
     <string name="theDefault">默认</string>
     <string name="theError">错误</string>
@@ -817,7 +891,11 @@
     <string name="updateDownloading">正在下载更新：{percent_loader}%</string>
     <string name="updateError">无法更新</string>
     <string name="updateErrorDescription">{app_name}更新失败。请返回{session_download_url}并手动安装新版本，并联系帮助中心反馈此问题。</string>
+    <string name="updateGroupInformation">更新群组信息</string>
+    <string name="updateGroupInformationDescription">群组名称与描述对所有群组成员可见。</string>
+    <string name="updateGroupInformationEnterShorterDescription">请输入更简短的群组描述</string>
     <string name="updateNewVersion">有新版本的{app_name}可用，点击更新</string>
+    <string name="updateNewVersionDescription">{app_name}有新版本（{version}）可用。</string>
     <string name="updateReleaseNotes">跳转到版本信息</string>
     <string name="updateSession">{app_name}更新</string>
     <string name="updateVersion">版本 {version}</string>
@@ -830,6 +908,8 @@
     <string name="video">视频</string>
     <string name="videoErrorPlay">无法播放视频。</string>
     <string name="view">查看</string>
+    <string name="viewLess">查看更少</string>
+    <string name="viewMore">查看更多</string>
     <string name="waitFewMinutes">这可能需要几分钟的时间。</string>
     <string name="waitOneMoment">请稍候...</string>
     <string name="warning">警告</string>

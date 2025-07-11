@@ -21,8 +21,8 @@ fun SessionSwitch(
         onCheckedChange = onCheckedChange,
         enabled = enabled,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = LocalColors.current.primary,
-            checkedTrackColor = LocalColors.current.primary.copy(alpha = 0.3f),
+            checkedThumbColor = LocalColors.current.accent,
+            checkedTrackColor = LocalColors.current.accent.copy(alpha = 0.3f),
             uncheckedThumbColor = LocalColors.current.disabled,
             uncheckedTrackColor = LocalColors.current.disabled.copy(alpha = 0.3f),
             uncheckedBorderColor = Color.Transparent,

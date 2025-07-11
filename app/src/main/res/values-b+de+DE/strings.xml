@@ -276,6 +276,7 @@
     <string name="create">Erstellen</string>
     <string name="creatingCall">Anruf wird erstellt</string>
     <string name="cut">Ausschneiden</string>
+    <string name="databaseErrorGeneric">Ein Datenbankfehler ist aufgetreten.\n\n Exportiere deine App-Logs, um diese für eine Fehleranalyse zu teilen. Wenn dies nicht erfolgreich ist, installiere die {app_name}  neu und stelle deinen Account wieder her.</string>
     <string name="databaseErrorTimeout">Wir haben bemerkt, dass {app_name} lange zum Starten braucht.\n\nDu kannst weiter warten, deine Geräteprotokolle zur Fehlerbehebung exportieren oder versuchen, {app_name} neu zu starten.</string>
     <string name="databaseErrorUpdate">Deine App-Datenbank ist mit dieser Version von {app_name} nicht kompatibel. Installiere die App neu und stelle deinen Account wieder her, um eine neue Datenbank zu erstellen und {app_name} weiter zu verwenden.\n\nWarnung: Dadurch gehen alle Nachrichten und Anhänge verloren, die älter als zwei Wochen sind.</string>
     <string name="databaseOptimizing">Optimiere Datenbank</string>

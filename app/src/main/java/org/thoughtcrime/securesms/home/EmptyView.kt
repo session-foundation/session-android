@@ -56,7 +56,7 @@ internal fun EmptyView(newAccount: Boolean) {
                         .format().toString()
                 },
                 style = LocalType.current.base,
-                color = LocalColors.current.primary,
+                color = LocalColors.current.accent,
                 textAlign = TextAlign.Center
             )
         }

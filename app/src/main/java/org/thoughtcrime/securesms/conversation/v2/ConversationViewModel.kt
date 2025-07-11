@@ -56,6 +56,7 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Hex
 import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.audio.AudioSlidePlayer
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
@@ -71,6 +72,7 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.mms.AudioSlide
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarData
 import org.thoughtcrime.securesms.ui.components.ConversationAppBarPagerData
@@ -84,7 +86,6 @@ import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
 import java.time.ZoneId
 import java.util.UUID
-
 
 class ConversationViewModel(
     val threadId: Long,
@@ -109,7 +110,11 @@ class ConversationViewModel(
     private val avatarUtils: AvatarUtils,
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
-) : ViewModel() {
+    private val proStatusManager: ProStatusManager,
+) : InputbarViewModel(
+    application = application,
+    proStatusManager = proStatusManager
+) {
 
     val showSendAfterApprovalText: Boolean
         get() = recipient?.run {
@@ -336,9 +341,12 @@ class ConversationViewModel(
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
-                        inputBarState = getInputBarState(recipient, community, deprecationState),
                         messageRequestState = buildMessageRequestState(recipient),
                     )
+                }
+
+                _inputBarState.update {
+                    getInputBarState(recipient, community, deprecationState)
                 }
             }
         }
@@ -350,8 +358,11 @@ class ConversationViewModel(
                 _uiState.update {
                     it.copy(
                         shouldExit = recipient == null,
-                        inputBarState = getInputBarState(recipient, _openGroup.value, legacyGroupDeprecationManager.deprecationState.value),
                     )
+                }
+
+                _inputBarState.update {
+                    getInputBarState(recipient, _openGroup.value, legacyGroupDeprecationManager.deprecationState.value)
                 }
             }
         }
@@ -379,11 +390,13 @@ class ConversationViewModel(
         community: OpenGroup?,
         deprecationState: LegacyGroupDeprecationManager.DeprecationState
     ): InputBarState {
+        val currentCharLimitState = _inputBarState.value.charLimitState
         return when {
             // prioritise cases that demand the input to be hidden
             !shouldShowInput(recipient, community, deprecationState) -> InputBarState(
                 contentState = InputBarContentState.Hidden,
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // next are cases where the  input is visible but disabled
@@ -395,7 +408,8 @@ class ConversationViewModel(
                         _uiEvents.tryEmit(ConversationUiEvent.ShowUnblockConfirmation)
                     }
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // the user does not have write access in the community
@@ -403,13 +417,15 @@ class ConversationViewModel(
                 contentState = InputBarContentState.Disabled(
                     text = application.getString(R.string.permissionsWriteCommunity),
                 ),
-                enableAttachMediaControls = false
+                enableAttachMediaControls = false,
+                charLimitState = currentCharLimitState
             )
 
             // other cases the input is visible, and the buttons might be disabled based on some criteria
             else -> InputBarState(
                 contentState = InputBarContentState.Visible,
-                enableAttachMediaControls = shouldEnableInputMediaControls(recipient)
+                enableAttachMediaControls = shouldEnableInputMediaControls(recipient),
+                charLimitState = currentCharLimitState
             )
         }
     }
@@ -1330,6 +1346,7 @@ class ConversationViewModel(
         private val avatarUtils: AvatarUtils,
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
+        private val proStatusManager: ProStatusManager,
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1356,6 +1373,7 @@ class ConversationViewModel(
                 avatarUtils = avatarUtils,
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
+                proStatusManager = proStatusManager,
             ) as T
         }
     }
@@ -1411,25 +1429,8 @@ data class ConversationUiState(
     val uiMessages: List<UiMessage> = emptyList(),
     val messageRequestState: MessageRequestUiState = MessageRequestUiState.Invisible,
     val shouldExit: Boolean = false,
-    val inputBarState: InputBarState = InputBarState(),
-
     val showLoader: Boolean = false,
 )
-
-data class InputBarState(
-    val contentState: InputBarContentState = InputBarContentState.Visible,
-    // Note: These input media controls are with regard to whether the user can attach multimedia files
-    // or record voice messages to be sent to a recipient - they are NOT things like video or audio
-    // playback controls.
-    val enableAttachMediaControls: Boolean = true,
-)
-
-sealed interface InputBarContentState {
-    data object Hidden : InputBarContentState
-    data object Visible : InputBarContentState
-    data class Disabled(val text: String, val onClick: (() -> Unit)? = null) : InputBarContentState
-}
-
 
 sealed interface ConversationUiEvent {
     data class NavigateToConversation(val threadId: Long) : ConversationUiEvent

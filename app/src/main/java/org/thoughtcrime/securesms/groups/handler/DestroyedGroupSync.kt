@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.groups.handler
 
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.session.libsession.database.StorageProtocol
@@ -32,6 +33,7 @@ class DestroyedGroupSync @Inject constructor(
         job = GlobalScope.launch {
             configFactory.configUpdateNotifications
                 .filterIsInstance<ConfigUpdateNotification.GroupConfigsUpdated>()
+                .filter { it.fromMerge }
                 .collect { update ->
                     val isDestroyed = configFactory.withGroupConfigs(update.groupId) {
                         it.groupInfo.isDestroyed()
