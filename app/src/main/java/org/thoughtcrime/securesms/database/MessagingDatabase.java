@@ -47,6 +47,10 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage);
 
+  public abstract List<Long> getExpiredMessageIDs(long nowMills);
+
+  public abstract long getNextExpiringTimestamp();
+
   public abstract boolean deleteMessage(long messageId);
   public abstract boolean deleteMessages(long[] messageId, long threadId);
 

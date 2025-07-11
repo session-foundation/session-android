@@ -40,13 +40,6 @@ class SSKEnvironment(
     interface MessageExpirationManagerProtocol {
         fun insertExpirationTimerMessage(message: ExpirationTimerUpdate)
 
-        /**
-         * Starts the expiration timer for a message, regardless of it has been sent, read or not.
-         *
-         * However, the timer will not start if it doesn't have its expiryMode set.
-         */
-        fun startExpiringNow(id: MessageId)
-
         fun onMessageSent(message: Message)
         fun onMessageReceived(message: Message)
     }

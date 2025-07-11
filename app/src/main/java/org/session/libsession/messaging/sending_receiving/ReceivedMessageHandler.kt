@@ -171,7 +171,10 @@ fun MessageReceiver.cancelTypingIndicatorsIfNeeded(senderPublicKey: String) {
 }
 
 private fun MessageReceiver.handleExpirationTimerUpdate(message: ExpirationTimerUpdate) {
-    SSKEnvironment.shared.messageExpirationManager.insertExpirationTimerMessage(message)
+    SSKEnvironment.shared.messageExpirationManager.run {
+        insertExpirationTimerMessage(message)
+        onMessageReceived(message)
+    }
 
     val isLegacyGroup = message.groupPublicKey != null && message.groupPublicKey?.startsWith(IdPrefix.GROUP.value) == false
 
