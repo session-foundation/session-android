@@ -21,6 +21,7 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
 import javax.inject.Inject
@@ -74,7 +75,8 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .asSequence()
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
                 .filter { mmsSmsDatabase.getMessageById(it.expirationInfo.id)?.run {
-                    isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
+                    (isExpirationTimerUpdate || messageContent is DisappearingMessageUpdate)
+                            && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
                 .forEach {
                     val db = if (it.expirationInfo.id.mms) {

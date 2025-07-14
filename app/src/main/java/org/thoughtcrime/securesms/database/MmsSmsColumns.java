@@ -9,6 +9,7 @@ public interface MmsSmsColumns {
   public static final String THREAD_ID                = "thread_id";
   public static final String READ                     = "read";
   public static final String BODY                     = "body";
+  public static final String MESSAGE_CONTENT          = "message_content";
 
   // This is the address of the message recipient, which may be a single user, a group, or a community!
   // It is NOT the address of the sender of any given message!
