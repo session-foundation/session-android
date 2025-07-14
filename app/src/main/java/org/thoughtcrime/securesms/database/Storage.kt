@@ -1940,27 +1940,6 @@ open class Storage @Inject constructor(
         )
     }
 
-    override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {
-        val expiringMessages = mutableListOf<Pair<Long, Long>>()
-        val smsDb = smsDatabase
-        smsDb.readerFor(smsDb.expirationNotStartedMessages).use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        val mmsDb = mmsDatabase
-        mmsDb.expireNotStartedMessages.use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        return expiringMessages
-    }
-
     override fun updateDisappearingState(
         messageSender: String,
         threadID: Long,

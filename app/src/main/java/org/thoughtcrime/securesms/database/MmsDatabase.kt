@@ -267,18 +267,6 @@ class MmsDatabase(context: Context, databaseHelper: Provider<SQLCipherOpenHelper
         }
     }
 
-    val expireStartedMessages: Reader
-        get() {
-            val where = "$EXPIRE_STARTED > 0"
-            return readerFor(rawQuery(where, null))!!
-        }
-
-    val expireNotStartedMessages: Reader
-        get() {
-            val where = "$EXPIRES_IN > 0 AND $EXPIRE_STARTED = 0"
-            return readerFor(rawQuery(where, null))!!
-        }
-
     override fun getExpiredMessageIDs(nowMills: Long): List<Long> {
         val query = "SELECT " + ID + " FROM " + TABLE_NAME +
                 " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?"

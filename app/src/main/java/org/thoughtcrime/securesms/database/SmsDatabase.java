@@ -605,16 +605,6 @@ public class SmsDatabase extends MessagingDatabase {
             " WHERE " + where + " GROUP BY " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID, arguments);
   }
 
-  public Cursor getExpirationStartedMessages() {
-    String         where = EXPIRE_STARTED + " > 0";
-    return rawQuery(where, null);
-  }
-
-  public Cursor getExpirationNotStartedMessages() {
-    String         where = EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " = 0";
-    return rawQuery(where, null);
-  }
-
   @Override
   public List<Long> getExpiredMessageIDs(long nowMills) {
     String query = "SELECT " + ID + " FROM " + TABLE_NAME +
