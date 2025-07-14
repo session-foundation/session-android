@@ -102,7 +102,9 @@ class ExpiringMessageManager @Inject constructor(
             val threadId = storage.get().getThreadId(recipient) ?: return null
             val mediaMessage = IncomingMediaMessage(
                 address, sentTimestamp!!, -1,
-                expiresInMillis, 0, true,
+                expiresInMillis,
+                0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
+                true,
                 false,
                 false,
                 Optional.absent(),
@@ -146,7 +148,7 @@ class ExpiringMessageManager @Inject constructor(
                 recipient,
                 sentTimestamp!!,
                 duration,
-                0,
+                0, // Marking as 0 as expiration shouldn't start until we send the message
                 groupId
             )
             return mmsDatabase.insertSecureDecryptedMessageOutbox(

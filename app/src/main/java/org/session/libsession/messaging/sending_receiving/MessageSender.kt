@@ -426,7 +426,6 @@ object MessageSender {
         message.id?.let { messageId ->
             if (openGroupSentTimestamp != -1L && message is VisibleMessage) {
                 storage.addReceivedMessageTimestamp(openGroupSentTimestamp)
-                storage.updateSentTimestamp(messageId, openGroupSentTimestamp)
                 message.sentTimestamp = openGroupSentTimestamp
             }
 
