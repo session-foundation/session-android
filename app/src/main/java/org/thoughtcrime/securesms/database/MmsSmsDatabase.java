@@ -551,7 +551,7 @@ public class MmsSmsDatabase extends Database {
                                   ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
                               SmsDatabase.BODY,
-                              MmsDatabase.TABLE_NAME + "." + MmsDatabase.MESSAGE_CONTENT + " AS " + MmsSmsColumns.MESSAGE_CONTENT,
+                              MmsDatabase.MESSAGE_CONTENT,
                               READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,

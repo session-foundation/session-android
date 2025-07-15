@@ -544,6 +544,7 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
 
       if (oldVersion < lokiV51) {
         db.execSQL(MmsDatabase.ADD_MESSAGE_CONTENT_COLUMN);
+        db.execSQL(MmsDatabase.MIGRATE_EXPIRY_CONTROL_MESSAGES);
         db.execSQL(ThreadDatabase.ADD_SNIPPET_CONTENT_COLUMN);
       }
 

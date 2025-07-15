@@ -52,7 +52,8 @@ public class OutgoingMediaMessage {
                               @NonNull List<Contact> contacts,
                               @NonNull List<LinkPreview> linkPreviews,
                               @NonNull List<NetworkFailure> networkFailures,
-                              @NonNull List<IdentityKeyMismatch> identityKeyMismatches, MessageContent messageContent)
+                              @NonNull List<IdentityKeyMismatch> identityKeyMismatches,
+                              @Nullable MessageContent messageContent)
   {
     this.recipient             = recipient;
     this.body                  = message;
@@ -130,8 +131,6 @@ public class OutgoingMediaMessage {
   public boolean isGroup() {
     return false;
   }
-
-  public boolean isExpirationUpdate() { return false; }
 
   public long getSentTimeMillis() {
     return sentTimeMillis;

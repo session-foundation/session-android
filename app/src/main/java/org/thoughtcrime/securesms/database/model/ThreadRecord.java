@@ -143,8 +143,7 @@ public class ThreadRecord extends DisplayRecord {
             return Phrase.from(context, R.string.callsMissedCallFrom)
                     .put(NAME_KEY, getName())
                     .format().toString();
-        } else if (MmsSmsColumns.Types.isExpirationTimerUpdate(type) ||
-                getMessageContent() instanceof DisappearingMessageUpdate) {
+        } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
             // Use the same message as we would for displaying on the conversation screen.
             // lastMessage shouldn't be null here, but we'll check just in case.
             if (lastMessage != null) {

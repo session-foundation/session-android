@@ -170,9 +170,27 @@ public class ThreadDatabase extends Database {
   public ThreadDatabase(
           @dagger.hilt.android.qualifiers.ApplicationContext Context context,
           Provider<SQLCipherOpenHelper> databaseHelper,
+          TextSecurePreferences prefs,
           Json json) {
     super(context, databaseHelper);
     this.json = json;
+
+    if (!prefs.getMigratedDisappearingMessagesToMessageContent()) {
+      migrateDisappearingMessagesToMessageContent();
+      prefs.setMigratedDisappearingMessagesToMessageContent(true);
+    }
+  }
+
+  // As we migrate disappearing messages to MessageContent, we need to ensure that
+  // if they appear in the snippet, they have to be re-generated with the new MessageContent.
+  private void migrateDisappearingMessagesToMessageContent() {
+    String sql = "SELECT " + ID + " FROM " + TABLE_NAME +
+            " WHERE " + SNIPPET_TYPE + " & " + MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT + " != 0";
+    try (final Cursor cursor = getReadableDatabase().rawQuery(sql)) {
+      while (cursor.moveToNext()) {
+        update(cursor.getLong(0), false);
+      }
+    }
   }
 
   public void setUpdateListener(ConversationThreadUpdateListener updateListener) {

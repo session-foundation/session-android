@@ -60,6 +60,7 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.database.model.Quote
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.database.model.content.MessageContent
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.MmsException
@@ -630,7 +631,7 @@ class MmsDatabase
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
+        if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, false.takeUnless { retrieved.groupId != null })
         val contentValues = ContentValues()
         contentValues.put(DATE_SENT, retrieved.sentTimeMillis)
         contentValues.put(ADDRESS, retrieved.from.toString())
@@ -681,10 +682,8 @@ class MmsDatabase
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
-        if (!MmsSmsColumns.Types.isExpirationTimerUpdate(mailbox)) {
-            if (runThreadUpdate) {
-                get(context).threadDatabase().update(threadId, true)
-            }
+        if (runThreadUpdate) {
+            get(context).threadDatabase().update(threadId, true)
         }
         notifyConversationListeners(threadId)
         return Optional.of(InsertResult(messageId, threadId))
@@ -698,7 +697,7 @@ class MmsDatabase
         runThreadUpdate: Boolean
     ): Optional<InsertResult> {
         if (threadId < 0 ) throw MmsException("No thread ID supplied!")
-        if (retrieved.isExpirationUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
+        if (retrieved.messageContent is DisappearingMessageUpdate) deleteExpirationTimerMessages(threadId, true.takeUnless { retrieved.isGroup })
         val messageId = insertMessageOutbox(
             retrieved,
             threadId,
@@ -726,9 +725,6 @@ class MmsDatabase
         if (retrieved.isPushMessage) {
             type = type or MmsSmsColumns.Types.PUSH_MESSAGE_BIT
         }
-        if (retrieved.isExpirationUpdate) {
-            type = type or MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT
-        }
         if (retrieved.isScreenshotDataExtraction) {
             type = type or MmsSmsColumns.Types.SCREENSHOT_EXTRACTION_BIT
         }
@@ -755,9 +751,6 @@ class MmsDatabase
         if (forceSms) type = type or MmsSmsColumns.Types.MESSAGE_FORCE_SMS_BIT
         if (message.isGroup && message is OutgoingGroupMediaMessage) {
             if (message.isUpdateMessage) type = type or MmsSmsColumns.Types.GROUP_UPDATE_MESSAGE_BIT
-        }
-        if (message.isExpirationUpdate) {
-            type = type or MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT
         }
         val earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(message.sentTimeMillis)
         val earlyReadReceipts = earlyReadReceiptCache.remove(message.sentTimeMillis)
@@ -1316,7 +1309,7 @@ class MmsDatabase
             " AND $MESSAGE_BOX & ${MmsSmsColumns.Types.BASE_TYPE_MASK} $comparison (${MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES.joinToString()})"
         } ?: ""
 
-        val where = "$THREAD_ID = ? AND ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) <> 0" + outgoingClause
+        val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
         writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
         notifyConversationListeners(threadId)
     }
@@ -1594,6 +1587,21 @@ class MmsDatabase
 
         const val ADD_MESSAGE_CONTENT_COLUMN: String =
             "ALTER TABLE $TABLE_NAME ADD COLUMN $MESSAGE_CONTENT TEXT DEFAULT NULL"
+
+        // This migration looks for messages with EXPIRATION_TIMER_UPDATE_BIT set,
+        // then create a message content with json type = 'disappearing_message_update' and remove the bit
+        const val MIGRATE_EXPIRY_CONTROL_MESSAGES = """
+            UPDATE $TABLE_NAME 
+            SET $MESSAGE_CONTENT = json_object(
+                    '${MessageContent.DISCRIMINATOR}', '${DisappearingMessageUpdate.TYPE_NAME}', 
+                    '${DisappearingMessageUpdate.KEY_EXPIRY_TIME_SECONDS}', $EXPIRES_IN / 1000, 
+                    '${DisappearingMessageUpdate.KEY_EXPIRY_TYPE}', 
+                        iif($EXPIRES_IN <= 0, '${DisappearingMessageUpdate.EXPIRY_MODE_NONE}',
+                          iif($EXPIRE_STARTED <= $DATE_SENT, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_SENT}, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_READ}))
+                ),
+                $MESSAGE_BOX = $MESSAGE_BOX & ~${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}
+            WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
+        """
 
         private val MMS_PROJECTION: Array<String> = arrayOf(
             "$TABLE_NAME.$ID AS $ID",

@@ -107,7 +107,7 @@ class ExpiringMessageManager @Inject constructor(
                 address, sentTimestamp!!, -1,
                 expiresInMillis,
                 0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
-                false, // We no longer set this to true anymore as it won't be used in the future,
+                // We no longer set this to true anymore as it won't be used in the future,
                 false,
                 false,
                 Optional.absent(),

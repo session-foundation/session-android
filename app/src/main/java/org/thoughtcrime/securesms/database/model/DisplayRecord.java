@@ -103,8 +103,6 @@ public abstract class DisplayRecord {
   public boolean isCallLog()                    { return SmsDatabase.Types.isCallLog(type);                        }
   public boolean isDataExtractionNotification() { return isMediaSavedNotification() || isScreenshotNotification(); }
   public boolean isDeleted()                    { return  MmsSmsColumns.Types.isDeletedMessage(type);              }
-  @Deprecated(forRemoval = true)
-  public boolean isExpirationTimerUpdate()      { return SmsDatabase.Types.isExpirationTimerUpdate(type);          }
   public boolean isFirstMissedCall()            { return SmsDatabase.Types.isFirstMissedCall(type);                }
   public boolean isGroupUpdateMessage()         { return SmsDatabase.Types.isGroupUpdateMessage(type);             }
   public boolean isIncoming()                   { return !MmsSmsColumns.Types.isOutgoingMessageType(type);         }
@@ -125,7 +123,6 @@ public abstract class DisplayRecord {
 
   public boolean isControlMessage() {
     return isGroupUpdateMessage()          ||
-            isExpirationTimerUpdate()      ||
             isDataExtractionNotification() ||
             isMessageRequestResponse()     ||
             isCallLog() ||

@@ -30,8 +30,6 @@ public class IncomingMediaMessage {
   private final int           subscriptionId;
   private final long          expiresIn;
   private final long          expireStartedAt;
-  @Deprecated
-  private final boolean       expirationUpdate; // Use new message content instead
   private final boolean       messageRequestResponse;
   private final boolean       hasMention;
   @Nullable
@@ -49,7 +47,6 @@ public class IncomingMediaMessage {
                               int subscriptionId,
                               long expiresIn,
                               long expireStartedAt,
-                              boolean expirationUpdate,
                               boolean messageRequestResponse,
                               boolean hasMention,
                               Optional<String> body,
@@ -69,7 +66,6 @@ public class IncomingMediaMessage {
     this.subscriptionId             = subscriptionId;
     this.expiresIn                  = expiresIn;
     this.expireStartedAt            = expireStartedAt;
-    this.expirationUpdate           = expirationUpdate;
     this.dataExtractionNotification = dataExtractionNotification.orNull();
     this.quote                      = quote.orNull();
     this.messageRequestResponse     = messageRequestResponse;
@@ -103,7 +99,7 @@ public class IncomingMediaMessage {
                                           Optional<List<LinkPreview>> linkPreviews)
   {
     return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt,
-            false, false, message.getHasMention(), Optional.fromNullable(message.getText()),
+            false, message.getHasMention(), Optional.fromNullable(message.getText()),
             group, Optional.fromNullable(attachments), null, quote, Optional.absent(), linkPreviews, Optional.absent());
   }
 
@@ -133,10 +129,6 @@ public class IncomingMediaMessage {
 
   public boolean isPushMessage() {
     return push;
-  }
-
-  public boolean isExpirationUpdate() {
-    return expirationUpdate;
   }
 
   public long getSentTimeMillis() {

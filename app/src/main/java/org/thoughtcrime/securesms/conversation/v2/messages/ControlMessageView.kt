@@ -87,37 +87,6 @@ class ControlMessageView : LinearLayout {
         binding.textView.text = messageBody
         val messageContent = message.messageContent
         when {
-            message.isExpirationTimerUpdate -> {
-                binding.apply {
-                    expirationTimerView.isVisible = true
-
-                    val threadRecipient = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(message.threadId)
-
-                    if (threadRecipient?.isGroupRecipient == true) {
-                        expirationTimerView.setTimerIcon()
-                    } else {
-                        expirationTimerView.setExpirationTime(message.expireStarted, message.expiresIn)
-                    }
-
-                    followSetting.isVisible = ExpirationConfiguration.isNewConfigEnabled
-                        && !message.isOutgoing
-                        && message.expiryMode != (MessagingModuleConfiguration.shared.storage.getExpirationConfiguration(message.threadId)?.expiryMode ?: ExpiryMode.NONE)
-                        && threadRecipient?.isGroupOrCommunityRecipient != true
-
-                    if (followSetting.isVisible) {
-                        binding.controlContentView.setOnClickListener {
-                            disappearingMessages.showFollowSettingDialog(context,
-                                threadId = message.threadId,
-                                recipient = message.recipient,
-                                content = DisappearingMessageUpdate(message.expiryMode)
-                            )
-                        }
-                    } else {
-                        binding.controlContentView.setOnClickListener(null)
-                    }
-                }
-            }
-
             messageContent is DisappearingMessageUpdate -> {
                 binding.apply {
                     expirationTimerView.isVisible = true

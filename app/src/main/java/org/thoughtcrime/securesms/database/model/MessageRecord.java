@@ -169,10 +169,6 @@ public abstract class MessageRecord extends DisplayRecord {
       boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
       return UpdateMessageBuilder.INSTANCE
               .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
-    } else if (isExpirationTimerUpdate()) {
-      int seconds = (int) (getExpiresIn() / 1000);
-      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
-      return new SpannableString(UpdateMessageBuilder.INSTANCE.buildExpirationTimerMessage(context, seconds, isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing(), getTimestamp(), expireStarted));
     } else if (isDataExtractionNotification()) {
       if (isScreenshotNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.SCREENSHOT, getIndividualRecipient().getAddress().toString())));
       else if (isMediaSavedNotification()) return new SpannableString((UpdateMessageBuilder.INSTANCE.buildDataExtractionMessage(context, DataExtractionNotificationInfoMessage.Kind.MEDIA_SAVED, getIndividualRecipient().getAddress().toString())));
