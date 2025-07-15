@@ -782,7 +782,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
-                message = Phrase.from(this, R.string.conversationsDeleteDescription)
+                message = Phrase.from(this, R.string.deleteConversationDescription)
                     .put(NAME_KEY, recipient.name)
                     .format()
             }
