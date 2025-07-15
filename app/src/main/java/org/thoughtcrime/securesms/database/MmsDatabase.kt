@@ -1519,6 +1519,15 @@ class MmsDatabase
         const val SHARED_CONTACTS: String = "shared_contacts"
         const val LINK_PREVIEWS: String = "previews"
 
+        /**
+         * The column that holds [MessageContent] in a JSON format.
+         *
+         * Note that this is a new column that we try to slowly migrate to, to store
+         * all the message content information in a single column. Right now the [MmsSmsColumns.BODY] column
+         * coexists alongside this column: if you see a [MessageContent], it takes precedence
+         * over the [MmsSmsColumns.BODY]/[MESSAGE_BOX]. If it's null, then we will still use
+         * the old way of describe what a message is.
+         */
         const val MESSAGE_CONTENT = "message_content"
 
 

@@ -106,6 +106,9 @@ public class ThreadDatabase extends Database {
   private static final String ERROR                  = "error";
   public  static final String SNIPPET_TYPE           = "snippet_type";
   public  static final String SNIPPET_URI            = "snippet_uri";
+  /**
+   * The column that hold a {@link MessageContent}. See {@link MmsDatabase#MESSAGE_CONTENT} for more information
+   */
   public  static final String SNIPPET_CONTENT        = "snippet_content";
   public  static final String ARCHIVED               = "archived";
   public  static final String STATUS                 = "status";
