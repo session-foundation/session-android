@@ -18,7 +18,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TIME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
-import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.ui.getSubbedCharSequence
@@ -108,8 +107,3 @@ class DisappearingMessages @Inject constructor(
         cancelButton()
     }
 }
-
-@Deprecated("This way of telling expiry mode is not true all the time. If you want to know the expiry mode of a message, you need to find out in the messageContent from now on.")
-val MessageRecord.expiryMode get() = if (expiresIn <= 0) ExpiryMode.NONE
-    else if (expireStarted == timestamp) ExpiryMode.AfterSend(expiresIn / 1000)
-    else ExpiryMode.AfterRead(expiresIn / 1000)
