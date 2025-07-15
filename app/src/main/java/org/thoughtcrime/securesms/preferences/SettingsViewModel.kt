@@ -18,17 +18,15 @@ import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsession.utilities.UsernameUtils
-import org.session.libsession.utilities.recipients.Recipient
+import org.session.libsession.utilities.currentUserName
 import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
-import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
@@ -48,9 +46,9 @@ class SettingsViewModel @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactory,
     private val connectivity: NetworkConnectivity,
-    private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager
+    private val recipientRepository: RecipientRepository,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -59,7 +57,7 @@ class SettingsViewModel @Inject constructor(
     val hexEncodedPublicKey: String = prefs.getLocalNumber() ?: ""
 
     private val userRecipient by lazy {
-        Recipient.from(context, Address.fromSerialized(hexEncodedPublicKey), false)
+        recipientRepository.getRecipientSync(Address.fromSerialized(hexEncodedPublicKey))
     }
 
     private val _uiState = MutableStateFlow(UIState(
@@ -97,9 +95,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
+    fun getDisplayName(): String = configFactory.currentUserName
 
-    fun hasAvatar() = prefs.getProfileAvatarId() != 0
+    fun hasAvatar() = configFactory.withUserConfigs { it.userProfile.getPic().url.isNotBlank() }
 
     fun createTempFile(): File? {
         try {
@@ -247,7 +245,7 @@ class SettingsViewModel @Inject constructor(
 
             try {
                 // Grab the profile key and kick of the promise to update the profile picture
-                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey(context)
+                val encodedProfileKey = ProfileKeyUtil.generateEncodedProfileKey()
                 val url = ProfilePictureUtilities.upload(profilePicture, encodedProfileKey, context)
 
                 // If the online portion of the update succeeded then update the local state
@@ -259,21 +257,17 @@ class SettingsViewModel @Inject constructor(
 
                 // When removing the profile picture the supplied ByteArray is empty so we'll clear the local data
                 if (profilePicture.isEmpty()) {
-                    MessagingModuleConfiguration.shared.storage.clearUserPic()
+                    configFactory.withMutableUserConfigs {
+                        it.userProfile.setPic(UserPic.DEFAULT)
+                    }
 
                     // update dialog state
                     _uiState.update { it.copy(avatarDialogState = AvatarDialogState.NoAvatar) }
                 } else {
-                    prefs.setProfileAvatarId(SECURE_RANDOM.nextInt())
-                    ProfileKeyUtil.setEncodedProfileKey(context, encodedProfileKey)
-
-                    // Attempt to grab the details we require to update the profile picture
-                    val profileKey = ProfileKeyUtil.getProfileKey(context)
-
                     // If we have a URL and a profile key then set the user's profile picture
-                    if (url.isNotEmpty() && profileKey.isNotEmpty()) {
+                    if (url.isNotBlank() && encodedProfileKey.isNotBlank()) {
                         configFactory.withMutableUserConfigs {
-                            it.userProfile.setPic(UserPic(url, profileKey))
+                            it.userProfile.setPic(UserPic(url, ProfileKeyUtil.getProfileKeyFromEncodedString(encodedProfileKey)))
                         }
                     }
 
@@ -296,7 +290,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun updateName(displayName: String) {
-        usernameUtils.saveCurrentUserName(displayName)
+        configFactory.withMutableUserConfigs { it.userProfile.setName(displayName) }
     }
 
     fun permanentlyHidePassword() {

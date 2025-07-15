@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
+import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.CreateGroupEvent
@@ -50,7 +51,7 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 @Composable
 fun CreateGroupScreen(
     fromLegacyGroupId: String?,
-    onNavigateToConversationScreen: (threadID: Long) -> Unit,
+    onNavigateToConversationScreen: (address: Address) -> Unit,
     onBack: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -65,7 +66,7 @@ fun CreateGroupScreen(
             when (event) {
                 is CreateGroupEvent.NavigateToConversation -> {
                     onClose()
-                    onNavigateToConversationScreen(event.threadID)
+                    onNavigateToConversationScreen(event.address)
                 }
 
                 is CreateGroupEvent.Error -> {

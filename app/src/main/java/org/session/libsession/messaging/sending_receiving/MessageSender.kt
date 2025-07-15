@@ -293,10 +293,9 @@ object MessageSender {
                 ?.let(MessagingModuleConfiguration.shared.storage::getThreadId)
         }
             ?.let(MessagingModuleConfiguration.shared.storage::getExpirationConfiguration)
-            ?.takeIf { it.isEnabled }
-            ?.expiryMode
             ?.takeIf { it is ExpiryMode.AfterSend || isSyncMessage }
             ?.expiryMillis
+            ?.takeIf { it > 0 }
     }
 
     // Open Groups
@@ -419,7 +418,6 @@ object MessageSender {
 
     // Result Handling
     fun handleSuccessfulMessageSend(message: Message, destination: Destination, isSyncMessage: Boolean = false, openGroupSentTimestamp: Long = -1) {
-        val threadId by lazy { requireNotNull(message.threadID) { "threadID for the message is null" } }
         val storage = MessagingModuleConfiguration.shared.storage
         val userPublicKey = storage.getUserPublicKey()!!
         // Ignore future self-sends
@@ -427,7 +425,6 @@ object MessageSender {
         message.id?.let { messageId ->
             if (openGroupSentTimestamp != -1L && message is VisibleMessage) {
                 storage.addReceivedMessageTimestamp(openGroupSentTimestamp)
-                storage.updateSentTimestamp(messageId, openGroupSentTimestamp, threadId)
                 message.sentTimestamp = openGroupSentTimestamp
             }
 
@@ -472,6 +469,9 @@ object MessageSender {
 
             // Mark the message as sent.
             storage.markAsSent(messageId)
+
+            // Update the message sent timestamp
+            storage.updateSentTimestamp(messageId, message.sentTimestamp!!)
 
             // Start the disappearing messages timer if needed
             SSKEnvironment.shared.messageExpirationManager.onMessageSent(message)
@@ -548,8 +548,6 @@ object MessageSender {
             // only show the NTS if it is currently marked as hidden
             MessagingModuleConfiguration.shared.configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN }
         ){
-            // make sure note to self is not hidden
-            MessagingModuleConfiguration.shared.preferences.setHasHiddenNoteToSelf(false)
             // update config in case it was marked as hidden there
             MessagingModuleConfiguration.shared.configFactory.withMutableUserConfigs {
                 it.userProfile.setNtsPriority(PRIORITY_VISIBLE)

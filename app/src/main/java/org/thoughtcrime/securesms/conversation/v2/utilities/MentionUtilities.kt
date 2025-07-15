@@ -11,8 +11,9 @@ import android.util.Range
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.BlindKeyAPI
 import nl.komponents.kovenant.combine.Tuple2
-import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
@@ -91,22 +92,20 @@ object MentionUtilities {
                 val publicKey = text.subSequence(matcher.start() + 1, matcher.end()).toString() // +1 to get rid of the @
 
                 val isYou = isYou(publicKey, userPublicKey, openGroup)
-                val userDisplayName: String? = if (isYou) {
+                val userDisplayName: String = if (isYou) {
                     context.getString(R.string.you)
                 } else {
-                    val contact = DatabaseComponent.get(context).sessionContactDatabase().getContactWithAccountID(publicKey)
-                    @Suppress("NAME_SHADOWING") val context = if (openGroup != null) Contact.ContactContext.OPEN_GROUP else Contact.ContactContext.REGULAR
-                    contact?.displayName(context)
+                    MessagingModuleConfiguration.shared.recipientRepository.getRecipientDisplayNameSync(
+                        Address.fromSerialized(publicKey)
+                    )
                 }
-                if (userDisplayName != null) {
-                    val mention = "@$userDisplayName"
-                    text = text.subSequence(0, matcher.start()).toString() + mention + text.subSequence(matcher.end(), text.length)
-                    val endIndex = matcher.start() + 1 + userDisplayName.length
-                    startIndex = endIndex
-                    mentions.add(Tuple2(Range.create(matcher.start(), endIndex), publicKey))
-                } else {
-                    startIndex = matcher.end()
-                }
+
+                val mention = "@$userDisplayName"
+                text = text.subSequence(0, matcher.start()).toString() + mention + text.subSequence(matcher.end(), text.length)
+                val endIndex = matcher.start() + 1 + userDisplayName.length
+                startIndex = endIndex
+                mentions.add(Tuple2(Range.create(matcher.start(), endIndex), publicKey))
+
                 matcher = pattern.matcher(text)
                 if (!matcher.find(startIndex)) { break }
             }

@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.BlockedContactLayoutBinding
-import org.session.libsession.utilities.recipients.Recipient
 import com.bumptech.glide.Glide
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.adapter.SelectableItem
 
 typealias SelectableRecipient = SelectableItem<Recipient>
@@ -47,7 +47,7 @@ class BlockedContactsAdapter(val viewModel: BlockedContactsViewModel) : ListAdap
         val binding = BlockedContactLayoutBinding.bind(itemView)
 
         fun bind(selectable: SelectableRecipient, toggle: (SelectableRecipient) -> Unit) {
-            binding.recipientName.text = selectable.item.name
+            binding.recipientName.text = selectable.item.displayName
             with (binding.profilePictureView) {
                 update(selectable.item)
             }

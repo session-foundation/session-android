@@ -1,25 +1,21 @@
 package org.thoughtcrime.securesms.messagerequests
 
-import android.content.Intent
-import android.database.Cursor
 import android.os.Bundle
-import android.view.ViewGroup.MarginLayoutParams
 import androidx.activity.viewModels
 import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
-import androidx.core.view.updatePadding
-import androidx.loader.app.LoaderManager
-import androidx.loader.content.Loader
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivityMessageRequestsBinding
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -28,9 +24,10 @@ import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.applySafeInsetsPaddings
 import org.thoughtcrime.securesms.util.push
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClickListener {
 
     private lateinit var binding: ActivityMessageRequestsBinding
     private lateinit var glide: RequestManager
@@ -41,7 +38,7 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private val viewModel: MessageRequestsViewModel by viewModels()
 
     private val adapter: MessageRequestsAdapter by lazy {
-        MessageRequestsAdapter(context = this, cursor = null, dateUtils = dateUtils, listener = this)
+        MessageRequestsAdapter(dateUtils = dateUtils, listener = this)
     }
 
     override val applyDefaultWindowInsets: Boolean
@@ -55,7 +52,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         glide = Glide.with(this)
 
         adapter.setHasStableIds(true)
-        adapter.glide = glide
         binding.recyclerView.adapter = adapter
 
         binding.clearAllMessageRequestsButton.setOnClickListener { deleteAll() }
@@ -63,45 +59,34 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
         binding.root.applySafeInsetsPaddings(
             applyBottom = false,
         )
-    }
 
-    override fun onResume() {
-        super.onResume()
-        LoaderManager.getInstance(this).restartLoader(0, null, this)
-    }
-
-    override fun onCreateLoader(id: Int, bundle: Bundle?): Loader<Cursor> {
-        return MessageRequestsLoader(this@MessageRequestsActivity)
-    }
-
-    override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
-        adapter.changeCursor(cursor)
-        updateEmptyState()
-    }
-
-    override fun onLoaderReset(cursor: Loader<Cursor>) {
-        adapter.changeCursor(null)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.threads
+                    .collectLatest {
+                        adapter.conversations = it
+                        updateEmptyState()
+                    }
+            }
+        }
     }
 
     override fun onConversationClick(thread: ThreadRecord) {
-        val intent = Intent(this, ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, thread.threadId)
-        push(intent)
+        push(ConversationActivityV2.createIntent(this, thread.recipient.address))
     }
 
     override fun onBlockConversationClick(thread: ThreadRecord) {
         fun doBlock() {
             val recipient = thread.invitingAdminId?.let {
-                Recipient.from(this, Address.fromSerialized(it), false)
-            } ?: thread.recipient
+                Address.fromSerialized(it)
+            } ?: thread.recipient.address
             viewModel.blockMessageRequest(thread, recipient)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {
             title(R.string.block)
             text(Phrase.from(context, R.string.blockDescription)
-                .put(NAME_KEY, thread.recipient.name)
+                .put(NAME_KEY, thread.recipient.displayName)
                 .format())
             dangerButton(R.string.block, R.string.AccessibilityId_blockConfirm) {
                 doBlock()
@@ -113,7 +98,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     override fun onDeleteConversationClick(thread: ThreadRecord) {
         fun doDecline() {
             viewModel.deleteMessageRequest(thread)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {
@@ -133,7 +117,6 @@ class MessageRequestsActivity : ScreenLockActionBarActivity(), ConversationClick
     private fun deleteAll() {
         fun doDeleteAllAndBlock() {
             viewModel.clearAllMessageRequests(false)
-            LoaderManager.getInstance(this).restartLoader(0, null, this)
         }
 
         showSessionDialog {

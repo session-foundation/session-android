@@ -346,16 +346,18 @@ class InputBar @JvmOverloads constructor(
 
         // handle buttons state
         allowAttachMultimediaButtons = state.enableAttachMediaControls
+    }
 
+    fun setCharLimitState(state: InputbarViewModel.InputBarCharLimitState?) {
         // handle char limit
-        if(state.charLimitState != null){
-            binding.characterLimitText.text = state.charLimitState.countFormatted
-            binding.characterLimitText.setTextColor(if(state.charLimitState.danger) dangerColor else textColor)
+        if(state != null){
+            binding.characterLimitText.text = state.count.toString()
+            binding.characterLimitText.setTextColor(if(state.danger) dangerColor else textColor)
             binding.characterLimitContainer.setOnClickListener {
                 delegate?.onCharLimitTapped()
             }
 
-            binding.badgePro.isVisible = state.charLimitState.showProBadge
+            binding.badgePro.isVisible = state.showProBadge
 
             binding.characterLimitContainer.isVisible = true
         } else {

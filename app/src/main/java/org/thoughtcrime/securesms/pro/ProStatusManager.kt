@@ -16,7 +16,7 @@ import javax.inject.Singleton
 class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences
 ){
-    private val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
+    val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
     private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users
 
@@ -76,7 +76,7 @@ class ProStatusManager @Inject constructor(
         if (prefs.forceIncomingMessagesAsPro()) return MAX_CHARACTER_PRO
 
         // otherwise return the true value
-        return MAX_CHARACTER_REGULAR //todo PRO implement real logic once it's in
+        return if(isPostPro()) MAX_CHARACTER_REGULAR else MAX_CHARACTER_PRO //todo PRO implement real logic once it's in
     }
 
     // Temporary method and concept that we should remove once Pro is out

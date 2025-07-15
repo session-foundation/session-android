@@ -21,8 +21,8 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -34,9 +34,9 @@ class EditGroupViewModel @AssistedInject constructor(
     storage: StorageProtocol,
     private val configFactory: ConfigFactoryProtocol,
     private val groupManager: GroupManagerV2,
-    private val usernameUtils: UsernameUtils,
-    private val avatarUtils: AvatarUtils
-) : BaseGroupMembersViewModel(groupId, context, storage, usernameUtils, configFactory, avatarUtils) {
+    avatarUtils: AvatarUtils,
+    private val recipientRepository: RecipientRepository,
+) : BaseGroupMembersViewModel(groupId, context, storage, configFactory, avatarUtils, recipientRepository) {
 
     // Output: The name of the group. This is the current name of the group, not the name being edited.
     val groupName: StateFlow<String> = groupInfo
@@ -69,7 +69,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
+                    err.format(context, recipientRepository).toString()
                 } else {
                     null
                 }
@@ -89,7 +89,7 @@ class EditGroupViewModel @AssistedInject constructor(
             showLoading = false,
             errorMessage = { err ->
                 if (err is GroupInviteException) {
-                    err.format(context, usernameUtils).toString()
+                    err.format(context, recipientRepository).toString()
                 } else {
                     null
                 }

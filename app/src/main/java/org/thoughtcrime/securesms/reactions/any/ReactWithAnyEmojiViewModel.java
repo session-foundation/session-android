@@ -1,13 +1,13 @@
 package org.thoughtcrime.securesms.reactions.any;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 
 import com.annimon.stream.Stream;
 
-import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.thoughtcrime.securesms.components.emoji.EmojiPageModel;
 import org.thoughtcrime.securesms.components.emoji.EmojiPageViewGridAdapter;
 import org.thoughtcrime.securesms.database.model.MessageId;
@@ -17,10 +17,16 @@ import org.thoughtcrime.securesms.util.adapter.mapping.MappingModelList;
 
 import java.util.List;
 
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
+import dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.qualifiers.ApplicationContext;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.subjects.BehaviorSubject;
 
+@HiltViewModel(assistedFactory = ReactWithAnyEmojiViewModel.Factory.class)
 public final class ReactWithAnyEmojiViewModel extends ViewModel {
 
   private static final int SEARCH_LIMIT = 40;
@@ -30,16 +36,18 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
   private final Observable<MappingModelList> emojiList;
   private final BehaviorSubject<EmojiSearchResult> searchResults;
 
-  private ReactWithAnyEmojiViewModel(@NonNull ReactWithAnyEmojiRepository repository,
-                                     long messageId,
-                                     boolean isMms,
-                                     @NonNull EmojiSearchRepository emojiSearchRepository)
+  @AssistedInject
+  public ReactWithAnyEmojiViewModel(
+          @Assisted @NonNull MessageId messageId,
+          @ApplicationContext Context context,
+          @NonNull EmojiSearchRepository emojiSearchRepository,
+          @NonNull ReactionsRepository reactionsRepository)
   {
-    this.repository            = repository;
+    this.repository            = new ReactWithAnyEmojiRepository(context);
     this.emojiSearchRepository = emojiSearchRepository;
     this.searchResults         = BehaviorSubject.createDefault(new EmojiSearchResult());
 
-    Observable<List<ReactWithAnyEmojiPage>> emojiPages = new ReactionsRepository().getReactions(new MessageId(messageId, isMms))
+    Observable<List<ReactWithAnyEmojiPage>> emojiPages = reactionsRepository.getReactions(messageId)
                                                                                   .map(thisMessagesReactions -> repository.getEmojiPageModels());
 
     Observable<MappingModelList> emojiList = emojiPages.map(pages -> {
@@ -100,23 +108,9 @@ public final class ReactWithAnyEmojiViewModel extends ViewModel {
     }
   }
 
-  static class Factory implements ViewModelProvider.Factory {
-
-    private final ReactWithAnyEmojiRepository repository;
-    private final long                        messageId;
-    private final boolean                     isMms;
-
-    Factory(@NonNull ReactWithAnyEmojiRepository repository, long messageId, boolean isMms) {
-      this.repository = repository;
-      this.messageId  = messageId;
-      this.isMms      = isMms;
-    }
-
-    @Override
-    public @NonNull <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-      //noinspection ConstantConditions
-      return modelClass.cast(new ReactWithAnyEmojiViewModel(repository, messageId, isMms, new EmojiSearchRepository(MessagingModuleConfiguration.getShared().getContext())));
-    }
+  @AssistedFactory
+  public interface Factory {
+    ReactWithAnyEmojiViewModel create(@NonNull MessageId messageId);
   }
 
 }

@@ -8,17 +8,19 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.plus
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.ConfigFactoryProtocol
-import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.database.model.content.MessageContent
 import org.thoughtcrime.securesms.groups.GroupManagerV2Impl
 import org.thoughtcrime.securesms.notifications.OptimizedMessageNotifier
 import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.repository.DefaultConversationRepository
-import org.thoughtcrime.securesms.sskenvironment.ProfileManager
 import org.thoughtcrime.securesms.tokenpage.TokenRepository
 import org.thoughtcrime.securesms.tokenpage.TokenRepositoryImpl
 import javax.inject.Singleton
@@ -26,6 +28,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideJson(): Json {
+        return Json {
+            ignoreUnknownKeys = true
+            serializersModule += MessageContent.serializersModule()
+        }
+    }
 }
 
 @Module
@@ -43,9 +53,6 @@ abstract class AppBindings {
 
     @Binds
     abstract fun bindGroupManager(groupManager: GroupManagerV2Impl): GroupManagerV2
-
-    @Binds
-    abstract fun bindProfileManager(profileManager: ProfileManager): SSKEnvironment.ProfileManagerProtocol
 
     @Binds
     abstract fun bindConfigFactory(configFactory: ConfigFactory): ConfigFactoryProtocol

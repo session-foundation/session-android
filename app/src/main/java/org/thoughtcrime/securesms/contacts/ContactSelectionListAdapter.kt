@@ -9,7 +9,7 @@ import org.session.libsession.utilities.recipients.Recipient
 class ContactSelectionListAdapter(private val context: Context, private val multiSelect: Boolean) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     lateinit var glide: RequestManager
     val selectedContacts = mutableSetOf<Recipient>()
-    var items = listOf<ContactSelectionListItem>()
+    var items = listOf<Recipient>()
         set(value) { field = value; notifyDataSetChanged() }
     var contactClickListener: ContactClickListener? = null
 
@@ -41,11 +41,10 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
     override fun onBindViewHolder(viewHolder: RecyclerView.ViewHolder, position: Int) {
         val item = items[position]
         if (viewHolder is UserViewHolder) {
-            item as ContactSelectionListItem.Contact
-            viewHolder.view.setOnClickListener { contactClickListener?.onContactClick(item.recipient) }
-            val isSelected = selectedContacts.contains(item.recipient)
+            viewHolder.view.setOnClickListener { contactClickListener?.onContactClick(item) }
+            val isSelected = selectedContacts.contains(item)
             viewHolder.view.bind(
-                item.recipient,
+                item,
                 if (multiSelect) UserView.ActionIndicator.Tick else UserView.ActionIndicator.None,
                 isSelected,
                 showCurrentUserAsNoteToSelf = true
@@ -61,11 +60,7 @@ class ContactSelectionListAdapter(private val context: Context, private val mult
             selectedContacts.add(recipient)
             contactClickListener?.onContactSelected(recipient)
         }
-        val index = items.indexOfFirst {
-            when (it) {
-                is ContactSelectionListItem.Contact -> it.recipient == recipient
-            }
-        }
+        val index = items.indexOf(recipient)
         notifyItemChanged(index)
     }
 }

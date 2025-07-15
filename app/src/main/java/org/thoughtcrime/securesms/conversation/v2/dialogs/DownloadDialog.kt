@@ -9,8 +9,8 @@ import network.loki.messenger.R
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.JobQueue
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.StringSubstitutionConstants.CONVERSATION_NAME_KEY
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.createSessionDialog
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.util.createAndStartAttachmentDownload
@@ -20,7 +20,7 @@ import javax.inject.Inject
  * they are to be trusted and files sent by them are to be downloaded. */
 @AndroidEntryPoint
 class AutoDownloadDialog(private val threadRecipient: Recipient,
-                     private val databaseAttachment: DatabaseAttachment
+                         private val databaseAttachment: DatabaseAttachment
 ) : DialogFragment() {
 
     @Inject lateinit var storage: StorageProtocol
@@ -30,7 +30,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
         title(getString(R.string.attachmentsAutoDownloadModalTitle))
 
         val explanation = Phrase.from(context, R.string.attachmentsAutoDownloadModalDescription)
-            .put(CONVERSATION_NAME_KEY, threadRecipient.name)
+            .put(CONVERSATION_NAME_KEY, threadRecipient.displayName)
             .format()
         text(explanation)
 
@@ -42,7 +42,7 @@ class AutoDownloadDialog(private val threadRecipient: Recipient,
     }
 
     private fun setAutoDownload() {
-        storage.setAutoDownloadAttachments(threadRecipient, true)
+        storage.setAutoDownloadAttachments(threadRecipient.address, true)
         JobQueue.shared.createAndStartAttachmentDownload(databaseAttachment)
     }
 }

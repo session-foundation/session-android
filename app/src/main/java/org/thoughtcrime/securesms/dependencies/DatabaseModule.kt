@@ -63,14 +63,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideSmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SmsDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideMmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MmsDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
     fun provideAttachmentDatabase(@ApplicationContext context: Context,
                                   openHelper: Provider<SQLCipherOpenHelper>,
                                   attachmentSecret: AttachmentSecret) = AttachmentDatabase(context, openHelper, attachmentSecret)
@@ -78,9 +70,6 @@ object DatabaseModule {
     @Singleton
     fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
 
-    @Provides
-    @Singleton
-    fun provideThread(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ThreadDatabase(context,openHelper)
 
     @Provides
     @Singleton
@@ -117,10 +106,6 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideLokiMessageDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiMessageDatabase(context,openHelper)
-
-    @Provides
-    @Singleton
-    fun provideLokiThreadDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = LokiThreadDatabase(context,openHelper)
 
     @Provides
     @Singleton

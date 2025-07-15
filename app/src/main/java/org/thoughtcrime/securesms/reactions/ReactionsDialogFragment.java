@@ -27,6 +27,7 @@ import org.thoughtcrime.securesms.util.NumberUtil;
 
 import java.util.Objects;
 
+import dagger.hilt.android.lifecycle.HiltViewModelExtensions;
 import network.loki.messenger.R;
 
 public final class ReactionsDialogFragment extends BottomSheetDialogFragment implements ReactionViewPagerAdapter.Listener {
@@ -143,9 +144,14 @@ public final class ReactionsDialogFragment extends BottomSheetDialogFragment imp
   }
 
   private void setUpViewModel(@NonNull MessageId messageId) {
-    ReactionsViewModel.Factory factory = new ReactionsViewModel.Factory(messageId);
-
-    ReactionsViewModel viewModel = new ViewModelProvider(this, factory).get(ReactionsViewModel.class);
+    final ReactionsViewModel viewModel = new ViewModelProvider(
+            getViewModelStore(),
+            getDefaultViewModelProviderFactory(),
+            HiltViewModelExtensions.withCreationCallback(
+                    getDefaultViewModelCreationExtras(),
+                    (ReactionsViewModel.Factory factory) -> factory.create(messageId)
+            )
+    ).get(ReactionsViewModel.class);
 
     disposables.add(viewModel.getEmojiCounts().subscribe(emojiCounts -> {
       if (emojiCounts.size() < 1) {

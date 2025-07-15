@@ -1,12 +1,17 @@
 package org.thoughtcrime.securesms.util
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * Buffers items from the flow and emits them in batches. The batch will have size [maxItems] and
@@ -38,6 +43,23 @@ fun <T> Flow<T>.timedBuffer(timeoutMillis: Long, maxItems: Int): Flow<List<T>> {
             buffer.clear()
         }
     }
+}
+
+fun <T, R> Flow<T>.mapToStateFlow(
+    scope: CoroutineScope,
+    initialData: T,
+    valueGetter: (T) -> R
+): StateFlow<R> {
+    return map { valueGetter(it) }
+        .stateIn(scope, SharingStarted.Eagerly, valueGetter(initialData))
+}
+
+fun <T, R> StateFlow<T>.mapStateFlow(
+    scope: CoroutineScope,
+    valueGetter: (T) -> R
+): StateFlow<R> {
+    return map { valueGetter(it) }
+        .stateIn(scope, SharingStarted.Eagerly, valueGetter(value))
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

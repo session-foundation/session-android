@@ -127,7 +127,7 @@ class InviteContactsJob(val groupSessionId: String, val memberSessionIds: Array<
                     groupName = groupName.orEmpty(),
                     underlying = firstError,
                 ).format(MessagingModuleConfiguration.shared.context,
-                    MessagingModuleConfiguration.shared.usernameUtils).let {
+                    MessagingModuleConfiguration.shared.recipientRepository).let {
                     withContext(Dispatchers.Main) {
                         toaster.toast(it, Toast.LENGTH_LONG)
                     }

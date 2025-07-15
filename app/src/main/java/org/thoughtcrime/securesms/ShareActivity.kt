@@ -22,28 +22,24 @@ import android.content.Intent
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
-import android.os.Parcel
 import android.provider.OpenableColumns
 import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.IntentCompat
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
-import org.session.libsession.utilities.Address.Companion.fromExternal
-import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.ViewUtil
-import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.components.SearchToolbar
 import org.thoughtcrime.securesms.components.SearchToolbar.SearchListener
 import org.thoughtcrime.securesms.contacts.ShareContactListFragment
 import org.thoughtcrime.securesms.contacts.ShareContactListFragment.OnContactSelectedListener
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.PartAuthority
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
@@ -58,9 +54,7 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     private val TAG = ShareActivity::class.java.simpleName
 
     companion object {
-        const val EXTRA_THREAD_ID          = "thread_id"
-        const val EXTRA_ADDRESS_MARSHALLED = "address_marshalled"
-        const val EXTRA_DISTRIBUTION_TYPE  = "distribution_type"
+        const val EXTRA_ADDRESS = "address"
     }
 
      override val applyDefaultWindowInsets: Boolean
@@ -186,20 +180,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
     }
 
     private fun handleResolvedMedia(intent: Intent, animate: Boolean) {
-        val threadId = intent.getLongExtra(EXTRA_THREAD_ID, -1)
-        val distributionType = intent.getIntExtra(EXTRA_DISTRIBUTION_TYPE, -1)
-        var address: Address? = null
-
-        if (intent.hasExtra(EXTRA_ADDRESS_MARSHALLED)) {
-            val parcel = Parcel.obtain()
-            val marshalled = intent.getByteArrayExtra(EXTRA_ADDRESS_MARSHALLED)
-            parcel.unmarshall(marshalled!!, 0, marshalled.size)
-            parcel.setDataPosition(0)
-            address = parcel.readParcelable<Address?>(classLoader)
-            parcel.recycle()
-        }
-
-        val hasResolvedDestination = threadId != -1L && address != null && distributionType != -1
+        val address = IntentCompat.getParcelableExtra<Address>(intent, EXTRA_ADDRESS, Address::class.java)
+        val hasResolvedDestination = address != null
 
         if (!hasResolvedDestination && animate) {
             ViewUtil.fadeIn(contactsFragment.requireView(), 300)
@@ -208,21 +190,12 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             contactsFragment.requireView().visibility = View.VISIBLE
             progressWheel.visibility = View.GONE
         } else {
-            createConversation(threadId, address, distributionType)
+            createConversation(address)
         }
     }
 
-    private fun createConversation(threadId: Long, address: Address?, distributionType: Int) {
-        val intent = getBaseShareIntent(ConversationActivityV2::class.java)
-        intent.putExtra(ConversationActivityV2.ADDRESS, address)
-        intent.putExtra(ConversationActivityV2.THREAD_ID, threadId)
-
-        isPassingAlongMedia = true
-        startActivity(intent)
-    }
-
-    private fun getBaseShareIntent(target: Class<*>): Intent {
-        val intent = Intent(this, target)
+    private fun createConversation(address: Address) {
+        val intent = ConversationActivityV2.createIntent(this, address)
 
         if (resolvedExtra != null) {
             intent.setDataAndType(resolvedExtra, mimeType)
@@ -231,7 +204,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
             intent.setType("text/plain")
         }
 
-        return intent
+        isPassingAlongMedia = true
+        startActivity(intent)
     }
 
     private fun getMimeType(uri: Uri?): String? {
@@ -242,10 +216,8 @@ class ShareActivity : ScreenLockActionBarActivity(), OnContactSelectedListener {
         return MediaUtil.getJpegCorrectedMimeTypeIfRequired(intent.type)
     }
 
-    override fun onContactSelected(number: String?) {
-        val recipient = Recipient.from(this, fromExternal(this, number), true)
-        val existingThread = get(this).threadDatabase().getThreadIdIfExistsFor(recipient)
-        createConversation(existingThread, recipient.address, DistributionTypes.DEFAULT)
+    override fun onContactSelected(number: String) {
+        createConversation(Address.fromSerialized(number))
     }
 
     override fun onContactDeselected(number: String?) { /* Nothing */ }

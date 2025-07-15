@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,6 +35,7 @@ import org.thoughtcrime.securesms.database.RecipientDatabase
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.repository.ConversationRepository
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.util.ClearDataUtils
 import java.time.ZonedDateTime
@@ -42,7 +44,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
@@ -52,6 +54,7 @@ class DebugMenuViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val recipientDatabase: RecipientDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val conversationRepository: ConversationRepository,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -64,7 +67,7 @@ class DebugMenuViewModel @Inject constructor(
             showLoadingDialog = false,
             showDeprecatedStateWarningDialog = false,
             hideMessageRequests = textSecurePreferences.hasHiddenMessageRequests(),
-            hideNoteToSelf = textSecurePreferences.hasHiddenNoteToSelf(),
+            hideNoteToSelf = configFactory.withUserConfigs { it.userProfile.getNtsPriority() == PRIORITY_HIDDEN },
             forceDeprecationState = deprecationManager.deprecationStateOverride.value,
             availableDeprecationState = listOf(null) + LegacyGroupDeprecationManager.DeprecationState.entries.toList(),
             deprecatedTime = deprecationManager.deprecatedTime.value,
@@ -137,7 +140,6 @@ class DebugMenuViewModel @Inject constructor(
             }
 
             is Commands.HideNoteToSelf -> {
-                textSecurePreferences.setHasHiddenNoteToSelf(command.hide)
                 configFactory.withMutableUserConfigs {
                     it.userProfile.setNtsPriority(if(command.hide) PRIORITY_HIDDEN else PRIORITY_VISIBLE)
                 }
@@ -299,12 +301,10 @@ class DebugMenuViewModel @Inject constructor(
 
         // clear trusted downloads for all recipients
         viewModelScope.launch {
-            val conversations: List<ThreadRecord> = threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
-            }
+            val conversations: List<ThreadRecord> = conversationRepository.observeConversationList(approved = true).first()
 
             conversations.filter { !it.recipient.isLocalNumber }.forEach {
-                recipientDatabase.setAutoDownloadAttachments(it.recipient, false)
+                recipientDatabase.setAutoDownloadAttachments(it.recipient.address, false)
             }
 
             // set all attachments back to pending

@@ -8,23 +8,30 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import androidx.core.content.IntentCompat
+import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.TYPE_INCOMING_CONNECTING
 import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder.Companion.WEBRTC_NOTIFICATION
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class CallForegroundService : Service() {
+
+    @Inject
+    lateinit var recipientRepository: RecipientRepository
 
     companion object {
         const val EXTRA_RECIPIENT_ADDRESS = "RECIPIENT_ID"
         const val EXTRA_TYPE = "CALL_STEP_TYPE"
 
-        fun startIntent(context: Context, type: Int, recipient: Recipient?): Intent {
+        fun startIntent(context: Context, type: Int, recipient: Address?): Intent {
             return Intent(context, CallForegroundService::class.java)
                 .putExtra(EXTRA_TYPE, type)
-                .putExtra(EXTRA_RECIPIENT_ADDRESS, recipient?.address)
+                .putExtra(EXTRA_RECIPIENT_ADDRESS, recipient)
         }
     }
 
@@ -33,7 +40,7 @@ class CallForegroundService : Service() {
             EXTRA_RECIPIENT_ADDRESS, Address::class.java)
             ?: return null
 
-        return Recipient.from(this, remoteAddress, true)
+        return recipientRepository.getRecipientSync(remoteAddress)
     }
 
     private fun startForeground(type: Int, recipient: Recipient?) {

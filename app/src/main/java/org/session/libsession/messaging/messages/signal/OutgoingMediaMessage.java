@@ -7,19 +7,28 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
+import org.session.libsession.utilities.Address;
 import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.DistributionTypes;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Represents an outgoing mms message. Note this class is only used for saving messages
+ * into the database. We will still use {@link org.session.libsession.messaging.messages.Message}
+ * as a model when sending the message to the network.
+ * <br/>
+ * See {@link OutgoingTextMessage} for the sms table counterpart.
+ */
 public class OutgoingMediaMessage {
 
-  private   final Recipient                 recipient;
+  private   final Address                   recipient;
   protected final String                    body;
   protected final List<Attachment>          attachments;
   private   final long                      sentTimeMillis;
@@ -28,13 +37,15 @@ public class OutgoingMediaMessage {
   private   final long                      expiresIn;
   private   final long                      expireStartedAt;
   private   final QuoteModel                outgoingQuote;
+  @Nullable
+  private   final MessageContent messageContent;
 
   private   final List<NetworkFailure>      networkFailures       = new LinkedList<>();
   private   final List<IdentityKeyMismatch> identityKeyMismatches = new LinkedList<>();
   private   final List<Contact>             contacts              = new LinkedList<>();
   private   final List<LinkPreview>         linkPreviews          = new LinkedList<>();
 
-  public OutgoingMediaMessage(Recipient recipient, String message,
+  public OutgoingMediaMessage(Address recipient, String message,
                               List<Attachment> attachments, long sentTimeMillis,
                               int subscriptionId, long expiresIn, long expireStartedAt,
                               int distributionType,
@@ -42,7 +53,8 @@ public class OutgoingMediaMessage {
                               @NonNull List<Contact> contacts,
                               @NonNull List<LinkPreview> linkPreviews,
                               @NonNull List<NetworkFailure> networkFailures,
-                              @NonNull List<IdentityKeyMismatch> identityKeyMismatches)
+                              @NonNull List<IdentityKeyMismatch> identityKeyMismatches,
+                              @Nullable MessageContent messageContent)
   {
     this.recipient             = recipient;
     this.body                  = message;
@@ -53,6 +65,7 @@ public class OutgoingMediaMessage {
     this.expiresIn             = expiresIn;
     this.expireStartedAt       = expireStartedAt;
     this.outgoingQuote         = outgoingQuote;
+    this.messageContent = messageContent;
 
     this.contacts.addAll(contacts);
     this.linkPreviews.addAll(linkPreviews);
@@ -70,6 +83,7 @@ public class OutgoingMediaMessage {
     this.expiresIn           = that.expiresIn;
     this.expireStartedAt     = that.expireStartedAt;
     this.outgoingQuote       = that.outgoingQuote;
+    this.messageContent      = that.messageContent;
 
     this.identityKeyMismatches.addAll(that.identityKeyMismatches);
     this.networkFailures.addAll(that.networkFailures);
@@ -78,7 +92,7 @@ public class OutgoingMediaMessage {
   }
 
   public static OutgoingMediaMessage from(VisibleMessage message,
-                                          Recipient recipient,
+                                          Address recipient,
                                           List<Attachment> attachments,
                                           @Nullable QuoteModel outgoingQuote,
                                           @Nullable LinkPreview linkPreview,
@@ -91,10 +105,15 @@ public class OutgoingMediaMessage {
     }
     return new OutgoingMediaMessage(recipient, message.getText(), attachments, message.getSentTimestamp(), -1,
             expiresInMillis, expireStartedAt, DistributionTypes.DEFAULT, outgoingQuote,
-            Collections.emptyList(), previews, Collections.emptyList(), Collections.emptyList());
+            Collections.emptyList(), previews, Collections.emptyList(), Collections.emptyList(), null);
   }
 
-  public Recipient getRecipient() {
+  @Nullable
+  public MessageContent getMessageContent() {
+    return messageContent;
+  }
+
+  public Address getRecipient() {
     return recipient;
   }
 
@@ -113,8 +132,6 @@ public class OutgoingMediaMessage {
   public boolean isGroup() {
     return false;
   }
-
-  public boolean isExpirationUpdate() { return false; }
 
   public long getSentTimeMillis() {
     return sentTimeMillis;

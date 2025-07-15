@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import nl.komponents.kovenant.functional.map
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.jobs.BatchMessageReceiveJob
 import org.session.libsession.messaging.jobs.GroupAvatarDownloadJob
 import org.session.libsession.messaging.jobs.JobQueue
@@ -43,6 +42,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.BlindMappingRepository
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
@@ -59,6 +59,7 @@ private typealias ManualPollRequestToken = Channel<Result<Unit>>
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
+    private val blindMappingRepository: BlindMappingRepository,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -303,7 +304,6 @@ class OpenGroupPoller @AssistedInject constructor(
         val serverPublicKey = storage.getOpenGroupPublicKey(server)!!
         val sortedMessages = messages.sortedBy { it.id }
         val lastMessageId = sortedMessages.last().id
-        val mappingCache = mutableMapOf<String, BlindedIdMapping>()
         if (fromOutbox) {
             storage.setLastOutboxMessageId(server, lastMessageId)
         } else {
@@ -327,19 +327,16 @@ class OpenGroupPoller @AssistedInject constructor(
                     emptySet() // this shouldn't be necessary as we are polling open groups here
                 )
                 if (fromOutbox) {
-                    val mapping = mappingCache[it.recipient] ?: storage.getOrCreateBlindedIdMapping(
-                        it.recipient,
-                        server,
-                        serverPublicKey,
-                        true
-                    )
-                    val syncTarget = mapping.accountId ?: it.recipient
+                    val syncTarget = blindMappingRepository.getMapping(
+                        serverUrl = server,
+                        blindedAddress = Address.fromSerialized(it.recipient)
+                    )?.address ?: it.recipient
+
                     if (message is VisibleMessage) {
                         message.syncTarget = syncTarget
                     } else if (message is ExpirationTimerUpdate) {
                         message.syncTarget = syncTarget
                     }
-                    mappingCache[it.recipient] = mapping
                 }
                 val threadId = Message.getThreadId(message, null, storage, false)
                 MessageReceiver.handle(message, proto, threadId ?: -1, null, null)

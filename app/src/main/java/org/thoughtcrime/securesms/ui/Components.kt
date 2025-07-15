@@ -992,7 +992,7 @@ fun ProCTAFeature(
             is CTAFeature.Icon -> {
                 Image(
                     painter = painterResource(id = data.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.accent),
+                    colorFilter = ColorFilter.tint(LocalColors.current.accentText ),
                     contentDescription = null,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )

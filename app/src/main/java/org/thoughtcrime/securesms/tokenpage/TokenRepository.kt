@@ -25,8 +25,9 @@ interface TokenRepository {
 
 @Singleton
 class TokenRepositoryImpl @Inject constructor(
-    @ApplicationContext val context: Context,
-    private val storage: StorageProtocol
+    @param:ApplicationContext val context: Context,
+    private val storage: StorageProtocol,
+    private val json: Json,
 ): TokenRepository {
     private val TAG = "TokenRepository"
 
@@ -55,8 +56,6 @@ class TokenRepositoryImpl @Inject constructor(
                 url = TOKEN_SERVER_INFO_ENDPOINT
             )
     }
-
-    private val json = Json { ignoreUnknownKeys = true }
 
     private suspend inline fun <reified T>sendOnionRequest(
         path: String, url: String, body: ByteArray? = null,

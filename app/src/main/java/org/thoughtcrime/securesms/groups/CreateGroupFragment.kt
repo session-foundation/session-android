@@ -26,10 +26,9 @@ class CreateGroupFragment : Fragment() {
             setContent {
                 SessionMaterialTheme {
                     CreateGroupScreen(
-                        onNavigateToConversationScreen = { threadID ->
+                        onNavigateToConversationScreen = { address ->
                             startActivity(
-                                Intent(requireContext(), ConversationActivityV2::class.java)
-                                    .putExtra(ConversationActivityV2.THREAD_ID, threadID)
+                                ConversationActivityV2.createIntent(requireContext(), address)
                             )
                         },
                         onBack = delegate::onDialogBackPressed,

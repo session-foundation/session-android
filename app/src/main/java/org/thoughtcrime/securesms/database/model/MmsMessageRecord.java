@@ -8,10 +8,10 @@ import org.session.libsession.utilities.Contact;
 import org.session.libsession.utilities.IdentityKeyMismatch;
 import org.session.libsession.utilities.NetworkFailure;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -22,15 +22,16 @@ public abstract class MmsMessageRecord extends MessageRecord {
   private final @NonNull  List<LinkPreview> linkPreviews = new LinkedList<>();
 
   MmsMessageRecord(long id, String body, Recipient conversationRecipient,
-    Recipient individualRecipient, long dateSent,
-    long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
-    long type, List<IdentityKeyMismatch> mismatches,
-    List<NetworkFailure> networkFailures, long expiresIn,
-    long expireStarted, @NonNull SlideDeck slideDeck, int readReceiptCount,
-    @Nullable Quote quote, @NonNull List<Contact> contacts,
-    @NonNull List<LinkPreview> linkPreviews, List<ReactionRecord> reactions, boolean hasMention)
+                   Recipient individualRecipient, long dateSent,
+                   long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
+                   long type, List<IdentityKeyMismatch> mismatches,
+                   List<NetworkFailure> networkFailures, long expiresIn,
+                   long expireStarted, @NonNull SlideDeck slideDeck, int readReceiptCount,
+                   @Nullable Quote quote, @NonNull List<Contact> contacts,
+                   @NonNull List<LinkPreview> linkPreviews, List<ReactionRecord> reactions, boolean hasMention,
+                   @Nullable MessageContent messageContent)
   {
-    super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, mismatches, networkFailures, expiresIn, expireStarted, readReceiptCount, reactions, hasMention);
+    super(id, body, conversationRecipient, individualRecipient, dateSent, dateReceived, threadId, deliveryStatus, deliveryReceiptCount, type, mismatches, networkFailures, expiresIn, expireStarted, readReceiptCount, reactions, hasMention, messageContent);
     this.slideDeck = slideDeck;
     this.quote     = quote;
     this.contacts.addAll(contacts);

@@ -16,17 +16,17 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewProfilePictureBinding
 import org.session.libsession.avatars.ContactColors
 import org.session.libsession.avatars.PlaceholderAvatarPhoto
-import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.avatars.ResourceContactPhoto
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.AppTextSecurePreferences
 import org.session.libsession.utilities.GroupUtil
-import org.session.libsession.utilities.UsernameUtils
+import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.truncateIdForDisplay
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.avatarOptions
@@ -56,15 +56,14 @@ class ProfilePictureView @JvmOverloads constructor(
     lateinit var storage: StorageProtocol
 
     @Inject
-    lateinit var usernameUtils: UsernameUtils
+    lateinit var avatarUtils: AvatarUtils
 
     @Inject
-    lateinit var avatarUtils: AvatarUtils
+    lateinit var recipientRepository: RecipientRepository
 
     @Inject
     lateinit var proStatusManager: ProStatusManager
 
-    private val profilePicturesCache = mutableMapOf<View, Recipient>()
     private val resourcePadding by lazy {
         context.resources.getDimensionPixelSize(R.dimen.normal_padding).toFloat()
     }
@@ -89,7 +88,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 address = address,
                 profileViewDataType = when {
                     isGroupV2Recipient -> ProfileViewDataType.GroupvV2(
-                        customGroupImage = profileAvatar
+                        customGroupImage = (avatar as? RemoteFile.Encrypted)?.url
                     )
                     isLegacyGroupRecipient -> ProfileViewDataType.LegacyGroup
                     isCommunityRecipient -> ProfileViewDataType.Community
@@ -104,8 +103,8 @@ class ProfilePictureView @JvmOverloads constructor(
         address: Address,
         profileViewDataType: ProfileViewDataType = ProfileViewDataType.OneOnOne
     ) {
-        fun getUserDisplayName(publicKey: String): String = prefs.takeIf { userPublicKey == publicKey }?.getProfileName()
-            ?: usernameUtils.getContactNameWithAccountID(publicKey)
+        fun getUserDisplayName(publicKey: String): String = recipientRepository.getRecipientDisplayNameSync(
+            Address.fromSerialized(publicKey))
 
         // group avatar
         if (profileViewDataType is ProfileViewDataType.GroupvV2 || profileViewDataType is ProfileViewDataType.LegacyGroup) {
@@ -192,15 +191,10 @@ class ProfilePictureView @JvmOverloads constructor(
                 this.recipient!!
             }
             else {
-                this.recipient = Recipient.from(context, Address.fromSerialized(publicKey), false)
+                val address = Address.fromSerialized(publicKey)
+                this.recipient = recipientRepository.getRecipientSync(address) ?: Recipient.empty(address)
                 this.recipient!!
             }
-            
-            if (profilePicturesCache[imageView] == recipient) return
-            // recipient is mutable so without cloning it the line above always returns true as the changes to the underlying recipient happens on both shared instances
-            profilePicturesCache[imageView] = recipient.clone()
-            val signalProfilePicture = recipient.contactPhoto
-            val avatar = (signalProfilePicture as? ProfileContactPhoto)?.avatarObject
 
             glide.clear(imageView)
 
@@ -210,9 +204,11 @@ class ProfilePictureView @JvmOverloads constructor(
                 avatarUtils.generateTextBitmap(128, publicKey, displayName)
             )
 
-            if (signalProfilePicture != null && avatar != "0" && avatar != "") {
+            val avatar = recipient.avatar
+
+            if (avatar != null) {
                 val maxSizePx = context.resources.getDimensionPixelSize(R.dimen.medium_profile_picture_size)
-                glide.load(signalProfilePicture)
+                glide.load(avatar)
                     .avatarOptions(
                         sizePx = maxSizePx,
                         freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
@@ -224,7 +220,7 @@ class ProfilePictureView @JvmOverloads constructor(
                 glide.load(createUnknownRecipientDrawable(publicKey))
                     .optionalTransform(CenterCrop())
                     .into(imageView)
-            } else if (recipient.isCommunityRecipient && recipient.groupAvatarId == null) {
+            } else if (recipient.isCommunityRecipient && avatar == null) {
                 glide.load(unknownOpenGroupDrawable)
                     .optionalTransform(CenterCrop())
                     .into(imageView)
@@ -243,7 +239,6 @@ class ProfilePictureView @JvmOverloads constructor(
     }
 
     fun recycle() {
-        profilePicturesCache.clear()
     }
     // endregion
 

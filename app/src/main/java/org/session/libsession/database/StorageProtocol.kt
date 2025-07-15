@@ -2,14 +2,12 @@ package org.session.libsession.database
 
 import android.content.Context
 import android.net.Uri
+import network.loki.messenger.libsession_util.util.ExpiryMode
 import network.loki.messenger.libsession_util.util.KeyPair
-import org.session.libsession.messaging.BlindedIdMapping
 import org.session.libsession.messaging.calls.CallMessageType
-import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.jobs.AttachmentUploadJob
 import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
-import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
@@ -28,8 +26,8 @@ import org.session.libsession.messaging.utilities.UpdateMessageData
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.GroupRecord
+import org.session.libsession.utilities.recipients.RecipientSettings
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.recipients.Recipient.RecipientSettings
 import org.session.libsignal.crypto.ecc.ECKeyPair
 import org.session.libsignal.messages.SignalServiceAttachmentPointer
 import org.session.libsignal.messages.SignalServiceGroup
@@ -48,10 +46,8 @@ interface StorageProtocol {
     fun getUserX25519KeyPair(): ECKeyPair
     fun getUserBlindedAccountId(serverPublicKey: String): AccountId?
     fun getUserProfile(): Profile
-    fun setProfilePicture(recipient: Recipient, newProfilePicture: String?, newProfileKey: ByteArray?)
-    fun setBlocksCommunityMessageRequests(recipient: Recipient, blocksMessageRequests: Boolean)
-    fun setUserProfilePicture(newProfilePicture: String?, newProfileKey: ByteArray?)
-    fun clearUserPic(clearConfig: Boolean = true)
+    fun setBlocksCommunityMessageRequests(recipient: Address, blocksMessageRequests: Boolean)
+
     // Signal
     fun getOrGenerateRegistrationID(): Int
 
@@ -81,6 +77,7 @@ interface StorageProtocol {
     fun getAllOpenGroups(): Map<Long, OpenGroup>
     fun updateOpenGroup(openGroup: OpenGroup)
     fun getOpenGroup(threadId: Long): OpenGroup?
+    fun getOpenGroup(address: Address): OpenGroup?
     suspend fun addOpenGroup(urlAsString: String)
     fun onOpenGroupAdded(server: String, room: String)
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
@@ -116,7 +113,7 @@ interface StorageProtocol {
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
     fun getMessageBy(timestamp: Long, author: String): MessageRecord?
-    fun updateSentTimestamp(messageId: MessageId, openGroupSentTimestamp: Long, threadId: Long)
+    fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
     fun markAsSending(messageId: MessageId)
@@ -130,13 +127,10 @@ interface StorageProtocol {
     fun getGroup(groupID: String): GroupRecord?
     fun createGroup(groupID: String, title: String?, members: List<Address>, avatar: SignalServiceAttachmentPointer?, relay: String?, admins: List<Address>, formationTimestamp: Long)
     fun createInitialConfigGroup(groupPublicKey: String, name: String, members: Map<String, Boolean>, formationTimestamp: Long, encryptionKeyPair: ECKeyPair, expirationTimer: Int)
-    fun updateGroupConfig(groupPublicKey: String)
     fun isGroupActive(groupPublicKey: String): Boolean
     fun setActive(groupID: String, value: Boolean)
-    fun getZombieMembers(groupID: String): Set<String>
     fun removeMember(groupID: String, member: Address)
     fun updateMembers(groupID: String, members: List<Address>)
-    fun setZombieMembers(groupID: String, members: List<Address>)
     fun getAllLegacyGroupPublicKeys(): Set<String>
     fun getAllActiveClosedGroupPublicKeys(): Set<String>
     fun addClosedGroupPublicKey(groupPublicKey: String)
@@ -176,24 +170,18 @@ interface StorageProtocol {
     // Groups
     fun getAllGroups(includeInactive: Boolean): List<GroupRecord>
 
-    // Settings
-    fun setProfileSharing(address: Address, value: Boolean)
-
     // Thread
     fun getOrCreateThreadIdFor(address: Address): Long
     fun getThreadIdFor(publicKey: String, groupPublicKey: String?, openGroupID: String?, createThread: Boolean): Long?
     fun getThreadId(publicKeyOrOpenGroupID: String): Long?
     fun getThreadId(openGroup: OpenGroup): Long?
     fun getThreadId(address: Address): Long?
-    fun getThreadId(recipient: Recipient): Long?
     fun getThreadIdForMms(mmsId: Long): Long
     fun getLastUpdated(threadID: Long): Long
-    fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
     fun getTotalPinned(): Int
-    fun setPinned(threadID: Long, isPinned: Boolean)
-    fun isPinned(threadID: Long): Boolean
+    fun setPinned(address: Address, isPinned: Boolean)
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
@@ -202,16 +190,11 @@ interface StorageProtocol {
     fun clearMedia(threadID: Long, fromUser: Address? = null): Boolean
 
     // Contacts
-    fun getContactWithAccountID(accountID: String): Contact?
-    fun getAllContacts(): Set<Contact>
-    fun setContact(contact: Contact)
     fun deleteContactAndSyncConfig(accountId: String)
-    fun getRecipientForThread(threadId: Long): Recipient?
+    fun getRecipientForThread(threadId: Long): Address?
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
-    fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
-    fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
-    fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
+    fun setAutoDownloadAttachments(recipient: Address, shouldAutoDownloadAttachments: Boolean)
 
     // Attachments
     fun getAttachmentDataUri(attachmentId: AttachmentId): Uri
@@ -229,9 +212,6 @@ interface StorageProtocol {
     fun insertDataExtractionNotificationMessage(senderPublicKey: String, message: DataExtractionNotificationInfoMessage, sentTimestamp: Long)
     fun insertMessageRequestResponseFromContact(response: MessageRequestResponse)
     fun insertMessageRequestResponseFromYou(threadId: Long)
-    fun setRecipientApproved(recipient: Recipient, approved: Boolean)
-    fun getRecipientApproved(address: Address): Boolean
-    fun setRecipientApprovedMe(recipient: Recipient, approvedMe: Boolean)
     fun insertCallMessage(senderPublicKey: String, callMessageType: CallMessageType, sentTimestamp: Long)
     fun conversationHasOutgoing(userPublicKey: String): Boolean
     fun deleteMessagesByHash(threadId: Long, hashes: List<String>)
@@ -247,7 +227,6 @@ interface StorageProtocol {
     fun getLastOutboxMessageId(server: String): Long?
     fun setLastOutboxMessageId(server: String, messageId: Long)
     fun removeLastOutboxMessageId(server: String)
-    fun getOrCreateBlindedIdMapping(blindedId: String, server: String, serverPublicKey: String, fromOutbox: Boolean = false): BlindedIdMapping
 
     /**
      * Add reaction to a message that has the timestamp given by [reaction]. This is less than
@@ -270,16 +249,10 @@ interface StorageProtocol {
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
-    fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
+    fun setBlocked(recipients: Iterable<Address>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
     fun blockedContacts(): List<Recipient>
-    fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
-    fun setExpirationConfiguration(config: ExpirationConfiguration)
-    fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
-    fun updateDisappearingState(
-        messageSender: String,
-        threadID: Long,
-        disappearingState: Recipient.DisappearingState
-    )
+    fun getExpirationConfiguration(threadId: Long): ExpiryMode
+    fun setExpirationConfiguration(address: Address, expiryMode: ExpiryMode)
 
     // Shared configs
     fun conversationInConfig(publicKey: String?, groupPublicKey: String?, openGroupId: String?, visibleOnly: Boolean): Boolean

@@ -1,7 +1,10 @@
 package org.session.libsession.messaging.open_groups
 
+import network.loki.messenger.libsession_util.util.BaseCommunityInfo
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.session.libsession.utilities.Address
+import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
 import java.util.Locale
@@ -65,6 +68,28 @@ data class OpenGroup(
             }
             return builder.build()
         }
+
+        /**
+         * Returns the group ID for this community info. The group ID is the session android unique
+         * way of identifying a community. It itself isn't super useful but it's used to construct
+         * the [Address] for communities.
+         *
+         * See [toAddress]
+         */
+        val BaseCommunityInfo.groupId: String
+            get() = "${baseUrl}.${room}"
+
+        fun BaseCommunityInfo.toAddress(): Address {
+            return Address.fromSerialized(GroupUtil.getEncodedOpenGroupID(groupId.toByteArray()))
+        }
+    }
+
+    fun toCommunityInfo(): BaseCommunityInfo {
+        return BaseCommunityInfo(
+            baseUrl = server,
+            room = room,
+            pubKeyHex = publicKey,
+        )
     }
 
     fun toJson(): Map<String,String?> = mapOf(

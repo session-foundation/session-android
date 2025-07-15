@@ -1,10 +1,11 @@
 package org.thoughtcrime.securesms.conversation.v2.settings.notification
 
 import androidx.compose.runtime.Composable
+import androidx.core.content.IntentCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
-import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesActivity
 
 /**
  * Forced to add an activity entry point for this screen
@@ -14,15 +15,15 @@ import org.thoughtcrime.securesms.conversation.disappearingmessages.Disappearing
 @AndroidEntryPoint
 class NotificationSettingsActivity: FullComposeScreenLockActivity() {
 
-    private val threadId: Long by lazy {
-        intent.getLongExtra(DisappearingMessagesActivity.THREAD_ID, -1)
-    }
-
     @Composable
     override fun ComposeContent() {
         val viewModel =
             hiltViewModel<NotificationSettingsViewModel, NotificationSettingsViewModel.Factory> { factory ->
-                factory.create(threadId)
+                factory.create(requireNotNull(
+                    IntentCompat.getParcelableExtra(intent, ARG_ADDRESS, Address::class.java)
+                ) {
+                    "NotificationSettingsActivity requires an Address to be passed in via the intent."
+                })
             }
 
         NotificationSettingsScreen(
@@ -32,6 +33,6 @@ class NotificationSettingsActivity: FullComposeScreenLockActivity() {
     }
 
     companion object {
-        const val THREAD_ID = "thread_id"
+        const val ARG_ADDRESS = "address"
     }
 }

@@ -33,6 +33,7 @@ import org.thoughtcrime.securesms.database.AttachmentDatabase
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.LokiMessageDatabase
 import org.thoughtcrime.securesms.database.MmsSmsDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.MessageId
@@ -64,7 +65,8 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
     messageDataProvider: MessageDataProvider,
-    storage: Storage
+    storage: Storage,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()
@@ -76,6 +78,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         storage = storage,
         messageDataProvider = messageDataProvider,
         scope = viewModelScope,
+        recipientRepository = recipientRepository,
     )
 
     init {
@@ -114,9 +117,9 @@ class MessageDetailsViewModel @AssistedInject constructor(
             state.value = messageRecord.run {
                 val slides = mmsRecord?.slideDeck?.slides ?: emptyList()
 
-                val conversation = threadDb.getRecipientForThreadId(threadId)!!
-                val isDeprecatedLegacyGroup = conversation.isLegacyGroupRecipient &&
-                        deprecationManager.isDeprecated
+                val conversationAddress = threadDb.getRecipientForThreadId(threadId)!!
+                val conversation = recipientRepository.getRecipient(conversationAddress) ?: Recipient.empty(conversationAddress)
+                val isDeprecatedLegacyGroup = conversationAddress.isLegacyGroup && deprecationManager.isDeprecated
 
 
                 val errorString = lokiMessageDatabase.getErrorMessage(messageId)
@@ -132,7 +135,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                 }
 
                 val sender = if(messageRecord.isOutgoing){
-                    Recipient.from(context, Address.fromSerialized(prefs.getLocalNumber() ?: ""), false)
+                    recipientRepository.getRecipient(Address.fromSerialized(prefs.getLocalNumber()!!))!!
                 } else individualRecipient
 
                 val attachments = slides.map(::Attachment)
@@ -168,7 +171,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
                     status = status,
                     senderInfo = sender.run {
                         TitledText(
-                            if(messageRecord.isOutgoing) context.getString(R.string.you) else name,
+                            if(messageRecord.isOutgoing) context.getString(R.string.you) else displayName,
                             address.toString()
                         )
                     },
@@ -223,7 +226,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         if(state.thread == null) return
 
         viewModelScope.launch {
-            MediaPreviewArgs(slide, state.mmsRecord, state.thread)
+            MediaPreviewArgs(slide, state.mmsRecord, state.thread.address)
                 .let(Event::StartMediaPreview)
                 .let { event.send(it) }
         }

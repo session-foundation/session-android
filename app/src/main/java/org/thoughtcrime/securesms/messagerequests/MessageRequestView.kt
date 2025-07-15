@@ -8,13 +8,11 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewMessageRequestBinding
-import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.model.ThreadRecord
-import com.bumptech.glide.RequestManager
+import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.util.DateUtils
 import java.util.Locale
-import javax.inject.Inject
 
 class MessageRequestView : LinearLayout {
     private lateinit var binding: ViewMessageRequestBinding
@@ -64,7 +62,7 @@ class MessageRequestView : LinearLayout {
         return if (recipient.isLocalNumber) {
             context.getString(R.string.noteToSelf)
         } else {
-            recipient.name // Internally uses the Contact API
+            recipient.displayName // Internally uses the Contact API
         }
     }
     // endregion

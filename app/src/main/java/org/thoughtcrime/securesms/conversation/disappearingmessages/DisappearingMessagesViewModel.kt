@@ -18,26 +18,27 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.ExpiryMode
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
 import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
 import org.thoughtcrime.securesms.database.GroupDatabase
+import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
-import org.thoughtcrime.securesms.database.ThreadDatabase
 
 @HiltViewModel(assistedFactory = DisappearingMessagesViewModel.Factory::class)
 class DisappearingMessagesViewModel @AssistedInject constructor(
-    @Assisted("threadId")            private val threadId: Long,
+    @Assisted private val address: Address,
     @Assisted("isNewConfigEnabled")  private val isNewConfigEnabled: Boolean,
     @Assisted("showDebugOptions")    private val showDebugOptions: Boolean,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val disappearingMessages: DisappearingMessages,
-    private val threadDb: ThreadDatabase,
     private val groupDb: GroupDatabase,
     private val storage: Storage,
     private val navigator: ConversationSettingsNavigator,
+    private val recipientRepository: RecipientRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -54,27 +55,27 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val expiryMode = storage.getExpirationConfiguration(threadId)?.expiryMode ?: ExpiryMode.NONE
-            val recipient = threadDb.getRecipientForThreadId(threadId)?: return@launch
+            val expiryMode = recipientRepository.getRecipientOrEmpty(address).expiryMode
 
             val isAdmin = when {
-                recipient.isGroupV2Recipient -> {
+                address.isGroupV2 -> {
                     // Handle the new closed group functionality
-                    storage.getMembers(recipient.address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
+                    storage.getMembers(address.toString()).any { it.accountId() == textSecurePreferences.getLocalNumber() && it.admin }
                 }
-                recipient.isLegacyGroupRecipient -> {
-                    val groupRecord = groupDb.getGroup(recipient.address.toGroupString()).orNull()
+
+                address.isLegacyGroup -> {
+                    val groupRecord = groupDb.getGroup(address.toGroupString()).orNull()
                     // Handle as legacy group
                     groupRecord?.admins?.any{ it.toString() == textSecurePreferences.getLocalNumber() } == true
                 }
-                else -> !recipient.isGroupOrCommunityRecipient
+                else -> !address.isGroupOrCommunity
             }
 
             _state.update {
                 it.copy(
-                    address = recipient.address,
-                    isGroup = recipient.isGroupRecipient,
-                    isNoteToSelf = recipient.address.toString() == textSecurePreferences.getLocalNumber(),
+                    address = address,
+                    isGroup = address.isGroup,
+                    isNoteToSelf = address.toString() == textSecurePreferences.getLocalNumber(),
                     isSelfAdmin = isAdmin,
                     expiryMode = expiryMode,
                     persistedMode = expiryMode
@@ -96,7 +97,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
             return@launch
         }
 
-        disappearingMessages.set(threadId, address, mode, state.isGroup)
+        disappearingMessages.set(address, mode, state.isGroup)
 
         navigator.navigateUp()
     }
@@ -104,7 +105,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     @AssistedFactory
     interface Factory {
         fun create(
-            @Assisted("threadId")           threadId: Long,
+            address: Address,
             @Assisted("isNewConfigEnabled") isNewConfigEnabled: Boolean,
             @Assisted("showDebugOptions")   showDebugOptions: Boolean
         ): DisappearingMessagesViewModel
