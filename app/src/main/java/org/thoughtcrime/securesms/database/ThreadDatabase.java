@@ -168,6 +168,7 @@ public class ThreadDatabase extends Database {
 
   private ConversationThreadUpdateListener updateListener;
   private final Json json;
+  private final TextSecurePreferences prefs;
 
   @Inject
   public ThreadDatabase(
@@ -177,7 +178,12 @@ public class ThreadDatabase extends Database {
           Json json) {
     super(context, databaseHelper);
     this.json = json;
+    this.prefs = prefs;
+  }
 
+  // This method is called when the application is created, providing an opportunity to perform
+  // initialization tasks that need to be done only once.
+  public void onAppCreated() {
     if (!prefs.getMigratedDisappearingMessagesToMessageContent()) {
       migrateDisappearingMessagesToMessageContent();
       prefs.setMigratedDisappearingMessagesToMessageContent(true);

@@ -72,6 +72,7 @@ import org.thoughtcrime.securesms.configs.ConfigUploader
 import org.thoughtcrime.securesms.database.EmojiSearchDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.Storage
+import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.EmojiSearchData
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.AppComponent
@@ -205,6 +206,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
 
     @Inject
     lateinit var openGroupPollerManager: Lazy<OpenGroupPollerManager>
+
+    @Inject
+    lateinit var threadDatabase: Lazy<ThreadDatabase>
 
     @Volatile
     var isAppVisible: Boolean = false
@@ -381,6 +385,8 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         groupPollerManager.get()
         expiredGroupManager.get()
         openGroupPollerManager.get()
+
+        threadDatabase.get().onAppCreated()
     }
 
     override fun onStart(owner: LifecycleOwner) {
