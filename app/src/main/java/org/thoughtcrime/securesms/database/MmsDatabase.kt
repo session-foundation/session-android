@@ -523,6 +523,15 @@ class MmsDatabase
                         Log.w(TAG, e)
                     }
                 }
+
+                val messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
+
+                val messageContent = runCatching {
+                    json.decodeFromString<MessageContent>(messageContentJson)
+                }.onFailure {
+                    Log.w(TAG, "Failed to decode message content for message ID $messageId", it)
+                }.getOrNull()
+
                 val message = OutgoingMediaMessage(
                     recipient,
                     body,
@@ -537,7 +546,7 @@ class MmsDatabase
                     previews,
                     networkFailures!!,
                     mismatches!!,
-                    null
+                    messageContent,
                 )
                 return if (MmsSmsColumns.Types.isSecureType(outboxType)) {
                     OutgoingSecureMediaMessage(message)
@@ -682,8 +691,10 @@ class MmsDatabase
             linkPreviews = retrieved.linkPreviews,
             contentValues = contentValues,
         )
-        if (runThreadUpdate) {
-            get(context).threadDatabase().update(threadId, true)
+        if (retrieved.messageContent !is DisappearingMessageUpdate) {
+            if (runThreadUpdate) {
+                get(context).threadDatabase().update(threadId, true)
+            }
         }
         notifyConversationListeners(threadId)
         return Optional.of(InsertResult(messageId, threadId))
@@ -1377,7 +1388,7 @@ class MmsDatabase
             val expiresIn            = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRES_IN))
             val expireStarted        = cursor.getLong(cursor.getColumnIndexOrThrow(EXPIRE_STARTED))
             val hasMention           = cursor.getInt(cursor.getColumnIndexOrThrow(HAS_MENTION)) == 1
-            val messageContentText   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
+            val messageContentJson   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE_CONTENT))
 
             if (!isReadReceiptsEnabled(context)) {
                 readReceiptCount = 0
@@ -1402,7 +1413,7 @@ class MmsDatabase
             val quote = if (getQuote) getQuote(cursor) else null
             val reactions = get(context).reactionDatabase().getReactions(cursor)
             val messageContent = runCatching {
-                messageContentText?.takeIf { it.isNotBlank() }
+                messageContentJson?.takeIf { it.isNotBlank() }
                     ?.let { json.decodeFromString<MessageContent>(it) }
             }.onFailure {
                 Log.e(TAG, "Failed to decode message content", it)

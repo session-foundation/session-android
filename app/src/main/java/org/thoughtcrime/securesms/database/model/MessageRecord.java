@@ -64,13 +64,6 @@ public abstract class MessageRecord extends DisplayRecord {
   @Nullable
   private UpdateMessageData               groupUpdateMessage;
 
-  // You must use information in  ((DisappearingMessageUpdate) getMessageContent())
-  // in later version as this will be removed in the future.
-  @Deprecated(forRemoval = true)
-  public final boolean isNotDisappearAfterRead() {
-    return expireStarted == getTimestamp();
-  }
-
   public abstract boolean isMms();
   public abstract boolean isMmsNotification();
 
