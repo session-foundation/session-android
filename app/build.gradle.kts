@@ -46,7 +46,7 @@ val getGitHash = providers
 
 kotlin {
     compilerOptions {
-        jvmToolchain(17)
+        jvmToolchain(21)
     }
 }
 
