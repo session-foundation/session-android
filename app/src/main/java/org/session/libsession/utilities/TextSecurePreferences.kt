@@ -214,6 +214,8 @@ interface TextSecurePreferences {
     var migratedToDisablingKDF: Boolean
     var migratedToMultiPartConfig: Boolean
 
+    var migratedDisappearingMessagesToMessageContent: Boolean
+
     var selectedActivityAliasName: String?
 
     companion object {
@@ -1017,6 +1019,10 @@ class AppTextSecurePreferences @Inject constructor(
     override var migratedToMultiPartConfig: Boolean
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
         set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
+
+    override var migratedDisappearingMessagesToMessageContent: Boolean
+        get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
+        set(value) = setBooleanPreference("migrated_disappearing_messages_to_message_content", value)
 
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)

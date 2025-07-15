@@ -43,11 +43,11 @@ import javax.inject.Inject
 private const val TAG = "PushHandler"
 
 class PushReceiver @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val configFactory: ConfigFactory,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
+    private val json: Json,
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Both push services should hit this method once they receive notification data

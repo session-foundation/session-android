@@ -58,6 +58,7 @@ import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
@@ -65,18 +66,21 @@ import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
 
 import java.io.Closeable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import kotlin.collections.CollectionsKt;
+import kotlinx.serialization.json.Json;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
+@Singleton
 public class ThreadDatabase extends Database {
 
   public interface ConversationThreadUpdateListener {
@@ -102,6 +106,10 @@ public class ThreadDatabase extends Database {
   private static final String ERROR                  = "error";
   public  static final String SNIPPET_TYPE           = "snippet_type";
   public  static final String SNIPPET_URI            = "snippet_uri";
+  /**
+   * The column that hold a {@link MessageContent}. See {@link MmsDatabase#MESSAGE_CONTENT} for more information
+   */
+  public  static final String SNIPPET_CONTENT        = "snippet_content";
   public  static final String ARCHIVED               = "archived";
   public  static final String STATUS                 = "status";
   public  static final String DELIVERY_RECEIPT_COUNT = "delivery_receipt_count";
@@ -127,9 +135,11 @@ public class ThreadDatabase extends Database {
     "CREATE INDEX IF NOT EXISTS archived_count_index ON " + TABLE_NAME + " (" + ARCHIVED + ", " + MESSAGE_COUNT + ");",
   };
 
+  public static final String ADD_SNIPPET_CONTENT_COLUMN = "ALTER TABLE " + TABLE_NAME + " ADD COLUMN " + SNIPPET_CONTENT + " TEXT DEFAULT NULL;";
+
   private static final String[] THREAD_PROJECTION = {
       ID, THREAD_CREATION_DATE, MESSAGE_COUNT, ADDRESS, SNIPPET, SNIPPET_CHARSET, READ, UNREAD_COUNT, UNREAD_MENTION_COUNT, DISTRIBUTION_TYPE, ERROR, SNIPPET_TYPE,
-      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED
+      SNIPPET_URI, ARCHIVED, STATUS, DELIVERY_RECEIPT_COUNT, EXPIRES_IN, LAST_SEEN, READ_RECEIPT_COUNT, IS_PINNED, SNIPPET_CONTENT,
   };
 
   private static final List<String> TYPED_THREAD_PROJECTION = Stream.of(THREAD_PROJECTION)
@@ -157,9 +167,33 @@ public class ThreadDatabase extends Database {
   }
 
   private ConversationThreadUpdateListener updateListener;
+  private final Json json;
 
-  public ThreadDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
+  @Inject
+  public ThreadDatabase(
+          @dagger.hilt.android.qualifiers.ApplicationContext Context context,
+          Provider<SQLCipherOpenHelper> databaseHelper,
+          TextSecurePreferences prefs,
+          Json json) {
     super(context, databaseHelper);
+    this.json = json;
+
+    if (!prefs.getMigratedDisappearingMessagesToMessageContent()) {
+      migrateDisappearingMessagesToMessageContent();
+      prefs.setMigratedDisappearingMessagesToMessageContent(true);
+    }
+  }
+
+  // As we migrate disappearing messages to MessageContent, we need to ensure that
+  // if they appear in the snippet, they have to be re-generated with the new MessageContent.
+  private void migrateDisappearingMessagesToMessageContent() {
+    String sql = "SELECT " + ID + " FROM " + TABLE_NAME +
+            " WHERE " + SNIPPET_TYPE + " & " + MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT + " != 0";
+    try (final Cursor cursor = getReadableDatabase().rawQuery(sql)) {
+      while (cursor.moveToNext()) {
+        update(cursor.getLong(0), false);
+      }
+    }
   }
 
   public void setUpdateListener(ConversationThreadUpdateListener updateListener) {
@@ -179,7 +213,7 @@ public class ThreadDatabase extends Database {
     return db.insert(TABLE_NAME, null, contentValues);
   }
 
-  private void updateThread(long threadId, long count, String body, @Nullable Uri attachment,
+  private void updateThread(long threadId, long count, String body, @Nullable Uri attachment, @Nullable MessageContent messageContent,
                             long date, int status, int deliveryReceiptCount, long type, boolean unarchive,
                             long expiresIn, int readReceiptCount)
   {
@@ -189,6 +223,7 @@ public class ThreadDatabase extends Database {
     if (!body.isEmpty()) {
       contentValues.put(SNIPPET, body);
     }
+    contentValues.put(SNIPPET_CONTENT, messageContent == null ? null : json.encodeToString(MessageContent.Companion.serializer(), messageContent));
     contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
     contentValues.put(SNIPPET_TYPE, type);
     contentValues.put(STATUS, status);
@@ -207,25 +242,7 @@ public class ThreadDatabase extends Database {
     ContentValues contentValues = new ContentValues(1);
 
     contentValues.put(SNIPPET, "");
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
-    notifyConversationListListeners();
-  }
-
-  public void updateSnippet(long threadId, String snippet, @Nullable Uri attachment, long date, long type, boolean unarchive) {
-    ContentValues contentValues = new ContentValues(4);
-
-    contentValues.put(THREAD_CREATION_DATE, date - date % 1000);
-    if (!snippet.isEmpty()) {
-      contentValues.put(SNIPPET, snippet);
-    }
-    contentValues.put(SNIPPET_TYPE, type);
-    contentValues.put(SNIPPET_URI, attachment == null ? null : attachment.toString());
-
-    if (unarchive) {
-      contentValues.put(ARCHIVED, 0);
-    }
+    contentValues.put(SNIPPET_CONTENT, "");
 
     SQLiteDatabase db = getWritableDatabase();
     db.update(TABLE_NAME, contentValues, ID + " = ?", new String[] {threadId + ""});
@@ -705,7 +722,7 @@ public class ThreadDatabase extends Database {
         }
       }
       if (record != null && !record.isDeleted()) {
-        updateThread(threadId, count, getFormattedBodyFor(record), getAttachmentUriFor(record),
+        updateThread(threadId, count, getFormattedBodyFor(record), getAttachmentUriFor(record), record.getMessageContent(),
                      record.getTimestamp(), record.getDeliveryStatus(), record.getDeliveryReceiptCount(),
                      record.getType(), unarchive, record.getExpiresIn(), record.getReadReceiptCount());
         return false;
@@ -881,6 +898,7 @@ public class ThreadDatabase extends Database {
       Uri                snippetUri           = getSnippetUri(cursor);
       boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
+      String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -910,9 +928,19 @@ public class ThreadDatabase extends Database {
         groupThreadStatus = GroupThreadStatus.None;
       }
 
-      return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
+        MessageContent messageContent;
+        try {
+            messageContent = (messageContentJson == null || messageContentJson.isEmpty()) ? null : json.decodeFromString(
+                    MessageContent.Companion.serializer(),
+                    messageContentJson
+            );
+        } catch (Exception e) {
+          Log.e(TAG, "Failed to parse message content for thread: " + threadId, e);
+          messageContent = null;
+        }
+        return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {

@@ -9,6 +9,7 @@ public interface MmsSmsColumns {
   public static final String THREAD_ID                = "thread_id";
   public static final String READ                     = "read";
   public static final String BODY                     = "body";
+  public static final String MESSAGE_CONTENT          = "message_content";
 
   // This is the address of the message recipient, which may be a single user, a group, or a community!
   // It is NOT the address of the sender of any given message!
@@ -99,6 +100,7 @@ public interface MmsSmsColumns {
     // Group Message Information
     protected static final long GROUP_UPDATE_BIT            = 0x10000;
     protected static final long GROUP_QUIT_BIT              = 0x20000;
+    @Deprecated(forRemoval = true)
     protected static final long EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
     protected static final long GROUP_UPDATE_MESSAGE_BIT    = 0x80000;
 
@@ -254,9 +256,6 @@ public interface MmsSmsColumns {
               baseType == MISSED_CALL_TYPE || baseType == FIRST_MISSED_CALL_TYPE;
     }
 
-    public static boolean isExpirationTimerUpdate(long type) {
-      return (type & EXPIRATION_TIMER_UPDATE_BIT) != 0;
-    }
 
     public static boolean isMediaSavedExtraction(long type) {
       return (type & MEDIA_SAVED_EXTRACTION_BIT) != 0;

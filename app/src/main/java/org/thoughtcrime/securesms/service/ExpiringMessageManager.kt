@@ -12,10 +12,12 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
 import org.session.libsession.messaging.messages.signal.IncomingMediaMessage
-import org.session.libsession.messaging.messages.signal.OutgoingExpirationUpdateMessage
+import org.session.libsession.messaging.messages.signal.OutgoingGroupMediaMessage
+import org.session.libsession.messaging.messages.signal.OutgoingSecureMediaMessage
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
+import org.session.libsession.utilities.DistributionTypes
 import org.session.libsession.utilities.GroupUtil
 import org.session.libsession.utilities.GroupUtil.doubleEncodeGroupID
 import org.session.libsession.utilities.SSKEnvironment.MessageExpirationManagerProtocol
@@ -32,6 +34,7 @@ import org.thoughtcrime.securesms.database.MmsDatabase
 import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.mms.MmsException
 import org.thoughtcrime.securesms.util.observeChanges
 import java.io.IOException
@@ -104,12 +107,13 @@ class ExpiringMessageManager @Inject constructor(
                 address, sentTimestamp!!, -1,
                 expiresInMillis,
                 0,  // Marking expiryStartedAt as 0 as expiration logic will be universally applied on received messages
-                true,
+                // We no longer set this to true anymore as it won't be used in the future,
                 false,
                 false,
                 Optional.absent(),
                 groupInfo,
                 Optional.absent(),
+                DisappearingMessageUpdate(message.expiryMode),
                 Optional.absent(),
                 Optional.absent(),
                 Optional.absent(),
@@ -144,13 +148,34 @@ class ExpiringMessageManager @Inject constructor(
             val recipient = Recipient.from(context, address, false)
 
             message.threadID = storage.get().getOrCreateThreadIdFor(address)
-            val timerUpdateMessage = OutgoingExpirationUpdateMessage(
+            val content = DisappearingMessageUpdate(message.expiryMode)
+            val timerUpdateMessage = if (groupId != null) OutgoingGroupMediaMessage(
                 recipient,
+                "",
+                groupId,
+                null,
                 sentTimestamp!!,
                 duration,
                 0, // Marking as 0 as expiration shouldn't start until we send the message
-                groupId
+                false,
+                null,
+                emptyList(),
+                emptyList(),
+                content
+            ) else OutgoingSecureMediaMessage(
+                recipient,
+                "",
+                emptyList(),
+                sentTimestamp!!,
+                DistributionTypes.CONVERSATION,
+                duration,
+                0, // Marking as 0 as expiration shouldn't start until we send the message
+                null,
+                emptyList(),
+                emptyList(),
+                content
             )
+
             return mmsDatabase.insertSecureDecryptedMessageOutbox(
                 timerUpdateMessage,
                 message.threadID!!,

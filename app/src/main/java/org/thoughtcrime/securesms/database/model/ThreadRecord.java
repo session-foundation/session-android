@@ -37,6 +37,8 @@ import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.ui.UtilKt;
 
 /**
@@ -67,11 +69,11 @@ public class ThreadRecord extends DisplayRecord {
   public ThreadRecord(@NonNull String body, @Nullable Uri snippetUri,
                       @Nullable MessageRecord lastMessage, @NonNull Recipient recipient, long date, long count, int unreadCount,
                       int unreadMentionCount, long threadId, int deliveryReceiptCount, int status,
-                      long snippetType,  int distributionType, boolean archived, long expiresIn,
+                      long snippetType, int distributionType, boolean archived, long expiresIn,
                       long lastSeen, int readReceiptCount, boolean pinned, String invitingAdminId,
-                      @NonNull GroupThreadStatus groupThreadStatus)
+                      @NonNull GroupThreadStatus groupThreadStatus, @Nullable MessageContent messageContent)
   {
-    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount);
+    super(body, recipient, date, date, threadId, status, deliveryReceiptCount, snippetType, readReceiptCount, messageContent);
     this.snippetUri         = snippetUri;
     this.lastMessage        = lastMessage;
     this.count              = count;
@@ -141,7 +143,7 @@ public class ThreadRecord extends DisplayRecord {
             return Phrase.from(context, R.string.callsMissedCallFrom)
                     .put(NAME_KEY, getName())
                     .format().toString();
-        } else if (SmsDatabase.Types.isExpirationTimerUpdate(type)) {
+        } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
             // Use the same message as we would for displaying on the conversation screen.
             // lastMessage shouldn't be null here, but we'll check just in case.
             if (lastMessage != null) {
@@ -149,7 +151,8 @@ public class ThreadRecord extends DisplayRecord {
             } else {
                 return "";
             }
-        } else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
+        }
+        else if (MmsSmsColumns.Types.isMediaSavedExtraction(type)) {
             return Phrase.from(context, R.string.attachmentsMediaSaved)
                     .put(NAME_KEY, getName())
                     .format().toString();
