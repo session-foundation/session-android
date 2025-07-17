@@ -193,6 +193,8 @@ android {
         val sharedTestDir = "src/sharedTest/java"
         getByName("test").java.srcDirs(sharedTestDir)
 
+        getByName("test").resources.srcDirs("$projectDir/src/main/assets")
+
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
             maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
