@@ -17,8 +17,8 @@ jobs:
     strategy:
       fail-fast: false # Continue with other matrix items if one fails
       matrix:
-        variant: [ 'play', 'website', 'huawei' ]
-        build_type: [ 'debug' ]
+        variant: [ 'play', 'website', 'huawei', 'fdroid' ]
+        build_type: [ 'qa' ]
         include:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
