@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.VariantDimension
 import com.android.build.api.variant.FilterConfiguration
 import java.io.ByteArrayOutputStream
 
@@ -45,6 +46,15 @@ val getGitHash = providers
     .map { it.trim() }
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
+
+fun VariantDimension.testNetDefaultOn(defaultOn: Boolean) {
+    val fqEnumClass = "org.session.libsession.utilities.Environment"
+    buildConfigField(
+        fqEnumClass,
+        "DEFAULT_ENVIRONMENT",
+        if (defaultOn) "$fqEnumClass.TEST_NET" else "$fqEnumClass.MAIN_NET"
+    )
+}
 
 kotlin {
     compilerOptions {
@@ -125,6 +135,8 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+
+            testNetDefaultOn(false)
         }
 
         create("qa") {
@@ -133,6 +145,14 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
+
+            testNetDefaultOn(false)
+        }
+
+        create("automaticQa") {
+            initWith(getByName("qa"))
+
+            testNetDefaultOn(true)
         }
 
         getByName("debug") {
@@ -140,6 +160,8 @@ android {
             isMinifyEnabled = false
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
+
+            testNetDefaultOn(false)
         }
     }
 
@@ -178,43 +200,30 @@ android {
         create("play") {
             isDefault = true
             dimension = "distribution"
-            ext["websiteUpdateUrl"] = "null"
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "false")
             buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
-            buildConfigField("String", "NOPLAY_UPDATE_URL", ext["websiteUpdateUrl"] as String)
             buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
             signingConfig = signingConfigs.getByName("play")
         }
 
         create("fdroid") {
-            dimension = "distribution"
-            ext["websiteUpdateUrl"] = "https://github.com/session-foundation/session-android/releases"
-            buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
-            buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
-            buildConfigField("String", "NOPLAY_UPDATE_URL", "\"${ext["websiteUpdateUrl"]}\"")
-            buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
-            signingConfig = signingConfigs.getByName("play")
+            initWith(getByName("play"))
         }
 
         if (huaweiEnabled) {
             create("huawei") {
                 dimension = "distribution"
-                ext["websiteUpdateUrl"] = "null"
                 buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
                 buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.HUAWEI")
-                buildConfigField("String", "NOPLAY_UPDATE_URL", ext["websiteUpdateUrl"] as String)
                 buildConfigField("String", "PUSH_KEY_SUFFIX", "\"_HUAWEI\"")
                 signingConfig = signingConfigs.getByName("huawei")
             }
         }
 
         create("website") {
-            dimension = "distribution"
-            ext["websiteUpdateUrl"] = "https://github.com/session-foundation/session-android/releases"
+            initWith(getByName("play"))
+
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
-            buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
-            buildConfigField("String", "NOPLAY_UPDATE_URL", "\"${ext["websiteUpdateUrl"]}\"")
-            buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
         }
 
     }

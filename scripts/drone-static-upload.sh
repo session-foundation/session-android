@@ -18,8 +18,8 @@ set -o xtrace  # Don't start tracing until *after* we write the ssh key
 chmod 600 ssh_key
 
 # Define the output paths
-build_dir="app/build/outputs/apk/play/debug"
-target_path="${build_dir}/$(ls ${build_dir} | grep -o 'session-[^[:space:]]*-universal-play.apk')"
+build_dir="app/build/outputs/apk"
+target_path=$(find "$build_dir" -type f -name "*universal*.apk" -print -quit)
 
 # Validate the paths exist
 if [ ! -d $build_path ]; then
