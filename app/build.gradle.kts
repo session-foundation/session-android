@@ -44,6 +44,8 @@ val getGitHash = providers
     .asText
     .map { it.trim() }
 
+val firebaseEnabledVariants = listOf("play", "fdroid")
+
 kotlin {
     compilerOptions {
         jvmToolchain(17)
@@ -113,14 +115,20 @@ android {
     sourceSets {
         val sharedTestDir = "src/sharedTest/java"
         getByName("test").java.srcDirs(sharedTestDir)
-        getByName("androidTest").java.srcDirs(sharedTestDir)
 
-        getByName("test").resources.srcDirs("$projectDir/src/main/assets")
+        val firebaseCommonDir = "src/firebaseCommon"
+        firebaseEnabledVariants.forEach { variant ->
+            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+        }
     }
 
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+        }
+
+        create("qa") {
+            initWith(getByName("release"))
         }
 
         getByName("debug") {
@@ -160,6 +168,7 @@ android {
         }
     }
 
+
     flavorDimensions += "distribution"
     productFlavors {
         create("play") {
@@ -169,6 +178,16 @@ android {
             buildConfigField("boolean", "PLAY_STORE_DISABLED", "false")
             buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
             buildConfigField("String", "NOPLAY_UPDATE_URL", ext["websiteUpdateUrl"] as String)
+            buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
+            signingConfig = signingConfigs.getByName("play")
+        }
+
+        create("fdroid") {
+            dimension = "distribution"
+            ext["websiteUpdateUrl"] = "https://github.com/session-foundation/session-android/releases"
+            buildConfigField("boolean", "PLAY_STORE_DISABLED", "true")
+            buildConfigField("org.session.libsession.utilities.Device", "DEVICE", "org.session.libsession.utilities.Device.ANDROID")
+            buildConfigField("String", "NOPLAY_UPDATE_URL", "\"${ext["websiteUpdateUrl"]}\"")
             buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
             signingConfig = signingConfigs.getByName("play")
         }
@@ -193,6 +212,7 @@ android {
             buildConfigField("String", "NOPLAY_UPDATE_URL", "\"${ext["websiteUpdateUrl"]}\"")
             buildConfigField("String", "PUSH_KEY_SUFFIX", "\"\"")
         }
+
     }
 
     testOptions {
@@ -251,11 +271,14 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
 
-    val playImplementation = configurations.maybeCreate("playImplementation")
-    playImplementation(libs.firebase.messaging) {
-        exclude(group = "com.google.firebase", module = "firebase-core")
-        exclude(group = "com.google.firebase", module = "firebase-analytics")
-        exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
+    // Add firebase dependencies to specific variants
+    for (variant in firebaseEnabledVariants) {
+        val configuration = configurations.maybeCreate("${variant}Implementation")
+        configuration(libs.firebase.messaging) {
+            exclude(group = "com.google.firebase", module = "firebase-core")
+            exclude(group = "com.google.firebase", module = "firebase-analytics")
+            exclude(group = "com.google.firebase", module = "firebase-measurement-connector")
+        }
     }
 
     if (huaweiEnabled) {
@@ -394,9 +417,10 @@ androidComponents {
 }
 
 // Disable google services for non-google variants
+// Note: fdroid is a special variant that also uses google services (fore firebase), so we keep it enabled
 androidComponents {
     finalizeDsl {
         tasks.named { it.contains("GoogleServices") }
-            .configureEach { enabled = name.contains("play", true) }
+            .configureEach { enabled = name.contains("play", true) || name.contains("fdroid", true) }
     }
 }

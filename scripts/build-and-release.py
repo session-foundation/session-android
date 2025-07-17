@@ -243,8 +243,16 @@ play_build_result = build_releases(
     credentials_property_prefix='SESSION'
     )
 
+print("Building fdroid releases...")
+fdroid_build_result = build_releases(
+    project_root=project_root,
+    flavor='fdroid',
+    credentials=BuildCredentials(credentials['build']['play']),
+    credentials_property_prefix='SESSION'
+    )
+
 print("Updating fdroid repo...")
-update_fdroid(build=play_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
+update_fdroid(build=fdroid_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
 
 print("Building huawei releases...")
 huawei_build_result = build_releases(
