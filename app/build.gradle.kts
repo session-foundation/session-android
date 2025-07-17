@@ -129,6 +129,8 @@ android {
 
         create("qa") {
             initWith(getByName("release"))
+
+            matchingFallbacks += "release"
         }
 
         getByName("debug") {
