@@ -420,11 +420,12 @@ androidComponents {
     }
 }
 
-// Disable google services for non-google variants
-// Note: fdroid is a special variant that also uses google services (fore firebase), so we keep it enabled
+// Only enable google services tasks for firebase-enabled variants
 androidComponents {
     finalizeDsl {
         tasks.named { it.contains("GoogleServices") }
-            .configureEach { enabled = name.contains("play", true) || name.contains("fdroid", true) }
+            .configureEach {
+                enabled = firebaseEnabledVariants.any { name.contains(it, true) }
+            }
     }
 }
