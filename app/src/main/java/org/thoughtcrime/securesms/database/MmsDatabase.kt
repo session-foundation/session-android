@@ -1617,7 +1617,7 @@ class MmsDatabase
                     '${DisappearingMessageUpdate.KEY_EXPIRY_TIME_SECONDS}', $EXPIRES_IN / 1000, 
                     '${DisappearingMessageUpdate.KEY_EXPIRY_TYPE}', 
                         iif($EXPIRES_IN <= 0, '${DisappearingMessageUpdate.EXPIRY_MODE_NONE}',
-                          iif($EXPIRE_STARTED <= $DATE_SENT, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_SENT}, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_READ}))
+                          iif($EXPIRE_STARTED == $DATE_SENT, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_SENT}, ${DisappearingMessageUpdate.EXPIRY_MODE_AFTER_READ}))
                 ),
                 $MESSAGE_BOX = $MESSAGE_BOX & ~${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}
             WHERE ($MESSAGE_BOX & ${MmsSmsColumns.Types.EXPIRATION_TIMER_UPDATE_BIT}) != 0;
