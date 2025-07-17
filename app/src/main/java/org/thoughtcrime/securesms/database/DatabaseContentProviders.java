@@ -8,6 +8,8 @@ import android.net.Uri;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import network.loki.messenger.BuildConfig;
+
 /**
  * Starting in API 26, a {@link ContentProvider} needs to be defined for each authority you wish to
  * observe changes on. These classes essentially do nothing except exist so Android doesn't complain.
@@ -15,11 +17,11 @@ import androidx.annotation.Nullable;
 public class DatabaseContentProviders {
 
   public static class ConversationList extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversationlist");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversationlist" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   public static class Conversation extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversation");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.conversation" + BuildConfig.AUTHORITY_POSTFIX);
 
     public static Uri getUriForThread(long threadId) {
       return CONTENT_URI.buildUpon()
@@ -29,19 +31,19 @@ public class DatabaseContentProviders {
   }
 
   public static class Attachment extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.attachment");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.attachment" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   public static class Sticker extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.sticker");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.sticker" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   public static class StickerPack extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.stickerpack");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.stickerpack" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   public static class Recipient extends NoopContentProvider {
-    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.recipient");
+    public static final Uri CONTENT_URI = Uri.parse("content://network.loki.securesms.database.recipient" + BuildConfig.AUTHORITY_POSTFIX);
   }
 
   private static abstract class NoopContentProvider extends ContentProvider {

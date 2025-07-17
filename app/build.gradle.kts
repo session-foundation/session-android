@@ -72,6 +72,11 @@ fun VariantDimension.setAlternativeAppName(alternative: String?) {
     }
 }
 
+fun VariantDimension.setAuthorityPostfix(postfix: String) {
+    manifestPlaceholders["authority_postfix"] = postfix
+    buildConfigField("String", "AUTHORITY_POSTFIX", "\"$postfix\"")
+}
+
 kotlin {
     compilerOptions {
         jvmToolchain(21)
@@ -145,6 +150,7 @@ android {
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
             setAlternativeAppName(null)
+            setAuthorityPostfix("")
         }
 
         create("qa") {
@@ -159,6 +165,7 @@ android {
             enablePermissiveNetworkSecurityConfig(true)
 
             setAlternativeAppName("Session QA")
+            setAuthorityPostfix(".qa")
         }
 
         create("automaticQa") {
@@ -178,6 +185,7 @@ android {
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
             setAlternativeAppName("Session Debug")
+            setAuthorityPostfix(".debug")
         }
     }
 

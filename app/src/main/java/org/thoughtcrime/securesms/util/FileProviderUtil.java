@@ -7,9 +7,11 @@ import androidx.core.content.FileProvider;
 
 import java.io.File;
 
+import network.loki.messenger.BuildConfig;
+
 public class FileProviderUtil {
 
-  public static final String AUTHORITY = "network.loki.securesms.fileprovider";
+  public static final String AUTHORITY = "network.loki.securesms.fileprovider" + BuildConfig.AUTHORITY_POSTFIX;
 
   @NonNull
   public static Uri getUriFor(@NonNull Context context, @NonNull File file) {
