@@ -28,6 +28,7 @@ import org.session.libsession.snode.model.StoreMessageResponse
 import org.session.libsession.snode.utilities.asyncPromise
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.snode.utilities.retrySuspendAsPromise
+import org.session.libsession.utilities.Environment
 import org.session.libsession.utilities.mapValuesNotNull
 import org.session.libsession.utilities.toByteArray
 import org.session.libsignal.crypto.secureRandom
@@ -83,13 +84,15 @@ object SnodeAPI {
     // Use port 4433 to enforce pinned certificates
     private val seedNodePort = 4443
 
-    private val seedNodePool = if (SnodeModule.shared.useTestNet) setOf(
-        "http://public.loki.foundation:38157"
-    ) else setOf(
-        "https://seed1.getsession.org:$seedNodePort",
-        "https://seed2.getsession.org:$seedNodePort",
-        "https://seed3.getsession.org:$seedNodePort",
-    )
+    private val seedNodePool = when (SnodeModule.shared.environment) {
+        Environment.DEV_NET -> setOf("http://192.168.1.223:1280")
+        Environment.TEST_NET -> setOf("http://public.loki.foundation:38157")
+        Environment.MAIN_NET -> setOf(
+            "https://seed1.getsession.org:$seedNodePort",
+            "https://seed2.getsession.org:$seedNodePort",
+            "https://seed3.getsession.org:$seedNodePort",
+        )
+    }
 
     private const val snodeFailureThreshold = 3
     private const val useOnionRequests = true

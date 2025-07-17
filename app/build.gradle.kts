@@ -47,12 +47,12 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 
-fun VariantDimension.testNetDefaultOn(defaultOn: Boolean) {
+fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
     buildConfigField(
         fqEnumClass,
         "DEFAULT_ENVIRONMENT",
-        if (defaultOn) "$fqEnumClass.TEST_NET" else "$fqEnumClass.MAIN_NET"
+        if (defaultOn) "$fqEnumClass.DEV_NET" else "$fqEnumClass.MAIN_NET"
     )
 }
 
@@ -136,7 +136,7 @@ android {
         getByName("release") {
             isMinifyEnabled = false
 
-            testNetDefaultOn(false)
+            devNetDefaultOn(false)
         }
 
         create("qa") {
@@ -146,13 +146,13 @@ android {
 
             signingConfig = signingConfigs.getByName("debug")
 
-            testNetDefaultOn(false)
+            devNetDefaultOn(false)
         }
 
         create("automaticQa") {
             initWith(getByName("qa"))
 
-            testNetDefaultOn(true)
+            devNetDefaultOn(true)
         }
 
         getByName("debug") {
@@ -161,7 +161,7 @@ android {
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
-            testNetDefaultOn(false)
+            devNetDefaultOn(false)
         }
     }
 
