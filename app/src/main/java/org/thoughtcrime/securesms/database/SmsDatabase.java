@@ -246,9 +246,6 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(BODY, displayedMessage);
     contentValues.put(HAS_MENTION, 0);
     contentValues.put(STATUS, Status.STATUS_NONE);
-    // Clear the expiration fields so that the "message is deleted" is never expired.
-    contentValues.put(EXPIRE_STARTED, 0);
-    contentValues.put(EXPIRES_IN, 0);
 
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
 
