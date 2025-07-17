@@ -131,6 +131,8 @@ android {
             initWith(getByName("release"))
 
             matchingFallbacks += "release"
+
+            signingConfig = signingConfigs.getByName("debug")
         }
 
         getByName("debug") {
