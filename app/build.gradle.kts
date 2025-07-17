@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.AndroidSourceSet
 import com.android.build.api.dsl.VariantDimension
 import com.android.build.api.variant.FilterConfiguration
 import java.io.ByteArrayOutputStream
@@ -62,6 +61,14 @@ fun VariantDimension.enablePermissiveNetworkSecurityConfig(permissive: Boolean) 
         "@xml/network_security_configuration_permissive"
     } else {
         "@xml/network_security_configuration"
+    }
+}
+
+fun VariantDimension.setAlternativeAppName(alternative: String?) {
+    if (alternative != null) {
+        manifestPlaceholders["app_name"] = alternative
+    } else {
+        manifestPlaceholders["app_name"] = "@string/app_name"
     }
 }
 
@@ -137,6 +144,7 @@ android {
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(false)
+            setAlternativeAppName(null)
         }
 
         create("qa") {
@@ -145,15 +153,19 @@ android {
             matchingFallbacks += "release"
 
             signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".$name"
 
             devNetDefaultOn(false)
             enablePermissiveNetworkSecurityConfig(true)
+
+            setAlternativeAppName("Session QA")
         }
 
         create("automaticQa") {
             initWith(getByName("qa"))
 
             devNetDefaultOn(true)
+            setAlternativeAppName("Session AQA")
         }
 
         getByName("debug") {
@@ -162,8 +174,10 @@ android {
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
+            applicationIdSuffix = ".${name}"
             enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
+            setAlternativeAppName("Session Debug")
         }
     }
 
