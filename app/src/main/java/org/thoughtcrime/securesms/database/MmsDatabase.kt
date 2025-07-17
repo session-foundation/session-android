@@ -367,6 +367,11 @@ class MmsDatabase
         contentValues.put(READ, 1)
         contentValues.put(BODY, displayedMessage)
         contentValues.put(HAS_MENTION, 0)
+
+        // Clear the expiration fields so that the "message is deleted" is never expired.
+        contentValues.put(EXPIRE_STARTED, 0)
+        contentValues.put(EXPIRES_IN, 0)
+
         database.update(TABLE_NAME, contentValues, ID_WHERE, arrayOf(messageId.toString()))
         val attachmentDatabase = get(context).attachmentDatabase()
         queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
