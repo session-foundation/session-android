@@ -1694,7 +1694,7 @@ open class Storage @Inject constructor(
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
         smsDatabase.insertCallMessage(callMessage)
     }

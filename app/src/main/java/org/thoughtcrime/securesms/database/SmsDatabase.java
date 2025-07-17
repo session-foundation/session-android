@@ -246,6 +246,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(BODY, displayedMessage);
     contentValues.put(HAS_MENTION, 0);
     contentValues.put(STATUS, Status.STATUS_NONE);
+
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
 
     updateTypeBitmask(messageId, Types.BASE_TYPE_MASK,

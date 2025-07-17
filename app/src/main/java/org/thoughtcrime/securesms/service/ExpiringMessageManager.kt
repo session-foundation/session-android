@@ -203,7 +203,6 @@ class ExpiringMessageManager @Inject constructor(
         }
     }
 
-
     override fun onMessageSent(message: Message) {
         // When a message is sent, we'll schedule deletion immediately if we have an expiry mode,
         // even if the expiry mode is set to AfterRead, as we don't have a reliable way to know
@@ -212,17 +211,9 @@ class ExpiringMessageManager @Inject constructor(
         // As for the receiver, they will be able to disappear the message correctly after
         // they've done reading it.
         val messageId = message.id
-        val sentTimestamp = message.sentTimestamp
-        if (message.expiryMode != ExpiryMode.NONE && messageId != null && sentTimestamp != null) {
-            // If the expiryMode is set to AfterRead, the start time must be greater than the sent timestamp.
-            // This is due to the assumption downstream that `expiryStarted == sentTimestamp` means expiryMode is AfterSend.
-            val startTime = if (message.expiryMode is ExpiryMode.AfterRead) {
-                sentTimestamp + 1 // Ensure start time is after sent timestamp
-            } else {
-                sentTimestamp
-            }
-
-            getDatabase(messageId.mms).markExpireStarted(messageId.id, startTime)
+        if (message.expiryMode != ExpiryMode.NONE && messageId != null) {
+            getDatabase(messageId.mms)
+                .markExpireStarted(messageId.id, clock.currentTimeMills())
         }
     }
 
@@ -230,12 +221,11 @@ class ExpiringMessageManager @Inject constructor(
         // When we receive a message, we'll schedule deletion if it has an expiry mode set to
         // AfterSend, as the message would be considered sent from the sender's perspective.
         val messageId = message.id
-        val sentTimestamp = message.sentTimestamp
-        if (message.expiryMode is ExpiryMode.AfterSend && messageId != null && sentTimestamp != null) {
-            getDatabase(messageId.mms).markExpireStarted(messageId.id, sentTimestamp)
+        if (message.expiryMode is ExpiryMode.AfterSend && messageId != null) {
+            getDatabase(messageId.mms)
+                .markExpireStarted(messageId.id, clock.currentTimeMills())
         }
     }
-
 
     private suspend fun processDatabase(db: MessagingDatabase) {
         while (true) {
