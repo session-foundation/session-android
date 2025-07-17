@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.AndroidSourceSet
 import com.android.build.api.dsl.VariantDimension
 import com.android.build.api.variant.FilterConfiguration
 import java.io.ByteArrayOutputStream
@@ -54,6 +55,14 @@ fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
         "DEFAULT_ENVIRONMENT",
         if (defaultOn) "$fqEnumClass.DEV_NET" else "$fqEnumClass.MAIN_NET"
     )
+}
+
+fun VariantDimension.enablePermissiveNetworkSecurityConfig(permissive: Boolean) {
+    manifestPlaceholders["network_security_config"] = if (permissive) {
+        "@xml/network_security_configuration_permissive"
+    } else {
+        "@xml/network_security_configuration"
+    }
 }
 
 kotlin {
@@ -122,21 +131,12 @@ android {
         }
     }
 
-    sourceSets {
-        val sharedTestDir = "src/sharedTest/java"
-        getByName("test").java.srcDirs(sharedTestDir)
-
-        val firebaseCommonDir = "src/firebaseCommon"
-        firebaseEnabledVariants.forEach { variant ->
-            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
-        }
-    }
-
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
 
             devNetDefaultOn(false)
+            enablePermissiveNetworkSecurityConfig(false)
         }
 
         create("qa") {
@@ -147,6 +147,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
 
             devNetDefaultOn(false)
+            enablePermissiveNetworkSecurityConfig(true)
         }
 
         create("automaticQa") {
@@ -161,9 +162,21 @@ android {
             enableUnitTestCoverage = false
             signingConfig = signingConfigs.getByName("debug")
 
+            enablePermissiveNetworkSecurityConfig(true)
             devNetDefaultOn(false)
         }
     }
+
+    sourceSets {
+        val sharedTestDir = "src/sharedTest/java"
+        getByName("test").java.srcDirs(sharedTestDir)
+
+        val firebaseCommonDir = "src/firebaseCommon"
+        firebaseEnabledVariants.forEach { variant ->
+            maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+        }
+    }
+
 
     signingConfigs {
         create("play") {
