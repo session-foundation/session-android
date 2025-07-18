@@ -810,10 +810,10 @@ class ConversationReactionOverlay : FrameLayout {
 }
 
 private val MessageRecord.subtitle: ((Context) -> CharSequence?)?
-    get() = if (expiresIn <= 0) {
+    get() = if (expiresIn <= 0 || expireStarted <= 0) {
         null
     } else { context ->
-        (expiresIn - (SnodeAPI.nowWithOffset - (expireStarted.takeIf { it > 0 } ?: timestamp)))
+        (expiresIn - (SnodeAPI.nowWithOffset - expireStarted))
             .coerceAtLeast(0L)
             .milliseconds
             .toShortTwoPartString()
