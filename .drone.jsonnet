@@ -37,6 +37,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         image: docker_base + 'android',
         pull: 'always',
         environment: { ANDROID_HOME: '/usr/lib/android-sdk' },
+        mem_limit: "8g",
         commands: [
           'apt-get update --allow-releaseinfo-change',
           'apt-get install -y ninja-build openjdk-21-jdk',
@@ -70,7 +71,10 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
     type: 'docker',
     name: 'Debug APK Build',
     platform: { arch: 'amd64' },
-    trigger: { event: { exclude: [ 'pull_request' ] } },
+    trigger: {
+        event: ['push'],
+        branch: ['master', 'dev', 'release/*']
+    },
     steps: [
       version_info,
       clone_submodules,
@@ -78,6 +82,7 @@ local ci_dep_mirror(want_mirror) = (if want_mirror then ' -DLOCAL_MIRROR=https:/
         name: 'Build and upload',
         image: docker_base + 'android',
         pull: 'always',
+        mem_limit: "8g",
         environment: { SSH_KEY: { from_secret: 'SSH_KEY' }, ANDROID_HOME: '/usr/lib/android-sdk' },
         commands: [
           'apt-get update --allow-releaseinfo-change',

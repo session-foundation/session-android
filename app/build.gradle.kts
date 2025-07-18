@@ -24,8 +24,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 414
-val canonicalVersionName = "1.25.2"
+val canonicalVersionCode = 415
+val canonicalVersionName = "1.26.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -44,17 +44,19 @@ val getGitHash = providers
     .asText
     .map { it.trim() }
 
+kotlin {
+    compilerOptions {
+        jvmToolchain(21)
+    }
+}
+
 android {
     namespace = "network.loki.messenger"
     useLibrary("org.apache.http.legacy")
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     packaging {

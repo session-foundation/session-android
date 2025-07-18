@@ -24,7 +24,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
-import android.util.Pair;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.database.model.SmsMessageRecord;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -245,6 +246,7 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(BODY, displayedMessage);
     contentValues.put(HAS_MENTION, 0);
     contentValues.put(STATUS, Status.STATUS_NONE);
+
     database.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(messageId)});
 
     updateTypeBitmask(messageId, Types.BASE_TYPE_MASK,
@@ -258,12 +260,13 @@ public class SmsDatabase extends MessagingDatabase {
     contentValues.put(EXPIRE_STARTED, startedAtTimestamp);
 
     SQLiteDatabase db = getWritableDatabase();
-    db.update(TABLE_NAME, contentValues, ID_WHERE, new String[] {String.valueOf(id)});
-
-    long threadId = getThreadIdForMessage(id);
-
-    DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
+    try (final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + EXPIRE_STARTED + " = ? " +
+                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, startedAtTimestamp, id)) {
+      if (cursor.moveToNext()) {
+        long threadId = cursor.getLong(0);
+        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+      }
+    }
   }
 
   public void markAsSentFailed(long id) {
@@ -371,10 +374,10 @@ public class SmsDatabase extends MessagingDatabase {
   }
 
   public List<MarkedMessageInfo> setMessagesRead(long threadId, long beforeTime) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0) AND " + DATE_SENT + " <= ?", new String[]{threadId+"", beforeTime+""});
   }
   public List<MarkedMessageInfo> setMessagesRead(long threadId) {
-    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0 OR " + REACTIONS_UNREAD + " = 1)", new String[] {String.valueOf(threadId)});
+    return setMessagesRead(THREAD_ID + " = ? AND (" + READ + " = 0)", new String[] {String.valueOf(threadId)});
   }
 
   public List<MarkedMessageInfo> setAllMessagesRead() {
@@ -412,34 +415,16 @@ public class SmsDatabase extends MessagingDatabase {
     return results;
   }
 
-  public void updateSentTimestamp(long messageId, long newTimestamp, long threadId) {
+  public void updateSentTimestamp(long messageId, long newTimestamp) {
     SQLiteDatabase db = getWritableDatabase();
-    db.execSQL("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
-                    "WHERE " + ID + " = ?",
-            new String[] {newTimestamp + "", messageId + ""});
-    notifyConversationListeners(threadId);
+    try(final Cursor cursor = db.rawQuery("UPDATE " + TABLE_NAME + " SET " + DATE_SENT + " = ? " +
+                    "WHERE " + ID + " = ? RETURNING " + THREAD_ID, newTimestamp, messageId)) {
+      if (cursor.moveToNext()) {
+        notifyConversationListeners(cursor.getLong(0));
+      }
+    }
+
     notifyConversationListListeners();
-  }
-
-  public Pair<Long, Long> updateBundleMessageBody(long messageId, String body) {
-    long type = Types.BASE_INBOX_TYPE | Types.SECURE_MESSAGE_BIT | Types.PUSH_MESSAGE_BIT;
-    return updateMessageBodyAndType(messageId, body, Types.TOTAL_MASK, type);
-  }
-
-  private Pair<Long, Long> updateMessageBodyAndType(long messageId, String body, long maskOff, long maskOn) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.execSQL("UPDATE " + TABLE_NAME + " SET " + BODY + " = ?, " +
-                   TYPE + " = (" + TYPE + " & " + (Types.TOTAL_MASK - maskOff) + " | " + maskOn + ") " +
-                   "WHERE " + ID + " = ?",
-               new String[] {body, messageId + ""});
-
-    long threadId = getThreadIdForMessage(messageId);
-
-    DatabaseComponent.get(context).threadDatabase().update(threadId, true);
-    notifyConversationListeners(threadId);
-    notifyConversationListListeners();
-
-    return new Pair<>(messageId, threadId);
   }
 
   protected Optional<InsertResult> insertMessageInbox(IncomingTextMessage message, long type, long serverTimestamp, boolean runThreadUpdate) {
@@ -453,8 +438,7 @@ public class SmsDatabase extends MessagingDatabase {
       groupRecipient = Recipient.from(context, message.getGroupId(), true);
     }
 
-    boolean    unread     = (Util.isDefaultSmsProvider(context) ||
-            message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
+    boolean    unread     = (message.isSecureMessage() || message.isGroup() || message.isUnreadCallMessage());
 
     long       threadId;
 
@@ -576,7 +560,7 @@ public class SmsDatabase extends MessagingDatabase {
     Map<Address, Long> earlyDeliveryReceipts = earlyDeliveryReceiptCache.remove(date);
     Map<Address, Long> earlyReadReceipts     = earlyReadReceiptCache.remove(date);
 
-    ContentValues contentValues = new ContentValues(6);
+    ContentValues contentValues = new ContentValues();
     contentValues.put(ADDRESS, address.toString());
     contentValues.put(THREAD_ID, threadId);
     contentValues.put(BODY, message.getMessageBody());
@@ -622,14 +606,36 @@ public class SmsDatabase extends MessagingDatabase {
             " WHERE " + where + " GROUP BY " + SmsDatabase.TABLE_NAME + "." + SmsDatabase.ID, arguments);
   }
 
-  public Cursor getExpirationStartedMessages() {
-    String         where = EXPIRE_STARTED + " > 0";
-    return rawQuery(where, null);
+  @Override
+  public List<Long> getExpiredMessageIDs(long nowMills) {
+    String query = "SELECT " + ID + " FROM " + TABLE_NAME +
+            " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?";
+
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query, nowMills)) {
+      List<Long> result = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          result.add(cursor.getLong(0));
+      }
+
+      return result;
+    }
   }
 
-  public Cursor getExpirationNotStartedMessages() {
-    String         where = EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " = 0";
-    return rawQuery(where, null);
+  /**
+   * @return the next expiring timestamp for messages that have started expiring. 0 if no messages are expiring.
+   */
+  @Override
+  public long getNextExpiringTimestamp() {
+    String query = "SELECT MIN(" + EXPIRE_STARTED + " + " + EXPIRES_IN + ") FROM " + TABLE_NAME +
+            " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0";
+
+    try (final Cursor cursor = getReadableDatabase().rawQuery(query)) {
+      if (cursor.moveToFirst()) {
+        return cursor.getLong(0);
+      } else {
+        return 0L;
+      }
+    }
   }
 
   @NonNull

@@ -26,7 +26,9 @@
     <string name="adminPromotionFailedDescription">{name} को {group_name} में पदोन्नत करने में विफल</string>
     <string name="adminPromotionFailedDescriptionMultiple">{name} और {count} अन्य को {group_name} में पदोन्नत करने में विफल</string>
     <string name="adminPromotionFailedDescriptionTwo">{name} और {other_name} को {group_name} में पदोन्नत करने में विफल</string>
+    <string name="adminPromotionNotSent">प्रमोशन नहीं भेजा गया</string>
     <string name="adminPromotionSent">एडमिन पदोन्नति भेजी गई</string>
+    <string name="adminPromotionStatusUnknown">पदोन्नति की स्थिति अज्ञात</string>
     <string name="adminRemove">एडमिन को हटाएं</string>
     <string name="adminRemoveAsAdmin">एडमिन के रूप में हटाएं</string>
     <string name="adminRemoveCommunityNone">इस Community में कोई Admins नहीं हैं।</string>
@@ -36,14 +38,24 @@
     <string name="adminRemovedUser"><b>{name}</b> को एडमिन से हटा दिया गया।</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> और <b>{count} अन्य</b> को व्यवस्थापक पद से हटा दिया गया |</string>
     <string name="adminRemovedUserOther"><b>{name}</b> and <b>{other_name}</b> को व्यवस्थापक पद से हटा दिया गया |</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">एडमिन प्रमोशन भेजा जा रहा है</item>
+        <item quantity="other">एडमिन प्रमोशन भेजे जा रहे हैं</item>
+    </plurals>
     <string name="adminSettings">एडमिन सेटिंग्स</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> और <b>{other_name}</b> को Admin बनाया गया।</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">गुमनाम</string>
     <string name="appIcon">ऐप आइकॉन</string>
+    <string name="appIconAndNameDescription">होम स्क्रीन और ऐप ड्रॉअर पर वैकल्पिक ऐप आइकन और नाम प्रदर्शित होता है।</string>
     <string name="appIconAndNameSelectionTitle">आइकॉन और नाम</string>
+    <string name="appIconDescription">होम स्क्रीन और ऐप लाइब्रेरी पर वैकल्पिक ऐप आइकन प्रदर्शित होता है। ऐप का नाम अभी भी \'{app_name}\' के रूप में दिखाई देगा।</string>
+    <string name="appIconEnableIcon">वैकल्पिक ऐप आइकन का उपयोग करें</string>
+    <string name="appIconEnableIconAndName">वैकल्पिक ऐप आइकन और नाम का उपयोग करें</string>
+    <string name="appIconSelect">वैकल्पिक ऐप आइकन चुनें</string>
     <string name="appIconSelectionTitle">आइकॉन</string>
     <string name="appNameCalculator">कैलकुलेटर</string>
+    <string name="appNameMeetingSE">मीटिंगएसई</string>
     <string name="appNameNews">समाचार</string>
     <string name="appNameNotes">नोट्स</string>
     <string name="appNameStocks">शेयरों</string>
@@ -155,6 +167,7 @@
     <string name="callsNotificationsRequired">वॉइस और वीडियो कॉल के लिए आपके डिवाइस सिस्टम सेटिंग्स में नोटिफिकेशन सक्षम होना आवश्यक है।</string>
     <string name="callsPermissionsRequired">कॉल अनुमतियाँ आवश्यक हैं</string>
     <string name="callsPermissionsRequiredDescription">आप गोपनीयता सेटिंग्स में \"वॉइस और वीडियो कॉल्स\" अनुमति सक्षम कर सकते हैं।</string>
+    <string name="callsPermissionsRequiredDescription1">आप अनुमति सेटिंग में \"वॉयस और वीडियो कॉल\" अनुमति सक्षम कर सकते हैं।</string>
     <string name="callsReconnecting">पुन: कनेक्ट हो रहा है…</string>
     <string name="callsRinging">बज रहा है...</string>
     <string name="callsSessionCall">{app_name} कॉल करें</string>
@@ -261,7 +274,9 @@
     <string name="copied">कॉपी किया गया!</string>
     <string name="copy">कॉपी करें</string>
     <string name="create">बनाएं</string>
+    <string name="creatingCall">कॉल बनाया जा रहा है</string>
     <string name="cut">कट</string>
+    <string name="databaseErrorGeneric">डेटाबेस त्रुटि हुई है।\n\nसमस्या निवारण के लिए अपने एप्लिकेशन लॉग्स को शेयर करने के लिए निर्यात करें। यदि यह असफल रहता है, तो {app_name} को फिर से इंस्टॉल करें और अपना खाता पुनः प्राप्त करें।</string>
     <string name="databaseErrorTimeout">हमने देखा कि {app_name} प्रारंभ होने में बहुत समय ले रहा है।\n\nआप प्रतीक्षा करना जारी रख सकते हैं, अपने डिवाइस लॉग को निर्यात कर सकते हैं ताकि समस्या निवारण के लिए साझा कर सकें, या {app_name} पुनरारंभ करने का प्रयास कर सकते हैं।</string>
     <string name="databaseErrorUpdate">{app_name} का यह संस्करण आपके ऐप डेटाबेस के साथ असंगत है। ऐप को पुन: स्थापित करें और अपना खाता पुनर्स्थापित करें ताकि नया डेटाबेस उत्पन्न हो सके और {app_name} का उपयोग जारी रख सकें।\n\nचेतावनी: इससे दो सप्ताह से पुराने सभी संदेश और संलग्नक खो जाएंगे।</string>
     <string name="databaseOptimizing">डाटाबेस का अनुकूलन</string>
@@ -287,12 +302,20 @@
         <item quantity="one">संदेश मिटाएं</item>
         <item quantity="other">संदेश मिटाएं</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">क्या आप वाकई इस संदेश को हटाना चाहते हैं?</item>
+        <item quantity="other">क्या आप वाकई इन संदेशों को हटाना चाहते हैं?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">संदेश मिटाया गया</item>
         <item quantity="other">संदेश मिटाये गए</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">यह संदेश हटा दिया गया है</string>
     <string name="deleteMessageDeletedLocally">यह संदेश इस डिवाइस पर हटा दिया गया है</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">क्या आप वाकई केवल इस डिवाइस से इस संदेश को हटाना चाहते हैं?</item>
+        <item quantity="other">क्या आप वाकई इन संदेशों को केवल इसी डिवाइस से हटाना चाहते हैं?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">क्या आप वाकई इस संदेश को सभी के लिए हटाना चाहते हैं?</string>
     <string name="deleteMessageDeviceOnly">केवल इस डिवाइस पर मिटाएँ</string>
     <string name="deleteMessageDevicesAll">सभी उपकरणों पर मिटाएँ</string>
@@ -390,6 +413,7 @@
     <string name="errorCopyAndQuit">त्रुटि कॉपी करें और छोड़ दें</string>
     <string name="errorDatabase">डेटाबेस त्रुटि</string>
     <string name="errorUnknown">एक अज्ञात त्रुटि हुई।</string>
+    <string name="failedToDownload">डाउनलोड विफल</string>
     <string name="failures">विफलतायें</string>
     <string name="file">फ़ाइल</string>
     <string name="files">फ़ाइलें</string>
@@ -403,6 +427,9 @@
     <string name="groupCreate">समूह बनाएँ</string>
     <string name="groupCreateErrorNoMembers">कृपया कम से कम एक ग्रुप सदस्य चुनें</string>
     <string name="groupDelete">ग्रुप डिलीट करें</string>
+    <string name="groupDeleteDescription">क्या आप वाकई <b>{group_name}</b> को हटाना चाहते हैं?\n\nइससे सभी सदस्य हट जाएंगे और समूह की सारी सामग्री भी मिट जाएगी।</string>
+    <string name="groupDeleteDescriptionMember">क्या आप वाकई <b>{group_name}</b> को हटाना चाहते हैं?</string>
+    <string name="groupDeletedMemberDescription">{group_name} को ग्रुप एडमिन ने हटा दिया है। अब आप कोई और संदेश नहीं भेज पाएंगे।</string>
     <string name="groupDescriptionEnter">ग्रुप विवरण दर्ज करें</string>
     <string name="groupDisplayPictureUpdated">समूह डिस्प्ले चित्र अपडेट किया गया।</string>
     <string name="groupEdit">समूह संपादित करें</string>
@@ -418,7 +445,12 @@
     <string name="groupInviteNotSent">आमंत्रण नहीं भेजा गया</string>
     <string name="groupInviteReinvite"><b>{name}</b> ने आपको <b>{group_name}</b> में फिर से शामिल होने के लिए आमंत्रित किया है, जहां आप एक व्यवस्थापक हैं।</string>
     <string name="groupInviteReinviteYou">आपको <b>{group_name}</b> में फिर से जुड़ने के लिए आमंत्रित किया गया है, जहाँ आप एक एडमिन हैं।</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">निमंत्रण भेजा जा रहा है</item>
+        <item quantity="other">निमंत्रण भेजे जा रहे हैं</item>
+    </plurals>
     <string name="groupInviteSent">आमंत्रण भेजा गया</string>
+    <string name="groupInviteStatusUnknown">आमंत्रण स्थिति अज्ञात</string>
     <string name="groupInviteSuccessful">समूह आमंत्रण सफल</string>
     <string name="groupInviteVersion">निमंत्रण प्राप्त करने के लिए उपयोगकर्ताओं के पास नवीनतम रिलीज़ होनी चाहिए</string>
     <string name="groupInviteYou"><b>आप</b> को समूह में शामिल होने के लिए आमंत्रित किया गया था।</string>
@@ -439,6 +471,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> और <b>{count} अन्य</b> को समूह में शामिल होने के लिए आमंत्रित किया गया।</string>
     <string name="groupMemberNewTwo"><b>{name}</b> और <b>{other_name}</b> को समूह में शामिल होने के लिए आमंत्रित किया गया था।</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>आप</b> और <b>{count} अन्य</b> को समूह में शामिल होने के लिए आमंत्रित किया गया। चैट इतिहास साझा किया गया।</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>आप</b> और <b>{other_name}</b> को समूह में शामिल होने के लिए आमंत्रित किया गया। चैट इतिहास साझा किया गया।</string>
     <string name="groupMemberYouLeft"><b>आप</b> ने समूह छोड़ दिया।</string>
     <string name="groupMembers">समूह के सदस्य</string>
     <string name="groupMembersNone">इस समूह में कोई अन्य सदस्य नहीं है।</string>
@@ -450,10 +483,12 @@
     <string name="groupNameUpdated">समूह का नाम अपडेट किया गया।</string>
     <string name="groupNameVisible">समूह का नाम सभी समूह के सदस्यों के लिए दृश्यमान है।</string>
     <string name="groupNoMessages">आपके पास <b>{group_name}</b> से कोई संदेश नहीं हैं। वार्तालाप शुरू करने के लिए एक संदेश भेजें!</string>
+    <string name="groupNotUpdatedWarning">इस समूह को 30 दिनों से अधिक समय से अपडेट नहीं किया गया है। आपको संदेश भेजने या समूह की जानकारी देखने में समस्या आ सकती है।</string>
     <string name="groupOnlyAdmin">आप <b>{group_name}</b> में अकेले व्यवस्थापक हैं।\n\nसमूह सदस्य और सेटिंग्स बिना व्यवस्थापक के बदले नहीं जा सकते।</string>
     <string name="groupPendingRemoval">लंबित हटाना</string>
     <string name="groupPromotedYou"><b>आप</b> को Admin बनाया गया।</string>
     <string name="groupPromotedYouMultiple"><b>आप</b> और <b>{count} अन्य</b> को Admin बनाया गया।</string>
+    <string name="groupPromotedYouTwo"><b>आपको</b> और <b>{other_name}</b> को व्यवस्थापक के पद पर पदोन्नत किया गया है।</string>
     <string name="groupRemoveDescription">क्या आप <b>{name}</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
     <string name="groupRemoveDescriptionMultiple">क्या आप <b>{name}</b> और <b>{count} अन्य</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
     <string name="groupRemoveDescriptionTwo">क्या आप <b>{name}</b> और <b>{other_name}</b> को <b>{group_name}</b> से निकालना चाहेंगे?</string>
@@ -475,6 +510,7 @@
     <string name="groupSetDisplayPicture">समूह डिस्प्ले तस्वीर सेट करें</string>
     <string name="groupUnknown">अनजान समूह</string>
     <string name="groupUpdated">समूह अपडेट किया गया</string>
+    <string name="handlingConnectionCandidates">कनेक्शन उम्मीदवारों को संभाला जा रहा है</string>
     <string name="helpFAQ">अकसर किये गए सवाल</string>
     <string name="helpHelpUsTranslateSession">हमें {app_name} का अनुवाद करने में मदद करें</string>
     <string name="helpReportABug">बग सूचित करें</string>
@@ -489,16 +525,28 @@
     <string name="hideMenuBarDescription">सिस्टम मेनू बार दृश्यता टॉगल करें</string>
     <string name="hideOthers">बाकियों को छुपाएं</string>
     <string name="image">तस्वीर</string>
+    <string name="images">इमेजिस</string>
     <string name="incognitoKeyboard">गुप्त कीबोर्ड</string>
     <string name="incognitoKeyboardDescription">संवेदनशील मोड उपलब्ध होने पर अनुरोध करें। आप जिस कीबोर्ड का उपयोग कर रहे हैं, उसके आधार पर आपका कीबोर्ड इस अनुरोध को अनदेखा कर सकता है।</string>
     <string name="info">जानकारी</string>
     <string name="invalidShortcut">अमान्य शॉर्टकट</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">निमंत्रण विफल</item>
+        <item quantity="other">निमंत्रण विफल</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">आमंत्रण नहीं भेजा जा सका। क्या आप फिर से प्रयास करना चाहेंगे?</item>
+        <item quantity="other">आमंत्रण नहीं भेजे जा सके। क्या आप फिर से प्रयास करना चाहेंगे?</item>
+    </plurals>
     <string name="join">से जुड़ें</string>
     <string name="later">बाद में</string>
     <string name="learnMore">अधिक जानें</string>
     <string name="leave">छोड़ें</string>
     <string name="leaving">छोड़ना...</string>
     <string name="legacyGroupAfterDeprecationAdmin">यह समूह अब केवल पढ़ने के लिए है। चैटिंग जारी रखने के लिए इस समूह को पुनः बनाएँ।</string>
+    <string name="legacyGroupAfterDeprecationMember">यह ग्रुप अब केवल पढ़ने के लिए है। चैटिंग जारी रखने के लिए ग्रुप एडमिन से इस ग्रुप को फिर से बनाने के लिए कहें।</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">समूहों को अपग्रेड कर दिया गया है! बेहतर विश्वसनीयता के लिए इस समूह को फिर से बनाएँ। यह समूह {date} को केवल पढ़ने के लिए उपलब्ध हो जाएगा।</string>
+    <string name="legacyGroupBeforeDeprecationMember">ग्रुप को अपग्रेड कर दिया गया है! बेहतर विश्वसनीयता के लिए ग्रुप एडमिन से इस ग्रुप को फिर से बनाने के लिए कहें। यह ग्रुप {date} को केवल पढ़ने के लिए उपलब्ध हो जाएगा।</string>
     <string name="legacyGroupChatHistory">बातचीत इतिहास का हस्तांतरण नए समूह में नहीं हो सकता है। आप बातचीत इतिहास पुराने समूह में देख सकते हैं।</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> समूह में शामिल हुए</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> और <b>{count} अन्य</b> समूह में शामिल हुए।</string>
@@ -569,6 +617,10 @@
         <item quantity="one">आपको एक नया संदेश मिला है।</item>
         <item quantity="other">आपको %1$d नए संदेश मिले हैं।</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">आपको %1$s में एक नया संदेश मिला है।</item>
+        <item quantity="other">आपको %1$s में %2$d नए संदेश मिले हैं।</item>
+    </plurals>
     <string name="messageReplyingTo">को जवाब दे रहे हैं</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> ने आपको <b>{group_name}</b> से जुड़ने के लिए आमंत्रित किया है।</string>
     <string name="messageRequestGroupInviteDescription">इस समूह को संदेश भेजना स्वचालित रूप से समूह निमंत्रण को स्वीकार करेगा।</string>
@@ -619,6 +671,7 @@
     <string name="notificationsContentShowNoNameOrContent">कोई नाम या सामग्री नहीं</string>
     <string name="notificationsFastMode">तीव्र विधा |</string>
     <string name="notificationsFastModeDescription">आपको नई सूचनाओं के बारे में Google के नोटीफिकेशन servers से तत्काल सूचित किया जाएगा।</string>
+    <string name="notificationsFastModeDescriptionHuawei">Huawei के अधिसूचना सर्वर का उपयोग करके आपको नए संदेशों की विश्वसनीय और तुरंत सूचना दी जाएगी।</string>
     <string name="notificationsFastModeDescriptionIos">आपको नई सूचनाओं के बारे में Apple के नोटीफिकेशन servers से तत्काल सूचित किया जाएगा।</string>
     <string name="notificationsGoToDevice">डिवाइस अधिसूचना सेटिंग्स पर जाएं</string>
     <string name="notificationsHeaderAllMessages">सूचनाएं - सभी</string>
@@ -692,20 +745,31 @@
     <string name="passwordSet">पासवर्ड सेट करें</string>
     <string name="passwordSetDescription">आपका पासवर्ड सेट कर दिया गया है। कृपया इसे सुरक्षित रखें।</string>
     <string name="paste">पेस्ट करें</string>
+    <string name="permissionChange">अनुमति परिवर्तन</string>
     <string name="permissionMusicAudioDenied">{app_name} को संगीत और ऑडियो एक्सेस की आवश्यकता है ताकि फ़ाइलें, संगीत और ऑडियो भेजी जा सकें, लेकिन इसे स्थायी रूप से अस्वीकार कर दिया गया है। सेटिंग्स पर टैप करें → अनुमतियां, और \"संगीत और ऑडियो\" चालू करें।</string>
     <string name="permissionsAppleMusic">मीडिया संलग्नक बजाने के लिए {app_name} को Apple Music के उपयोग की आवश्यकता है।</string>
     <string name="permissionsAutoUpdate">स्वयमेव अद्यतन हो जाना</string>
     <string name="permissionsAutoUpdateDescription">स्टार्टअप पर स्वचालित रूप से अद्यतन जांचें</string>
+    <string name="permissionsCameraAccessRequiredCallsIos">वीडियो कॉल करने के लिए कैमरा एक्सेस की आवश्यकता होती है। जारी रखने के लिए सेटिंग में \"कैमरा\" अनुमति टॉगल करें।</string>
+    <string name="permissionsCameraChangeDescriptionIos">कैमरा एक्सेस वर्तमान में सक्षम है। इसे अक्षम करने के लिए, सेटिंग्स में \"कैमरा\" अनुमति टॉगल करें।</string>
     <string name="permissionsCameraDenied">{app_name} को फ़ोटो और वीडियो लेने के लिए कैमरा अनुमति की आवश्यकता होती है, लेकिन इसे स्थायी रूप से मना कर दिया गया है। सेटिंग्स → अनुमतियां पर टैप करें और \"कैमरा\" चालू करें।</string>
+    <string name="permissionsCameraDescriptionIos">वीडियो कॉल के लिए कैमरे तक पहुंच की अनुमति दें.</string>
     <string name="permissionsFaceId">{app_name} पर स्क्रीन लॉक फीचर Face ID का उपयोग करता है।</string>
     <string name="permissionsKeepInSystemTray">सिस्टम ट्रे में रखें</string>
     <string name="permissionsKeepInSystemTrayDescription">जब आप विंडो बंद करते हैं तो {app_name} पृष्ठभूमि में चलता रहता है</string>
     <string name="permissionsLibrary">{app_name} को जारी रखने के लिए फ़ोटो लाइब्रेरी पहुंच की आवश्यकता है। आप iOS सेटिंग्स में पहुंच सक्षम कर सकते हैं।</string>
+    <string name="permissionsLocalNetworkAccessRequiredCallsIos">कॉल की सुविधा के लिए स्थानीय नेटवर्क एक्सेस की आवश्यकता होती है। जारी रखने के लिए सेटिंग्स में \"स्थानीय नेटवर्क\" अनुमति टॉगल करें।</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} को वॉयस और वीडियो कॉल करने के लिए स्थानीय नेटवर्क तक पहुंच की आवश्यकता है।</string>
+    <string name="permissionsLocalNetworkChangeDescriptionIos">स्थानीय नेटवर्क एक्सेस वर्तमान में सक्षम है। इसे अक्षम करने के लिए, सेटिंग्स में \"स्थानीय नेटवर्क\" अनुमति टॉगल करें।</string>
+    <string name="permissionsLocalNetworkDescriptionIos">आवाज और वीडियो कॉल की सुविधा के लिए स्थानीय नेटवर्क तक पहुंच की अनुमति दें।</string>
+    <string name="permissionsLocalNetworkIos">लोकल नेटवर्क</string>
     <string name="permissionsMicrophone">माइक्रोफ़ोन</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} को कॉल करने और ऑडियो संदेश भेजने के लिए माइक्रोफ़ोन अनुमति की आवश्यकता है, लेकिन इसे स्थायी रूप से मना कर दिया गया है। सेटिंग्स → अनुमतियां पर टैप करें, और \"माइक्रोफ़ोन\" चालू करें।</string>
+    <string name="permissionsMicrophoneAccessRequiredCallsIos">कॉल करने और ऑडियो संदेश रिकॉर्ड करने के लिए माइक्रोफ़ोन एक्सेस की आवश्यकता होती है। जारी रखने के लिए सेटिंग में \"माइक्रोफ़ोन\" अनुमति टॉगल करें।</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">आप {app_name} की गोपनीयता सेटिंग्स में माइक्रोफ़ोन एक्सेस सक्षम कर सकते हैं</string>
     <string name="permissionsMicrophoneAccessRequiredIos">कॉल करने और ऑडियो संदेश रिकॉर्ड करने के लिए {app_name} को माइक्रोफोन एक्सेस की आवश्यकता है।</string>
     <string name="permissionsMicrophoneDescription">माइक्रोफ़ोन तक पहुंच की अनुमति दें।</string>
+    <string name="permissionsMicrophoneDescriptionIos">वोइस कॉल और ऑडियो संदेशों के लिए माइक्रोफ़ोन तक पहुंच की अनुमति दे |</string>
     <string name="permissionsMusicAudio">{app_name} को फ़ाइलें, संगीत और ऑडियो भेजने के लिए संगीत और ऑडियो एक्सेस की आवश्यकता है।</string>
     <string name="permissionsRequired">अनुमति की आवश्यकता</string>
     <string name="permissionsStorageDenied">{app_name} को फ़ोटो और वीडियो भेजने के लिए फोटो लाइब्रेरी अनुमति की आवश्यकता है, लेकिन इसे स्थायी रूप से मना कर दिया गया है। सेटिंग्स → अनुमतियां पर टैप करें, और \"फ़ोटो और वीडियो\" चालू करें।</string>
@@ -725,6 +789,14 @@
     <string name="profileDisplayPictureSizeError">Please pick a smaller file.</string>
     <string name="profileErrorUpdate">प्रोफ़ाइल अपडेट करने में विफल।</string>
     <string name="promote">पदोन्नत करें</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">प्रमोशन विफल</item>
+        <item quantity="other">प्रमोशन विफल</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">प्रमोशन लागू नहीं किया जा सका। क्या आप फिर से प्रयास करना चाहेंगे?</item>
+        <item quantity="other">प्रमोशन लागू नहीं किए जा सके। क्या आप फिर से प्रयास करना चाहेंगे?</item>
+    </plurals>
     <string name="qrCode">QR कोड</string>
     <string name="qrNotAccountId">इस QR कोड में Account ID नहीं है</string>
     <string name="qrNotRecoveryPassword">इस QR कोड में Recovery Password नहीं है</string>
@@ -737,11 +809,15 @@
     <string name="readReceipts">पठित स्थिति प्रमाणपत्र</string>
     <string name="readReceiptsDescription">आपके द्वारा भेजे और प्राप्त किए गए सभी संदेशों के लिए पढ़ने की रसीदें दिखाएं।</string>
     <string name="received">प्राप्त किया:</string>
+    <string name="receivedAnswer">उत्तर प्राप्त हुआ</string>
+    <string name="receivingCallOffer">कॉल ऑफर प्राप्त हो रहा है</string>
+    <string name="receivingPreOffer">प्री ऑफर प्राप्त हो रहा है</string>
     <string name="recommended">संस्तुत</string>
     <string name="recoveryPasswordBannerDescription">अपना रिकवरी पासवर्ड सहेजें ताकि आप अपने खाते तक पहुँच न खोएं।</string>
     <string name="recoveryPasswordBannerTitle">अपना रिकवरी पासवर्ड सहेजें</string>
     <string name="recoveryPasswordDescription">अपना अकाउंट नए डिवाइस पर लोड करने के लिए अपने रिकवरी पासवर्ड का उपयोग करें।\n\nआपका अकाउंट आपके रिकवरी पासवर्ड के बिना पुनर्प्राप्त नहीं किया जा सकता है। सुनिश्चित करें कि इसे कहीं सुरक्षित रखें और इसे किसी के साथ साझा न करें।</string>
     <string name="recoveryPasswordEnter">अपना पुनर्प्राप्ति पासवर्ड दर्ज करें</string>
+    <string name="recoveryPasswordErrorLoad">आपका पुनर्प्राप्ति पासवर्ड लोड करने का प्रयास करते समय एक त्रुटि हुई।\n\nकृपया अपने लॉग निर्यात करें, फिर इस समस्या को हल करने में सहायता के लिए {app_name} सहायता डेस्क के माध्यम से फ़ाइल अपलोड करें।</string>
     <string name="recoveryPasswordErrorMessageGeneric">Please check your recovery password and try again.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">आपके पुनर्प्राप्ति पासवर्ड के कुछ शब्द गलत हैं। कृपया जांच कर पुनः प्रयास करें।</string>
     <string name="recoveryPasswordErrorMessageShort">The Recovery Password you entered is not long enough. Please check and try again.</string>
@@ -755,6 +831,7 @@
     <string name="recoveryPasswordRestoreDescription">अपना खाता लोड करने के लिए अपना पुनर्प्राप्ति पासवर्ड दर्ज करें। यदि आपने इसे सहेजा नहीं है, तो आप इसे अपनी ऐप सेटिंग में पा सकते हैं।</string>
     <string name="recoveryPasswordView">पासवर्ड देखें</string>
     <string name="recoveryPasswordWarningSendDescription">यह आपका पुनर्प्राप्ति वाक्यांश है। अगर आप इसे किसी को भेजते हैं तो उनके पास आपके खाते की पूरी पहुंच होगी।</string>
+    <string name="recreateGroup">समूह पुनः बनाएँ</string>
     <string name="redo">फिर से करें</string>
     <string name="remove">हटा दें</string>
     <string name="removePasswordFail">पासवर्ड हटाने में विफल</string>
@@ -789,6 +866,8 @@
     <string name="selectAll">सभी को चुन लो स</string>
     <string name="send">भेजें</string>
     <string name="sending">भेजा जा रहा है</string>
+    <string name="sendingCallOffer">कॉल ऑफर भेजा जा रहा है</string>
+    <string name="sendingConnectionCandidates">कनेक्शन उम्मीदवार भेजे जा रहे हैं</string>
     <string name="sent">भेजा गया:</string>
     <string name="sessionAppearance">दिखावट</string>
     <string name="sessionClearData">डेटा हटाएं</string>
@@ -807,6 +886,7 @@
     <string name="shareAccountIdDescription">अपने मित्र को अपने साथ {app_name} पर चैट करने के लिए Account ID साझा करके आमंत्रित करें।</string>
     <string name="shareAccountIdDescriptionCopied">अपने दोस्तों के साथ वहां साझा करें जहां आप आमतौर पर उनसे बात करते हैं - फिर यहां बातचीत को स्थानांतरित करें।</string>
     <string name="shareExtensionDatabaseError">डेटाबेस खोलने में समस्या हो रही है। कृपया एप्लिकेशन को पुनः प्रारंभ करें और फिर से कोशिश करें।</string>
+    <string name="shareExtensionNoAccountError">ओह! ऐसा लगता है कि आपके पास अभी तक {app_name} खाता नहीं है।\n\nशेयर करने से पहले आपको {app_name} ऐप में एक खाता बनाना होगा।</string>
     <string name="shareToSession">{app_name} को साझा करें</string>
     <string name="show">दिखाएं</string>
     <string name="showAll">सभी को दिखाएं</string>
@@ -829,6 +909,7 @@
     <string name="updateError">अद्यतन नहीं हो रहा</string>
     <string name="updateErrorDescription">{app_name} अपडेट होने में विफल. कृपया {session_download_url} पर जाएं और नए संस्करण को मैन्युअल रूप से इंस्टॉल करें, फिर इस समस्या के बारे में हमें हमारे सहायता केंद्र से संपर्क करें |</string>
     <string name="updateNewVersion">{app_name} का एक नया संस्करण उपलब्ध है, अपडेट करने के लिए टैप करें</string>
+    <string name="updateNewVersionDescription">{app_name} का एक नया संस्करण ({version}) उपलब्ध है।</string>
     <string name="updateReleaseNotes">रिलीज़ नोट्स पे जाइए</string>
     <string name="updateSession">{app_name} अपडेट</string>
     <string name="updateVersion">वर्ज़न {version}</string>

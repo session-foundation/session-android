@@ -23,7 +23,7 @@ import org.thoughtcrime.securesms.net.CallRequestController;
 import org.thoughtcrime.securesms.net.CompositeRequestController;
 import org.thoughtcrime.securesms.net.ContentProxySafetyInterceptor;
 import org.thoughtcrime.securesms.net.RequestController;
-import org.thoughtcrime.securesms.providers.BlobProvider;
+import org.thoughtcrime.securesms.providers.BlobUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -178,7 +178,7 @@ public class LinkPreviewRepository {
     bitmap.compress(format, 80, baos);
 
     byte[] bytes = baos.toByteArray();
-    Uri    uri   = BlobProvider.getInstance().forData(bytes).createForSingleSessionInMemory();
+    Uri    uri   = BlobUtils.getInstance().forData(bytes).createForSingleSessionInMemory();
 
     return Optional.of(new UriAttachment(uri,
            uri,

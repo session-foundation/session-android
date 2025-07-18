@@ -21,11 +21,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
 import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
-import org.thoughtcrime.securesms.ui.components.border
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions

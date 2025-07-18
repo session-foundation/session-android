@@ -12,8 +12,10 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.mms.MediaConstraints
-import org.thoughtcrime.securesms.providers.BlobProvider
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SingleLiveEvent
 import java.util.LinkedList
@@ -25,8 +27,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class MediaSendViewModel @Inject constructor(
-    private val application: Application
-) : ViewModel() {
+    private val application: Application,
+    private val proStatusManager: ProStatusManager,
+) : InputbarViewModel(
+    application = application,
+    proStatusManager = proStatusManager
+) {
     private val selectedMedia: MutableLiveData<List<Media>?>
     private val bucketMedia: MutableLiveData<List<Media>>
     private val position: MutableLiveData<Int>
@@ -201,8 +207,8 @@ internal class MediaSendViewModel @Inject constructor(
         val updatedList = selectedMediaOrDefault.toMutableList()
         val removed: Media = updatedList.removeAt(position)
 
-        if (BlobProvider.isAuthority(removed.uri)) {
-            BlobProvider.getInstance().delete(context, removed.uri)
+        if (BlobUtils.isAuthority(removed.uri)) {
+            BlobUtils.getInstance().delete(context, removed.uri)
         }
 
         selectedMedia.setValue(updatedList)
@@ -243,7 +249,7 @@ internal class MediaSendViewModel @Inject constructor(
             selected.remove(lastImageCapture.get())
             selectedMedia.value = selected
             countButtonState.value = CountButtonState(selected.size, countButtonVisibility)
-            BlobProvider.getInstance().delete(context, lastImageCapture.get().uri)
+            BlobUtils.getInstance().delete(context, lastImageCapture.get().uri)
         }
     }
 
@@ -326,12 +332,12 @@ internal class MediaSendViewModel @Inject constructor(
             Stream.of(selectedMediaOrDefault)
                 .map({ obj: Media -> obj.uri })
                 .filter({ uri: Uri? ->
-                    BlobProvider.isAuthority(
+                    BlobUtils.isAuthority(
                         uri!!
                     )
                 })
                 .forEach({ uri: Uri? ->
-                    BlobProvider.getInstance().delete(
+                    BlobUtils.getInstance().delete(
                         application.applicationContext, uri!!
                     )
                 })

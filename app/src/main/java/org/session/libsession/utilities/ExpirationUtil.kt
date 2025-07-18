@@ -1,24 +1,16 @@
 package org.session.libsession.utilities
 
 import android.content.Context
+import org.session.libsession.LocalisedTimeUtil
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import org.session.libsession.LocalisedTimeUtil
-import network.loki.messenger.R
 
-fun Context.getExpirationTypeDisplayValue(sent: Boolean) = if (sent) getString(R.string.disappearingMessagesTypeSent)
-                                                           else      getString(R.string.disappearingMessagesTypeRead)
 
 object ExpirationUtil {
 
     @JvmStatic
     fun getExpirationDisplayValue(context: Context, duration: Duration): String =
         LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(context, duration)
-
-    @JvmStatic
-    fun getExpirationDisplayValue(context: Context, expirationTimeSecs: Int) =
-        LocalisedTimeUtil.getDurationWithSingleLargestTimeUnit(context, expirationTimeSecs.seconds)
 
     fun getExpirationAbbreviatedDisplayValue(expirationTimeSecs: Long): String {
         return if (expirationTimeSecs < TimeUnit.MINUTES.toSeconds(1)) {

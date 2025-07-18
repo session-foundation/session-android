@@ -11,7 +11,6 @@ import org.session.libsession.messaging.jobs.Job
 import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.messages.ExpirationConfiguration
 import org.session.libsession.messaging.messages.Message
-import org.session.libsession.messaging.messages.control.ConfigurationMessage
 import org.session.libsession.messaging.messages.control.GroupUpdated
 import org.session.libsession.messaging.messages.control.MessageRequestResponse
 import org.session.libsession.messaging.messages.visible.Attachment
@@ -37,6 +36,7 @@ import org.session.libsignal.messages.SignalServiceGroup
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
+import org.thoughtcrime.securesms.database.model.ReactionRecord
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -116,7 +116,7 @@ interface StorageProtocol {
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
     fun getMessageBy(timestamp: Long, author: String): MessageRecord?
-    fun updateSentTimestamp(messageId: MessageId, openGroupSentTimestamp: Long, threadId: Long)
+    fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
     fun markAsSending(messageId: MessageId)
@@ -159,16 +159,17 @@ interface StorageProtocol {
     // Closed Groups
     fun getMembers(groupPublicKey: String): List<LibSessionGroupMember>
     fun getClosedGroupDisplayInfo(groupAccountId: String): GroupDisplayInfo?
-    fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId): Long?
-    fun insertGroupInfoLeaving(closedGroup: AccountId): Long?
-    fun insertGroupInfoErrorQuit(closedGroup: AccountId): Long?
+    fun insertGroupInfoChange(message: GroupUpdated, closedGroup: AccountId)
+    fun insertGroupInfoLeaving(closedGroup: AccountId)
+    fun insertGroupInfoErrorQuit(closedGroup: AccountId)
     fun insertGroupInviteControlMessage(
         sentTimestamp: Long,
         senderPublicKey: String,
         senderName: String?,
         closedGroup: AccountId,
         groupName: String
-    ): Long?
+    )
+
     fun updateGroupInfoChange(messageId: Long, newType: UpdateMessageData.Kind)
     fun deleteGroupInfoMessages(groupId: AccountId, kind: Class<out UpdateMessageData.Kind>)
 
@@ -190,6 +191,7 @@ interface StorageProtocol {
     fun trimThread(threadID: Long, threadLimit: Int)
     fun trimThreadBefore(threadID: Long, timestamp: Long)
     fun getMessageCount(threadID: Long): Long
+    fun getTotalPinned(): Int
     fun setPinned(threadID: Long, isPinned: Boolean)
     fun isPinned(threadID: Long): Boolean
     fun deleteConversation(threadID: Long)
@@ -208,7 +210,6 @@ interface StorageProtocol {
     fun getRecipientSettings(address: Address): RecipientSettings?
     fun syncLibSessionContacts(contacts: List<LibSessionContact>, timestamp: Long?)
     fun hasAutoDownloadFlagBeenSet(recipient: Recipient): Boolean
-    fun addContacts(contacts: List<ConfigurationMessage.Contact>)
     fun shouldAutoDownloadAttachments(recipient: Recipient): Boolean
     fun setAutoDownloadAttachments(recipient: Recipient, shouldAutoDownloadAttachments: Boolean)
 
@@ -258,17 +259,21 @@ interface StorageProtocol {
     /**
      * Add reaction to a specific message. This is preferable to the timestamp lookup.
      */
-    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String)
+
+    /**
+     * Add reactions into the database. If [replaceAll] is true,
+     * it will remove all existing reactions that belongs to the same message(s).
+     */
+    fun addReactions(reactions: Map<MessageId, List<ReactionRecord>>, replaceAll: Boolean, notifyUnread: Boolean)
     fun removeReaction(emoji: String, messageTimestamp: Long, threadId: Long, author: String, notifyUnread: Boolean)
     fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long)
     fun deleteReactions(messageId: MessageId)
     fun deleteReactions(messageIds: List<Long>, mms: Boolean)
     fun setBlocked(recipients: Iterable<Recipient>, isBlocked: Boolean, fromConfigUpdate: Boolean = false)
-    fun setRecipientHash(recipient: Recipient, recipientHash: String?)
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
-    fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
     fun updateDisappearingState(
         messageSender: String,
         threadID: Long,

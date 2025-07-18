@@ -62,6 +62,7 @@ class VoiceMessageView @JvmOverloads constructor(
             if (attachment.audioDurationMs > 0) {
                 val formattedVoiceMessageDuration = MediaUtil.getFormattedVoiceMessageDuration(attachment.audioDurationMs)
                 binding.voiceMessageViewDurationTextView.text = formattedVoiceMessageDuration
+                durationMS = attachment.audioDurationMs
             } else {
                 Log.w(TAG, "For some reason attachment.audioDurationMs was NOT greater than zero!")
                 binding.voiceMessageViewDurationTextView.text = "--:--"
@@ -79,6 +80,7 @@ class VoiceMessageView @JvmOverloads constructor(
 
     override fun onPlayerStart(player: AudioSlidePlayer) {
         isPlaying = true
+
         if (player.duration != C.TIME_UNSET) {
             durationMS = player.duration
         }

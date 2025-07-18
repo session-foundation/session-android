@@ -1,51 +1,54 @@
 package org.thoughtcrime.securesms.notifications
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.AsyncTask
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.shared
 import org.session.libsession.messaging.messages.control.ReadReceipt
 import org.session.libsession.messaging.sending_receiving.MessageSender.send
 import org.session.libsession.snode.SnodeAPI
 import org.session.libsession.snode.SnodeAPI.nowWithOffset
-import org.session.libsession.snode.utilities.await
-import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isReadReceiptsEnabled
 import org.session.libsession.utilities.associateByNotNull
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ExpiryType
-import org.thoughtcrime.securesms.database.ExpirationInfo
 import org.thoughtcrime.securesms.database.MarkedMessageInfo
-import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.SessionMetaProtocol.shouldSendReadReceipt
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MarkReadReceiver : BroadcastReceiver() {
-    @SuppressLint("StaticFieldLeak")
+    @Inject
+    lateinit var storage: StorageProtocol
+
+    @Inject
+    lateinit var clock: SnodeClock
+
     override fun onReceive(context: Context, intent: Intent) {
         if (CLEAR_ACTION != intent.action) return
         val threadIds = intent.getLongArrayExtra(THREAD_IDS_EXTRA) ?: return
         NotificationManagerCompat.from(context).cancel(intent.getIntExtra(NOTIFICATION_ID_EXTRA, -1))
-        object : AsyncTask<Void?, Void?, Void?>() {
-            override fun doInBackground(vararg params: Void?): Void? {
-                val currentTime = nowWithOffset
-                threadIds.forEach {
-                    Log.i(TAG, "Marking as read: $it")
-                    shared.storage.markConversationAsRead(it, currentTime, true)
-                }
-                return null
+        GlobalScope.launch {
+            val currentTime = clock.currentTimeMills()
+            threadIds.forEach {
+                Log.i(TAG, "Marking as read: $it")
+                storage.markConversationAsRead(
+                    threadId = it,
+                    lastSeenTime = currentTime,
+                    force = true
+                )
             }
-        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+        }
     }
 
     companion object {
@@ -53,8 +56,6 @@ class MarkReadReceiver : BroadcastReceiver() {
         const val CLEAR_ACTION = "network.loki.securesms.notifications.CLEAR"
         const val THREAD_IDS_EXTRA = "thread_ids"
         const val NOTIFICATION_ID_EXTRA = "notification_id"
-
-        val messageExpirationManager = SSKEnvironment.shared.messageExpirationManager
 
         @JvmStatic
         fun process(
@@ -74,14 +75,22 @@ class MarkReadReceiver : BroadcastReceiver() {
                 .asSequence()
                 .filter { it.expiryType == ExpiryType.AFTER_READ }
                 .filter { mmsSmsDatabase.getMessageById(it.expirationInfo.id)?.run {
-                    isExpirationTimerUpdate && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
+                    (messageContent is DisappearingMessageUpdate)
+                            && threadDb.getRecipientForThreadId(threadId)?.isGroupOrCommunityRecipient == true } == false
                 }
-                .forEach { messageExpirationManager.startDisappearAfterRead(it.syncMessageId.timetamp, it.syncMessageId.address.toString()) }
+                .forEach {
+                    val db = if (it.expirationInfo.id.mms) {
+                        DatabaseComponent.get(context).mmsDatabase()
+                    } else {
+                        DatabaseComponent.get(context).smsDatabase()
+                    }
+
+                    db.markExpireStarted(it.expirationInfo.id.id, nowWithOffset)
+                }
 
             hashToDisappearAfterReadMessage(context, markedReadMessages)?.let { hashToMessages ->
                 GlobalScope.launch {
                     try {
-                        fetchUpdatedExpiriesAndScheduleDeletion(context, hashToMessages)
                         shortenExpiryOfDisappearingAfterRead(hashToMessages)
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to fetch updated expiries and schedule deletion", e)
@@ -134,39 +143,6 @@ class MarkReadReceiver : BroadcastReceiver() {
                         .apply { sentTimestamp = nowWithOffset }
                         .let { send(it, address) }
                 }
-        }
-
-        private suspend fun fetchUpdatedExpiriesAndScheduleDeletion(
-            context: Context,
-            hashToMessage: Map<String, MarkedMessageInfo>
-        ) {
-            @Suppress("UNCHECKED_CAST")
-            val expiries = SnodeAPI.getExpiries(hashToMessage.keys.toList(), shared.storage.userAuth!!).await()["expiries"] as Map<String, Long>
-            hashToMessage.forEach { (hash, info) -> expiries[hash]?.let { scheduleDeletion(context, info.expirationInfo, it - info.expirationInfo.expireStarted) } }
-        }
-
-        private fun scheduleDeletion(
-            context: Context,
-            expirationInfo: ExpirationInfo,
-            expiresIn: Long = expirationInfo.expiresIn
-        ) {
-            if (expiresIn == 0L) return
-
-            val now = nowWithOffset
-
-            val expireStarted = expirationInfo.expireStarted
-
-            if (expirationInfo.isDisappearAfterRead() && expireStarted == 0L || now < expireStarted) {
-                val db = DatabaseComponent.get(context).run { if (expirationInfo.id.mms) mmsDatabase() else smsDatabase() }
-                db.markExpireStarted(expirationInfo.id.id, now)
-            }
-
-            ApplicationContext.getInstance(context).expiringMessageManager.get().scheduleDeletion(
-                expirationInfo.id.id,
-                expirationInfo.id.mms,
-                now,
-                expiresIn
-            )
         }
     }
 }

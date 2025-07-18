@@ -13,7 +13,6 @@ fun TextView.showDateBreak(message: MessageRecord, previous: MessageRecord?, dat
     val showDateBreak = (previous == null || message.timestamp - previous.timestamp > maxTimeBetweenBreaksMS)
     isVisible = showDateBreak
     text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
-        Locale.getDefault(),
         message.timestamp
     ) else ""
 }

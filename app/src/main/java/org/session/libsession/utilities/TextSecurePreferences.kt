@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.ArrayRes
 import androidx.annotation.StyleRes
+import androidx.camera.core.CameraSelector
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
@@ -34,6 +35,9 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_DA
 import org.session.libsession.utilities.TextSecurePreferences.Companion.OCEAN_LIGHT
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_ACCENT_COLOR
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SELECTED_STYLE
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_CURRENT_USER_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_INCOMING_MESSAGE_PRO
+import org.session.libsession.utilities.TextSecurePreferences.Companion.SET_FORCE_POST_PRO
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_NOTIFICATION
 import org.session.libsession.utilities.TextSecurePreferences.Companion.SHOWN_CALL_WARNING
 import org.session.libsession.utilities.TextSecurePreferences.Companion._events
@@ -97,8 +101,8 @@ interface TextSecurePreferences {
     fun getProfilePictureURL(): String?
     fun getNotificationPriority(): Int
     fun getMessageBodyTextSize(): Int
-    fun setDirectCaptureCameraId(value: Int)
-    fun getDirectCaptureCameraId(): Int
+    fun setPreferredCameraDirection(value: CameraSelector)
+    fun getPreferredCameraDirection(): CameraSelector
     fun getNotificationPrivacy(): NotificationPrivacyPreference
     fun getRepeatAlertsCount(): Int
     fun getLocalRegistrationId(): Int
@@ -168,6 +172,12 @@ interface TextSecurePreferences {
     fun setHasSeenLinkPreviewSuggestionDialog()
     fun hasHiddenMessageRequests(): Boolean
     fun setHasHiddenMessageRequests(hidden: Boolean)
+    fun forceCurrentUserAsPro(): Boolean
+    fun setForceCurrentUserAsPro(hidden: Boolean)
+    fun forceIncomingMessagesAsPro(): Boolean
+    fun setForceIncomingMessagesAsPro(hidden: Boolean)
+    fun forcePostPro(): Boolean
+    fun setForcePostPro(hidden: Boolean)
     fun hasHiddenNoteToSelf(): Boolean
     fun setHasHiddenNoteToSelf(hidden: Boolean)
     fun setShownCallWarning(): Boolean
@@ -203,6 +213,8 @@ interface TextSecurePreferences {
     var migratedToGroupV2Config: Boolean
     var migratedToDisablingKDF: Boolean
     var migratedToMultiPartConfig: Boolean
+
+    var migratedDisappearingMessagesToMessageContent: Boolean
 
     var selectedActivityAliasName: String?
 
@@ -285,6 +297,9 @@ interface TextSecurePreferences {
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
+        const val SET_FORCE_CURRENT_USER_PRO = "pref_force_current_user_pro"
+        const val SET_FORCE_INCOMING_MESSAGE_PRO = "pref_force_incoming_message_pro"
+        const val SET_FORCE_POST_PRO = "pref_force_post_pro"
         const val CALL_NOTIFICATIONS_ENABLED = "pref_call_notifications_enabled"
         const val SHOWN_CALL_WARNING = "pref_shown_call_warning" // call warning is user-facing warning of enabling calls
         const val SHOWN_CALL_NOTIFICATION = "pref_shown_call_notification" // call notification is a prompt to check privacy settings
@@ -568,26 +583,6 @@ interface TextSecurePreferences {
         @JvmStatic
         fun getProfilePictureURL(context: Context): String? {
             return getStringPreference(context, PROFILE_AVATAR_URL_PREF, null)
-        }
-
-        @JvmStatic
-        fun getNotificationPriority(context: Context): Int {
-            return getStringPreference(context, NOTIFICATION_PRIORITY_PREF, NotificationCompat.PRIORITY_HIGH.toString())!!.toInt()
-        }
-
-        @JvmStatic
-        fun getMessageBodyTextSize(context: Context): Int {
-            return getStringPreference(context, MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
-        }
-
-        @JvmStatic
-        fun setDirectCaptureCameraId(context: Context, value: Int) {
-            setIntegerPreference(context, DIRECT_CAPTURE_CAMERA_ID, value)
-        }
-
-        @JvmStatic
-        fun getDirectCaptureCameraId(context: Context): Int {
-            return getIntegerPreference(context, DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)
         }
 
         @JvmStatic
@@ -1025,6 +1020,10 @@ class AppTextSecurePreferences @Inject constructor(
         get() = getBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, false)
         set(value) = setBooleanPreference(TextSecurePreferences.MIGRATED_TO_MULTIPART_CONFIG, value)
 
+    override var migratedDisappearingMessagesToMessageContent: Boolean
+        get() = getBooleanPreference("migrated_disappearing_messages_to_message_content", false)
+        set(value) = setBooleanPreference("migrated_disappearing_messages_to_message_content", value)
+
     override fun getConfigurationMessageSynced(): Boolean {
         return getBooleanPreference(TextSecurePreferences.CONFIGURATION_SYNCED, false)
     }
@@ -1227,12 +1226,19 @@ class AppTextSecurePreferences @Inject constructor(
         return getStringPreference(TextSecurePreferences.MESSAGE_BODY_TEXT_SIZE_PREF, "16")!!.toInt()
     }
 
-    override fun setDirectCaptureCameraId(value: Int) {
-        setIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, value)
+    override fun setPreferredCameraDirection(value: CameraSelector) {
+        setIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID,
+            when(value){
+                CameraSelector.DEFAULT_FRONT_CAMERA -> Camera.CameraInfo.CAMERA_FACING_FRONT
+                else -> Camera.CameraInfo.CAMERA_FACING_BACK
+            })
     }
 
-    override fun getDirectCaptureCameraId(): Int {
-        return getIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)
+    override fun getPreferredCameraDirection(): CameraSelector {
+        return when(getIntegerPreference(TextSecurePreferences.DIRECT_CAPTURE_CAMERA_ID, Camera.CameraInfo.CAMERA_FACING_BACK)){
+            Camera.CameraInfo.CAMERA_FACING_FRONT -> CameraSelector.DEFAULT_FRONT_CAMERA
+            else -> CameraSelector.DEFAULT_BACK_CAMERA
+        }
     }
 
     override fun getNotificationPrivacy(): NotificationPrivacyPreference {
@@ -1602,6 +1608,33 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setHasHiddenNoteToSelf(hidden: Boolean) {
         setBooleanPreference(HAS_HIDDEN_NOTE_TO_SELF, hidden)
         _events.tryEmit(HAS_HIDDEN_NOTE_TO_SELF)
+    }
+
+    override fun forceCurrentUserAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_CURRENT_USER_PRO, false)
+    }
+
+    override fun setForceCurrentUserAsPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_CURRENT_USER_PRO, hidden)
+        _events.tryEmit(SET_FORCE_CURRENT_USER_PRO)
+    }
+
+    override fun forceIncomingMessagesAsPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, false)
+    }
+
+    override fun setForceIncomingMessagesAsPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_INCOMING_MESSAGE_PRO, hidden)
+        _events.tryEmit(SET_FORCE_INCOMING_MESSAGE_PRO)
+    }
+
+    override fun forcePostPro(): Boolean {
+        return getBooleanPreference(SET_FORCE_POST_PRO, false)
+    }
+
+    override fun setForcePostPro(hidden: Boolean) {
+        setBooleanPreference(SET_FORCE_POST_PRO, hidden)
+        _events.tryEmit(SET_FORCE_POST_PRO)
     }
 
     override fun getFingerprintKeyGenerated(): Boolean {

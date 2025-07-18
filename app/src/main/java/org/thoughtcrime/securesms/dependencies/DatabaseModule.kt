@@ -65,9 +65,6 @@ object DatabaseModule {
     @Singleton
     fun provideSmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = SmsDatabase(context, openHelper)
 
-    @Provides
-    @Singleton
-    fun provideMmsDatabase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MmsDatabase(context, openHelper)
 
     @Provides
     @Singleton
@@ -77,10 +74,6 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideMediaDatbase(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = MediaDatabase(context, openHelper)
-
-    @Provides
-    @Singleton
-    fun provideThread(@ApplicationContext context: Context, openHelper: Provider<SQLCipherOpenHelper>) = ThreadDatabase(context,openHelper)
 
     @Provides
     @Singleton

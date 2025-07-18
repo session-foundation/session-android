@@ -23,7 +23,7 @@ object FilenameUtils {
 
     // Filename for when we create a new voice message
     @JvmStatic
-    fun constructNewVoiceMessageFilename(context: Context): String = context.getString(R.string.app_name) + "-" + context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".aac"
+    fun constructNewVoiceMessageFilename(context: Context): String = context.getString(R.string.app_name) + "-" + context.getString(R.string.messageVoice).replace(" ", "") + "_${getFormattedDate()}" + ".mp4"
 
     // Method to synthesize a suitable filename for a voice message that we have been sent.
     // Note: If we have a file as an attachment then it has a `isVoiceNote` property which
@@ -123,7 +123,7 @@ object FilenameUtils {
         if (extractedFilename.isNullOrEmpty()) {
 
             if (attachment == null) {
-                val timestamp = if (uri?.path.isNullOrEmpty()) null else getTimestampFromUri(uri.path!!)
+                val timestamp = if (uri?.path.isNullOrEmpty()) null else getTimestampFromUri(uri!!.path!!)
                 extractedFilename = constructFallbackMediaFilenameFromMimeType(context, mimeType, timestamp)
             } else {
                 // If the mimetype is audio then we generate a filename which contain "VoiceMessage" or "Audio"

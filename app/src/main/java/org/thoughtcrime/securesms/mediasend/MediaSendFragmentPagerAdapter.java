@@ -118,7 +118,4 @@ class MediaSendFragmentPagerAdapter extends FragmentStatePagerAdapter {
     savedState.putAll(state);
   }
 
-  @Nullable View getPlaybackControls(int position) {
-    return fragments.containsKey(position) ? fragments.get(position).getPlaybackControls() : null;
-  }
 }

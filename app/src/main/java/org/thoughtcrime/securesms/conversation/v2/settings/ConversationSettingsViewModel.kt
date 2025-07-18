@@ -70,7 +70,9 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_GROUP
 import org.thoughtcrime.securesms.dependencies.ConfigFactory.Companion.MAX_NAME_BYTES
 import org.thoughtcrime.securesms.groups.OpenGroupManager
 import org.thoughtcrime.securesms.home.HomeActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.repository.ConversationRepository
+import org.thoughtcrime.securesms.ui.SimpleDialogData
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
@@ -97,6 +99,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private val lokiThreadDatabase: LokiThreadDatabase,
     private val groupManager: GroupManagerV2,
     private val openGroupManager: OpenGroupManager,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<UIState> = MutableStateFlow(
@@ -772,8 +775,18 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     }
 
     private fun pinConversation(){
-        viewModelScope.launch {
-            storage.setPinned(threadId, true)
+        // check the pin limit before continuing
+        val totalPins = storage.getTotalPinned()
+        val maxPins = proStatusManager.getPinnedConversationLimit()
+        if(totalPins >= maxPins){
+            // the user has reached the pin limit, show the CTA
+            _dialogState.update {
+                it.copy(pinCTA = PinProCTA(overTheLimit = totalPins > maxPins))
+            }
+        } else {
+            viewModelScope.launch {
+                storage.setPinned(threadId, true)
+            }
         }
     }
 
@@ -786,7 +799,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmBlockUser(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.block),
                     message = Phrase.from(context, R.string.blockDescription)
                         .put(NAME_KEY, recipient?.name ?: "")
@@ -805,7 +818,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmUnblockUser(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.blockUnblock),
                     message = Phrase.from(context, R.string.blockUnblockName)
                         .put(NAME_KEY, recipient?.name ?: "")
@@ -844,7 +857,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmHideNTS(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.noteToSelfHide),
                     message = context.getText(R.string.hideNoteToSelfDescription),
                     positiveText = context.getString(R.string.hide),
@@ -861,7 +874,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmShowNTS(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.showNoteToSelf),
                     message = context.getText(R.string.showNoteToSelfDescription),
                     positiveText = context.getString(R.string.show),
@@ -901,7 +914,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmDeleteContact(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.contactDelete),
                     message = Phrase.from(context, R.string.deleteContactDescription)
                         .put(NAME_KEY, recipient?.name ?: "")
@@ -934,7 +947,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmDeleteConversation(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.conversationsDelete),
                     message = Phrase.from(context, R.string.deleteConversationDescription)
                         .put(NAME_KEY, recipient?.name ?: "")
@@ -965,7 +978,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     private fun confirmLeaveCommunity(){
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.communityLeave),
                     message = Phrase.from(context, R.string.groupLeaveDescription)
                         .put(GROUP_NAME_KEY, recipient?.name ?: "")
@@ -1031,7 +1044,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         _dialogState.update {
             it.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = context.getString(R.string.clearMessages),
                     message = message,
                     positiveText = context.getString(R.string.clear),
@@ -1091,7 +1104,7 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             ) ?: return
 
             state.copy(
-                showSimpleDialog = Dialog(
+                showSimpleDialog = SimpleDialogData(
                     title = dialogData.title,
                     message = dialogData.message,
                     positiveText = context.getString(dialogData.positiveText),
@@ -1181,6 +1194,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             is Commands.ShowGroupEditDialog -> showGroupEditDialog()
 
             is Commands.HideGroupEditDialog -> hideGroupEditDialog()
+
+            is Commands.HidePinCTADialog -> {
+                _dialogState.update { it.copy(pinCTA = null) }
+            }
 
             is Commands.RemoveNickname -> {
                 setNickname(null)
@@ -1291,6 +1308,14 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
                     hideLoading()
                 }
+            }
+
+            is Commands.GoToProUpgradeScreen -> {
+                // hide dialog
+                _dialogState.update { it.copy(pinCTA = null) }
+
+                // to go Pro upgrade screen
+                //todo PRO go to screen once it exists
             }
         }
     }
@@ -1423,6 +1448,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         data object ShowGroupEditDialog : Commands
         data object HideGroupEditDialog : Commands
+
+        data object HidePinCTADialog: Commands
+
+        data object GoToProUpgradeScreen: Commands
     }
 
     @AssistedFactory
@@ -1440,21 +1469,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val showLoading: Boolean = false,
         val editCommand: Commands? = null,
         val categories: List<OptionsCategory> = emptyList()
-    )
-
-    /**
-     * Data to display a simple dialog
-     */
-    data class Dialog(
-        val title: String,
-        val message: CharSequence,
-        val positiveText: String,
-        val positiveStyleDanger: Boolean = true,
-        val negativeText: String,
-        val positiveQaTag: String?,
-        val negativeQaTag: String?,
-        val onPositive: () -> Unit,
-        val onNegative: () -> Unit
     )
 
     data class OptionsCategory(
@@ -1478,10 +1492,15 @@ class ConversationSettingsViewModel @AssistedInject constructor(
     )
 
     data class DialogsState(
-        val showSimpleDialog: Dialog? = null,
+        val pinCTA: PinProCTA? = null,
+        val showSimpleDialog: SimpleDialogData? = null,
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
+    )
+
+    data class PinProCTA(
+        val overTheLimit: Boolean
     )
 
     data class NicknameDialogData(

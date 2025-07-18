@@ -3,6 +3,7 @@
     <string name="about">Quant a</string>
     <string name="accept">Accepta</string>
     <string name="accountIDCopy">Copiar ID del compte</string>
+    <string name="accountId">Identificador del compte</string>
     <string name="accountIdCopied">ID del compte copiat</string>
     <string name="accountIdCopyDescription">Copia el teu ID de compte i comparteix-lo amb els teus amics perquè et puguin enviar missatges.</string>
     <string name="accountIdEnter">Introdueix Account ID</string>
@@ -15,6 +16,7 @@
     <string name="actualSize">Mida actual</string>
     <string name="add">Afegir</string>
     <string name="addAdmins">Afegiu administradors</string>
+    <string name="addAdminsDescription">Introdueix l\'ID del compte de l\'usuari que estàs promocionant a administrador.\n\nPer afegir diversos usuaris, introdueix cada ID del compte separat per una coma. Es poden especificar fins a 20 identificadors de compte alhora.</string>
     <string name="adminCannotBeRemoved">Els administradors no es poden eliminar.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} altres</b> han estat ascendits a Admin.</string>
     <string name="adminPromote">Promociona Administradors</string>
@@ -27,7 +29,9 @@
     <string name="adminPromotionFailedDescription">Error de promoció de {name} a administrador de {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Error de promoció de {name} i {count} altres a administrador de {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Error de promoció de {name} i {other_name} a administrador de {group_name}</string>
+    <string name="adminPromotionNotSent">No s\'ha enviat la promoció</string>
     <string name="adminPromotionSent">S\'ha enviat la promoció de l\'admin</string>
+    <string name="adminPromotionStatusUnknown">Estat de promoció desconegut</string>
     <string name="adminRemove">Suprimir Administradors</string>
     <string name="adminRemoveAsAdmin">Suprimeix com a Admin</string>
     <string name="adminRemoveCommunityNone">No hi ha administradors en aquesta Comunitat.</string>
@@ -37,12 +41,19 @@
     <string name="adminRemovedUser"><b>{name}</b> ha estat eliminat com a Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> i <b>{count} altres</b> han estat eliminats com a administradors.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> i <b>{other_name}</b> han estat eliminats com a administradors.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Enviant promoció d\'administració</item>
+        <item quantity="other">Enviar promocions d\'administració</item>
+    </plurals>
     <string name="adminSettings">Configuració d\'Admins</string>
     <string name="adminTwoPromotedToAdmin"><b>{name}</b> i <b>{other_name}</b> han estat ascendits a Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anònim</string>
     <string name="appIcon">Icona de l\'Aplicació</string>
+    <string name="appIconAndNameChange">Canvia la icona i el nom de l\'aplicació</string>
+    <string name="appIconAndNameChangeConfirmation">Canviar la icona i el nom de l\'aplicació requereix que es tanqui {app_name}. Les notificacions continuaran utilitzant la icona i nom de l\'aplicació {app_name}.</string>
     <string name="appIconAndNameDescription">La icona i nom alternatiu es mostraran a la pantalla d\'inici i calaix d\'aplicacions.</string>
+    <string name="appIconAndNameSelectionDescription">La icona i el nom de l\'aplicació seleccionada es mostren a la pantalla d\'inici i al calaix de l\'aplicació.</string>
     <string name="appIconAndNameSelectionTitle">Icona i nom</string>
     <string name="appIconDescription">La icona alternativa es mostrarà a la pantalla d\'inici i calaix d\'aplicacions. El nom mostrat continuarà essent \'{app_name}\'.</string>
     <string name="appIconEnableIcon">Ús d\'una icona alternativa</string>
@@ -50,8 +61,11 @@
     <string name="appIconSelect">Trieu una icona alternativa</string>
     <string name="appIconSelectionTitle">Icona</string>
     <string name="appNameCalculator">Calculadora</string>
+    <string name="appNameMeetingSE">MeetingSE</string>
     <string name="appNameNews">Notícies</string>
     <string name="appNameNotes">Notes</string>
+    <string name="appNameStocks">Estocks</string>
+    <string name="appNameWeather">Temps</string>
     <string name="appearanceAutoDarkMode">Mode fosc automàtic</string>
     <string name="appearanceHideMenuBar">Amaga la barra de menú</string>
     <string name="appearanceLanguage">Llengua</string>
@@ -131,10 +145,13 @@
     <string name="banErrorFailed">Bloquejar usuari fallit</string>
     <string name="banUnbanErrorFailed">Desbloquejament fallit</string>
     <string name="banUnbanUser">Desbloquejar usuari</string>
+    <string name="banUnbanUserDescription">Introdueix l\'ID del compte de l\'usuari que estàs desenganxant</string>
     <string name="banUnbanUserUnbanned">Usuari desbloquejat</string>
     <string name="banUser">Bloquejar usuari</string>
     <string name="banUserBanned">Usuari exclòs</string>
+    <string name="banUserDescription">Entra el Compte ID de l\'usuari que estàs prohibint</string>
     <string name="block">Bloqueu</string>
+    <string name="blockBlockedDescription">Desbloca aquest contacte per a enviar-li un missatge</string>
     <string name="blockBlockedNone">No hi ha contactes bloquejats</string>
     <string name="blockBlockedUser">Bloquejat {name}</string>
     <string name="blockDescription">Esteu segur que voleu blocar <b>{name}?</b> Els usuaris bloquejats no us poden enviar sol·licituds de missatges, invitacions de grups ni trucar-vos.</string>
@@ -154,11 +171,13 @@
     <string name="callsInProgress">Telefonada en procés</string>
     <string name="callsIncoming">Trucada entrant de {name}</string>
     <string name="callsIncomingUnknown">Telefonada entrant</string>
+    <string name="callsMicrophonePermissionsRequired">Has perdut una trucada de <b>{name}</b> perquè no vas concedir <b>accés al micròfon</b>.</string>
     <string name="callsMissed">Trucada perduda</string>
     <string name="callsMissedCallFrom">Trucada perduda de {name}</string>
     <string name="callsNotificationsRequired">Les telefonades de veu i de vídeo requereixen que les notificacions estiguin activades a la configuració del sistema del dispositiu.</string>
     <string name="callsPermissionsRequired">Permís de trucada necessari</string>
     <string name="callsPermissionsRequiredDescription">Podeu habilitar el permís de \'Telefonades de veu i vídeo\' a la configuració de Privadesa.</string>
+    <string name="callsPermissionsRequiredDescription1">Pots habilitar el permís \"Trucades de veu i vídeo\" en configuració de permisos.</string>
     <string name="callsReconnecting">S\'està tornant a connectar…</string>
     <string name="callsRinging">Està sonant...</string>
     <string name="callsSessionCall">Trucada {app_name}</string>
@@ -189,18 +208,27 @@
     <string name="clearDataErrorDescriptionGeneric">S\'ha produït un error desconegut i les vostres dades no s\'han suprimit. Voleu suprimir les dades només d\'aquest dispositiu?</string>
     <string name="clearDevice">Esborrar el dispositiu</string>
     <string name="clearDeviceAndNetwork">Esborreu el dispositiu i la xarxa</string>
-    <string name="clearDeviceAndNetworkConfirm">Esteu segur que voleu suprimir les vostres dades de la xarxa? Si continueu, no podreu restaurar els vostres missatges o contactes.</string>
+    <string name="clearDeviceAndNetworkConfirm">Estàs segur que vols suprimir les teves dades de la xarxa? Si continues, no pots restaurar els teus missatges o contactes.</string>
     <string name="clearDeviceDescription">Esteu segur que voleu esborrar el dispositiu?</string>
     <string name="clearDeviceOnly">Esborreu només el dispositiu</string>
+    <string name="clearDeviceRestart">Esborrar el dispositiu i reiniciar</string>
+    <string name="clearDeviceRestore">Esborrar el dispositiu i restaurar</string>
     <string name="clearMessages">Esborra tots els missatges</string>
     <string name="clearMessagesChatDescription">Esteu segur que voleu esborrar tots els missatges de la vostra conversa amb <b>{name}?</b> del vostre dispositiu?</string>
+    <string name="clearMessagesChatDescriptionUpdated">Estàs segur que vols esborrar tots els missatges de la teva conversa amb <b>{name}</b> en aquest dispositiu?</string>
     <string name="clearMessagesCommunity">Esteu segur que voleu esborrar tots els missatges de <b>{community_name}?</b> del vostre dispositiu?</string>
+    <string name="clearMessagesCommunityUpdated">Estàs segur que vols esborrar tots els missatges de <b>{community_name}</b> en aquest dispositiu?</string>
     <string name="clearMessagesForEveryone">Esborra per a tothom</string>
     <string name="clearMessagesForMe">Esborra per a mi</string>
     <string name="clearMessagesGroupAdminDescription">Esteu segur que voleu esborrar tots els missatges de <b>{group_name}?</b>?</string>
+    <string name="clearMessagesGroupAdminDescriptionUpdated">Estàs segur que vols esborrar tots els missatges de <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Esteu segur que voleu esborrar tots els missatges de <b>{group_name}?</b> del vostre dispositiu?</string>
+    <string name="clearMessagesGroupDescriptionUpdated">Estàs segur que vols esborrar tots els missatges de <b>{group_name}</b> en aquest dispositiu?</string>
     <string name="clearMessagesNoteToSelfDescription">Esteu segur que voleu esborrar tots els missatges de Nota Personal del vostre dispositiu?</string>
+    <string name="clearMessagesNoteToSelfDescriptionUpdated">Estàs segur que vols esborrar tots els <b>Missatges a Si Mateix</b> en aquest dispositiu?</string>
+    <string name="clearOnThisDevice">Esborra en aquest dispositiu</string>
     <string name="close">Tancar</string>
+    <string name="closeApp">Tanca l\'aplicació</string>
     <string name="closeWindow">Tanca la finestra</string>
     <string name="commitHashDesktop">Hash del Commit: {hash}</string>
     <string name="communityBanDeleteDescription">Això prohibirà l\'usuari seleccionat d\'aquesta Community i eliminarà tots els seus missatges. Esteu segur que voleu continuar?</string>
@@ -265,7 +293,11 @@
     <string name="copied">S\'ha copiat</string>
     <string name="copy">Copiar</string>
     <string name="create">Crear</string>
+    <string name="creatingCall">Creant Trucada</string>
     <string name="cut">Retalla</string>
+    <string name="databaseErrorClearDataWarning">Estàs segur que vols suprimir tots els missatges, fitxers adjunts i dades del compte d\'aquest dispositiu i crear un compte nou?</string>
+    <string name="databaseErrorGeneric">S\'ha produït un error de base de dades.\n \n Exporta els registres de l\'aplicació per compartir i resoldre problemes. Si això no té èxit, reinstal·la {app_name} i restaura el teu compte.</string>
+    <string name="databaseErrorRestoreDataWarning">Estàs segur que vols suprimir tots els missatges, fitxers adjunts i dades del compte d\'aquest dispositiu i restaurar el teu compte de la xarxa?</string>
     <string name="databaseErrorTimeout">Hem notat que {app_name} està trigant molt a començar.\n\nPodeu continuar esperant, exportar els registres del dispositiu per compartir-los per solucionar problemes, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">La base de dades de la vostra aplicació no és compatible amb aquesta versió de {app_name}. Reinstal·leu l\'aplicació i restaureu el vostre compte per generar una nova base de dades i continuar utilitzant {app_name}.\n\nAvís: Això donarà lloc a la pèrdua de tots els missatges i adjunts anteriors a dues setmanes.</string>
     <string name="databaseOptimizing">Optimitzant la base de dades</string>
@@ -287,9 +319,15 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Espereu mentre es crea el grup...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">No s\'ha pogut actualitzar el grup</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">No teniu autorització per esborrar els missatges d\'altres</string>
+    <string name="deleteContactDescription">Estàs segur que vols suprimir <b>{name}</b> dels teus contactes?\n\n Això suprimirà la teva conversa, inclosos tots els missatges i fitxers adjunts. Els missatges futurs de <b>{name}</b> apareixeran com una sol·licitud de missatge.</string>
+    <string name="deleteConversationDescription">Estàs segur que vols suprimir la teva conversa amb <b> {name} </b>? \n Això eliminarà definitivament tots els missatges i fitxers adjunts.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Suprimeix el missatge</item>
         <item quantity="other">Suprimeix els missatges</item>
+    </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Estàs segur que vols suprimir aquest missatge?</item>
+        <item quantity="other">Estàs segur que vols suprimir aquests missatges?</item>
     </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Missatge suprimit</item>
@@ -297,6 +335,10 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Aquest missatge s\'ha suprimit</string>
     <string name="deleteMessageDeletedLocally">Aquest missatge s\'ha suprimit en aquest dispositiu</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Estàs segur que vols suprimir aquest missatge només d\'aquest dispositiu?</item>
+        <item quantity="other">Estàs segur que vols suprimir aquests missatges només d\'aquest dispositiu?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Esteu segur que voleu suprimir aquest missatge per a tothom?</string>
     <string name="deleteMessageDeviceOnly">Suprimeix només en aquest dispositiu</string>
     <string name="deleteMessageDevicesAll">Suprimeix als meus dispositius</string>
@@ -304,6 +346,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Error en eliminar el missatge</item>
         <item quantity="other">Error en eliminar els missatges</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Aquest missatge no es pot suprimir de tots els teus dispositius</item>
+        <item quantity="other">Alguns dels missatges que has seleccionat no es poden suprimir de tots els teus dispositius</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Aquest missatge no es pot suprimir per a tothom</item>
+        <item quantity="other">Alguns dels missatges que has seleccionat no es poden suprimir per a tothom</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Esteu segur que voleu suprimir aquests missatges per a tothom?</string>
     <string name="deleting">Suprimint</string>
@@ -336,7 +386,7 @@
     <string name="disappearingMessagesTimer">Temporitzador</string>
     <string name="disappearingMessagesTurnedOff"><b>{name}</b> ha desactivat els missatges efímers. Els missatges que enviïn ja no desapareixeran.</string>
     <string name="disappearingMessagesTurnedOffGroup"><b>{name}</b> ha <b>desactivat</b> els missatges que desapareixen.</string>
-    <string name="disappearingMessagesTurnedOffYou"><b>Heu</b> <b>desactivat</b> els missatges que desapareixen. Els missatges que envieu ja no desapareixeran.</string>
+    <string name="disappearingMessagesTurnedOffYou"><b>Has</b> <b>desactivat</b> els missatges que desapareixen. Els missatges que envies ja no desapareixeran.</string>
     <string name="disappearingMessagesTurnedOffYouGroup"><b>Heu</b> <b>desactivat</b> els missatges que desapareixen.</string>
     <string name="disappearingMessagesTypeRead">llegit</string>
     <string name="disappearingMessagesTypeSent">enviat</string>
@@ -351,7 +401,9 @@
     <string name="displayNameNew">Esccull un nou nom a mostrar</string>
     <string name="displayNamePick">Tria el nom que es mostrarà</string>
     <string name="displayNameSet">Definiu el nom a mostrar</string>
+    <string name="displayNameVisible">El teu nom de pantalla és visible per als usuaris, grups i comunitats amb els que interactues.</string>
     <string name="document">Document</string>
+    <string name="donate">Doneu</string>
     <string name="done">Fet</string>
     <string name="download">Descarregar</string>
     <string name="downloading">Descarregant...</string>
@@ -359,19 +411,19 @@
     <string name="edit">Editar</string>
     <string name="emojiAndSymbols">Emoticones &amp;amp; Símbols</string>
     <string name="emojiCategoryActivities">Activitats</string>
-    <string name="emojiCategoryAnimals">Animals &amp;amp; Natura</string>
+    <string name="emojiCategoryAnimals">Animals i Natura</string>
     <string name="emojiCategoryFlags">Banderes</string>
     <string name="emojiCategoryFood">Menjar &amp;amp; Beguda</string>
     <string name="emojiCategoryObjects">Objectes</string>
     <string name="emojiCategoryRecentlyUsed">Usat recentment</string>
     <string name="emojiCategorySmileys">Emoticones &amp;amp; Gent</string>
     <string name="emojiCategorySymbols">Símbols</string>
-    <string name="emojiCategoryTravel">Viatjar &amp;amp; Llocs</string>
+    <string name="emojiCategoryTravel">Viatjar i Llocs</string>
     <string name="emojiReactsClearAll">Esteu segur que voleu esborrar tots els {emoji}?</string>
     <string name="emojiReactsCoolDown">Vés a poc a poc! Has enviat massa reaccions d\'emoji. Torna-ho a provar aviat</string>
     <plurals name="emojiReactsCountOthers">
-        <item quantity="one">I %1$d un altre ha reaccionat %2$s a aquest missatge.</item>
-        <item quantity="other">I %1$d uns altres han reaccionat %2$s a aquest missatge.</item>
+        <item quantity="one">I %1$d altre ha reaccionat %2$s a aquest missatge.</item>
+        <item quantity="other">I %1$d altres han reaccionat %2$s a aquest missatge.</item>
     </plurals>
     <string name="emojiReactsHoverNameDesktop">{name} ha reaccionat amb {emoji_name}</string>
     <string name="emojiReactsHoverNameTwoDesktop">{name} i {other_name} han reaccionat amb {emoji_name}</string>
@@ -381,7 +433,7 @@
     <string name="emojiReactsHoverYouNameTwoDesktop">Vós i {name} han reaccionat amb {emoji_name}</string>
     <string name="emojiReactsNotification">Va reaccionar al teu missatge {emoji}</string>
     <string name="enable">Habiliteu</string>
-    <string name="errorConnection">Comprova si estas en línia i torneu-ho a provar.</string>
+    <string name="errorConnection">Comprova si estàs en línia i torneu-ho a provar.</string>
     <string name="errorCopyAndQuit">Copia l\'error i surt</string>
     <string name="errorDatabase">Error de la base de dades</string>
     <string name="errorGeneric">Quelcom ha anat malament. Torneu a provar més tard.</string>
@@ -401,6 +453,9 @@
     <string name="groupCreate">Creeu un grup</string>
     <string name="groupCreateErrorNoMembers">Com a mínim, trieu 1 membre per al grup, per favor.</string>
     <string name="groupDelete">Esborra el grup</string>
+    <string name="groupDeleteDescription">Estàs segur que vols suprimir <b> {group_name} </b>? \n \n Això eliminarà tots els membres i suprimirà tot el contingut del grup.</string>
+    <string name="groupDeleteDescriptionMember">Estàs segur que vols suprimir <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} has estat suprimit per un administrador del grup. No pots enviar cap missatge més.</string>
     <string name="groupDescriptionEnter">Introdueix una descripció del grup</string>
     <string name="groupDisplayPictureUpdated">La imatge de perfil del grup ha estat actualitzada.</string>
     <string name="groupEdit">Edita el grup</string>
@@ -414,6 +469,12 @@
     <string name="groupInviteFailedTwo">Error al convidar {name} i {other_name} a {group_name}</string>
     <string name="groupInviteFailedUser">Error al convidar {name} a {group_name}</string>
     <string name="groupInviteNotSent">Invitació no enviada</string>
+    <string name="groupInviteReinvite"><b>{name}</b> et van convidar a unir-te a <b>{group_name}</b>, on ets un administrador.</string>
+    <string name="groupInviteReinviteYou">Vas ser convidat a unir-te a <b>{group_name}</b>, on ets un administrador.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Enviant invitació</item>
+        <item quantity="other">Enviant invitacions</item>
+    </plurals>
     <string name="groupInviteSent">Invitació enviada</string>
     <string name="groupInviteStatusUnknown">Estat desconegut de la invitació</string>
     <string name="groupInviteSuccessful">Invitació al grup amb èxit</string>
@@ -421,6 +482,7 @@
     <string name="groupInviteYou"><b>Tu</b> has estat convidat a unir-te al grup.</string>
     <string name="groupInviteYouAndMoreNew"><b>Tu</b> i <b>{count} altres</b> heu estat convidats a unir-vos al grup.</string>
     <string name="groupInviteYouAndOtherNew"><b>Tu</b> i <b>{other_name}</b> heu estat convidats a unir-vos al grup.</string>
+    <string name="groupInviteYouHistory"><b>Tu</b> vas ser convidat a unir-te al grup. Es va compartir l\'historial de xat.</string>
     <string name="groupLeave">Marxar del grup</string>
     <string name="groupLeaveDescription">Esteu segur que voleu abandonar <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Esteu segur que voleu deixar <b>{group_name}</b>?\n\nAixò eliminarà tots els membres i suprimirà tot el contingut del grup.</string>
@@ -435,6 +497,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> i <b>{count} altres</b> han estat convidats a unir-se al grup.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> i <b>{other_name}</b> han estat convidats a unir-se al grup.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> i <b>{count} altres</b> heu estat convidats a unir-vos al grup. S\'ha compartit l\'historial de la conversa.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Tu</b> i <b>{other_name}</b> vas ser convidat a unir-se al grup. Es va compartir l\'historial de xat.</string>
     <string name="groupMemberYouLeft"><b>Tu</b> has abandonat el grup.</string>
     <string name="groupMembers">Membres del Grup</string>
     <string name="groupMembersNone">No hi ha altres membres en aquest grup.</string>
@@ -444,10 +507,14 @@
     <string name="groupNameEnterShorter">Introdueix un nom de grup mes curt.</string>
     <string name="groupNameNew">El nom del grup ara és «{group_name}».</string>
     <string name="groupNameUpdated">Nom del grup actualitzat.</string>
+    <string name="groupNameVisible">El nom del grup és visible per a tots els membres del grup.</string>
     <string name="groupNoMessages">No teniu missatges de <b>{group_name}.</b> Envieu un missatge per a encetar una conversa!</string>
+    <string name="groupNotUpdatedWarning">Aquest grup no s\'ha actualitzat en més de 30 dies. Pots experimentar problemes enviant missatges o mirar informació del grup.</string>
     <string name="groupOnlyAdmin">Vós sou l\'únic administradór de <b>{group_name}</b>.\n\nEls membres del grup i les configuracions no poden ser canviats sense un administradór.</string>
+    <string name="groupPendingRemoval">Pendent d\'eliminació</string>
     <string name="groupPromotedYou"><b>Tu</b> has estat ascendit a administrador.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> i <b>{count} altres</b> heu estat ascendits a administrador.</string>
+    <string name="groupPromotedYouTwo"><b> Tu </b> i <b> {other_name} </b> es van promoure a l\'administrador.</string>
     <string name="groupRemoveDescription">Voleu eliminar <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Voleu eliminar <b>{name}</b> i <b>{count} altres</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Voleu eliminar <b>{name}</b> i <b>{other_name}</b> de <b>{group_name}</b>?</string>
@@ -463,11 +530,13 @@
     <string name="groupRemovedMultiple"><b>{name}</b> i <b>{count} altres</b> han estat eliminats del grup.</string>
     <string name="groupRemovedTwo"><b>{name}</b> i <b>{other_name}</b> han estat eliminats del grup.</string>
     <string name="groupRemovedYou">Heu estat expulsat de <b>{group_name}.</b></string>
+    <string name="groupRemovedYouGeneral">Va ser retirat del grup.</string>
     <string name="groupRemovedYouMultiple"><b>Tu</b> i <b>{count} altres</b> heu estat eliminats del grup.</string>
     <string name="groupRemovedYouTwo"><b>Tu</b> i <b>{other_name}</b> heu estat eliminats del grup.</string>
     <string name="groupSetDisplayPicture">Definiu la imatge del grup</string>
     <string name="groupUnknown">Grup desconegut</string>
     <string name="groupUpdated">Grup actualitzat</string>
+    <string name="handlingConnectionCandidates">Gestionar Candidats de Connexió</string>
     <string name="helpFAQ">PMF</string>
     <string name="helpHelpUsTranslateSession">Ajuda\'ns a traduir {app_name}</string>
     <string name="helpReportABug">Informeu d\'un error</string>
@@ -480,6 +549,7 @@
     <string name="helpWedLoveYourFeedback">Ens agradaria molt de rebre els vostres comentaris</string>
     <string name="hide">Amaga</string>
     <string name="hideMenuBarDescription">Commuta la visibilitat de la barra de menú del sistema</string>
+    <string name="hideNoteToSelfDescription">Estàs segur que vols amagar <b>Nota a Si Mateix</b> de la teva llista de converses?</string>
     <string name="hideOthers">Amaga les altres</string>
     <string name="image">Imatge</string>
     <string name="images">imatges</string>
@@ -487,11 +557,24 @@
     <string name="incognitoKeyboardDescription">Sol·liciteu el mode incògnit si està disponible. Segons el teclat que feu servir, el vostre teclat pot ignorar aquesta sol·licitud.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Drecera no vàlida</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitació ha fallat</item>
+        <item quantity="other">Invitacions han fallat</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">La invitació no es va poder enviar. Vols tornar-ho a provar?</item>
+        <item quantity="other">Les invitacions no es va poder enviar. Vols tornar-ho a provar?</item>
+    </plurals>
     <string name="join">Uneix-t\'hi</string>
     <string name="later">Després</string>
     <string name="learnMore">Més informació</string>
     <string name="leave">Marxar</string>
     <string name="leaving">Sortint...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Aquest grup ara és de només-llegir. Recrea aquest grup per seguir xerrant.</string>
+    <string name="legacyGroupAfterDeprecationMember">Aquest grup ara és de només-llegir. Demana a l\'administrador del grup a recrear aquest grup per seguir xerrant.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Els grups s\'han actualitzat! Recrea aquest grup per millorar la fiabilitat. Aquest grup es convertirà a només-llegir a {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">S\'ha actualitzat els grups! Demana a l\'administrador del grup per recrear aquest grup per millorar la fiabilitat. Aquest grup es convertirà en només-llegir a {date}.</string>
+    <string name="legacyGroupChatHistory">L\'historial de xat no es transferirà al nou grup. Encara pots veure tota la història del xat del teu grup antic.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> s\'ha unit al grup.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> <b>{count} altres</b> s\'han unit al grup.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Tu</b> i <b>{count} altres</b> us heu unit al grup.</string>
@@ -544,6 +627,7 @@
     <string name="membersInviteShareNewMessagesOnly">Desa només nous missatges</string>
     <string name="membersInviteTitle">Convida</string>
     <string name="message">Missatge</string>
+    <string name="messageBubbleReadMore">Llegiu més</string>
     <string name="messageEmpty">Aquest missatge és buit.</string>
     <string name="messageErrorDelivery">Error en el lliurament del missatge</string>
     <string name="messageErrorLimit">Límit del missatge assolit</string>
@@ -553,8 +637,8 @@
     <string name="messageMarkRead">Marcar com a llegit</string>
     <string name="messageMarkUnread">Marcar com a no llegit</string>
     <plurals name="messageNew">
-        <item quantity="one">Nou missatge</item>
-        <item quantity="other">Nous missatges</item>
+        <item quantity="one">Missatge nou</item>
+        <item quantity="other">Missatges nous</item>
     </plurals>
     <string name="messageNewDescriptionDesktop">Comença una conversa nova introduint la ID del compte o el ONS del teu amic.</string>
     <string name="messageNewDescriptionMobile">Comença una conversa nova introduint la ID del compte, el ONS o escanejant el seu codi QR.</string>
@@ -562,7 +646,13 @@
         <item quantity="one">Tens un missatge nou.</item>
         <item quantity="other">Tens %1$d missatges nous.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Tens un missatge nou a %1$s.</item>
+        <item quantity="other">Tens %1$d nous missatges a %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Responent a</string>
+    <string name="messageRequestDisabledToastAttachments">No pots enviar fitxers adjunts fins que no s\'accepti la sol·licitud de missatge</string>
+    <string name="messageRequestDisabledToastVoiceMessages">No pots enviar missatges de veu fins que no s\'accepti la sol·licitud de missatge</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> t\'ha convidat a unir-te a <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Enviant un missatge a aquest grup acceptarà automàticament la invitació al grup.</string>
     <string name="messageRequestPending">La teva sol·licitud de missatge està pendent actualment.</string>
@@ -573,6 +663,7 @@
     <string name="messageRequestsClearAllExplanation">Esteu segur que voleu esborrar totes les sol·licituds de missatges i invitacions de grup?</string>
     <string name="messageRequestsCommunities">Sol·licituds de missatges de la comunitat</string>
     <string name="messageRequestsCommunitiesDescription">Permeteu sol·licitud de missatges de les converses de la comunitat.</string>
+    <string name="messageRequestsContactDelete">Estàs segur que vols suprimir aquesta sol·licitud de missatge i el contacte associat?</string>
     <string name="messageRequestsDelete">Esteu segur que voleu suprimir aquesta sol·licitud de missatge?</string>
     <string name="messageRequestsNew">Teniu una sol·licitud de missatge nova</string>
     <string name="messageRequestsNonePending">No hi ha sol·licituds de missatges pendents</string>
@@ -590,9 +681,19 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} Missatge de veu</string>
     <string name="messages">Missatges</string>
     <string name="minimize">Minimitza</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Els missatges tenen un límit de %1$s caràcter. Teniu %2$d caràcter que queda</item>
+        <item quantity="other">Els missatges tenen un límit de %1$s caràcters. Teniu %2$d caràcters que queden</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">Longitud del missatge</string>
+    <string name="modalMessageCharacterTooLongDescription">Heu superat el límit de caràcters per a aquest missatge. Si us plau, escurceu el vostre missatge a {limit} caràcters o menys.</string>
+    <string name="modalMessageCharacterTooLongTitle">Missatge massa llarg</string>
+    <string name="modalMessageTooLongDescription">Si us plau, escurceu el vostre missatge als {limit} caràcters o menys.</string>
+    <string name="modalMessageTooLongTitle">Missatge massa llarg</string>
     <string name="next">Següent</string>
     <string name="nicknameDescription">Trieu un sobrenom per a <b>{name}</b>. Això us apareixerà a les vostres converses individuals i de grup.</string>
     <string name="nicknameEnter">Introdueix una sobrenom</string>
+    <string name="nicknameErrorShorter">Introdueix un sobrenom més curt</string>
     <string name="nicknameRemove">Elimina sobrenom</string>
     <string name="nicknameSet">Definir sobrenom</string>
     <string name="no">No</string>
@@ -627,6 +728,8 @@
     <string name="notificationsMuteFor">Silencia per {time_large}</string>
     <string name="notificationsMuteUnmute">Treure el silenci</string>
     <string name="notificationsMuted">Silenciat</string>
+    <string name="notificationsMutedFor">Silenciat per {time_large}</string>
+    <string name="notificationsMutedForTime">Silenciat fins a {date_time}</string>
     <string name="notificationsSlowMode">Mode lent</string>
     <string name="notificationsSlowModeDescription">{app_name} ocasionalment comprovarà si hi ha nous missatges en segon pla.</string>
     <string name="notificationsSound">So</string>
@@ -655,7 +758,7 @@
     <string name="onboardingTos">Condicions del servei</string>
     <string name="onboardingTosPrivacy">En utilitzar aquest servei, accepteu els nostres <b>Termes de Servei</b> i la nostra <b>Política de Privadesa</b></string>
     <string name="onionRoutingPath">Ruta</string>
-    <string name="onionRoutingPathDescription">{app_name} amaga la vostra IP redirigint els vostres missatges a través de múltiples Service Nodes a la xarxa descentralitzada de {app_name}. Aquest és el vostre camí actual:</string>
+    <string name="onionRoutingPathDescription">{app_name} amaga la vostra IP redirigint els vostres missatges a través de múltiples nodes de servei a la xarxa descentralitzada de {app_name}. Aquest és el vostre camí actual:</string>
     <string name="onionRoutingPathDestination">Destinació</string>
     <string name="onionRoutingPathEntryNode">Node d\'entrada</string>
     <string name="onionRoutingPathServiceNode">Service Node</string>
@@ -718,11 +821,17 @@
     <string name="permissionsStorageSave">{app_name} necessita accés a l\'emmagatzematge per desar els fitxers adjunts i els suports.</string>
     <string name="permissionsStorageSaveDenied">{app_name} necessita accés a l\'emmagatzematge per desar fotografies i vídeos, però s\'ha denegat permanentment. Per favor, continueu cap al menú de configuració de l\'aplicació, seleccioneu Permisos i habiliteu-hi l\'Emmagatzematge.</string>
     <string name="permissionsStorageSend">{app_name} necessita accés a l\'emmagatzematge per enviar fotografies i vídeos.</string>
+    <string name="permissionsWriteCommunity">No tens permís d\'escriptura en aquesta comunitat</string>
     <string name="pin">Ancoreu</string>
     <string name="pinConversation">Ancoreu la conversa</string>
     <string name="pinUnpin">Desancoreu</string>
     <string name="pinUnpinConversation">Desancorar la conversa</string>
     <string name="preview">Vista prèvia</string>
+    <string name="proCallToActionLongerMessages">Voleu enviar missatges més llargs? Envia més text i desbloqueja funcions premium amb Session Pro</string>
+    <string name="proFeatureListLargerGroups">Xateja de grups més grans fins a 300 membres</string>
+    <string name="proFeatureListLoadsMore">Plus carrega funcions més exclusives</string>
+    <string name="proFeatureListLongerMessages">Missatges de fins a 10,000 caràcters</string>
+    <string name="proSendMore">Envia més amb</string>
     <string name="profile">Perfil</string>
     <string name="profileDisplayPicture">Imatge de perfil</string>
     <string name="profileDisplayPictureRemoveError">Error en eliminar la imatge de perfil.</string>
@@ -730,6 +839,14 @@
     <string name="profileDisplayPictureSizeError">Si us plau, selecciona un fitxer més petit.</string>
     <string name="profileErrorUpdate">No s\'ha pogut actualitzar el perfil.</string>
     <string name="promote">Promou</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">La promoció ha fallat</item>
+        <item quantity="other">Les promocions han fallat</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">La promoció no es va poder aplicar. Vols tornar-ho a provar?</item>
+        <item quantity="other">Les promocions no es va poder aplicar. Vols tornar-ho a provar?</item>
+    </plurals>
     <string name="qrCode">Codi QR</string>
     <string name="qrNotAccountId">Aquest codi QR no conté un ID de compte</string>
     <string name="qrNotRecoveryPassword">Aquest codi QR no conté una contrasenya de recuperació</string>
@@ -742,11 +859,15 @@
     <string name="readReceipts">Confirmacions de Lectura</string>
     <string name="readReceiptsDescription">Mostreu les confirmacions de lectura per a tots els missatges que envieu i rebeu.</string>
     <string name="received">Rebut:</string>
+    <string name="receivedAnswer">Resposta rebuda</string>
+    <string name="receivingCallOffer">Rebre Oferta de Trucada</string>
+    <string name="receivingPreOffer">Rebent Oferta Prèvia</string>
     <string name="recommended">Recomanat</string>
     <string name="recoveryPasswordBannerDescription">Desa la teva contrasenya de recuperació per assegurar-te de no perdre accés al teu compte.</string>
     <string name="recoveryPasswordBannerTitle">Desa la teva contrasenya de recuperació</string>
     <string name="recoveryPasswordDescription">Utilitza la teva contrasenya de recuperació per carregar el teu compte en nous dispositius.\n\n No es pot recuperar el teu compte sense la teva contrasenya de recuperació. Assegura\'t que està emmagatzemada en un lloc segur i no la comparteixis amb ningú.</string>
     <string name="recoveryPasswordEnter">Introdueix la teva contrasenya de recuperació</string>
+    <string name="recoveryPasswordErrorLoad">S\'ha produït un error en intentar carregar la contrasenya de recuperació.\n\n Exporta els teus registres i, a continuació, envia el fitxer a través de l\'assistència {app_name} per ajudar a resoldre aquest problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Si us plau, comprova la teva contrasenya de recuperació i torna-ho a intentar.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algunes de les paraules de la vostra contrasenya de recuperació són incorrectes. Comproveu-ho i torneu-ho a provar.</string>
     <string name="recoveryPasswordErrorMessageShort">La contrasenya de recuperació que heu introduït no és prou llarga. Comproveu-ho i torneu-ho a provar.</string>
@@ -760,7 +881,13 @@
     <string name="recoveryPasswordRestoreDescription">Introdueix la teva contrasenya de recuperació per carregar el teu compte. Si no l\'has guardat, la pots trobar a la configuració de l\'aplicació.</string>
     <string name="recoveryPasswordView">Mostra la contrasenya</string>
     <string name="recoveryPasswordWarningSendDescription">Aquesta és la vostra contrasenya de recuperació. Si l\'envieu a algú, tindrà accés complet al vostre compte.</string>
+    <string name="recreateGroup">Recrea grup</string>
     <string name="redo">Refés</string>
+    <string name="remainingCharactersOverTooltip">Reduir la longitud del missatge per {count}</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">%1$d caràcter que queda</item>
+        <item quantity="other">%1$d caràcters que queden</item>
+    </plurals>
     <string name="remove">Suprimeix</string>
     <string name="removePasswordFail">No s\'ha pogut eliminar la contrasenya</string>
     <string name="reply">Responeu</string>
@@ -792,8 +919,11 @@
     <string name="searchSearching">Cercant...</string>
     <string name="select">Seleccioneu</string>
     <string name="selectAll">Selecciona-ho tot</string>
+    <string name="selectAppIcon">Selecciona la icona de l\'aplicació</string>
     <string name="send">Enviar</string>
     <string name="sending">Enviant</string>
+    <string name="sendingCallOffer">Enviant Oferta de Trucada</string>
+    <string name="sendingConnectionCandidates">Enviant Candidats de Connexió</string>
     <string name="sent">Enviat:</string>
     <string name="sessionAppearance">Aparença</string>
     <string name="sessionClearData">Esborrar les dades</string>
@@ -801,6 +931,16 @@
     <string name="sessionHelp">Ajuda</string>
     <string name="sessionInviteAFriend">Convideu un amic</string>
     <string name="sessionMessageRequests">Sol·licituds de missatges</string>
+    <string name="sessionNetworkCurrentPrice">Actual {token_name_short} preu</string>
+    <string name="sessionNetworkDescription">Els missatges s\'envien mitjançant el nom de xarxa {network_name}. La xarxa està formada per nodes incentivats amb {token_name_long}, que manté {app_name} descentralitzat i segur. <font color="0"><b>Aprendre Més </b>{icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Aprèn sobre participar</string>
+    <string name="sessionNetworkMarketCap">Cap de mercat</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} Nodes que asseguren <font color="0">Els teus missatges</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} Nodes al <font color="0">teu eixam</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} És viu! Explora la nova secció {network_name} en Configuració per conèixer com {token_name_long} potencia Session.</string>
+    <string name="sessionNetworkSecuredBy">Xarxa assegurada per</string>
+    <string name="sessionNetworkTokenDescription">Quan fas participar {token_name_long} per assegurar la xarxa, obtindries recompenses a {token_name_short} del {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Nou</font></string>
     <string name="sessionNotifications">Notificacions</string>
     <string name="sessionPermissions">Permisos</string>
     <string name="sessionPrivacy">Privadesa</string>
@@ -818,6 +958,8 @@
     <string name="show">Mostra</string>
     <string name="showAll">Mostra-ho tot</string>
     <string name="showLess">Mostreu menys</string>
+    <string name="showNoteToSelf">Mostra la Nota a Si Mateix</string>
+    <string name="showNoteToSelfDescription">Estàs segur que vols mostrar <b>Nota a Si Mateix</b> a la teva llista de converses?</string>
     <string name="stickers">Adhesius</string>
     <string name="supportGoTo">Vés a la pàgina de suport</string>
     <string name="systemInformationDesktop">Informació del sistema: {information}</string>
@@ -836,10 +978,16 @@
     <string name="updateDownloading">S\'està baixant l\'actualització: {percent_loader}%</string>
     <string name="updateError">No es pot actualitzar</string>
     <string name="updateErrorDescription">Ha fallat l\'actualització de {app_name}. Aneu a {session_download_url} i instal·leu la nova versió manualment, llavors contacteu amb el nostre Centre de Suport per a informar sobre aquest problema.</string>
+    <string name="updateGroupInformation">Actualitza el Grup Informació</string>
+    <string name="updateGroupInformationDescription">El nom i la descripció del grup són visibles per a tots els membres del grup.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Si us plau, entra una descripció de grup més curta</string>
     <string name="updateNewVersion">Hi ha disponible una nova versió de {app_name}. Toqueu per actualitzar-lo</string>
+    <string name="updateNewVersionDescription">Hi ha disponible una nova versió ({version}) de {app_name}.</string>
     <string name="updateReleaseNotes">Vés a les notes de versió</string>
     <string name="updateSession">Actualització de {app_name}</string>
     <string name="updateVersion">Versió {version}</string>
+    <string name="updated">Darrera actualització fa {relative_time}</string>
+    <string name="upgradeTo">Actualitzeu a</string>
     <string name="uploading">Pujant</string>
     <string name="urlCopy">Copiar URL</string>
     <string name="urlOpen">Obriu l\'URL</string>

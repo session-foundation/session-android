@@ -141,7 +141,7 @@
     <string name="authenticateFailed">Ověření se nezdařilo</string>
     <string name="authenticateFailedTooManyAttempts">Příliš mnoho neúspěšných pokusů o ověření. Zkuste to prosím později.</string>
     <string name="authenticateNotAccessed">K ověření nebylo možné přistoupit.</string>
-    <string name="authenticateToOpen">Ověření pro otevření {app_name}.</string>
+    <string name="authenticateToOpen">Ověřte pro otevření {app_name}.</string>
     <string name="back">Zpět</string>
     <string name="banDeleteAll">Zablokovat a smazat vše</string>
     <string name="banErrorFailed">Zablokování selhalo</string>
@@ -153,6 +153,7 @@
     <string name="banUserBanned">Uživatel zablokován</string>
     <string name="banUserDescription">Zadejte ID účtu uživatele, kterého chcete blokovat</string>
     <string name="block">Blokovat</string>
+    <string name="blockBlockedDescription">Pro odeslání zprávy tento kontakt odblokujte.</string>
     <string name="blockBlockedNone">Žádné blokované kontakty</string>
     <string name="blockBlockedUser">Blokovat {name}</string>
     <string name="blockDescription">Jste si jisti, že chcete zablokovat <b>{name}</b>? Zablokovaní uživatelé vám nemohou posílat žádosti o komunikaci, pozvánky do skupin ani vám nemohou volat.</string>
@@ -203,7 +204,7 @@
     <string name="clearDataAllDescription">Tímto trvale smažete vaše zprávy a kontakty. Chcete smazat data pouze na tomto zařízení, nebo smazat také data ze sítě?</string>
     <string name="clearDataError">Data nebyla odstraněna</string>
     <plurals name="clearDataErrorDescription">
-        <item quantity="one">Data nebyla odstraněna %1$d Service Node. ID Service Node: %2$s.</item>
+        <item quantity="one">Data nebyla smazána %1$d servery služby. ID serveru služby: %2$s.</item>
         <item quantity="few">Data nebyla smazána %1$d provozními uzly. ID provozních uzlů: %2$s.</item>
         <item quantity="many">Data nebyla smazána %1$d provozními uzly. ID provozních uzlů: %2$s.</item>
         <item quantity="other">Data nebyla smazána %1$d provozními uzly. ID provozních uzlů: %2$s.</item>
@@ -322,6 +323,7 @@
     <string name="deleteAfterLegacyGroupsGroupCreation">Počkejte prosím, než se skupina vytvoří...</string>
     <string name="deleteAfterLegacyGroupsGroupUpdateErrorTitle">Aktualizace skupiny selhala</string>
     <string name="deleteAfterMessageDeletionStandardisationMessageDeletionForbidden">Nemáte oprávnění k mazání zpráv ostatních</string>
+    <string name="deleteContactDescription">Opravdu chcete smazat <b>{name}</b> z vašich kontaktů?\n\nTím smažete vaše konverzace, včetně všech zpráv a příloh. Budoucí zprávy od <b>{name}</b> se zobrazí jako žádost o komunikaci.</string>
     <string name="deleteConversationDescription">Opracdu chcete smazat konverzaci s <b>{name}</b>?\nTím trvale smažete všechny zprávy a přílohy.</string>
     <plurals name="deleteMessage">
         <item quantity="one">Smazat zprávu</item>
@@ -419,6 +421,7 @@
     <string name="displayNameSet">Nastavte zobrazované jméno</string>
     <string name="displayNameVisible">Vaše zobrazované jméno je viditelné pro uživatele, skupiny a komunity, se kterými jste ve spojení.</string>
     <string name="document">Dokument</string>
+    <string name="donate">Darovat</string>
     <string name="done">Hotovo</string>
     <string name="download">Stáhnout</string>
     <string name="downloading">Stahování...</string>
@@ -449,10 +452,11 @@
     <string name="emojiReactsHoverYouNameMultipleDesktop">Vy a <font color="0">{count} dalších</font> reagovalo {emoji_name}</string>
     <string name="emojiReactsHoverYouNameTwoDesktop">Vy a {name} reagovali {emoji_name}</string>
     <string name="emojiReactsNotification">Reagoval(a) na vaši zprávu {emoji}</string>
-    <string name="enable">Zapnout</string>
+    <string name="enable">Povolit</string>
     <string name="errorConnection">Zkontrolujte prosím připojení k internetu a zkuste to znovu.</string>
     <string name="errorCopyAndQuit">Zkopírovat chybu a ukončit</string>
     <string name="errorDatabase">Chyba databáze</string>
+    <string name="errorGeneric">Něco se pokazilo. Zkuste to prosím později.</string>
     <string name="errorUnknown">Došlo k neznámé chybě.</string>
     <string name="failedToDownload">Stahování selhalo</string>
     <string name="failures">Chyby</string>
@@ -659,6 +663,7 @@
     <string name="membersInviteShareNewMessagesOnly">Sdílet pouze nové zprávy</string>
     <string name="membersInviteTitle">Pozvat</string>
     <string name="message">Zpráva</string>
+    <string name="messageBubbleReadMore">Více</string>
     <string name="messageEmpty">Tato zpráva je prázdná.</string>
     <string name="messageErrorDelivery">Selhalo doručení zprávy</string>
     <string name="messageErrorLimit">Dosažen limit zprávy</string>
@@ -688,8 +693,8 @@
         <item quantity="other">Ve skupině %1$s máte %2$d nových zpráv.</item>
     </plurals>
     <string name="messageReplyingTo">Odpovědět na</string>
-    <string name="messageRequestDisabledToastAttachments">Dokud není vaše žádost o zprávu přijata, nemůžete posílat přílohy</string>
-    <string name="messageRequestDisabledToastVoiceMessages">Dokud není vaše žádost o zprávu přijata, nemůžete posílat hlasové zprávy</string>
+    <string name="messageRequestDisabledToastAttachments">Dokud není vaše žádost o komunikaci přijata, nemůžete posílat přílohy</string>
+    <string name="messageRequestDisabledToastVoiceMessages">Dokud není vaše žádost o komunikaci přijata, nemůžete posílat hlasové zprávy</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> vás pozval(a) do skupiny <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">Odesláním zprávy do této skupiny automaticky přijmete pozvánku do skupiny.</string>
     <string name="messageRequestPending">Vaše žádost o komunikaci teď čeká na vyřízení.</string>
@@ -700,6 +705,7 @@
     <string name="messageRequestsClearAllExplanation">Jste si jisti, že chcete smazat všechny žádosti o komunikaci a pozvánky do skupin?</string>
     <string name="messageRequestsCommunities">Žádosti o komunikaci z komunit</string>
     <string name="messageRequestsCommunitiesDescription">Povolit žádosti o komunikaci zahájené prostřednictvím komunit.</string>
+    <string name="messageRequestsContactDelete">Opravdu chcete smazat tuto žádost o komunikaci a s ní spojený kontakt?</string>
     <string name="messageRequestsDelete">Jste si jisti, že chcete smazat tuto žádost o komunikaci?</string>
     <string name="messageRequestsNew">Máte novou žádost o komunikaci</string>
     <string name="messageRequestsNonePending">Žádné nevyřízené žádosti o komunikaci</string>
@@ -717,6 +723,17 @@
     <string name="messageVoiceSnippetGroup">{author}: {emoji} hlasová zpráva</string>
     <string name="messages">Zprávy</string>
     <string name="minimize">Minimalizovat</string>
+    <plurals name="modalMessageCharacterDisplayDescription">
+        <item quantity="one">Zprávy mají limit %1$s znaků. Zbývá vám %2$d znak</item>
+        <item quantity="few">Zprávy mají limit %1$s znaků. Zbývají vám %2$d znaky</item>
+        <item quantity="many">Zprávy mají limit %1$s znaků. Zbývá vám %2$d znaků</item>
+        <item quantity="other">Zprávy mají limit %1$s znaků. Zbývá vám %2$d znaků</item>
+    </plurals>
+    <string name="modalMessageCharacterDisplayTitle">Délka zprávy</string>
+    <string name="modalMessageCharacterTooLongDescription">Překročili jste limit počtu znaků pro tuto zprávu. Zkraťte prosím svou zprávu na {limit} znaků nebo méně.</string>
+    <string name="modalMessageCharacterTooLongTitle">Zpráva je příliš dlouhá</string>
+    <string name="modalMessageTooLongDescription">Zkraťte prosím svou zprávu na {limit} znaků nebo méně.</string>
+    <string name="modalMessageTooLongTitle">Zpráva je příliš dlouhá</string>
     <string name="next">Další</string>
     <string name="nicknameDescription">Vyberte přezdívku pro <b>{name}</b>. Zobrazí se ve vašich konverzacích jeden na jednoho a ve skupinových.</string>
     <string name="nicknameEnter">Zadejte přezdívku</string>
@@ -785,9 +802,10 @@
     <string name="onboardingTos">Podmínky služby</string>
     <string name="onboardingTosPrivacy">Používáním této služby souhlasíte s našimi <b>Podmínkami služby</b> a <b>Zásadami ochrany osobních údajů</b></string>
     <string name="onionRoutingPath">Trasa</string>
+    <string name="onionRoutingPathDescription">{app_name} skrývá vaši IP adresu tím, že směruje vaše zprávy přes několik serverů služby v decentralizované síti {app_name}. Toto je vaše aktuální trasa:</string>
     <string name="onionRoutingPathDestination">Cíl</string>
-    <string name="onionRoutingPathEntryNode">Vstupní uzel</string>
-    <string name="onionRoutingPathServiceNode">Service Node</string>
+    <string name="onionRoutingPathEntryNode">Vstupní server</string>
+    <string name="onionRoutingPathServiceNode">Server služby</string>
     <string name="onionRoutingPathUnknownCountry">Neznámá země</string>
     <string name="onsErrorNotRecognized">Nepodařilo se rozpoznat tento ONS. Zkontrolujte ho a zkuste to znovu.</string>
     <string name="onsErrorUnableToSearch">Nepodařilo se vyhledat tento ONS. Zkuste to prosím později.</string>
@@ -847,11 +865,27 @@
     <string name="permissionsStorageSave">{app_name} potřebuje přístup k úložišti pro ukládání příloh a médií.</string>
     <string name="permissionsStorageSaveDenied">{app_name} potřebuje přístup k úložišti pro ukládání fotografií a videí, ale byl trvale zakázán. Prosím, pokračujte do nastavení aplikací, vyberte \"Oprávnění\" a povolte \"Úložiště\".</string>
     <string name="permissionsStorageSend">{app_name} potřebuje přístup k úložišti pro odesílání fotografií a videí.</string>
+    <string name="permissionsWriteCommunity">V této komunitě nemáte oprávnění k zápisu</string>
     <string name="pin">Připnout</string>
     <string name="pinConversation">Připnout konverzaci</string>
     <string name="pinUnpin">Odepnout</string>
     <string name="pinUnpinConversation">Odepnout konverzaci</string>
     <string name="preview">Náhled</string>
+    <string name="proActivated">Aktivováno</string>
+    <string name="proAlreadyPurchased">Už máte</string>
+    <string name="proAnimatedDisplayPicture">Jako váš zobrazovaný profilový obrázek nastavte animovaný GIF nebo WebP!</string>
+    <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se Session Pro</string>
+    <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
+    <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
+    <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
+    <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
+    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
+    <string name="proFeatureListAnimatedDisplayPicture">Nahrajte GIF a WebP jako zobrazovaný obrázek</string>
+    <string name="proFeatureListLargerGroups">Větší soukromé skupiny až 300 členů</string>
+    <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
+    <string name="proFeatureListLongerMessages">Zprávy až do 10000 znaků</string>
+    <string name="proFeatureListPinnedConversations">Připněte neomezený počet konverzací</string>
+    <string name="proSendMore">Posílejte více se</string>
     <string name="profile">Profil</string>
     <string name="profileDisplayPicture">Zobrazovaný obrázek</string>
     <string name="profileDisplayPictureRemoveError">Chyba při odstraňování zobrazovaného obrázku.</string>
@@ -907,6 +941,13 @@
     <string name="recoveryPasswordWarningSendDescription">Toto je vaše heslo pro obnovení. Pokud ho někomu pošlete, bude mít plný přístup k vašemu účtu.</string>
     <string name="recreateGroup">Znovu vytvořit skupinu</string>
     <string name="redo">Znovu</string>
+    <string name="remainingCharactersOverTooltip">Zkraťte délku zprávy o {count}</string>
+    <plurals name="remainingCharactersTooltip">
+        <item quantity="one">Zbývá %1$d znak</item>
+        <item quantity="few">Zbývají %1$d znaky</item>
+        <item quantity="many">Zbývá %1$d znaků</item>
+        <item quantity="other">Zbývá %1$d znaků</item>
+    </plurals>
     <string name="remove">Odstranit</string>
     <string name="removePasswordFail">Odebrání hesla selhalo</string>
     <string name="reply">Odpovědět</string>
@@ -952,6 +993,16 @@
     <string name="sessionHelp">Nápověda</string>
     <string name="sessionInviteAFriend">Pozvat přátele</string>
     <string name="sessionMessageRequests">Žádosti o komunikaci</string>
+    <string name="sessionNetworkCurrentPrice">Aktuální cena {token_name_short}</string>
+    <string name="sessionNetworkDescription">Zprávy se odesílají pomocí {network_name}. Síť se skládá ze serverů, jejichž provozovatelé jsou odměňováni pomocí {token_name_long}, což zajišťuje decentralizaci a bezpečnost {app_name}. <font color="0"><b>Další informace</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Přečtěte si o stakingu</string>
+    <string name="sessionNetworkMarketCap">Tržní kapitalizace</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} servery zabezpečující <font color="0">vaše zprávy</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} servery ve vašem <font color="0">swarmu</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} funguje! Prozkoumejte novou sekci {network_name} v Nastavení a zjistěte, jak {token_name_long} zabezpečuje funkčnost Session.</string>
+    <string name="sessionNetworkSecuredBy">Síť zabezpečuje</string>
+    <string name="sessionNetworkTokenDescription">{token_name_long} staking znamená zvyšovat bezpečnost sítě a získávat odměny v podobě {token_name_short} ze {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Nové</font></string>
     <string name="sessionNotifications">Upozornění</string>
     <string name="sessionPermissions">Oprávnění</string>
     <string name="sessionPrivacy">Soukromí</string>
@@ -981,6 +1032,7 @@
     <string name="tryAgain">Zkusit znovu</string>
     <string name="typingIndicators">Indikátory psaní</string>
     <string name="typingIndicatorsDescription">Zobrazit a sdílet indikátor probíhajícího psaní.</string>
+    <string name="unavailable">Nedostupné</string>
     <string name="undo">Vrátit zpět</string>
     <string name="unknown">Neznámé</string>
     <string name="updateApp">Aktualizace aplikace</string>
@@ -996,6 +1048,8 @@
     <string name="updateReleaseNotes">Přejít na poznámky k vydání</string>
     <string name="updateSession">Aktualizace {app_name}</string>
     <string name="updateVersion">Verze {version}</string>
+    <string name="updated">Naposledy aktualizováno před {relative_time}</string>
+    <string name="upgradeTo">Navýšit na</string>
     <string name="uploading">Nahrávání</string>
     <string name="urlCopy">Zkopírovat URL</string>
     <string name="urlOpen">Otevřít odkaz</string>

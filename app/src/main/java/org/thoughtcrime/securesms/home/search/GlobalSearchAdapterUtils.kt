@@ -124,7 +124,6 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
     searchResultTimestamp.isVisible = true
 
     searchResultTimestamp.text = dateUtils.getDisplayFormattedTimeSpanString(
-        Locale.getDefault(),
         model.messageResult.sentTimestampMs
     )
 

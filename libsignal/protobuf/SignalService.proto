@@ -53,16 +53,16 @@ message Content {
   optional CallMessage                callMessage                = 3;
   optional ReceiptMessage             receiptMessage             = 5;
   optional TypingMessage              typingMessage              = 6;
-  optional ConfigurationMessage       configurationMessage       = 7;
   optional DataExtractionNotification dataExtractionNotification = 8;
   optional UnsendRequest              unsendRequest              = 9;
   optional MessageRequestResponse     messageRequestResponse     = 10;
-  optional SharedConfigMessage        sharedConfigMessage        = 11;
   optional ExpirationType             expirationType             = 12;
   optional uint32                     expirationTimer            = 13;
   optional uint64                     sigTimestamp               = 15;
 
   reserved 14;
+  reserved 11; // Used to be a "sharedConfigMessage" but no longer used
+  reserved 7; // Used to be a "configurationMessage" but it has been deleted
 }
 
 message KeyPair {
@@ -220,42 +220,6 @@ message DataMessage {
     // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
   }
 
-  message ClosedGroupControlMessage {
-
-    enum Type {
-      NEW                         = 1;  // publicKey, name, encryptionKeyPair, members, admins, expireTimer
-      ENCRYPTION_KEY_PAIR         = 3;  // publicKey, wrappers
-      NAME_CHANGE                 = 4;  // name
-      MEMBERS_ADDED               = 5;  // members
-      MEMBERS_REMOVED             = 6;  // members
-      MEMBER_LEFT                 = 7;
-      INVITE                      = 9;  // publicKey, name, memberPrivateKey
-      PROMOTE                     = 10; // publicKey, privateKey
-      DELETE_GROUP                = 11; // publicKey, members
-      DELETE_MESSAGES             = 12; // publicKey
-      DELETE_ATTACHMENTS          = 13; // publicKey
-    }
-
-    message KeyPairWrapper {
-      // @required
-      required bytes publicKey        = 1; // The public key of the user the key pair is meant for
-      // @required
-      required bytes encryptedKeyPair = 2; // The encrypted key pair
-    }
-
-    // @required
-    required Type           type              = 1;
-    optional bytes          publicKey         = 2;
-    optional string         name              = 3;
-    optional KeyPair        encryptionKeyPair = 4;
-    repeated bytes          members           = 5;
-    repeated bytes          admins            = 6;
-    repeated KeyPairWrapper wrappers          = 7;
-    optional uint32         expirationTimer   = 8;
-    optional bytes          memberPrivateKey  = 9;
-    optional bytes          privateKey        = 10;
-  }
-
   message Reaction {
     enum Action {
       REACT = 0;
@@ -281,37 +245,11 @@ message DataMessage {
   optional Reaction                  reaction                       = 11;
   optional LokiProfile               profile                        = 101;
   optional OpenGroupInvitation       openGroupInvitation            = 102;
-  optional ClosedGroupControlMessage closedGroupControlMessage      = 104;
   optional string                    syncTarget                     = 105;
   optional bool                      blocksCommunityMessageRequests = 106;
   optional GroupUpdateMessage        groupUpdateMessage             = 120;
-}
 
-message GroupDeleteMessage {
-  // @required
-  required bytes          publicKey         = 1; // the identity public key of the group to be deleted
-  // @required
-  required bytes          lastEncryptionKey = 2; // used by members to make sure incoming admin action can be trusted
-}
-
-message GroupMemberLeftMessage {
-  // the pubkey of the member left is included as part of the closed group encryption logic (senderIdentity on desktop)
-}
-
-message GroupInviteMessage {
-  // @required
-  required bytes          publicKey         = 1; // this is the group public key
-  // @required
-  required string         name              = 2;
-  // @required
-  required bytes          memberPrivateKey  = 3;
-}
-
-message GroupPromoteMessage {
-  // @required
-  required bytes          publicKey           = 1; // this is the session id for the user that should be promoted
-  // @required
-  required bytes          encryptedPrivateKey = 2; // this is the group admins key
+  reserved 104; // Used to be "closedGroupControlMessage" but it has been deleted
 }
 
 message CallMessage {
@@ -336,61 +274,11 @@ message CallMessage {
   required string uuid            = 5;
 }
 
-message ConfigurationMessage {
-
-  message ClosedGroup {
-    optional bytes   publicKey         = 1;
-    optional string  name              = 2;
-    optional KeyPair encryptionKeyPair = 3;
-    repeated bytes   members           = 4;
-    repeated bytes   admins            = 5;
-    optional uint32  expirationTimer   = 6;
-  }
-
-  message Contact {
-    // @required
-    required bytes  publicKey         = 1;
-    // @required
-    required string name              = 2;
-    optional string profilePicture    = 3;
-    optional bytes  profileKey        = 4;
-    optional bool isApproved          = 5;
-    optional bool isBlocked           = 6;
-    optional bool didApproveMe        = 7;
-  }
-
-  repeated ClosedGroup closedGroups   = 1;
-  repeated string      openGroups     = 2;
-  optional string      displayName    = 3;
-  optional string      profilePicture = 4;
-  optional bytes       profileKey     = 5;
-  repeated Contact     contacts       = 6;
-}
-
 message MessageRequestResponse {
   // @required
   required bool                    isApproved = 1;
   optional bytes                   profileKey = 2;
   optional DataMessage.LokiProfile profile    = 3;
-}
-
-message SharedConfigMessage {
-  enum Kind {
-    USER_PROFILE         = 1;
-    CONTACTS             = 2;
-    CONVO_INFO_VOLATILE    = 3;
-    GROUPS = 4;
-    CLOSED_GROUP_INFO    = 5;
-    CLOSED_GROUP_MEMBERS = 6;
-    ENCRYPTION_KEYS      = 7;
-  }
-
-  // @required
-  required Kind  kind  = 1;
-  // @required
-  required int64 seqno = 2;
-  // @required
-  required bytes data  = 3;
 }
 
 message ReceiptMessage {

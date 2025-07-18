@@ -1,0 +1,79 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/custom_controls"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="bottom"
+    android:paddingHorizontal="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="16dp">
+        
+        <ImageButton
+            android:id="@id/exo_prev"
+            style="@style/ExoStyledControls.Button.Center.Previous"
+            app:tint="?android:textColorPrimary"/>
+
+        <Button android:id="@id/exo_rew_with_amount"
+            style="@style/ExoStyledControls.Button.Center.RewWithAmount"
+            android:foregroundTint="?android:textColorPrimary"/>
+
+        <ImageButton android:id="@id/exo_play_pause"
+            style="@style/ExoStyledControls.Button.Center.PlayPause"
+            app:tint="?android:textColorPrimary"/>
+
+        <Button android:id="@id/exo_ffwd_with_amount"
+            style="@style/ExoStyledControls.Button.Center.FfwdWithAmount"
+            android:foregroundTint="?android:textColorPrimary"/>
+
+        <ImageButton
+            android:id="@id/exo_next"
+            style="@style/ExoStyledControls.Button.Center.Next"
+            app:tint="?android:textColorPrimary" />
+        
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:animateLayoutChanges="false"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@id/exo_position"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/ExoStyledControls.TimeText.Position"
+            android:textColor="?android:textColorPrimary"
+            tools:text="1:23"/>
+
+        <androidx.media3.ui.DefaultTimeBar
+            android:id="@id/exo_progress"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/exo_styled_progress_layout_height"
+            app:unplayed_color="@color/text_primary_disabled"
+            app:played_color="?android:textColorPrimary"
+            app:buffered_color="@color/text_primary_disabled"
+            app:scrubber_color="?android:textColorPrimary"
+            android:layout_weight="1"
+            app:bar_gravity="center" />
+
+        <TextView
+            android:id="@id/exo_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/ExoStyledControls.TimeText.Duration"
+            android:textColor="?android:textColorPrimary"
+            tools:text="2:23"/>
+
+    </LinearLayout>
+
+</LinearLayout>

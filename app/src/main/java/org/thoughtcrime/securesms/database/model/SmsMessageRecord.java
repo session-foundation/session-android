@@ -47,7 +47,7 @@ public class SmsMessageRecord extends MessageRecord {
     super(id, body, recipient, individualRecipient,
       dateSent, dateReceived, threadId, status, deliveryReceiptCount, type,
       mismatches, new LinkedList<>(),
-      expiresIn, expireStarted, readReceiptCount, reactions, hasMention);
+      expiresIn, expireStarted, readReceiptCount, reactions, hasMention, null);
   }
 
   public long getType() {

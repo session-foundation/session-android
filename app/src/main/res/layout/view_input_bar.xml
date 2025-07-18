@@ -26,41 +26,81 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="4dp">
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="16dp"
+            tools:background="@color/classic_dark_2">
 
             <RelativeLayout
                 android:id="@+id/attachmentsButtonContainer"
                 android:layout_width="@dimen/input_bar_button_expanded_size"
                 android:layout_height="@dimen/input_bar_button_expanded_size"
                 android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="@dimen/small_spacing"
-                android:contentDescription="@string/AccessibilityId_attachmentsButton" />
+                android:layout_alignParentTop="true"
+                android:contentDescription="@string/AccessibilityId_attachmentsButton"
+                tools:background="@color/classic_dark_3"/>
 
             <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBarEditText
                 android:id="@+id/inputBarEditText"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:layout_marginStart="64dp"
-                android:layout_marginEnd="64dp"
+                android:layout_toEndOf="@+id/attachmentsButtonContainer"
+                android:layout_toStartOf="@+id/microphoneOrSendButtonContainer"
+                android:layout_marginHorizontal="16dp"
                 android:background="@null"
                 android:contentDescription="@string/AccessibilityId_inputBox"
                 android:gravity="center_vertical"
+                android:maxLines="6"
                 android:hint="@string/message"
                 android:inputType="text|textCapSentences|textMultiLine|textAutoComplete"
-                android:maxLength="@integer/max_input_chars"
                 android:textColor="?input_bar_text_user"
                 android:textColorHint="?attr/input_bar_text_hint"
-                android:textSize="@dimen/medium_font_size" />
+                android:textSize="@dimen/medium_font_size"
+                tools:lines="6"/>
+
+
+            <LinearLayout
+                android:id="@+id/characterLimitContainer"
+                android:layout_width="@dimen/input_bar_button_expanded_size"
+                android:layout_height="@dimen/input_bar_button_expanded_size"
+                android:layout_alignParentEnd="true"
+                android:layout_alignBottom="@+id/inputBarEditText"
+                android:visibility="gone"
+                android:focusable="true"
+                android:clickable="true"
+                tools:visibility="visible"
+                android:background="@drawable/bg_round_transparent"
+                android:orientation="vertical"
+                tools:background="@color/classic_dark_3">
+                <TextView
+                    android:id="@+id/characterLimitText"
+                    android:textColor="?input_bar_text_user"
+                    android:textSize="@dimen/small_font_size"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="bottom|center_horizontal"
+                    tools:text="199"/>
+
+                <ImageView android:id="@+id/badgePro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_pro_badge"
+                    android:contentDescription="null"
+                    android:layout_marginTop="4dp"
+                    android:layout_weight="1"
+                    android:visibility="gone"
+                    tools:visibility="visible"
+                    android:gravity="bottom|center_horizontal"/>
+            </LinearLayout>
 
             <RelativeLayout
                 android:id="@+id/microphoneOrSendButtonContainer"
                 android:layout_width="@dimen/input_bar_button_expanded_size"
                 android:layout_height="@dimen/input_bar_button_expanded_size"
                 android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="@dimen/small_spacing" />
+                android:layout_alignParentTop="true"
+                tools:background="@color/classic_dark_3"/>
 
         </RelativeLayout>
 

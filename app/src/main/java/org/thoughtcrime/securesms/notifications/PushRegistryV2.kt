@@ -62,7 +62,7 @@ class PushRegistryV2 @Inject constructor(
             enc_key = pnKey.toHexString(),
         ).let(Json::encodeToJsonElement).jsonObject + signed
 
-        val response = retryResponseBody<SubscriptionResponse>(
+        val response = getResponseBody<SubscriptionResponse>(
             "subscribe",
             Json.encodeToString(requestParameters)
         )
@@ -91,7 +91,7 @@ class PushRegistryV2 @Inject constructor(
             service_info = mapOf("token" to token),
         ).let(Json::encodeToJsonElement).jsonObject + signature
 
-        val response: UnsubscribeResponse = retryResponseBody("unsubscribe", Json.encodeToString(requestParameters))
+        val response: UnsubscribeResponse = getResponseBody("unsubscribe", Json.encodeToString(requestParameters))
 
         check(response.isSuccess()) {
             "Error unsubscribing to push notifications: ${response.message}"
@@ -106,9 +106,6 @@ class PushRegistryV2 @Inject constructor(
             }
         })
     }
-
-    private suspend inline fun <reified T: Response> retryResponseBody(path: String, requestParameters: String): T =
-        retryWithUniformInterval(maxRetryCount = maxRetryCount) { getResponseBody(path, requestParameters) }
 
     @OptIn(ExperimentalSerializationApi::class)
     private suspend inline fun <reified T: Response> getResponseBody(path: String, requestParameters: String): T {

@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -35,7 +36,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleOpenGroupReactions
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
@@ -169,6 +169,15 @@ class OpenGroupPoller @AssistedInject constructor(
                     manualPollRequest.receiveAsFlow()
                 ).first()
 
+                // We might have more than one manual poll request, collect them all now so
+                // they don't trigger unnecessary pollings
+                val extraTokens = buildList {
+                    while (true) {
+                        val nexToken = manualPollRequest.tryReceive().getOrNull() ?: break
+                        add(nexToken)
+                    }
+                }
+
                 mutableIsCaughtUp.value = false
                 var delayDuration = POLL_INTERVAL_MILLS
                 try {
@@ -176,6 +185,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     pollOnce()
                     mutableIsCaughtUp.value = true
                     token?.trySend(Result.success(Unit))
+                    extraTokens.forEach { it.trySend(Result.success(Unit)) }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error while polling open group messages", e)
                     delayDuration = 2000L
@@ -225,15 +235,25 @@ class OpenGroupPoller @AssistedInject constructor(
                     }
                 }
         } catch (e: Exception) {
-            updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
+            if (e !is CancellationException) {
+                Log.e(TAG, "Error while polling open group messages", e)
+                updateCapabilitiesIfNeeded(isPostCapabilitiesRetry, e)
+            }
+
             throw e
         }
     }
 
-    suspend fun manualPollOnce() {
+    suspend fun requestPollOnceAndWait() {
         val token = Channel<Result<Unit>>()
         manualPollRequest.send(token)
         token.receive().getOrThrow()
+    }
+
+    fun requestPollOnce() {
+        scope.launch {
+            manualPollRequest.send(Channel())
+        }
     }
 
     private fun updateCapabilitiesIfNeeded(isPostCapabilitiesRetry: Boolean, exception: Exception) {
@@ -347,10 +367,6 @@ class OpenGroupPoller @AssistedInject constructor(
                     .setTimestamp(message.sentTimestamp)
                     .build()
                 envelopes.add(Triple( message.serverID, envelope, message.reactions))
-            } else if (!message.reactions.isNullOrEmpty()) {
-                message.serverID?.let {
-                    MessageReceiver.handleOpenGroupReactions(threadId, it, message.reactions)
-                }
             }
         }
 

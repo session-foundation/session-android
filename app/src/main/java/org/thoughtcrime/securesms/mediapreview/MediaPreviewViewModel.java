@@ -11,8 +11,11 @@ import androidx.lifecycle.ViewModel;
 import dagger.hilt.android.lifecycle.HiltViewModel;
 import dagger.hilt.android.qualifiers.ApplicationContext;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import javax.inject.Inject;
 import org.session.libsignal.utilities.Log;
 import org.session.libsignal.utilities.guava.Optional;
@@ -34,6 +37,9 @@ public class MediaPreviewViewModel extends ViewModel {
 
     private @Nullable Cursor cursor;
 
+    //  map of playback position of the pager's items
+    private final Map<Uri, Long> playbackPositions = new HashMap<>();
+
     public void setCursor(@NonNull Context context, @Nullable Cursor cursor, boolean leftIsRecent) {
         boolean firstLoad = (this.cursor == null) && (cursor != null);
         if (this.cursor != null && !this.cursor.equals(cursor)) {
@@ -45,6 +51,15 @@ public class MediaPreviewViewModel extends ViewModel {
         if (firstLoad) {
             setActiveAlbumRailItem(context, 0);
         }
+    }
+
+    public void savePlaybackPosition(Uri videoUri, long position) {
+        playbackPositions.put(videoUri, position);
+    }
+
+    public long getSavedPlaybackPosition(Uri videoUri) {
+        Long position = playbackPositions.get(videoUri);
+        return position != null ? position : 0L;
     }
 
     public void setActiveAlbumRailItem(@NonNull Context context, int activePosition) {
