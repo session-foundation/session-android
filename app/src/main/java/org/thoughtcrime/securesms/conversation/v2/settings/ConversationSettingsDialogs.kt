@@ -170,6 +170,7 @@ fun ConversationSettingsDialogs(
                              sendCommand(UpdateGroupName(updatedText))
                         },
                         showClear = true,
+                        clearQaTag = R.string.qa_input_clear_name,
                         singleLine = true,
                         error = dialogsState.groupEditDialog.errorName,
                     )
@@ -187,6 +188,7 @@ fun ConversationSettingsDialogs(
                              sendCommand(UpdateGroupDescription(updatedText))
                         },
                         showClear = true,
+                        clearQaTag = R.string.qa_input_clear_description,
                         error = dialogsState.groupEditDialog.errorDescription,
                     )
                 }

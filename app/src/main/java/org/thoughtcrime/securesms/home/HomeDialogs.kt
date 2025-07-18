@@ -3,6 +3,7 @@ package org.thoughtcrime.securesms.home
 import androidx.compose.runtime.Composable
 import org.thoughtcrime.securesms.home.HomeViewModel.Commands.*
 import org.thoughtcrime.securesms.ui.PinProCTA
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
 
 @Composable
@@ -22,6 +23,18 @@ fun HomeDialogs(
                 onCancel = {
                     sendCommand(HidePinCTADialog)
                 }
+            )
+        }
+
+        if(dialogsState.userProfileModal != null){
+            UserProfileModal(
+                data = dialogsState.userProfileModal,
+                onDismissRequest = {
+                    sendCommand(HideUserProfileModal)
+                },
+                sendCommand = {
+                    sendCommand(HandleUserProfileCommand(it))
+                },
             )
         }
     }

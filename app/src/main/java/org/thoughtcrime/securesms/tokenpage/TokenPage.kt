@@ -34,10 +34,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.TopCenter
@@ -53,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.squareup.phrase.Phrase
+import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.NonTranslatableStringConstants.STAKING_REWARD_POOL
@@ -66,11 +70,11 @@ import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_L
 import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_SHORT_KEY
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
-import org.thoughtcrime.securesms.ui.SimplePopup
+import org.thoughtcrime.securesms.ui.SpeechBubbleTooltip
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.BlurredImage
 import org.thoughtcrime.securesms.ui.components.CircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.AccentOutlineButtonRect
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.components.iconExternalLink
@@ -458,6 +462,7 @@ fun getNodeImageForSwarmSize(numNodesInOurSwarm: Int): Pair<Int, Int> {
 // Stats section that shows the number of nodes in your swarm (along with a visual representation), the
 // number of nodes securing your messages, the current SENT token price, and the total USD value securing
 // the network.
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsSection(
     currentSessionNodesInSwarm: Int,
@@ -534,27 +539,32 @@ fun StatsSection(
                 }
                 .height(if (cellHeight > 0.dp) cellHeight else androidx.compose.ui.unit.Dp.Unspecified)
         ) {
-            // Mutable state to keep track of whether we should display the "Price data powered by CoinGecko" popup
-            var shouldDisplayPopup by remember { mutableStateOf(false) }
-
             Box(
                 modifier = Modifier
                     .padding(LocalDimensions.current.xxxsSpacing)
                     .size(15.dp)
                     .align(Alignment.TopEnd)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_circle_help),
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(LocalColors.current.text), // Tint the question mark icon to be our text colour (typically white)
-                    modifier = Modifier
-                        .size(15.dp)
-                        .clickable { shouldDisplayPopup = true }
-                        .qaTag("Tooltip")
-                )
+                val tooltipState = rememberTooltipState(isPersistent = true)
+                val scope = rememberCoroutineScope()
 
-                if (shouldDisplayPopup) {
-                    PriceDataSourcePopup(priceDataPopupText, onDismiss = { shouldDisplayPopup = false })
+                SpeechBubbleTooltip(
+                    text = priceDataPopupText,
+                    tooltipState = tooltipState
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_circle_help),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(LocalColors.current.text),
+                        modifier = Modifier
+                            .size(LocalDimensions.current.iconXSmall)
+                            .clickable {
+                                scope.launch {
+                                    if (tooltipState.isVisible) tooltipState.dismiss() else tooltipState.show()
+                                }
+                            }
+                            .qaTag("Tooltip")
+                    )
                 }
             }
         }
@@ -710,29 +720,6 @@ fun SessionTokenSection(
                 onDismissRequest = { showTheOpenUrlModal = false }
             )
         }
-    }
-}
-
-// Pop-up that displays the source of the price data and when we obtained that data
-@Composable
-fun PriceDataSourcePopup(
-    priceDataPopupText: String,
-    onDismiss: () -> Unit
-) {
-    SimplePopup(
-        onDismiss = onDismiss
-    ) {
-        Text(
-            text = priceDataPopupText,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(
-                    horizontal = LocalDimensions.current.smallSpacing,
-                    vertical = LocalDimensions.current.xxsSpacing
-                )
-                .qaTag("Tooltip info"),
-            style = LocalType.current.small
-        )
     }
 }
 

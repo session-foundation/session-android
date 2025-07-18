@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,13 +42,15 @@ import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.PinProCTA
 import org.thoughtcrime.securesms.database.DatabaseContentProviders
 import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.util.observeChanges
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -66,7 +69,8 @@ class HomeViewModel @Inject constructor(
     private val usernameUtils: UsernameUtils,
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
-    private val proStatusManager: ProStatusManager
+    private val proStatusManager: ProStatusManager,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
@@ -126,6 +130,9 @@ class HomeViewModel @Inject constructor(
         Log.e("HomeViewModel", "Error loading conversation list", err)
         emit(null)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
 
     private fun hasHiddenMessageRequests() = TextSecurePreferences.events
         .filter { it == TextSecurePreferences.HAS_HIDDEN_MESSAGE_REQUESTS }
@@ -273,11 +280,36 @@ class HomeViewModel @Inject constructor(
                 //todo PRO go to screen once it exists
             }
 
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
+        }
+    }
+
+    fun showUserProfileModal(thread: ThreadRecord) {
+        // get the helper class for the selected user
+        userProfileModalUtils = upmFactory.create(
+            recipient = thread.recipient,
+            threadId = thread.threadId,
+            scope = viewModelScope
+        )
+
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogsState.update { it.copy(userProfileModal = upmData) }
+            }
         }
     }
 
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
+        val userProfileModal: UserProfileModalData? = null
     )
 
     data class PinProCTA(
@@ -286,7 +318,11 @@ class HomeViewModel @Inject constructor(
 
     sealed interface Commands {
         data object HidePinCTADialog: Commands
+        data object HideUserProfileModal: Commands
         data object GoToProUpgradeScreen: Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ): Commands
     }
 
     companion object {

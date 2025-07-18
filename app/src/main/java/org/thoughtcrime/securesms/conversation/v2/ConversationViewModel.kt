@@ -81,6 +81,9 @@ import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.RecipientChangeSource
+import org.thoughtcrime.securesms.util.UserProfileModalCommands
+import org.thoughtcrime.securesms.util.UserProfileModalData
+import org.thoughtcrime.securesms.util.UserProfileUtils
 import org.thoughtcrime.securesms.util.avatarOptions
 import org.thoughtcrime.securesms.webrtc.CallManager
 import org.thoughtcrime.securesms.webrtc.data.State
@@ -111,6 +114,7 @@ class ConversationViewModel(
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -145,6 +149,9 @@ class ConversationViewModel(
         )
     ))
     val appBarData: StateFlow<ConversationAppBarData> = _appBarData
+
+    private var userProfileModalJob: Job? = null
+    private var userProfileModalUtils: UserProfileUtils? = null
 
     private var _recipient: RetrieveOnce<Recipient> = RetrieveOnce {
         val conversation = repository.maybeGetRecipientForThreadId(threadId)
@@ -1247,6 +1254,14 @@ class ConversationViewModel(
             is Commands.NavigateToConversation -> {
                 _uiEvents.tryEmit(ConversationUiEvent.NavigateToConversation(command.threadId))
             }
+
+            is Commands.HideUserProfileModal -> {
+                _dialogsState.update { it.copy(userProfileModal = null) }
+            }
+
+            is Commands.HandleUserProfileCommand -> {
+                userProfileModalUtils?.onCommand(command.upmCommand)
+            }
         }
     }
 
@@ -1318,6 +1333,23 @@ class ConversationViewModel(
         }
     }
 
+    fun showUserProfileModal(recipient: Recipient) {
+        // get the helper class for the selected user
+        userProfileModalUtils = upmFactory.create(
+            recipient = recipient,
+            threadId = threadId,
+            scope = viewModelScope
+        )
+
+        // cancel previous job if any then listen in on the changes
+        userProfileModalJob?.cancel()
+        userProfileModalJob = viewModelScope.launch {
+            userProfileModalUtils?.userProfileModalData?.collect { upmData ->
+                _dialogsState.update { it.copy(userProfileModal = upmData) }
+            }
+        }
+    }
+
     @dagger.assisted.AssistedFactory
     interface AssistedFactory {
         fun create(threadId: Long, edKeyPair: KeyPair?): Factory
@@ -1350,6 +1382,7 @@ class ConversationViewModel(
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
         private val proStatusManager: ProStatusManager,
+        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1377,6 +1410,7 @@ class ConversationViewModel(
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
                 proStatusManager = proStatusManager,
+                upmFactory = upmFactory
             ) as T
         }
     }
@@ -1387,6 +1421,7 @@ class ConversationViewModel(
         val deleteEveryone: DeleteForEveryoneDialogData? = null,
         val recreateGroupConfirm: Boolean = false,
         val recreateGroupData: RecreateGroupDialogData? = null,
+        val userProfileModal: UserProfileModalData? = null,
     )
 
     data class RecreateGroupDialogData(
@@ -1423,6 +1458,11 @@ class ConversationViewModel(
         data object HideRecreateGroupConfirm : Commands
         data object HideRecreateGroup : Commands
         data class NavigateToConversation(val threadId: Long) : Commands
+
+        data object HideUserProfileModal: Commands
+        data class HandleUserProfileCommand(
+            val upmCommand: UserProfileModalCommands
+        ): Commands
     }
 }
 

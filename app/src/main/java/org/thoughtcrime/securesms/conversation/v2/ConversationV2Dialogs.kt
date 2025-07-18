@@ -30,14 +30,12 @@ import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands
 import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel.Commands.ShowOpenUrlDialog
 import org.thoughtcrime.securesms.groups.compose.CreateGroupScreen
 import org.thoughtcrime.securesms.ui.AlertDialog
-import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.RadioOption
-import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
-import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -223,6 +221,19 @@ fun ConversationV2Dialogs(
                     },
                 )
             }
+        }
+
+        // user profile modal
+        if(dialogsState.userProfileModal != null){
+            UserProfileModal(
+                data = dialogsState.userProfileModal,
+                onDismissRequest = {
+                    sendCommand(ConversationViewModel.Commands.HideUserProfileModal)
+                },
+                sendCommand = {
+                    sendCommand(ConversationViewModel.Commands.HandleUserProfileCommand(it))
+                },
+            )
         }
     }
 }
