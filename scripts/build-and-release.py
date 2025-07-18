@@ -74,7 +74,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/session-{version_name}-{flavor}-release.aab'))
+                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-release.aab'))
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')
