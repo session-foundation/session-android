@@ -10,12 +10,15 @@ import org.session.libsignal.utilities.Log
  */
 fun MutableContacts.upsertContact(accountId: String, updateFunction: Contact.() -> Unit = {}) {
     when {
+        accountId.startsWith(IdPrefix.STANDARD.value) -> {
+            getOrConstruct(accountId).let {
+                updateFunction(it)
+                set(it)
+            }
+        }
         accountId.startsWith(IdPrefix.BLINDED.value) -> Log.w("Loki", "Trying to create a contact with a blinded ID prefix")
         accountId.startsWith(IdPrefix.UN_BLINDED.value) -> Log.w("Loki", "Trying to create a contact with an un-blinded ID prefix")
         accountId.startsWith(IdPrefix.BLINDEDV2.value) -> Log.w("Loki", "Trying to create a contact with a blindedv2 ID prefix")
-        else -> getOrConstruct(accountId).let {
-            updateFunction(it)
-            set(it)
-        }
+        else -> Log.w("Loki", "Trying to create a contact with an unknown ID prefix")
     }
 }

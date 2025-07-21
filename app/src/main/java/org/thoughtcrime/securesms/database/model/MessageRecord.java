@@ -159,7 +159,9 @@ public abstract class MessageRecord extends DisplayRecord {
 
       return text;
     } else if (getMessageContent() instanceof DisappearingMessageUpdate) {
-      boolean isGroup = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId()).isGroupOrCommunityRecipient();
+      Recipient rec = DatabaseComponent.get(context).threadDatabase().getRecipientForThreadId(getThreadId());
+      if(rec == null) return "";
+      boolean isGroup = rec.isGroupOrCommunityRecipient();
       return UpdateMessageBuilder.INSTANCE
               .buildExpirationTimerMessage(context, ((DisappearingMessageUpdate) getMessageContent()).getExpiryMode(), isGroup, getIndividualRecipient().getAddress().toString(), isOutgoing());
     } else if (isDataExtractionNotification()) {
