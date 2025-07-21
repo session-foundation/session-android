@@ -29,7 +29,10 @@ class ReviewsManagerTest {
     val mockLoggingRule = MockLoggingRule()
 
 
-    private fun TestScope.createManager(isFreshInstall: Boolean): ReviewsManager {
+    private fun TestScope.createManager(
+        isFreshInstall: Boolean,
+        supportInAppReviewFlow: Boolean = true
+    ): ReviewsManager {
         val pm = mock<PackageManager> {
             on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
                 if (isFreshInstall) {
@@ -58,6 +61,9 @@ class ReviewsManagerTest {
             },
             clock = mock {
                 on { currentTimeMills() } doAnswer { System.currentTimeMillis() }
+            },
+            storeReviewManager = mock {
+                on { supportsReviewFlow } doReturn supportInAppReviewFlow
             },
             scope = backgroundScope,
         )
@@ -180,6 +186,21 @@ class ReviewsManagerTest {
 
                 // Try the trigger event now
                 manager.onEvent(triggerEvent)
+                expectNoEvents()
+            }
+        }
+    }
+
+    @Test
+    fun `should never show when in app flow is not supported`() = runTest {
+        val allEvents = EnumSet.allOf(ReviewsManager.Event::class.java)
+
+        for (triggerEvent in allEvents) {
+            val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = false)
+            manager.shouldShowPrompt.test {
+                assertFalse(awaitItem()) // Initially should not show prompt
+
+                manager.onEvent(triggerEvent) // Send the event
                 expectNoEvents()
             }
         }

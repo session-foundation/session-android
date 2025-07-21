@@ -40,7 +40,8 @@ class ReviewsManager @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val json: Json,
     private val clock: SnodeClock,
-    private val scope: CoroutineScope = GlobalScope,
+    private val storeReviewManager: StoreReviewManager,
+    scope: CoroutineScope = GlobalScope,
 ) {
     private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val eventsChannel: SendChannel<Event>
@@ -62,7 +63,10 @@ class ReviewsManager @Inject constructor(
                     } else {
                         flow {
                             emit(false)
-                            Log.i(TAG, "Review request is not ready yet, will show in $delayMills ms.")
+                            Log.i(
+                                TAG,
+                                "Review request is not ready yet, will show in $delayMills ms."
+                            )
                             delay(delayMills)
                             emit(true)
                         }
@@ -78,13 +82,17 @@ class ReviewsManager @Inject constructor(
 
         scope.launch {
             val startState = prefs.reviewState ?: run {
-                Log.i(TAG, "Initializing review state, checking if fresh install.")
-                val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
-                ReviewState.WaitingForTrigger(
-                    appUpdated = pkg.firstInstallTime != pkg.lastUpdateTime
-                ).also {
-                    prefs.reviewState = it // Save the initial state
+                if (storeReviewManager.supportsReviewFlow) {
+                    val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
+                    ReviewState.WaitingForTrigger(
+                        appUpdated = pkg.firstInstallTime != pkg.lastUpdateTime
+                    )
+                } else {
+                    ReviewState.DismissedForever
                 }
+            }.also {
+                Log.i(TAG, "Initial review state: $it")
+                prefs.reviewState = it // Save the initial state
             }
 
             channel.consumeAsFlow()
@@ -119,8 +127,12 @@ class ReviewsManager @Inject constructor(
                         // trigger events happen...
                         state is ReviewState.WaitingForTrigger && (
                                 (state.appUpdated && event == Event.DonateButtonPressed) ||
-                                (!state.appUpdated && event in EnumSet.of(Event.PathScreenVisited, Event.DonateButtonPressed, Event.ThemeChanged))
-                        ) -> {
+                                        (!state.appUpdated && event in EnumSet.of(
+                                            Event.PathScreenVisited,
+                                            Event.DonateButtonPressed,
+                                            Event.ThemeChanged
+                                        ))
+                                ) -> {
                             ReviewState.ShowingReviewRequest
                         }
 
