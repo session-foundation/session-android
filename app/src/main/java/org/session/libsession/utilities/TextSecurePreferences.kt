@@ -311,6 +311,7 @@ interface TextSecurePreferences {
         val IS_PUSH_ENABLED get() = "pref_is_using_fcm$pushSuffix"
         const val CONFIGURATION_SYNCED = "pref_configuration_synced"
         const val LAST_PROFILE_UPDATE_TIME = "pref_last_profile_update_time"
+        const val PROFILE_PIC_EXPIRY = "profile_pic_expiry"
         const val LAST_OPEN_DATE = "pref_last_open_date"
         const val HAS_HIDDEN_MESSAGE_REQUESTS = "pref_message_requests_hidden"
         const val HAS_HIDDEN_NOTE_TO_SELF = "pref_note_to_self_hidden"
@@ -909,6 +910,16 @@ interface TextSecurePreferences {
         @JvmStatic
         fun setLastProfilePictureUpload(context: Context, newValue: Long) {
             setLongPreference(context, "last_profile_picture_upload", newValue)
+        }
+
+        @JvmStatic
+        fun getProfileExpiry(context: Context): Long{
+            return getLongPreference(context, PROFILE_PIC_EXPIRY, 0)
+        }
+
+        @JvmStatic
+        fun setProfileExpiry(context: Context, newValue: Long){
+            setLongPreference(context, PROFILE_PIC_EXPIRY, newValue)
         }
 
         fun getLastSnodePoolRefreshDate(context: Context?): Long {

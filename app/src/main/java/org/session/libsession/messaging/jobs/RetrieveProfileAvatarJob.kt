@@ -1,12 +1,12 @@
 package org.session.libsession.messaging.jobs
 
-import network.loki.messenger.libsession_util.SessionEncrypt
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.AESGCM
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.DownloadUtilities.downloadFromFileServer
+import org.session.libsession.utilities.ProfilePictureUtilities
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfileAvatarId
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setProfilePictureURL
 import org.session.libsession.utilities.Util.equals
@@ -15,8 +15,9 @@ import org.session.libsignal.exceptions.NonRetryableException
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
-import java.io.File
 import java.io.FileOutputStream
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentSkipListSet
 
 class RetrieveProfileAvatarJob(
@@ -78,7 +79,19 @@ class RetrieveProfileAvatarJob(
 
 
         try {
-            val downloaded = downloadFromFileServer(profileAvatar)
+            val response = downloadFromFileServer(profileAvatar)
+            val downloaded = response.body
+
+            // if we are getting the avatar for the current user
+            // use the opportunity to set the expiry for the avatar
+            // which we can get from the response's headers
+            if(recipient.isLocalNumber && response.headers != null){
+                ProfilePictureUtilities.updateAvatarExpiryTimestamp(
+                    context,
+                    parseHttpDate(response.headers["expires"])
+                )
+            }
+
             val decrypted = AESGCM.decrypt(
                 downloaded.data,
                 offset = downloaded.offset,
@@ -116,6 +129,14 @@ class RetrieveProfileAvatarJob(
             }
         }
         return delegate.handleJobSucceeded(this, dispatcherName)
+    }
+
+    fun parseHttpDate(dateString: String?): Long? {
+        if(dateString == null) return null
+        return ZonedDateTime
+            .parse(dateString, DateTimeFormatter.RFC_1123_DATE_TIME)
+            .toInstant()
+            .toEpochMilli()
     }
 
     override fun serialize(): Data {
