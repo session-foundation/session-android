@@ -6,7 +6,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PlayReviewManager @Inject constructor(
+class PlayStoreReviewManager @Inject constructor(
     private val manager: ReviewManager
 ) : StoreReviewManager {
 

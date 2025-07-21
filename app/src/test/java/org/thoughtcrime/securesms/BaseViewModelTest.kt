@@ -4,18 +4,14 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.util.MockLoggingRule
 
 open class BaseViewModelTest: BaseCoroutineTest() {
 
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun setupLogger() {
-            Log.initialize(NoOpLogger)
-        }
-    }
-
     @get:Rule
     var instantExecutorRule = InstantTaskExecutorRule()
+
+    @get:Rule
+    var mockLoggingRule = MockLoggingRule()
 
 }

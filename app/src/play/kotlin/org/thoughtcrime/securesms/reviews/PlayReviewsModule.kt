@@ -16,7 +16,7 @@ import javax.inject.Singleton
 abstract class PlayReviewsModule {
     @Binds
     abstract fun bindStoreReviewManager(
-        storeReviewManager: PlayReviewManager
+        storeReviewManager: PlayStoreReviewManager
     ): StoreReviewManager
 }
 
