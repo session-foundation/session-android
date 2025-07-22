@@ -58,7 +58,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context,
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
@@ -70,7 +70,7 @@ class HomeViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
     private val proStatusManager: ProStatusManager,
-    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(

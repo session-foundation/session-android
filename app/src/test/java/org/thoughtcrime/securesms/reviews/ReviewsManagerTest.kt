@@ -32,7 +32,7 @@ class ReviewsManagerTest {
     private fun TestScope.createManager(
         isFreshInstall: Boolean,
         supportInAppReviewFlow: Boolean = true
-    ): ReviewsManager {
+    ): InAppReviewManager {
         val pm = mock<PackageManager> {
             on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
                 if (isFreshInstall) {
@@ -47,7 +47,7 @@ class ReviewsManagerTest {
 
         var reviewState: String? = null
 
-        return ReviewsManager(
+        return InAppReviewManager(
             context = mock {
                 on { packageManager } doReturn pm
                 on { packageName } doReturn "mypackage.name"
@@ -72,9 +72,9 @@ class ReviewsManagerTest {
     @Test
     fun `should show prompt on triggers on fresh install`() = runTest {
 
-        for (event in listOf(ReviewsManager.Event.ThemeChanged,
-            ReviewsManager.Event.PathScreenVisited,
-            ReviewsManager.Event.DonateButtonPressed)) {
+        for (event in listOf(InAppReviewManager.Event.ThemeChanged,
+            InAppReviewManager.Event.PathScreenVisited,
+            InAppReviewManager.Event.DonateButtonPressed)) {
             val manager = createManager(isFreshInstall = true)
 
             manager.shouldShowPrompt.test {
@@ -90,9 +90,9 @@ class ReviewsManagerTest {
     @Test
     fun `should show prompt respectively on triggers on update`() = runTest {
         val shouldShowByEvent = mapOf(
-            ReviewsManager.Event.ThemeChanged to false,
-            ReviewsManager.Event.PathScreenVisited to false,
-            ReviewsManager.Event.DonateButtonPressed to true
+            InAppReviewManager.Event.ThemeChanged to false,
+            InAppReviewManager.Event.PathScreenVisited to false,
+            InAppReviewManager.Event.DonateButtonPressed to true
         )
 
         for ((event, shouldShow) in shouldShowByEvent) {
@@ -116,17 +116,17 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
             assertFalse(awaitItem()) // The prompt should be gone now
 
-            advanceTimeBy(ReviewsManager.REVIEW_REQUEST_DISMISS_DELAY)
+            advanceTimeBy(InAppReviewManager.REVIEW_REQUEST_DISMISS_DELAY)
 
             assertTrue(awaitItem()) // Should show prompt after the delay
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow again
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow again
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -138,10 +138,10 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.Dismiss) // User dismisses the prompt
+            manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -153,17 +153,17 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
             assertFalse(awaitItem()) // The prompt should be gone now
 
-            advanceTimeBy(ReviewsManager.REVIEW_REQUEST_DISMISS_DELAY)
+            advanceTimeBy(InAppReviewManager.REVIEW_REQUEST_DISMISS_DELAY)
 
             assertTrue(awaitItem()) // Should show prompt after the delay
 
-            manager.onEvent(ReviewsManager.Event.Dismiss) // User abandons the flow again
+            manager.onEvent(InAppReviewManager.Event.Dismiss) // User abandons the flow again
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -171,17 +171,17 @@ class ReviewsManagerTest {
 
     @Test
     fun `review request should not show again once dismissed`() = runTest {
-        val allEvents = EnumSet.allOf(ReviewsManager.Event::class.java)
+        val allEvents = EnumSet.allOf(InAppReviewManager.Event::class.java)
 
         for (triggerEvent in allEvents) {
             val manager = createManager(isFreshInstall = true)
             manager.shouldShowPrompt.test {
                 assertFalse(awaitItem()) // Initially should not show prompt
 
-                manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+                manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
                 assertTrue(awaitItem()) // Should show prompt
 
-                manager.onEvent(ReviewsManager.Event.Dismiss) // User dismisses the prompt
+                manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
                 assertFalse(awaitItem()) // The prompt should be gone now
 
                 // Try the trigger event now
@@ -193,7 +193,7 @@ class ReviewsManagerTest {
 
     @Test
     fun `should never show when in app flow is not supported`() = runTest {
-        val allEvents = EnumSet.allOf(ReviewsManager.Event::class.java)
+        val allEvents = EnumSet.allOf(InAppReviewManager.Event::class.java)
 
         for (triggerEvent in allEvents) {
             val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = false)

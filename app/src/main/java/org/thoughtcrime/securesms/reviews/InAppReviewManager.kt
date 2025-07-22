@@ -3,10 +3,8 @@ package org.thoughtcrime.securesms.reviews
 import android.content.Context
 import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -35,7 +33,7 @@ import kotlin.time.Duration.Companion.days
 
 @OptIn(DelicateCoroutinesApi::class)
 @Singleton
-class ReviewsManager @Inject constructor(
+class InAppReviewManager @Inject constructor(
     @param:ApplicationContext val context: Context,
     private val prefs: TextSecurePreferences,
     private val json: Json,
@@ -53,9 +51,9 @@ class ReviewsManager @Inject constructor(
         .map { prefs.reviewState }
         .flatMapLatest { state ->
             when (state) {
-                ReviewState.DismissedForever, is ReviewState.WaitingForTrigger, null -> flowOf(false)
-                ReviewState.ShowingReviewRequest -> flowOf(true)
-                is ReviewState.DismissedUntil -> {
+                InAppReviewState.DismissedForever, is InAppReviewState.WaitingForTrigger, null -> flowOf(false)
+                InAppReviewState.ShowingReviewRequest -> flowOf(true)
+                is InAppReviewState.DismissedUntil -> {
                     val now = clock.currentTimeMills()
                     val delayMills = state.untilTimestampMills - now
                     if (delayMills <= 0) {
@@ -84,11 +82,11 @@ class ReviewsManager @Inject constructor(
             val startState = prefs.reviewState ?: run {
                 if (storeReviewManager.supportsReviewFlow) {
                     val pkg = context.packageManager.getPackageInfo(context.packageName, 0)
-                    ReviewState.WaitingForTrigger(
+                    InAppReviewState.WaitingForTrigger(
                         appUpdated = pkg.firstInstallTime != pkg.lastUpdateTime
                     )
                 } else {
-                    ReviewState.DismissedForever
+                    InAppReviewState.DismissedForever
                 }
             }.also {
                 Log.i(TAG, "Initial review state: $it")
@@ -101,31 +99,31 @@ class ReviewsManager @Inject constructor(
                     when {
                         // If we have determined that we should not show the review request,
                         // no amount of events will change that.
-                        state == ReviewState.DismissedForever -> state
+                        state == InAppReviewState.DismissedForever -> state
 
                         // If we have shown the review request and the user has abandoned it...
-                        state == ReviewState.ShowingReviewRequest && event == Event.ReviewFlowAbandoned -> {
-                            ReviewState.DismissedUntil(clock.currentTimeMills() + REVIEW_REQUEST_DISMISS_DELAY.inWholeMilliseconds)
+                        state == InAppReviewState.ShowingReviewRequest && event == Event.ReviewFlowAbandoned -> {
+                            InAppReviewState.DismissedUntil(clock.currentTimeMills() + REVIEW_REQUEST_DISMISS_DELAY.inWholeMilliseconds)
                         }
 
                         // If the user abandoned the review flow **again**...
-                        state is ReviewState.DismissedUntil && event == Event.ReviewFlowAbandoned -> {
-                            ReviewState.DismissedForever
+                        state is InAppReviewState.DismissedUntil && event == Event.ReviewFlowAbandoned -> {
+                            InAppReviewState.DismissedForever
                         }
 
                         // If we are showing the review request and the user has dismissed it...
-                        state == ReviewState.ShowingReviewRequest && event == Event.Dismiss -> {
-                            ReviewState.DismissedForever
+                        state == InAppReviewState.ShowingReviewRequest && event == Event.Dismiss -> {
+                            InAppReviewState.DismissedForever
                         }
 
                         // If we are showing the review request and the user has dismissed it...
-                        state is ReviewState.DismissedUntil && event == Event.Dismiss -> {
-                            ReviewState.DismissedForever
+                        state is InAppReviewState.DismissedUntil && event == Event.Dismiss -> {
+                            InAppReviewState.DismissedForever
                         }
 
                         // If we are waiting for the user to trigger the review request, and eligible
                         // trigger events happen...
-                        state is ReviewState.WaitingForTrigger && (
+                        state is InAppReviewState.WaitingForTrigger && (
                                 (state.appUpdated && event == Event.DonateButtonPressed) ||
                                         (!state.appUpdated && event in EnumSet.of(
                                             Event.PathScreenVisited,
@@ -133,7 +131,7 @@ class ReviewsManager @Inject constructor(
                                             Event.ThemeChanged
                                         ))
                                 ) -> {
-                            ReviewState.ShowingReviewRequest
+                            InAppReviewState.ShowingReviewRequest
                         }
 
                         else -> state
@@ -160,13 +158,13 @@ class ReviewsManager @Inject constructor(
 
     private var TextSecurePreferences.reviewState
         get() = prefs.inAppReviewState?.let {
-            runCatching { json.decodeFromString<ReviewState>(it) }
+            runCatching { json.decodeFromString<InAppReviewState>(it) }
                 .onFailure { Log.w(TAG, "Failed to decode review state", it) }
                 .getOrNull()
         }
         set(value) {
             prefs.inAppReviewState =
-                value?.let { json.encodeToString(ReviewState.serializer(), it) }
+                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
             stateChangeNotification.tryEmit(Unit)
         }
 

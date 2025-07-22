@@ -10,6 +10,9 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
+/**
+ * Module for providing default implementation of [StoreReviewManager].
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class ReviewsModule {
@@ -19,18 +22,20 @@ abstract class ReviewsModule {
     ): StoreReviewManager
 }
 
+/**
+ * Module for providing JSON serializers.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 class ReviewsSerializerModule {
     @Provides
     @IntoSet
     fun provideReviewsSerializersModule(): SerializersModule = SerializersModule {
-        // No specific serializers needed for reviews at the moment
-        polymorphic(ReviewState::class) {
-            subclass(ReviewState.WaitingForTrigger::class)
-            subclass(ReviewState.ShowingReviewRequest::class)
-            subclass(ReviewState.DismissedForever::class)
-            subclass(ReviewState.DismissedUntil::class)
+        polymorphic(InAppReviewState::class) {
+            subclass(InAppReviewState.WaitingForTrigger::class)
+            subclass(InAppReviewState.ShowingReviewRequest::class)
+            subclass(InAppReviewState.DismissedForever::class)
+            subclass(InAppReviewState.DismissedUntil::class)
         }
     }
 }
