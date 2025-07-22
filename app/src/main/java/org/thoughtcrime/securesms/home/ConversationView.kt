@@ -67,7 +67,7 @@ class ConversationView : LinearLayout {
             binding.accentView.background = UnreadStylingHelper.getAccentBackground(context)
             // Using thread.isRead we can determine if the last message was our own, and display it as 'read' even though previous messages may not be
             // This would also not trigger the disappearing message timer which may or may not be desirable
-            binding.accentView.isVisible = isUnread
+            binding.accentView.visibility = if(isUnread) View.VISIBLE else View.INVISIBLE
         }
 
         binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
