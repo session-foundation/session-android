@@ -194,9 +194,6 @@ fun TestScope.createManager(
         json = Json {
             serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
         },
-        clock = mock {
-            on { currentTimeMills() } doAnswer { System.currentTimeMillis() }
-        },
         storeReviewManager = mock {
             on { supportsReviewFlow } doReturn supportInAppReviewFlow
         },

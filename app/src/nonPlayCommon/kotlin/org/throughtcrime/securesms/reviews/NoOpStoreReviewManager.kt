@@ -4,6 +4,8 @@ import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import javax.inject.Inject
 
 class NoOpStoreReviewManager @Inject constructor() : StoreReviewManager {
+    override val storeName: String
+        get() = ""
     override val supportsReviewFlow: Boolean
         get() = false
 

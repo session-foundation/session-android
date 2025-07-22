@@ -1,9 +1,12 @@
 package org.thoughtcrime.securesms.reviews.ui
 
+import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,10 +18,16 @@ import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
+import network.loki.messenger.R
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
+import org.session.libsession.utilities.TranslatableText
 import javax.inject.Inject
 
 @HiltViewModel
 class InAppReviewViewModel @Inject constructor(
+    @param:ApplicationContext private val context: Context,
     private val manager: InAppReviewManager,
     private val storeReviewManager: StoreReviewManager,
 ) : ViewModel() {
@@ -99,26 +108,33 @@ class InAppReviewViewModel @Inject constructor(
         combine(state, manager.shouldShowPrompt) { st, shouldShowPrompt ->
             when (st) {
                 State.Init -> if (shouldShowPrompt) UiState.Visible(
-                    title = "Enjoying Session?",
-                    message = "You've been using Session for a little while, how’s it going? We’d really appreciate hearing your thoughts",
-                    positiveButtonText = "It's Great ❤\uFE0F",
-                    negativeButtonText = "Needs Work \uD83D\uDE15",
+                    title = TranslatableText(R.string.enjoyingSession, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    message = TranslatableText(R.string.enjoyingSessionDescription, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    positiveButtonText = TranslatableText(R.string.enjoyingSessionButtonPositive, EMOJI_KEY to "❤\uFE0F"),
+                    negativeButtonText = TranslatableText(R.string.enjoyingSessionButtonNegative, EMOJI_KEY to "\uD83D\uDE15"),
                 ) else {
                     UiState.Hidden
                 }
 
                 State.PositiveFlow -> UiState.Visible(
-                    title = "Rate Session?",
-                    message = "We're glad you're enjoying Session, if you have a moment, rating us in the Google Play helps others discover private, secure messaging!",
-                    positiveButtonText = "Rate App",
-                    negativeButtonText = "Not Now",
+                    title = TranslatableText(R.string.rateSession, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    message = TranslatableText(
+                        R.string.rateSessionModalDescription,
+                        APP_NAME_KEY to context.getString(R.string.app_name),
+                        STORE_VARIANT_KEY to storeReviewManager.storeName
+                    ),
+                    positiveButtonText = TranslatableText(R.string.rateSessionApp),
+                    negativeButtonText = TranslatableText(R.string.notNow),
                 )
 
                 State.NegativeFlow -> UiState.Visible(
-                    title = "Give Feedback?",
-                    message = "Sorry to hear your Session experience hasn’t been ideal. We'd be grateful if you could take a moment to share your thoughts in a brief survey",
-                    positiveButtonText = "Open Survey",
-                    negativeButtonText = "Not Now",
+                    title = TranslatableText(R.string.giveFeedback, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    message = TranslatableText(
+                        R.string.giveFeedbackDescription,
+                        APP_NAME_KEY to context.getString(R.string.app_name),
+                    ),
+                    positiveButtonText = TranslatableText(R.string.openSurvey),
+                    negativeButtonText = TranslatableText(R.string.notNow),
                 )
 
                 State.ConfirmOpeningSurvey -> UiState.OpenURLDialog(url = "https://getsession.org/review/survey")
@@ -155,10 +171,10 @@ class InAppReviewViewModel @Inject constructor(
         data object Hidden : UiState
 
         data class Visible(
-            val title: String,
-            val message: String,
-            val positiveButtonText: String,
-            val negativeButtonText: String,
+            val title: TranslatableText,
+            val message: TranslatableText,
+            val positiveButtonText: TranslatableText,
+            val negativeButtonText: TranslatableText,
         ) : UiState
 
         data class OpenURLDialog(

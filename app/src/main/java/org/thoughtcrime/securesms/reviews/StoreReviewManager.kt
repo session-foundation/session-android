@@ -5,5 +5,6 @@ package org.thoughtcrime.securesms.reviews
  */
 interface StoreReviewManager {
     val supportsReviewFlow: Boolean
+    val storeName: String
     suspend fun requestReviewFlow()
 }

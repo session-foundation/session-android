@@ -30,6 +30,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -38,13 +39,11 @@ class InAppReviewManager @Inject constructor(
     @param:ApplicationContext val context: Context,
     private val prefs: TextSecurePreferences,
     private val json: Json,
-    private val clock: SnodeClock,
     private val storeReviewManager: StoreReviewManager,
     @param:ManagerScope private val scope: CoroutineScope,
 ) {
     private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val eventsChannel: SendChannel<Event>
-
 
     @Suppress("OPT_IN_USAGE")
     val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
@@ -55,7 +54,7 @@ class InAppReviewManager @Inject constructor(
                 InAppReviewState.DismissedForever, is InAppReviewState.WaitingForTrigger, null -> flowOf(false)
                 InAppReviewState.ShowingReviewRequest -> flowOf(true)
                 is InAppReviewState.DismissedUntil -> {
-                    val now = clock.currentTimeMills()
+                    val now = System.currentTimeMillis()
                     val delayMills = state.untilTimestampMills - now
                     if (delayMills <= 0) {
                         flowOf(true)
@@ -98,7 +97,7 @@ class InAppReviewManager @Inject constructor(
 
                         // If we have shown the review request and the user has abandoned it...
                         state == InAppReviewState.ShowingReviewRequest && event == Event.ReviewFlowAbandoned -> {
-                            InAppReviewState.DismissedUntil(clock.currentTimeMills() + REVIEW_REQUEST_DISMISS_DELAY.inWholeMilliseconds)
+                            InAppReviewState.DismissedUntil(System.currentTimeMillis() + REVIEW_REQUEST_DISMISS_DELAY.inWholeMilliseconds)
                         }
 
                         // If the user abandoned the review flow **again**...
@@ -169,6 +168,6 @@ class InAppReviewManager @Inject constructor(
         private const val TAG = "InAppReviewManager"
 
         @VisibleForTesting
-        val REVIEW_REQUEST_DISMISS_DELAY = 10.seconds
+        val REVIEW_REQUEST_DISMISS_DELAY = 14.days
     }
 }

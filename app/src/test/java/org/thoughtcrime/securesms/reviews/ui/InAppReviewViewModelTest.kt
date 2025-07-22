@@ -1,11 +1,9 @@
 package org.thoughtcrime.securesms.reviews.ui
 
+import android.app.Application
+import android.content.Context
+import androidx.test.platform.app.InstrumentationRegistry
 import app.cash.turbine.test
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.android.awaitFrame
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -13,20 +11,27 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyBlocking
-import org.mockito.verification.VerificationMode
 import org.thoughtcrime.securesms.BaseViewModelTest
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import org.thoughtcrime.securesms.reviews.createManager
-import kotlin.time.Duration.Companion.days
 
 @RunWith(JUnit4::class)
 class InAppReviewViewModelTest : BaseViewModelTest() {
 
+    lateinit var context: Context
+
+    @Before
+    fun setUp() {
+        context = mock {
+            on { getString(any()) } doReturn "Mocked String"
+        }
+    }
 
     @Test
     fun `should go through store flow`() = runTest {
@@ -38,7 +43,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
 
         val vm = InAppReviewViewModel(
             manager = manager,
-            storeReviewManager = storeReviewManager
+            storeReviewManager = storeReviewManager,
+            context = context,
         )
 
         vm.uiState.test {
@@ -72,7 +78,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
 
         val vm = InAppReviewViewModel(
             manager = manager,
-            storeReviewManager = storeReviewManager
+            storeReviewManager = storeReviewManager,
+            context = context,
         )
 
         vm.uiState.test {
@@ -106,7 +113,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
 
         val vm = InAppReviewViewModel(
             manager = manager,
-            storeReviewManager = storeReviewManager
+            storeReviewManager = storeReviewManager,
+            context = context,
         )
 
         vm.uiState.test {
@@ -137,7 +145,8 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
 
         val vm = InAppReviewViewModel(
             manager = manager,
-            storeReviewManager = storeReviewManager
+            storeReviewManager = storeReviewManager,
+            context = context,
         )
 
         vm.uiState.test {

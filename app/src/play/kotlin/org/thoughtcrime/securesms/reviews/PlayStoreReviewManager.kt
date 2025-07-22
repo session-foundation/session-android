@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.reviews
 
+import android.app.Application
 import com.google.android.play.core.ktx.launchReview
 import com.google.android.play.core.ktx.requestReview
 import com.google.android.play.core.review.ReviewManager
@@ -8,13 +9,21 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 @Singleton
 class PlayStoreReviewManager @Inject constructor(
     private val manager: ReviewManager,
     private val currentActivityObserver: CurrentActivityObserver,
+    private val application: Application,
 ) : StoreReviewManager {
+
+    override val storeName: String by lazy {
+        val pm = application.packageManager
+        runCatching {
+            pm.getApplicationLabel(pm.getApplicationInfo("com.android.vending", 0))
+        }.getOrNull()?.toString() ?: "Google Play Store"
+    }
 
     override val supportsReviewFlow: Boolean
         get() = true
@@ -27,7 +36,7 @@ class PlayStoreReviewManager @Inject constructor(
         val info = manager.requestReview()
         manager.launchReview(activity, info)
 
-        val hasLaunchedSomething = withTimeoutOrNull(1.seconds) {
+        val hasLaunchedSomething = withTimeoutOrNull(500.milliseconds) {
             currentActivityObserver.currentActivity.first { it == null }
         } != null
 
