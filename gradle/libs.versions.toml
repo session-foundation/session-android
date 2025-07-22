@@ -77,6 +77,7 @@ uiTestJunit4Version = "1.8.3"
 workRuntimeKtxVersion = "2.10.2"
 zxingVersion = "3.5.3"
 huaweiPushVersion = "6.7.0.300"
+googlePlayReviewVersion = "2.0.2"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistThemeadapterAppcompatVersion" }
@@ -176,7 +177,8 @@ tooltips = { module = "com.tomergoldst.android:tooltips", version.ref = "tooltip
 truth = { module = "com.google.truth:truth", version.ref = "truthVersion" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" }
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
-
+google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
+google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

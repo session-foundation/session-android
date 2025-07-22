@@ -14,14 +14,5 @@ import kotlinx.serialization.modules.subclass
 sealed interface MessageContent {
     companion object {
         const val DISCRIMINATOR = "type"
-
-        fun serializersModule() = SerializersModule {
-            polymorphic(MessageContent::class) {
-                subclass(DisappearingMessageUpdate::class)
-                defaultDeserializer {
-                    UnknownMessageContent.serializer()
-                }
-            }
-        }
     }
 }
