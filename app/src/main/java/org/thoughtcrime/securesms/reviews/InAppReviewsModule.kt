@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.reviews
 
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -10,17 +9,6 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
-/**
- * Module for providing default implementation of [StoreReviewManager].
- */
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class ReviewsModule {
-    @Binds
-    abstract fun bindStoreReviewManager(
-        storeReviewManager: NoOpStoreReviewManager
-    ): StoreReviewManager
-}
 
 /**
  * Module for providing JSON serializers.

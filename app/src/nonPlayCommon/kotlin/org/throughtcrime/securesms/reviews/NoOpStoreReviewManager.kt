@@ -1,5 +1,6 @@
-package org.thoughtcrime.securesms.reviews
+package org.throughtcrime.securesms.reviews
 
+import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import javax.inject.Inject
 
 class NoOpStoreReviewManager @Inject constructor() : StoreReviewManager {

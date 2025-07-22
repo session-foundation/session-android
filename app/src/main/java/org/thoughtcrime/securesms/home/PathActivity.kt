@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -40,6 +41,7 @@ import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsignal.utilities.Snode
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.ui.getSubbedString
 import org.thoughtcrime.securesms.util.GlowViewUtilities
 import org.thoughtcrime.securesms.util.IP2Country
@@ -50,11 +52,16 @@ import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.fadeIn
 import org.thoughtcrime.securesms.util.fadeOut
 import org.thoughtcrime.securesms.util.getAccentColor
+import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class PathActivity : ScreenLockActionBarActivity() {
     private lateinit var binding: ActivityPathBinding
     private val broadcastReceivers = mutableListOf<BroadcastReceiver>()
+
+    @Inject
+    lateinit var inAppReviewManager: InAppReviewManager
 
     // region Lifecycle
     override fun onCreate(savedInstanceState: Bundle?, isReady: Boolean) {
@@ -98,6 +105,10 @@ class PathActivity : ScreenLockActionBarActivity() {
             }
 
             binding.pathRowsContainer.layoutParams = params
+        }
+
+        lifecycleScope.launch {
+            inAppReviewManager.onEvent(InAppReviewManager.Event.PathScreenVisited)
         }
     }
 
