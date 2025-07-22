@@ -117,7 +117,7 @@ class InAppReviewViewModel @Inject constructor(
                 }
 
                 State.PositiveFlow -> UiState.Visible(
-                    title = TranslatableText(R.string.rateSession, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    title = TranslatableText(R.string.rateSession),
                     message = TranslatableText(
                         R.string.rateSessionModalDescription,
                         APP_NAME_KEY to context.getString(R.string.app_name),
@@ -128,7 +128,7 @@ class InAppReviewViewModel @Inject constructor(
                 )
 
                 State.NegativeFlow -> UiState.Visible(
-                    title = TranslatableText(R.string.giveFeedback, APP_NAME_KEY to context.getString(R.string.app_name)),
+                    title = TranslatableText(R.string.giveFeedback),
                     message = TranslatableText(
                         R.string.giveFeedbackDescription,
                         APP_NAME_KEY to context.getString(R.string.app_name),
