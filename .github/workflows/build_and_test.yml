@@ -44,7 +44,8 @@ jobs:
 
       - name: Build and test with Gradle
         id: build
-        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} test${{ matrix.variant }}${{ matrix.build_type }}UnitTest  ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} && \
+                ./gradlew test${{ matrix.variant }}${{ matrix.build_type }}UnitTest ${{ matrix.extra_build_command_options }}
 
       - name: Upload build reports regardless
         if: always()
