@@ -355,7 +355,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         // Schedule a notification about the new Token Page for 1 hour after running the updated app for the first time.
         // Note: We do NOT schedule a debug notification on startup - but one may be triggered from the Debug Menu.
-        if (!BuildConfig.DEBUG) {
+        if (BuildConfig.BUILD_TYPE == "release") {
             tokenPageNotificationManager.scheduleTokenPageNotification(constructDebugNotification = false)
         }
 

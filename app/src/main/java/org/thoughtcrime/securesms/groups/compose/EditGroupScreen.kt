@@ -305,7 +305,7 @@ private fun MemberActionSheet(
                 )
             }
 
-            if (BuildConfig.DEBUG && member.canPromote) {
+            if (BuildConfig.BUILD_TYPE != "release" && member.canPromote) {
                 this += ActionSheetItemData(
                     title = context.getString(R.string.adminPromoteToAdmin),
                     iconRes = R.drawable.ic_user_filled_custom,
@@ -322,7 +322,7 @@ private fun MemberActionSheet(
                 )
             }
 
-            if (BuildConfig.DEBUG && member.canResendPromotion) {
+            if (BuildConfig.BUILD_TYPE != "release" && member.canResendPromotion) {
                 this += ActionSheetItemData(
                     title = "Resend promotion",
                     iconRes = R.drawable.ic_mail,

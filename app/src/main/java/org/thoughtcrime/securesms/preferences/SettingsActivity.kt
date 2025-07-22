@@ -282,7 +282,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.settings_general, menu)
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.BUILD_TYPE != "release") {
             menu.findItem(R.id.action_qr_code)?.contentDescription = resources.getString(R.string.AccessibilityId_qrView)
         }
         return true
