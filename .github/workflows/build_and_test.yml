@@ -29,9 +29,7 @@ jobs:
           path: |
             ~/.gradle/caches
             .gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}-${{ matrix.variant }}
 
       - uses: actions/checkout@v4
         with:
