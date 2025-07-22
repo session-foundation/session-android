@@ -331,6 +331,10 @@ dependencies {
         }
     }
 
+    val playImplementation = configurations.maybeCreate("playImplementation")
+    playImplementation(libs.google.play.review)
+    playImplementation(libs.google.play.review.ktx)
+
     if (huaweiEnabled) {
         val huaweiImplementation = configurations.maybeCreate("huaweiImplementation")
         huaweiImplementation(libs.huawei.push)

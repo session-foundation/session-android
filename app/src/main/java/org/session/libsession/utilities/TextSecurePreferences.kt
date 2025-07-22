@@ -12,10 +12,15 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager.getDefaultSharedPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
@@ -228,6 +233,8 @@ interface TextSecurePreferences {
 
     var selectedActivityAliasName: String?
 
+    var inAppReviewState: String?
+
     companion object {
         val TAG = TextSecurePreferences::class.simpleName
 
@@ -370,6 +377,8 @@ interface TextSecurePreferences {
         const val TIME_FORMAT_PREF = "libsession.TIME_FORMAT_PREF"
 
         const val FORCED_SHORT_TTL = "forced_short_ttl"
+
+        const val IN_APP_REVIEW_STATE = "in_app_review_state"
 
         @JvmStatic
         fun getConfigurationMessageSynced(context: Context): Boolean {
@@ -1802,6 +1811,10 @@ class AppTextSecurePreferences @Inject constructor(
     override fun setForcedShortTTL(value: Boolean) {
         setBooleanPreference(FORCED_SHORT_TTL, value)
     }
+
+    override var inAppReviewState: String?
+        get() = getStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, null)
+        set(value) = setStringPreference(TextSecurePreferences.IN_APP_REVIEW_STATE, value)
 
     override var deprecationStateOverride: String?
         get() = getStringPreference(TextSecurePreferences.DEPRECATED_STATE_OVERRIDE, null)

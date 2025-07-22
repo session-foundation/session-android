@@ -32,10 +32,12 @@ import javax.inject.Singleton
 class AppModule {
     @Provides
     @Singleton
-    fun provideJson(): Json {
+    fun provideJson(modules: Set<@JvmSuppressWildcards SerializersModule>): Json {
         return Json {
             ignoreUnknownKeys = true
-            serializersModule += MessageContent.serializersModule()
+            serializersModule += SerializersModule {
+                modules.forEach { include(it) }
+            }
         }
     }
 }
