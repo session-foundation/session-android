@@ -26,6 +26,7 @@ import kotlinx.serialization.json.Json
 import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,11 +40,10 @@ class InAppReviewManager @Inject constructor(
     private val json: Json,
     private val clock: SnodeClock,
     private val storeReviewManager: StoreReviewManager,
-    scope: CoroutineScope = GlobalScope,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
     private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val eventsChannel: SendChannel<Event>
-
 
     @Suppress("OPT_IN_USAGE")
     val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
@@ -170,7 +170,7 @@ class InAppReviewManager @Inject constructor(
 
 
     companion object {
-        private const val TAG = "ReviewsManager"
+        private const val TAG = "InAppReviewManager"
 
         @VisibleForTesting
         val REVIEW_REQUEST_DISMISS_DELAY = 14.days

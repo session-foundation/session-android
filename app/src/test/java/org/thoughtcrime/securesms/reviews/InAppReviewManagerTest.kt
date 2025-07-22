@@ -22,7 +22,7 @@ import org.thoughtcrime.securesms.util.MockLoggingRule
 import java.util.EnumSet
 
 @RunWith(JUnit4::class)
-class ReviewsManagerTest {
+class InAppReviewManagerTest {
 
 
     @get:Rule
