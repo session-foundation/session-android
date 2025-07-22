@@ -874,12 +874,8 @@
     <string name="proActivated">Aktivováno</string>
     <string name="proAlreadyPurchased">Už máte</string>
     <string name="proAnimatedDisplayPicture">Jako váš zobrazovaný profilový obrázek nastavte animovaný GIF nebo WebP!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Získejte možnost nahrát animovaný zobrazovaný obrázek profilu a další prémiové funkce se Session Pro</string>
     <string name="proAnimatedDisplayPictureModalDescription">uživatelé mohou nahrávat GIFy</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Nahrajte GIFy se</string>
-    <string name="proCallToActionLongerMessages">Chcete posílat delší zprávy? Posílejte více textu odemknutím prémiových funkcí Session Pro</string>
-    <string name="proCallToActionPinnedConversations">Chcete více připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Chcete více než 5 připnutí? Organizujte své chaty a odemkněte prémiové funkce pomocí Session Pro</string>
     <string name="proFeatureListAnimatedDisplayPicture">Nahrajte GIF a WebP jako zobrazovaný obrázek</string>
     <string name="proFeatureListLargerGroups">Větší soukromé skupiny až 300 členů</string>
     <string name="proFeatureListLoadsMore">A další exkluzivních funkce</string>
