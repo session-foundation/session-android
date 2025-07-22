@@ -5,7 +5,6 @@ import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.delay
@@ -14,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -30,7 +30,7 @@ import org.thoughtcrime.securesms.dependencies.ManagerScope
 import java.util.EnumSet
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(DelicateCoroutinesApi::class)
 @Singleton
@@ -44,6 +44,8 @@ class InAppReviewManager @Inject constructor(
 ) {
     private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val eventsChannel: SendChannel<Event>
+
+    private var inMemoryState: InAppReviewState? = null
 
     @Suppress("OPT_IN_USAGE")
     val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
@@ -61,10 +63,7 @@ class InAppReviewManager @Inject constructor(
                     } else {
                         flow {
                             emit(false)
-                            Log.i(
-                                TAG,
-                                "Review request is not ready yet, will show in $delayMills ms."
-                            )
+                            Log.i(TAG, "Review request is not ready yet, will show in $delayMills ms.")
                             delay(delayMills)
                             emit(true)
                         }
@@ -88,9 +87,6 @@ class InAppReviewManager @Inject constructor(
                 } else {
                     InAppReviewState.DismissedForever
                 }
-            }.also {
-                Log.i(TAG, "Initial review state: $it")
-                prefs.reviewState = it // Save the initial state
             }
 
             channel.consumeAsFlow()
@@ -124,10 +120,10 @@ class InAppReviewManager @Inject constructor(
                         // If we are waiting for the user to trigger the review request, and eligible
                         // trigger events happen...
                         state is InAppReviewState.WaitingForTrigger && (
-                                (state.appUpdated && event == Event.DonateButtonPressed) ||
+                                (state.appUpdated && event == Event.DonateButtonClicked) ||
                                         (!state.appUpdated && event in EnumSet.of(
                                             Event.PathScreenVisited,
-                                            Event.DonateButtonPressed,
+                                            Event.DonateButtonClicked,
                                             Event.ThemeChanged
                                         ))
                                 ) -> {
@@ -137,6 +133,7 @@ class InAppReviewManager @Inject constructor(
                         else -> state
                     }
                 }
+                .distinctUntilChanged()
                 .collectLatest {
                     prefs.reviewState = it
                     Log.d(TAG, "New review state is: $it")
@@ -150,29 +147,35 @@ class InAppReviewManager @Inject constructor(
 
     enum class Event {
         PathScreenVisited,
-        DonateButtonPressed,
+        DonateButtonClicked,
         ThemeChanged,
         ReviewFlowAbandoned,
         Dismiss,
     }
 
+
     private var TextSecurePreferences.reviewState
-        get() = prefs.inAppReviewState?.let {
-            runCatching { json.decodeFromString<InAppReviewState>(it) }
-                .onFailure { Log.w(TAG, "Failed to decode review state", it) }
-                .getOrNull()
-        }
+        get() = inMemoryState
         set(value) {
-            prefs.inAppReviewState =
-                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
+            inMemoryState = value
             stateChangeNotification.tryEmit(Unit)
         }
+//        get() = prefs.inAppReviewState?.let {
+//            runCatching { json.decodeFromString<InAppReviewState>(it) }
+//                .onFailure { Log.w(TAG, "Failed to decode review state", it) }
+//                .getOrNull()
+//        }
+//        set(value) {
+//            prefs.inAppReviewState =
+//                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
+//            stateChangeNotification.tryEmit(Unit)
+//        }
 
 
     companion object {
         private const val TAG = "InAppReviewManager"
 
         @VisibleForTesting
-        val REVIEW_REQUEST_DISMISS_DELAY = 14.days
+        val REVIEW_REQUEST_DISMISS_DELAY = 10.seconds
     }
 }

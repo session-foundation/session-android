@@ -74,7 +74,7 @@ class InAppReviewManagerTest {
 
         for (event in listOf(InAppReviewManager.Event.ThemeChanged,
             InAppReviewManager.Event.PathScreenVisited,
-            InAppReviewManager.Event.DonateButtonPressed)) {
+            InAppReviewManager.Event.DonateButtonClicked)) {
             val manager = createManager(isFreshInstall = true)
 
             manager.shouldShowPrompt.test {
@@ -92,7 +92,7 @@ class InAppReviewManagerTest {
         val shouldShowByEvent = mapOf(
             InAppReviewManager.Event.ThemeChanged to false,
             InAppReviewManager.Event.PathScreenVisited to false,
-            InAppReviewManager.Event.DonateButtonPressed to true
+            InAppReviewManager.Event.DonateButtonClicked to true
         )
 
         for ((event, shouldShow) in shouldShowByEvent) {
@@ -116,7 +116,7 @@ class InAppReviewManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
             manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
@@ -138,7 +138,7 @@ class InAppReviewManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
             manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
@@ -153,7 +153,7 @@ class InAppReviewManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
             manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
@@ -178,7 +178,7 @@ class InAppReviewManagerTest {
             manager.shouldShowPrompt.test {
                 assertFalse(awaitItem()) // Initially should not show prompt
 
-                manager.onEvent(InAppReviewManager.Event.DonateButtonPressed) // Send the event
+                manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
                 assertTrue(awaitItem()) // Should show prompt
 
                 manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
