@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,13 +15,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
-import org.thoughtcrime.securesms.reviews.InAppReviewManager
-import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FEEDBACK_URL
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
 import org.session.libsession.utilities.TranslatableText
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
+import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import javax.inject.Inject
 
 @HiltViewModel
@@ -137,7 +137,7 @@ class InAppReviewViewModel @Inject constructor(
                     negativeButtonText = TranslatableText(R.string.notNow),
                 )
 
-                State.ConfirmOpeningSurvey -> UiState.OpenURLDialog(url = "https://getsession.org/review/survey")
+                State.ConfirmOpeningSurvey -> UiState.OpenURLDialog(url = SESSION_FEEDBACK_URL)
                 State.ReviewLimitReached -> UiState.ReviewLimitReachedDialog
             }
         }.distinctUntilChanged()
