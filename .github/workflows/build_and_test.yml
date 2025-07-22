@@ -22,6 +22,8 @@ jobs:
         include:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
+          - variant: 'play'
+            run_test: true
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,10 +43,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build and test with Gradle
+      - name: Build with gradle
         id: build
-        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} && \
-                ./gradlew test${{ matrix.variant }}${{ matrix.build_type }}UnitTest ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} &&
+
+      - name: Run unit tests
+        if: ${{ matrix.run_test == true }}
+        id: test
+        run: ./gradlew test${{ matrix.variant }}${{ matrix.build_type }}UnitTest ${{ matrix.extra_build_command_options }}
 
       - name: Upload build reports regardless
         if: always()
