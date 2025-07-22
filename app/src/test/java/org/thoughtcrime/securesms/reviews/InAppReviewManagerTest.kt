@@ -23,51 +23,8 @@ import java.util.EnumSet
 
 @RunWith(JUnit4::class)
 class InAppReviewManagerTest {
-
-
     @get:Rule
     val mockLoggingRule = MockLoggingRule()
-
-
-    private fun TestScope.createManager(
-        isFreshInstall: Boolean,
-        supportInAppReviewFlow: Boolean = true
-    ): InAppReviewManager {
-        val pm = mock<PackageManager> {
-            on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
-                if (isFreshInstall) {
-                    firstInstallTime = System.currentTimeMillis()
-                    lastUpdateTime = firstInstallTime
-                } else {
-                    firstInstallTime = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 30 // 30 days ago
-                    lastUpdateTime = System.currentTimeMillis() // Just now
-                }
-            }
-        }
-
-        var reviewState: String? = null
-
-        return InAppReviewManager(
-            context = mock {
-                on { packageManager } doReturn pm
-                on { packageName } doReturn "mypackage.name"
-            },
-            prefs = mock {
-                on { inAppReviewState } doAnswer { reviewState }
-                on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
-            },
-            json = Json {
-                serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
-            },
-            clock = mock {
-                on { currentTimeMills() } doAnswer { System.currentTimeMillis() }
-            },
-            storeReviewManager = mock {
-                on { supportsReviewFlow } doReturn supportInAppReviewFlow
-            },
-            scope = backgroundScope,
-        )
-    }
 
     @Test
     fun `should show prompt on triggers on fresh install`() = runTest {
@@ -205,4 +162,44 @@ class InAppReviewManagerTest {
             }
         }
     }
+}
+
+fun TestScope.createManager(
+    isFreshInstall: Boolean,
+    supportInAppReviewFlow: Boolean = true
+): InAppReviewManager {
+    val pm = mock<PackageManager> {
+        on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
+            if (isFreshInstall) {
+                firstInstallTime = System.currentTimeMillis()
+                lastUpdateTime = firstInstallTime
+            } else {
+                firstInstallTime = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 30 // 30 days ago
+                lastUpdateTime = System.currentTimeMillis() // Just now
+            }
+        }
+    }
+
+    var reviewState: String? = null
+
+    return InAppReviewManager(
+        context = mock {
+            on { packageManager } doReturn pm
+            on { packageName } doReturn "mypackage.name"
+        },
+        prefs = mock {
+            on { inAppReviewState } doAnswer { reviewState }
+            on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
+        },
+        json = Json {
+            serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
+        },
+        clock = mock {
+            on { currentTimeMills() } doAnswer { System.currentTimeMillis() }
+        },
+        storeReviewManager = mock {
+            on { supportsReviewFlow } doReturn supportInAppReviewFlow
+        },
+        scope = backgroundScope,
+    )
 }

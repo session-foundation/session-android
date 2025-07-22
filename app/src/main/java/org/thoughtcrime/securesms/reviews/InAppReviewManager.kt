@@ -45,7 +45,6 @@ class InAppReviewManager @Inject constructor(
     private val stateChangeNotification = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     private val eventsChannel: SendChannel<Event>
 
-    private var inMemoryState: InAppReviewState? = null
 
     @Suppress("OPT_IN_USAGE")
     val shouldShowPrompt: StateFlow<Boolean> = stateChangeNotification
@@ -153,23 +152,17 @@ class InAppReviewManager @Inject constructor(
         Dismiss,
     }
 
-
     private var TextSecurePreferences.reviewState
-        get() = inMemoryState
+        get() = prefs.inAppReviewState?.let {
+            runCatching { json.decodeFromString<InAppReviewState>(it) }
+                .onFailure { Log.w(TAG, "Failed to decode review state", it) }
+                .getOrNull()
+        }
         set(value) {
-            inMemoryState = value
+            prefs.inAppReviewState =
+                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
             stateChangeNotification.tryEmit(Unit)
         }
-//        get() = prefs.inAppReviewState?.let {
-//            runCatching { json.decodeFromString<InAppReviewState>(it) }
-//                .onFailure { Log.w(TAG, "Failed to decode review state", it) }
-//                .getOrNull()
-//        }
-//        set(value) {
-//            prefs.inAppReviewState =
-//                value?.let { json.encodeToString(InAppReviewState.serializer(), it) }
-//            stateChangeNotification.tryEmit(Unit)
-//        }
 
 
     companion object {

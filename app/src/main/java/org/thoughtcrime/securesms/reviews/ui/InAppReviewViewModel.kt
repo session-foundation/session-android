@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
@@ -91,6 +92,7 @@ class InAppReviewViewModel @Inject constructor(
                 }
             }
         }
+        .distinctUntilChanged()
         .stateIn(viewModelScope, started = SharingStarted.Eagerly, initialValue = State.Init)
 
     val uiState: StateFlow<UiState> =
@@ -122,7 +124,8 @@ class InAppReviewViewModel @Inject constructor(
                 State.ConfirmOpeningSurvey -> UiState.OpenURLDialog(url = "https://getsession.org/review/survey")
                 State.ReviewLimitReached -> UiState.ReviewLimitReachedDialog
             }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Hidden)
+        }.distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Hidden)
 
     fun sendUiCommand(command: UiCommand) {
         commands.tryEmit(command)
