@@ -51,10 +51,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
 import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2.Companion.ADDRESS
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -84,6 +87,7 @@ fun UserProfileModal(
     onDismissRequest: () -> Unit,
 ){
     // the user profile modal
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismissRequest,
         showCloseButton = true,
@@ -224,7 +228,6 @@ fun UserProfileModal(
                     buttonModifier = buttonModifier.weight(1f)
                 }
 
-                val context = LocalContext.current
                 SlimAccentOutlineButton(
                     modifier = buttonModifier,
                     text = stringResource(R.string.message),
@@ -259,7 +262,11 @@ fun UserProfileModal(
         AnimatedSessionProCTA(
             heroImageBg = R.drawable.cta_hero_generic_bg,
             heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
-            text = stringResource(R.string.proUserProfileModalCallToAction),
+            text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
+                .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .format()
+                .toString(),
             features = listOf(
                 CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
                 CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),

@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,6 +79,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
@@ -878,7 +880,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
              AnimatedSessionProCTA(
                  heroImageBg = R.drawable.cta_hero_animated_bg,
                  heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                 text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
+                 text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+                     .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                     .format()
+                     .toString(),
                  features = listOf(
                      CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
                      CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),

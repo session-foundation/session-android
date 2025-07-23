@@ -43,4 +43,5 @@ object StringSubstitutionConstants {
     const val VALUE_KEY                      = "value"
     const val VERSION_KEY                    = "version"
     const val LIMIT_KEY                      = "limit"
+    const val APP_PRO_KEY                    = "app_pro"
 }
