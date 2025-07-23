@@ -867,12 +867,8 @@
     <string name="proActivated">активовано</string>
     <string name="proAlreadyPurchased">У вас вже є</string>
     <string name="proAnimatedDisplayPicture">Не зволікайте і завантажуйте GIF та анімовані WebP картинки для свого аватара!</string>
-    <string name="proAnimatedDisplayPictureCallToActionDescription">Отримайте анімовані аватари та розблокуйте преміальні функції з Session Pro</string>
     <string name="proAnimatedDisplayPictureModalDescription">користувачі можуть завантажувати GIF</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Завантажувати GIF з</string>
-    <string name="proCallToActionLongerMessages">Хочете відправляти довші повідомлення? Надсилайте більше тексту та розблокуйте преміальні функції застосунку з Session Pro</string>
-    <string name="proCallToActionPinnedConversations">Потрібно більше закріплених бесід? Впорядкуйте свої чати та розблокуйте преміальні функції з Session Pro</string>
-    <string name="proCallToActionPinnedConversationsMoreThan">Потрібно понад 5 закріплених бесід? Впорядкуйте свої бесіди та розблокуйте преміальні функції з Session Pro</string>
     <string name="proFeatureListAnimatedDisplayPicture">Завантажуйте GIF та WebP аватари</string>
     <string name="proFeatureListLargerGroups">Більша кількість — до 300 учасників — групових чатів</string>
     <string name="proFeatureListLoadsMore">Та велика кількість ексклюзивних можливостей</string>
