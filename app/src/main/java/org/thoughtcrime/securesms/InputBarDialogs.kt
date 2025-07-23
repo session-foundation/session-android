@@ -50,7 +50,7 @@ fun InputBarDialogs(
             }
 
             AlertDialog(
-                onDismissRequest = {1
+                onDismissRequest = {
                     // hide dialog
                     sendCommand(InputbarViewModel.Commands.HideSimpleDialog)
                 },
