@@ -25,8 +25,8 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 415
-val canonicalVersionName = "1.26.0"
+val canonicalVersionCode = 416
+val canonicalVersionName = "1.27.0"
 
 val postFixSize = 10
 val abiPostFix = mapOf(
@@ -46,6 +46,7 @@ val getGitHash = providers
     .map { it.trim() }
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
+val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -190,14 +191,22 @@ android {
     }
 
     sourceSets {
-        val sharedTestDir = "src/sharedTest/java"
-        getByName("test").java.srcDirs(sharedTestDir)
-
-        getByName("test").resources.srcDirs("$projectDir/src/main/assets")
+        getByName("test").apply {
+            java.srcDirs("$projectDir/src/sharedTest/java")
+            resources.srcDirs("$projectDir/src/main/assets")
+        }
 
         val firebaseCommonDir = "src/firebaseCommon"
         firebaseEnabledVariants.forEach { variant ->
             maybeCreate(variant).java.srcDirs("$firebaseCommonDir/kotlin")
+        }
+
+        val nonPlayCommonDir = "src/nonPlayCommon"
+        nonPlayVariants.forEach { variant ->
+            maybeCreate(variant).apply {
+                java.srcDirs("$nonPlayCommonDir/kotlin")
+                resources.srcDirs("$nonPlayCommonDir/resources")
+            }
         }
     }
 

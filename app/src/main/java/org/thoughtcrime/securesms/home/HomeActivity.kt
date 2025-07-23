@@ -78,6 +78,9 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.reviews.StoreReviewManager
+import org.thoughtcrime.securesms.reviews.ui.InAppReview
+import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -123,9 +126,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var storeReviewManager: StoreReviewManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
+    private val inAppReviewViewModel by viewModels<InAppReviewViewModel>()
 
     private val publicKey: String by lazy { textSecurePreferences.getLocalNumber()!! }
 
@@ -389,6 +394,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
         )
+
+        // Set up in-app review
+        binding.inAppReviewView.setThemedContent {
+            InAppReview(
+                uiState = inAppReviewViewModel.uiState.collectAsState().value,
+                storeReviewManager = storeReviewManager,
+                sendCommands = inAppReviewViewModel::sendUiCommand,
+            )
+        }
     }
 
     override fun onCancelClicked() {

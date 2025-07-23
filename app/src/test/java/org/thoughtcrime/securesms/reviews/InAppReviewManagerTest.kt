@@ -22,59 +22,16 @@ import org.thoughtcrime.securesms.util.MockLoggingRule
 import java.util.EnumSet
 
 @RunWith(JUnit4::class)
-class ReviewsManagerTest {
-
-
+class InAppReviewManagerTest {
     @get:Rule
     val mockLoggingRule = MockLoggingRule()
-
-
-    private fun TestScope.createManager(
-        isFreshInstall: Boolean,
-        supportInAppReviewFlow: Boolean = true
-    ): ReviewsManager {
-        val pm = mock<PackageManager> {
-            on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
-                if (isFreshInstall) {
-                    firstInstallTime = System.currentTimeMillis()
-                    lastUpdateTime = firstInstallTime
-                } else {
-                    firstInstallTime = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 30 // 30 days ago
-                    lastUpdateTime = System.currentTimeMillis() // Just now
-                }
-            }
-        }
-
-        var reviewState: String? = null
-
-        return ReviewsManager(
-            context = mock {
-                on { packageManager } doReturn pm
-                on { packageName } doReturn "mypackage.name"
-            },
-            prefs = mock {
-                on { inAppReviewState } doAnswer { reviewState }
-                on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
-            },
-            json = Json {
-                serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
-            },
-            clock = mock {
-                on { currentTimeMills() } doAnswer { System.currentTimeMillis() }
-            },
-            storeReviewManager = mock {
-                on { supportsReviewFlow } doReturn supportInAppReviewFlow
-            },
-            scope = backgroundScope,
-        )
-    }
 
     @Test
     fun `should show prompt on triggers on fresh install`() = runTest {
 
-        for (event in listOf(ReviewsManager.Event.ThemeChanged,
-            ReviewsManager.Event.PathScreenVisited,
-            ReviewsManager.Event.DonateButtonPressed)) {
+        for (event in listOf(InAppReviewManager.Event.ThemeChanged,
+            InAppReviewManager.Event.PathScreenVisited,
+            InAppReviewManager.Event.DonateButtonClicked)) {
             val manager = createManager(isFreshInstall = true)
 
             manager.shouldShowPrompt.test {
@@ -90,9 +47,9 @@ class ReviewsManagerTest {
     @Test
     fun `should show prompt respectively on triggers on update`() = runTest {
         val shouldShowByEvent = mapOf(
-            ReviewsManager.Event.ThemeChanged to false,
-            ReviewsManager.Event.PathScreenVisited to false,
-            ReviewsManager.Event.DonateButtonPressed to true
+            InAppReviewManager.Event.ThemeChanged to false,
+            InAppReviewManager.Event.PathScreenVisited to false,
+            InAppReviewManager.Event.DonateButtonClicked to true
         )
 
         for ((event, shouldShow) in shouldShowByEvent) {
@@ -116,17 +73,17 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
             assertFalse(awaitItem()) // The prompt should be gone now
 
-            advanceTimeBy(ReviewsManager.REVIEW_REQUEST_DISMISS_DELAY)
+            advanceTimeBy(InAppReviewManager.REVIEW_REQUEST_DISMISS_DELAY)
 
             assertTrue(awaitItem()) // Should show prompt after the delay
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow again
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow again
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -138,10 +95,10 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.Dismiss) // User dismisses the prompt
+            manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -153,17 +110,17 @@ class ReviewsManagerTest {
         manager.shouldShowPrompt.test {
             assertFalse(awaitItem()) // Initially should not show prompt
 
-            manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+            manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
             assertTrue(awaitItem()) // Should show prompt
 
-            manager.onEvent(ReviewsManager.Event.ReviewFlowAbandoned) // User abandons the flow
+            manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned) // User abandons the flow
             assertFalse(awaitItem()) // The prompt should be gone now
 
-            advanceTimeBy(ReviewsManager.REVIEW_REQUEST_DISMISS_DELAY)
+            advanceTimeBy(InAppReviewManager.REVIEW_REQUEST_DISMISS_DELAY)
 
             assertTrue(awaitItem()) // Should show prompt after the delay
 
-            manager.onEvent(ReviewsManager.Event.Dismiss) // User abandons the flow again
+            manager.onEvent(InAppReviewManager.Event.Dismiss) // User abandons the flow again
             assertFalse(awaitItem()) // The prompt should be gone now
             expectNoEvents()
         }
@@ -171,17 +128,17 @@ class ReviewsManagerTest {
 
     @Test
     fun `review request should not show again once dismissed`() = runTest {
-        val allEvents = EnumSet.allOf(ReviewsManager.Event::class.java)
+        val allEvents = EnumSet.allOf(InAppReviewManager.Event::class.java)
 
         for (triggerEvent in allEvents) {
             val manager = createManager(isFreshInstall = true)
             manager.shouldShowPrompt.test {
                 assertFalse(awaitItem()) // Initially should not show prompt
 
-                manager.onEvent(ReviewsManager.Event.DonateButtonPressed) // Send the event
+                manager.onEvent(InAppReviewManager.Event.DonateButtonClicked) // Send the event
                 assertTrue(awaitItem()) // Should show prompt
 
-                manager.onEvent(ReviewsManager.Event.Dismiss) // User dismisses the prompt
+                manager.onEvent(InAppReviewManager.Event.Dismiss) // User dismisses the prompt
                 assertFalse(awaitItem()) // The prompt should be gone now
 
                 // Try the trigger event now
@@ -193,7 +150,7 @@ class ReviewsManagerTest {
 
     @Test
     fun `should never show when in app flow is not supported`() = runTest {
-        val allEvents = EnumSet.allOf(ReviewsManager.Event::class.java)
+        val allEvents = EnumSet.allOf(InAppReviewManager.Event::class.java)
 
         for (triggerEvent in allEvents) {
             val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = false)
@@ -205,4 +162,41 @@ class ReviewsManagerTest {
             }
         }
     }
+}
+
+fun TestScope.createManager(
+    isFreshInstall: Boolean,
+    supportInAppReviewFlow: Boolean = true
+): InAppReviewManager {
+    val pm = mock<PackageManager> {
+        on { getPackageInfo(any<String>(), any<Int>()) } doReturn PackageInfo().apply {
+            if (isFreshInstall) {
+                firstInstallTime = System.currentTimeMillis()
+                lastUpdateTime = firstInstallTime
+            } else {
+                firstInstallTime = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 30 // 30 days ago
+                lastUpdateTime = System.currentTimeMillis() // Just now
+            }
+        }
+    }
+
+    var reviewState: String? = null
+
+    return InAppReviewManager(
+        context = mock {
+            on { packageManager } doReturn pm
+            on { packageName } doReturn "mypackage.name"
+        },
+        prefs = mock {
+            on { inAppReviewState } doAnswer { reviewState }
+            on { inAppReviewState = any() } doAnswer { reviewState = it.arguments[0] as? String }
+        },
+        json = Json {
+            serializersModule += ReviewsSerializerModule().provideReviewsSerializersModule()
+        },
+        storeReviewManager = mock {
+            on { supportsReviewFlow } doReturn supportInAppReviewFlow
+        },
+        scope = backgroundScope,
+    )
 }

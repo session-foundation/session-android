@@ -7,8 +7,8 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-@JsonClassDiscriminator(ReviewState.DISCRIMINATOR)
-sealed interface ReviewState {
+@JsonClassDiscriminator(InAppReviewState.DISCRIMINATOR)
+sealed interface InAppReviewState {
 
     /**
      * Indicate we are waiting for the user to trigger the review request.
@@ -18,14 +18,14 @@ sealed interface ReviewState {
     data class WaitingForTrigger(
         // Whether the app was updated over an old version since the review request feature was added.
         val appUpdated: Boolean
-    ) : ReviewState
+    ) : InAppReviewState
 
     /**
      * Indicates that we should be showing the review prompt right now.
      */
     @Serializable
     @SerialName("showing")
-    data object ShowingReviewRequest : ReviewState
+    data object ShowingReviewRequest : InAppReviewState
 
     /**
      * Indicates that we have shown the review request but the user has abandoned it mid-flow,
@@ -39,7 +39,7 @@ sealed interface ReviewState {
     data class DismissedUntil(
         @SerialName("until")
         val untilTimestampMills: Long,
-    ) : ReviewState
+    ) : InAppReviewState
 
     /**
      * Indicates that the user has dismissed the review request permanently, or we have
@@ -47,7 +47,7 @@ sealed interface ReviewState {
      */
     @Serializable
     @SerialName("dismissed_forever")
-    data object DismissedForever : ReviewState
+    data object DismissedForever : InAppReviewState
 
     companion object {
         const val DISCRIMINATOR = "type"
