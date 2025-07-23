@@ -29,7 +29,8 @@ class PlayStoreReviewManager @Inject constructor(
         get() = true
 
     override suspend fun requestReviewFlow() {
-        val activity = requireNotNull(currentActivityObserver.currentActivity.value) {
+        val requestedOnActivity = currentActivityObserver.currentActivity.value
+        val activity = requireNotNull(requestedOnActivity) {
             "Cannot request review flow without a current activity."
         }
 
@@ -37,7 +38,7 @@ class PlayStoreReviewManager @Inject constructor(
         manager.launchReview(activity, info)
 
         val hasLaunchedSomething = withTimeoutOrNull(500.milliseconds) {
-            currentActivityObserver.currentActivity.first { it == null }
+            currentActivityObserver.currentActivity.first { it != requestedOnActivity }
         } != null
 
         require(hasLaunchedSomething) {
