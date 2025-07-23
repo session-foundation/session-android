@@ -25,6 +25,8 @@ fun InAppReview(
     storeReviewManager: StoreReviewManager,
     sendCommands: (InAppReviewViewModel.UiCommand) -> Unit,
 ) {
+    val context = LocalContext.current
+
     AnimatedContent(uiState) { st ->
         when (st) {
             InAppReviewViewModel.UiState.StartPrompt -> {
@@ -38,8 +40,11 @@ fun InAppReview(
             InAppReviewViewModel.UiState.ReviewLimitReached -> AlertDialog(
                 onDismissRequest = { sendCommands(InAppReviewViewModel.UiCommand.CloseButtonClicked) },
                 showCloseButton = true,
-                title = "Review Limit",
-                text = "It looks like you've already reviewed Session recently, thanks for your feedback!"
+                title = context.getString(R.string.reviewLimit),
+                text = Phrase.from(context, R.string.reviewLimitDescription)
+                    .put(APP_NAME_KEY, context.getString(R.string.app_name))
+                    .format()
+                    .toString(),
             )
 
             InAppReviewViewModel.UiState.PositivePrompt -> InAppReviewPositivePrompt(
