@@ -138,7 +138,7 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
     }
 
     @Test
-    fun `should reappear after dismissing mid-flow`() = runTest {
+    fun `should reappear after dismissing mid-positive flow`() = runTest {
         val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = true)
         val storeReviewManager = mock<StoreReviewManager> {
             onBlocking { requestReviewFlow() }
@@ -158,12 +158,12 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
             manager.onEvent(InAppReviewManager.Event.ThemeChanged)
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
 
-            // Click on negative button - should have negative prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
-            assertEquals(InAppReviewViewModel.UiState.NegativePrompt, awaitItem())
+            // Click on positive button - should have positive prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.PositiveButtonClicked)
+            assertEquals(InAppReviewViewModel.UiState.PositivePrompt, awaitItem())
 
-            // Click on negative button again - should dismiss the prompt
-            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
+            // Dismiss the dialog - should hide the prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.CloseButtonClicked)
             assertEquals(InAppReviewViewModel.UiState.Hidden, awaitItem())
 
             // Wait for the state to reset
@@ -171,6 +171,43 @@ class InAppReviewViewModelTest : BaseViewModelTest() {
 
             // Now the prompt should reappear
             assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
+        }
+    }
+
+    @Test
+    fun `should not reappear after dismissing mid-negative flow`() = runTest {
+        val manager = createManager(isFreshInstall = true, supportInAppReviewFlow = true)
+        val storeReviewManager = mock<StoreReviewManager> {
+            onBlocking { requestReviewFlow() }
+                .thenReturn(Unit) // Simulate successful request
+        }
+
+        val vm = InAppReviewViewModel(
+            manager = manager,
+            storeReviewManager = storeReviewManager,
+        )
+
+        vm.uiState.test {
+            // Initial state
+            assertEquals(InAppReviewViewModel.UiState.Hidden, awaitItem())
+
+            // Change theme - should show the prompt
+            manager.onEvent(InAppReviewManager.Event.ThemeChanged)
+            assertEquals(InAppReviewViewModel.UiState.StartPrompt, awaitItem())
+
+            // Click on positive button - should have positive prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.NegativeButtonClicked)
+            assertEquals(InAppReviewViewModel.UiState.NegativePrompt, awaitItem())
+
+            // Dismiss the dialog - should hide the prompt
+            vm.sendUiCommand(InAppReviewViewModel.UiCommand.CloseButtonClicked)
+            assertEquals(InAppReviewViewModel.UiState.Hidden, awaitItem())
+
+            // Wait for the state to reset
+            advanceTimeBy(InAppReviewManager.REVIEW_REQUEST_DISMISS_DELAY)
+
+            // Now the prompt should reappear
+            expectNoEvents()
         }
     }
 }

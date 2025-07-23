@@ -86,7 +86,7 @@ class InAppReviewViewModel @Inject constructor(
 
                     // "Not Now"/close button clicked
                     UiCommand.CloseButtonClicked, UiCommand.NegativeButtonClicked -> {
-                        manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned)
+                        manager.onEvent(InAppReviewManager.Event.Dismiss)
                         UiState.Hidden
                     }
 
