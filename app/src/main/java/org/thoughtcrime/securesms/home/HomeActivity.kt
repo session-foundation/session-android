@@ -398,7 +398,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         // Set up in-app review
         binding.inAppReviewView.setThemedContent {
             InAppReview(
-                uiState = inAppReviewViewModel.uiState.collectAsState().value,
+                uiStateFlow = inAppReviewViewModel.uiState,
                 storeReviewManager = storeReviewManager,
                 sendCommands = inAppReviewViewModel::sendUiCommand,
             )
