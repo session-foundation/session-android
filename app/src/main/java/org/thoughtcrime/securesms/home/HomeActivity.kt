@@ -78,6 +78,7 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import org.thoughtcrime.securesms.reviews.ui.InAppReview
 import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
@@ -125,6 +126,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var storeReviewManager: StoreReviewManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -397,6 +399,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         binding.inAppReviewView.setThemedContent {
             InAppReview(
                 uiState = inAppReviewViewModel.uiState.collectAsState().value,
+                storeReviewManager = storeReviewManager,
                 sendCommands = inAppReviewViewModel::sendUiCommand,
             )
         }

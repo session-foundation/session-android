@@ -1,33 +1,28 @@
 package org.thoughtcrime.securesms.reviews.ui
 
-import android.content.Context
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
-import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FEEDBACK_URL
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
-import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
-import org.session.libsession.utilities.TranslatableText
+import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import javax.inject.Inject
 
+private const val TAG = "InAppReviewViewModel"
+
 @HiltViewModel
 class InAppReviewViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val manager: InAppReviewManager,
     private val storeReviewManager: StoreReviewManager,
 ) : ViewModel() {
@@ -35,152 +30,112 @@ class InAppReviewViewModel @Inject constructor(
 
     /**
      * Represent the current state of the in-app review flow.
+     *
+     * This flow is done by advancing the state machine based on the events emitted by both
+     * UI and the [InAppReviewManager].
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    @VisibleForTesting
-    val state: Flow<State> = commands
-        .scan(State.Init) { st, command ->
+    val uiState: StateFlow<UiState> = merge(commands, manager.shouldShowPrompt.filter { it }.map { ShowPrompt })
+        .scan(UiState.Hidden) { st, event ->
+            Log.d(TAG, "Received $event, current state = $st")
             when (st) {
-                State.Init -> {
-                    // Only react to commands if the prompt is currently shown
-                    if (manager.shouldShowPrompt.value) {
-                        when (command) {
-                            UiCommand.PositiveButtonClicked -> State.PositiveFlow
-                            UiCommand.NegativeButtonClicked -> State.NegativeFlow
-                            UiCommand.CloseButtonClicked -> {
-                                manager.onEvent(InAppReviewManager.Event.Dismiss)
-                                State.Init
-                            }
+                UiState.Hidden -> when (event) {
+                    ShowPrompt -> UiState.StartPrompt
+                    else -> st // Ignore other events
+                }
+
+                UiState.StartPrompt -> {
+                    when (event) {
+                        UiCommand.PositiveButtonClicked -> UiState.PositivePrompt
+                        UiCommand.NegativeButtonClicked -> UiState.NegativePrompt
+                        UiCommand.CloseButtonClicked -> {
+                            manager.onEvent(InAppReviewManager.Event.Dismiss)
+                            UiState.Hidden
                         }
-                    } else {
-                        st
+                        else -> st // Ignore other event
                     }
                 }
 
-                State.PositiveFlow -> when (command) {
+                UiState.PositivePrompt -> when (event) {
                     // "Rate App" button clicked
                     UiCommand.PositiveButtonClicked -> {
                         manager.onEvent(InAppReviewManager.Event.Dismiss)
 
                         if (runCatching { storeReviewManager.requestReviewFlow() }.isSuccess) {
-                            State.Init
+                            UiState.Hidden
                         } else {
-                            State.ReviewLimitReached
+                            UiState.ReviewLimitReached
                         }
                     }
 
                     // "Not Now"/close button clicked
                     UiCommand.CloseButtonClicked, UiCommand.NegativeButtonClicked -> {
                         manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned)
-                        State.Init
+                        UiState.Hidden
                     }
+
+                    else -> st // Ignore other events
                 }
 
-                State.NegativeFlow -> when (command) {
+                UiState.NegativePrompt -> when (event) {
                     // "Open Survey" button clicked
                     UiCommand.PositiveButtonClicked -> {
                         manager.onEvent(InAppReviewManager.Event.Dismiss)
-                        State.ConfirmOpeningSurvey
+                        UiState.ConfirmOpeningSurvey
                     }
 
                     // "Not Now"/close button clicked
                     UiCommand.CloseButtonClicked, UiCommand.NegativeButtonClicked -> {
                         manager.onEvent(InAppReviewManager.Event.ReviewFlowAbandoned)
-                        State.Init
+                        UiState.Hidden
                     }
+
+                    else -> st // Ignore other events
                 }
 
-                State.ConfirmOpeningSurvey -> when (command) {
-                    UiCommand.CloseButtonClicked -> State.Init
+                UiState.ConfirmOpeningSurvey -> when (event) {
+                    UiCommand.CloseButtonClicked -> UiState.Hidden
                     else -> st // Ignore other commands
                 }
 
-                State.ReviewLimitReached -> when (command) {
-                    UiCommand.CloseButtonClicked -> State.Init
+                UiState.ReviewLimitReached -> when (event) {
+                    UiCommand.CloseButtonClicked -> UiState.Hidden
                     else -> st // Ignore other commands
                 }
             }
         }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, started = SharingStarted.Eagerly, initialValue = State.Init)
-
-    val uiState: StateFlow<UiState> =
-        combine(state, manager.shouldShowPrompt) { st, shouldShowPrompt ->
-            when (st) {
-                State.Init -> if (shouldShowPrompt) UiState.Visible(
-                    title = TranslatableText(R.string.enjoyingSession, APP_NAME_KEY to context.getString(R.string.app_name)),
-                    message = TranslatableText(R.string.enjoyingSessionDescription, APP_NAME_KEY to context.getString(R.string.app_name)),
-                    positiveButtonText = TranslatableText(R.string.enjoyingSessionButtonPositive, EMOJI_KEY to "❤\uFE0F"),
-                    negativeButtonText = TranslatableText(R.string.enjoyingSessionButtonNegative, EMOJI_KEY to "\uD83D\uDE15"),
-                ) else {
-                    UiState.Hidden
-                }
-
-                State.PositiveFlow -> UiState.Visible(
-                    title = TranslatableText(R.string.rateSession),
-                    message = TranslatableText(
-                        R.string.rateSessionModalDescription,
-                        APP_NAME_KEY to context.getString(R.string.app_name),
-                        STORE_VARIANT_KEY to storeReviewManager.storeName
-                    ),
-                    positiveButtonText = TranslatableText(R.string.rateSessionApp),
-                    negativeButtonText = TranslatableText(R.string.notNow),
-                )
-
-                State.NegativeFlow -> UiState.Visible(
-                    title = TranslatableText(R.string.giveFeedback),
-                    message = TranslatableText(
-                        R.string.giveFeedbackDescription,
-                        APP_NAME_KEY to context.getString(R.string.app_name),
-                    ),
-                    positiveButtonText = TranslatableText(R.string.openSurvey),
-                    negativeButtonText = TranslatableText(R.string.notNow),
-                )
-
-                State.ConfirmOpeningSurvey -> UiState.OpenURLDialog(url = SESSION_FEEDBACK_URL)
-                State.ReviewLimitReached -> UiState.ReviewLimitReachedDialog
-            }
-        }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Hidden)
+        .onEach { Log.d(TAG, "New state $it") }
+        .stateIn(viewModelScope, started = SharingStarted.Eagerly, initialValue = UiState.Hidden)
 
     fun sendUiCommand(command: UiCommand) {
         commands.tryEmit(command)
     }
 
-    @VisibleForTesting
-    enum class State {
-
-        /**
-         * Initial state. Note that this state is neutral about whether the UI should be shown or not,
-         * you should check [InAppReviewManager.shouldShowPrompt] to determine if the UI should be shown.
-         */
-        Init,
-        PositiveFlow,
-        NegativeFlow,
+    enum class UiState {
+        StartPrompt,
+        PositivePrompt,
+        NegativePrompt,
         ConfirmOpeningSurvey,
         ReviewLimitReached,
+        Hidden,
     }
 
-    enum class UiCommand {
+    /**
+     * Represents the event that can occur in the in-app review flow.
+     */
+    private sealed interface Event
+
+    enum class UiCommand : Event {
         PositiveButtonClicked,
         NegativeButtonClicked,
         CloseButtonClicked,
     }
 
-    sealed interface UiState {
-        data object Hidden : UiState
-
-        data class Visible(
-            val title: TranslatableText,
-            val message: TranslatableText,
-            val positiveButtonText: TranslatableText,
-            val negativeButtonText: TranslatableText,
-        ) : UiState
-
-        data class OpenURLDialog(
-            val url: String,
-        ) : UiState
-
-        data object ReviewLimitReachedDialog : UiState
-    }
+    /**
+     * Triggered when the [InAppReviewManager] determines that we should show the review prompt.
+     *
+     * Whether we actually show the prompt will be further controlled by us.
+     */
+    private data object ShowPrompt : Event
 }

@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
 import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,10 +45,8 @@ class AppDisguiseManager @Inject constructor(
     application: Application,
     private val prefs: TextSecurePreferences,
     private val currentActivityObserver: CurrentActivityObserver,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope: CoroutineScope = GlobalScope
-
     val allAppAliases: Flow<List<AppAlias>> = flow {
         emit(
             application.packageManager
