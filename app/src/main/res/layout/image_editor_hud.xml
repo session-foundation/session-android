@@ -32,7 +32,7 @@
                 android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:src="@drawable/ic_trash_2" />
 
             <ImageView
@@ -41,7 +41,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_rotate_ccw" />
 
@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_case_sensitive" />
                 
@@ -61,7 +61,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_pencil" />
 
@@ -71,7 +71,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_brush" />
 
@@ -81,7 +81,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_emoji_custom" />
 
@@ -91,7 +91,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_crop" />
 
@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:layout_gravity="center_vertical"
-                app:tint="@color/white"
+                app:tint="?android:textColorPrimary"
                 android:padding="8dp"
                 android:src="@drawable/ic_circle_check" />
 
@@ -140,7 +140,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
-            app:tint="@color/white"
+            app:tint="?android:textColorPrimary"
             android:layout_gravity="center_vertical"
             android:layout_marginBottom="8dp"
             android:src="@drawable/ic_flip_horizontal_2"
@@ -155,7 +155,7 @@
             android:padding="8dp"
             android:layout_marginBottom="8dp"
             android:layout_marginStart="10dp"
-            app:tint="@color/white"
+            app:tint="?android:textColorPrimary"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_rotate_ccw_square"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -167,7 +167,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:padding="8dp"
-            app:tint="@color/white"
+            app:tint="?android:textColorPrimary"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_crop_lock_custom"
             android:layout_marginBottom="8dp"

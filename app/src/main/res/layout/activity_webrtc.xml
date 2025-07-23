@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:theme="@style/Theme.Session.CallActivity"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:keepScreenOn="true"
     android:layout_width="match_parent"
@@ -9,7 +8,6 @@
 
     <FrameLayout
         android:id="@+id/fullscreen_renderer_container"
-        android:background="@color/black"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -57,7 +55,7 @@
         android:scaleType="centerInside"
         android:layout_width="@dimen/medium_profile_picture_size"
         android:layout_height="@dimen/medium_profile_picture_size"
-        app:tint="@color/white" />
+        app:tint="?android:textColorPrimary" />
 
     <TextView
         app:layout_constraintTop_toTopOf="parent"
@@ -168,7 +166,7 @@
         android:background="@drawable/call_controls_background"
         android:src="@drawable/ic_switch_camera"
         android:padding="@dimen/medium_spacing"
-        app:tint="@color/white"
+        app:tint="?android:textColorPrimary"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
@@ -180,8 +178,7 @@
 
     <ImageView
         android:id="@+id/enableCameraButton"
-        android:background="@drawable/circle_tintable"
-        android:backgroundTint="@color/state_list_call_action_background"
+        android:background="@drawable/call_controls_background"
         app:tint="@color/state_list_call_action_foreground"
         android:src="@drawable/ic_video"
         android:padding="@dimen/medium_spacing"
@@ -201,16 +198,14 @@
         android:src="@drawable/ic_mic_off"
         android:layout_marginBottom="@dimen/large_spacing"
         app:layout_constraintBottom_toTopOf="@+id/endCallButton"
-        android:background="@drawable/circle_tintable"
-        android:backgroundTint="@color/state_list_call_action_mic_background"
-        app:tint="@color/white"
+        android:background="@drawable/call_controls_mic_background"
+        app:tint="@color/state_list_call_action_mic_foreground"
         app:layout_constraintEnd_toStartOf="@id/speakerPhoneButton"
         app:layout_constraintStart_toEndOf="@id/enableCameraButton"/>
 
     <ImageView
         android:id="@+id/speakerPhoneButton"
-        android:background="@drawable/circle_tintable"
-        android:backgroundTint="@color/state_list_call_action_background"
+        android:background="@drawable/call_controls_background"
         app:tint="@color/state_list_call_action_foreground"
         android:src="@drawable/ic_volume_2"
         android:padding="@dimen/medium_spacing"

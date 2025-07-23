@@ -252,7 +252,7 @@ class BatchMessageReceiveJob(
             // Only call markConversationAsRead() when lastSeen actually advanced (we sent a message).
             // For incoming-only batches (like reactions), skip this to preserve REACTIONS_UNREAD flags
             // so the notification system can detect them. Thread updates happen separately below.
-            if (updatedLastSeen > storedLastSeen) {
+            if (updatedLastSeen > 0 || storedLastSeen == 0L) {
                 storage.markConversationAsRead(threadId, updatedLastSeen, force = true)
             }
             storage.updateThread(threadId, true)

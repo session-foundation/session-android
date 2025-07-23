@@ -1,10 +1,12 @@
 package org.thoughtcrime.securesms.debugmenu
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -20,6 +24,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -38,7 +43,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -63,8 +71,10 @@ import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.DropDown
+import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
 import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
+import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -228,6 +238,39 @@ fun DebugMenu(
                         sendCommand(DebugMenuViewModel.Commands.ForcePostPro(it))
                     }
                 )
+
+                DebugSwitchRow(
+                    text = "Set other users as Pro",
+                    checked = uiState.forceOtherUsersAsPro,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceOtherUsersAsPro(it))
+                    }
+                )
+
+                DebugSwitchRow(
+                    text = "Force 30sec TTL avatar",
+                    checked = uiState.forceShortTTl,
+                    onCheckedChange = {
+                        sendCommand(DebugMenuViewModel.Commands.ForceShortTTl(it))
+                    }
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
+                ){
+                    Image(
+                        modifier = Modifier.size(LocalDimensions.current.iconXSmall),
+                        painter = painterResource(id = R.drawable.ic_triangle_alert),
+                        colorFilter = ColorFilter.tint(LocalColors.current.warning),
+                        contentDescription = null,
+                    )
+
+                    Text(
+                        text = "For avatar animation changes based on the values changed above, please restart the app",
+                        style = LocalType.current.base.copy(color = LocalColors.current.warning)
+                    )
+                }
             }
 
             // Fake contacts
@@ -236,23 +279,25 @@ fun DebugMenu(
                 var count by remember { mutableStateOf("2000") }
 
                 DebugRow("Prefix") {
-                    TextField(
-                        value = prefix,
-                        onValueChange = { prefix = it },
+                    SessionOutlinedTextField(
+                        text = prefix,
+                        innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
+                        onChange = { prefix = it },
                         modifier = Modifier.weight(2f)
                     )
                 }
 
                 DebugRow("Count") {
-                    TextField(
-                        value = count,
-                        onValueChange = { value -> count = value.filter { it.isDigit() } },
+                    SessionOutlinedTextField(
+                        text = count,
+                        innerPadding = PaddingValues(LocalDimensions.current.smallSpacing),
+                        onChange = { value -> count = value.filter { it.isDigit() } },
                         modifier = Modifier.weight(2f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
 
-                SlimOutlineButton("Generate") {
+                SlimOutlineButton(modifier = Modifier.fillMaxWidth(), text = "Generate") {
                     sendCommand(
                         GenerateContacts(
                             prefix = prefix,
@@ -313,7 +358,8 @@ fun DebugMenu(
                 )
 
                 SlimOutlineButton(
-                    "Clear All Trusted Downloads",
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Clear All Trusted Downloads",
                 ) {
                     sendCommand(ClearTrustedDownloads)
                 }
@@ -482,7 +528,8 @@ private fun DebugRow(
 ) {
     Row(
         modifier = modifier.heightIn(min = LocalDimensions.current.minItemButtonHeight),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
     ) {
         Text(
             text = title,
@@ -560,7 +607,9 @@ fun PreviewDebugMenu() {
                 deprecatingStartTime = ZonedDateTime.now(),
                 forceCurrentUserAsPro = false,
                 forceIncomingMessagesAsPro = false,
+                forceOtherUsersAsPro = false,
                 forcePostPro = false,
+                forceShortTTl = false
             ),
             sendCommand = {},
             onClose = {}

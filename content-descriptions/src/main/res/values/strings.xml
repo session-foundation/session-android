@@ -114,7 +114,9 @@
     <string name="qa_conversation_settings_delete_conversation">delete-conversation-menu-option</string>
     <string name="qa_conversation_settings_delete_contact">delete-contact-menu-option</string>
     <string name="qa_conversation_search_input">search-input</string>
-    <string name="qa_conversation_search_clear">clear-input-button</string>
+    <string name="qa_input_clear">clear-input-button</string>
+    <string name="qa_input_clear_name">clear-input-button-name</string>
+    <string name="qa_input_clear_description">clear-input-button-description</string>
     <string name="qa_conversation_search_cancel">search-cancel-button</string>
     <string name="qa_conversation_search_up">search-toggle-up-button</string>
     <string name="qa_conversation_search_down">search-toggle-down-button</string>

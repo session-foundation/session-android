@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.session.libsession.utilities.Conversions;
 import org.session.libsession.utilities.Util;
+import org.thoughtcrime.securesms.util.LimitedInputStream;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -52,10 +53,10 @@ class LogFile {
     private final Cipher               cipher;
     private final BufferedOutputStream outputStream;
 
-    Writer(@NonNull byte[] secret, @NonNull File file) throws IOException {
+    Writer(@NonNull byte[] secret, @NonNull File file, boolean append) throws IOException {
       this.secret       = secret;
       this.file         = file;
-      this.outputStream = new BufferedOutputStream(new FileOutputStream(file, true));
+      this.outputStream = new BufferedOutputStream(new FileOutputStream(file, append));
 
       try {
         this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -114,7 +115,8 @@ class LogFile {
 
     Reader(@NonNull byte[] secret, @NonNull File file) throws IOException {
       this.secret      = secret;
-      this.inputStream = new BufferedInputStream(new FileInputStream(file));
+      // Limit the input stream to the file size to prevent endless reading in the case of a streaming file.
+      this.inputStream = new BufferedInputStream(new LimitedInputStream(new FileInputStream(file), file.length()));
 
       try {
         this.cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -123,28 +125,9 @@ class LogFile {
       }
     }
 
-    String readAll() throws IOException {
-      StringBuilder builder = new StringBuilder();
-
-      String entry;
-      while ((entry = readEntry()) != null) {
-        builder.append(entry).append('\n');
-      }
-
-      return builder.toString();
-    }
-
     @Override
     public void close() throws IOException {
       Util.close(inputStream);
-    }
-
-    String readEntry() throws IOException {
-      byte[] plaintext = readEntryBytes();
-      if (plaintext == null) {
-        return null;
-      }
-      return new String(plaintext);
     }
 
     byte[] readEntryBytes() throws IOException {

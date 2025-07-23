@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
 import nl.komponents.kovenant.Promise
+import nl.komponents.kovenant.functional.map
 import okio.Buffer
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -65,7 +66,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             } else {
                 val keyAndResult = upload(attachment, FileServerApi.FILE_SERVER_URL, true) {
-                    FileServerApi.upload(it)
+                    FileServerApi.upload(it).map { it.id }
                 }
                 handleSuccess(dispatcherName, attachment, keyAndResult.first, keyAndResult.second)
             }

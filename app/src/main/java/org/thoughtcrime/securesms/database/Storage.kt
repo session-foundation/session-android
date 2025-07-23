@@ -95,7 +95,6 @@ import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
-import kotlin.collections.set
 import network.loki.messenger.libsession_util.util.Contact as LibSessionContact
 import network.loki.messenger.libsession_util.util.GroupMember as LibSessionGroupMember
 
@@ -312,7 +311,7 @@ open class Storage @Inject constructor(
         getRecipientForThread(threadId)?.let { recipient ->
             val currentLastRead = threadDb.getLastSeenAndHasSent(threadId).first()
             // don't set the last read in the volatile if we didn't set it in the DB
-            if (!threadDb.markAllAsRead(threadId, recipient.isGroupOrCommunityRecipient, lastSeenTime, force) && !force) return
+            if (!threadDb.markAllAsRead(threadId, lastSeenTime, force) && !force) return
 
             // don't process configs for inbox recipients
             if (recipient.isCommunityInboxRecipient) return
@@ -400,10 +399,10 @@ open class Storage @Inject constructor(
         }
         val targetRecipient = Recipient.from(context, targetAddress, false)
         if (!targetRecipient.isGroupOrCommunityRecipient) {
-            if (isUserSender || isUserBlindedSender) {
+            if ((isUserSender || isUserBlindedSender) && !targetRecipient.isApproved) {
                 setRecipientApproved(targetRecipient, true)
-            } else {
-                setRecipientApprovedMe(targetRecipient, true)
+            } else if(!targetRecipient.hasApprovedMe()){
+                 setRecipientApprovedMe(targetRecipient, true)
             }
         }
         if (message.threadID == null && !targetRecipient.isCommunityRecipient) {
@@ -669,15 +668,12 @@ open class Storage @Inject constructor(
 
     override fun updateSentTimestamp(
         messageId: MessageId,
-        openGroupSentTimestamp: Long,
-        threadId: Long
+        newTimestamp: Long
     ) {
         if (messageId.mms) {
-            val mmsDb = mmsDatabase
-            mmsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
+            mmsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         } else {
-            val smsDb = smsDatabase
-            smsDb.updateSentTimestamp(messageId.id, openGroupSentTimestamp, threadId)
+            smsDatabase.updateSentTimestamp(messageId.id, newTimestamp)
         }
     }
 
@@ -858,7 +854,20 @@ open class Storage @Inject constructor(
         val userPublicKey = getUserPublicKey()!!
         val recipient = Recipient.from(context, fromSerialized(groupID), false)
         val updateData = UpdateMessageData.buildGroupUpdate(type, name, members)?.toJSON() ?: ""
-        val infoMessage = OutgoingGroupMediaMessage(recipient, updateData, groupID, null, sentTimestamp, 0, 0, true, null, listOf(), listOf())
+        val infoMessage = OutgoingGroupMediaMessage(
+            recipient,
+            updateData,
+            groupID,
+            null,
+            sentTimestamp,
+            0,
+            0,
+            true,
+            null,
+            listOf(),
+            listOf(),
+            null
+        )
         val mmsDB = mmsDatabase
         val mmsSmsDB = mmsSmsDatabase
         if (mmsSmsDB.getMessageFor(sentTimestamp, userPublicKey) != null) {
@@ -1022,7 +1031,8 @@ open class Storage @Inject constructor(
                 true,
                 null,
                 listOf(),
-                listOf()
+                listOf(),
+                null
             )
             val mmsDB = mmsDatabase
             val mmsSmsDB = mmsSmsDatabase
@@ -1501,10 +1511,10 @@ open class Storage @Inject constructor(
             expireStartedAt,
             false,
             false,
-            false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1512,10 +1522,6 @@ open class Storage @Inject constructor(
         )
 
         mmsDatabase.insertSecureDecryptedMessageInbox(mediaMessage, threadId, runThreadUpdate = true)
-            .orNull()
-            ?.let {
-                messageExpirationManager.startExpiringNow(MessageId(id = it.messageId, mms = true))
-            }
     }
 
     /**
@@ -1607,12 +1613,12 @@ open class Storage @Inject constructor(
                     -1,
                     0,
                     0,
-                    false,
                     true,
                     false,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
+                    null,
                     Optional.absent(),
                     Optional.absent(),
                     Optional.absent(),
@@ -1639,12 +1645,12 @@ open class Storage @Inject constructor(
             -1,
             0,
             0,
-            false,
             true,
             false,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
+            null,
             Optional.absent(),
             Optional.absent(),
             Optional.absent(),
@@ -1688,13 +1694,9 @@ open class Storage @Inject constructor(
         val expirationConfig = getExpirationConfiguration(threadId)
         val expiryMode = expirationConfig?.expiryMode?.coerceSendToRead() ?: ExpiryMode.NONE
         val expiresInMillis = expiryMode.expiryMillis
-        val expireStartedAt = if (expiryMode is ExpiryMode.AfterSend) sentTimestamp else 0
+        val expireStartedAt = if (expiryMode != ExpiryMode.NONE) clock.currentTimeMills() else 0
         val callMessage = IncomingTextMessage.fromCallInfo(callMessageType, address, Optional.absent(), sentTimestamp, expiresInMillis, expireStartedAt)
-        smsDatabase.insertCallMessage(callMessage).orNull()
-            ?.let {
-                messageExpirationManager.startExpiringNow(MessageId(it.messageId, mms = false))
-            }
-
+        smsDatabase.insertCallMessage(callMessage)
     }
 
     override fun conversationHasOutgoing(userPublicKey: String): Boolean {
@@ -1787,10 +1789,10 @@ open class Storage @Inject constructor(
             return
         }
 
-        addReaction(messageId, reaction, messageSender, notifyUnread)
+        addReaction(messageId, reaction, messageSender)
     }
 
-    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean) {
+    override fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String) {
         reactionDatabase.addReaction(
             ReactionRecord(
                 messageId = messageId,
@@ -1801,8 +1803,7 @@ open class Storage @Inject constructor(
                 sortId = reaction.index!!,
                 dateSent = reaction.dateSent!!,
                 dateReceived = reaction.dateReceived!!
-            ),
-            notifyUnread
+            )
         )
     }
 
@@ -1813,8 +1814,7 @@ open class Storage @Inject constructor(
     ) {
         reactionDatabase.addReactions(
             reactionsByMessageId = reactions,
-            replaceAll = replaceAll,
-            notifyUnread = notifyUnread
+            replaceAll = replaceAll
         )
     }
 
@@ -1826,7 +1826,11 @@ open class Storage @Inject constructor(
         notifyUnread: Boolean
     ) {
         val messageRecord = mmsSmsDatabase.getMessageForTimestamp(threadId, messageTimestamp) ?: return
-        reactionDatabase.deleteReaction(emoji, MessageId(messageRecord.id, messageRecord.isMms), author, notifyUnread)
+        reactionDatabase.deleteReaction(
+            emoji,
+            MessageId(messageRecord.id, messageRecord.isMms),
+            author
+        )
     }
 
     override fun updateReactionIfNeeded(message: Message, sender: String, openGroupSentTimestamp: Long) {
@@ -1948,27 +1952,6 @@ open class Storage @Inject constructor(
         expirationDb.setExpirationConfiguration(
             config.run { copy(expiryMode = expiryMode) }
         )
-    }
-
-    override fun getExpiringMessages(messageIds: List<Long>): List<Pair<Long, Long>> {
-        val expiringMessages = mutableListOf<Pair<Long, Long>>()
-        val smsDb = smsDatabase
-        smsDb.readerFor(smsDb.expirationNotStartedMessages).use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        val mmsDb = mmsDatabase
-        mmsDb.expireNotStartedMessages.use { reader ->
-            while (reader.next != null) {
-                if (messageIds.isEmpty() || reader.current.id in messageIds) {
-                    expiringMessages.add(reader.current.id to reader.current.expiresIn)
-                }
-            }
-        }
-        return expiringMessages
     }
 
     override fun updateDisappearingState(

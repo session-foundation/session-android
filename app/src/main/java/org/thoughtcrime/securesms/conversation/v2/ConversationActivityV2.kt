@@ -172,7 +172,6 @@ import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.giph.ui.GiphyActivity
 import org.thoughtcrime.securesms.groups.GroupMembersActivity
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.home.search.getSearchName
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewRepository
 import org.thoughtcrime.securesms.linkpreview.LinkPreviewUtil
@@ -216,7 +215,6 @@ import org.thoughtcrime.securesms.webrtc.WebRtcCallActivity.Companion.ACTION_STA
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge.Companion.EXTRA_RECIPIENT_ADDRESS
 import java.io.File
 import java.util.LinkedList
-import java.util.Locale
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -238,8 +236,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     InputBarRecordingViewDelegate, AttachmentManager.AttachmentListener, ActivityDispatcher,
     ConversationActionModeCallbackDelegate, VisibleMessageViewDelegate, RecipientModifiedListener,
     SearchBottomBar.EventListener, LoaderManager.LoaderCallbacks<Cursor>,
-    OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback,
-    UserDetailsBottomSheet.UserDetailsBottomSheetCallback {
+    OnReactionSelectedListener, ReactWithAnyEmojiDialogFragment.Callback, ReactionsDialogFragment.Callback {
 
     private lateinit var binding: ActivityConversationV2Binding
 
@@ -526,7 +523,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         setupWindowInsets()
 
-
         startConversationLoaderWithDelay()
 
         // set the compose dialog content
@@ -534,9 +530,12 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setThemedContent {
                 val dialogsState by viewModel.dialogsState.collectAsState()
+                val inputBarDialogState by viewModel.inputBarStateDialogsState.collectAsState()
                 ConversationV2Dialogs(
                     dialogsState = dialogsState,
-                    sendCommand = viewModel::onCommand
+                    inputBarDialogsState = inputBarDialogState,
+                    sendCommand = viewModel::onCommand,
+                    sendInputBarCommand = viewModel::onInputBarCommand
                 )
             }
         }
@@ -889,7 +888,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                         AttachmentManager.MediaType.VIDEO  == mediaType)
             ) {
                 val media = Media(mediaURI, filename, mimeType, 0, 0, 0, 0, null, null)
-                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, ""), PICK_FROM_LIBRARY)
+                startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), viewModel.recipient!!, threadId, getMessageBody()), PICK_FROM_LIBRARY)
                 return
             } else {
                 prepMediaForSending(mediaURI, mediaType).addListener(object : ListenableFuture.Listener<Boolean> {
@@ -926,7 +925,9 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
         if (textSecurePreferences.isTypingIndicatorsEnabled()) {
             binding.inputBar.addTextChangedListener {
-                typingStatusSender.onTypingStarted(viewModel.threadId)
+                if(it.isNotEmpty()) {
+                    typingStatusSender.onTypingStarted(viewModel.threadId)
+                }
             }
         }
     }
@@ -1064,14 +1065,20 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
-                    binding.inputBar.setState(state.inputBarState)
-
                     binding.root.requestApplyInsets()
 
                     // show or hide loading indicator
                     binding.loader.isVisible = state.showLoader
 
                     updatePlaceholder()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.inputBarState.collect { state ->
+                    binding.inputBar.setState(state)
                 }
             }
         }
@@ -1127,8 +1134,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // region Animation & Updating
     override fun onModified(recipient: Recipient) {
-        viewModel.updateRecipient()
-
         runOnUiThread {
             invalidateOptionsMenu()
             updateSendAfterApprovalText()
@@ -1530,8 +1535,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     // `position` is the adapter position; not the visual position
     private fun handleSwipeToReply(message: MessageRecord) {
         if (message.isOpenGroupInvitation) return
-        val recipient = viewModel.recipient ?: return
-        binding.inputBar.draftQuote(recipient, message, glide)
+        reply(setOf(message))
     }
 
     // `position` is the adapter position; not the visual position
@@ -1671,7 +1675,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                 dateSent = emojiTimestamp,
                 dateReceived = emojiTimestamp
             )
-            reactionDb.addReaction(reaction, false)
+            reactionDb.addReaction(reaction)
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1708,7 +1712,11 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             Log.w(TAG, "Unable to locate local number when removing emoji reaction - aborting.")
             return
         } else {
-            reactionDb.deleteReaction(emoji, MessageId(originalMessage.id, originalMessage.isMms), author, false)
+            reactionDb.deleteReaction(
+                emoji,
+                MessageId(originalMessage.id, originalMessage.isMms),
+                author
+            )
 
             val originalAuthor = if (originalMessage.isOutgoing) {
                 fromSerialized(viewModel.blindedPublicKey ?: textSecurePreferences.getLocalNumber()!!)
@@ -1921,6 +1929,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         viewHolder.view.playVoiceMessage()
     }
 
+    override fun showUserProfileModal(recipient: Recipient){
+        viewModel.showUserProfileModal(recipient)
+    }
+
     override fun sendMessage() {
         val recipient = viewModel.recipient ?: return
 
@@ -1951,7 +1963,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         val mimeType = MediaUtil.getMimeType(this, contentUri)!!
         val filename = FilenameUtils.getFilenameFromUri(this, contentUri, mimeType)
         val media = Media(contentUri, filename, mimeType, 0, 0, 0, 0, null, null)
-        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, getMessageBody()), PICK_FROM_LIBRARY)
+        startActivityForResult(MediaSendActivity.buildEditorIntent(this, listOf( media ), recipient, threadId, getMessageBody()), PICK_FROM_LIBRARY)
     }
 
     // If we previously approve this recipient, either implicitly or explicitly, we need to wait for
@@ -1986,10 +1998,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         message.sentTimestamp = sentTimestamp
         message.text = text
         val expiresInMillis = viewModel.expirationConfiguration?.expiryMode?.expiryMillis ?: 0
-        val expireStartedAt = if (viewModel.expirationConfiguration?.expiryMode is ExpiryMode.AfterSend) {
-            message.sentTimestamp
-        } else 0
-        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, expireStartedAt!!)
+        val outgoingTextMessage = OutgoingTextMessage.from(message, recipient, expiresInMillis, 0)
 
         // Clear the input bar
         binding.inputBar.text = ""
@@ -2124,12 +2133,19 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun pickFromLibrary() {
         val recipient = viewModel.recipient ?: return
-        binding.inputBar.text?.trim()?.let { text ->
-            AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient, text)
-        }
+        AttachmentManager.selectGallery(this, PICK_FROM_LIBRARY, recipient, threadId,
+            getMessageBody())
     }
 
-    private fun showCamera() { attachmentManager.capturePhoto(this, TAKE_PHOTO, viewModel.recipient) }
+    private fun showCamera() {
+        attachmentManager.capturePhoto(
+            this,
+            TAKE_PHOTO,
+            viewModel.recipient,
+            threadId,
+            getMessageBody()
+        )
+    }
 
     override fun onAttachmentChanged() { /* Do nothing */ }
 
@@ -2640,10 +2656,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     override fun onSearchMoveDownPressed() {
         this.searchViewModel.onMoveDown()
-    }
-
-    override fun onNicknameSaved() {
-        adapter.notifyDataSetChanged()
     }
 
     private fun jumpToMessage(author: Address, timestamp: Long, highlight: Boolean, onMessageNotFound: Runnable?) {

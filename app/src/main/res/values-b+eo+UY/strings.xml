@@ -3,6 +3,7 @@
     <string name="about">Pri</string>
     <string name="accept">Akcepti</string>
     <string name="accountIDCopy">Kopii identigilon de konto</string>
+    <string name="accountId">Konta ID</string>
     <string name="accountIdCopied">Konto-identigilo kopiita</string>
     <string name="accountIdCopyDescription">Kopiu vian Konto-ID-on kaj dividu ĝin kun viaj amikoj tiel ke ili povas mesaĝi al vi.</string>
     <string name="accountIdEnter">Enigi Account ID</string>
@@ -14,6 +15,7 @@
     <string name="accountIdYoursDescription">Ĉi tio estas via Konto IDENT. Aliaj uzantoj povas skani ĝin por komenci konversacion kun vi.</string>
     <string name="actualSize">Efektiva grandeco</string>
     <string name="add">Aldoni</string>
+    <string name="addAdmins">Aldoni administrantojn</string>
     <string name="adminCannotBeRemoved">Administrantoj ne povas esti forigitaj.</string>
     <string name="adminMorePromotedToAdmin"><b>{name} </b> kaj <b>{count} aliaj </b> estis promociitaj al Admin.</string>
     <string name="adminPromote">Promocii administrantojn</string>
@@ -26,7 +28,9 @@
     <string name="adminPromotionFailedDescription">Malsukcesis promocii {name} en {group_name}</string>
     <string name="adminPromotionFailedDescriptionMultiple">Malsukcesis promocii {name} kaj {count} aliajn en {group_name}</string>
     <string name="adminPromotionFailedDescriptionTwo">Malsukcesis promocii {name} kaj {other_name} en {group_name}</string>
+    <string name="adminPromotionNotSent">Promocio ne sendita</string>
     <string name="adminPromotionSent">Pli altnivela administranto sendita</string>
+    <string name="adminPromotionStatusUnknown">Stato de promocio estas nekonata</string>
     <string name="adminRemove">Forigi Administrantojn</string>
     <string name="adminRemoveAsAdmin">Forigi kiel Administranto</string>
     <string name="adminRemoveCommunityNone">Ne estas Dummy-antoj en ĉi tiu Komunumo.</string>
@@ -36,10 +40,27 @@
     <string name="adminRemovedUser"><b>{name}</b> estis deprenita kiel Admin.</string>
     <string name="adminRemovedUserMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> estis forigitaj kiel Admoj.</string>
     <string name="adminRemovedUserOther"><b>{name}</b> kaj <b>{other_name}</b> estis forigitaj kiel Admoj.</string>
+    <plurals name="adminSendingPromotion">
+        <item quantity="one">Sendante administran promocion</item>
+        <item quantity="other">Sendante administrajn promociojn</item>
+    </plurals>
     <string name="adminSettings">Administraj Agordoj</string>
     <string name="adminTwoPromotedToAdmin"><b>{name} </b> kaj <b>{other_name} </b> estis promociitaj al Admin.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonima</string>
+    <string name="appIcon">Piktogramo de aplikaĵo</string>
+    <string name="appIconAndNameChange">Ŝanĝi piktogramon de aplikaĵo kaj nomon</string>
+    <string name="appIconAndNameSelectionTitle">Piktogramo kaj nomo</string>
+    <string name="appIconEnableIcon">Uzi alternativan piktogramon de aplikaĵo</string>
+    <string name="appIconEnableIconAndName">Uzi alternativan piktogramon de aplikaĵo kaj nomon</string>
+    <string name="appIconSelect">Elektu alternativan piktogramon de aplikaĵo</string>
+    <string name="appIconSelectionTitle">Piktogramo</string>
+    <string name="appNameCalculator">Kalkulilo</string>
+    <string name="appNameMeetingSE">KunvenoSE</string>
+    <string name="appNameNews">Novaĵoj</string>
+    <string name="appNameNotes">Notoj</string>
+    <string name="appNameStocks">Akcioj</string>
+    <string name="appNameWeather">Vetero</string>
     <string name="appearanceAutoDarkMode">Aŭtomata malhela reĝimo</string>
     <string name="appearanceHideMenuBar">Kaŝi Menuan Stangon</string>
     <string name="appearanceLanguage">Lingvo</string>
@@ -57,6 +78,7 @@
     <string name="appearanceZoomIn">Alzomi</string>
     <string name="appearanceZoomOut">Elzomi</string>
     <string name="attachment">Kunsendaĵo</string>
+    <string name="attachments">Alfiksitaĵoj</string>
     <string name="attachmentsAdd">Aldoni kunsendaĵon</string>
     <string name="attachmentsAlbumUnnamed">Sen nomita Albumo</string>
     <string name="attachmentsAutoDownload">Aŭtomata Elŝuto de Aldonaĵoj</string>
@@ -118,9 +140,11 @@
     <string name="banErrorFailed">Malpermeso malsukcesis</string>
     <string name="banUnbanErrorFailed">La malpermesado malsukcesis</string>
     <string name="banUnbanUser">Repermesi al uzanto</string>
+    <string name="banUnbanUserDescription">Enigu ID de la konto de la uzanto, kiun vi malblokas</string>
     <string name="banUnbanUserUnbanned">Uzanto repermisita</string>
     <string name="banUser">Forbari uzanton</string>
     <string name="banUserBanned">Uzanto forigita</string>
+    <string name="banUserDescription">Enigu ID de la konto de la uzanto, kiun vi blokas</string>
     <string name="block">Bloki</string>
     <string name="blockBlockedNone">Neniu blokata kontakto</string>
     <string name="blockBlockedUser">Blokis {name}</string>
@@ -141,11 +165,13 @@
     <string name="callsInProgress">Voko farata</string>
     <string name="callsIncoming">Envena alvoko el {name}</string>
     <string name="callsIncomingUnknown">Envena alvoko</string>
+    <string name="callsMicrophonePermissionsRequired">Vi maltrafis vokon de <b>{name}</b>, ĉar vi ne ebligis <b>aliron al la mikrofono</b>.</string>
     <string name="callsMissed">Maltrafita Alvoko</string>
     <string name="callsMissedCallFrom">Maltrafita alvoko el {name}</string>
     <string name="callsNotificationsRequired">Voĉaj kaj Videaj Vokoj bezonas ebligi notifikojn en viaj sistema agordoj.</string>
     <string name="callsPermissionsRequired">Vokaj Permesoj Bezonataj</string>
     <string name="callsPermissionsRequiredDescription">Vi povas ebligi la permeson \"Voĉaj kaj Video Alvokoj\" en privatecaj agordoj.</string>
+    <string name="callsPermissionsRequiredDescription1">Vi povas ebligi la permeson \"Voĉaj kaj Video Alvokoj\" en permesaj agordoj.</string>
     <string name="callsReconnecting">Rekonektante…</string>
     <string name="callsRinging">Sonorante...</string>
     <string name="callsSessionCall">{app_name} Voko</string>
@@ -187,7 +213,9 @@
     <string name="clearMessagesGroupAdminDescription">Ĉu vi certas, ke vi volas forigi ĉiujn mesaĝojn de <b>{group_name}</b>?</string>
     <string name="clearMessagesGroupDescription">Ĉu vi certas, ke vi volas forigi ĉiujn mesaĝojn de <b>{group_name}</b> el via aparato?</string>
     <string name="clearMessagesNoteToSelfDescription">Ĉu vi certas, ke vi volas forigi ĉiujn mesaĝojn al Memo al Mi mem el via aparato?</string>
+    <string name="clearOnThisDevice">Forigi sur ĉi tiu aparato</string>
     <string name="close">Fermi</string>
+    <string name="closeApp">Fermi aplikaĵon</string>
     <string name="closeWindow">Fermi fenestron</string>
     <string name="commitHashDesktop">Komitiba Hash: {hash}</string>
     <string name="communityBanDeleteDescription">This will ban the selected user from this Community and delete all their messages. Are you sure you want to continue?</string>
@@ -252,6 +280,7 @@
     <string name="copied">Kopiite</string>
     <string name="copy">Kopii</string>
     <string name="create">Krei</string>
+    <string name="creatingCall">Kreante vokon</string>
     <string name="cut">Eltondi</string>
     <string name="databaseErrorTimeout">Ni rimarkis ke {app_name} bezonas longe por komenci.\n\nVi povas daŭrigi atendadon, eksporti viajn aparato-protokolojn por dividi por cimo-serĉado, aŭ reprovi relanĉi {app_name}.</string>
     <string name="databaseErrorUpdate">Via aplikaĵa datumbazo ne kongruas kun ĉi tiu versio de {app_name}. Reinstalu la aplikaĵon kaj restarigu vian konton por generi novan datumbazon kaj daŭrigi la uzadon de {app_name}.\n\nAverto: Ĉi tio rezultos en la perdo de ĉiuj mesaĝoj kaj aldonaĵoj pli aĝaj ol du semajnoj.</string>
@@ -278,12 +307,20 @@
         <item quantity="one">Forigi mesaĝon</item>
         <item quantity="other">Forigi mesaĝojn</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">Ĉu vi certas, ke vi volas forigi ĉi tiun mesaĝon?</item>
+        <item quantity="other">Ĉu vi certas, ke vi volas forigi ĉi tiujn mesaĝojn?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">Mesaĝo forigita</item>
         <item quantity="other">Mesaĝoj forigitaj</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">Ĉi tiu mesaĝo forigitis</string>
     <string name="deleteMessageDeletedLocally">Ĉi tiu mesaĝo estis forigita sur ĉi tiu aparato</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Ĉu vi certas, ke vi volas forigi ĉi tiun mesaĝon nur de ĉi tiu aparato?</item>
+        <item quantity="other">Ĉu vi certas, ke vi volas forigi ĉi tiujn mesaĝojn nur de ĉi tiu aparato?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Ĉu vi certas, ke vi volas forigi ĉi tiun mesaĝon por ĉiuj?</string>
     <string name="deleteMessageDeviceOnly">Forigi sole sur ĉi tiu aparato</string>
     <string name="deleteMessageDevicesAll">Forigi sur ĉiuj miaj aparatoj</string>
@@ -291,6 +328,14 @@
     <plurals name="deleteMessageFailed">
         <item quantity="one">Malsukcesis forigi mesaĝon</item>
         <item quantity="other">Malsukcesis forigi mesaĝojn</item>
+    </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">Tiu ĉi mesaĝo ne povas esti forigita el ĉiuj viaj aparatoj</item>
+        <item quantity="other">Kelkaj el la mesaĝoj, kiujn vi elektis, ne povas esti forigitaj el ĉiuj viaj aparatoj</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">Tiu ĉi mesaĝo ne povas esti forigita por ĉiu</item>
+        <item quantity="other">Kelkaj el la mesaĝoj, kiujn vi elektis, ne povas esti forigitaj por ĉiu</item>
     </plurals>
     <string name="deleteMessagesDescriptionEveryone">Ĉu vi certas, ke vi volas forigi ĉi tiujn mesaĝojn por ĉiuj?</string>
     <string name="deleting">Forviŝante</string>
@@ -338,7 +383,9 @@
     <string name="displayNameNew">Elektu novan vidigan nomon</string>
     <string name="displayNamePick">Elektu vian vidigan nomon</string>
     <string name="displayNameSet">Agordi Montratan Nomon</string>
+    <string name="displayNameVisible">Via montra nomo estas videbla al uzantoj, grupoj kaj komunumojl, kun kiuj vi interagas.</string>
     <string name="document">Dokumento</string>
+    <string name="donate">Donaci</string>
     <string name="done">Farite</string>
     <string name="download">Elŝuti</string>
     <string name="downloading">Elŝutante...</string>
@@ -371,11 +418,14 @@
     <string name="errorConnection">Bonvolu kontroli vian interretan konekton kaj reprovu.</string>
     <string name="errorCopyAndQuit">Kopii la eraron kaj eliri</string>
     <string name="errorDatabase">Datumbaza eraro</string>
+    <string name="errorGeneric">Io misfunkciis. Bonvolu reprovi poste.</string>
     <string name="errorUnknown">Nekonata eraro okazis.</string>
+    <string name="failedToDownload">Elŝutado fiaskis</string>
     <string name="failures">Malsukcesoj</string>
     <string name="file">Dosiero</string>
     <string name="files">Dosieroj</string>
     <string name="followSystemSettings">Sekvi sistemajn agordojn</string>
+    <string name="forever">Por ĉiam</string>
     <string name="from">El:</string>
     <string name="fullScreenToggle">Baskuligi plenekranan reĝimon</string>
     <string name="gif">GIF</string>
@@ -385,6 +435,9 @@
     <string name="groupCreate">Krei Grupon</string>
     <string name="groupCreateErrorNoMembers">Bonvolu elekti almenaŭ unu grupanon.</string>
     <string name="groupDelete">Forigi grupon</string>
+    <string name="groupDeleteDescription">Ĉu vi certas, ke vi volas forigi <b>{group_name}</b>?\n\nTio forigos ĉiujn membrojn kaj forigos la tutan enhavon de la grupo.</string>
+    <string name="groupDeleteDescriptionMember">Ĉu vi certas, ke vi volas forigi <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">{group_name} estis forigita de administranto de la grupo. Vi ne plu povos sendi mesaĝojn.</string>
     <string name="groupDescriptionEnter">Enigu gruppriskribon</string>
     <string name="groupDisplayPictureUpdated">Grupa bildo ĝisdatigis.</string>
     <string name="groupEdit">Redakti Grupon</string>
@@ -397,12 +450,21 @@
     <string name="groupInviteFailedMultiple">Malsukcesis inviti {name} kaj {count} aliajn al {group_name}</string>
     <string name="groupInviteFailedTwo">Malsukcesis inviti {name} kaj {other_name} al {group_name}</string>
     <string name="groupInviteFailedUser">Malsukcesis inviti {name} al {group_name}</string>
+    <string name="groupInviteNotSent">Invitilo ne sendita</string>
+    <string name="groupInviteReinvite"><b>{name}</b> invitis vin por aliĝi <b>{group_name}</b>, kie vi estas Administranto.</string>
+    <string name="groupInviteReinviteYou">Vi estis invitita por realiĝi <b>{group_name}</b>, kie vi estas Administranto.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Sendante invitilon</item>
+        <item quantity="other">Sendante invitilojn</item>
+    </plurals>
     <string name="groupInviteSent">Invito sendita</string>
+    <string name="groupInviteStatusUnknown">Stato de invitilo estas nekonata</string>
     <string name="groupInviteSuccessful">Invito de grupo sukcesis</string>
     <string name="groupInviteVersion">Uzantoj devas havi la plej novan version por ricevi invitojn</string>
     <string name="groupInviteYou"><b>Vi</b> estis invitita aniĝi al la grupo.</string>
     <string name="groupInviteYouAndMoreNew"><b>Vi</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupInviteYouAndOtherNew"><b>Vi</b> kaj <b>{other_name}</b> estis invititaj aniĝi al la grupo.</string>
+    <string name="groupInviteYouHistory"><b>Vi</b> estis invitita por aliĝi la grupon. Babileja historio estis diskonigita.</string>
     <string name="groupLeave">Forlasi Grupon</string>
     <string name="groupLeaveDescription">Ĉu vi certas, ke vi volas forlasi <b>{group_name}</b>?</string>
     <string name="groupLeaveDescriptionAdmin">Ĉu vi certas, ke vi volas foriri el <b>{group_name}</b>?\n\nĈi tio forigos ĉiujn membrojn kaj forigos ĉiun grupon enhavo.</string>
@@ -417,6 +479,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> kaj <b>{other_name}</b> estis invititaj aniĝi al la grupo.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis invititaj aniĝi al la grupo. Babilhistorio estis dividita.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Vi</b> kaj <b>{other_name}</b> estis invititaj por aliĝi al la grupo. Historio de la babilejo estis diskonigita.</string>
     <string name="groupMemberYouLeft"><b>Vi</b> forlasis la grupon.</string>
     <string name="groupMembers">Grupanoj</string>
     <string name="groupMembersNone">Ne estas aliaj membroj en ĉi tiu grupo.</string>
@@ -426,10 +489,13 @@
     <string name="groupNameEnterShorter">Bonvolu entajpi plej mallongan grupnomon.</string>
     <string name="groupNameNew">La grupnomo estas de nun „{group_name}“.</string>
     <string name="groupNameUpdated">Grupa nomo ĝisdatigite.</string>
+    <string name="groupNameVisible">Nomo de la grupo estas videbla al ĉiuj membroj de la grupo.</string>
     <string name="groupNoMessages">Vi ne havas mesaĝojn de <b>{group_name}</b>. Sendu mesaĝon por komenci la konversacion!</string>
+    <string name="groupNotUpdatedWarning">Tiu ĉi grupo ne estis ĝisdatigita pli ol 30 tagojn. Vi povas trafi problemojn pri sendi mesaĝojn aŭ vidi informon de la grupo.</string>
     <string name="groupOnlyAdmin">Vi estas la sola admin en <b>{group_name}</b>.\n\nGrupanoj kaj agordoj ne povas esti ŝanĝitaj sen admin.</string>
     <string name="groupPromotedYou"><b>Vi</b> estis promociita al Admin.</string>
     <string name="groupPromotedYouMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis promociitaj al Admin.</string>
+    <string name="groupPromotedYouTwo"><b>Vi</b> kaj <b>{other_name}</b> estis promociitaj al Administranto.</string>
     <string name="groupRemoveDescription">Ĉu vi ŝatus forigi <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Ĉu vi ŝatus forigi <b>{name}</b> kaj <b>{count} aliajn</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Ĉu vi ŝatus forigi <b>{name}</b> kaj <b>{other_name}</b> de <b>{group_name}</b>?</string>
@@ -445,6 +511,7 @@
     <string name="groupRemovedMultiple"><b>{name}</b> kaj <b>{count} aliaj </b> estis forigitaj de la grupo.</string>
     <string name="groupRemovedTwo"><b>{name} </b> kaj <b>{other_name} </b> estis forigitaj de la grupo.</string>
     <string name="groupRemovedYou">Vi estis forigita el <b>{group_name}</b>.</string>
+    <string name="groupRemovedYouGeneral">Vi estis forigita el la grupo.</string>
     <string name="groupRemovedYouMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> estis forigitaj de la grupo.</string>
     <string name="groupRemovedYouTwo"><b>Vi</b> kaj <b>{other_name}</b> estis forigitaj de la grupo.</string>
     <string name="groupSetDisplayPicture">Agordi Grupbildon</string>
@@ -464,15 +531,29 @@
     <string name="hideMenuBarDescription">Ŝalti la videblecon de la sistemmenuo</string>
     <string name="hideOthers">Kaŝi aliajn</string>
     <string name="image">Bildo</string>
+    <string name="images">bildoj</string>
     <string name="incognitoKeyboard">Inkognita klavaro</string>
     <string name="incognitoKeyboardDescription">Peti inkognitan reĝimon se disponebla. Depende de la klavaro kiun vi uzas, via klavaro eble ignoros ĉi tiun peton.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Nevalida ŝparvojo</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitado fiaskis</item>
+        <item quantity="other">Invitadoj fiaskis</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">La invitilo ne povas esti sendita. Ĉu vi volas reprovi?</item>
+        <item quantity="other">La invitiloj ne povas esti senditaj. Ĉu vi volas reprovi?</item>
+    </plurals>
     <string name="join">Aliĝi</string>
     <string name="later">Poste</string>
     <string name="learnMore">Lerni pli</string>
     <string name="leave">Forlasi</string>
     <string name="leaving">Forlasante...</string>
+    <string name="legacyGroupAfterDeprecationAdmin">Tiu ĉi grupo nun estas nurlega. Rekreu tiun ĉi grupon por daŭrigi babiladon.</string>
+    <string name="legacyGroupAfterDeprecationMember">Tiu ĉi grupo nun estas nurlega. Petu administranton de la grupo rekrei tiun ĉi grupon por daŭrigi babiladon.</string>
+    <string name="legacyGroupBeforeDeprecationAdmin">Grupoj estis plibonigitaj! Rekreu tiun ĉi grupon por plibonigi la fidindecon. Tiu ĉi grupo fariĝos nurlega je {date}.</string>
+    <string name="legacyGroupBeforeDeprecationMember">Grupoj estis plibonigitaj! Petu administranton de la grupo rekrei la grupon por plibonigi la fidindecon. Tiu ĉi grupo fariĝos nurlega je {date}.</string>
+    <string name="legacyGroupChatHistory">Historio de babilejo ne estos transportita al la nova grupo. Vi ankoraŭ povas vidi tutan historion de la babilado en via malnova grupo.</string>
     <string name="legacyGroupMemberNew"><b>{name}</b> grupaniĝis.</string>
     <string name="legacyGroupMemberNewMultiple"><b>{name}</b> kaj <b>{count} aliaj</b> grupaniĝis.</string>
     <string name="legacyGroupMemberNewYouMultiple"><b>Vi</b> kaj <b>{count} aliaj</b> aniĝis al la grupo.</string>
@@ -501,6 +582,7 @@
     <string name="lockAppStatus">Ŝlosostato</string>
     <string name="lockAppUnlock">Tuŝetu por Malŝlosi</string>
     <string name="lockAppUnlocked">{app_name} estas malŝlosita</string>
+    <string name="manageMembers">Administri membrojn</string>
     <string name="max">Maksimuma</string>
     <string name="media">Aŭdvidaĵo</string>
     <plurals name="members">
@@ -542,6 +624,10 @@
         <item quantity="one">Vi ricevis novan mesaĝon.</item>
         <item quantity="other">Vi ricevis %1$d novajn mesaĝojn.</item>
     </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Vi ricevis novan mesaĝon en %1$s.</item>
+        <item quantity="other">Vi ricevis %1$d novajn mesaĝojn en %2$s.</item>
+    </plurals>
     <string name="messageReplyingTo">Respondi al</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> invitis vin aniĝi al <b>{group_name} </b>.</string>
     <string name="messageRequestGroupInviteDescription">Sendi mesaĝon al ĉi tiu grupo aŭtomate akceptos la grupinvitaĵon.</string>
@@ -553,6 +639,7 @@
     <string name="messageRequestsClearAllExplanation">Ĉu vi certas, ke vi volas forigi ĉiujn mesaĝpetojn kaj grup-invitojn?</string>
     <string name="messageRequestsCommunities">Mesaĝaj Petoj de la Komunumo</string>
     <string name="messageRequestsCommunitiesDescription">Permesi mesaĝajn petojn de Comunitat konversacioj.</string>
+    <string name="messageRequestsContactDelete">Ĉu vi certas, ke vi volas forigi ĉi tiun mesaĝpeton kaj la asociitan kontakton?</string>
     <string name="messageRequestsDelete">Ĉu vi certas, ke vi volas forigi ĉi tiun mesaĝpeton?</string>
     <string name="messageRequestsNew">Vi havas novan mesaĝan peton</string>
     <string name="messageRequestsNonePending">Neniuj pendaj message requests</string>
@@ -573,6 +660,7 @@
     <string name="next">Sekva</string>
     <string name="nicknameDescription">Elektu kromnomon por <b>{name}</b>. Ĉi tio aperos al vi en viaj unu-kontraŭ-unu kaj grupaj konversacioj.</string>
     <string name="nicknameEnter">Entajpu alnomon</string>
+    <string name="nicknameErrorShorter">Bonvolu enigi pli mallongan kaŝnomon</string>
     <string name="nicknameRemove">Forigi alnomon</string>
     <string name="nicknameSet">Agordi Kromnomon</string>
     <string name="no">Ne</string>
@@ -606,6 +694,8 @@
     <string name="notificationsMuteFor">Silentigi por {time_large}</string>
     <string name="notificationsMuteUnmute">Malsilentigi</string>
     <string name="notificationsMuted">Silentigite</string>
+    <string name="notificationsMutedFor">Silentigita por {time_large}</string>
+    <string name="notificationsMutedForTime">Silentigita ĝis {date_time}</string>
     <string name="notificationsSlowMode">Malrapida Reĝimo</string>
     <string name="notificationsSlowModeDescription">{app_name} foje serĉos novajn mesaĝojn en la fono.</string>
     <string name="notificationsSound">Sono</string>
@@ -664,20 +754,26 @@
     <string name="passwordSet">Agordi Pasvorton</string>
     <string name="passwordSetDescription">Via pasvorto estas agordita. Bonvolu konservi ĝin sekura.</string>
     <string name="paste">Alglui</string>
+    <string name="permissionChange">Ŝanĝi permesojn</string>
     <string name="permissionMusicAudioDenied">{app_name} needs music and audio access in order to send files, music and audio, but it has been permanently denied. Tap Settings → Permissions, and turn \"Music and audio\" on.</string>
     <string name="permissionsAppleMusic">{app_name} bezonas uzi Apple Music por ludi aŭdvidaĵojn.</string>
     <string name="permissionsAutoUpdate">Aŭtomata Ĝisdatigo</string>
     <string name="permissionsAutoUpdateDescription">Aŭtomate serĉi ĝisdatigojn kiam komenciĝas</string>
     <string name="permissionsCameraDenied">{app_name} needs camera access to take photos and videos, but it has been permanently denied. Tap Settings → Permissions, and turn \"Camera\" on.</string>
+    <string name="permissionsCameraDescriptionIos">Permesu aliron al kamerao por video vokoj.</string>
     <string name="permissionsFaceId">La ŝlosila ekrano en {app_name} uzas Vizaĝo-ID.</string>
     <string name="permissionsKeepInSystemTray">Tenadi en Sistemo Plej</string>
     <string name="permissionsKeepInSystemTrayDescription">{app_name} daŭrigas funkcii en la fono kiam vi fermas la fenestron</string>
     <string name="permissionsLibrary">{app_name} bezonas aliron al foto-biblioteko por daŭrigi. Vi povas ŝalti aliron en la agordoj de iOS.</string>
+    <string name="permissionsLocalNetworkAccessRequiredIos">{app_name} bezonas aliron al loka reto por fari voĉajn kaj video vokojn.</string>
+    <string name="permissionsLocalNetworkDescriptionIos">Permesu aliron al loka reto por faciligi voĉajn kaj video vokojn.</string>
+    <string name="permissionsLocalNetworkIos">Loka reto</string>
     <string name="permissionsMicrophone">Mikrofono</string>
     <string name="permissionsMicrophoneAccessRequired">{app_name} bezonas aliron al la mikrofono por fari vokojn kaj sendi aŭdajn mesaĝojn, sed ĝi estis porĉiame malakceptita. Alklaku agordojn - Permesoj, kaj ŝaltu \"Mikrofono\".</string>
     <string name="permissionsMicrophoneAccessRequiredDesktop">Vi povas ebligi mikrofonan aliron en la privatecaj agordoj de {app_name}</string>
     <string name="permissionsMicrophoneAccessRequiredIos">{app_name} bezonas mikrofonan aliron por fari vokojn kaj registri aŭdajn mesaĝojn.</string>
     <string name="permissionsMicrophoneDescription">Permesi uzi la mikrofonon.</string>
+    <string name="permissionsMicrophoneDescriptionIos">Permesu aliron al mikrofono por voĉaj vokoj kaj aŭdiomesaĝoj.</string>
     <string name="permissionsMusicAudio">{app_name} needs music and audio access in order to send files, music and audio.</string>
     <string name="permissionsRequired">Permeso bezonata</string>
     <string name="permissionsStorageDenied">{app_name} needs photo library access so you can send photos and videos, but it has been permanently denied. Tap Settings → Permissions, and turn \"Photos and videos\" on.</string>
@@ -685,6 +781,7 @@
     <string name="permissionsStorageSave">{app_name} bezonas aliron al memoro por konservi aldonaĵojn kaj aŭdvidaĵojn.</string>
     <string name="permissionsStorageSaveDenied">{app_name} bezonas aliron al memoro por konservi bildojn kaj videojn, sed ĝi estis porĉiame malakceptita. Bonvolu iri al la aplikaĵaj agordoj, elekti \"Permesoj\", kaj ŝalti \"Memoro\".</string>
     <string name="permissionsStorageSend">{app_name} bezonas aliron al memoro por sendi bildojn kaj videojn.</string>
+    <string name="permissionsWriteCommunity">Vi ne havas permesojn por skribi en tiu ĉi komunumo</string>
     <string name="pin">Alpingli</string>
     <string name="pinConversation">Alpingli Interparolon</string>
     <string name="pinUnpin">Depingli</string>
@@ -697,6 +794,14 @@
     <string name="profileDisplayPictureSizeError">Bonvolu elekti plej malgrandan dosieron.</string>
     <string name="profileErrorUpdate">Malsukcesis ĝisdatigi profilon.</string>
     <string name="promote">Promocii</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promocio fiaskis</item>
+        <item quantity="other">Promocioj fiaskis</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">La promocio ne povas esti aplikita. Ĉu vi volas reprovi?</item>
+        <item quantity="other">La promocioj ne povas esti aplikitaj. Ĉu vi volas reprovi?</item>
+    </plurals>
     <string name="qrCode">QR-Kodo</string>
     <string name="qrNotAccountId">Ĉi tiu QR-kodo ne enhavas Konto IDENT.</string>
     <string name="qrNotRecoveryPassword">Ĉi tiu QR-kodo ne enhavas riparan pasvorton</string>
@@ -709,11 +814,13 @@
     <string name="readReceipts">Legokonfirmoj</string>
     <string name="readReceiptsDescription">Montri legitajn kvitancojn por ĉiuj mesaĝoj, kiujn vi sendas kaj ricevas.</string>
     <string name="received">Ricevita:</string>
+    <string name="receivedAnswer">Ricevita respondo</string>
     <string name="recommended">Rekomendate</string>
     <string name="recoveryPasswordBannerDescription">Konservu vian riparan pasvorton por certigi, ke vi ne perdu aliron al via konto.</string>
     <string name="recoveryPasswordBannerTitle">Konservu vian riparan pasvorton</string>
     <string name="recoveryPasswordDescription">Uzu vian recuđer passvorton por ŝarĝi vian konton sur novaj aparatoj.\n\nVia konto ne povas esti rekuperita sen via recuđer passvorto. Certigu, ke ĝi estas stokita ien sekura kaj ne dividas ĝin kun iu ajn.</string>
     <string name="recoveryPasswordEnter">Enigu vian riparan pasvorton</string>
+    <string name="recoveryPasswordErrorLoad">Okazis eraro dum provi ŝarĝi vian reakiran pasvorton.\n\nBonvolu eksporti viajn protokolojn, poste alŝutu la dosieron tra helplabortablo de {app_name} por helpi solvi tiun ĉi problemon.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Bonvolu kontroli vian riparan pasvorton kaj reprovu.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Iuj vortoj en via Ripara Pasvorto estas malĝustaj. Bonvolu kontroli kaj provi denove.</string>
     <string name="recoveryPasswordErrorMessageShort">La ripara pasvorto, kiun vi enmetis, ne estas sufiĉe longa. Bonvolu kontroli kaj reprovi.</string>
@@ -727,6 +834,7 @@
     <string name="recoveryPasswordRestoreDescription">Enigu vian riparan pasvorton por ŝargi vian konton. Se vi ne konservis ĝin, vi povas trovi ĝin en viaj aplikaĵa agordoj.</string>
     <string name="recoveryPasswordView">Vidi Pasvorton</string>
     <string name="recoveryPasswordWarningSendDescription">Ĉi tio estas via ripara pasvorto. Se vi sendas ĝin al iu, tiam tiu havos tutan aliron al via konto.</string>
+    <string name="recreateGroup">Rekrei grupon</string>
     <string name="redo">Refari</string>
     <string name="remove">Forigi</string>
     <string name="removePasswordFail">Malsukcesis forigi pasvorton</string>
@@ -759,6 +867,7 @@
     <string name="searchSearching">Serĉante...</string>
     <string name="select">Elekti</string>
     <string name="selectAll">Elekti ĉion</string>
+    <string name="selectAppIcon">Elektu piktogramon de aplikaĵo</string>
     <string name="send">Sendi</string>
     <string name="sending">Sendante</string>
     <string name="sent">Sendita:</string>
@@ -768,30 +877,39 @@
     <string name="sessionHelp">Helpo</string>
     <string name="sessionInviteAFriend">Inviti Amikon</string>
     <string name="sessionMessageRequests">Mesaĝpetoj</string>
+    <string name="sessionNetworkCurrentPrice">Nuna prezo de {token_name_short}</string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} estas viva! Esploru la novan sekcion {network_name} en Agordoj por lerni kiel {token_name_long} funkciigas Session.</string>
+    <string name="sessionNetworkSecuredBy">Reto sekurigita de</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Nova</font></string>
     <string name="sessionNotifications">Sciigoj</string>
     <string name="sessionPermissions">Permesoj</string>
     <string name="sessionPrivacy">Privateco</string>
     <string name="sessionRecoveryPassword">Ripara Pasvorto</string>
     <string name="sessionSettings">Agordoj</string>
     <string name="set">Fiksu</string>
+    <string name="setCommunityDisplayPicture">Agordi bildon de la komunumo</string>
     <string name="settingsRestartDescription">Vi devas rekomenci {app_name} por apliki viajn novajn agordojn.</string>
     <string name="share">Kunhavigi</string>
     <string name="shareAccountIdDescription">Invitu vian amikon babili kun vi en {app_name} dividante vian Konta Identigilo kun ili.</string>
     <string name="shareAccountIdDescriptionCopied">Kunhavigu kun viaj amikoj kien ajn vi kutime parolas kun ili — tiam movu la konversacion ĉi tie.</string>
     <string name="shareExtensionDatabaseError">Okazis problemo dum malfermo de la datumbazo. Bonvolu restartigi la aplikon kaj reprovi.</string>
+    <string name="shareExtensionNoAccountError">Ups! Ŝajnas ke vi ankoraŭ ne havas {app_name} konton\n\nVi bezonos krei ĝin en la {app_name} antaŭ ol vi povos diskonigi.</string>
     <string name="shareToSession">Kunhavigi al {app_name}</string>
     <string name="show">Montri</string>
     <string name="showAll">Montri ĉiujn</string>
     <string name="showLess">Montri malpli</string>
+    <string name="showNoteToSelf">Montri noton al mi mem</string>
     <string name="stickers">Glumarkoj</string>
     <string name="supportGoTo">Iri al helppaĝo</string>
     <string name="systemInformationDesktop">Sistemajn Informojn: {information}</string>
+    <string name="tapToRetry">Frapetu por reprovi</string>
     <string name="theContinue">Daŭrigi</string>
     <string name="theDefault">Defaŭlta</string>
     <string name="theError">Eraro</string>
     <string name="tryAgain">Provi Denove</string>
     <string name="typingIndicators">Tajpantaj indikiloj</string>
     <string name="typingIndicatorsDescription">Vidi kaj kunhavigi tajp-indikilojn.</string>
+    <string name="unavailable">Ne disponebla</string>
     <string name="undo">Malfari</string>
     <string name="unknown">Nekonata</string>
     <string name="updateApp">Aplikaĵaj ĝisdatigoj</string>
@@ -799,10 +917,15 @@
     <string name="updateDownloading">Elŝutante ĝisdatigon: {percent_loader}%</string>
     <string name="updateError">Neaktualebligas</string>
     <string name="updateErrorDescription">{app_name} malsukcesis ĝisdatigi. Bonvolu iri al {session_download_url} kaj instali la novan version permane, poste kontaktu nian HelpoCentron por sciigi nin pri tiu ĉi problemo.</string>
+    <string name="updateGroupInformation">Ĝisdatigi informon de la grupo</string>
+    <string name="updateGroupInformationDescription">Grupa nomo kaj priskribo estas videbla al ĉiuj membroj de la grupo.</string>
+    <string name="updateGroupInformationEnterShorterDescription">Bonvolu enigi pli mallongan priskribon de la grupo</string>
     <string name="updateNewVersion">Nova versio de {app_name} disponeblas, tuŝu por ĝisdatigi</string>
+    <string name="updateNewVersionDescription">Nova versio ({version}) de {app_name} estas disponebla.</string>
     <string name="updateReleaseNotes">Iri al eldonaj notoj</string>
     <string name="updateSession">Ĝisdatigo de {app_name}</string>
     <string name="updateVersion">Versio {version}</string>
+    <string name="updated">Laste ĝisdatigita antaŭ {relative_time}</string>
     <string name="uploading">Alŝutante</string>
     <string name="urlCopy">Kopii URL-on</string>
     <string name="urlOpen">Ĉu Malfermi Retadreson</string>
@@ -812,6 +935,8 @@
     <string name="video">Videaĵo</string>
     <string name="videoErrorPlay">Ne eblas ludi videaĵon.</string>
     <string name="view">Vidi</string>
+    <string name="viewLess">Vidi malpli</string>
+    <string name="viewMore">Vidi pli</string>
     <string name="waitFewMinutes">Ĉi tio povas daŭri kelkajn minutojn.</string>
     <string name="waitOneMoment">Momenton, Bonvolu...</string>
     <string name="warning">Averto</string>

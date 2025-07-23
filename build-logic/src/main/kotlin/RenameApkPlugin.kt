@@ -23,7 +23,8 @@ class RenameApkPlugin : Plugin<Project> {
                 val taskProvider = project.tasks.register(
                     "rename${variant.name.capitalized()}Apk",
                     RenameApkTask::class.java,
-                    variant.flavorName
+                    variant.flavorName,
+                    variant.buildType
                 )
 
                 val request = variant.artifacts.use(taskProvider)
@@ -38,7 +39,10 @@ class RenameApkPlugin : Plugin<Project> {
     }
 }
 
-abstract class RenameApkTask @Inject constructor(private val flavourName: String?) : DefaultTask() {
+abstract class RenameApkTask @Inject constructor(
+    private val flavourName: String?,
+    private val buildType: String?
+) : DefaultTask() {
     @get:InputFiles
     abstract val inputDir: DirectoryProperty
 
@@ -53,8 +57,16 @@ abstract class RenameApkTask @Inject constructor(private val flavourName: String
         request.get()
             .submit(this) { artifact ->
                 val abi = artifact.filters.firstOrNull { it.filterType == FilterConfiguration.FilterType.ABI }?.identifier ?: "universal"
-                val flavorPostfix = flavourName?.let { "-$it" } ?: ""
-                val name = "session-${artifact.versionName}-$abi$flavorPostfix.apk"
+
+                val name = sequenceOf(
+                    "session",
+                    artifact.versionName,
+                    abi,
+                    flavourName,
+                    buildType
+                ).filterNotNull()
+                    .joinToString(separator = "-", postfix = ".apk")
+
                 val dst = outputDir.file(name).get().asFile
                 File(artifact.outputFile).copyTo(dst, overwrite = true)
                 dst

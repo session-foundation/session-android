@@ -19,10 +19,13 @@ package org.thoughtcrime.securesms.database.model;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.session.libsession.utilities.recipients.Recipient;
 import org.thoughtcrime.securesms.database.MmsSmsColumns;
 import org.thoughtcrime.securesms.database.SmsDatabase;
+import org.thoughtcrime.securesms.database.model.content.DisappearingMessageUpdate;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 /**
  * The base class for all message record models.  Encapsulates basic data
@@ -43,9 +46,12 @@ public abstract class DisplayRecord {
   private final int        deliveryReceiptCount;
   private final int        readReceiptCount;
 
+  @Nullable
+  private final MessageContent messageContent;
+
   DisplayRecord(String body, Recipient recipient, long dateSent,
-    long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
-    long type, int readReceiptCount)
+                long dateReceived, long threadId, int deliveryStatus, int deliveryReceiptCount,
+                long type, int readReceiptCount, @Nullable MessageContent messageContent)
   {
     this.threadId             = threadId;
     this.recipient            = recipient;
@@ -56,6 +62,7 @@ public abstract class DisplayRecord {
     this.deliveryReceiptCount = deliveryReceiptCount;
     this.readReceiptCount     = readReceiptCount;
     this.deliveryStatus       = deliveryStatus;
+    this.messageContent = messageContent;
   }
 
   public @NonNull String getBody() {
@@ -88,10 +95,14 @@ public abstract class DisplayRecord {
     return isPending;
   }
 
+  @Nullable
+  public MessageContent getMessageContent() {
+    return messageContent;
+  }
+
   public boolean isCallLog()                    { return SmsDatabase.Types.isCallLog(type);                        }
   public boolean isDataExtractionNotification() { return isMediaSavedNotification() || isScreenshotNotification(); }
   public boolean isDeleted()                    { return  MmsSmsColumns.Types.isDeletedMessage(type);              }
-  public boolean isExpirationTimerUpdate()      { return SmsDatabase.Types.isExpirationTimerUpdate(type);          }
   public boolean isFirstMissedCall()            { return SmsDatabase.Types.isFirstMissedCall(type);                }
   public boolean isGroupUpdateMessage()         { return SmsDatabase.Types.isGroupUpdateMessage(type);             }
   public boolean isIncoming()                   { return !MmsSmsColumns.Types.isOutgoingMessageType(type);         }
@@ -112,10 +123,10 @@ public abstract class DisplayRecord {
 
   public boolean isControlMessage() {
     return isGroupUpdateMessage()          ||
-            isExpirationTimerUpdate()      ||
             isDataExtractionNotification() ||
             isMessageRequestResponse()     ||
-            isCallLog();
+            isCallLog() ||
+            (messageContent instanceof DisappearingMessageUpdate);
   }
 
   public boolean isGroupV2ExpirationTimerUpdate() { return false; }

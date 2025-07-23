@@ -255,6 +255,7 @@
     <string name="copy">Copiază</string>
     <string name="create">Creează</string>
     <string name="cut">Decupează</string>
+    <string name="databaseErrorGeneric">A apărut o eroare în baza de date.\n\nExportați jurnalele aplicației pentru a le partaja în vederea depanării. Dacă nu reușiți, reinstalați {app_name} și restaurați-vă contul.</string>
     <string name="databaseErrorTimeout">Am observat că {app_name} durează mult timp să pornească.\n\nPuteți continua să așteptați, să exportați jurnalele dispozitivului pentru a le partaja pentru depanare sau să încercați să reporniți {app_name}.</string>
     <string name="databaseErrorUpdate">Baza de date a aplicației dumneavoastră este incompatibilă cu această versiune de {app_name}. Reinstalați aplicația și restaurați contul pentru a genera o nouă bază de date și a continua să folosiți {app_name}.\n\nAtenție: Aceasta va conduce la pierderea tuturor mesajelor și atașamentelor mai vechi de două săptămâni.</string>
     <string name="databaseOptimizing">Optimizare bază de date</string>
@@ -288,6 +289,11 @@
     </plurals>
     <string name="deleteMessageDeletedGlobally">Acest mesaj a fost șters.</string>
     <string name="deleteMessageDeletedLocally">Acest mesaj a fost șters pe acest dispozitiv.</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">Sunteţi sigur că doriţi să ștergeți acest mesaj doar de pe acest dispozitiv?</item>
+        <item quantity="few">Sunteţi sigur că doriţi să ștergeți acest mesaj doar de pe acest dispozitiv?</item>
+        <item quantity="other">Sigur doriți să ștergeți acest mesaj numai de pe acest dispozitiv?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">Ești sigur/ă că dorești să ștergi acest mesaj pentru toată lumea?</string>
     <string name="deleteMessageDeviceOnly">Șterge doar pe acest dispozitiv</string>
     <string name="deleteMessageDevicesAll">Șterge pe toate dispozitivele mele</string>
@@ -402,6 +408,7 @@
     <string name="groupCreate">Creează grup</string>
     <string name="groupCreateErrorNoMembers">Vă rugăm să alegeți cel puțin un alt membru al grupului.</string>
     <string name="groupDelete">Șterge grup</string>
+    <string name="groupDeleteDescription">Sunteți sigur că vreți să ștergeți <b>{group_name}</b>?\n\nAceasta va elimina toți membrii și va șterge tot conținutul grupului.</string>
     <string name="groupDescriptionEnter">Introduceți o descriere a grupului</string>
     <string name="groupDisplayPictureUpdated">Imaginea afișată de grup a fost actualizată.</string>
     <string name="groupEdit">Editează grupul</string>
@@ -416,6 +423,11 @@
     <string name="groupInviteFailedUser">Nu s-a putut invita {name} la {group_name}</string>
     <string name="groupInviteReinvite"><b>{name}</b> te-a invitat să te realături grupului <b>{group_name}</b>, unde ești Admin.</string>
     <string name="groupInviteReinviteYou">Ai fost invitat să te alături din nou la <b>{group_name}</b>, unde ești administrator.</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">Se trimite invitația</item>
+        <item quantity="few">Se trimit invitațiile</item>
+        <item quantity="other">Se trimit invitațiile</item>
+    </plurals>
     <string name="groupInviteSent">Invitația a fost trimisă</string>
     <string name="groupInviteSuccessful">Invitație grup reușită</string>
     <string name="groupInviteVersion">Utilizatorii trebuie să aibă versiunea cea mai recentă pentru a primi invitații</string>
@@ -437,6 +449,7 @@
     <string name="groupMemberNewMultiple"><b>{name}</b> și <b> alți {count}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewTwo"><b>{name}</b> și <b>{other_name}</b> au fost invitați să se alăture grupului.</string>
     <string name="groupMemberNewYouHistoryMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
+    <string name="groupMemberNewYouHistoryTwo"><b>Dumneavoastră</b> și <b>{other_name}</b> ați fost invitați să vă alăturați grupului. Istoricul conversațiilor a fost partajat.</string>
     <string name="groupMemberYouLeft"><b>Tu</b> ai părăsit grupul.</string>
     <string name="groupMembers">Membrii grupului</string>
     <string name="groupMembersNone">Nu există alți membri în acest grup.</string>
@@ -451,6 +464,7 @@
     <string name="groupOnlyAdmin">Ești singurul administrator din <b>{group_name}</b>.\n\nMembrii și setările grupului nu pot fi modificate fără un administrator.</string>
     <string name="groupPromotedYou"><b>Tu</b> ai fost promovat/ă la nivel de administrator.</string>
     <string name="groupPromotedYouMultiple"><b>Tu</b> și <b>alți {count}</b> ați fost promovați la nivel de administrator.</string>
+    <string name="groupPromotedYouTwo"><b>Dumneavoastră</b> și <b>{other_name}</b> ați fost promovați ca administratori.</string>
     <string name="groupRemoveDescription">Doriți să eliminați pe <b>{name}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">Doriți să eliminați pe <b>{name}</b> și <b>alți {count}</b> din <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">Doriți să eliminați pe <b>{name}</b> și <b>{other_name}</b> din <b>{group_name}</b>?</string>
@@ -492,6 +506,16 @@
     <string name="incognitoKeyboardDescription">Solicită modul incognito, dacă este disponibil. În funcție de tastatura pe care o folosești, este posibil ca tastatura ta să ignore această solicitare.</string>
     <string name="info">Info</string>
     <string name="invalidShortcut">Scurtătură incorectă</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">Invitație eșuată</item>
+        <item quantity="few">Invitații eșuate</item>
+        <item quantity="other">Invitații eșuate</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">Invitația nu a putut fi trimisă. Doriți să încercați din nou?</item>
+        <item quantity="few">Invitațiile nu au putut fi trimise. Doriți să încercați din nou?</item>
+        <item quantity="other">Invitațiile nu au putut fi trimise. Doriți să încercați din nou?</item>
+    </plurals>
     <string name="join">Alătură-te</string>
     <string name="later">Mai târziu</string>
     <string name="learnMore">Află mai mult</string>
@@ -570,6 +594,11 @@
         <item quantity="one">Ai primit un mesaj nou.</item>
         <item quantity="few">Ai %1$d mesaje noi.</item>
         <item quantity="other">Ai %1$d mesaje noi.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">Ați primit un mesaj nou în %1$s.</item>
+        <item quantity="few">Ați primit %1$d mesaje noi în %2$s.</item>
+        <item quantity="other">Ați primit %1$d mesaje noi în %2$s.</item>
     </plurals>
     <string name="messageReplyingTo">Răspunde la</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> te-a invitat să te alături grupului <b>{group_name}</b>.</string>
@@ -727,6 +756,16 @@
     <string name="profileDisplayPictureSizeError">Vă rugăm alegeți un fișier mai mic.</string>
     <string name="profileErrorUpdate">Eroare la actualizarea profilului.</string>
     <string name="promote">Promovează</string>
+    <plurals name="promotionFailed">
+        <item quantity="one">Promovare eșuată</item>
+        <item quantity="few">Promovări eșuate</item>
+        <item quantity="other">Promovări eșuate</item>
+    </plurals>
+    <plurals name="promotionFailedDescription">
+        <item quantity="one">Promovarea nu a putut fi aplicată. Doriți să încercați din nou?</item>
+        <item quantity="few">Promovările nu au putut fi aplicate. Doriți să încercați din nou?</item>
+        <item quantity="other">Promovările nu au putut fi aplicate. Doriți să încercați din nou?</item>
+    </plurals>
     <string name="qrCode">Cod QR</string>
     <string name="qrNotAccountId">Acest cod QR nu conține un ID de cont</string>
     <string name="qrNotRecoveryPassword">Acest cod QR nu conține o parolă de recuperare</string>
@@ -831,6 +870,7 @@
     <string name="updateError">Nu se poate actualiza</string>
     <string name="updateErrorDescription">{app_name} nu a reușit să se actualizeze. Vă rugăm să accesați {session_download_url} și să instalați manual noua versiune, apoi contactați Centrul de Asistență pentru a ne informa despre această problemă.</string>
     <string name="updateNewVersion">Este disponibilă o nouă versiune de {app_name}, apăsați pentru actualizare</string>
+    <string name="updateNewVersionDescription">O nouă versiune ({version}) {app_name} este valabilă.</string>
     <string name="updateReleaseNotes">Mergi la Notele de lansare</string>
     <string name="updateSession">Actualizare {app_name}</string>
     <string name="updateVersion">Versiunea {version}</string>

@@ -729,7 +729,10 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
             val  loadSize = min(context.resources.displayMetrics.widthPixels, context.resources.displayMetrics.heightPixels)
             Glide.with(context).load(it)
-                .avatarOptions(loadSize)
+                .avatarOptions(
+                    sizePx = loadSize,
+                    freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
+                )
                 .preload(loadSize, loadSize)
         }
     }

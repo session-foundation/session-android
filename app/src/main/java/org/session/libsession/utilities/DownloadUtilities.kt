@@ -13,7 +13,7 @@ object DownloadUtilities {
      *
      * This will assume the URL is a valid file server URL, and if not,
      */
-    suspend fun downloadFromFileServer(urlAsString: String): ByteArraySlice {
+    suspend fun downloadFromFileServer(urlAsString: String): FileServerApi.SendResponse {
         try {
             val url = urlAsString.toHttpUrl()
             require(url.host == FileServerApi.fileServerUrl.host) {

@@ -153,6 +153,7 @@
     <string name="callsNotificationsRequired">Las llamadas de voz y video requieren que las notificaciones estén habilitadas en la configuración del sistema de tu dispositivo.</string>
     <string name="callsPermissionsRequired">Se requieren permisos de llamada</string>
     <string name="callsPermissionsRequiredDescription">Puedes habilitar los permisos de \"Llamadas de Voz y Video\" en la Configuración de Privacidad.</string>
+    <string name="callsPermissionsRequiredDescription1">Puedes activar el permiso para \"Llamadas de voz y vídeo\" en los ajustes de Privacidad.</string>
     <string name="callsReconnecting">Reconectando...</string>
     <string name="callsRinging">Llamando...</string>
     <string name="callsSessionCall">Llamada de {app_name}</string>
@@ -261,6 +262,7 @@
     <string name="create">Crear</string>
     <string name="creatingCall">Creando llamada</string>
     <string name="cut">Cortar</string>
+    <string name="databaseErrorGeneric">Ocurrió un error en la base de datos.\n\nExporta tus registros de aplicación para compartirlos con fines de resolución de problemas. Si esto no funciona, reinstala {app_name} y restaura tu cuenta.</string>
     <string name="databaseErrorTimeout">Hemos notado que {app_name} está tardando mucho en iniciar.\n\nPuedes seguir esperando, exportar los registros de tu dispositivo para compartirlos y solucionar problemas, o intentar reiniciar {app_name}.</string>
     <string name="databaseErrorUpdate">Su base de datos de la aplicación no es compatible con esta versión de {app_name}. Reinstala la aplicación y restaura tu cuenta para generar una nueva base de datos y continuar usando {app_name}.\n\nAdvertencia: Esto resultará en la pérdida de todos los mensajes y archivos adjuntos anteriores a dos semanas.</string>
     <string name="databaseOptimizing">Optimizando base de datos</string>
@@ -410,7 +412,9 @@
     <string name="groupCreate">Crear grupo</string>
     <string name="groupCreateErrorNoMembers">Por favor, elige al menos un miembro del grupo.</string>
     <string name="groupDelete">Borrar Grupo</string>
+    <string name="groupDeleteDescription">¿Estás seguro de que deseas eliminar <b>{group_name}</b>?\n\n Esto borrará a todos los miembros y eliminará todo el contenido del grupo.</string>
     <string name="groupDeleteDescriptionMember">¿Seguro que quieres eliminar <b>{group_name}</b>?</string>
+    <string name="groupDeletedMemberDescription">Un administrador de grupo ha eliminado {group_name}. No podrás enviar más mensajes.</string>
     <string name="groupDescriptionEnter">Ingrese una descripción del grupo</string>
     <string name="groupDisplayPictureUpdated">La imagen del grupo se actualizó.</string>
     <string name="groupEdit">Editar grupo</string>
@@ -463,9 +467,12 @@
     <string name="groupNameUpdated">Nombre del grupo actualizadó.</string>
     <string name="groupNameVisible">El nombre del grupo es visible para todos los miembros del grupo.</string>
     <string name="groupNoMessages">No tienes mensajes de <b>{group_name}</b>. ¡Envía un mensaje para iniciar la conversación!</string>
+    <string name="groupNotUpdatedWarning">Este grupo no ha sido actualizado en más de 30 días. Puede que experimentes problemas al enviar mensajes o ver la información del grupo.</string>
     <string name="groupOnlyAdmin">Eres el único admin en <b>{group_name}</b>.\n\nLos miembros y la configuración del grupo no pueden ser modificados sin un admin.</string>
+    <string name="groupPendingRemoval">Pendiente de eliminación</string>
     <string name="groupPromotedYou"><b>Tú</b> fuiste promovido a Administrador.</string>
     <string name="groupPromotedYouMultiple"><b>Tú</b> y <b>{count} más</b> fueron promovidos a Administradores.</string>
+    <string name="groupPromotedYouTwo"><b>Tú</b> y <b>{other_name}</b> fueron promovidos a Administradores.</string>
     <string name="groupRemoveDescription">¿Te gustaría eliminar a <b>{name}</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionMultiple">¿Te gustaría eliminar a <b>{name}</b> y a <b>{count} otros</b> de <b>{group_name}</b>?</string>
     <string name="groupRemoveDescriptionTwo">¿Te gustaría eliminar a <b>{name}</b> y a <b>{other_name}</b> de <b>{group_name}</b>?</string>
@@ -774,6 +781,7 @@
     <string name="recoveryPasswordBannerTitle">Guarde su clave de recuperación</string>
     <string name="recoveryPasswordDescription">Usa tu contraseña de recuperación para cargar tu cuenta en nuevos dispositivos.\n\nTu cuenta no se puede recuperar sin tu contraseña de recuperación. Asegúrate de que esté guardada en un lugar seguro y no la compartas con nadie.</string>
     <string name="recoveryPasswordEnter">Ingrese su clave de recuperación</string>
+    <string name="recoveryPasswordErrorLoad">Ocurrió un error al intentar cargar tu contraseña de recuperación.\n\nPor favor exporta tus registros, y luego sube el archivo a través del Help Desk {app_name} para ayudar a resolver este problema.</string>
     <string name="recoveryPasswordErrorMessageGeneric">Por favor, comprueba tu clave de recuperación y vuelve a intentarlo.</string>
     <string name="recoveryPasswordErrorMessageIncorrect">Algunas de las palabras en tu clave de recuperación son incorrectas. Por favor verifica e inténtalo de nuevo.</string>
     <string name="recoveryPasswordErrorMessageShort">La contraseña de recuperación que ingresaste no es lo suficientemente larga. Por favor verifica e intenta nuevamente.</string>
@@ -839,6 +847,7 @@
     <string name="shareAccountIdDescription">Invita a tu amigo a hablar contigo en {app_name} compartiendo tu ID de Cuenta con él.</string>
     <string name="shareAccountIdDescriptionCopied">Comparte con tus amigos dondequiera que hables con ellos — luego mueve la conversación aquí.</string>
     <string name="shareExtensionDatabaseError">Hay un problema al abrir la base de datos. Por favor, reinicia la aplicación e inténtalo de nuevo.</string>
+    <string name="shareExtensionNoAccountError">¡Ups! Parece que no tienes una cuenta de {app_name} todavía.\n\nTendrás que crear una en la aplicación de {app_name} antes de que puedas compartir.</string>
     <string name="shareToSession">Compartir en {app_name}</string>
     <string name="show">Mostrar</string>
     <string name="showAll">Mostrar todas</string>
@@ -860,6 +869,7 @@
     <string name="updateError">No se pudo actualizar</string>
     <string name="updateErrorDescription">{app_name} falló al actualizarse. Por favor ve a {session_download_url} e instala la nueva versión manualmente, después contacta con nuestro Centro de Ayuda para informarnos sobre este problema.</string>
     <string name="updateNewVersion">Hay una nueva versión de {app_name} disponible, toca para actualizar</string>
+    <string name="updateNewVersionDescription">Hay disponible una nueva versión ({version}) de {app_name}.</string>
     <string name="updateReleaseNotes">Ir a las notas de versión</string>
     <string name="updateSession">Actualización de {app_name}</string>
     <string name="updateVersion">Versión {version}</string>

@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "43512467490",
+    "firebase_url": "https://loki-5a81e.firebaseio.com",
+    "project_id": "loki-5a81e",
+    "storage_bucket": "loki-5a81e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43512467490:android:12239ad88b21eedf19ba7b",
+        "android_client_info": {
+          "package_name": "network.loki.messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPvEo_fyUsb3nuqhh20EwJGt_UXaVITrE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43512467490:android:bb1470d5bad72eb919ba7b",
+        "android_client_info": {
+          "package_name": "network.loki.messenger.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPvEo_fyUsb3nuqhh20EwJGt_UXaVITrE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43512467490:android:ccdcc593e39b3e4a19ba7b",
+        "android_client_info": {
+          "package_name": "network.loki.messenger.qa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPvEo_fyUsb3nuqhh20EwJGt_UXaVITrE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

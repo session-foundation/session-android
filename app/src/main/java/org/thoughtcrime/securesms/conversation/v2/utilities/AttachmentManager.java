@@ -264,7 +264,7 @@ public class AttachmentManager {
                 .execute();
     }
 
-    public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull String body) {
+    public static void selectGallery(Activity activity, int requestCode, @NonNull Recipient recipient, @NonNull long threadId, @NonNull String body) {
 
         Context c = activity.getApplicationContext();
 
@@ -296,7 +296,7 @@ public class AttachmentManager {
                     );
         }
 
-        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, body), requestCode))
+        builder.onAllGranted(() -> activity.startActivityForResult(MediaSendActivity.buildGalleryIntent(activity, recipient, threadId, body), requestCode))
                 .execute();
     }
 
@@ -318,7 +318,7 @@ public class AttachmentManager {
         return captureUri;
     }
 
-    public void capturePhoto(Activity activity, int requestCode, Recipient recipient) {
+    public void capturePhoto(Activity activity, int requestCode, Recipient recipient, @NonNull long threadId, @NonNull String body) {
 
         String cameraPermissionDeniedTxt = Phrase.from(context, R.string.permissionsCameraDenied)
                 .put(APP_NAME_KEY, context.getString(R.string.app_name))
@@ -328,7 +328,7 @@ public class AttachmentManager {
                 .request(Manifest.permission.CAMERA)
                 .withPermanentDenialDialog(cameraPermissionDeniedTxt)
                 .onAllGranted(() -> {
-                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient);
+                    Intent captureIntent = MediaSendActivity.buildCameraIntent(activity, recipient, threadId, body);
                     if (captureIntent.resolveActivity(activity.getPackageManager()) != null) {
                         activity.startActivityForResult(captureIntent, requestCode);
                     }

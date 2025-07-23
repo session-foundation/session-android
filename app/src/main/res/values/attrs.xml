@@ -82,7 +82,6 @@
     <attr name="message_sent_background_color" format="color|reference" />
     <attr name="message_sent_text_color" format="color|reference" />
     <attr name="message_status_color" format="color|reference" />
-    <attr name="input_bar_background" format="color|reference"/>
     <attr name="input_bar_text_hint" format="color|reference"/>
     <attr name="input_bar_text_user" format="color|reference"/>
     <attr name="input_bar_border" format="color|reference"/>
@@ -210,10 +209,6 @@
         <attr name="typingIndicator_tint" format="color" />
     </declare-styleable>
 
-    <declare-styleable name="MaxHeightScrollView">
-        <attr name="scrollView_maxHeight" format="dimension" />
-    </declare-styleable>
-
     <declare-styleable name="KeyboardPageSearchView">
         <attr name="show_always" format="boolean" />
         <attr name="search_bar_tint" format="color|reference" />
@@ -227,5 +222,9 @@
     <attr name="reactionsPillSelectedBackground" format="color|reference"/>
     <attr name="reactionsPillNormalBackground" format="color|reference"/>
     <attr name="reactionsPillNormalTextColor" format="color|reference"/>
+
+    <declare-styleable name="InputBar">
+        <attr name="sendOnly" format="boolean" />
+    </declare-styleable>
 
 </resources>

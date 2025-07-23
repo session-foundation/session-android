@@ -3,6 +3,7 @@
     <string name="about">O aplikacji</string>
     <string name="accept">Zaakceptuj</string>
     <string name="accountIDCopy">Kopiuj identyfikator konta</string>
+    <string name="accountId">Identyfikator konta</string>
     <string name="accountIdCopied">Skopiowano identyfikator konta</string>
     <string name="accountIdCopyDescription">Skopiuj swój identyfikator konta, a następnie udostępnij go znajomym, aby mogli wysłać do Ciebie wiadomość.</string>
     <string name="accountIdEnter">Wprowadź identyfikator konta</string>
@@ -15,6 +16,7 @@
     <string name="actualSize">Rzeczywisty rozmiar</string>
     <string name="add">Dodaj</string>
     <string name="addAdmins">Dodaj administratorów</string>
+    <string name="addAdminsDescription">Wprowadź identyfikator konta użytkownika, którego chcesz awansować na administratora.\n\nAby dodać wielu użytkowników, wpisz każdy identyfikator konta oddzielone przecinkiem. Można jednocześnie podać maksymalnie 20 identyfikatorów kont.</string>
     <string name="adminCannotBeRemoved">Nie można usuwać administratorów.</string>
     <string name="adminMorePromotedToAdmin"><b>{name}</b> i <b>{count} innych</b> zostali awansowani na administratów.</string>
     <string name="adminPromote">Awansuj administratorów</string>
@@ -50,7 +52,10 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">Anonim</string>
     <string name="appIcon">Ikona aplikacji</string>
+    <string name="appIconAndNameChange">Zmień ikonę i nazwę aplikacji</string>
+    <string name="appIconAndNameChangeConfirmation">Zmiana ikony i nazwy aplikacji wymaga zamknięcia aplikacji {app_name}. Powiadomienia nadal będą używać domyślnej ikony i nazwy {app_name}.</string>
     <string name="appIconAndNameDescription">Alternatywna ikona i nazwa aplikacji są wyświetlane na ekranie głównym i w szufladzie aplikacji.</string>
+    <string name="appIconAndNameSelectionDescription">Wybrana ikona i nazwa aplikacji będą wyświetlane na ekranie głównym oraz w szufladzie aplikacji.</string>
     <string name="appIconAndNameSelectionTitle">Ikona i nazwa</string>
     <string name="appIconDescription">Alternatywna ikona aplikacji jest wyświetlana na ekranie głównym i w bibliotece aplikacji. Nazwa aplikacji będzie nadal wyświetlana jako „{app_name}”.</string>
     <string name="appIconEnableIcon">Użyj alternatywnej ikony aplikacji</string>
@@ -226,6 +231,7 @@
     <string name="clearMessagesNoteToSelfDescriptionUpdated">Czy na pewno chcesz usunąć z urządzenia wszystkie <b>Moje notatki</b>?</string>
     <string name="clearOnThisDevice">Wyczyść na tym urządzeniu</string>
     <string name="close">Zamknij</string>
+    <string name="closeApp">Zamknij aplikację</string>
     <string name="closeWindow">Zamknij okno</string>
     <string name="commitHashDesktop">Hash zatwierdzenia: {hash}</string>
     <string name="communityBanDeleteDescription">Działanie zablokuje wybranego użytkownika w społeczności i skasuje wszystkie jego wiadomości. Na pewno kontynuować?</string>
@@ -448,6 +454,7 @@
     <string name="errorConnection">Sprawdź swoje połączenie z internetem i spróbuj ponownie.</string>
     <string name="errorCopyAndQuit">Skopiuj błąd i zakończ</string>
     <string name="errorDatabase">Błąd bazy danych</string>
+    <string name="errorGeneric">Coś poszło nie tak. Spróbuj ponownie później.</string>
     <string name="errorUnknown">Wystąpił nieznany błąd.</string>
     <string name="failedToDownload">Nie udało się pobrać</string>
     <string name="failures">Awarie</string>
@@ -695,6 +702,7 @@
     <string name="messageRequestsClearAllExplanation">Czy na pewno chcesz wyczyścić wszystkie prośby o wiadomość i zaproszenia do grupy?</string>
     <string name="messageRequestsCommunities">Prośby o wiadomość od społeczności</string>
     <string name="messageRequestsCommunitiesDescription">Zezwalaj na prośby o wiadomość z rozmów społecznościowych.</string>
+    <string name="messageRequestsContactDelete">Czy na pewno chcesz usunąć to żądanie wiadomości i powiązany z nim kontakt?</string>
     <string name="messageRequestsDelete">Czy na pewno chcesz usunąć tę prośbę o wiadomość?</string>
     <string name="messageRequestsNew">Masz nową prośbę o wiadomość</string>
     <string name="messageRequestsNonePending">Brak oczekujących próśb o wiadomość</string>
@@ -751,6 +759,7 @@
     <string name="notificationsMuteUnmute">Wyłącz wyciszenie</string>
     <string name="notificationsMuted">Wyciszono</string>
     <string name="notificationsMutedFor">Wyciszony przez {time_large}</string>
+    <string name="notificationsMutedForTime">Wyciszony do {date_time}</string>
     <string name="notificationsSlowMode">Tryb wolny</string>
     <string name="notificationsSlowModeDescription">Aplikacja {app_name} będzie od czasu do czasu sprawdzać nowe wiadomości w tle.</string>
     <string name="notificationsSound">Dźwięk</string>
@@ -842,6 +851,7 @@
     <string name="permissionsStorageSave">Aby zapisywać załączniki i multimedia, aplikacja {app_name} potrzebuje dostępu do pamięci.</string>
     <string name="permissionsStorageSaveDenied">Aby zapisywać zdjęcia i filmy, aplikacja {app_name} potrzebuje dostępu do pamięci, jednak na stałe go odmówiono. Przejdź do ustawień aplikacji, wybierz „Uprawnienia” i włącz „Pamięć”.</string>
     <string name="permissionsStorageSend">Aby wysyłać zdjęcia i filmy, aplikacja {app_name} potrzebuje dostępu do pamięci.</string>
+    <string name="permissionsWriteCommunity">Nie masz uprawnień do zapisu w tej społeczności</string>
     <string name="pin">Przypnij</string>
     <string name="pinConversation">Przypnij konwersację</string>
     <string name="pinUnpin">Odepnij</string>
@@ -935,6 +945,7 @@
     <string name="searchSearching">Wyszukiwanie...</string>
     <string name="select">Wybierz</string>
     <string name="selectAll">Zaznacz wszystko</string>
+    <string name="selectAppIcon">Wybierz ikonę aplikacji</string>
     <string name="send">Wyślij</string>
     <string name="sending">Wysyłanie</string>
     <string name="sendingCallOffer">Wysyłanie oferty połączenia</string>
@@ -946,6 +957,16 @@
     <string name="sessionHelp">Pomoc</string>
     <string name="sessionInviteAFriend">Zaproś znajomego</string>
     <string name="sessionMessageRequests">Prośby o wiadomość</string>
+    <string name="sessionNetworkCurrentPrice">Aktualna {token_name_short} cena</string>
+    <string name="sessionNetworkDescription">Wiadomości są wysyłane za pośrednictwem sieci {network_name}. Sieć składa się z węzłów, które są motywowane tokenami {token_name_long}, co zapewnia, że {app_name} pozostaje zdecentralizowana i bezpieczna. <font color="0"><b>Dowiedz się więcej</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">Dowiedz się więcej o stakingu</string>
+    <string name="sessionNetworkMarketCap">Kapitalizacja</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} Węzły zabezpieczające <font color="0">twoje wiadomości</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} Węzły w <font color="0">twoim roju</font></string>
+    <string name="sessionNetworkNotificationLive">{token_name_long} jest już dostępny! Zapoznaj się z nową sekcją {network_name} w Ustawieniach, aby dowiedzieć się, jak {token_name_long} zasila Session.</string>
+    <string name="sessionNetworkSecuredBy">Sieć zabezpieczona przez</string>
+    <string name="sessionNetworkTokenDescription">Stawiając {token_name_long} w celu zabezpieczenia sieci, otrzymujesz nagrody w {token_name_short} z puli {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Nowy</font></string>
     <string name="sessionNotifications">Powiadomienia</string>
     <string name="sessionPermissions">Uprawnienia</string>
     <string name="sessionPrivacy">Prywatność</string>
@@ -975,6 +996,7 @@
     <string name="tryAgain">Spróbuj ponownie</string>
     <string name="typingIndicators">Wskaźniki pisania</string>
     <string name="typingIndicatorsDescription">Wyświetlaj i udostępniaj wskaźniki pisania.</string>
+    <string name="unavailable">Niedostępny</string>
     <string name="undo">Cofnij</string>
     <string name="unknown">Nieznane</string>
     <string name="updateApp">Aktualizacje aplikacji</string>
@@ -990,6 +1012,7 @@
     <string name="updateReleaseNotes">Przejdź do informacji o wersji</string>
     <string name="updateSession">Aktualizacja aplikacji {app_name}</string>
     <string name="updateVersion">Wersja {version}</string>
+    <string name="updated">Ostatnia aktualizacja {relative_time} temu</string>
     <string name="uploading">Przesyłanie</string>
     <string name="urlCopy">Skopiuj adres URL</string>
     <string name="urlOpen">Otwórz adres URL</string>

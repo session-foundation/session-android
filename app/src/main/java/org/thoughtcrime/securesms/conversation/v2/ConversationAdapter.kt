@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import kotlin.math.max
 
 class ConversationAdapter(
     context: Context,
@@ -302,6 +303,13 @@ class ConversationAdapter(
         val cursor = this.cursor ?: return null
         if (!cursor.moveToPosition(firstVisiblePosition)) return null
         val message = messageDB.readerFor(cursor).current ?: return null
-        return message.timestamp
+        if (message.reactions.isEmpty()) {
+            // If the message has no reactions, we can use the timestamp directly
+            return message.timestamp
+        }
+
+        // Otherwise, we will need to take the reaction timestamp into account
+        val maxReactionTimestamp = message.reactions.maxOf { it.dateReceived }
+        return max(message.timestamp, maxReactionTimestamp)
     }
 }

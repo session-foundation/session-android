@@ -16,7 +16,6 @@ import org.session.libsignal.utilities.JsonUtil;
 import org.session.libsignal.utilities.Log;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 import org.thoughtcrime.securesms.database.model.MessageRecord;
-import org.thoughtcrime.securesms.util.SqlUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +47,10 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
 
   public abstract void markAsDeleted(long messageId, boolean isOutgoing, String displayedMessage);
 
+  public abstract List<Long> getExpiredMessageIDs(long nowMills);
+
+  public abstract long getNextExpiringTimestamp();
+
   public abstract boolean deleteMessage(long messageId);
   public abstract boolean deleteMessages(long[] messageId, long threadId);
 
@@ -74,34 +77,6 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
                          IdentityKeyMismatchList.class);
     } catch (IOException e) {
       Log.w(TAG, e);
-    }
-  }
-
-  void updateReactionsUnread(SQLiteDatabase db, long messageId, boolean hasReactions, boolean isRemoval, boolean notifyUnread) {
-    try {
-      MessageRecord message    = getMessageRecord(messageId);
-      ContentValues values     = new ContentValues();
-
-      if (notifyUnread) {
-        if (!hasReactions) {
-          values.put(REACTIONS_UNREAD, 0);
-        } else if (!isRemoval) {
-          values.put(REACTIONS_UNREAD, 1);
-        }
-      } else {
-        values.put(REACTIONS_UNREAD, 0);
-      }
-
-      if (message.isOutgoing() && hasReactions) {
-        values.put(NOTIFIED, 0);
-      }
-
-      if (values.size() > 0) {
-        db.update(getTableName(), values, ID_WHERE, SqlUtil.buildArgs(messageId));
-      }
-      notifyConversationListeners(message.getThreadId());
-    } catch (NoSuchMessageException e) {
-      Log.w(TAG, "Failed to find message " + messageId);
     }
   }
 

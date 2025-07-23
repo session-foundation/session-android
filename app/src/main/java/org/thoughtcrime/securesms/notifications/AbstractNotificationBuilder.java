@@ -5,7 +5,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
+import android.text.TextPaint;
 import android.text.TextUtils;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -24,7 +26,7 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
   @SuppressWarnings("unused")
   private static final String TAG = AbstractNotificationBuilder.class.getSimpleName();
 
-  private static final int MAX_DISPLAY_LENGTH = 50;
+  private static final int MAX_DISPLAY_LENGTH = 80;
 
   protected Context                       context;
   protected NotificationPrivacyPreference privacy;
@@ -82,7 +84,7 @@ public abstract class AbstractNotificationBuilder extends NotificationCompat.Bui
     text = text == null ? "" : text;
 
     return text.length() <= MAX_DISPLAY_LENGTH ? text
-                                               : text.subSequence(0, MAX_DISPLAY_LENGTH);
+                                               : text.subSequence(0, MAX_DISPLAY_LENGTH - 3) +"\u2026";
   }
 
   @Override

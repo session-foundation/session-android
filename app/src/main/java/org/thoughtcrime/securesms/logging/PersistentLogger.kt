@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.session.libsignal.utilities.Log.Logger
 import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.regex.Pattern
@@ -28,7 +29,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 @Singleton
 class PersistentLogger @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : Logger() {
     private val freeLogEntryPool = LogEntryPool()
     private val logEntryChannel: SendChannel<LogEntry>
@@ -61,7 +62,19 @@ class PersistentLogger @Inject constructor(
 
                     if (bulk.isNotEmpty()) {
                         if (logWriter == null) {
-                            logWriter = LogFile.Writer(secret, File(logFolder, CURRENT_LOG_FILE_NAME))
+                            val currentFile = File(logFolder, CURRENT_LOG_FILE_NAME)
+
+                            // If current file exist, we need to make sure we can decrypt it
+                            // as this file can come from a previous session.
+                            val append = if (currentFile.exists() && currentFile.length() > 0) {
+                                LogFile.Reader(secret, currentFile).use {
+                                    it.readEntryBytes() != null
+                                }
+                            } else {
+                                true
+                            }
+
+                            logWriter = LogFile.Writer(secret, currentFile, append)
                         }
 
                         bulkWrite(entryBuilder, logWriter, bulk)
@@ -91,6 +104,10 @@ class PersistentLogger @Inject constructor(
                 )
             }
         }
+    }
+
+    fun deleteAllLogs() {
+        logFolder.deleteRecursively()
     }
 
     private fun rotateAndTrimLogFiles(currentFile: File) {
@@ -125,6 +142,7 @@ class PersistentLogger @Inject constructor(
                 .append(entry.tag.orEmpty())
                 .append(": ")
                 .append(entry.message.orEmpty())
+                .append('\n')
             entry.err?.let {
                 sb.append('\n')
                 sb.append(it.stackTraceToString())
@@ -192,8 +210,7 @@ class PersistentLogger @Inject constructor(
                     ?.toLongOrNull()
                     ?.let { timestamp -> it to timestamp }
             }
-            .toMutableList()
-            .apply { sortByDescending { (_, timestamp) -> timestamp } }
+            .sortedByDescending { (_, timestamp) -> timestamp }
             .mapTo(arrayListOf()) { it.first }
 
         if (includeActiveLogFile) {
@@ -214,19 +231,32 @@ class PersistentLogger @Inject constructor(
     fun readAllLogsCompressed(output: Uri) {
         val logs = getLogFilesSorted(includeActiveLogFile = true).apply { reverse() }
 
-        requireNotNull(context.contentResolver.openOutputStream(output, "w")) {
+        if (logs.isEmpty()) {
+            android.util.Log.w(TAG, "No log files found to read.")
+            return
+        }
+
+        requireNotNull(context.contentResolver.openOutputStream(output, "w")?.buffered()) {
             "Failed to open output stream for URI: $output"
         }.use { outStream ->
             ZipOutputStream(outStream).use { zipOut ->
                 zipOut.putNextEntry(ZipEntry("log.txt"))
+
                 for (log in logs) {
                     LogFile.Reader(secret, log).use { reader ->
-                        var entry = reader.readEntryBytes()
-                        while (entry != null) {
-                            zipOut.write(entry)
-                            zipOut.write('\n'.code)
-                            entry = reader.readEntryBytes()
-                        }
+                        var count = 0
+                        generateSequence { reader.readEntryBytes() }
+                            .forEach { entry ->
+                                zipOut.write(entry)
+
+                                if (entry.isEmpty() || entry.last().toInt() != '\n'.code) {
+                                    zipOut.write('\n'.code)
+                                }
+
+                                count++
+                            }
+
+                        android.util.Log.d(TAG, "Read $count entries from ${log.name}")
                     }
                 }
                 zipOut.closeEntry()

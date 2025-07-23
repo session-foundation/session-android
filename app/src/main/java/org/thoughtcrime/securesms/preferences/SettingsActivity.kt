@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -43,25 +42,25 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
@@ -73,8 +72,10 @@ import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ActivitySettingsBinding
 import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
@@ -84,24 +85,28 @@ import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
-import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.NoAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
+import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.AnimatedSessionProCTA
+import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LargeItemButton
 import org.thoughtcrime.securesms.ui.LargeItemButtonWithDrawable
+import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
+import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.BaseBottomSheet
-import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
-import org.thoughtcrime.securesms.ui.components.AcccentOutlineCopyButton
 import org.thoughtcrime.securesms.ui.getCellBottomShape
 import org.thoughtcrime.securesms.ui.getCellTopShape
 import org.thoughtcrime.securesms.ui.qaTag
@@ -112,8 +117,8 @@ import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
-import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.accentTextButtonColors
+import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.util.FileProviderUtil
 import org.thoughtcrime.securesms.util.applyCommonWindowInsetsOnViews
 import org.thoughtcrime.securesms.util.push
@@ -128,6 +133,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     @Inject
     lateinit var prefs: TextSecurePreferences
 
+    @Inject
+    lateinit var inAppReviewManager: InAppReviewManager
+
     private val viewModel: SettingsViewModel by viewModels()
 
     private lateinit var binding: ActivitySettingsBinding
@@ -141,11 +149,15 @@ class SettingsActivity : ScreenLockActionBarActivity() {
      private val pickPhotoLauncher: ActivityResultLauncher<PickVisualMediaRequest> =
          registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
              uri?.let {
-                 showAvatarPickerOptions = false // close the bottom sheet
+                 viewModel.hideAvatarPickerOptions() // close the bottom sheet
 
                  // Handle the selected image URI
-                 val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
-                 cropImage(it, outputFile)
+                 if(viewModel.isAnimated(uri)){ // no cropping for animated images
+                     viewModel.onAvatarPicked(uri)
+                 } else {
+                     val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
+                     cropImage(it, outputFile)
+                 }
 
              }
          }
@@ -153,7 +165,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
      // Launcher for capturing a photo using the camera.
      private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
          if (success) {
-             showAvatarPickerOptions = false // close the bottom sheet
+             viewModel.hideAvatarPickerOptions() // close the bottom sheet
 
              val outputFile = Uri.fromFile(File(cacheDir, "cropped"))
              cropImage(viewModel.getTempFile()?.let(Uri::fromFile), outputFile)
@@ -171,11 +183,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             viewModel.permanentlyHidePassword()
         }
     }
-
-    private var urlToOPen: String? by mutableStateOf(null)
-    private var showAvatarDialog: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptionCamera: Boolean by mutableStateOf(false)
-    private var showAvatarPickerOptions: Boolean by mutableStateOf(false)
 
     private val bgColor by lazy { getColorFromAttr(android.R.attr.colorPrimary) }
     private val txtColor by lazy { getColorFromAttr(android.R.attr.textColorPrimary) }
@@ -200,16 +207,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
         // set the compose dialog content
         binding.composeLayout.setThemedContent {
+            val uiState by viewModel.uiState.collectAsState()
             SettingsComposeContent(
-                showUrlDialog = urlToOPen,
-                showAvatarDialog = showAvatarDialog,
-                startAvatarSelection = ::startAvatarSelection,
-                saveAvatar = viewModel::saveAvatar,
-                removeAvatar = viewModel::removeAvatar,
-                showAvatarPickerOptions = showAvatarPickerOptions,
-                showCamera = showAvatarPickerOptionCamera,
-                hideUrlDialog = { urlToOPen = null },
-                onSheetDismissRequest = { showAvatarPickerOptions = false },
+                uiState = uiState,
                 onGalleryPicked = {
                     try {
                         pickPhotoLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -227,7 +227,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
         binding.run {
             userAvatar.setOnClickListener {
-                showAvatarDialog = true
+                viewModel.showAvatarDialog()
             }
             ctnGroupNameSection.setOnClickListener { startActionMode(DisplayNameEditActionModeCallback()) }
             btnGroupNameDisplay.text = viewModel.getDisplayName()
@@ -240,28 +240,23 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
 
         binding.composeView.setThemedContent {
-            val recoveryHidden by viewModel.recoveryHidden.collectAsState()
-            Buttons(recoveryHidden = recoveryHidden)
+            val uiState by viewModel.uiState.collectAsState()
+            Buttons(recoveryHidden = uiState.recoveryHidden)
         }
 
         binding.userAvatar.setThemedContent {
-            val avatarData by viewModel.avatarData.collectAsState()
+            val uiState by viewModel.uiState.collectAsState()
+            val avatarData = uiState.avatarData
             if(avatarData == null) return@setThemedContent
 
             Avatar(
                 size = LocalDimensions.current.iconXXLarge,
-                data = avatarData!!
+                data = avatarData
             )
         }
 
-        lifecycleScope.launch {
-            viewModel.showLoader.collect {
-                binding.loader.isVisible = it
-            }
-        }
-
         binding.sentLogoImageView.setSafeOnClickListener {
-            urlToOPen = "https://token.getsession.org"
+            viewModel.showUrlDialog("https://token.getsession.org")
         }
 
         applyCommonWindowInsetsOnViews(mainScrollView = binding.scrollView)
@@ -288,7 +283,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.settings_general, menu)
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.BUILD_TYPE != "release") {
             menu.findItem(R.id.action_qr_code)?.contentDescription = resources.getString(R.string.AccessibilityId_qrView)
         }
         return true
@@ -344,8 +339,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     }
 
     private fun updateDisplayName(displayName: String): Boolean {
-        binding.loader.isVisible = true
-
         // We'll assume we fail & flip the flag on success
         var updateWasSuccessful = false
 
@@ -365,7 +358,6 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             Toast.makeText(this@SettingsActivity, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
         }
 
-        binding.loader.isVisible = false
         return updateWasSuccessful
     }
     // endregion
@@ -396,12 +388,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         Permissions.with(this)
             .request(Manifest.permission.CAMERA)
             .onAnyDenied {
-                showAvatarPickerOptionCamera = false
-                showAvatarPickerOptions = true
+                viewModel.showAvatarPickerOptions(showCamera = false)
             }
             .onAllGranted {
-                showAvatarPickerOptionCamera = true
-                showAvatarPickerOptions = true
+                viewModel.showAvatarPickerOptions(showCamera = true)
             }
             .execute()
     }
@@ -474,6 +464,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     fun Buttons(
         recoveryHidden: Boolean
     ) {
+        val scope = rememberCoroutineScope()
+
         Column(
             modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.spacing)
@@ -521,7 +513,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                         colors = accentTextButtonColors()
                     ) {
-                        urlToOPen = "https://session.foundation/donate#app"
+                        scope.launch {
+                            inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
+                        }
+                        viewModel.showUrlDialog( "https://session.foundation/donate#app")
                     }
                     Divider()
 
@@ -611,40 +606,40 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Composable
     fun SettingsComposeContent(
-        showUrlDialog: String?,
-        showAvatarDialog: Boolean,
-        startAvatarSelection: ()->Unit,
-        saveAvatar: ()->Unit,
-        removeAvatar: ()->Unit,
-        hideUrlDialog: ()->Unit,
-        showAvatarPickerOptions: Boolean,
-        showCamera: Boolean,
-        onSheetDismissRequest: () -> Unit,
+        uiState: SettingsViewModel.UIState,
         onGalleryPicked: () -> Unit,
         onCameraPicked: () -> Unit
     ){
+        // loading
+        if(uiState.showLoader) {
+            LoadingDialog()
+        }
+
         // dialog for the avatar
-        if(showAvatarDialog) {
-            AvatarDialogContainer(
-                startAvatarSelection = startAvatarSelection,
-                saveAvatar = saveAvatar,
-                removeAvatar = removeAvatar
+        if(uiState.showAvatarDialog) {
+            AvatarDialogContainer()
+        }
+
+        // Animated avatar CTA
+        if(uiState.showAnimatedProCTA){
+            AnimatedProCTA(
+                isPro = uiState.isPro,
             )
         }
 
         // donate confirmation
-        if(showUrlDialog != null){
+        if(uiState.showUrlDialog != null){
             OpenURLAlertDialog(
-                url = showUrlDialog,
-                onDismissRequest = hideUrlDialog
+                url = uiState.showUrlDialog,
+                onDismissRequest = viewModel::hideUrlDialog
             )
         }
 
         // bottom sheets with options for avatar: Gallery or photo
-        if(showAvatarPickerOptions) {
+        if(uiState.showAvatarPickerOptions) {
             AvatarBottomSheet(
-                showCamera = showCamera,
-                onDismissRequest = onSheetDismissRequest,
+                showCamera = uiState.showAvatarPickerOptionCamera,
+                onDismissRequest = viewModel::hideAvatarPickerOptions,
                 onGalleryPicked = onGalleryPicked,
                 onCameraPicked = onCameraPicked
             )
@@ -652,19 +647,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     }
 
     @Composable
-    fun AvatarDialogContainer(
-        startAvatarSelection: ()->Unit,
-        saveAvatar: ()->Unit,
-        removeAvatar: ()->Unit
-    ){
-        val state by viewModel.avatarDialogState.collectAsState()
+    fun AvatarDialogContainer(){
+        val state by viewModel.uiState.collectAsState()
 
-        AvatarDialog(
-            state = state,
-            startAvatarSelection = startAvatarSelection,
-            saveAvatar = saveAvatar,
-            removeAvatar = removeAvatar
-        )
+        AvatarDialog(state = state)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -741,26 +727,62 @@ class SettingsActivity : ScreenLockActionBarActivity() {
         }
     }
 
+    @OptIn(ExperimentalGlideComposeApi::class)
     @Composable
     fun AvatarDialog(
-        state: SettingsViewModel.AvatarDialogState,
-        startAvatarSelection: ()->Unit,
-        saveAvatar: ()->Unit,
-        removeAvatar: ()->Unit
+        state: SettingsViewModel.UIState,
     ){
         AlertDialog(
             onDismissRequest = {
                 viewModel.onAvatarDialogDismissed()
-                showAvatarDialog = false
             },
             title = stringResource(R.string.profileDisplayPictureSet),
             content = {
                 // custom content that has the displayed images
 
+                // animated Pro title
+                if(state.isPostPro){
+                    Row(
+                        modifier = Modifier.padding(
+                            top = LocalDimensions.current.xxxsSpacing,
+                            bottom = LocalDimensions.current.xsSpacing,
+                        )
+                            .clickable{
+                                viewModel.showAnimatedProCTA()
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+                    ) {
+                        if(state.isPro) {
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+
+                            Text(
+                                text = stringResource(R.string.proAnimatedDisplayPictureModalDescription),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.proAnimatedDisplayPicturesNonProModalDescription),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+                    }
+                }
+
                 // main container that control the overall size and adds the rounded bg
                 Box(
                     modifier = Modifier
-                        .padding(top = LocalDimensions.current.smallSpacing)
+                        .padding(vertical = LocalDimensions.current.smallSpacing)
                         .size(LocalDimensions.current.iconXXLarge)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -776,7 +798,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                     contentAlignment = Alignment.Center
                 ) {
                     // the image content will depend on state type
-                    when(val s = state){
+                    when(val s = state.avatarDialogState){
                         // user avatar
                         is UserAvatar -> {
                             Avatar(
@@ -787,11 +809,12 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
                         // temporary image
                         is TempAvatar -> {
-                            Image(
+                            GlideImage(
                                 modifier = Modifier.size(LocalDimensions.current.iconXXLarge)
                                     .clip(shape = CircleShape,),
-                                bitmap = BitmapFactory.decodeByteArray(s.data, 0, s.data.size).asImageBitmap(),
-                                contentDescription = null
+                                contentScale = ContentScale.Crop,
+                                model = s.data,
+                                contentDescription = stringResource(R.string.profileDisplayPicture)
                             )
                         }
 
@@ -830,19 +853,51 @@ class SettingsActivity : ScreenLockActionBarActivity() {
             buttons = listOf(
                 DialogButtonData(
                     text = GetString(R.string.save),
-                    enabled = state is TempAvatar,
-                    onClick = saveAvatar
+                    enabled = state.avatarDialogState is TempAvatar,
+                    dismissOnClick = false,
+                    onClick = viewModel::saveAvatar
                 ),
                 DialogButtonData(
-                    text = GetString(R.string.remove),
+                    text = GetString(if(state.avatarDialogState is TempAvatar) R.string.clear else R.string.remove),
                     color = LocalColors.current.danger,
-                    enabled = state is UserAvatar || // can remove is the user has an avatar set
-                            (state is TempAvatar && state.hasAvatar),
-                    onClick = removeAvatar
+                    enabled = state.avatarDialogState is UserAvatar || // can remove is the user has an avatar set
+                            state.avatarDialogState is TempAvatar, // can clear a temp avatar
+                    dismissOnClick = false,
+                    onClick = viewModel::removeAvatar
                 )
             )
         )
     }
+
+     @Composable
+     fun AnimatedProCTA(
+         isPro: Boolean,
+     ){
+         if(isPro) {
+             AnimatedSessionProActivatedCTA (
+                 heroImageBg = R.drawable.cta_hero_animated_bg,
+                 heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                 text = stringResource(R.string.proAnimatedDisplayPicture),
+                 onCancel = viewModel::hideAnimatedProCTA
+             )
+         } else {
+             AnimatedSessionProCTA(
+                 heroImageBg = R.drawable.cta_hero_animated_bg,
+                 heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
+                 text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+                     .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                     .format()
+                     .toString(),
+                 features = listOf(
+                     CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
+                     CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
+                     CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
+                 ),
+                 onUpgrade = viewModel::goToProUpgradeScreen,
+                 onCancel = viewModel::hideAnimatedProCTA
+             )
+         }
+     }
 
     @Preview
     @Composable
@@ -851,10 +906,11 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     ){
         PreviewTheme(colors) {
             AvatarDialog(
-                state = NoAvatar,
-                startAvatarSelection = {},
-                saveAvatar = {},
-                removeAvatar = {}
+                state = SettingsViewModel.UIState(
+                    recoveryHidden = false,
+                    isPro = false,
+                    isPostPro = false
+                )
             )
         }
     }

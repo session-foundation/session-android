@@ -143,7 +143,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
             val openGroup = storage.getOpenGroup(threadID)
             val downloadedData = if (openGroup == null) {
                 Log.d("AttachmentDownloadJob", "downloading normal attachment")
-                DownloadUtilities.downloadFromFileServer(attachment.url)
+                DownloadUtilities.downloadFromFileServer(attachment.url).body
             } else {
                 Log.d("AttachmentDownloadJob", "downloading open group attachment")
                 val url = attachment.url.toHttpUrlOrNull()!!

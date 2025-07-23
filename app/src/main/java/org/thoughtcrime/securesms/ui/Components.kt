@@ -47,6 +47,10 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.TooltipState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,7 +59,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -66,7 +69,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
@@ -87,31 +89,24 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.thoughtcrime.securesms.conversation.v2.ConversationViewModel
-import org.thoughtcrime.securesms.openUrl
-import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -706,16 +701,22 @@ fun SimpleSessionProCTA(
         features = features,
         onUpgrade = onUpgrade,
         onCancel = onCancel,
-        content = {
-        Image(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(LocalColors.current.accent),
-            contentScale = ContentScale.FillWidth,
-            painter = painterResource(id = heroImage),
-            contentDescription = null,
-        )
-    })
+        content = { CTAImage(heroImage = heroImage) }
+    )
+}
+
+@Composable
+fun CTAImage(
+    @DrawableRes heroImage: Int,
+){
+    Image(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(LocalColors.current.accent),
+        contentScale = ContentScale.FillWidth,
+        painter = painterResource(id = heroImage),
+        contentDescription = null,
+    )
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
@@ -736,34 +737,178 @@ fun AnimatedSessionProCTA(
         onUpgrade = onUpgrade,
         onCancel = onCancel,
         content = {
-            Image(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(LocalColors.current.accent),
-                contentScale = ContentScale.FillWidth,
-                painter = painterResource(id = heroImageBg),
-                contentDescription = null,
+            CTAAnimatedImages(
+                heroImageBg = heroImageBg,
+                heroImageAnimatedFg = heroImageAnimatedFg
             )
+        })
+}
 
-            GlideSubcomposition(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(IntrinsicSize.Min),
-                model = heroImageAnimatedFg,
-            ){
-                when (state) {
-                    is RequestState.Success -> {
-                        Image(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentScale = ContentScale.FillWidth,
-                            painter = painter,
-                            contentDescription = null,
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun CTAAnimatedImages(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+){
+    Image(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(LocalColors.current.accent),
+        contentScale = ContentScale.FillWidth,
+        painter = painterResource(id = heroImageBg),
+        contentDescription = null,
+    )
+
+    GlideSubcomposition(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
+        model = heroImageAnimatedFg,
+    ){
+        when (state) {
+            is RequestState.Success -> {
+                Image(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.FillWidth,
+                    painter = painter,
+                    contentDescription = null,
+                )
+            }
+
+            else -> {}
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionProActivatedCTA(
+    content: @Composable () -> Unit,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    BasicAlertDialog(
+        modifier = modifier,
+        onDismissRequest = onCancel,
+        content = {
+            DialogBg {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    // hero image
+                    BottomFadingEdgeBox(
+                        fadingEdgeHeight = 70.dp,
+                        fadingColor = LocalColors.current.backgroundSecondary,
+                        content = { _ ->
+                            content()
+                        },
+                    )
+
+                    // content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(LocalDimensions.current.smallSpacing)
+                    ) {
+                        // title
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentScale = ContentScale.FillHeight,
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+
+                            Text(
+                                text = stringResource(R.string.proActivated),
+                                style = LocalType.current.h5
+                            )
+                        }
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // already have pro
+                        Row(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
+
+                        ) {
+                            Text(
+                                text = stringResource(R.string.proAlreadyPurchased),
+                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
+                            )
+
+                            Image(
+                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
+                                painter = painterResource(id = R.drawable.ic_pro_badge),
+                                contentDescription = NonTranslatableStringConstants.APP_PRO,
+                            )
+                        }
+
+                        Spacer(Modifier.height(2.dp))
+
+                        // main message
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = text,
+                            textAlign = TextAlign.Center,
+                            style = LocalType.current.base.copy(
+                                color = LocalColors.current.textSecondary
+                            )
+                        )
+
+                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
+
+                        // buttons
+                        TertiaryFillButtonRect(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = stringResource(R.string.close),
+                            onClick = onCancel
                         )
                     }
-
-                    else -> {}
                 }
             }
+        }
+    )
+}
+
+@Composable
+fun SimpleSessionProActivatedCTA(
+    @DrawableRes heroImage: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    SessionProActivatedCTA(
+        modifier = modifier,
+        text = text,
+        onCancel = onCancel,
+        content = { CTAImage(heroImage = heroImage) }
+    )
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun AnimatedSessionProActivatedCTA(
+    @DrawableRes heroImageBg: Int,
+    @DrawableRes heroImageAnimatedFg: Int,
+    text: String,
+    modifier: Modifier = Modifier,
+    onCancel: () -> Unit,
+){
+    SessionProActivatedCTA(
+        modifier = modifier,
+        text = text,
+        onCancel = onCancel,
+        content = {
+            CTAAnimatedImages(
+                heroImageBg = heroImageBg,
+                heroImageAnimatedFg = heroImageAnimatedFg
+            )
         })
 }
 
@@ -777,11 +922,20 @@ fun PinProCTA(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ){
+    val context = LocalContext.current
     SimpleSessionProCTA(
         modifier = modifier,
-        heroImage = R.drawable.cta_hero_char_limit,
-        text = if(overTheLimit) stringResource(R.string.proCallToActionPinnedConversations)
-                else stringResource(R.string.proCallToActionPinnedConversationsMoreThan),
+        heroImage = R.drawable.cta_hero_pins,
+        text = if(overTheLimit)
+            Phrase.from(context,R.string.proCallToActionPinnedConversations)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .format()
+                .toString()
+                else
+            Phrase.from(context,R.string.proCallToActionPinnedConversationsMoreThan)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .format()
+                .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
@@ -812,6 +966,20 @@ private fun PreviewProCTA(
     }
 }
 
+@Preview
+@Composable
+private fun PreviewProActivatedCTA(
+    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
+) {
+    PreviewTheme(colors) {
+        SimpleSessionProActivatedCTA(
+            heroImage = R.drawable.cta_hero_char_limit,
+            text = "This is a description of this Pro feature",
+            onCancel = {}
+        )
+    }
+}
+
 @Composable
 fun ProCTAFeature(
     data: CTAFeature,
@@ -828,7 +996,7 @@ fun ProCTAFeature(
             is CTAFeature.Icon -> {
                 Image(
                     painter = painterResource(id = data.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.accent),
+                    colorFilter = ColorFilter.tint(LocalColors.current.accentText ),
                     contentDescription = null,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 )
@@ -937,73 +1105,43 @@ fun LoadingArcOr(loading: Boolean, content: @Composable () -> Unit) {
     }
 }
 
-@Composable
-fun SimplePopup(
-    arrowSize: DpSize = DpSize(
-        LocalDimensions.current.smallSpacing,
-        LocalDimensions.current.xsSpacing
-    ),
-    onDismiss: () -> Unit,
-    content: @Composable () -> Unit
-) {
-    val popupBackgroundColour = LocalColors.current.backgroundBubbleReceived
 
-    Popup(
-        popupPositionProvider = AboveCenterPositionProvider(),
-        onDismissRequest = onDismiss
-    ) {
-        Box(
-            modifier = Modifier.clickable { onDismiss() },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = CenterHorizontally
-            ) {
-                // Speech bubble card
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SpeechBubbleTooltip(
+    text: CharSequence,
+    modifier: Modifier = Modifier,
+    tooltipState: TooltipState = rememberTooltipState(),
+    content: @Composable () -> Unit,
+) {
+    TooltipBox(
+        state = tooltipState,
+        modifier = modifier,
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+            val bubbleColor = LocalColors.current.backgroundBubbleReceived
+
+            Column {
                 Card(
-                    shape = RoundedCornerShape(LocalDimensions.current.spacing),
-                    colors = CardDefaults.cardColors(
-                        containerColor = popupBackgroundColour
-                    ),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = CardDefaults.cardColors(containerColor = bubbleColor),
                     elevation = CardDefaults.elevatedCardElevation(4.dp)
                 ) {
-                    content()
-                }
-
-                // Triangle below the card to make it look like a speech bubble
-                Canvas(
-                    modifier = Modifier.size(arrowSize)
-                ) {
-                    val path = Path().apply {
-                        moveTo(0f, 0f)
-                        lineTo(size.width, 0f)
-                        lineTo(size.width / 2, size.height)
-                        close()
-                    }
-                    drawPath(
-                        path = path,
-                        color = popupBackgroundColour
+                    Text(
+                        text = annotatedStringResource(text),
+                        modifier = Modifier.padding(
+                            horizontal = LocalDimensions.current.xsSpacing,
+                            vertical = LocalDimensions.current.xxsSpacing
+                        ),
+                        style = LocalType.current.small,
+                        color = LocalColors.current.text
                     )
                 }
+
             }
         }
-    }
-}
-
-/**
- * Positions the popup above/centered from its parent
- */
-class AboveCenterPositionProvider() : PopupPositionProvider {
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize
-    ): IntOffset {
-        return IntOffset(
-            anchorBounds.topCenter.x - (popupContentSize.width / 2),
-            anchorBounds.topCenter.y - popupContentSize.height
-        )
+    ) {
+        content()
     }
 }
 
@@ -1063,7 +1201,7 @@ fun SearchBar(
                         LocalColors.current.textSecondary
                     ),
                     modifier = Modifier
-                        .qaTag(R.string.qa_conversation_search_clear)
+                        .qaTag(R.string.qa_input_clear)
                         .padding(
                             horizontal = LocalDimensions.current.smallSpacing,
                             vertical = LocalDimensions.current.xxsSpacing

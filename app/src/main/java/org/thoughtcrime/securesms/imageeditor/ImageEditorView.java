@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.imageeditor;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -10,6 +11,7 @@ import android.graphics.RectF;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GestureDetectorCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
@@ -21,6 +23,9 @@ import org.thoughtcrime.securesms.imageeditor.model.EditorModel;
 import org.thoughtcrime.securesms.imageeditor.model.ThumbRenderer;
 import org.thoughtcrime.securesms.imageeditor.renderers.BezierDrawingRenderer;
 import org.thoughtcrime.securesms.imageeditor.renderers.TextRenderer;
+import org.thoughtcrime.securesms.util.ResUtil;
+
+import network.loki.messenger.R;
 
 /**
  * ImageEditorView
@@ -71,6 +76,9 @@ public final class ImageEditorView extends FrameLayout {
   private TapListener     tapListener;
   private RendererContext rendererContext;
 
+  private int bgColor;
+  private final RectF bgRect = new RectF();
+
   @Nullable
   private EditSession editSession;
   private boolean     moreThanOnePointerUsedInSession;
@@ -97,6 +105,8 @@ public final class ImageEditorView extends FrameLayout {
     editText = createAHiddenTextEntryField();
 
     doubleTap = new GestureDetectorCompat(getContext(), new DoubleTapGestureListener());
+
+    bgColor = ResUtil.getColor(getContext(), android.R.attr.colorPrimary);
 
     setOnTouchListener((v, event) -> doubleTap.onTouchEvent(event));
   }
@@ -150,6 +160,14 @@ public final class ImageEditorView extends FrameLayout {
     } finally {
       rendererContext.restore();
     }
+
+    // Make sure the canvas doesn't apply any extra colors
+    bgRect.set(Bounds.FULL_BOUNDS);
+    viewMatrix.mapRect(bgRect);
+    int save = canvas.save();
+    canvas.clipOutRect(bgRect);
+    canvas.drawColor(bgColor);
+    canvas.restoreToCount(save);
   }
 
   private final RendererContext.Ready rendererReady = new RendererContext.Ready() {

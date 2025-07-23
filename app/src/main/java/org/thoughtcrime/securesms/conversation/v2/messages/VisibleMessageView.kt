@@ -20,10 +20,8 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
@@ -59,13 +57,11 @@ import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.groups.OpenGroupManager
-import org.thoughtcrime.securesms.home.UserDetailsBottomSheet
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.disableClipping
 import org.thoughtcrime.securesms.util.toDp
 import org.thoughtcrime.securesms.util.toPx
 import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.min
@@ -210,19 +206,9 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.publicKey = senderAccountID
                 binding.profilePictureView.update(message.individualRecipient)
                 binding.profilePictureView.setOnClickListener {
-                    if (thread.isCommunityRecipient) {
-                        val openGroup = lokiThreadDb.getOpenGroupChat(threadID)
-                        if (IdPrefix.fromValue(senderAccountID) == IdPrefix.BLINDED && openGroup?.canWrite == true) {
-                            // TODO: support v2 soon
-                            val intent = Intent(context, ConversationActivityV2::class.java)
-                            intent.putExtra(ConversationActivityV2.FROM_GROUP_THREAD_ID, threadID)
-                            intent.putExtra(ConversationActivityV2.ADDRESS, Address.fromSerialized(senderAccountID))
-                            context.startActivity(intent)
-                        }
-                    } else {
-                        maybeShowUserDetails(senderAccountID, threadID)
-                    }
+                    delegate?.showUserProfileModal(message.recipient)
                 }
+
                 if (thread.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
@@ -254,15 +240,24 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
-        val contactContext =
-            if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
-            contact = contact,
-            accountID = senderAccountID,
-            contactContext = contactContext,
-            groupId = groupId
-        )
+        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+            binding.senderNameTextView.setOnClickListener {
+                delegate?.showUserProfileModal(message.recipient)
+            }
+
+            val contactContext =
+                if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
+            binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
+                contact = contact,
+                accountID = senderAccountID,
+                contactContext = contactContext,
+                groupId = groupId
+            )
+
+            binding.senderNameTextView.isVisible = true
+        } else {
+            binding.senderNameTextView.isVisible = false
+        }
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing
@@ -646,16 +641,6 @@ class VisibleMessageView : FrameLayout {
     }
 
     fun onContentClick(event: MotionEvent) = binding.messageContentView.root.onContentClick(event)
-
-    private fun maybeShowUserDetails(publicKey: String, threadID: Long) {
-        UserDetailsBottomSheet().apply {
-            arguments = bundleOf(
-                UserDetailsBottomSheet.ARGUMENT_PUBLIC_KEY to publicKey,
-                UserDetailsBottomSheet.ARGUMENT_THREAD_ID to threadID
-            )
-            show((this@VisibleMessageView.context as AppCompatActivity).supportFragmentManager, tag)
-        }
-    }
 
     fun playVoiceMessage() {
         binding.messageContentView.root.playVoiceMessage()

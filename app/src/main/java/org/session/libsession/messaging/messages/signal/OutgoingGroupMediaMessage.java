@@ -9,6 +9,7 @@ import org.session.libsession.utilities.Contact;
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview;
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel;
 import org.session.libsession.utilities.recipients.Recipient;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -28,12 +29,13 @@ public class OutgoingGroupMediaMessage extends OutgoingSecureMediaMessage {
                                    boolean updateMessage,
                                    @Nullable QuoteModel quote,
                                    @NonNull List<Contact> contacts,
-                                   @NonNull List<LinkPreview> previews)
+                                   @NonNull List<LinkPreview> previews,
+                                   @Nullable MessageContent messageContent)
   {
     super(recipient, body,
           new LinkedList<Attachment>() {{if (avatar != null) add(avatar);}},
           sentTime,
-          DistributionTypes.CONVERSATION, expireIn, expireStartedAt, quote, contacts, previews);
+          DistributionTypes.CONVERSATION, expireIn, expireStartedAt, quote, contacts, previews, messageContent);
 
     this.groupID = groupId;
     this.isUpdateMessage = updateMessage;

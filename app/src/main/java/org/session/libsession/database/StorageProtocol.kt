@@ -116,7 +116,7 @@ interface StorageProtocol {
     fun removeReceivedMessageTimestamps(timestamps: Set<Long>)
     fun getAttachmentsForMessage(mmsMessageId: Long): List<DatabaseAttachment>
     fun getMessageBy(timestamp: Long, author: String): MessageRecord?
-    fun updateSentTimestamp(messageId: MessageId, openGroupSentTimestamp: Long, threadId: Long)
+    fun updateSentTimestamp(messageId: MessageId, newTimestamp: Long)
     fun markAsResyncing(messageId: MessageId)
     fun markAsSyncing(messageId: MessageId)
     fun markAsSending(messageId: MessageId)
@@ -259,7 +259,7 @@ interface StorageProtocol {
     /**
      * Add reaction to a specific message. This is preferable to the timestamp lookup.
      */
-    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String, notifyUnread: Boolean)
+    fun addReaction(messageId: MessageId, reaction: Reaction, messageSender: String)
 
     /**
      * Add reactions into the database. If [replaceAll] is true,
@@ -274,7 +274,6 @@ interface StorageProtocol {
     fun blockedContacts(): List<Recipient>
     fun getExpirationConfiguration(threadId: Long): ExpirationConfiguration?
     fun setExpirationConfiguration(config: ExpirationConfiguration)
-    fun getExpiringMessages(messageIds: List<Long> = emptyList()): List<Pair<Long, Long>>
     fun updateDisappearingState(
         messageSender: String,
         threadID: Long,

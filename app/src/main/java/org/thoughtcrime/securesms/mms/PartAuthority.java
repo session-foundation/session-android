@@ -14,11 +14,13 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import org.thoughtcrime.securesms.providers.BlobUtils;
 import org.thoughtcrime.securesms.providers.PartAndBlobProvider;
 
+import network.loki.messenger.BuildConfig;
+
 public class PartAuthority {
 
-  private static final String PART_URI_STRING     = "content://network.loki.provider.securesms/part";
-  private static final String THUMB_URI_STRING    = "content://network.loki.provider.securesms/thumb";
-  private static final String STICKER_URI_STRING  = "content://network.loki.provider.securesms/sticker";
+  private static final String PART_URI_STRING     = "content://network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX + "/part";
+  private static final String THUMB_URI_STRING    = "content://network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX + "/thumb";
+  private static final String STICKER_URI_STRING  = "content://network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX + "/sticker";
   private static final Uri    PART_CONTENT_URI    = Uri.parse(PART_URI_STRING);
   private static final Uri    THUMB_CONTENT_URI   = Uri.parse(THUMB_URI_STRING);
   private static final Uri    STICKER_CONTENT_URI = Uri.parse(STICKER_URI_STRING);
@@ -33,9 +35,9 @@ public class PartAuthority {
 
   static {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    uriMatcher.addURI("network.loki.provider.securesms", "part/*/#", PART_ROW);
-    uriMatcher.addURI("network.loki.provider.securesms", "thumb/*/#", THUMB_ROW);
-    uriMatcher.addURI("network.loki.provider.securesms", "sticker/#", STICKER_ROW);
+    uriMatcher.addURI("network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX, "part/*/#", PART_ROW);
+    uriMatcher.addURI("network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX, "thumb/*/#", THUMB_ROW);
+    uriMatcher.addURI("network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX, "sticker/#", STICKER_ROW);
     uriMatcher.addURI(BlobUtils.AUTHORITY, BlobUtils.PATH, BLOB_ROW);
   }
 

@@ -114,88 +114,110 @@ fun AlertDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
         content = {
-            DialogBg {
-                // only show the 'x' button is required
-                if (showCloseButton) {
-                    IconButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.align(Alignment.TopEnd)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_x),
-                            tint = LocalColors.current.text,
-                            contentDescription = "back"
-                        )
-                    }
-                }
-
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = LocalDimensions.current.spacing)
-                            .padding(horizontal = LocalDimensions.current.smallSpacing)
-                    ) {
-                        title?.let {
-                            Text(
-                                text = it,
-                                textAlign = TextAlign.Center,
-                                style = LocalType.current.h7,
-                                modifier = Modifier
-                                    .padding(bottom = LocalDimensions.current.xxsSpacing)
-                                    .qaTag(R.string.AccessibilityId_modalTitle)
-                            )
-                        }
-                        text?.let {
-                            val textStyle = LocalType.current.large
-                            var textModifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
-
-                            // if we have a maxLines, make the text scrollable
-                            if(maxLines != null) {
-                                val textHeight = with(LocalDensity.current) {
-                                    textStyle.lineHeight.toDp()
-                                } * maxLines
-
-                                textModifier = textModifier
-                                    .height(textHeight)
-                                    .verticalScroll(rememberScrollState())
-                            }
-
-                            Text(
-                                text = it,
-                                textAlign = TextAlign.Center,
-                                style = textStyle,
-                                modifier = textModifier
-                                    .qaTag(R.string.AccessibilityId_modalMessage)
-                            )
-                        }
-                        content()
-                    }
-                    if(buttons?.isNotEmpty() == true) {
-                        Row(Modifier.height(IntrinsicSize.Min)) {
-                            buttons.forEach {
-                                DialogButton(
-                                    text = it.text(),
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .qaTag(it.qaTag ?: it.text.string())
-                                        .weight(1f),
-                                    color = it.color,
-                                    enabled = it.enabled
-                                ) {
-                                    it.onClick()
-                                    if (it.dismissOnClick) onDismissRequest()
-                                }
-                            }
-                        }
-                    } else {
-                        Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
-                    }
-                }
-            }
+            AlertDialogContent(
+                onDismissRequest = onDismissRequest,
+                title = title,
+                text = text,
+                maxLines = maxLines,
+                buttons = buttons,
+                showCloseButton = showCloseButton,
+                content = content
+            )
         }
     )
+}
+
+@Composable
+fun AlertDialogContent(
+    onDismissRequest: () -> Unit,
+    title: AnnotatedString? = null,
+    text: AnnotatedString? = null,
+    maxLines: Int? = null,
+    buttons: List<DialogButtonData>? = null,
+    showCloseButton: Boolean = false,
+    content: @Composable () -> Unit = {}
+) {
+    DialogBg {
+        // only show the 'x' button is required
+        if (showCloseButton) {
+            IconButton(
+                onClick = onDismissRequest,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_x),
+                    tint = LocalColors.current.text,
+                    contentDescription = "back"
+                )
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = LocalDimensions.current.spacing)
+                    .padding(horizontal = LocalDimensions.current.smallSpacing)
+            ) {
+                title?.let {
+                    Text(
+                        text = it,
+                        textAlign = TextAlign.Center,
+                        style = LocalType.current.h7,
+                        modifier = Modifier
+                            .padding(bottom = LocalDimensions.current.xxsSpacing)
+                            .qaTag(R.string.AccessibilityId_modalTitle)
+                    )
+                }
+                text?.let {
+                    val textStyle = LocalType.current.large
+                    var textModifier = Modifier.padding(bottom = LocalDimensions.current.xxsSpacing)
+
+                    // if we have a maxLines, make the text scrollable
+                    if(maxLines != null) {
+                        val textHeight = with(LocalDensity.current) {
+                            textStyle.lineHeight.toDp()
+                        } * maxLines
+
+                        textModifier = textModifier
+                            .height(textHeight)
+                            .verticalScroll(rememberScrollState())
+                    }
+
+                    Text(
+                        text = it,
+                        textAlign = TextAlign.Center,
+                        style = textStyle,
+                        modifier = textModifier
+                            .qaTag(R.string.AccessibilityId_modalMessage)
+                    )
+                }
+                content()
+            }
+            if(buttons?.isNotEmpty() == true) {
+                Row(Modifier.height(IntrinsicSize.Min)) {
+                    buttons.forEach {
+                        DialogButton(
+                            text = it.text(),
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .qaTag(it.qaTag ?: it.text.string())
+                                .weight(1f),
+                            color = it.color,
+                            enabled = it.enabled
+                        ) {
+                            it.onClick()
+                            if (it.dismissOnClick) onDismissRequest()
+                        }
+                    }
+                }
+            } else {
+                Spacer(Modifier.height(LocalDimensions.current.smallSpacing))
+            }
+        }
+    }
+
 }
 
 @Composable
@@ -303,10 +325,7 @@ fun LoadingDialog(
                 Box {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        //TODO: Leave this as hardcoded color for now as the dialog background (scrim)
-                        // always seems to be dark. Can can revisit later when we have more control over
-                        // the scrim color.
-                        color = Color.White
+                        color = LocalColors.current.accent
                     )
                 }
             } else {

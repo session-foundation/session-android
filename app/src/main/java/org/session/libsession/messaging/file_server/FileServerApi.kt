@@ -56,7 +56,7 @@ object FileServerApi {
     }
 
 
-    private fun send(request: Request): Promise<ByteArraySlice, Exception> {
+    private fun send(request: Request): Promise<SendResponse, Exception> {
         val urlBuilder = fileServerUrl
             .newBuilder()
             .addPathSegments(request.endpoint)
@@ -76,7 +76,12 @@ object FileServerApi {
         }
         return if (request.useOnionRouting) {
             OnionRequestAPI.sendOnionRequest(requestBuilder.build(), FILE_SERVER_URL, FILE_SERVER_PUBLIC_KEY).map {
-                it.body ?: throw Error.ParsingFailed
+                val body = it.body ?: throw Error.ParsingFailed
+
+                SendResponse(
+                    body = body,
+                    headers = it.info["headers"] as? Map<String, String>
+                )
             }.fail { e ->
                 when (e) {
                     // No need for the stack trace for HTTP errors
@@ -89,7 +94,7 @@ object FileServerApi {
         }
     }
 
-    fun upload(file: ByteArray): Promise<Long, Exception> {
+    fun upload(file: ByteArray, customHeaders: Map<String, String> = mapOf()): Promise<UploadResult, Exception> {
         val request = Request(
             verb = HTTP.Verb.POST,
             endpoint = "file",
@@ -97,18 +102,25 @@ object FileServerApi {
             headers = mapOf(
                 "Content-Disposition" to "attachment",
                 "Content-Type" to "application/octet-stream"
-            )
+            ) + customHeaders
         )
         return send(request).map { response ->
-            val json = JsonUtil.fromJson(response, Map::class.java)
+            val json = JsonUtil.fromJson(response.body, Map::class.java)
             val hasId = json.containsKey("id")
             val id = json.getOrDefault("id", null)
             Log.d("Loki-FS", "File Upload Response hasId: $hasId of type: ${id?.javaClass}")
-            (id as? String)?.toLong() ?: throw Error.ParsingFailed
+            val idLong = (id as? String)?.toLong() ?: throw Error.ParsingFailed
+            val ttl = json.getOrDefault("expires", null) as? Number
+            Log.d("Loki-FS", "File Upload Response expires (timestamp in milli): ${ttl?.let{ it.toLong() * 1000 }}")
+
+            UploadResult(
+                id = idLong,
+                ttlTimestamp = ttl?.let{ (it.toDouble() * 1000).toLong() } // from seconds to milliseconds
+            )
         }
     }
 
-    fun download(file: String): Promise<ByteArraySlice, Exception> {
+    fun download(file: String): Promise<SendResponse, Exception> {
         val request = Request(verb = HTTP.Verb.GET, endpoint = "file/$file")
         return send(request)
     }
@@ -150,7 +162,7 @@ object FileServerApi {
         val result = send(request).await()
 
         // map out the result
-        return JsonUtil.fromJson(result, Map::class.java).let {
+        return JsonUtil.fromJson(result.body, Map::class.java).let {
             VersionData(
                 statusCode = it["status_code"] as? Int ?: 0,
                 version = it["result"] as? String ?: "",
@@ -158,4 +170,14 @@ object FileServerApi {
             )
         }
     }
+
+    data class UploadResult(
+        val id: Long,
+        val ttlTimestamp: Long?
+    )
+
+    data class SendResponse(
+        val body: ByteArraySlice,
+        val headers: Map<String, String>?
+    )
 }

@@ -183,7 +183,8 @@
     <style name="Widget.Session.EditText.Compose" parent="@style/Signal.Text.Body">
         <item name="android:padding">2dp</item>
         <item name="android:background">@null</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">?android:textColorPrimary</item>
+        <item name="android:textColorHint">?android:textColorTertiary</item>
         <item name="android:maxLines">4</item>
         <item name="android:maxLength">65536</item>
         <item name="android:capitalize">sentences</item>
@@ -250,7 +251,7 @@
     </style>
 
     <style name="CallMessage">
-        <item name="android:background">@drawable/message_bubble_background</item>
+        <item name="android:background">@drawable/control_message_bubble_background</item>
         <item name="android:textColor">?message_received_text_color</item>
         <item name="android:paddingLeft">12dp</item>
         <item name="android:paddingTop">@dimen/small_spacing</item>

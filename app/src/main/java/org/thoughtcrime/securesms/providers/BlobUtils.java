@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import network.loki.messenger.BuildConfig;
+
 /**
  * Allows for the creation and retrieval of blobs.
  */
@@ -38,8 +40,8 @@ public class BlobUtils {
   private static final String MULTI_SESSION_DIRECTORY  = "multi_session_blobs";
   private static final String SINGLE_SESSION_DIRECTORY = "single_session_blobs";
 
-  public static final Uri        CONTENT_URI = Uri.parse("content://network.loki.provider.securesms/blob");
-  public static final String     AUTHORITY   = "network.loki.provider.securesms";
+  public static final Uri        CONTENT_URI = Uri.parse("content://network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX + "/blob");
+  public static final String     AUTHORITY   = "network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX;
   public static final String     PATH        = "blob/*/*/*/*/*";
 
   private static final int STORAGE_TYPE_PATH_SEGMENT = 1;

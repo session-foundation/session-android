@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Range
@@ -16,6 +17,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.ThemeUtil
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.truncateIdForDisplay
+import org.thoughtcrime.securesms.conversation.v2.mention.MentionEditable
+import org.thoughtcrime.securesms.conversation.v2.mention.MentionViewModel
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.RoundedBackgroundSpan
 import org.thoughtcrime.securesms.util.getAccentColor
@@ -23,7 +26,35 @@ import java.util.regex.Pattern
 
 object MentionUtilities {
 
-    private val pattern by lazy { Pattern.compile("@[0-9a-fA-F]{66}") }
+    private val ACCOUNT_ID = Regex("@([0-9a-fA-F]{66})")
+    private val pattern by lazy { Pattern.compile(ACCOUNT_ID.pattern) }
+
+    /**
+     * In-place replacement on the *live* MentionEditable that the
+     * input-bar is already using.
+     *
+     * It swaps every "@<64-hex>" token for "@DisplayName" **and**
+     * attaches a MentionSpan so later normalisation still works.
+     */
+    fun substituteIdsInPlace(
+        editable: MentionEditable,
+        membersById: Map<String, MentionViewModel.Member>
+    ) {
+        ACCOUNT_ID.findAll(editable)
+            .toList()                // avoid index shifts
+            .asReversed()            // back-to-front replacement
+            .forEach { m ->
+                val id      = m.groupValues[1]
+                val member  = membersById[id] ?: return@forEach
+
+                val start = m.range.first
+                val end   = m.range.last + 1    // inclusive ➜ exclusive
+
+                editable.replace(start, end, "@${member.name}")
+                editable.addMention(member, start .. start + member.name.length + 1)
+            }
+    }
+
 
     /**
      * Highlights mentions in a given text.

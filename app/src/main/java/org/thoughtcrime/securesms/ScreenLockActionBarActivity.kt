@@ -302,7 +302,7 @@ abstract class ScreenLockActionBarActivity : BaseActionBarActivity() {
             cachedIntentFiles.add(tempFile)
 
             // Return a FileProvider Uri that references this cached file
-            FileProvider.getUriForFile(this@ScreenLockActionBarActivity, FileProviderUtil.AUTHORITY, tempFile)
+            FileProviderUtil.getUriFor(this@ScreenLockActionBarActivity, tempFile)
         } catch (e: Exception) {
             Log.e(TAG, "Error copying file to cache", e)
             null

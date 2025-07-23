@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:src="@drawable/ic_plus"
-        app:tint="@color/white"
+        app:tint="?android:textColorPrimary"
         android:elevation="4dp" />
 
 </FrameLayout>

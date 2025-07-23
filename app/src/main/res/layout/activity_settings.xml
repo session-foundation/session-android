@@ -117,30 +117,6 @@
 
     </ScrollView>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:animateLayoutChanges="true">
-
-        <RelativeLayout
-            android:id="@+id/loader"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#A4000000"
-            android:visibility="gone">
-
-            <ProgressBar
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_centerInParent="true"
-                android:indeterminateTint="?colorAccent"
-                android:indeterminate="true"/>
-
-        </RelativeLayout>
-
-    </FrameLayout>
-
     <androidx.compose.ui.platform.ComposeView
         android:id="@+id/composeLayout"
         android:layout_width="match_parent"

@@ -3,6 +3,7 @@
     <string name="about">حول</string>
     <string name="accept">قبول</string>
     <string name="accountIDCopy">نسخ مُعرف الحساب</string>
+    <string name="accountId">معرف الحساب</string>
     <string name="accountIdCopied">تم نسخ معرف الحساب</string>
     <string name="accountIdCopyDescription">نسخ مُعرف حسابك ثم شاركه مع أصدقائك حتى يتمكنوا من مراسلتك.</string>
     <string name="accountIdEnter">أدخل معرف الحساب</string>
@@ -51,6 +52,9 @@
     <string name="andMore">+{count}</string>
     <string name="anonymous">مجهول</string>
     <string name="appIcon">أيقونة التطبيق</string>
+    <string name="appIconAndNameChange">تغيير اسم و أيقونة التطبيق</string>
+    <string name="appIconAndNameChangeConfirmation">يتطلب تغيير أيقونة التطبيق واسمه إغلاق {app_name}. سوف تستمر الإشعارات في استخدام أيقونة واسم {app_name} الافتراضي.</string>
+    <string name="appIconAndNameSelectionDescription">يتم عرض أيقونة التطبيق المحدد والاسم على الشاشة الرئيسة و درج التطبيقات.</string>
     <string name="appIconAndNameSelectionTitle">الأيقونة والاسم</string>
     <string name="appIconEnableIcon">استخدم أيقونة البديلة للتطبيق</string>
     <string name="appIconEnableIconAndName">استخدام أيقونة واسم بديل للتطبيق</string>
@@ -215,6 +219,7 @@
     <string name="clearMessagesGroupDescription">هل أنت متأكد من حذف كافة الرسائل <b>{group_name}؟</b> من جهازك.</string>
     <string name="clearMessagesNoteToSelfDescription">هل أنت متأكد من مسح كافة رسائل \"ملاحظة لنفسي\" من جهازك؟</string>
     <string name="close">غلق</string>
+    <string name="closeApp">إغلاق التطبيق</string>
     <string name="closeWindow">غلق النافذة</string>
     <string name="commitHashDesktop">إيداع التجزئة: {hash}</string>
     <string name="communityBanDeleteDescription">سيؤدي هذا إلى حظر المستخدم المحدد من هذه المجتمع وحذف جميع رسائلهم. هل أنت متأكد أنك تريد المتابعة؟</string>
@@ -674,6 +679,7 @@
         <item quantity="other">لديك %1$d رسائل جديدة.</item>
     </plurals>
     <string name="messageReplyingTo">الرد على</string>
+    <string name="messageRequestDisabledToastVoiceMessages">لا يمكنك إرسال رسائل صوتية حتى يتم قَبُول طلب الرسالة الخاص بك</string>
     <string name="messageRequestGroupInvite"><b>{name}</b> دعاك للانضمام إلى <b>{group_name}</b>.</string>
     <string name="messageRequestGroupInviteDescription">بإرسال رسالة إلى هذه المجموعة سوف يقبل تلقائيًا دعوة المجموعة.</string>
     <string name="messageRequestPending">طلب رسالتك قيد الانتظار.</string>
@@ -740,6 +746,7 @@
     <string name="notificationsMuteFor">صامت لمدة {time_large}</string>
     <string name="notificationsMuteUnmute">إلغاء الكتم</string>
     <string name="notificationsMuted">كتم</string>
+    <string name="notificationsMutedForTime">كتم حتى {date_time}</string>
     <string name="notificationsSlowMode">الوضع البطيئ</string>
     <string name="notificationsSlowModeDescription">{app_name} سيتحقق بشكل دوري من وجود رسائل جديدة في الخلفية.</string>
     <string name="notificationsSound">صوت</string>
@@ -910,6 +917,7 @@
     <string name="searchSearching">جاري البحث...</string>
     <string name="select">تحديد</string>
     <string name="selectAll">تحديد الكل</string>
+    <string name="selectAppIcon">حدد أيقونة التطبيق</string>
     <string name="send">إرسل</string>
     <string name="sending">إرسال</string>
     <string name="sendingCallOffer">إرسال طلب للمكالمة</string>
@@ -920,6 +928,7 @@
     <string name="sessionHelp">المساعدة</string>
     <string name="sessionInviteAFriend">دعوة صديق</string>
     <string name="sessionMessageRequests">طلبات المُراسلة</string>
+    <string name="sessionNetworkDescription">يتم إرسال الرسائل باستخدام {network_name}. تتكون الشبكة من عقد محفزة مع {token_name_long}، الذي يحافظ على {app_name} لامركزي وآمن. <font color="0"><b>اعرف المزيد</b> {icon}</font></string>
     <string name="sessionNotifications">الإشعارات</string>
     <string name="sessionPermissions">الصلاحيات</string>
     <string name="sessionPrivacy">الخصوصية</string>

@@ -41,11 +41,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import network.loki.messenger.BuildConfig;
+
 public class PartAndBlobProvider extends ContentProvider {
 
   private static final String TAG = PartAndBlobProvider.class.getSimpleName();
 
-  private static final String CONTENT_URI_STRING = "content://network.loki.provider.securesms/part";
+  private static final String CONTENT_URI_STRING = "content://network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX + "/part";
   private static final Uri    CONTENT_URI        = Uri.parse(CONTENT_URI_STRING);
   private static final int    SINGLE_ROW         = 1;
   private static final int    BLOB_ROW           = 2; // New constant for blob URIs
@@ -54,8 +56,8 @@ public class PartAndBlobProvider extends ContentProvider {
 
   static {
     uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-    uriMatcher.addURI("network.loki.provider.securesms", "part/*/#", SINGLE_ROW);
-    uriMatcher.addURI("network.loki.provider.securesms", "blob/*/*/*/*/*", BLOB_ROW); // Add blob pattern
+    uriMatcher.addURI("network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX, "part/*/#", SINGLE_ROW);
+    uriMatcher.addURI("network.loki.provider.securesms" + BuildConfig.AUTHORITY_POSTFIX, "blob/*/*/*/*/*", BLOB_ROW); // Add blob pattern
   }
 
   @Override

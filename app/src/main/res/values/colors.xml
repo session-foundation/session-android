@@ -10,10 +10,6 @@
     <color name="paths_building">#FFCE3A</color>
     <color name="cell_selected">#0C0C0C</color>
 
-    <color name="call_action_button">#DD353535</color>
-    <color name="call_action_button_highlighted">#FFFFFF</color>
-    <color name="call_action_foreground_highlighted">#171717</color>
-
     <color name="accent_green">#ff31F196</color>
     <color name="accent_blue">#ff57C9FA</color>
     <color name="accent_purple">#ffC993FF</color>

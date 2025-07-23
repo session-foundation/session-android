@@ -29,18 +29,15 @@ import androidx.compose.ui.unit.sp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import network.loki.messenger.R
 import org.session.libsession.avatars.ProfileContactPhoto
 import org.session.libsession.utilities.Address
-import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
 import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.classicDark3
-import org.thoughtcrime.securesms.ui.theme.classicLight1
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
@@ -163,10 +160,10 @@ private fun AvatarElement(
                 contentDescription = null,
                 loading = placeholder(R.drawable.ic_user_filled_custom_padded),
                 requestBuilderTransform = {
-                    it.avatarOptions(maxSizePx)
+                    it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
                 }
             )
-        } // second attemot to use the custom icon if there is one
+        } // second attempt to use the custom icon if there is one
         else if(data.icon != null){
             Image(
                 modifier = Modifier.fillMaxSize().padding(size * 0.2f),

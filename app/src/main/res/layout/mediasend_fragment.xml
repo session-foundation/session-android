@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/core_black"
+    android:background="?colorPrimary"
     android:id="@+id/mediasend_safe_area"
     tools:context="org.thoughtcrime.securesms.mediasend.MediaSendActivity">
 
@@ -16,22 +16,12 @@
         android:layout_width="match_parent"
         android:layout_height="0dp" />
 
-    <FrameLayout
-        android:id="@+id/mediasend_playback_controls_container"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="@+id/mediasend_pager"
-        app:layout_constraintBottom_toBottomOf="@+id/mediasend_pager"
-        android:animateLayoutChanges="true"
-        android:layout_gravity="top"/>
-
     <LinearLayout
         android:id="@+id/mediasend_caption_and_rail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:background="@color/transparent_black_70">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/mediasend_media_rail"
@@ -40,79 +30,26 @@
             android:layout_marginTop="2dp"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp"
+            android:layout_marginBottom="4dp"
             tools:listitem="@layout/mediarail_media_item"
             tools:layout_height="64dp"/>
 
-        <LinearLayout
-            android:id="@+id/mediasend_compose_container"
+        <org.thoughtcrime.securesms.conversation.v2.input_bar.InputBar
+            android:id="@+id/inputBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="12dp"
-            android:orientation="horizontal">
+            tools:layout_height="60dp"
+            android:background="?backgroundSecondary"
+            app:sendOnly="true"
+            />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:orientation="horizontal"
-                android:background="@drawable/compose_background_camera">
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="@dimen/conversation_compose_height" />
-
-                <org.thoughtcrime.securesms.components.ComposeText
-                    style="@style/Widget.Session.EditText.Compose"
-                    android:id="@+id/mediasend_compose_text"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:nextFocusForward="@+id/send_button"
-                    android:nextFocusRight="@+id/send_button"
-                    tools:text="Secret message"
-                    tools:hint="Send TextSecure message" >
-                    <requestFocus />
-                </org.thoughtcrime.securesms.components.ComposeText>
-
-            </LinearLayout>
-
-            <FrameLayout
-                android:id="@+id/mediasend_send_button_bkg"
-                android:layout_width="@dimen/conversation_compose_height"
-                android:layout_height="@dimen/conversation_compose_height"
-                android:layout_marginStart="12dp"
-                android:layout_gravity="bottom">
-
-                <ImageButton
-                    android:id="@+id/mediasend_send_button"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:scaleType="fitCenter"
-                    android:padding="6dp"
-                    android:contentDescription="@string/send"
-                    android:src="@drawable/ic_arrow_up"
-                    android:background="@drawable/accent_dot"/>
-
-            </FrameLayout>
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/mediasend_characters_left"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:paddingBottom="12dp"
-            android:visibility="gone"
-            tools:visibility="visible"
-            tools:text="160/160 (1)" />
+            android:layout_height="0dp"
+            android:background="?backgroundSecondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/bottomSpacer" />
 
     </LinearLayout>
 
@@ -133,10 +70,15 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:src="@drawable/ic_x"
-            app:tint="@android:color/white"/>
+            app:tint="?android:textColorPrimary"/>
 
     </FrameLayout>
 
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/dialogs"
+        tools:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <FrameLayout
         android:id="@+id/loader"

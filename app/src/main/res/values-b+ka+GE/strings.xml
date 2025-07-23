@@ -5,9 +5,9 @@
     <string name="accountIDCopy">აკაუნტის ID-ის დაკოპირება</string>
     <string name="accountIdCopied">ანგარიშის ID დაკოპირდა</string>
     <string name="accountIdCopyDescription">დააკოპირეთ თქვენი Account ID და გაუზიარეთ თქვენს მეგობრებს, რომ მათ შეძლონ გაცნობოთ.</string>
-    <string name="accountIdEnter">შეიყვანეთ ანგარიში ID</string>
+    <string name="accountIdEnter">შეიყვანეთ ანგარიშის ID</string>
     <string name="accountIdErrorInvalid">ეს ანგარიშის ID არასწორია. გთხოვთ გადაამოწმეთ და სცადეთ თავიდან.</string>
-    <string name="accountIdOrOnsEnter">შეიყვანეთ ანგარიში ID ან ONS</string>
+    <string name="accountIdOrOnsEnter">შეიყვანეთ ანგარიშის ID ან ONS</string>
     <string name="accountIdOrOnsInvite">მოწვიე Account ID ან ONS</string>
     <string name="accountIdShare">Hey, I\'ve been using {app_name} to chat with complete privacy and security. Come join me! My Account ID is\n\n{account_id}\n\nDownload it at {session_download_url}</string>
     <string name="accountIdYours">თქვენი Account ID</string>
@@ -40,6 +40,7 @@
     <string name="adminTwoPromotedToAdmin"><b>{name}ს</b> და <b>{other_name}ს</b> მიენიჭათ ადმინისტრატორის როლი.</string>
     <string name="andMore">+{count}</string>
     <string name="anonymous">ანონიმური</string>
+    <string name="appIcon">აპის ხატულა</string>
     <string name="appearanceAutoDarkMode">ავტომატიკური დაბნელების რეჟიმი</string>
     <string name="appearanceHideMenuBar">მენიუს ზოლში დამალვა</string>
     <string name="appearanceLanguage">ენა</string>
@@ -68,7 +69,7 @@
     <string name="attachmentsClickToDownload">დააწკაპუნეთ რომ გადმოწეროთ {file_type}</string>
     <string name="attachmentsCollapseOptions">შესავსობი ოფციების დამალვა</string>
     <string name="attachmentsCollecting">შესავსობების შეგროვება...</string>
-    <string name="attachmentsDownload">მიმაგრებული ფაილის გადმოტვირთვა</string>
+    <string name="attachmentsDownload">მიმაგრებული ფაილის ჩამოტვირთვა</string>
     <string name="attachmentsDuration">ხანგრძლივობა:</string>
     <string name="attachmentsErrorLoad">შეცდომა ფაილის მიმაგრებისას</string>
     <string name="attachmentsErrorMediaSelection">ვერ ავირჩიე მიმაგრებული ფაილი</string>
@@ -252,6 +253,7 @@
     <string name="copied">დაკოპირებულია</string>
     <string name="copy">დაკოპირება</string>
     <string name="create">შექმნა</string>
+    <string name="creatingCall">ირეკება</string>
     <string name="cut">ამოჭრა</string>
     <string name="databaseErrorTimeout">გავიგეთ {app_name}-ის გაშვება დიდ დროს იკავებს.\n\nთქვენ შეგიძლიათ დაელოდოთ, ექსპორტირდეთ თქვენი მოწყობილობის ჟურნალები რათა გაუზიაროთ პრობლემების დიაგნოსტირებისთვის, ან სცადოთ {app_name}-ის გადატვირთვა.</string>
     <string name="databaseErrorUpdate">თქვენი აპლიკაციის მონაცემთა ბაზა არ შეესაბამება {app_name}-ის ამ ვერსიას. ხელახლა დააინსტალირეთ აპლიკაცია და აღადგინეთ თქვენი ანგარიში ახალი მონაცემთა ბაზის შესაქმნელად და {app_name} გამოყენების გაგრძელებისთვის.\n\nგაფრთხილება: ეს გამოიწვევს ყველა მესიჯის და ფაილის დაკარგვას, რომლებიც ორ კვირაზე მეტი ხნისაა.</string>
@@ -278,12 +280,20 @@
         <item quantity="one">შეტყობინების წაშლა</item>
         <item quantity="other">შეტყობინებების წაშლა</item>
     </plurals>
+    <plurals name="deleteMessageConfirm">
+        <item quantity="one">დარწმუნებული ხართ რომ ამ შეტყობინების წაშლა გსურთ?</item>
+        <item quantity="other">დარწმუნებული ხართ რომ ამ შეწყობინებების წაშლა გსურთ?</item>
+    </plurals>
     <plurals name="deleteMessageDeleted">
         <item quantity="one">შეტყობინება წაშლილია</item>
         <item quantity="other">შეტყობინებები წაშლილია</item>
     </plurals>
     <string name="deleteMessageDeletedGlobally">ეს შეტყობინება წაშლილია</string>
     <string name="deleteMessageDeletedLocally">ეს შეტყობინება წაშლილია ამ მოწყობილობაზე</string>
+    <plurals name="deleteMessageDescriptionDevice">
+        <item quantity="one">დარწმუნებული ხართ რომ ამ შეწყობინების მხოლოდ ამ მოწყობილობიდან წაშლა გსურთ?</item>
+        <item quantity="other">დარწმუნებული ხართ რომ ამ შეტყობინებების მხოლოდ ამ მოწყობილობიდან წაშლა გსურთ?</item>
+    </plurals>
     <string name="deleteMessageDescriptionEveryone">დარწმუნებული ხართ, რომ გსურთ ამ შეტყობინების წაშლა ყველასთვის?</string>
     <string name="deleteMessageDeviceOnly">მხოლოდ ამ მოწყობილობაზე წაშლა</string>
     <string name="deleteMessageDevicesAll">წაშლა ყველა ჩემს მოწყობილობაზე</string>
@@ -292,8 +302,16 @@
         <item quantity="one">შეტყობინების წაშლა ვერ მოხერხდა</item>
         <item quantity="other">შეტყობინებების წაშლა ვერ მოხერხდა</item>
     </plurals>
+    <plurals name="deleteMessageNoteToSelfWarning">
+        <item quantity="one">ეს შეტყობინება ვერ წაიშლება თქვენი ყველა მოწყობილობიდან</item>
+        <item quantity="other">თქვენს მიერ არჩეული ზოგიერთი შეტყობინება ვერ წაიშლება თქვენი ყველა მოწყობილობიდან</item>
+    </plurals>
+    <plurals name="deleteMessageWarning">
+        <item quantity="one">ეს შეტყობინება ყველასთვის ვერ წაიშლება</item>
+        <item quantity="other">თქვენს მიერ არჩეული ზოგიერთი შეტყობინება ყველასთვის ვერ წაიშლება</item>
+    </plurals>
     <string name="deleteMessagesDescriptionEveryone">დარწმუნებული ხართ, რომ გსურთ ამ შეტყობინებების წაშლა ყველასთვის?</string>
-    <string name="deleting">წაშლა მიმდინარეობს</string>
+    <string name="deleting">იშლება</string>
     <string name="developerToolsToggle">დეველოპერის ხელსაწყოების გადართვა</string>
     <string name="dictationStart">დიქტაციის დაწყება...</string>
     <string name="disappearingMessages">გაუჩინარებადი შეტყობინებები</string>
@@ -340,7 +358,7 @@
     <string name="displayNameSet">ხელის შეწყვილება</string>
     <string name="document">დოკუმენტი</string>
     <string name="done">შესრულებულია</string>
-    <string name="download">გადმოტვირთვა</string>
+    <string name="download">ჩამოტვირთვა</string>
     <string name="downloading">იტვირთება...</string>
     <string name="draft">წერილობითი ვარიანტი</string>
     <string name="edit">რედაქტირება</string>
@@ -385,6 +403,7 @@
     <string name="groupCreate">ჯგუფის შექმნა</string>
     <string name="groupCreateErrorNoMembers">გთხოვთ აირჩიოთ მინიმუმ ერთი სხვა ჯგუფის წევრი.</string>
     <string name="groupDelete">ჯგუფის წაშლა</string>
+    <string name="groupDeleteDescription">დარწმუნებული ხართ რომ <b>{group_name}</b>-ის წაშლა გსურთ?\n\n ეს ამოშლის ჯგუფის ყველა წევრს და შიგთავსს.</string>
     <string name="groupDescriptionEnter">შეიყვანეთ ჯგუფის აღწერა</string>
     <string name="groupDisplayPictureUpdated">ჯგუფის სურათი განახლდა.</string>
     <string name="groupEdit">ჯგუფის რედაქტირება</string>
@@ -397,6 +416,10 @@
     <string name="groupInviteFailedMultiple">ვერ შევძელიში {name} და {count} სხვა პირი ჯგუფში {group_name} მიიწვია</string>
     <string name="groupInviteFailedTwo">ვერ შევძელიში {name} და {other_name} ჯგუფში {group_name} მიიწვია</string>
     <string name="groupInviteFailedUser">ვერ შევძელიში {name} ჯგუფში {group_name} მიიწვია</string>
+    <plurals name="groupInviteSending">
+        <item quantity="one">იგზავნება მოსაწვევი</item>
+        <item quantity="other">იგზავნება მისაწვევები</item>
+    </plurals>
     <string name="groupInviteSent">მოწვევა გაგზავნილია</string>
     <string name="groupInviteSuccessful">ჯგუფის მოწვევა წარმატებული იყო</string>
     <string name="groupInviteVersion">მომხმარებელმა უნდა ჰქონდეს უახლესი ვერსია მიწვევების მისაღებად</string>
@@ -468,6 +491,14 @@
     <string name="incognitoKeyboardDescription">თხოვა ინკოგნიტო რეჟიმი თუ შესაძლებელი. დამოკიდებულია იმ კლავიატურაზე, რომელიც თქვენ იყენებთ, თქვენი კლავიატურა შეიძლება იგნორიროს ეს თხოვნა.</string>
     <string name="info">ინფორმაცია</string>
     <string name="invalidShortcut">არასწორი მალსახმობი</string>
+    <plurals name="inviteFailed">
+        <item quantity="one">მოწვევა ვერ მოხერხდა</item>
+        <item quantity="other">მოწვევები ვერ მოხერხდა</item>
+    </plurals>
+    <plurals name="inviteFailedDescription">
+        <item quantity="one">მოსაწვევი ვერ გაიგზავნა. გსურთ თავიდან ცდა?</item>
+        <item quantity="other">მოსაწვევები ვერ გაიგზავნა. გსურთ თავიდან ცდა?</item>
+    </plurals>
     <string name="join">შეუერთდით</string>
     <string name="later">მოგვიანებით</string>
     <string name="learnMore">გაიგე მეტი</string>
@@ -511,7 +542,7 @@
         <item quantity="one">%1$d აქტიური წევრი</item>
         <item quantity="other">%1$d აქტიური წევრი</item>
     </plurals>
-    <string name="membersAddAccountIdOrOns">ანგარიშის ID ან ONS-ის დამატება</string>
+    <string name="membersAddAccountIdOrOns">ანგარიშის ID-ის ან ONS-ის დამატება</string>
     <string name="membersInvite">კონტაქტების მოწვევა</string>
     <plurals name="membersInviteSend">
         <item quantity="one">გამოაგზავნეთ მოწვევა</item>
@@ -541,6 +572,10 @@
     <plurals name="messageNewYouveGot">
         <item quantity="one">თქვენ გაქვთ ახალი შეტყობინება.</item>
         <item quantity="other">თქვენ გაქვთ %1$d ახალი შეტყობინება.</item>
+    </plurals>
+    <plurals name="messageNewYouveGotGroup">
+        <item quantity="one">თქვენ მიიღეთ ახალი შეტყობინება %1$s-ში.</item>
+        <item quantity="other">თქვენ მიიღეთ %1$d ახალი შეტყობინება %2$s-ში.</item>
     </plurals>
     <string name="messageReplyingTo">Პასუხობთ</string>
     <string name="messageRequestGroupInvite"><b>{name}ს</b> მოპატიჟა <b>{group_name}</b>-ში.</string>
@@ -709,6 +744,7 @@
     <string name="readReceipts">წაკითხვის ქვითრები</string>
     <string name="readReceiptsDescription">პრევიუების ჩვენება, რომლებიც მიიღებენ და გაგზავნიან ყველა შეტყობინებას.</string>
     <string name="received">მიღებული:</string>
+    <string name="receivedAnswer">მიღებულია პასუხი</string>
     <string name="recommended">გირჩევთ</string>
     <string name="recoveryPasswordBannerDescription">შეინახე შენი recovery password, რათა დარწმუნდე, რომ არ დაკარგავ ანგარიშზე წვდომას.</string>
     <string name="recoveryPasswordBannerTitle">შეინახე შენი recovery password</string>
@@ -796,10 +832,11 @@
     <string name="unknown">უცნობი</string>
     <string name="updateApp">აპლიკაციის განახლება</string>
     <string name="updateDownloaded">განახლება დაინსტალირებულია, დაწკაპეთ გადასატვირთად</string>
-    <string name="updateDownloading">განახლების გადმოტვირთვა: {percent_loader}%</string>
+    <string name="updateDownloading">განახლება იწერება: {percent_loader}%</string>
     <string name="updateError">ვერ განახლდა</string>
     <string name="updateErrorDescription">{app_name} ვერ განახლდა. გთხოვთ გადადით {session_download_url} და ხელით დააყენეთ ახალი ვერსია, შემდეგ კი დაგვიკავშირდით დახმარების ცენტრში ამ პრობლემის შესახებ.</string>
     <string name="updateNewVersion">{app_name}-ის ახალი ვერსია ხელმისაწვდომია, დააჭირეთ განახლებისთვის</string>
+    <string name="updateNewVersionDescription">ხელმისაწვდომია {app_name}-ის ახალი ვერსია ({version}).</string>
     <string name="updateReleaseNotes">გადადით გამოშვების ჩანაწერებზე</string>
     <string name="updateSession">{app_name} განახლება</string>
     <string name="updateVersion">Ვერსია {version}</string>

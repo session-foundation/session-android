@@ -9,7 +9,6 @@ import org.session.libsignal.utilities.JsonUtil.SaneJSONObject
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.ReactionRecord
-import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.util.CursorUtil
 import javax.inject.Provider
 
@@ -105,11 +104,11 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
     return reactions
   }
 
-  fun addReaction(reaction: ReactionRecord, notifyUnread: Boolean) {
-    addReactions(mapOf(reaction.messageId to listOf(reaction)), replaceAll = false, notifyUnread)
+  fun addReaction(reaction: ReactionRecord) {
+    addReactions(mapOf(reaction.messageId to listOf(reaction)), replaceAll = false)
   }
 
-  fun addReactions(reactionsByMessageId: Map<MessageId, List<ReactionRecord>>, replaceAll: Boolean, notifyUnread: Boolean) {
+  fun addReactions(reactionsByMessageId: Map<MessageId, List<ReactionRecord>>, replaceAll: Boolean) {
     if (reactionsByMessageId.isEmpty()) return
 
     val values = ContentValues()
@@ -155,120 +154,55 @@ class ReactionDatabase(context: Context, helper: Provider<SQLCipherOpenHelper>) 
             writableDatabase.insert(TABLE_NAME, null, values)
         }
 
-      for ((messageId, reactions) in reactionsByMessageId) {
-        val hasReactions = !replaceAll || reactions.isNotEmpty()
-        val isRemoval = replaceAll && reactions.isEmpty()
-        if (messageId.mms) {
-          DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions, isRemoval, notifyUnread)
-        } else {
-          DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions, isRemoval, notifyUnread)
-        }
-      }
-
       writableDatabase.setTransactionSuccessful()
     } finally {
       writableDatabase.endTransaction()
     }
   }
 
-  fun deleteReaction(emoji: String, messageId: MessageId, author: String, notifyUnread: Boolean) {
+  fun deleteReaction(emoji: String, messageId: MessageId, author: String) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ? AND $EMOJI = ? AND $AUTHOR_ID = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}", emoji, author),
-      notifyUnread
     )
   }
 
   fun deleteEmojiReactions(emoji: String, messageId: MessageId) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ? AND $EMOJI = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}", emoji),
-      false
     )
   }
 
   fun deleteMessageReactions(messageId: MessageId) {
     deleteReactions(
-      messageId = messageId,
       query = "$MESSAGE_ID = ? AND $IS_MMS = ?",
       args = arrayOf("${messageId.id}", "${if (messageId.mms)  1 else 0}"),
-      false
     )
   }
 
-    private fun deleteReactions(messageId: MessageId, query: String, args: Array<String>, notifyUnread: Boolean) {
-    writableDatabase.beginTransaction()
-    try {
-      writableDatabase.delete(TABLE_NAME, query, args)
+  fun deleteMessageReactions(messageIds: List<MessageId>) {
+      if (messageIds.isEmpty()) return  // Early exit if the list is empty
 
-      if (messageId.mms) {
-        DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), true, notifyUnread)
-      } else {
-        DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(writableDatabase, messageId.id, hasReactions(messageId), true, notifyUnread)
+      val conditions = mutableListOf<String>()
+      val args = mutableListOf<String>()
+
+      for (messageId in messageIds) {
+          conditions.add("($MESSAGE_ID = ? AND $IS_MMS = ?)")
+          args.add(messageId.id.toString())
+          args.add(if (messageId.mms) "1" else "0")
       }
 
-      writableDatabase.setTransactionSuccessful()
-    } finally {
-      writableDatabase.endTransaction()
-    }
-    }
+      val query = conditions.joinToString(" OR ")
 
-    fun deleteMessageReactions(messageIds: List<MessageId>) {
-        if (messageIds.isEmpty()) return  // Early exit if the list is empty
+      deleteReactions(
+        query = query,
+        args = args.toTypedArray()
+      )
+  }
 
-        val conditions = mutableListOf<String>()
-        val args = mutableListOf<String>()
-
-        for (messageId in messageIds) {
-            conditions.add("($MESSAGE_ID = ? AND $IS_MMS = ?)")
-            args.add(messageId.id.toString())
-            args.add(if (messageId.mms) "1" else "0")
-        }
-
-        val query = conditions.joinToString(" OR ")
-
-        deleteReactions(
-            messageIds = messageIds,
-            query = query,
-            args = args.toTypedArray(),
-            notifyUnread = false
-        )
-    }
-
-    private fun deleteReactions(messageIds: List<MessageId>, query: String, args: Array<String>, notifyUnread: Boolean) {
-        writableDatabase.beginTransaction()
-        try {
-            writableDatabase.delete(TABLE_NAME, query, args)
-
-            // Update unread status for each message
-            for (messageId in messageIds) {
-                val hasReaction = hasReactions(messageId)
-                if (messageId.mms) {
-                    DatabaseComponent.get(context).mmsDatabase().updateReactionsUnread(
-                        writableDatabase, messageId.id, hasReaction, true, notifyUnread
-                    )
-                } else {
-                    DatabaseComponent.get(context).smsDatabase().updateReactionsUnread(
-                        writableDatabase, messageId.id, hasReaction, true, notifyUnread
-                    )
-                }
-            }
-
-            writableDatabase.setTransactionSuccessful()
-        } finally {
-            writableDatabase.endTransaction()
-        }
-    }
-
-  private fun hasReactions(messageId: MessageId): Boolean {
-    val query = "$MESSAGE_ID = ? AND $IS_MMS = ?"
-    val args = arrayOf("${messageId.id}", "${if (messageId.mms) 1 else 0}")
-
-    readableDatabase.query(TABLE_NAME, arrayOf(MESSAGE_ID), query, args, null, null, null).use { cursor ->
-      return cursor.moveToFirst()
-    }
+  private fun deleteReactions(query: String, args: Array<String>) {
+    writableDatabase.delete(TABLE_NAME, query, args)
   }
 
   fun getReactions(cursor: Cursor): List<ReactionRecord> {

@@ -5,7 +5,7 @@
     android:id="@+id/searchBottomBarConstraintLayout"
     android:layout_width="match_parent"
     android:layout_height="@dimen/input_bar_height"
-    android:background="?input_bar_background"
+    android:background="?backgroundSecondary"
     android:orientation="vertical">
 
     <View
@@ -63,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
-            android:background="?input_bar_background"
+            android:background="?backgroundSecondary"
             android:visibility="gone"
             android:layout_centerInParent="true">
 

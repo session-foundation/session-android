@@ -17,34 +17,40 @@ jobs:
     strategy:
       fail-fast: false # Continue with other matrix items if one fails
       matrix:
-        variant: [ 'play', 'website', 'huawei' ]
-        build_type: [ 'debug' ]
+        variant: [ 'play', 'website', 'huawei', 'fdroid' ]
+        build_type: [ 'qa' ]
         include:
           - variant: 'huawei'
             extra_build_command_options: '-Phuawei=1'
+          - variant: 'play'
+            run_test: true
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             .gradle
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle.properties') }}-${{ matrix.variant }}
 
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build and test with Gradle
+      - name: Build with gradle
         id: build
-        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} test${{ matrix.variant }}${{ matrix.build_type }}UnitTest  ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }}
+
+      - name: Run unit tests
+        if: ${{ matrix.run_test == true }}
+        id: test
+        run: ./gradlew test${{ matrix.variant }}${{ matrix.build_type }}UnitTest ${{ matrix.extra_build_command_options }}
 
       - name: Upload build reports regardless
         if: always()

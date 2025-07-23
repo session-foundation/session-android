@@ -333,6 +333,9 @@ public class Recipient implements RecipientModifiedListener, Cloneable {
     }
   }
 
+  //todo SESSIONHERO refactor: This can be removed
+  public synchronized String getRawName() { return name; }
+
   public void setName(@Nullable String name) {
     boolean notify = false;
 

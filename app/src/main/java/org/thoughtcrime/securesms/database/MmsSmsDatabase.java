@@ -17,8 +17,10 @@
 package org.thoughtcrime.securesms.database;
 
 import static org.thoughtcrime.securesms.database.MmsDatabase.MESSAGE_BOX;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.ID;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED;
 import static org.thoughtcrime.securesms.database.MmsSmsColumns.READ;
+import static org.thoughtcrime.securesms.database.MmsSmsColumns.UNIQUE_ROW_ID;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -61,7 +63,7 @@ public class MmsSmsDatabase extends Database {
   public static final String SMS_TRANSPORT = "sms";
 
   private static final String[] PROJECTION = {MmsSmsColumns.ID, MmsSmsColumns.UNIQUE_ROW_ID,
-                                              SmsDatabase.BODY, SmsDatabase.TYPE,
+                                              SmsDatabase.BODY, SmsDatabase.TYPE, MmsSmsColumns.MESSAGE_CONTENT,
                                               MmsSmsColumns.THREAD_ID,
                                               SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT,
                                               MmsSmsColumns.NORMALIZED_DATE_SENT,
@@ -410,17 +412,22 @@ public class MmsSmsDatabase extends Database {
                     MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" +
                     buildOutgoingTypesList() + "))";
 
+    final String lastSeenQuery = "SELECT " + ThreadDatabase.LAST_SEEN +
+            " FROM " + ThreadDatabase.TABLE_NAME +
+            " WHERE " + ThreadDatabase.ID + " = " + MmsSmsColumns.THREAD_ID;
+
     // ──────────────────────────────────────────────────────────────
     // 2) Selection:
     //    A) incoming  unread+un-notified,      NOT outgoing
     //    B) outgoing  with unseen reactions,   IS  outgoing
+    // To query unseen reactions, we compare the date received on the reaction with the "last seen timestamp" on this thread
     // ──────────────────────────────────────────────────────────────
     String selection =
             "(" + READ + " = 0 AND " +
                     NOTIFIED + " = 0 AND NOT (" + outgoingCondition + "))" +   // A
-                    " OR " +
-                    "(" + MmsSmsColumns.REACTIONS_UNREAD + " = 1 AND (" +            // B
-                    outgoingCondition + "))";
+                    " OR (" +
+                      ReactionDatabase.TABLE_NAME + "." + ReactionDatabase.DATE_SENT + " > (" + lastSeenQuery +") AND (" +
+                      outgoingCondition + "))";             // B
 
     String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
     return queryTables(PROJECTION, selection, order, null);
@@ -543,7 +550,9 @@ public class MmsSmsDatabase extends Database {
                                   "'" + AttachmentDatabase.STICKER_ID + "', " + AttachmentDatabase.TABLE_NAME + "." + AttachmentDatabase.STICKER_ID +
                                   ")) AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY,
+                              MmsDatabase.MESSAGE_CONTENT,
+                              READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
@@ -572,7 +581,9 @@ public class MmsSmsDatabase extends Database {
                                   + " AS " + MmsSmsColumns.UNIQUE_ROW_ID,
                               "NULL AS " + AttachmentDatabase.ATTACHMENT_JSON_ALIAS,
                               reactionsColumn,
-                              SmsDatabase.BODY, READ, MmsSmsColumns.THREAD_ID,
+                              SmsDatabase.BODY,
+                              MmsSmsColumns.MESSAGE_CONTENT,
+                              READ, MmsSmsColumns.THREAD_ID,
                               SmsDatabase.TYPE, SmsDatabase.ADDRESS, SmsDatabase.ADDRESS_DEVICE_ID, SmsDatabase.SUBJECT, MmsDatabase.MESSAGE_TYPE,
                               MmsDatabase.MESSAGE_BOX, SmsDatabase.STATUS, MmsDatabase.PART_COUNT,
                               MmsDatabase.CONTENT_LOCATION, MmsDatabase.TRANSACTION_ID,
@@ -617,6 +628,7 @@ public class MmsSmsDatabase extends Database {
     mmsColumnsPresent.add(MmsSmsColumns.ID);
     mmsColumnsPresent.add(READ);
     mmsColumnsPresent.add(MmsSmsColumns.THREAD_ID);
+    mmsColumnsPresent.add(MmsSmsColumns.MESSAGE_CONTENT);
     mmsColumnsPresent.add(MmsSmsColumns.BODY);
     mmsColumnsPresent.add(MmsSmsColumns.ADDRESS);
     mmsColumnsPresent.add(MmsSmsColumns.ADDRESS_DEVICE_ID);

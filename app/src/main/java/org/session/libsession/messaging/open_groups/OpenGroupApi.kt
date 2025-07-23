@@ -286,19 +286,19 @@ object OpenGroupApi {
         return RequestBody.create("application/json".toMediaType(), parametersAsJSON)
     }
 
-    private fun getResponseBody(request: Request): Promise<ByteArraySlice, Exception> {
-        return send(request).map { response ->
+    private fun getResponseBody(request: Request, signRequest: Boolean = true): Promise<ByteArraySlice, Exception> {
+        return send(request, signRequest = signRequest).map { response ->
             response.body ?: throw Error.ParsingFailed
         }
     }
 
-    private fun getResponseBodyJson(request: Request): Promise<Map<*, *>, Exception> {
-        return send(request).map {
+    private fun getResponseBodyJson(request: Request, signRequest: Boolean = true): Promise<Map<*, *>, Exception> {
+        return send(request, signRequest = signRequest).map {
             JsonUtil.fromJson(it.body, Map::class.java)
         }
     }
 
-    private fun send(request: Request): Promise<OnionResponse, Exception> {
+    private fun send(request: Request, signRequest: Boolean): Promise<OnionResponse, Exception> {
         request.server.toHttpUrlOrNull() ?: return Promise.ofFail(Error.InvalidURL)
         val urlBuilder = StringBuilder("${request.server}/${request.endpoint.value}")
         if (request.verb == GET && request.queryParameters.isNotEmpty()) {
@@ -308,68 +308,76 @@ object OpenGroupApi {
             }
         }
         fun execute(): Promise<OnionResponse, Exception> {
-            val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(request.server)
             val serverPublicKey =
                 MessagingModuleConfiguration.shared.storage.getOpenGroupPublicKey(request.server)
                     ?: return Promise.ofFail(Error.NoPublicKey)
-            val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
-                ?: return Promise.ofFail(Error.NoEd25519KeyPair)
             val urlRequest = urlBuilder.toString()
-            val headers = request.headers.toMutableMap()
-            val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
-            val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
-            val bodyHash = if (request.parameters != null) {
-                val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
-                Hash.hash64(parameterBytes)
-            } else if (request.body != null) {
-                Hash.hash64(request.body)
-            } else {
-                byteArrayOf()
-            }
 
-            val messageBytes = Hex.fromStringCondensed(serverPublicKey)
-                .plus(nonce)
-                .plus("$timestamp".toByteArray(Charsets.US_ASCII))
-                .plus(request.verb.rawValue.toByteArray())
-                .plus("/${request.endpoint.value}".toByteArray())
-                .plus(bodyHash)
+            val headers = if (signRequest) {
+                val serverCapabilities = MessagingModuleConfiguration.shared.storage.getServerCapabilities(request.server)
 
-            val signature: ByteArray
-            val pubKey: String
+                val ed25519KeyPair = MessagingModuleConfiguration.shared.storage.getUserED25519KeyPair()
+                    ?: return Promise.ofFail(Error.NoEd25519KeyPair)
 
-            if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
-                pubKey = AccountId(
-                    IdPrefix.BLINDED,
-                    BlindKeyAPI.blind15KeyPair(
-                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                        serverPubKey = Hex.fromStringCondensed(serverPublicKey)
-                    ).pubKey.data
-                ).hexString
+                val headers = request.headers.toMutableMap()
+                val nonce = ByteArray(16).also { SecureRandom().nextBytes(it) }
+                val timestamp = TimeUnit.MILLISECONDS.toSeconds(SnodeAPI.nowWithOffset)
+                val bodyHash = if (request.parameters != null) {
+                    val parameterBytes = JsonUtil.toJson(request.parameters).toByteArray()
+                    Hash.hash64(parameterBytes)
+                } else if (request.body != null) {
+                    Hash.hash64(request.body)
+                } else {
+                    byteArrayOf()
+                }
 
-                try {
-                    signature = BlindKeyAPI.blind15Sign(
-                        ed25519SecretKey = ed25519KeyPair.secretKey.data,
-                        serverPubKey = serverPublicKey,
+                val messageBytes = Hex.fromStringCondensed(serverPublicKey)
+                    .plus(nonce)
+                    .plus("$timestamp".toByteArray(Charsets.US_ASCII))
+                    .plus(request.verb.rawValue.toByteArray())
+                    .plus("/${request.endpoint.value}".toByteArray())
+                    .plus(bodyHash)
+
+                val signature: ByteArray
+                val pubKey: String
+
+                if (serverCapabilities.isEmpty() || serverCapabilities.contains(Capability.BLIND.name.lowercase())) {
+                    pubKey = AccountId(
+                        IdPrefix.BLINDED,
+                        BlindKeyAPI.blind15KeyPair(
+                            ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                            serverPubKey = Hex.fromStringCondensed(serverPublicKey)
+                        ).pubKey.data
+                    ).hexString
+
+                    try {
+                        signature = BlindKeyAPI.blind15Sign(
+                            ed25519SecretKey = ed25519KeyPair.secretKey.data,
+                            serverPubKey = serverPublicKey,
+                            message = messageBytes
+                        )
+                    } catch (e: Exception) {
+                        throw Error.SigningFailed
+                    }
+                } else {
+                    pubKey = AccountId(
+                        IdPrefix.UN_BLINDED,
+                        ed25519KeyPair.pubKey.data
+                    ).hexString
+
+                    signature = ED25519.sign(
+                        ed25519PrivateKey = ed25519KeyPair.secretKey.data,
                         message = messageBytes
                     )
-                } catch (e: Exception) {
-                    throw Error.SigningFailed
                 }
+                headers["X-SOGS-Nonce"] = encodeBytes(nonce)
+                headers["X-SOGS-Timestamp"] = "$timestamp"
+                headers["X-SOGS-Pubkey"] = pubKey
+                headers["X-SOGS-Signature"] = encodeBytes(signature)
+                headers
             } else {
-                pubKey = AccountId(
-                    IdPrefix.UN_BLINDED,
-                    ed25519KeyPair.pubKey.data
-                ).hexString
-
-                signature = ED25519.sign(
-                    ed25519PrivateKey = ed25519KeyPair.secretKey.data,
-                    message = messageBytes
-                )
+                request.headers
             }
-            headers["X-SOGS-Nonce"] = encodeBytes(nonce)
-            headers["X-SOGS-Timestamp"] = "$timestamp"
-            headers["X-SOGS-Pubkey"] = pubKey
-            headers["X-SOGS-Signature"] = encodeBytes(signature)
 
             val requestBuilder = okhttp3.Request.Builder()
                 .url(urlRequest)
@@ -401,7 +409,8 @@ object OpenGroupApi {
     fun downloadOpenGroupProfilePicture(
         server: String,
         roomID: String,
-        imageId: String
+        imageId: String,
+        signRequest: Boolean = true,
     ): Promise<ByteArraySlice, Exception> {
         val request = Request(
             verb = GET,
@@ -409,7 +418,7 @@ object OpenGroupApi {
             server = server,
             endpoint = Endpoint.RoomFileIndividual(roomID, imageId)
         )
-        return getResponseBody(request)
+        return getResponseBody(request, signRequest = signRequest)
     }
 
     // region Upload/Download
@@ -425,7 +434,7 @@ object OpenGroupApi {
                 "Content-Type" to "application/octet-stream"
             )
         )
-        return getResponseBodyJson(request).map { json ->
+        return getResponseBodyJson(request, signRequest = true).map { json ->
             (json["id"] as? Number)?.toLong() ?: throw Error.ParsingFailed
         }
     }
@@ -437,7 +446,7 @@ object OpenGroupApi {
             server = server,
             endpoint = Endpoint.RoomFileIndividual(room, fileId)
         )
-        return getResponseBody(request)
+        return getResponseBody(request, signRequest = true)
     }
     // endregion
 
@@ -465,7 +474,7 @@ object OpenGroupApi {
             endpoint = Endpoint.RoomMessage(room),
             parameters = parameters
         )
-        return getResponseBodyJson(request).map { json ->
+        return getResponseBodyJson(request, signRequest = true).map { json ->
             @Suppress("UNCHECKED_CAST") val rawMessage = json as? Map<String, Any>
                 ?: throw Error.ParsingFailed
             val result = OpenGroupMessage.fromJSON(rawMessage) ?: throw Error.ParsingFailed
@@ -485,7 +494,7 @@ object OpenGroupApi {
             parameters = emptyMap<String, String>()
         )
         val pendingReaction = PendingReaction(server, room, messageId, emoji, true)
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = true).map { response ->
             JsonUtil.fromJson(response, AddReactionResponse::class.java).also {
                 val index = pendingReactions.indexOf(pendingReaction)
                 pendingReactions[index].seqNo = it.seqNo
@@ -501,7 +510,7 @@ object OpenGroupApi {
             endpoint = Endpoint.Reaction(room, messageId, emoji)
         )
         val pendingReaction = PendingReaction(server, room, messageId, emoji, true)
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = true).map { response ->
             JsonUtil.fromJson(response, DeleteReactionResponse::class.java).also {
                 val index = pendingReactions.indexOf(pendingReaction)
                 pendingReactions[index].seqNo = it.seqNo
@@ -516,7 +525,7 @@ object OpenGroupApi {
             server = server,
             endpoint = Endpoint.ReactionDelete(room, messageId, emoji)
         )
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = true).map { response ->
             JsonUtil.fromJson(response, DeleteAllReactionsResponse::class.java)
         }
     }
@@ -526,7 +535,7 @@ object OpenGroupApi {
     @JvmStatic
     fun deleteMessage(serverID: Long, room: String, server: String): Promise<Unit, Exception> {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.RoomMessageIndividual(room, serverID))
-        return send(request).map {
+        return send(request, signRequest = true).map {
             Log.d("Loki", "Message deletion successful.")
         }
     }
@@ -547,7 +556,7 @@ object OpenGroupApi {
             endpoint = Endpoint.RoomDeleteMessages(room, storage.getUserPublicKey() ?: ""),
             queryParameters = queryParameters
         )
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = true).map { response ->
             val json = JsonUtil.fromJson(response, Map::class.java)
             val type = TypeFactory.defaultInstance()
                 .constructCollectionType(List::class.java, MessageDeletion::class.java)
@@ -575,7 +584,7 @@ object OpenGroupApi {
             endpoint = Endpoint.UserBan(publicKey),
             parameters = parameters
         )
-        return send(request).map {
+        return send(request, signRequest = true).map {
             Log.d("Loki", "Banned user: $publicKey from: $server.$room.")
         }
     }
@@ -607,7 +616,7 @@ object OpenGroupApi {
 
     fun unban(publicKey: String, room: String, server: String): Promise<Unit, Exception> {
         val request = Request(verb = DELETE, room = room, server = server, endpoint = Endpoint.UserUnban(publicKey))
-        return send(request).map {
+        return send(request, signRequest = true).map {
             Log.d("Loki", "Unbanned user: $publicKey from: $server.$room")
         }
     }
@@ -765,9 +774,10 @@ object OpenGroupApi {
 
     private fun getBatchResponseJson(
         request: Request,
-        requests: MutableList<BatchRequestInfo<*>>
+        requests: MutableList<BatchRequestInfo<*>>,
+        signRequest: Boolean = true
     ): Promise<List<BatchResponse<*>>, Exception> {
-        return getResponseBody(request).map { batch ->
+        return getResponseBody(request, signRequest = signRequest).map { batch ->
             val results = JsonUtil.fromJson(batch, List::class.java) ?: throw Error.ParsingFailed
             results.mapIndexed { idx, result ->
                 val response = result as? Map<*, *> ?: throw Error.ParsingFailed
@@ -809,7 +819,7 @@ object OpenGroupApi {
                 }
             }
             val images = groups.associate { group ->
-                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(defaultServer, group.token, it) }
+                group.token to group.imageId?.let { downloadOpenGroupProfilePicture(defaultServer, group.token, it, signRequest = false) }
             }
             groups.map { group ->
                 val image = try {
@@ -842,7 +852,7 @@ object OpenGroupApi {
             server = defaultServer,
             endpoint = Endpoint.Rooms
         )
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = false).map { response ->
             val rawRooms = JsonUtil.fromJson(response, List::class.java) ?: throw Error.ParsingFailed
             rawRooms.mapNotNull {
                 JsonUtil.fromJson(JsonUtil.toJson(it), RoomInfo::class.java)
@@ -850,17 +860,9 @@ object OpenGroupApi {
         }
     }
 
-    fun getMemberCount(room: String, server: String): Promise<Int, Exception> {
-        return getRoomInfo(room, server).map { info ->
-            val storage = MessagingModuleConfiguration.shared.storage
-            storage.setUserCount(room, server, info.activeUsers)
-            info.activeUsers
-        }
-    }
-
     fun getCapabilities(server: String): Promise<Capabilities, Exception> {
         val request = Request(verb = GET, room = null, server = server, endpoint = Endpoint.Capabilities)
-        return getResponseBody(request).map { response ->
+        return getResponseBody(request, signRequest = false).map { response ->
             JsonUtil.fromJson(response, Capabilities::class.java)
         }
     }

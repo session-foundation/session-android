@@ -74,7 +74,7 @@ def build_releases(project_root: str, flavor: str, credentials_property_prefix: 
                             apk_paths=apks, 
                             package_id=package_id, 
                             version_name=version_name,
-                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/session-{version_name}-{flavor}-release.aab'))
+                            bundle_path=os.path.join(project_root, f'app/build/outputs/bundle/{flavor}Release/app-{flavor}-release.aab'))
         
     finally:
         print(f'Cleaning up keystore file: {keystore_file}')
@@ -243,8 +243,16 @@ play_build_result = build_releases(
     credentials_property_prefix='SESSION'
     )
 
+print("Building fdroid releases...")
+fdroid_build_result = build_releases(
+    project_root=project_root,
+    flavor='fdroid',
+    credentials=BuildCredentials(credentials['build']['play']),
+    credentials_property_prefix='SESSION'
+    )
+
 print("Updating fdroid repo...")
-update_fdroid(build=play_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
+update_fdroid(build=fdroid_build_result, creds=BuildCredentials(credentials['fdroid']), fdroid_workspace=os.path.join(fdroid_repo_path, 'fdroid'))
 
 print("Building huawei releases...")
 huawei_build_result = build_releases(

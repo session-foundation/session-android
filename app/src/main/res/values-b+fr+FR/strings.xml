@@ -402,6 +402,7 @@
     <string name="displayNameSet">Définir un nom d\'affichage</string>
     <string name="displayNameVisible">Votre nom d\'affichage est visible par les utilisateurs, les groupes et les communautés avec lesquels vous interagissez.</string>
     <string name="document">Document</string>
+    <string name="donate">Faire un don</string>
     <string name="done">Terminé</string>
     <string name="download">Télécharger</string>
     <string name="downloading">Téléchargement…</string>
@@ -434,6 +435,7 @@
     <string name="errorConnection">Veuillez vérifier votre connexion internet et réessayer.</string>
     <string name="errorCopyAndQuit">Copier l\'erreur et quitter</string>
     <string name="errorDatabase">Erreur de base de données</string>
+    <string name="errorGeneric">Une erreur s\'est produite. Veuillez réessayer plus tard.</string>
     <string name="errorUnknown">Une erreur inconnue est survenue.</string>
     <string name="failedToDownload">Échec du téléchargement</string>
     <string name="failures">Échecs</string>
@@ -906,6 +908,16 @@
     <string name="sessionHelp">Aide</string>
     <string name="sessionInviteAFriend">Inviter un ami</string>
     <string name="sessionMessageRequests">Demandes de message</string>
+    <string name="sessionNetworkCurrentPrice">Prix actuel du {token_name_short}</string>
+    <string name="sessionNetworkDescription">Les messages sont envoyés en utilisant l\'{network_name}. Le réseau est composé de noeuds stimulés par {token_name_long}, qui permet à {app_name} d\'être décentralisée et sécurisée. <font color="0"><b>En savoir plus</b> {icon}</font></string>
+    <string name="sessionNetworkLearnAboutStaking">En savoir plus sur Staking</string>
+    <string name="sessionNetworkMarketCap">Capitalisation du marché</string>
+    <string name="sessionNetworkNodesSecuring">{app_name} Nodes sécurisant <font color="0">vos messages</font></string>
+    <string name="sessionNetworkNodesSwarm">{app_name} Nodes dans <font color="0">votre essaim</font></string>
+    <string name="sessionNetworkNotificationLive">Le {token_name_long} est en ligne ! Explorez la nouvelle section {network_name} dans les paramètres pour apprendre comment le {token_name_long} alimente Session.</string>
+    <string name="sessionNetworkSecuredBy">Réseau sécurisé par</string>
+    <string name="sessionNetworkTokenDescription">Lorsque vous stakez du {token_name_long} pour sécuriser le réseau, vous gagnez des récompenses en {token_name_short} de l’ {staking_reward_pool}.</string>
+    <string name="sessionNew"><font color="0"><b>•</b> Nouveau</font></string>
     <string name="sessionNotifications">Notifications</string>
     <string name="sessionPermissions">Permissions</string>
     <string name="sessionPrivacy">Confidentialité</string>
@@ -935,6 +947,7 @@
     <string name="tryAgain">Réessayer</string>
     <string name="typingIndicators">Indicateurs de saisie</string>
     <string name="typingIndicatorsDescription">Voir et partager les indicateurs de saisie.</string>
+    <string name="unavailable">Indisponible</string>
     <string name="undo">Annuler</string>
     <string name="unknown">Inconnu</string>
     <string name="updateApp">Mises à jour de l’application</string>
@@ -950,6 +963,7 @@
     <string name="updateReleaseNotes">Accéder aux notes de mise à jour</string>
     <string name="updateSession">Mise à jour de {app_name}</string>
     <string name="updateVersion">Version {version}</string>
+    <string name="updated">Dernière mise à jour il y a {relative_time}</string>
     <string name="uploading">Téléversement</string>
     <string name="urlCopy">Copier l\'adresse URL</string>
     <string name="urlOpen">Ouvrir l\'URL</string>

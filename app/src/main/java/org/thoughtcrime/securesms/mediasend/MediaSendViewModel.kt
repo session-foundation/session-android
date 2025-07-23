@@ -12,7 +12,9 @@ import org.session.libsession.utilities.Util.equals
 import org.session.libsession.utilities.Util.runOnMain
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.guava.Optional
+import org.thoughtcrime.securesms.InputbarViewModel
 import org.thoughtcrime.securesms.mms.MediaConstraints
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.providers.BlobUtils
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.SingleLiveEvent
@@ -25,8 +27,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class MediaSendViewModel @Inject constructor(
-    private val application: Application
-) : ViewModel() {
+    private val application: Application,
+    private val proStatusManager: ProStatusManager,
+) : InputbarViewModel(
+    application = application,
+    proStatusManager = proStatusManager
+) {
     private val selectedMedia: MutableLiveData<List<Media>?>
     private val bucketMedia: MutableLiveData<List<Media>>
     private val position: MutableLiveData<Int>

@@ -14,9 +14,6 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.core.os.bundleOf
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
@@ -54,7 +51,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_K
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.recipients.Recipient
-import org.session.libsession.utilities.wasKickedFromGroupV2
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.ApplicationContext
@@ -82,6 +78,9 @@ import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.reviews.StoreReviewManager
+import org.thoughtcrime.securesms.reviews.ui.InAppReview
+import org.thoughtcrime.securesms.reviews.ui.InAppReviewViewModel
 import org.thoughtcrime.securesms.showSessionDialog
 import org.thoughtcrime.securesms.tokenpage.TokenPageNotificationManager
 import org.thoughtcrime.securesms.ui.setThemedContent
@@ -127,9 +126,11 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var messageNotifier: MessageNotifier
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
+    @Inject lateinit var storeReviewManager: StoreReviewManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
+    private val inAppReviewViewModel by viewModels<InAppReviewViewModel>()
 
     private val publicKey: String by lazy { textSecurePreferences.getLocalNumber()!! }
 
@@ -359,7 +360,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
 
         // Schedule a notification about the new Token Page for 1 hour after running the updated app for the first time.
         // Note: We do NOT schedule a debug notification on startup - but one may be triggered from the Debug Menu.
-        if (!BuildConfig.DEBUG) {
+        if (BuildConfig.BUILD_TYPE == "release") {
             tokenPageNotificationManager.scheduleTokenPageNotification(constructDebugNotification = false)
         }
 
@@ -393,6 +394,15 @@ class HomeActivity : ScreenLockActionBarActivity(),
                 }
             }
         )
+
+        // Set up in-app review
+        binding.inAppReviewView.setThemedContent {
+            InAppReview(
+                uiStateFlow = inAppReviewViewModel.uiState,
+                storeReviewManager = storeReviewManager,
+                sendCommands = inAppReviewViewModel::sendUiCommand,
+            )
+        }
     }
 
     override fun onCancelClicked() {
@@ -557,13 +567,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
         bottomSheet.group = groupDatabase.getGroup(thread.recipient.address.toString()).orNull()
         bottomSheet.onViewDetailsTapped = {
             bottomSheet.dismiss()
-            val userDetailsBottomSheet = UserDetailsBottomSheet()
-            val bundle = bundleOf(
-                    UserDetailsBottomSheet.ARGUMENT_PUBLIC_KEY to thread.recipient.address.toString(),
-                    UserDetailsBottomSheet.ARGUMENT_THREAD_ID to thread.threadId
-            )
-            userDetailsBottomSheet.arguments = bundle
-            userDetailsBottomSheet.show(supportFragmentManager, userDetailsBottomSheet.tag)
+            homeViewModel.showUserProfileModal(thread)
         }
         bottomSheet.onCopyConversationId = onCopyConversationId@{
             bottomSheet.dismiss()
@@ -782,7 +786,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             }
             else { // If this is a 1-on-1 conversation
                 title = getString(R.string.conversationsDelete)
-                message = Phrase.from(this, R.string.conversationsDeleteDescription)
+                message = Phrase.from(this, R.string.deleteConversationDescription)
                     .put(NAME_KEY, recipient.name)
                     .format()
             }

@@ -29,15 +29,27 @@ import java.util.Date
 
 object ProfilePictureUtilities {
 
+    const val DEFAULT_AVATAR_TTL: Long = 14 * 24 * 60 * 60 * 1000 // 14 days
+    const val DEBUG_AVATAR_TTL: Long = 30 // 30 seconds
+
     @OptIn(DelicateCoroutinesApi::class)
     fun resubmitProfilePictureIfNeeded(context: Context) {
         GlobalScope.launch(Dispatchers.IO) {
             // Files expire on the file server after a while, so we simply re-upload the user's profile picture
             // at a certain interval to ensure it's always available.
             val userPublicKey = getLocalNumber(context) ?: return@launch
+            // no need to go any further if we do not have an avatar
+            if(TextSecurePreferences.getProfileAvatarId(context) == 0) return@launch
+
             val now = Date().time
-            val lastProfilePictureUpload = getLastProfilePictureUpload(context)
-            if (now - lastProfilePictureUpload <= 14 * 24 * 60 * 60 * 1000) return@launch
+
+            val avatarTtl = TextSecurePreferences.getProfileExpiry(context)
+            // we can stop here if we have no info on expiry yet
+            // We will get that info on upload or download, and the check can happen when we next reopen the app
+            if(avatarTtl == 0L) return@launch
+
+            Log.d("Loki-Avatar", "Should reupload avatar? ${now < avatarTtl} (TTL of $avatarTtl)")
+            if (now < avatarTtl) return@launch
 
             // Don't generate a new profile key here; we do that when the user changes their profile picture
             Log.d("Loki-Avatar", "Uploading Avatar Started")
@@ -104,17 +116,33 @@ object ProfilePictureUtilities {
         val b = Buffer()
         drb.writeTo(b)
         val data = b.readByteArray()
-        var id: Long = 0
+
+        // add a custom TTL header if we have enabled it i the debug menu
+        val customHeaders = if(TextSecurePreferences.forcedShortTTL(context)){
+            mapOf("X-FS-TTL" to DEBUG_AVATAR_TTL.toString()) // force the TTL to 30 seconds
+        } else mapOf()
 
         // this can throw an error
-        id = retryIfNeeded(4) {
-            FileServerApi.upload(data)
+        val result = retryIfNeeded(4) {
+            FileServerApi.upload(file = data, customHeaders = customHeaders)
         }.await()
 
         TextSecurePreferences.setLastProfilePictureUpload(context, Date().time)
-        val url = "${FileServerApi.FILE_SERVER_URL}/file/$id"
+
+        // save the expiry for this profile picture, so that whe we periodically check if we should
+        // reupload, we can check against this timestamp
+        updateAvatarExpiryTimestamp(context, result.ttlTimestamp)
+
+        val url = "${FileServerApi.FILE_SERVER_URL}/file/${result.id}"
         TextSecurePreferences.setProfilePictureURL(context, url)
 
         return url
+    }
+
+    fun updateAvatarExpiryTimestamp(context: Context, expiry: Long?){
+        TextSecurePreferences.setProfileExpiry(
+            context,
+            expiry ?: DEFAULT_AVATAR_TTL
+        )
     }
 }

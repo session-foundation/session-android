@@ -1,5 +1,6 @@
 package org.session.libsession.messaging.messages.signal;
 
+import org.jspecify.annotations.Nullable;
 import org.session.libsession.messaging.messages.visible.VisibleMessage;
 import org.session.libsession.messaging.sending_receiving.attachments.Attachment;
 import org.session.libsession.messaging.sending_receiving.attachments.PointerAttachment;
@@ -13,6 +14,7 @@ import org.session.libsignal.messages.SignalServiceAttachment;
 import org.session.libsignal.messages.SignalServiceGroup;
 import org.session.libsignal.utilities.Hex;
 import org.session.libsignal.utilities.guava.Optional;
+import org.thoughtcrime.securesms.database.model.content.MessageContent;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -28,9 +30,10 @@ public class IncomingMediaMessage {
   private final int           subscriptionId;
   private final long          expiresIn;
   private final long          expireStartedAt;
-  private final boolean       expirationUpdate;
   private final boolean       messageRequestResponse;
   private final boolean       hasMention;
+  @Nullable
+  private final MessageContent messageContent;
 
   private final DataExtractionNotificationInfoMessage dataExtractionNotification;
   private final QuoteModel                            quote;
@@ -44,17 +47,18 @@ public class IncomingMediaMessage {
                               int subscriptionId,
                               long expiresIn,
                               long expireStartedAt,
-                              boolean expirationUpdate,
                               boolean messageRequestResponse,
                               boolean hasMention,
                               Optional<String> body,
                               Optional<SignalServiceGroup> group,
                               Optional<List<SignalServiceAttachment>> attachments,
+                              @Nullable MessageContent messageContent,
                               Optional<QuoteModel> quote,
                               Optional<List<Contact>> sharedContacts,
                               Optional<List<LinkPreview>> linkPreviews,
                               Optional<DataExtractionNotificationInfoMessage> dataExtractionNotification)
   {
+    this.messageContent = messageContent;
     this.push                       = true;
     this.from                       = from;
     this.sentTimeMillis             = sentTimeMillis;
@@ -62,7 +66,6 @@ public class IncomingMediaMessage {
     this.subscriptionId             = subscriptionId;
     this.expiresIn                  = expiresIn;
     this.expireStartedAt            = expireStartedAt;
-    this.expirationUpdate           = expirationUpdate;
     this.dataExtractionNotification = dataExtractionNotification.orNull();
     this.quote                      = quote.orNull();
     this.messageRequestResponse     = messageRequestResponse;
@@ -96,8 +99,8 @@ public class IncomingMediaMessage {
                                           Optional<List<LinkPreview>> linkPreviews)
   {
     return new IncomingMediaMessage(from, message.getSentTimestamp(), -1, expiresIn, expireStartedAt,
-            false, false, message.getHasMention(), Optional.fromNullable(message.getText()),
-            group, Optional.fromNullable(attachments), quote, Optional.absent(), linkPreviews, Optional.absent());
+            false, message.getHasMention(), Optional.fromNullable(message.getText()),
+            group, Optional.fromNullable(attachments), null, quote, Optional.absent(), linkPreviews, Optional.absent());
   }
 
   public int getSubscriptionId() {
@@ -120,12 +123,12 @@ public class IncomingMediaMessage {
     return groupId;
   }
 
-  public boolean isPushMessage() {
-    return push;
+  public @Nullable MessageContent getMessageContent() {
+    return messageContent;
   }
 
-  public boolean isExpirationUpdate() {
-    return expirationUpdate;
+  public boolean isPushMessage() {
+    return push;
   }
 
   public long getSentTimeMillis() {
