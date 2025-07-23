@@ -34,6 +34,7 @@ import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
+import net.zetetic.database.sqlcipher.SQLiteStatement;
 
 import org.session.libsession.messaging.MessagingModuleConfiguration;
 import org.session.libsession.snode.SnodeAPI;
@@ -504,6 +505,29 @@ public class ThreadDatabase extends Database {
             RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.BLOCK + " = 0 AND " +
             GroupDatabase.TABLE_NAME + "." + GROUP_ID + " IS NULL";
     return getConversationList(where);
+  }
+
+  // Returns the count directly instead of having to use cursor
+  public long getUnapprovedUnreadConversationCount() {
+    String where =
+            "(" + MESSAGE_COUNT + " != 0 OR "
+                    + TABLE_NAME + "." + ADDRESS + " LIKE '" + IdPrefix.GROUP.getValue() + "%')" +
+                    " AND " + ARCHIVED             + " = 0" +
+                    " AND " + HAS_SENT             + " = 0" +
+                    " AND " + RecipientDatabase.APPROVED + " = 0" +
+                    " AND " + RecipientDatabase.BLOCK    + " = 0" +
+                    " AND " + GroupDatabase.GROUP_ID     + " IS NULL" +
+                    " AND (" + UNREAD_COUNT       + " > 0 OR "
+                    + UNREAD_MENTION_COUNT + " > 0)";
+
+    String baseSql = createQuery(where, /* limit= */ 0);
+
+    String countSql = "SELECT COUNT(*) FROM (" + baseSql + ")";
+
+    // try-with-resource to close the statement
+    try (SQLiteStatement stmt = getReadableDatabase().compileStatement(countSql)) {
+        return stmt.simpleQueryForLong();
+    }
   }
 
   private Cursor getConversationList(String where) {
