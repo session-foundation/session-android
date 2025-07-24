@@ -64,7 +64,6 @@ robolectricVersion = "4.14.1"
 roundedimageviewVersion = "2.1.0"
 runnerVersion = "1.5.2"
 rxbindingVersion = "3.1.0"
-shortcutbadgerVersion = "1.1.16"
 sqlcipherAndroidVersion = "4.9.0"
 streamVersion = "1.1.8"
 sqliteKtxVersion = "2.3.1"
@@ -169,7 +168,6 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageviewVersion" }
 rxbinding = { module = "com.jakewharton.rxbinding3:rxbinding", version.ref = "rxbindingVersion" }
 robolectric-shadows-multidex = { module = "org.robolectric:shadows-multidex", version.ref = "robolectricVersion" }
-shortcutbadger = { module = "me.leolin:ShortcutBadger", version.ref = "shortcutbadgerVersion" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipherAndroidVersion" }
 stream = { module = "com.annimon:stream", version.ref = "streamVersion" }
 subsampling-scale-image-view = { module = "com.davemorrissey.labs:subsampling-scale-image-view", version.ref = "subsamplingScaleImageViewVersion" }
