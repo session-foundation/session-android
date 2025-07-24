@@ -282,7 +282,7 @@ fun UserProfileModal(
             heroImageAnimatedFg = R.drawable.cta_hero_generic_fg,
             text = Phrase.from(context,R.string.proUserProfileModalCallToAction)
                 .put(APP_NAME_KEY, context.getString(R.string.app_name))
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format()
                 .toString(),
             features = listOf(

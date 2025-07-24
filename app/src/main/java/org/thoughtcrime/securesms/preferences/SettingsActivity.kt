@@ -885,7 +885,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                  heroImageBg = R.drawable.cta_hero_animated_bg,
                  heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
                  text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
-                     .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                      .format()
                      .toString(),
                  features = listOf(

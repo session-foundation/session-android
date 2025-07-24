@@ -928,12 +928,12 @@ fun PinProCTA(
         heroImage = R.drawable.cta_hero_pins,
         text = if(overTheLimit)
             Phrase.from(context,R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format()
                 .toString()
                 else
             Phrase.from(context,R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                 .format()
                 .toString(),
         features = listOf(
