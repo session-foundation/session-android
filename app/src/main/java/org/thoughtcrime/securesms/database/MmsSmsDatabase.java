@@ -295,6 +295,24 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
+  public List<String> getRecentChatMemberAddresses(long threadId, int limit) {
+    String[] projection = new String[] { "DISTINCT " + MmsSmsColumns.ADDRESS };
+    String selection = MmsSmsColumns.THREAD_ID + " = " + threadId;
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " DESC";
+    String limitStr = String.valueOf(limit);
+
+    try (Cursor cursor = queryTables(projection, selection, order, limitStr)) {
+      List<String> addresses = new ArrayList<>();
+      while (cursor != null && cursor.moveToNext()) {
+        String address = cursor.getString(0);
+        if (address != null && !address.isEmpty()) {
+          addresses.add(address);
+        }
+      }
+      return addresses;
+    }
+  }
+
   public List<MessageRecord> getUserMessages(long threadId, String sender) {
 
     List<MessageRecord> idList = new ArrayList<>();

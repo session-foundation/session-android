@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -69,6 +70,7 @@ class MentionViewModel(
     storage: Storage,
     configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
     private val editable = MentionEditable()
 
@@ -108,7 +110,7 @@ class MentionViewModel(
                         )
                             .map { it.toString() }
                     }
-                    recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(
+                    recipient.isCommunityRecipient -> mmsSmsDatabase.getRecentChatMemberAddresses(
                         threadID,
                         20
                     )
@@ -374,6 +376,7 @@ class MentionViewModel(
         private val memberDatabase: GroupMemberDatabase,
         private val configFactory: ConfigFactoryProtocol,
         private val application: Application,
+        private val mmsSmsDatabase : MmsSmsDatabase
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -388,6 +391,7 @@ class MentionViewModel(
                 storage = storage,
                 configFactory = configFactory,
                 application = application,
+                mmsSmsDatabase = mmsSmsDatabase
             ) as T
         }
     }
