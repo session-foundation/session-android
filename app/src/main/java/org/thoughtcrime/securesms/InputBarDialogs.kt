@@ -66,7 +66,7 @@ fun InputBarDialogs(
             SimpleSessionProCTA(
                 heroImage = R.drawable.cta_hero_char_limit,
                 text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.SESSION_PRO)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
                     .format()
                     .toString(),
                 features = listOf(

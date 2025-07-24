@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.reviews.ui
 
-import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -17,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants.SESSION_FEEDBACK_BASE_URL
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.STORE_VARIANT_KEY
@@ -37,7 +36,8 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.OpenURLAlertDialog
 import org.thoughtcrime.securesms.ui.theme.LocalColors
-import androidx.core.net.toUri
+
+private const val SESSION_FEEDBACK_BASE_URL = "https://getsession.org/feedback?platform=android"
 
 @Composable
 fun InAppReview(
