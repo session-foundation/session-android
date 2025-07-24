@@ -2,7 +2,7 @@
 androidMinSdkVersion = "26"
 androidTargetSdkVersion = "35"
 androidCompileSdkVersion = "35"
-accompanistPermissionsVersion = "0.36.0"
+accompanistPermissionsVersion = "0.37.3"
 accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
