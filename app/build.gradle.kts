@@ -353,7 +353,6 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
     implementation(libs.android)
-    implementation(libs.shortcutbadger)
     implementation(libs.photoview)
     implementation(libs.glide)
     implementation(libs.compose)
