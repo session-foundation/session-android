@@ -403,7 +403,7 @@
     <string name="displayNameNew">Pick a new display name</string>
     <string name="displayNamePick">Pick your display name</string>
     <string name="displayNameSet">Set Display Name</string>
-    <string name="displayNameVisible">Your Display Name is visible to users, groups and communities you interact with.</string>
+    <string name="displayNameVisible">Your Display Name is visible to users, groups, and communities you interact with.</string>
     <string name="document">Document</string>
     <string name="donate">Donate</string>
     <string name="done">Done</string>
@@ -840,8 +840,10 @@
     <string name="proAlreadyPurchased">You’ve already got</string>
     <string name="proAnimatedDisplayPicture">Go ahead and upload GIFs and animated WebP images for your display picture!</string>
     <string name="proAnimatedDisplayPictureCallToActionDescription">Get animated display pictures and unlock premium features with {app_pro}</string>
+    <string name="proAnimatedDisplayPictureFeature">Animated Display Picture</string>
     <string name="proAnimatedDisplayPictureModalDescription">users can upload GIFs</string>
     <string name="proAnimatedDisplayPicturesNonProModalDescription">Upload GIFs with</string>
+    <string name="proBadge">{app_pro} Badge</string>
     <string name="proCallToActionLongerMessages">Want to send longer messages? Send more text and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversations">Want more pins? Organize your chats and unlock premium features with {app_pro}</string>
     <string name="proCallToActionPinnedConversationsMoreThan">Want more than 5 pins? Organize your chats and unlock premium features with {app_pro}</string>
@@ -850,6 +852,11 @@
     <string name="proFeatureListLoadsMore">Plus loads more exclusive features</string>
     <string name="proFeatureListLongerMessages">Messages up to 10,000 characters</string>
     <string name="proFeatureListPinnedConversations">Pin unlimited conversations</string>
+    <string name="proGroupActivated">Group Activated</string>
+    <string name="proGroupActivatedDescription">This group has expanded capacity! It can support up to 300 members because a group admin has</string>
+    <string name="proIncreasedAttachmentSizeFeature">Increased Attachment Size</string>
+    <string name="proIncreasedMessageLengthFeature">Increased Message Length</string>
+    <string name="proMessageInfoFeatures">This message used the following Session Pro features:</string>
     <string name="proSendMore">Send more with</string>
     <string name="proUserProfileModalCallToAction">Want to get more out of {app_name}? Upgrade to {app_pro} for a more powerful messaging experience.</string>
     <string name="profile">Profile</string>
