@@ -93,12 +93,6 @@ class MentionViewModelTest : BaseViewModelTest() {
             },
             groupDatabase = mock {
             },
-            mmsDatabase = mock {
-                on { getRecentChatMemberIDs(eq(threadID), any()) } doAnswer {
-                    val limit = it.arguments[1] as Int
-                    threadMembers.take(limit).map { m -> m.pubKey }
-                }
-            },
             contactDatabase = mock {
                 on { getContacts(any()) } doAnswer {
                     val ids = it.arguments[0] as Collection<String>
@@ -120,7 +114,13 @@ class MentionViewModelTest : BaseViewModelTest() {
             dispatcher = StandardTestDispatcher(),
             configFactory = mock(),
             threadID = threadID,
-            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application
+            application = InstrumentationRegistry.getInstrumentation().context as android.app.Application,
+            mmsSmsDatabase = mock {
+                on { getRecentChatMemberAddresses(threadID, 20)} doAnswer {
+                    val limit = it.arguments[1] as Int
+                    threadMembers.take(limit).map { m -> m.pubKey }
+                }
+            }
         )
     }
 

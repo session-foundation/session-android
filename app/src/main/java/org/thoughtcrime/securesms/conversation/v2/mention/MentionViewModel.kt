@@ -44,6 +44,7 @@ import org.thoughtcrime.securesms.database.DatabaseContentProviders.Conversation
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.database.MmsDatabase
+import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
@@ -63,12 +64,12 @@ class MentionViewModel(
     contentResolver: ContentResolver,
     threadDatabase: ThreadDatabase,
     groupDatabase: GroupDatabase,
-    mmsDatabase: MmsDatabase,
     contactDatabase: SessionContactDatabase,
     memberDatabase: GroupMemberDatabase,
     storage: Storage,
     configFactory: ConfigFactoryProtocol,
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
     private val editable = MentionEditable()
 
@@ -108,7 +109,7 @@ class MentionViewModel(
                         )
                             .map { it.toString() }
                     }
-                    recipient.isCommunityRecipient -> mmsDatabase.getRecentChatMemberIDs(
+                    recipient.isCommunityRecipient -> mmsSmsDatabase.getRecentChatMemberAddresses(
                         threadID,
                         20
                     )
@@ -368,12 +369,12 @@ class MentionViewModel(
         private val contentResolver: ContentResolver,
         private val threadDatabase: ThreadDatabase,
         private val groupDatabase: GroupDatabase,
-        private val mmsDatabase: MmsDatabase,
         private val contactDatabase: SessionContactDatabase,
         private val storage: Storage,
         private val memberDatabase: GroupMemberDatabase,
         private val configFactory: ConfigFactoryProtocol,
         private val application: Application,
+        private val mmsSmsDatabase : MmsSmsDatabase
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -382,12 +383,12 @@ class MentionViewModel(
                 contentResolver = contentResolver,
                 threadDatabase = threadDatabase,
                 groupDatabase = groupDatabase,
-                mmsDatabase = mmsDatabase,
                 contactDatabase = contactDatabase,
                 memberDatabase = memberDatabase,
                 storage = storage,
                 configFactory = configFactory,
                 application = application,
+                mmsSmsDatabase = mmsSmsDatabase
             ) as T
         }
     }
