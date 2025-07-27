@@ -103,6 +103,7 @@ import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.tokenpage.TokenDataManager
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.Broadcaster
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import org.thoughtcrime.securesms.util.VersionDataFetcher
 import org.thoughtcrime.securesms.webrtc.CallMessageProcessor
 import org.thoughtcrime.securesms.webrtc.WebRtcCallBridge
@@ -164,6 +165,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
     @Inject lateinit var appDisguiseManager: Lazy<AppDisguiseManager>
     @Inject lateinit var persistentLogger: Lazy<PersistentLogger>
+    @Inject lateinit var currentActivityObserver: Lazy<CurrentActivityObserver>
 
     @get:Deprecated(message = "Use proper DI to inject this component")
     @Inject
@@ -388,6 +390,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
         groupPollerManager.get()
         expiredGroupManager.get()
         openGroupPollerManager.get()
+        currentActivityObserver.get()
 
         threadDatabase.get().onAppCreated()
     }

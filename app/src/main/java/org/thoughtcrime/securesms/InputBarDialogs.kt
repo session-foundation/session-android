@@ -3,8 +3,12 @@ package org.thoughtcrime.securesms
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.squareup.phrase.Phrase
 import network.loki.messenger.R
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -61,7 +65,10 @@ fun InputBarDialogs(
         if (inputBarDialogsState.sessionProCharLimitCTA) {
             SimpleSessionProCTA(
                 heroImage = R.drawable.cta_hero_char_limit,
-                text = stringResource(R.string.proCallToActionLongerMessages),
+                text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
+                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                    .format()
+                    .toString(),
                 features = listOf(
                     CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
                     CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),

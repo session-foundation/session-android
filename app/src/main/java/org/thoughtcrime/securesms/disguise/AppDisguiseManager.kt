@@ -31,6 +31,8 @@ import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.util.CurrentActivityObserver
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,12 +44,9 @@ import javax.inject.Singleton
 class AppDisguiseManager @Inject constructor(
     application: Application,
     private val prefs: TextSecurePreferences,
+    private val currentActivityObserver: CurrentActivityObserver,
+    @param:ManagerScope private val scope: CoroutineScope,
 ) {
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope: CoroutineScope = GlobalScope
-
-    private var currentActivity: Activity? = null
-
     val allAppAliases: Flow<List<AppAlias>> = flow {
         emit(
             application.packageManager
@@ -147,27 +146,11 @@ class AppDisguiseManager @Inject constructor(
 
                     if (changed.isNotEmpty()) {
                         // Finish current activity if the disguise is on
-                        currentActivity?.finishAffinity()
+                        currentActivityObserver.currentActivity.value?.finishAffinity()
                     }
                 }
             }
         }
-
-        application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-            override fun onActivityStarted(activity: Activity) {
-                currentActivity = activity
-            }
-            override fun onActivityResumed(activity: Activity) {}
-            override fun onActivityPaused(activity: Activity) {}
-            override fun onActivityStopped(activity: Activity) {
-                if (currentActivity === activity) {
-                    currentActivity = null
-                }
-            }
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-            override fun onActivityDestroyed(activity: Activity) {}
-        })
     }
 
     fun setSelectedAliasName(name: String?) {

@@ -819,7 +819,6 @@
     <string name="pinUnpin">Kitűzés eltávolítása</string>
     <string name="pinUnpinConversation">Beszélgetés kitűzésének eltávolítása</string>
     <string name="preview">Előnézet</string>
-    <string name="proCallToActionLongerMessages">Szeretne hosszabb üzeneteket küldeni? Küldjön több szöveget és oldja fel a prémium funkciókat a Session Pro szolgáltatással</string>
     <string name="proFeatureListLargerGroups">Nagyobb csoportos beszélgetések akár 300 taggal</string>
     <string name="proFeatureListLoadsMore">Plusz még több exkluzív funkció</string>
     <string name="proFeatureListLongerMessages">Legfeljebb 10 000 karakteres üzenetek</string>

@@ -6,7 +6,7 @@
     <uses-sdk tools:overrideLibrary="android.support.v13,com.davemorrissey.labs.subscaleview,com.tomergoldst.tooltips,com.klinker.android.send_message,android.support.v14.preference" />
 
     <permission
-        android:name="network.loki.messenger.ACCESS_SESSION_SECRETS"
+        android:name="network.loki.messenger.ACCESS_SESSION_SECRETS${authority_postfix}"
         android:label="Access to Session secrets"
         android:protectionLevel="signature" />
 

@@ -47,6 +47,7 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
@@ -58,7 +59,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    @ApplicationContext
+    @param:ApplicationContext
     private val context: Context,
     private val threadDb: ThreadDatabase,
     private val contentResolver: ContentResolver,
@@ -70,12 +71,12 @@ class HomeViewModel @Inject constructor(
     private val storage: StorageProtocol,
     private val groupManager: GroupManagerV2,
     private val proStatusManager: ProStatusManager,
-    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
 ) : ViewModel() {
     // SharedFlow that emits whenever the user asks us to reload  the conversation
     private val manualReloadTrigger = MutableSharedFlow<Unit>(
-            extraBufferCapacity = 1,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     private val mutableIsSearchOpen = MutableStateFlow(false)
@@ -83,9 +84,9 @@ class HomeViewModel @Inject constructor(
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected
-        if(it !is State.Idle && it !is State.Disconnected){
+        if (it !is State.Idle && it !is State.Disconnected) {
             // call is started, we need to differentiate between in progress vs incoming
-            if(it is State.Connected) context.getString(R.string.callsInProgress)
+            if (it is State.Connected) context.getString(R.string.callsInProgress)
             else context.getString(R.string.callsIncomingUnknown)
         } else null // null when the call isn't in progress / incoming
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialValue = null)
@@ -145,10 +146,10 @@ class HomeViewModel @Inject constructor(
         .onStart { emit(prefs.hasHiddenNoteToSelf()) }
 
     private fun observeTypingStatus(): Flow<Set<Long>> = typingStatusRepository
-                    .typingThreads
-                    .asFlow()
-                    .onStart { emit(emptySet()) }
-                    .distinctUntilChanged()
+        .typingThreads
+        .asFlow()
+        .onStart { emit(emptySet()) }
+        .distinctUntilChanged()
 
     private fun messageRequests() = combine(
         unapprovedConversationCount(),
@@ -157,16 +158,19 @@ class HomeViewModel @Inject constructor(
     ).flowOn(Dispatchers.Default)
 
     private fun unapprovedConversationCount() = reloadTriggersAndContentChanges()
-        .map { threadDb.unapprovedConversationList.use { cursor -> cursor.count } }
+        .map {
+            threadDb.getUnapprovedUnreadConversationCount().toInt()
+        }
 
     @Suppress("OPT_IN_USAGE")
-    private fun observeConversationList(): Flow<List<ThreadRecord>> = reloadTriggersAndContentChanges()
-        .mapLatest { _ ->
-            threadDb.approvedConversationList.use { openCursor ->
-                threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+    private fun observeConversationList(): Flow<List<ThreadRecord>> =
+        reloadTriggersAndContentChanges()
+            .mapLatest { _ ->
+                threadDb.approvedConversationList.use { openCursor ->
+                    threadDb.readerFor(openCursor).run { generateSequence { next }.toList() }
+                }
             }
-        }
-        .flowOn(Dispatchers.IO)
+            .flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class)
     private fun reloadTriggersAndContentChanges(): Flow<*> = merge(
@@ -252,7 +256,7 @@ class HomeViewModel @Inject constructor(
         // check the pin limit before continuing
         val totalPins = storage.getTotalPinned()
         val maxPins = proStatusManager.getPinnedConversationLimit()
-        if(pinned && totalPins >= maxPins){
+        if (pinned && totalPins >= maxPins) {
             // the user has reached the pin limit, show the CTA
             _dialogsState.update {
                 it.copy(
@@ -317,12 +321,12 @@ class HomeViewModel @Inject constructor(
     )
 
     sealed interface Commands {
-        data object HidePinCTADialog: Commands
-        data object HideUserProfileModal: Commands
-        data object GoToProUpgradeScreen: Commands
+        data object HidePinCTADialog : Commands
+        data object HideUserProfileModal : Commands
+        data object GoToProUpgradeScreen : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
-        ): Commands
+        ) : Commands
     }
 
     companion object {

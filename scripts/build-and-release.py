@@ -1,4 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# dependencies = [
+#   "fdroidserver",
+# ]
+# ///
 
 import subprocess
 import json
@@ -12,6 +18,7 @@ import tempfile
 import base64
 import string
 import glob
+import argparse
 
 
 # Number of versions to keep in the fdroid repo. Will remove all the older versions.
@@ -211,7 +218,15 @@ def update_fdroid(build: BuildResult, fdroid_workspace: str, creds: BuildCredent
                     -R session-foundation/session-fdroid \
                     --body "This is an automated release preparation for Release {build.version_name}. Human beings are still required to approve and merge this PR."\
                     ''', shell=True, check=True, cwd=fdroid_workspace)
-    
+
+parser = argparse.ArgumentParser(
+    prog='build-and-release.py',
+    description='Build and release script for Session Android'
+ )
+
+parser.add_argument('--build-play-only', action='store_true', help='If set, will only build Play releases and skip F-Droid and Huawei releases.')
+
+args = parser.parse_args()
 
 # Make sure gh command is available
 if shutil.which('gh') is None:
@@ -243,7 +258,12 @@ play_build_result = build_releases(
     credentials_property_prefix='SESSION'
     )
 
+if args.build_play_only:
+    print('Skipping F-Droid and Huawei releases as --build-play-only is set.')
+    sys.exit(0)
+
 print("Building fdroid releases...")
+
 fdroid_build_result = build_releases(
     project_root=project_root,
     flavor='fdroid',

@@ -2,7 +2,7 @@
 androidMinSdkVersion = "26"
 androidTargetSdkVersion = "35"
 androidCompileSdkVersion = "35"
-accompanistPermissionsVersion = "0.36.0"
+accompanistPermissionsVersion = "0.37.3"
 accompanistThemeadapterAppcompatVersion = "0.33.1-alpha"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
@@ -29,7 +29,7 @@ fragmentKtxVersion = "1.8.6"
 gradlePluginVersion = "8.11.1"
 dependenciesAnalysisVersion = "2.17.0"
 googleServicesVersion = "4.4.2"
-junit = "1.1.5"
+junit = "1.2.1"
 kotlinVersion = "2.2.0"
 kotlinxDatetimeVersion = "0.6.0"
 kryoVersion = "5.1.1"
@@ -56,7 +56,7 @@ phraseVersion = "1.2.0"
 lifecycleVersion = "2.7.0"
 materialVersion = "1.12.0"
 mockitoKotlinVersion = "5.4.0"
-okhttpVersion = "4.12.0"
+okhttpVersion = "5.1.0"
 preferenceVersion = "1.2.1"
 protobufVersion = "4.29.3"
 recyclerviewVersion = "1.4.0"
@@ -64,8 +64,7 @@ robolectricVersion = "4.14.1"
 roundedimageviewVersion = "2.1.0"
 runnerVersion = "1.5.2"
 rxbindingVersion = "3.1.0"
-shortcutbadgerVersion = "1.1.16"
-sqlcipherAndroidVersion = "4.7.2"
+sqlcipherAndroidVersion = "4.9.0"
 streamVersion = "1.1.8"
 sqliteKtxVersion = "2.3.1"
 subsamplingScaleImageViewVersion = "3.10.0"
@@ -169,7 +168,6 @@ robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectr
 roundedimageview = { module = "com.makeramen:roundedimageview", version.ref = "roundedimageviewVersion" }
 rxbinding = { module = "com.jakewharton.rxbinding3:rxbinding", version.ref = "rxbindingVersion" }
 robolectric-shadows-multidex = { module = "org.robolectric:shadows-multidex", version.ref = "robolectricVersion" }
-shortcutbadger = { module = "me.leolin:ShortcutBadger", version.ref = "shortcutbadgerVersion" }
 sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipherAndroidVersion" }
 stream = { module = "com.annimon:stream", version.ref = "streamVersion" }
 subsampling-scale-image-view = { module = "com.davemorrissey.labs:subsampling-scale-image-view", version.ref = "subsamplingScaleImageViewVersion" }

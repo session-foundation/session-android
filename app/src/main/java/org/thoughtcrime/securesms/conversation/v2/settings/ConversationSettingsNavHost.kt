@@ -318,7 +318,7 @@ fun ConversationSettingsNavHost(
                         factory.create(
                             threadId = threadId,
                             isNewConfigEnabled = ExpirationConfiguration.isNewConfigEnabled,
-                            showDebugOptions = BuildConfig.DEBUG
+                            showDebugOptions = BuildConfig.BUILD_TYPE != "release"
                         )
                     }
 

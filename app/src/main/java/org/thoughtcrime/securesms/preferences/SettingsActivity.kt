@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
@@ -30,7 +29,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,14 +43,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,8 +59,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.canhub.cropper.CropImageContract
@@ -78,6 +75,7 @@ import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.NonTranslatableStringConstants.NETWORK_NAME
 import org.session.libsession.utilities.SSKEnvironment.ProfileManagerProtocol
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
@@ -86,12 +84,12 @@ import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.home.PathActivity
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
-import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.TempAvatar
 import org.thoughtcrime.securesms.preferences.SettingsViewModel.AvatarDialogState.UserAvatar
 import org.thoughtcrime.securesms.preferences.appearance.AppearanceSettingsActivity
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.tokenpage.TokenPageActivity
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.AnimatedSessionProActivatedCTA
@@ -134,6 +132,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     @Inject
     lateinit var prefs: TextSecurePreferences
+
+    @Inject
+    lateinit var inAppReviewManager: InAppReviewManager
 
     private val viewModel: SettingsViewModel by viewModels()
 
@@ -282,7 +283,7 @@ class SettingsActivity : ScreenLockActionBarActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.settings_general, menu)
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.BUILD_TYPE != "release") {
             menu.findItem(R.id.action_qr_code)?.contentDescription = resources.getString(R.string.AccessibilityId_qrView)
         }
         return true
@@ -463,6 +464,8 @@ class SettingsActivity : ScreenLockActionBarActivity() {
     fun Buttons(
         recoveryHidden: Boolean
     ) {
+        val scope = rememberCoroutineScope()
+
         Column(
             modifier = Modifier
                 .padding(horizontal = LocalDimensions.current.spacing)
@@ -510,6 +513,9 @@ class SettingsActivity : ScreenLockActionBarActivity() {
                         modifier = Modifier.qaTag(R.string.qa_settings_item_donate),
                         colors = accentTextButtonColors()
                     ) {
+                        scope.launch {
+                            inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
+                        }
                         viewModel.showUrlDialog( "https://session.foundation/donate#app")
                     }
                     Divider()
@@ -878,7 +884,10 @@ class SettingsActivity : ScreenLockActionBarActivity() {
              AnimatedSessionProCTA(
                  heroImageBg = R.drawable.cta_hero_animated_bg,
                  heroImageAnimatedFg = R.drawable.cta_hero_animated_fg,
-                 text = stringResource(R.string.proAnimatedDisplayPictureCallToActionDescription),
+                 text = Phrase.from(LocalContext.current, R.string.proAnimatedDisplayPictureCallToActionDescription)
+                     .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                     .format()
+                     .toString(),
                  features = listOf(
                      CTAFeature.Icon(stringResource(R.string.proFeatureListAnimatedDisplayPicture)),
                      CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),

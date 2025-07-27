@@ -208,9 +208,7 @@ class VisibleMessageView : FrameLayout {
                 binding.profilePictureView.setOnClickListener {
                     delegate?.showUserProfileModal(message.recipient)
                 }
-                binding.senderNameTextView.setOnClickListener {
-                    delegate?.showUserProfileModal(message.recipient)
-                }
+
                 if (thread.isCommunityRecipient) {
                     val openGroup = lokiThreadDb.getOpenGroupChat(threadID) ?: return
                     var standardPublicKey = ""
@@ -242,15 +240,24 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        binding.senderNameTextView.isVisible = !message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))
-        val contactContext =
-            if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
-        binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
-            contact = contact,
-            accountID = senderAccountID,
-            contactContext = contactContext,
-            groupId = groupId
-        )
+        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+            binding.senderNameTextView.setOnClickListener {
+                delegate?.showUserProfileModal(message.recipient)
+            }
+
+            val contactContext =
+                if (thread.isCommunityRecipient) ContactContext.OPEN_GROUP else ContactContext.REGULAR
+            binding.senderNameTextView.text = usernameUtils.getContactNameWithAccountID(
+                contact = contact,
+                accountID = senderAccountID,
+                contactContext = contactContext,
+                groupId = groupId
+            )
+
+            binding.senderNameTextView.isVisible = true
+        } else {
+            binding.senderNameTextView.isVisible = false
+        }
 
         // Unread marker
         val shouldShowUnreadMarker = lastSeen != -1L && message.timestamp > lastSeen && (previous == null || previous.timestamp <= lastSeen) && !message.isOutgoing

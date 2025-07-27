@@ -94,11 +94,13 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
 import com.bumptech.glide.integration.compose.RequestState
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
@@ -920,11 +922,20 @@ fun PinProCTA(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ){
+    val context = LocalContext.current
     SimpleSessionProCTA(
         modifier = modifier,
         heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit) stringResource(R.string.proCallToActionPinnedConversations)
-                else stringResource(R.string.proCallToActionPinnedConversationsMoreThan),
+        text = if(overTheLimit)
+            Phrase.from(context,R.string.proCallToActionPinnedConversations)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format()
+                .toString()
+                else
+            Phrase.from(context,R.string.proCallToActionPinnedConversationsMoreThan)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format()
+                .toString(),
         features = listOf(
             CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
             CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
