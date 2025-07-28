@@ -16,7 +16,7 @@ buildscript {
 //        classpath(files("libs/gradle-witness.jar"))
 //        classpath("com.squareup:javapoet:1.13.0")
         if (project.hasProperty("huawei")) {
-            classpath("com.huawei.agconnect:agcp:1.9.1.300")
+            classpath("com.huawei.agconnect:agcp:1.9.3.301")
         }
     }
 }
