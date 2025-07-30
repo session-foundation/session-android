@@ -45,7 +45,6 @@ allprojects {
 
         google()
         mavenCentral()
-        maven { url = uri("https://jitpack.io") }
         if (project.hasProperty("huawei")) {
             maven {
                 url = uri("https://developer.huawei.com/repo/")
