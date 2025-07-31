@@ -117,10 +117,8 @@ class DefaultMessageNotifier(
         try {
             val activeNotifications = notifications.activeNotifications
 
-            // Also prevent REQUEST_NOTIFICATION_ID from being cleared here. We need to manually clear it
             for (activeNotification in activeNotifications) {
-                if(activeNotification.id != WEBRTC_NOTIFICATION &&
-                    activeNotification.id != REQUEST_NOTIFICATION_ID) {
+                if(activeNotification.id != WEBRTC_NOTIFICATION) {
                     notifications.cancel(activeNotification.id)
                 }
             }
@@ -141,7 +139,7 @@ class DefaultMessageNotifier(
                 var validNotification = false
 
                 if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID &&
-                    notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID && notification.id != REQUEST_NOTIFICATION_ID) {
+                    notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
                     for (item in notificationState.notifications) {
                         if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
                             validNotification = true
@@ -189,7 +187,6 @@ class DefaultMessageNotifier(
             !(recipient.isApproved || threads.getLastSeenAndHasSent(threadId).second())
         ) {
             removeHasHiddenMessageRequests(context)
-            clearMessageRequestNotification(context)
         }
 
         if (!isNotificationsEnabled(context) ||
@@ -211,14 +208,6 @@ class DefaultMessageNotifier(
         } catch (e: Exception) {
             return false
         }
-    }
-
-    private fun clearMessageRequestNotification(context: Context) {
-        ServiceUtil
-            .getNotificationManager(context)
-            .cancel(REQUEST_NOTIFICATION_ID)
-
-        hasPostedRequestOnce = false
     }
 
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
@@ -289,13 +278,7 @@ class DefaultMessageNotifier(
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
 
-        val notificationId = if (notifications.size == 1
-            && notifications[0].id == REQUEST_NOTIFICATION_ID.toLong()
-        ) {
-            REQUEST_NOTIFICATION_ID
-        } else {
-            (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
-        }
+        val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -305,7 +288,7 @@ class DefaultMessageNotifier(
         val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
         // Only skip duplicates for _real_ message notifications, not for request alerts
-        if (notificationId != REQUEST_NOTIFICATION_ID && existingSignature == contentSignature) {
+        if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
         }
@@ -313,25 +296,26 @@ class DefaultMessageNotifier(
         val builder = SingleRecipientNotificationBuilder(context, getNotificationPrivacy(context), avatarUtils)
         builder.putStringExtra(CONTENT_SIGNATURE, contentSignature)
 
-        val messageOriginator = notifications[0].recipient
-        val messageIdTag = notifications[0].timestamp.toString()
+        val notificationItem =  notifications.first()
 
-        val timestamp = notifications[0].timestamp
+        val messageOriginator = notificationItem.recipient
+        val messageIdTag = notificationItem.timestamp.toString()
+
+        val timestamp = notificationItem.timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)
 
         builder.putStringExtra(LATEST_MESSAGE_ID_TAG, messageIdTag)
 
-        val notificationText = notifications[0].text
+        val notificationText = notificationItem.text
 
-        builder.setThread(notifications[0].recipient)
+        builder.setThread(notificationItem.recipient)
         builder.setMessageCount(notificationState.notificationCount)
 
-        val isMessageRequest = notificationId == REQUEST_NOTIFICATION_ID
+        val isMessageRequest = !notificationItem.recipient.isApproved
         if(isMessageRequest){
             // Set the notification title to App Name
             builder.setContentTitle(context.getString(R.string.app_name))
             builder.setLargeIcon(null as Bitmap?)
-            builder.setOnlyAlertOnce(true)
         }
 
         val builderCS = notificationText ?: ""
@@ -550,33 +534,10 @@ class DefaultMessageNotifier(
                     !threadRecipients.isApproved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
-            if (isMessageRequest) {
-                val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-                val hasHiddenRequests = hasHiddenMessageRequests(context)
+            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
 
-               // Only send if you either have no existing message requests or have hidden the section
-                if (!hasPostedRequestOnce && (!hasExistingMessages || !hasHiddenRequests)) {
-                    val item =
-                        // Use a constant ID here so Android treats all request notifications as the same
-                        NotificationItem(
-                            REQUEST_NOTIFICATION_ID.toLong(),
-                            false,
-                            record.recipient,
-                            record.individualRecipient,
-                            record.recipient,
-                            threadId,
-                            SpanUtil.italic(context.getString(R.string.messageRequestsNew)),
-                            record.timestamp,
-                            null
-                        )
-                    notificationState.addNotification(item)
-
-                    hasPostedRequestOnce = true
-                }
-
-                continue
-            }
-
+            // If the thread has more than 1 message (prevents spam request notif)
+            if (isMessageRequest && hasExistingMessages) continue
 
             // Check notification settings
             if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
@@ -630,8 +591,16 @@ class DefaultMessageNotifier(
                 var body: CharSequence = record.getDisplayBody(context)
                 var slideDeck: SlideDeck? = null
 
-                if (KeyCachingService.isLocked(context)) {
-                    body = SpanUtil.italic(context.resources.getQuantityString(R.plurals.messageNewYouveGot, 1, 1))
+                if (isMessageRequest) {
+                    body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+                } else if (KeyCachingService.isLocked(context)) {
+                    body = SpanUtil.italic(
+                        context.resources.getQuantityString(
+                            R.plurals.messageNewYouveGot,
+                            1,
+                            1
+                        )
+                    )
                 } else {
                     // Handle MMS content
                     if (record.isMms && TextUtils.isEmpty(body) && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()) {
@@ -852,12 +821,8 @@ class DefaultMessageNotifier(
         private const val SUMMARY_NOTIFICATION_ID = 1338
         private const val PENDING_MESSAGES_ID = 1111
         private const val NOTIFICATION_GROUP = "messages"
-        private const val REQUEST_NOTIFICATION_ID = 1112 // Constant ID for message requests
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
-
-        // Message Request variables to keep a single one
-        private var hasPostedRequestOnce = false
 
         @Volatile
         private var visibleThread: Long = -1
