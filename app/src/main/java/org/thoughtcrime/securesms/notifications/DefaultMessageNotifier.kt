@@ -555,7 +555,7 @@ class DefaultMessageNotifier(
                 val hasHiddenRequests = hasHiddenMessageRequests(context)
 
                // Only send if you either have no existing message requests or have hidden the section
-                if (!hasPostedRequestOnce && (!hasExistingMessages || hasHiddenRequests)) {
+                if (!hasPostedRequestOnce && (!hasExistingMessages || !hasHiddenRequests)) {
                     val item =
                         // Use a constant ID here so Android treats all request notifications as the same
                         NotificationItem(
