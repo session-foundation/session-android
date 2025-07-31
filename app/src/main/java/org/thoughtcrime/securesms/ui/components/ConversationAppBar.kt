@@ -37,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -47,6 +46,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
+import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -90,10 +90,18 @@ fun ConversationAppBar(
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                AppBarText(
-                                    modifier = Modifier.qaTag(R.string.AccessibilityId_conversationTitle),
-                                    title = data.title,
-                                    singleLine = true
+                                var titleModifier: Modifier = Modifier
+                                // we want the title to also open the UCS, but we will follow
+                                // the logic for the avatar, so if the avatar isn't showing,
+                                // do not apply the onClick
+                                if(data.showAvatar) {
+                                    titleModifier = titleModifier.clickable{ onAvatarPressed() }
+                                }
+
+                                ProBadgeText(
+                                    modifier = titleModifier.qaTag(R.string.AccessibilityId_conversationTitle),
+                                    text = data.title,
+                                    showBadge = data.showProBadge
                                 )
 
                                 if (data.pagerData.isNotEmpty()) {
@@ -135,7 +143,10 @@ fun ConversationAppBar(
                             if (data.showAvatar) {
                                 Avatar(
                                     modifier = Modifier.qaTag(R.string.qa_conversation_avatar)
-                                        .padding(end = LocalDimensions.current.xsSpacing)
+                                        .padding(
+                                            start = if(data.showCall) 0.dp else LocalDimensions.current.xsSpacing,
+                                            end = LocalDimensions.current.xsSpacing
+                                        )
                                         .clickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = ripple(bounded = false, radius = LocalDimensions.current.iconLargeAvatar/2),
@@ -196,6 +207,7 @@ fun ConversationAppBar(
 data class ConversationAppBarData(
     val title: String,
     val pagerData: List<ConversationAppBarPagerData>,
+    val showProBadge: Boolean = false,
     val showAvatar: Boolean = false,
     val showCall: Boolean = false,
     val showSearch: Boolean = false,
@@ -324,7 +336,8 @@ class ConversationTopBarPreviewParams(
     val settingsPagesCount: Int,
     val isCallAvailable: Boolean,
     val showAvatar: Boolean,
-    val showSearch: Boolean = false
+    val showSearch: Boolean = false,
+    val showProBadge: Boolean = false
 )
 
 /**
@@ -339,13 +352,13 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             isCallAvailable = false,
             showAvatar = true
         ),
-        // search
+        // Basic conversation with no settings + Pro
         ConversationTopBarPreviewParams(
             title = "Alice Smith",
             settingsPagesCount = 0,
             isCallAvailable = false,
             showAvatar = true,
-            showSearch = true
+            showProBadge = true
         ),
         // Basic conversation with no settings
         ConversationTopBarPreviewParams(
@@ -368,12 +381,28 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             isCallAvailable = false,
             showAvatar = true
         ),
+        // Long title without call button + Pro
+        ConversationTopBarPreviewParams(
+            title = "Really Long Conversation Title That Should Ellipsize",
+            settingsPagesCount = 0,
+            isCallAvailable = false,
+            showAvatar = true,
+            showProBadge = true
+        ),
         // Long title with call button
         ConversationTopBarPreviewParams(
             title = "Really Long Conversation Title That Should Ellipsize",
             settingsPagesCount = 0,
             isCallAvailable = true,
             showAvatar = true
+        ),
+        // Long title with call button + Pro
+        ConversationTopBarPreviewParams(
+            title = "Really Long Conversation Title That Should Ellipsize",
+            settingsPagesCount = 0,
+            isCallAvailable = true,
+            showAvatar = true,
+            showProBadge = true
         ),
         // With settings pages and all options
         ConversationTopBarPreviewParams(
@@ -388,7 +417,15 @@ class ConversationTopBarParamsProvider : PreviewParameterProvider<ConversationTo
             settingsPagesCount = 0,
             isCallAvailable = false,
             showAvatar = false
-        )
+        ),
+        // search
+        ConversationTopBarPreviewParams(
+            title = "Alice Smith",
+            settingsPagesCount = 0,
+            isCallAvailable = false,
+            showAvatar = true,
+            showSearch = true
+        ),
     )
 }
 
@@ -418,6 +455,7 @@ fun ConversationTopBarPreview(
                 showAvatar = params.showAvatar,
                 showCall = params.isCallAvailable,
                 showSearch = params.showSearch,
+                showProBadge = params.showProBadge,
                 avatarUIData = AvatarUIData(
                     listOf(
                         AvatarUIElement(

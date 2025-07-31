@@ -35,13 +35,6 @@ class RecoveryPasswordActivity : BaseActionBarActivity() {
                 mnemonic = mnemonic,
                 seed = seed,
                 confirmHideRecovery = {
-                    val returnIntent = Intent()
-                    returnIntent.putExtra(RESULT_RECOVERY_HIDDEN, true)
-                    setResult(RESULT_OK, returnIntent)
-
-                    // The returnIntent assumes we're going back to the SettingsActivity, which handles the result - but
-                    // if we entered this activity through the recovery phrase banner then we're going back to the
-                    // HomeActivity, which does not. As such we'll write the change here to cover all our bases.
                     prefs.setHidePassword(true)
 
                     finish()

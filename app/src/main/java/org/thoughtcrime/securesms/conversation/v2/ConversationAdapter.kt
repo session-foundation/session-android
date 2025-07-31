@@ -31,6 +31,7 @@ import org.thoughtcrime.securesms.database.CursorRecyclerViewAdapter
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 
 class ConversationAdapter(
@@ -56,8 +57,8 @@ class ConversationAdapter(
     var visibleMessageViewDelegate: VisibleMessageViewDelegate? = null
 
     private val updateQueue = Channel<String>(1024, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val contactCache = SparseArray<Contact>(100)
-    private val contactLoadedCache = SparseBooleanArray(100)
+    private val contactCache = ConcurrentHashMap<String, Contact>(100)
+    private val contactLoadedCache = ConcurrentHashMap<String, Boolean>(100)
     private val lastSeen = AtomicLong(originalLastSeen)
 
     var lastSentMessageId: MessageId? = null
@@ -79,8 +80,8 @@ class ConversationAdapter(
             while (isActive) {
                 val item = updateQueue.receive()
                 val contact = getSenderInfo(item) ?: continue
-                contactCache[item.hashCode()] = contact
-                contactLoadedCache[item.hashCode()] = true
+                contactCache[item] = contact
+                contactLoadedCache[item] = true
             }
         }
     }
@@ -131,18 +132,17 @@ class ConversationAdapter(
                 visibleMessageView.snIsSelected = isSelected
                 visibleMessageView.indexInAdapter = position
                 val senderId = message.individualRecipient.address.toString()
-                val senderIdHash = senderId.hashCode()
                 updateQueue.trySend(senderId)
-                if (contactCache[senderIdHash] == null && !contactLoadedCache.getOrDefault(
-                        senderIdHash,
+                if (contactCache[senderId] == null && !contactLoadedCache.getOrDefault(
+                        senderId,
                         false
                     )
                 ) {
                     getSenderInfo(senderId)?.let { contact ->
-                        contactCache[senderIdHash] = contact
+                        contactCache[senderId] = contact
                     }
                 }
-                val contact = contactCache[senderIdHash]
+                val contact = contactCache[senderId]
                 val isExpanded = expandedMessageIds.contains(message.messageId)
 
                 visibleMessageView.bind(

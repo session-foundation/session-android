@@ -3,18 +3,14 @@ package org.thoughtcrime.securesms.home
 import android.content.Context
 import android.content.res.ColorStateList
 import android.content.res.Resources
-import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
 import android.widget.LinearLayout
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
-import javax.inject.Inject
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewConversationBinding
 import org.session.libsession.utilities.ThemeUtil
@@ -24,16 +20,23 @@ import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_ALL
 import org.thoughtcrime.securesms.database.RecipientDatabase.NOTIFY_TYPE_NONE
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
-import org.thoughtcrime.securesms.util.getAccentColor
 import org.thoughtcrime.securesms.util.getConversationUnread
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConversationView : LinearLayout {
 
     @Inject lateinit var configFactory: ConfigFactory
     @Inject lateinit var dateUtils: DateUtils
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding: ViewConversationBinding by lazy { ViewConversationBinding.bind(this) }
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -76,7 +79,20 @@ class ConversationView : LinearLayout {
         binding.unreadMentionIndicator.isVisible = (thread.unreadMentionCount != 0 && thread.recipient.address.isGroupOrCommunity)
 
         val senderDisplayName = getTitle(thread.recipient)
-        binding.conversationViewDisplayNameTextView.text = senderDisplayName
+
+        // set up thread name
+        binding.conversationViewDisplayName.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                ProBadgeText(
+                    text = senderDisplayName,
+                    textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
+                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                            && !thread.recipient.isLocalNumber,
+                )
+            }
+        }
+
         binding.timestampTextView.text = thread.date.takeIf { it != 0L }?.let { dateUtils.getDisplayFormattedTimeSpanString(
             it
         ) }

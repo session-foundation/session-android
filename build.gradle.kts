@@ -45,25 +45,8 @@ allprojects {
 
         google()
         mavenCentral()
-        maven {
-            url = uri("https://raw.github.com/signalapp/maven/master/photoview/releases/")
-            content {
-                includeGroupByRegex("com\\.github\\.chrisbanes.*")
-            }
-        }
-        maven {
-            url = uri("https://raw.github.com/signalapp/maven/master/shortcutbadger/releases/")
-            content {
-                includeGroupByRegex("me\\.leolin.*")
-            }
-        }
-        maven {
-            url = uri("https://raw.github.com/signalapp/maven/master/sqlcipher/release/")
-            content {
-                includeGroupByRegex("org\\.signal.*")
-            }
-        }
         maven { url = uri("https://jitpack.io") }
+
         if (project.hasProperty("huawei")) {
             maven {
                 url = uri("https://developer.huawei.com/repo/")

@@ -7,21 +7,32 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.canhub.cropper.CropImage
 import com.canhub.cropper.CropImageView
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.UserPic
 import org.session.libsession.avatars.AvatarHelper
+import org.session.libsession.database.StorageProtocol
+import org.session.libsession.database.userAuth
 import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.messaging.open_groups.OpenGroupApi
+import org.session.libsession.snode.OnionRequestAPI
+import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ProfileKeyUtil
 import org.session.libsession.utilities.ProfilePictureUtilities
+import org.session.libsession.utilities.SSKEnvironment
+import org.session.libsession.utilities.StringSubstitutionConstants.VERSION_KEY
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsession.utilities.recipients.Recipient
@@ -29,14 +40,17 @@ import org.session.libsignal.utilities.ExternalStorageUtil.getImageDir
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.NoExternalStorageException
 import org.session.libsignal.utilities.Util.SECURE_RANDOM
+import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.profiles.ProfileMediaConstraints
+import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.BitmapDecodingException
 import org.thoughtcrime.securesms.util.BitmapUtil
+import org.thoughtcrime.securesms.util.ClearDataUtils
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import java.io.File
 import java.io.IOException
@@ -50,7 +64,10 @@ class SettingsViewModel @Inject constructor(
     private val connectivity: NetworkConnectivity,
     private val usernameUtils: UsernameUtils,
     private val avatarUtils: AvatarUtils,
-    private val proStatusManager: ProStatusManager
+    private val proStatusManager: ProStatusManager,
+    private val clearDataUtils: ClearDataUtils,
+    private val storage: StorageProtocol,
+    private val inAppReviewManager: InAppReviewManager
 ) : ViewModel() {
     private val TAG = "SettingsViewModel"
 
@@ -63,9 +80,14 @@ class SettingsViewModel @Inject constructor(
     }
 
     private val _uiState = MutableStateFlow(UIState(
+        username = usernameUtils.getCurrentUsernameWithAccountIdFallback(),
+        accountID = hexEncodedPublicKey,
+        hasPath = true,
+        version = getVersionNumber(),
         recoveryHidden = prefs.getHidePassword(),
         isPro = proStatusManager.isCurrentUserPro(),
-        isPostPro = proStatusManager.isPostPro()
+        isPostPro = proStatusManager.isPostPro(),
+        showProBadge = proStatusManager.shouldShowProBadge(userRecipient.address),
     ))
     val uiState: StateFlow<UIState>
         get() = _uiState
@@ -89,6 +111,25 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(isPostPro = postPro) }
             }
         }
+
+        viewModelScope.launch {
+            prefs.watchHidePassword().collect { hidden ->
+                _uiState.update { it.copy(recoveryHidden = hidden) }
+            }
+        }
+
+        viewModelScope.launch {
+            OnionRequestAPI.hasPath.collect {
+                _uiState.update { it.copy(hasPath = it.hasPath) }
+            }
+        }
+    }
+
+    private fun getVersionNumber(): CharSequence {
+        val gitCommitFirstSixChars = BuildConfig.GIT_HASH.take(6)
+        val environment: String = if(BuildConfig.BUILD_TYPE == "release") "" else " - ${prefs.getEnvironment().label}"
+        val versionDetails = " ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE} - $gitCommitFirstSixChars) $environment"
+        return Phrase.from(context, R.string.updateVersion).put(VERSION_KEY, versionDetails).format()
     }
 
     private fun updateAvatar(){
@@ -96,8 +137,6 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(avatarData = avatarUtils.getUIDataFromRecipient(userRecipient)) }
         }
     }
-
-    fun getDisplayName(): String = usernameUtils.getCurrentUsernameWithAccountIdFallback()
 
     fun hasAvatar() = prefs.getProfileAvatarId() != 0
 
@@ -193,7 +232,7 @@ class SettingsViewModel @Inject constructor(
     )
     else AvatarDialogState.NoAvatar
 
-    fun saveAvatar() {
+    private fun saveAvatar() {
         val tempAvatar = (uiState.value.avatarDialogState as? AvatarDialogState.TempAvatar)
             ?: return Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
 
@@ -223,7 +262,7 @@ class SettingsViewModel @Inject constructor(
     }
 
 
-    fun removeAvatar() {
+    private fun removeAvatar() {
         // if the user has a temporary avatar selected, clear that and redisplay the default avatar instead
         if (uiState.value.avatarDialogState is AvatarDialogState.TempAvatar) {
             viewModelScope.launch {
@@ -306,27 +345,30 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateName(displayName: String) {
-        usernameUtils.saveCurrentUserName(displayName)
-    }
-
-    fun permanentlyHidePassword() {
-        //todo we can simplify this once we expose all our sharedPrefs as flows
-        prefs.setHidePassword(true)
-        _uiState.update { it.copy(recoveryHidden = true) }
-    }
-
     fun hasNetworkConnection(): Boolean = connectivity.networkAvailable.value
 
-    fun showUrlDialog(url: String) {
-        _uiState.update { it.copy(showUrlDialog = url) }
+    fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
+            && AnimatedImageUtils.isAnimated(context, uri)
+
+    private fun showAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = true) }
     }
-    fun hideUrlDialog() {
-        _uiState.update { it.copy(showUrlDialog = null) }
+
+    private fun hideAnimatedProCTA() {
+        _uiState.update { it.copy(showAnimatedProCTA = false) }
     }
 
     fun showAvatarDialog() {
         _uiState.update { it.copy(showAvatarDialog = true) }
+    }
+
+    fun hideAvatarPickerOptions() {
+        _uiState.update { it.copy(showAvatarPickerOptions = false) }
+
+    }
+
+    fun showUrlDialog(url: String) {
+        _uiState.update { it.copy(showUrlDialog = url) }
     }
 
     fun showAvatarPickerOptions(showCamera: Boolean) {
@@ -335,28 +377,184 @@ class SettingsViewModel @Inject constructor(
             showAvatarPickerOptionCamera = showCamera
         ) }
     }
-    fun hideAvatarPickerOptions() {
-        _uiState.update { it.copy(showAvatarPickerOptions = false) }
 
+    private fun clearData(clearNetwork: Boolean) {
+        val currentClearState = uiState.value.clearDataDialog
+        // show loading
+        _uiState.update { it.copy(clearDataDialog = ClearDataState.Clearing) }
+
+        // only clear locally is clearNetwork is false or we are in an error state
+        viewModelScope.launch(Dispatchers.Default) {
+            if (!clearNetwork || currentClearState == ClearDataState.Error) {
+                clearDataDeviceOnly()
+            } else if(currentClearState == ClearDataState.Default){
+                _uiState.update { it.copy(clearDataDialog = ClearDataState.ConfirmNetwork) }
+            } else { // clear device and network
+                clearDataDeviceAndNetwork()
+            }
+        }
     }
 
-    fun showAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = true) }
-    }
-    fun hideAnimatedProCTA() {
-        _uiState.update { it.copy(showAnimatedProCTA = false) }
+    private suspend fun clearDataDeviceOnly() {
+        val result = runCatching {
+            clearDataUtils.clearAllDataAndRestart()
+        }
+
+        withContext(Main) {
+            if (result.isSuccess) {
+                _uiState.update { it.copy(clearDataDialog = ClearDataState.Hidden) }
+            } else {
+                Toast.makeText(context, R.string.errorUnknown, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
-    fun goToProUpgradeScreen() {
-        // hide dialog
-        hideAnimatedProCTA()
+    private suspend fun clearDataDeviceAndNetwork() {
+        val deletionResultMap: Map<String, Boolean>? = try {
+            val openGroups = storage.getAllOpenGroups()
+            openGroups.map { it.value.server }.toSet().forEach { server ->
+                OpenGroupApi.deleteAllInboxMessages(server).await()
+            }
+            SnodeAPI.deleteAllMessages(checkNotNull(storage.userAuth)).await()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete network messages - offering user option to delete local data only.", e)
+            null
+        }
 
-        // to go Pro upgrade screen
-        //todo PRO go to screen once it exists
+        // If one or more deletions failed then inform the user and allow them to clear the device only if they wish..
+        if (deletionResultMap == null || deletionResultMap.values.any { !it } || deletionResultMap.isEmpty()) {
+            withContext(Main) {
+                _uiState.update { it.copy(clearDataDialog = ClearDataState.Error) }
+            }
+        }
+        else if (deletionResultMap.values.all { it }) {
+            // ..otherwise if the network data deletion was successful proceed to delete the local data as well.
+            clearDataDeviceOnly()
+        }
     }
 
-    fun isAnimated(uri: Uri) = proStatusManager.isPostPro() // block animated avatars prior to pro
-            && AnimatedImageUtils.isAnimated(context, uri)
+    private fun setUsername(name: String){
+        if(!hasNetworkConnection()){
+            Log.w(TAG, "Cannot update display name - no network connection.")
+            Toast.makeText(context, R.string.profileErrorUpdate, Toast.LENGTH_LONG).show()
+            return
+        }
+
+        // save username
+        _uiState.update { it.copy(username = name) }
+        prefs.setProfileName(name)
+        usernameUtils.saveCurrentUserName(name)
+    }
+
+    fun onCommand(command: Commands) {
+        when (command) {
+            is Commands.ShowClearDataDialog -> {
+                _uiState.update { it.copy(clearDataDialog = ClearDataState.Default) }
+            }
+
+            is Commands.HideClearDataDialog -> {
+                _uiState.update { it.copy(clearDataDialog = ClearDataState.Hidden) }
+            }
+
+            is Commands.ShowUrlDialog -> {
+                showUrlDialog(command.url)
+            }
+
+            is Commands.HideUrlDialog -> {
+                _uiState.update { it.copy(showUrlDialog = null) }
+            }
+
+            is Commands.ShowAvatarDialog -> {
+                showAvatarDialog()
+            }
+
+            is Commands.ShowAvatarPickerOptions -> {
+                showAvatarPickerOptions(command.showCamera)
+            }
+
+            is Commands.HideAvatarPickerOptions -> {
+                hideAvatarPickerOptions()
+            }
+
+            is Commands.OnAvatarDialogDismissed -> {
+                onAvatarDialogDismissed()
+            }
+
+            is Commands.ShowAnimatedProCTA -> {
+                showAnimatedProCTA()
+            }
+
+            is Commands.HideAnimatedProCTA -> {
+               hideAnimatedProCTA()
+            }
+
+            is Commands.SaveAvatar -> {
+                saveAvatar()
+            }
+
+            is Commands.RemoveAvatar -> {
+                removeAvatar()
+            }
+
+            is Commands.ClearData -> {
+                clearData(command.clearNetwork)
+            }
+
+            is Commands.ShowUsernameDialog -> {
+                _uiState.update {
+                    it.copy(usernameDialog = UsernameDialogData(
+                        currentName = it.username,
+                        inputName = it.username,
+                        setEnabled = false,
+                        error = null
+                    ))
+                }
+            }
+
+
+            is Commands.HideUsernameDialog -> {
+                _uiState.update { it.copy(usernameDialog = null) }
+            }
+
+            is Commands.SetUsername -> {
+                _uiState.value.usernameDialog?.inputName?.trim()?.let {
+                    setUsername(it)
+                }
+
+                // hide username dialog
+                _uiState.update { it.copy(usernameDialog = null) }
+            }
+
+            is Commands.UpdateUsername -> {
+                val trimmedName = command.name.trim()
+
+                val error: String? = when {
+                    trimmedName.textSizeInBytes() >  SSKEnvironment.ProfileManagerProtocol.NAME_PADDED_LENGTH ->
+                        context.getString(R.string.displayNameErrorDescriptionShorter)
+
+                    else -> null
+                }
+
+                _uiState.update { it.copy(usernameDialog =
+                    it.usernameDialog?.copy(
+                            inputName = command.name,
+                            setEnabled = trimmedName.isNotEmpty() && // can save if we have an input
+                                    trimmedName != it.usernameDialog.currentName && // ... and it isn't the same as what is already saved
+                                    error == null, // ... and there are no errors
+                            error = error
+                        )
+                    )
+                }
+            }
+
+            is Commands.OnDonateClicked -> {
+                viewModelScope.launch {
+                    inAppReviewManager.onEvent(InAppReviewManager.Event.DonateButtonClicked)
+                }
+                showUrlDialog( "https://session.foundation/donate#app")
+            }
+        }
+    }
 
     sealed class AvatarDialogState() {
         object NoAvatar : AvatarDialogState()
@@ -368,17 +566,64 @@ class SettingsViewModel @Inject constructor(
         ) : AvatarDialogState()
     }
 
+    sealed interface ClearDataState {
+        data object Hidden: ClearDataState
+        data object Default: ClearDataState
+        data object Clearing: ClearDataState
+        data object ConfirmNetwork: ClearDataState
+        data object Error: ClearDataState
+    }
+
+    data class UsernameDialogData(
+        val currentName: String?, // the currently saved name
+        val inputName: String?, // the name being inputted
+        val setEnabled: Boolean,
+        val error: String?
+    )
+
     data class UIState(
+        val username: String,
+        val accountID: String,
+        val hasPath: Boolean,
+        val version: CharSequence = "",
         val showLoader: Boolean = false,
         val avatarDialogState: AvatarDialogState = AvatarDialogState.NoAvatar,
         val avatarData: AvatarUIData? = null,
         val recoveryHidden: Boolean,
         val showUrlDialog: String? = null,
+        val clearDataDialog: ClearDataState = ClearDataState.Hidden,
         val showAvatarDialog: Boolean = false,
         val showAvatarPickerOptionCamera: Boolean = false,
         val showAvatarPickerOptions: Boolean = false,
         val showAnimatedProCTA: Boolean = false,
+        val usernameDialog: UsernameDialogData? = null,
         val isPro: Boolean,
-        val isPostPro: Boolean
+        val isPostPro: Boolean,
+        val showProBadge: Boolean
     )
+
+    sealed interface Commands {
+        data object ShowClearDataDialog: Commands
+        data object HideClearDataDialog: Commands
+        data class ShowUrlDialog(val url: String): Commands
+        data object HideUrlDialog: Commands
+        data object ShowAvatarDialog: Commands
+        data class ShowAvatarPickerOptions(val showCamera: Boolean): Commands
+        data object HideAvatarPickerOptions: Commands
+        data object SaveAvatar: Commands
+        data object RemoveAvatar: Commands
+        data object OnAvatarDialogDismissed: Commands
+
+        data object ShowUsernameDialog : Commands
+        data object HideUsernameDialog : Commands
+        data object SetUsername: Commands
+        data class UpdateUsername(val name: String): Commands
+
+        data object ShowAnimatedProCTA: Commands
+        data object HideAnimatedProCTA: Commands
+
+        data object OnDonateClicked: Commands
+
+        data class ClearData(val clearNetwork: Boolean): Commands
+    }
 }
