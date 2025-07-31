@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,12 +36,12 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.core.net.toUri
@@ -116,7 +114,8 @@ fun MessageBubble(
 @Composable
 fun MessageContent(
     data: MessageViewData,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    maxWidth: Dp
 ) {
     Column(
         modifier = modifier,
@@ -147,7 +146,7 @@ fun MessageContent(
                 }
 
                 // There can be two bubbles in a message: First one contains quotes, links and message text
-                // The second one contains images, audio, video or documents
+                // The second one contains audio, document, images and video
                 val hasFirstBubble = data.quote != null || data.link != null || data.type.text != null
                 val hasSecondBubble = data.type !is MessageType.Text
 
@@ -199,31 +198,34 @@ fun MessageContent(
                         Spacer(modifier = Modifier.height(LocalDimensions.current.xxxsSpacing))
                     }
 
-                    MessageBubble(
-                        color = if (data.type.outgoing) LocalColors.current.accent
-                        else LocalColors.current.backgroundBubbleReceived
-                    ) {
-                        // Apply content based on message type
-                        when (data.type) {
-                            // Document messages
-                            is MessageType.Document -> DocumentMessage(
-                                data = data.type
-                            )
+                    // images and videos are a special case and aren' actually surrounded in a visible bubble
+                    if(data.type is MessageType.Media){
+                        MediaMessage(
+                            data = data.type,
+                            maxWidth = maxWidth
+                        )
+                    } else {
+                        MessageBubble(
+                            color = if (data.type.outgoing) LocalColors.current.accent
+                            else LocalColors.current.backgroundBubbleReceived
+                        ) {
+                            // Apply content based on message type
+                            when (data.type) {
+                                // Document messages
+                                is MessageType.Document -> DocumentMessage(
+                                    data = data.type
+                                )
 
-                            // Audio messages
-                            is MessageType.Audio -> AudioMessage(
-                                data = data.type
-                            )
+                                // Audio messages
+                                is MessageType.Audio -> AudioMessage(
+                                    data = data.type
+                                )
 
-                            // Media messages
-                            is MessageType.Media -> {
-
+                                else -> {}
                             }
-
-                            else -> {}
                         }
                     }
-                    }
+                }
             }
         }
 
@@ -261,7 +263,8 @@ fun Message(
                 .align(if (data.type.outgoing) Alignment.CenterEnd else Alignment.CenterStart)
                 .widthIn(max = maxMessageWidth)
                 .wrapContentWidth(),
-            data = data
+            data = data,
+            maxWidth = maxMessageWidth
         )
     }
 }
@@ -554,20 +557,7 @@ fun AudioMessage(
     }
 }
 
-@Composable
-private fun MediaItems(
-    data: MessageType.Media,
-    modifier: Modifier = Modifier
-){
-    //todo CONVOv3 media items (1 vs 2 vs 3 items)
-    GlideImage(
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .aspectRatio(1f),
-        model =DecryptableStreamUriLoader.DecryptableUri(data.items[0].uri),
-        contentDescription = data.items[0].filename
-    )
-}
+
 
 @Composable
 private fun getTextColor(outgoing: Boolean) = if(outgoing) LocalColors.current.textBubbleSent
@@ -654,21 +644,6 @@ sealed class MessageType(){
         val loading: Boolean,
         override val text: AnnotatedString? = null
     ): MessageType()
-}
-
-sealed class MessageMediaItem(){
-    abstract val uri: Uri
-    abstract val filename: String
-
-    data class Image(
-        override val uri: Uri,
-        override val filename: String
-    ): MessageMediaItem()
-
-    data class Video(
-        override val uri: Uri,
-        override val filename: String
-    ): MessageMediaItem()
 }
 
 sealed class MessageAudioState(){
@@ -966,7 +941,7 @@ fun MediaMessagePreview(
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = false,
-                    items = listOf(PreviewMessageData.image()),
+                    items = listOf(PreviewMessageData.image(true)),
                     loading = false
                 )
             ))
@@ -1021,7 +996,7 @@ fun MediaMessagePreview(
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
-                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(), PreviewMessageData.image()),
+                    items = listOf(PreviewMessageData.video(), PreviewMessageData.image(true), PreviewMessageData.image()),
                     loading = false
                 )
             ))
@@ -1115,7 +1090,7 @@ fun MediaMessagePreview(
     }
 }
 
-private object PreviewMessageData {
+object PreviewMessageData {
 
     // Common data
     val sampleAvatar = AvatarUIData(listOf(AvatarUIElement(name = "TO", color = primaryBlue)))
@@ -1157,14 +1132,16 @@ private object PreviewMessageData {
         audioState = state
     )
 
-    fun image() = MessageMediaItem.Image(
+    fun image(loading: Boolean = false) = MessageMediaItem.Image(
         "".toUri(),
-        ""
+        "",
+        loading = loading
     )
 
-    fun video() = MessageMediaItem.Video(
+    fun video(loading: Boolean = false) = MessageMediaItem.Video(
         "".toUri(),
-        ""
+        "",
+        loading = loading
     )
 
     fun quote(
