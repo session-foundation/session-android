@@ -265,21 +265,6 @@ class MmsDatabase
         return cursor
     }
 
-    fun getRecentChatMemberIDs(threadID: Long, limit: Int): List<String> {
-        val sql = """
-            SELECT DISTINCT $ADDRESS FROM $TABLE_NAME
-            WHERE $THREAD_ID = ?
-            ORDER BY $DATE_SENT DESC
-            LIMIT $limit
-        """.trimIndent()
-
-        return readableDatabase.rawQuery(sql, threadID).use { cursor ->
-            cursor.asSequence()
-                .map { it.getString(0) }
-                .toList()
-        }
-    }
-
     override fun getExpiredMessageIDs(nowMills: Long): List<Long> {
         val query = "SELECT " + ID + " FROM " + TABLE_NAME +
                 " WHERE " + EXPIRES_IN + " > 0 AND " + EXPIRE_STARTED + " > 0 AND " + EXPIRE_STARTED + " + " + EXPIRES_IN + " <= ?"

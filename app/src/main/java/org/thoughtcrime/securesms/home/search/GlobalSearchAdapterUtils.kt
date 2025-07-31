@@ -4,6 +4,8 @@ import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import network.loki.messenger.R
@@ -17,6 +19,11 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Header
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMessages
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SubHeader
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.SearchUtil
 import java.util.Locale
@@ -47,9 +54,9 @@ private val BoldStyleFactory = { StyleSpan(Typeface.BOLD) }
 fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
     when (model) {
         is ContactModel -> {
-            binding.searchResultTitle.text = getHighlight(
-                query,
-                model.name
+            binding.resultTitle.setupTitleWithBadge(
+                title = model.name,
+                showProBadge = model.showProBadge
             )
         }
         is Message -> {
@@ -65,12 +72,15 @@ fun ContentView.bindQuery(query: String, model: GlobalSearchAdapter.Model) {
             ))
             binding.searchResultSubtitle.text = textSpannable
             binding.searchResultSubtitle.isVisible = true
-            binding.searchResultTitle.text = model.messageResult.conversationRecipient.getSearchName()
+            binding.resultTitle.setupTitleWithBadge(
+                title =  model.messageResult.conversationRecipient.getSearchName(),
+                showProBadge = model.showProBadge
+            )
         }
         is GroupConversation -> {
-            binding.searchResultTitle.text = getHighlight(
-                query,
-                model.title
+            binding.resultTitle.setupTitleWithBadge(
+                title =  model.title,
+                showProBadge = model.showProBadge
             )
 
             binding.searchResultSubtitle.text = getHighlight(query, model.legacyMembersString.orEmpty())
@@ -85,14 +95,27 @@ private fun getHighlight(query: String?, toSearch: String): Spannable? {
     return SearchUtil.getHighlightedSpan(Locale.getDefault(), BoldStyleFactory, toSearch, query)
 }
 
+private fun ComposeView.setupTitleWithBadge(title: String, showProBadge: Boolean){
+    setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+    setThemedContent {
+        ProBadgeText(
+            text = title,
+            textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
+            showBadge = showProBadge,
+        )
+    }
+}
+
 fun ContentView.bindModel(query: String?, model: GroupConversation) {
     binding.searchResultProfilePicture.isVisible = true
     binding.searchResultSubtitle.isVisible = model.isLegacy
     binding.searchResultTimestamp.isVisible = false
     val threadRecipient = Recipient.from(binding.root.context, Address.fromSerialized(model.groupId), false)
     binding.searchResultProfilePicture.update(threadRecipient)
-    val nameString = model.title
-    binding.searchResultTitle.text = getHighlight(query, nameString)
+    binding.resultTitle.setupTitleWithBadge(
+        title =  model.title,
+        showProBadge = model.showProBadge
+    )
 
     if (model.legacyMembersString != null) {
         binding.searchResultSubtitle.text = getHighlight(query, model.legacyMembersString)
@@ -108,13 +131,20 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     searchResultProfilePicture.update(recipient)
     val nameString = if (model.isSelf) root.context.getString(R.string.noteToSelf)
         else model.name
-    searchResultTitle.text = getHighlight(query, nameString)
+
+    binding.resultTitle.setupTitleWithBadge(
+        title =  nameString,
+        showProBadge = model.showProBadge
+    )
 }
 
 fun ContentView.bindModel(model: SavedMessages) {
     binding.searchResultSubtitle.isVisible = false
     binding.searchResultTimestamp.isVisible = false
-    binding.searchResultTitle.setText(R.string.noteToSelf)
+    binding.resultTitle.setupTitleWithBadge(
+        title = binding.root.context.getString(R.string.noteToSelf),
+        showProBadge = false
+    )
     binding.searchResultProfilePicture.update(Address.fromSerialized(model.currentUserPublicKey))
     binding.searchResultProfilePicture.isVisible = true
 }
@@ -139,8 +169,13 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
             model.messageResult.bodySnippet
     ))
     searchResultSubtitle.text = textSpannable
-    searchResultTitle.text = if (model.isSelf) root.context.getString(R.string.noteToSelf)
+    val title = if (model.isSelf) root.context.getString(R.string.noteToSelf)
         else model.messageResult.conversationRecipient.getSearchName()
+
+    binding.resultTitle.setupTitleWithBadge(
+        title =  title,
+        showProBadge = model.showProBadge
+    )
     searchResultSubtitle.isVisible = true
 }
 

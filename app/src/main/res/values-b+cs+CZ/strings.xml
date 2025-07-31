@@ -735,7 +735,6 @@
     <string name="modalMessageTooLongDescription">Zkraťte prosím svou zprávu na {limit} znaků nebo méně.</string>
     <string name="modalMessageTooLongTitle">Zpráva je příliš dlouhá</string>
     <string name="next">Další</string>
-    <string name="nicknameDescription">Vyberte přezdívku pro <b>{name}</b>. Zobrazí se ve vašich konverzacích jeden na jednoho a ve skupinových.</string>
     <string name="nicknameEnter">Zadejte přezdívku</string>
     <string name="nicknameErrorShorter">Zadejte prosím kratší přezdívku</string>
     <string name="nicknameRemove">Odstranit přezdívku</string>

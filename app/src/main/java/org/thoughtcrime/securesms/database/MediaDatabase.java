@@ -63,8 +63,8 @@ public class MediaDatabase extends Database {
   private static final String GALLERY_MEDIA_QUERY  = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " LIKE 'image/%' OR " + AttachmentDatabase.CONTENT_TYPE + " LIKE 'video/%'");
   private static final String DOCUMENT_MEDIA_QUERY = String.format(BASE_MEDIA_QUERY, AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'image/%' AND " +
                                                                                      AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'video/%' AND " +
-                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'audio/%' AND " +
-                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain'");
+                                                                                     AttachmentDatabase.CONTENT_TYPE + " NOT LIKE 'text/x-signal-plain' AND " +
+                                                                                     "IFNULL(" + AttachmentDatabase.VOICE_NOTE + ", 0) = 0");
 
   public MediaDatabase(Context context, Provider<SQLCipherOpenHelper> databaseHelper) {
     super(context, databaseHelper);

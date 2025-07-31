@@ -3,9 +3,7 @@ package org.session.libsession.utilities
 // Non-translatable strings for use with the UI
 object NonTranslatableStringConstants {
     const val APP_NAME                   = "Session"
-    const val SESSION_PRO                = "Session Pro"
     const val SESSION_DOWNLOAD_URL       = "https://getsession.org/download"
-    const val SESSION_FEEDBACK_URL       = "https://getsession.org/feedback-android"
     const val GIF                        = "GIF"
     const val OXEN_FOUNDATION            = "Oxen Foundation"
     const val NETWORK_NAME               = "Session Network"

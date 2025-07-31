@@ -65,7 +65,7 @@ constructor(
                 preferences.pushEnabled,
                 tokenFetcher.token,
             ) { _, myAccountId, enabled, token ->
-                if (!enabled || myAccountId == null || token.isNullOrEmpty()) {
+                if (!enabled || myAccountId == null || storage.getUserED25519KeyPair() == null || token.isNullOrEmpty()) {
                     return@combine emptySet<SubscriptionKey>()
                 }
 

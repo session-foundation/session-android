@@ -44,6 +44,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.loader.app.LoaderManager
 import androidx.loader.content.Loader
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -53,6 +54,9 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.loki.messenger.R
 import network.loki.messenger.databinding.MediaPreviewActivityBinding
 import network.loki.messenger.databinding.MediaViewPageBinding
@@ -455,7 +459,7 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
 
         // If we have an attachment then we can take the filename from it, otherwise we have to take the
         // more expensive route of looking up or synthesizing a filename from the MediaItem's Uri.
-        var mediaFilename = ""
+        var mediaFilename: String? = null
         if (mediaItem.attachment != null) {
             mediaFilename = mediaItem.attachment.filename
         }
@@ -529,8 +533,10 @@ class MediaPreviewActivity : ScreenLockActionBarActivity(), RecipientModifiedLis
         }
 
         DeleteMediaPreviewDialog.show(this){
-            AttachmentUtil.deleteAttachment(applicationContext, mediaItem.attachment)
-            finish()
+            lifecycleScope.launch(Dispatchers.Default) {
+                AttachmentUtil.deleteAttachment(applicationContext, mediaItem.attachment)
+                withContext(Dispatchers.Main){ finish() }
+            }
         }
     }
 

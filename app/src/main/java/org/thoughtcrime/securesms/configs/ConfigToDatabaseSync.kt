@@ -418,6 +418,10 @@ class ConfigToDatabaseSync @Inject constructor(
                 is Conversation.LegacyGroup -> storage.getThreadIdFor("", conversation.groupId,null, createThread = false)
                 is Conversation.Community -> storage.getThreadIdFor("",null, "${conversation.baseCommunityInfo.baseUrl.removeSuffix("/")}.${conversation.baseCommunityInfo.room}", createThread = false)
                 is Conversation.ClosedGroup -> storage.getThreadIdFor(conversation.accountId, null, null, createThread = false) // New groups will be managed bia libsession
+                is Conversation.BlindedOneToOne -> {
+                    // Not supported yet
+                    continue
+                }
             }
             if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {

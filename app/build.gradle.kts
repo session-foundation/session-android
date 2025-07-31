@@ -353,7 +353,6 @@ dependencies {
     implementation(libs.androidx.media3.ui)
     implementation(libs.conscrypt.android)
     implementation(libs.android)
-    implementation(libs.shortcutbadger)
     implementation(libs.photoview)
     implementation(libs.glide)
     implementation(libs.compose)
@@ -443,7 +442,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.accompanist.permissions)
-    implementation(libs.accompanist.drawablepainter)
 
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
