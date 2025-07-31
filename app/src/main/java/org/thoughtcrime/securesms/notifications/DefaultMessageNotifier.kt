@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.os.AsyncTask
 import android.text.TextUtils
 import androidx.core.app.ActivityCompat
@@ -313,6 +314,13 @@ class DefaultMessageNotifier(
 
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.notificationCount)
+
+        val isRequestNote = notificationId == REQUEST_NOTIFICATION_ID
+        if(isRequestNote){
+            // Set the notification title to App Name
+            builder.setContentTitle(context.getString(R.string.app_name))
+            builder.setLargeIcon(null as Bitmap?)
+        }
 
         val builderCS = notificationText ?: ""
         val ss = highlightMentions(
