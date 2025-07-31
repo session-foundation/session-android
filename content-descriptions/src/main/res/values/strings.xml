@@ -50,6 +50,8 @@
     <string name="AccessibilityId_shareAccountId">Account ID</string>
     <string name="AccessibilityId_imageButton">Image button</string>
     <string name="AccessibilityId_cameraButton">Camera button</string>
+    <string name="qa_settings_dialog_username_save">update-username-confirm-button</string>
+    <string name="qa_settings_dialog_username_cancel">update-username-cancel-button</string>
     <!--Message requests-->
     <string name="AccessibilityId_clearAll">Clear all</string>
     <string name="AccessibilityId_messageRequestsNonePending">No pending message requests</string>
@@ -247,6 +249,7 @@
     <string name="AccessibilityId_displayName">Display name</string>
     <string name="qa_settings_item_session_network">session-network-menu-item</string>
     <string name="qa_settings_item_donate">donate-menu-item</string>
+    <string name="qa_settings_item_pro">pro-menu-item</string>
 
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>

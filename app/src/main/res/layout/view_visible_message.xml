@@ -59,21 +59,16 @@
             app:layout_constraintEnd_toEndOf="@+id/profilePictureView"
             tools:visibility="visible"/>
 
-        <TextView
-            android:id="@+id/senderNameTextView"
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/senderName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/message_spacing"
-            android:layout_marginEnd="@dimen/message_spacing"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?android:textColorPrimary"
             android:paddingBottom="4dp"
-            android:textStyle="bold"
             app:layout_constraintStart_toStartOf="@+id/messageInnerContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="@tools:sample/full_names" />
+            android:layout_marginStart="@dimen/message_spacing"
+            android:layout_marginEnd="@dimen/message_spacing"/>
 
         <FrameLayout
             android:id="@+id/messageInnerContainer"
@@ -82,7 +77,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/profilePictureView"
             app:layout_constraintStart_toEndOf="@+id/profilePictureView"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/senderNameTextView">
+            app:layout_constraintTop_toBottomOf="@+id/senderName">
 
             <LinearLayout
                 android:id="@+id/messageInnerLayout"

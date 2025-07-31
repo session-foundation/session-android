@@ -13,11 +13,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.loki.messenger.R
@@ -40,13 +42,14 @@ import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
 import org.thoughtcrime.securesms.mms.ImageSlide
 import org.thoughtcrime.securesms.mms.Slide
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.pro.ProStatusManager.MessageProFeature.*
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.observeChanges
-import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.text.Typography.ellipsis
@@ -63,6 +66,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val context: ApplicationContext,
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
+    private val proStatusManager: ProStatusManager,
     messageDataProvider: MessageDataProvider,
     storage: Storage
 ) : ViewModel() {
@@ -71,6 +75,9 @@ class MessageDetailsViewModel @AssistedInject constructor(
 
     private val event = Channel<Event>()
     val eventFlow = event.receiveAsFlow()
+
+    private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
+    val dialogState: StateFlow<DialogsState> = _dialogState
 
     private val attachmentDownloadHandler = AttachmentDownloadHandler(
         storage = storage,
@@ -173,8 +180,11 @@ class MessageDetailsViewModel @AssistedInject constructor(
                         )
                     },
                     senderAvatarData = avatarUtils.getUIDataFromRecipient(sender),
+                    senderShowProBadge = proStatusManager.shouldShowProBadge(sender.address),
                     thread = conversation,
-                    readOnly = isDeprecatedLegacyGroup
+                    readOnly = isDeprecatedLegacyGroup,
+                    proFeatures = proStatusManager.getMessageProFeatures(messageRecord.messageId),
+                    proBadgeClickable = !proStatusManager.isCurrentUserPro() // no badge click if the current user is pro
                 )
             }
         }
@@ -214,7 +224,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
         isDownloaded = slide.isDone
     )
 
-    fun onClickImage(index: Int) {
+    private fun openImage(index: Int) {
         val state = state.value
         val mmsRecord = state.mmsRecord ?: return
         val slide = mmsRecord.slideDeck.slides[index] ?: return
@@ -233,10 +243,46 @@ class MessageDetailsViewModel @AssistedInject constructor(
         attachmentDownloadHandler.retryFailedAttachments(attachments)
     }
 
+    fun onCommand(command: Commands) {
+        when (command) {
+            is Commands.OpenImage -> {
+                openImage(command.imageIndex)
+            }
+
+            is Commands.ShowProBadgeCTA -> {
+                val features = state.value.proFeatures
+                _dialogState.update {
+                    it.copy(
+                        proBadgeCTA = when{
+                            features.size > 1 -> ProBadgeCTA.Generic // always show the generic cta when there are more than 1 feature
+
+                            features.contains(LongMessage) -> ProBadgeCTA.LongMessage
+                            features.contains(AnimatedAvatar) -> ProBadgeCTA.AnimatedProfile
+                            else -> null
+                        }
+                    )
+                }
+            }
+
+            is Commands.HideProBadgeCTA -> {
+                _dialogState.update { it.copy(proBadgeCTA = null) }
+            }
+        }
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(id: MessageId) : MessageDetailsViewModel
     }
+}
+
+sealed interface Commands {
+    data class OpenImage(
+        val imageIndex: Int
+    ): Commands
+
+    object ShowProBadgeCTA: Commands
+    object HideProBadgeCTA: Commands
 }
 
 data class MessageDetailsState(
@@ -252,13 +298,26 @@ data class MessageDetailsState(
     val status: MessageStatus? = null,
     val senderInfo: TitledText? = null,
     val senderAvatarData: AvatarUIData? = null,
+    val senderShowProBadge: Boolean = false,
     val thread: Recipient? = null,
     val readOnly: Boolean = false,
+    val proFeatures: Set<ProStatusManager.MessageProFeature> = emptySet(),
+    val proBadgeClickable: Boolean = false,
 ) {
     val fromTitle = GetString(R.string.from)
     val canReply: Boolean get() = !readOnly && record?.isOpenGroupInvitation != true
     val canDelete: Boolean get() = !readOnly
 }
+
+sealed interface ProBadgeCTA {
+    data object Generic: ProBadgeCTA
+    data object LongMessage: ProBadgeCTA
+    data object AnimatedProfile: ProBadgeCTA
+}
+
+data class DialogsState(
+    val proBadgeCTA: ProBadgeCTA? = null
+)
 
 data class Attachment(
     val fileDetails: List<TitledText>,

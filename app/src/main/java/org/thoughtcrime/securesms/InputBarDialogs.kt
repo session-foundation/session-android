@@ -13,6 +13,7 @@ import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
+import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.SimpleSessionProCTA
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -63,24 +64,8 @@ fun InputBarDialogs(
 
         // Pro CTA
         if (inputBarDialogsState.sessionProCharLimitCTA) {
-            SimpleSessionProCTA(
-                heroImage = R.drawable.cta_hero_char_limit,
-                text = Phrase.from(LocalContext.current, R.string.proCallToActionLongerMessages)
-                    .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                    .format()
-                    .toString(),
-                features = listOf(
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLongerMessages)),
-                    CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-                    CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-                ),
-                onUpgrade = {
-                    sendCommand(InputbarViewModel.Commands.HideSessionProCTA)
-                    //todo PRO go to screen once it exists
-                },
-                onCancel = {
-                    sendCommand(InputbarViewModel.Commands.HideSessionProCTA)
-                }
+            LongMessageProCTA(
+                onDismissRequest = {sendCommand(InputbarViewModel.Commands.HideSessionProCTA)}
             )
         }
     }

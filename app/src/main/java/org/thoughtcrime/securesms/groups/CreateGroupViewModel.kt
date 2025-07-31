@@ -22,6 +22,7 @@ import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.v2.utilities.TextUtilities.textSizeInBytes
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUtils
 
 
@@ -32,6 +33,7 @@ class CreateGroupViewModel @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val groupManagerV2: GroupManagerV2,
     private val avatarUtils: AvatarUtils,
+    private val proStatusManager: ProStatusManager,
     groupDatabase: GroupDatabase,
     @Assisted createFromLegacyGroupId: String?,
 ): ViewModel() {
@@ -43,7 +45,8 @@ class CreateGroupViewModel @AssistedInject constructor(
         applyDefaultFiltering = true,
         scope = viewModelScope,
         appContext = appContext,
-        avatarUtils = avatarUtils
+        avatarUtils = avatarUtils,
+        proStatusManager = proStatusManager
     )
 
     // Input: group name

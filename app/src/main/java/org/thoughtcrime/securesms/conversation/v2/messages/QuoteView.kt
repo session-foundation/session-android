@@ -4,9 +4,15 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
+import androidx.core.graphics.toColor
 import androidx.core.text.toSpannable
 import androidx.core.view.isVisible
 import com.bumptech.glide.RequestManager
@@ -14,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewQuoteBinding
 import org.session.libsession.messaging.contacts.Contact
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -21,6 +28,12 @@ import org.session.libsession.utilities.truncateIdForDisplay
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities
 import org.thoughtcrime.securesms.database.SessionContactDatabase
 import org.thoughtcrime.securesms.mms.SlideDeck
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.MediaUtil
 import org.thoughtcrime.securesms.util.toPx
 import javax.inject.Inject
@@ -35,6 +48,8 @@ import javax.inject.Inject
 class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) : ConstraintLayout(context, attrs) {
 
     @Inject lateinit var contactDb: SessionContactDatabase
+
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val binding: ViewQuoteBinding by lazy { ViewQuoteBinding.bind(this) }
     private val vPadding by lazy { toPx(6, resources) }
@@ -66,10 +81,11 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
     // endregion
 
     // region Updating
-    fun bind(authorPublicKey: String, body: String?, attachments: SlideDeck?, thread: Recipient,
+    fun bind(authorRecipient: Recipient, body: String?, attachments: SlideDeck?, thread: Recipient,
         isOutgoingMessage: Boolean, isOpenGroupInvitation: Boolean, threadID: Long,
         isOriginalMissing: Boolean, glide: RequestManager) {
         // Author
+        val authorPublicKey = authorRecipient.address.toString()
         val author = contactDb.getContactWithAccountID(authorPublicKey)
         val localNumber = TextSecurePreferences.getLocalNumber(context)
         val quoteIsLocalUser = localNumber != null && authorPublicKey == localNumber
@@ -77,9 +93,28 @@ class QuoteView @JvmOverloads constructor(context: Context, attrs: AttributeSet?
         val authorDisplayName =
             if (quoteIsLocalUser) context.getString(R.string.you)
             else author?.displayName(Contact.contextForRecipient(thread)) ?: truncateIdForDisplay(authorPublicKey)
-        binding.quoteViewAuthorTextView.text = authorDisplayName
+
         val textColor = getTextColor(isOutgoingMessage)
-        binding.quoteViewAuthorTextView.setTextColor(textColor)
+
+        // set up quote author
+        binding.quoteAuthor.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            var modifier: Modifier = Modifier
+            if(mode == Mode.Regular){
+                modifier = modifier.widthIn(max = 240.dp) // this value is hardcoded in the xml files > when we move to composable messages this will be handled better internally
+            }
+
+            setThemedContent {
+                ProBadgeText(
+                    modifier = modifier,
+                    text = authorDisplayName, //todo badge we need to rework te naming logic to get the name (no account id for blinded here...) - waiting on the Recipient refactor
+                    textStyle = LocalType.current.small.bold().copy(color = Color(textColor)),
+                    showBadge = proStatusManager.shouldShowProBadge(authorRecipient.address),
+                    invertBadgeColor = isOutgoingMessage && mode == Mode.Regular
+                )
+            }
+        }
+
         // Body
         binding.quoteViewBodyTextView.text = if (isOpenGroupInvitation)
             resources.getString(R.string.communityInvitation)
