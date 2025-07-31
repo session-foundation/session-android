@@ -117,8 +117,10 @@ class DefaultMessageNotifier(
         try {
             val activeNotifications = notifications.activeNotifications
 
+            // Also prevent REQUEST_NOTIFICATION_ID from being cleared here. We need to manually clear it
             for (activeNotification in activeNotifications) {
-                if(activeNotification.id != WEBRTC_NOTIFICATION) {
+                if(activeNotification.id != WEBRTC_NOTIFICATION &&
+                    activeNotification.id != REQUEST_NOTIFICATION_ID) {
                     notifications.cancel(activeNotification.id)
                 }
             }
@@ -187,6 +189,7 @@ class DefaultMessageNotifier(
             !(recipient.isApproved || threads.getLastSeenAndHasSent(threadId).second())
         ) {
             removeHasHiddenMessageRequests(context)
+            clearMessageRequestNotification(context)
         }
 
         if (!isNotificationsEnabled(context) ||
@@ -208,6 +211,14 @@ class DefaultMessageNotifier(
         } catch (e: Exception) {
             return false
         }
+    }
+
+    private fun clearMessageRequestNotification(context: Context) {
+        ServiceUtil
+            .getNotificationManager(context)
+            .cancel(REQUEST_NOTIFICATION_ID)
+
+        hasPostedRequestOnce = false
     }
 
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
@@ -293,7 +304,7 @@ class DefaultMessageNotifier(
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
-        // Only skip duplicates for _real_ message notifications—not for request alerts
+        // Only skip duplicates for _real_ message notifications, not for request alerts
         if (notificationId != REQUEST_NOTIFICATION_ID && existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
@@ -315,11 +326,12 @@ class DefaultMessageNotifier(
         builder.setThread(notifications[0].recipient)
         builder.setMessageCount(notificationState.notificationCount)
 
-        val isRequestNote = notificationId == REQUEST_NOTIFICATION_ID
-        if(isRequestNote){
+        val isMessageRequest = notificationId == REQUEST_NOTIFICATION_ID
+        if(isMessageRequest){
             // Set the notification title to App Name
             builder.setContentTitle(context.getString(R.string.app_name))
             builder.setLargeIcon(null as Bitmap?)
+            builder.setOnlyAlertOnce(true)
         }
 
         val builderCS = notificationText ?: ""
@@ -516,9 +528,6 @@ class DefaultMessageNotifier(
         val threadDatabase = get(context).threadDatabase()
         val cache: MutableMap<Long, String?> = HashMap()
 
-        // A flag so we only ever enqueue one "message request" notification
-        var hasNotifiedMessageRequest = false
-
         var record: MessageRecord? = null
         do {
             record = reader.next
@@ -542,8 +551,12 @@ class DefaultMessageNotifier(
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
             if (isMessageRequest) {
-                if (!hasNotifiedMessageRequest) {
-                    notificationState.addNotification(
+                val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+                val hasHiddenRequests = hasHiddenMessageRequests(context)
+
+               // Only send if you either have no existing message requests or have hidden the section
+                if (!hasPostedRequestOnce && (!hasExistingMessages || hasHiddenRequests)) {
+                    val item =
                         // Use a constant ID here so Android treats all request notifications as the same
                         NotificationItem(
                             REQUEST_NOTIFICATION_ID.toLong(),
@@ -556,9 +569,11 @@ class DefaultMessageNotifier(
                             record.timestamp,
                             null
                         )
-                    )
-                    hasNotifiedMessageRequest = true
+                    notificationState.addNotification(item)
+
+                    hasPostedRequestOnce = true
                 }
+
                 continue
             }
 
@@ -840,6 +855,9 @@ class DefaultMessageNotifier(
         private const val REQUEST_NOTIFICATION_ID = 1112 // Constant ID for message requests
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
+
+        // Message Request variables to keep a single one
+        private var hasPostedRequestOnce = false
 
         @Volatile
         private var visibleThread: Long = -1
