@@ -1,7 +1,9 @@
 package org.thoughtcrime.securesms.home
 
 import androidx.compose.runtime.Composable
-import org.thoughtcrime.securesms.home.HomeViewModel.Commands.*
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HandleUserProfileCommand
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HidePinCTADialog
+import org.thoughtcrime.securesms.home.HomeViewModel.Commands.HideUserProfileModal
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.theme.SessionMaterialTheme
@@ -16,11 +18,7 @@ fun HomeDialogs(
         if(dialogsState.pinCTA != null){
             PinProCTA(
                 overTheLimit = dialogsState.pinCTA.overTheLimit,
-                onUpgrade = {
-                    sendCommand(GoToProUpgradeScreen)
-                },
-
-                onCancel = {
+                onDismissRequest = {
                     sendCommand(HidePinCTADialog)
                 }
             )

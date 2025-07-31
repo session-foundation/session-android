@@ -39,24 +39,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
-                    android:id="@+id/displayNameTextView"
+                <androidx.compose.ui.platform.ComposeView
+                    android:id="@+id/displayName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textAlignment="viewStart"
-                    android:textColor="?android:textColorPrimary"
-                    android:textSize="@dimen/medium_font_size"
-                    android:textStyle="bold"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/unreadCountIndicator"
                     app:layout_constraintHorizontal_bias="0"
                     app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constrainedWidth="true"
-                    tools:text="I'm a very long display name. What are you going to do about it?" />
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <RelativeLayout
                     android:id="@+id/unreadCountIndicator"
@@ -71,7 +63,7 @@
                     android:paddingRight="4dp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@id/timestampTextView"
-                    app:layout_constraintStart_toEndOf="@id/displayNameTextView"
+                    app:layout_constraintStart_toEndOf="@id/displayName"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <TextView

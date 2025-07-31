@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.groups.ContactItem
+import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.RadioButtonIndicator
 import org.thoughtcrime.securesms.ui.qaTag
@@ -61,6 +62,7 @@ fun  MemberItem(
     title: String,
     avatarUIData: AvatarUIData,
     showAsAdmin: Boolean,
+    showProBadge: Boolean,
     modifier: Modifier = Modifier,
     onClick: ((accountId: AccountId) -> Unit)? = null,
     subtitle: String? = null,
@@ -92,11 +94,11 @@ fun  MemberItem(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
         ) {
-            Text(
-                style = LocalType.current.h8,
+            ProBadgeText(
+                modifier = Modifier.qaTag(R.string.AccessibilityId_contact),
                 text = title,
-                color = LocalColors.current.text,
-                modifier = Modifier.qaTag(R.string.AccessibilityId_contact)
+                textStyle = LocalType.current.h8.copy(color = LocalColors.current.text),
+                showBadge = showProBadge
             )
 
             if (!subtitle.isNullOrEmpty()) {
@@ -122,6 +124,7 @@ fun RadioMemberItem(
     title: String,
     onClick: (accountId: AccountId) -> Unit,
     showAsAdmin: Boolean,
+    showProBadge: Boolean,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     subtitleColor: Color = LocalColors.current.textSecondary
@@ -134,6 +137,7 @@ fun RadioMemberItem(
         subtitleColor = subtitleColor,
         onClick = if(enabled) onClick else null,
         showAsAdmin = showAsAdmin,
+        showProBadge = showProBadge,
         modifier = modifier
     ){
         RadioButtonIndicator(
@@ -159,6 +163,7 @@ fun LazyListScope.multiSelectMemberList(
             avatarUIData = contact.avatarUIData,
             title = contact.name,
             showAsAdmin = false,
+            showProBadge = contact.showProBadge,
             onClick = { onContactItemClicked(contact.accountID) }
         )
     }
@@ -185,6 +190,7 @@ fun PreviewMemberList() {
                             )
                         ),
                         selected = false,
+                        showProBadge = false,
                     ),
                     ContactItem(
                         accountID = AccountId(random),
@@ -198,6 +204,7 @@ fun PreviewMemberList() {
                             )
                         ),
                         selected = true,
+                        showProBadge = true,
                     )
                 ),
                 onContactItemClicked = {}

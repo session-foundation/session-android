@@ -167,7 +167,7 @@ class VisibleMessageContentView : ConstraintLayout {
             } else {
                 quote.text
             }
-            binding.quoteView.root.bind(quote.author.toString(), quoteText, quote.attachment, thread,
+            binding.quoteView.root.bind(Recipient.from(context, quote.author, false), quoteText, quote.attachment, thread,
                 message.isOutgoing, message.isOpenGroupInvitation, message.threadId,
                 quote.isOriginalMissing, glide)
             onContentClick.add { event ->

@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.debugmenu
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerState
@@ -50,6 +53,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
@@ -64,6 +70,7 @@ import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.Schedule
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowDeprecationChangeDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.ShowEnvironmentWarningDialog
 import org.thoughtcrime.securesms.debugmenu.DebugMenuViewModel.Commands.GenerateContacts
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.DialogButtonData
@@ -214,7 +221,10 @@ fun DebugMenu(
             }
 
             // Session Pro
-            DebugCell("Session Pro") {
+            DebugCell(
+                "Session Pro",
+                verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Set current user as Pro",
                     checked = uiState.forceCurrentUserAsPro,
@@ -223,6 +233,7 @@ fun DebugMenu(
                     }
                 )
 
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Set all incoming messages as Pro",
                     checked = uiState.forceIncomingMessagesAsPro,
@@ -231,6 +242,51 @@ fun DebugMenu(
                     }
                 )
 
+                AnimatedVisibility(uiState.forceIncomingMessagesAsPro) {
+                    Column{
+                        DebugCheckboxRow(
+                            text = "Message Feature: Pro Badge",
+                            minHeight = 30.dp,
+                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.ProBadge),
+                            onCheckedChange = {
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetMessageProFeature(
+                                        ProStatusManager.MessageProFeature.ProBadge, it
+                                    )
+                                )
+                            }
+                        )
+
+                        DebugCheckboxRow(
+                            text = "Message Feature: Long Message",
+                            minHeight = 30.dp,
+                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.LongMessage),
+                            onCheckedChange = {
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetMessageProFeature(
+                                        ProStatusManager.MessageProFeature.LongMessage, it
+                                    )
+                                )
+                            }
+                        )
+
+                        DebugCheckboxRow(
+                            text = "Message Feature: Animated Avatar",
+                            minHeight = 30.dp,
+                            checked = uiState.messageProFeature.contains(ProStatusManager.MessageProFeature.AnimatedAvatar),
+                            onCheckedChange = {
+                                sendCommand(
+                                    DebugMenuViewModel.Commands.SetMessageProFeature(
+                                        ProStatusManager.MessageProFeature.AnimatedAvatar, it
+                                    )
+                                )
+                            }
+                        )
+                    }
+
+                }
+
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Set app as post Pro launch",
                     checked = uiState.forcePostPro,
@@ -239,6 +295,7 @@ fun DebugMenu(
                     }
                 )
 
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Set other users as Pro",
                     checked = uiState.forceOtherUsersAsPro,
@@ -247,6 +304,7 @@ fun DebugMenu(
                     }
                 )
 
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 DebugSwitchRow(
                     text = "Force 30sec TTL avatar",
                     checked = uiState.forceShortTTl,
@@ -255,6 +313,7 @@ fun DebugMenu(
                     }
                 )
 
+                Spacer(modifier = Modifier.height(LocalDimensions.current.xsSpacing))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
@@ -267,7 +326,7 @@ fun DebugMenu(
                     )
 
                     Text(
-                        text = "For avatar animation changes based on the values changed above, please restart the app",
+                        text = "For avatar animation or Pro badge changes based on the values modified above, please restart the app",
                         style = LocalType.current.base.copy(color = LocalColors.current.warning)
                     )
                 }
@@ -524,10 +583,11 @@ private val LegacyGroupDeprecationManager.DeprecationState?.displayName: String
 private fun DebugRow(
     title: String,
     modifier: Modifier = Modifier,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
     content: @Composable RowScope.() -> Unit
 ) {
     Row(
-        modifier = modifier.heightIn(min = LocalDimensions.current.minItemButtonHeight),
+        modifier = modifier.heightIn(min = minHeight),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
     ) {
@@ -563,9 +623,38 @@ fun DebugSwitchRow(
 }
 
 @Composable
+fun DebugCheckboxRow(
+    text: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    minHeight: Dp = LocalDimensions.current.minItemButtonHeight,
+) {
+    DebugRow(
+        title = text,
+        minHeight = minHeight,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = CheckboxDefaults.colors(
+                checkedColor = LocalColors.current.accent,
+                uncheckedColor = LocalColors.current.disabled,
+                checkmarkColor = LocalColors.current.background
+            )
+        )
+    }
+
+}
+
+@Composable
 fun ColumnScope.DebugCell(
     title: String,
     modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
@@ -575,7 +664,7 @@ fun ColumnScope.DebugCell(
     ) {
         Column(
             modifier = Modifier.padding(LocalDimensions.current.spacing),
-            verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing)
+            verticalArrangement = verticalArrangement
         ) {
             Text(
                 text = title,
@@ -606,10 +695,11 @@ fun PreviewDebugMenu() {
                 availableDeprecationState = emptyList(),
                 deprecatingStartTime = ZonedDateTime.now(),
                 forceCurrentUserAsPro = false,
-                forceIncomingMessagesAsPro = false,
+                forceIncomingMessagesAsPro = true,
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
-                forceShortTTl = false
+                forceShortTTl = false,
+                messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar)
             ),
             sendCommand = {},
             onClose = {}

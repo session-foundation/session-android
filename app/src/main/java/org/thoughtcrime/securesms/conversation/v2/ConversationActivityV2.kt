@@ -558,14 +558,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
         binding.scrollToBottomButton.setOnClickListener {
             val layoutManager = binding.conversationRecyclerView.layoutManager as LinearLayoutManager
-            val targetPosition = adapter.itemCount
+            val targetPosition = adapter.itemCount - 1
 
-            // If we are currently in the process of smooth scrolling then we'll use `scrollToPosition` to quick-jump..
             if (layoutManager.isSmoothScrolling) {
+                // Tapping while smooth scrolling is in progress will instantly jump to the bottom.
                 binding.conversationRecyclerView.scrollToPosition(targetPosition)
             } else {
-                // ..otherwise we'll use the animated `smoothScrollToPosition` to scroll to our target position.
-                binding.conversationRecyclerView.smoothScrollToPosition(targetPosition)
+                // First tap: smooth scroll
+                linearSmoothScroller.targetPosition = targetPosition
+                layoutManager.startSmoothScroll(linearSmoothScroller)
             }
         }
 
@@ -974,7 +975,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                             .apply {
                                 // Append a space as a placeholder
                                 append(" ")
-                                
+
                                 // we need to add the inline icon
                                 val drawable = ContextCompat.getDrawable(this@ConversationActivityV2, R.drawable.ic_square_arrow_up_right)!!
                                 val imageSize = toPx(10, resources)

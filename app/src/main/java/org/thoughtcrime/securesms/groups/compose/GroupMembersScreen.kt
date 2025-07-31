@@ -102,6 +102,7 @@ fun GroupMembers(
                             LocalColors.current.textSecondary
                         },
                         showAsAdmin = member.showAsAdmin,
+                        showProBadge = member.showProBadge,
                         avatarUIData = member.avatarUIData
                     )
                 }
@@ -125,6 +126,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited",
             avatarUIData = AvatarUIData(
@@ -146,6 +148,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed",
             avatarUIData = AvatarUIData(
@@ -167,6 +170,7 @@ private fun EditGroupPreview() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = "",
             avatarUIData = AvatarUIData(

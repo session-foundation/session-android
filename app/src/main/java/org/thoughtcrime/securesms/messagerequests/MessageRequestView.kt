@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import network.loki.messenger.R
@@ -16,16 +17,26 @@ import org.session.libsession.utilities.recipients.Recipient
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import com.bumptech.glide.RequestManager
+import dagger.hilt.android.AndroidEntryPoint
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.setThemedContent
+import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalType
+import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.UnreadStylingHelper
 import org.thoughtcrime.securesms.util.getAccentColor
 import java.util.Locale
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MessageRequestView : LinearLayout {
     private lateinit var binding: ViewMessageRequestBinding
     private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
     var thread: ThreadRecord? = null
+
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     // region Lifecycle
     constructor(context: Context) : super(context) { initialize() }
@@ -56,7 +67,18 @@ class MessageRequestView : LinearLayout {
         binding.unreadCountTextView.text = UnreadStylingHelper.formatUnreadCount(unreadCount)
         binding.unreadCountIndicator.isVisible =  isUnread
 
-        binding.displayNameTextView.text = senderDisplayName
+        binding.displayName.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setThemedContent {
+                ProBadgeText(
+                    text = senderDisplayName,
+                    textStyle = LocalType.current.h8.bold().copy(color = LocalColors.current.text),
+                    showBadge = proStatusManager.shouldShowProBadge(thread.recipient.address)
+                            && !thread.recipient.isLocalNumber,
+                )
+            }
+        }
+
         binding.timestampTextView.text = dateUtils.getDisplayFormattedTimeSpanString(
             thread.date
         )

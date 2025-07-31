@@ -45,17 +45,35 @@
                         app:layout_constraintBottom_toBottomOf="@+id/profileButton"
                         app:layout_constraintEnd_toEndOf="@+id/profileButton"/>
 
+
                     <ImageView
                         android:id="@+id/sessionHeaderImage"
-                        android:layout_width="0dp"
-                        android:layout_height="16dp"
+                        android:layout_width="125dp"
+                        android:layout_height="17dp"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toEndOf="@+id/profileButton"
-                        app:layout_constraintEnd_toStartOf="@+id/searchViewContainer"
+                        app:layout_constraintEnd_toStartOf="@+id/sessionHeaderProBadge"
+                        app:layout_constraintHorizontal_chainStyle="packed"
                         android:scaleType="centerInside"
                         android:src="@drawable/ic_session"
                         app:tint="?sessionLogoTint" />
+
+                    <ImageView
+                        android:id="@+id/sessionHeaderProBadge"
+                        android:layout_width="36dp"
+                        android:layout_height="17dp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/sessionHeaderImage"
+                        app:layout_constraintEnd_toStartOf="@+id/searchViewContainer"
+                        app:layout_constraintHorizontal_chainStyle="packed"
+                        android:contentDescription="null"
+                        android:layout_marginStart="6dp"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/ic_pro_badge"/>
 
                     <RelativeLayout
                         android:id="@+id/searchViewContainer"
