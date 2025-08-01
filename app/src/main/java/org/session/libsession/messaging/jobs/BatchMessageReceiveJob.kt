@@ -23,9 +23,6 @@ import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
 import org.session.libsession.messaging.sending_receiving.VisibleMessageHandlerContext
 import org.session.libsession.messaging.sending_receiving.constructReactionRecords
-import org.session.libsession.messaging.sending_receiving.handle
-import org.session.libsession.messaging.sending_receiving.handleUnsendRequest
-import org.session.libsession.messaging.sending_receiving.handleVisibleMessage
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.UserConfigType
@@ -180,6 +177,7 @@ class BatchMessageReceiveJob(
             )
 
             val communityReactions = mutableMapOf<MessageId, MutableList<ReactionRecord>>()
+            val handler = MessagingModuleConfiguration.shared.receivedMessageHandler
 
             messages.forEach { (parameters, message, proto) ->
                 try {
@@ -192,7 +190,7 @@ class BatchMessageReceiveJob(
                                 // use sent timestamp here since that is technically the last one we have
                                 updatedLastSeen = max(updatedLastSeen, message.sentTimestamp!!)
                             }
-                            val messageId = MessageReceiver.handleVisibleMessage(
+                            val messageId = handler.handleVisibleMessage(
                                 message = message,
                                 proto = proto,
                                 context = handlerContext,
@@ -218,7 +216,7 @@ class BatchMessageReceiveJob(
                         }
 
                         is UnsendRequest -> {
-                            val deletedMessage = MessageReceiver.handleUnsendRequest(message)
+                            val deletedMessage = handler.handleUnsendRequest(message)
 
                             // If we removed a message then ensure it isn't in the 'messageIds'
                             if (deletedMessage != null) {
@@ -226,7 +224,7 @@ class BatchMessageReceiveJob(
                             }
                         }
 
-                        else -> MessageReceiver.handle(
+                        else -> handler.handle(
                             message = message,
                             proto = proto,
                             threadId = threadId,

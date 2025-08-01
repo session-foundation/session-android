@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.sskenvironment
 
-import android.content.Context
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.SSKEnvironment
 import org.session.libsession.utilities.TextSecurePreferences
@@ -16,7 +15,11 @@ class ReadReceiptManager @Inject constructor(
     private val mmsSmsDatabase: MmsSmsDatabase,
 ): SSKEnvironment.ReadReceiptManagerProtocol {
 
-    override fun processReadReceipts(context: Context, fromRecipientId: String, sentTimestamps: List<Long>, readTimestamp: Long) {
+    override fun processReadReceipts(
+        fromRecipientId: String,
+        sentTimestamps: List<Long>,
+        readTimestamp: Long
+    ) {
         if (textSecurePreferences.isReadReceiptsEnabled()) {
 
             // Redirect message to master device conversation

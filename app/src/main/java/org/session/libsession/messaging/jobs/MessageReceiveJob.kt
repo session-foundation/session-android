@@ -5,7 +5,6 @@ import nl.komponents.kovenant.deferred
 import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
-import org.session.libsession.messaging.sending_receiving.handle
 import org.session.libsession.messaging.utilities.Data
 import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
@@ -42,7 +41,7 @@ class MessageReceiveJob(val data: ByteArray, val serverHash: String? = null, val
             val (message, proto) = MessageReceiver.parse(this.data, this.openGroupMessageServerID, openGroupPublicKey = serverPublicKey, currentClosedGroups = currentClosedGroups)
             val threadId = Message.getThreadId(message, this.openGroupID, storage, false)
             message.serverHash = serverHash
-            MessageReceiver.handle(message, proto, threadId ?: -1, this.openGroupID, null)
+            MessagingModuleConfiguration.shared.receivedMessageHandler.handle(message, proto, threadId ?: -1, this.openGroupID, null)
             this.handleSuccess(dispatcherName)
             deferred.resolve(Unit)
         } catch (e: Exception) {
