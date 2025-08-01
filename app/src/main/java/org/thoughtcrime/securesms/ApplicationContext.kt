@@ -47,6 +47,7 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.MessagingModuleConfiguration.Companion.configure
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.groups.LegacyGroupDeprecationManager
+import org.session.libsession.messaging.jobs.MessageSendJob
 import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
@@ -193,7 +194,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
     @Inject lateinit var usernameUtils: Lazy<UsernameUtils>
     @Inject lateinit var pollerManager: Lazy<PollerManager>
     @Inject lateinit var proStatusManager: Lazy<ProStatusManager>
-    @Inject lateinit var receivedMessageHandler: Lazy<ReceivedMessageHandler>
+    @Inject lateinit var messageSendJobFactory: MessageSendJob.Factory
 
     @Inject
     lateinit var backgroundPollManager: Lazy<BackgroundPollManager> // Exists here only to start upon app starts
@@ -296,7 +297,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver,
             deprecationManager = legacyGroupDeprecationManager.get(),
             usernameUtils = usernameUtils.get(),
             proStatusManager = proStatusManager.get(),
-            receivedMessageHandler = receivedMessageHandler.get(),
+            messageSendJobFactory = messageSendJobFactory,
         )
 
         startKovenant()

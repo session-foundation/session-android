@@ -67,8 +67,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val avatarUtils: AvatarUtils,
     private val dateUtils: DateUtils,
     private val proStatusManager: ProStatusManager,
-    messageDataProvider: MessageDataProvider,
-    storage: Storage
+    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory
 ) : ViewModel() {
     private val state = MutableStateFlow(MessageDetailsState())
     val stateFlow = state.asStateFlow()
@@ -79,11 +78,7 @@ class MessageDetailsViewModel @AssistedInject constructor(
     private val _dialogState: MutableStateFlow<DialogsState> = MutableStateFlow(DialogsState())
     val dialogState: StateFlow<DialogsState> = _dialogState
 
-    private val attachmentDownloadHandler = AttachmentDownloadHandler(
-        storage = storage,
-        messageDataProvider = messageDataProvider,
-        scope = viewModelScope,
-    )
+    private val attachmentDownloadHandler = attachmentDownloadHandlerFactory.create(viewModelScope)
 
     init {
         viewModelScope.launch {

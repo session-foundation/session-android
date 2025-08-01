@@ -137,7 +137,7 @@ class JobQueue : JobDelegate {
                     is OpenGroupDeleteJob -> {
                         openGroupQueue.send(job)
                     }
-                    is MessageReceiveJob, is TrimThreadJob,
+                    is TrimThreadJob,
                     is BatchMessageReceiveJob -> {
                         if ((job is BatchMessageReceiveJob && !job.openGroupID.isNullOrEmpty())
                             || (job is TrimThreadJob && !job.openGroupId.isNullOrEmpty())) {
@@ -226,7 +226,6 @@ class JobQueue : JobDelegate {
         val allJobTypes = listOf(
             AttachmentUploadJob.KEY,
             AttachmentDownloadJob.KEY,
-            MessageReceiveJob.KEY,
             MessageSendJob.KEY,
             NotifyPNServerJob.KEY,
             BatchMessageReceiveJob.KEY,
@@ -262,7 +261,7 @@ class JobQueue : JobDelegate {
         if (job is BatchMessageReceiveJob && job.failureCount <= 0) {
             val replacementParameters = job.failures.toList()
             if (replacementParameters.isNotEmpty()) {
-                val newJob = BatchMessageReceiveJob(replacementParameters, job.openGroupID)
+                val newJob = job.recreateWithNewMessages(replacementParameters)
                 newJob.failureCount = job.failureCount + 1
                 add(newJob)
             }

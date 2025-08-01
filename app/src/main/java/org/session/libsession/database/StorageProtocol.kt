@@ -62,7 +62,6 @@ interface StorageProtocol {
     fun getAllPendingJobs(vararg types: String): Map<String,Job?>
     fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob?
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob?
-    fun getMessageReceiveJob(messageReceiveJobID: String): Job?
     fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): Job?
     fun resumeMessageSendJobIfNeeded(messageSendJobID: String)
     fun isJobCanceled(job: Job): Boolean

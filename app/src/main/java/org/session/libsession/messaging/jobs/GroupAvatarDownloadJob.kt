@@ -70,7 +70,7 @@ class GroupAvatarDownloadJob(val server: String, val room: String, val imageId: 
         private const val IMAGE_ID = "imageId"
     }
 
-    class Factory : Job.Factory<GroupAvatarDownloadJob> {
+    class DeserializeFactory : Job.DeserializeFactory<GroupAvatarDownloadJob> {
 
         override fun create(data: Data): GroupAvatarDownloadJob {
             return GroupAvatarDownloadJob(

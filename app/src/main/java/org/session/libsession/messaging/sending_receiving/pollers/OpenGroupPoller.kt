@@ -60,6 +60,7 @@ class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
     private val receivedMessageHandler: ReceivedMessageHandler,
+    private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -375,7 +376,7 @@ class OpenGroupPoller @AssistedInject constructor(
             val parameters = list.map { (serverId, message, reactions) ->
                 MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
             }
-            JobQueue.shared.add(BatchMessageReceiveJob(parameters, openGroupID))
+            JobQueue.shared.add(batchMessageJobFactory.create(parameters, openGroupID))
         }
 
         if (envelopes.isNotEmpty()) {

@@ -43,7 +43,7 @@ class TrimThreadJob(val threadId: Long, val openGroupId: String?) : Job {
 
     override fun getFactoryKey(): String = "TrimThreadJob"
 
-    class Factory : Job.Factory<TrimThreadJob> {
+    class DeserializeFactory : Job.DeserializeFactory<TrimThreadJob> {
 
         override fun create(data: Data): TrimThreadJob {
             return TrimThreadJob(data.getLong(THREAD_ID), data.getStringOrDefault(OPEN_GROUP_ID, null))

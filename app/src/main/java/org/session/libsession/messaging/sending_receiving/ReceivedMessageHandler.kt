@@ -2,6 +2,9 @@ package org.session.libsession.messaging.sending_receiving
 
 import android.content.Context
 import android.text.TextUtils
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -87,6 +90,8 @@ class ReceivedMessageHandler @Inject constructor(
     private val groupManagerV2: GroupManagerV2,
     private val proStatusManager: ProStatusManager,
     private val profileManager: SSKEnvironment.ProfileManagerProtocol,
+    private val visibleMessageContextFactory: VisibleMessageHandlerContext.Factory,
+    private val attachmentDownloadJobFactory: AttachmentDownloadJob.Factory
 ) {
     fun handle(message: Message, proto: SignalServiceProtos.Content, threadId: Long, openGroupID: String?, groupv2Id: AccountId?) {
         // Do nothing if the message was outdated
@@ -114,7 +119,7 @@ class ReceivedMessageHandler @Inject constructor(
             is VisibleMessage -> handleVisibleMessage(
                 message = message,
                 proto = proto,
-                context = VisibleMessageHandlerContext(MessagingModuleConfiguration.shared, threadId, openGroupID),
+                context = visibleMessageContextFactory.create(threadId, openGroupID),
                 runThreadUpdate = true,
                 runProfileUpdate = true
             )
@@ -453,8 +458,10 @@ class ReceivedMessageHandler @Inject constructor(
             if (messageID.mms && (context.threadRecipient?.autoDownloadAttachments == true || messageSender == userPublicKey)) {
                 context.storage.getAttachmentsForMessage(messageID.id).iterator().forEach { attachment ->
                     attachment.attachmentId?.let { id ->
-                        val downloadJob = AttachmentDownloadJob(id.rowId, messageID.id)
-                        JobQueue.shared.add(downloadJob)
+                        JobQueue.shared.add(attachmentDownloadJobFactory.create(
+                            attachmentID = id.rowId,
+                            mmsMessageId = messageID.id
+                        ))
                     }
                 }
             }
@@ -709,28 +716,17 @@ private fun SignalServiceProtos.Content.ExpirationType.expiryMode(durationSecond
     }
 } ?: ExpiryMode.NONE
 
-class VisibleMessageHandlerContext(
-    val context: Context,
-    val threadId: Long,
-    val openGroupID: String?,
+
+class VisibleMessageHandlerContext @AssistedInject constructor(
+    @param:ApplicationContext val context: Context,
+    @Assisted val threadId: Long,
+    @Assisted val openGroupID: String?,
     val storage: StorageProtocol,
     val profileManager: SSKEnvironment.ProfileManagerProtocol,
     val groupManagerV2: GroupManagerV2,
     val messageExpirationManager: SSKEnvironment.MessageExpirationManagerProtocol,
     val messageDataProvider: MessageDataProvider,
 ) {
-    constructor(module: MessagingModuleConfiguration, threadId: Long, openGroupID: String?):
-            this(
-                context = module.context,
-                threadId = threadId,
-                openGroupID = openGroupID,
-                storage = module.storage,
-                profileManager = SSKEnvironment.shared.profileManager,
-                groupManagerV2 = module.groupManagerV2,
-                messageExpirationManager = SSKEnvironment.shared.messageExpirationManager,
-                messageDataProvider = module.messageDataProvider
-            )
-
     val openGroup: OpenGroup? by lazy {
         openGroupID?.let { storage.getOpenGroup(threadId) }
     }
@@ -754,6 +750,15 @@ class VisibleMessageHandlerContext(
 
     val threadRecipient: Recipient? by lazy {
         storage.getRecipientForThread(threadId)
+    }
+
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            threadId: Long,
+            openGroupID: String?
+        ): VisibleMessageHandlerContext
     }
 }
 

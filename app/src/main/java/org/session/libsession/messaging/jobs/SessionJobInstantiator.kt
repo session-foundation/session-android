@@ -1,8 +1,12 @@
 package org.session.libsession.messaging.jobs
 
 import org.session.libsession.messaging.utilities.Data
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SessionJobInstantiator(private val jobFactories: Map<String, Job.Factory<out Job>>) {
+@Singleton
+class SessionJobInstantiator @Inject constructor(factories: SessionJobManagerFactories) {
+    private val jobFactories by lazy { factories.getSessionJobFactories() }
 
     fun instantiate(jobFactoryKey: String, data: Data): Job? {
         if (jobFactories.containsKey(jobFactoryKey)) {

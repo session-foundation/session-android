@@ -47,6 +47,7 @@ class PushReceiver @Inject constructor(
     private val configFactory: ConfigFactory,
     private val groupRevokedMessageHandler: GroupRevokedMessageHandler,
     private val json: Json,
+    private val batchJobFactory: BatchMessageReceiveJob.Factory,
 ) {
 
     /**
@@ -159,7 +160,7 @@ class PushReceiver @Inject constructor(
             }
 
             if (params != null) {
-                JobQueue.shared.add(BatchMessageReceiveJob(listOf(params), null))
+                JobQueue.shared.add(batchJobFactory.create(listOf(params)))
             }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to unwrap data for message due to error.", e)
