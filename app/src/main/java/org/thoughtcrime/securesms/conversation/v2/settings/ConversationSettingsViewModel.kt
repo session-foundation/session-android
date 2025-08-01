@@ -474,8 +474,16 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
 
         // account ID
-        val accountId = when{
-            conversation.is1on1 || conversation.isLocalNumber -> conversation.address.toString()
+        val (accountId, accountIdHeader) = when{
+            conversation.is1on1 -> conversation.address.toString() to context.getString(R.string.accountId)
+            conversation.isLocalNumber -> conversation.address.toString() to context.getString(R.string.accountIdYours)
+            else -> null to null
+        }
+
+        // QR Account ID
+        val qrAddress = when {
+            conversation.is1on1 -> conversation.address.toString()
+            conversation.isCommunityRecipient -> community?.joinURL
             else -> null
         }
 
@@ -705,6 +713,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
             else -> emptyList()
         }
 
+        val showProBadge = proStatusManager.shouldShowProBadge(conversation.address)
+                && !conversation.isLocalNumber
+
+        // if it's a one on one convo and the user isn't pro themselves
+        val proBadgeClickable = if(conversation.is1on1 && proStatusManager.isCurrentUserPro()) false
+        else showProBadge // otherwise whenever the badge is shown
+
         val avatarData = avatarUtils.getUIDataFromRecipient(conversation)
         _uiState.update {
             _uiState.value.copy(
@@ -719,9 +734,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 editCommand = editCommand,
                 description = description,
                 descriptionQaTag = descriptionQaTag,
-                accountId = accountId,
+                displayAccountId = accountId,
                 avatarUIData = avatarData,
-                categories = optionData
+                categories = optionData,
+                showProBadge = showProBadge,
+                proBadgeClickable = proBadgeClickable,
+                displayAccountIdHeader = accountIdHeader,
+                qrAddress = qrAddress,
             )
         }
 
@@ -1313,12 +1332,29 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 }
             }
 
-            is Commands.GoToProUpgradeScreen -> {
-                // hide dialog
-                _dialogState.update { it.copy(pinCTA = null) }
+            is Commands.ToggleQR -> {
+                _uiState.update {
+                    it.copy(showQR = !it.showQR)
+                }
+            }
 
-                // to go Pro upgrade screen
-                //todo PRO go to screen once it exists
+            is Commands.ToggleAvatarExpand -> {
+                _uiState.update {
+                    it.copy(expandedAvatar = !it.expandedAvatar)
+                }
+            }
+
+            is Commands.ShowProBadgeCTA -> {
+                _dialogState.update {
+                    it.copy(
+                        proBadgeCTA = if(recipient?.isGroupV2Recipient == true) ProBadgeCTA.Group
+                        else ProBadgeCTA.Generic
+                    )
+                }
+            }
+
+            is Commands.HideProBadgeCTA -> {
+                _dialogState.update { it.copy(proBadgeCTA = null) }
             }
         }
     }
@@ -1454,7 +1490,11 @@ class ConversationSettingsViewModel @AssistedInject constructor(
 
         data object HidePinCTADialog: Commands
 
-        data object GoToProUpgradeScreen: Commands
+        object ToggleAvatarExpand: Commands
+        object ToggleQR: Commands
+
+        object ShowProBadgeCTA: Commands
+        object HideProBadgeCTA: Commands
     }
 
     @AssistedFactory
@@ -1468,9 +1508,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val nameQaTag: String? = null,
         val description: String? = null,
         val descriptionQaTag: String? = null,
-        val accountId: String? = null,
+        val displayAccountId: String? = null, // account id to display directly on the screen
         val showLoading: Boolean = false,
+        val showProBadge: Boolean = false,
+        val proBadgeClickable: Boolean = false,
         val editCommand: Commands? = null,
+
+        val displayAccountIdHeader: String? = null,
+        val qrAddress: String? = null, // address to display as a qr code
+        val expandedAvatar: Boolean = false,
+        val showQR: Boolean = false,
+
         val categories: List<OptionsCategory> = emptyList()
     )
 
@@ -1500,11 +1548,17 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         val nicknameDialog: NicknameDialogData? = null,
         val groupEditDialog: GroupEditDialog? = null,
         val groupAdminClearMessagesDialog: GroupAdminClearMessageDialog? = null,
+        val proBadgeCTA: ProBadgeCTA? = null
     )
 
     data class PinProCTA(
         val overTheLimit: Boolean
     )
+
+    sealed interface ProBadgeCTA {
+        data object Generic: ProBadgeCTA
+        data object Group: ProBadgeCTA
+    }
 
     data class NicknameDialogData(
         val name: String,

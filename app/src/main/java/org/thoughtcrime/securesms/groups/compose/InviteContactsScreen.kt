@@ -153,6 +153,7 @@ private fun PreviewSelectContacts() {
             accountID = AccountId(random),
             name = "User $it",
             selected = it % 3 == 0,
+            showProBadge = true,
             avatarUIData = AvatarUIData(
                 listOf(
                     AvatarUIElement(

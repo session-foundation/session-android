@@ -1,6 +1,5 @@
 package org.thoughtcrime.securesms.pro
 
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,12 +8,14 @@ import kotlinx.coroutines.launch
 import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
+import org.thoughtcrime.securesms.database.model.MessageId
+import org.thoughtcrime.securesms.util.AnimatedImageUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
-    private val prefs: TextSecurePreferences
+    private val prefs: TextSecurePreferences,
 ){
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
@@ -51,10 +52,10 @@ class ProStatusManager @Inject constructor(
     }
 
     fun isUserPro(address: Address?): Boolean{
-        //todo PRO implement real logic once it's in
+        //todo PRO implement real logic once it's in - including the specifics for a groupsV2
         if(address == null) return false
 
-        if(address.isCommunity) return true // there are no pro status for community so we consider it true so that features work, like animated images for a community
+        if(address.isCommunity) return false
         else if(address.toString() == prefs.getLocalNumber()) return isCurrentUserPro()
         else if(prefs.forceOtherUsersAsPro()) return true
 
@@ -65,7 +66,7 @@ class ProStatusManager @Inject constructor(
      * Logic to determine if we should animate the avatar for a user or freeze it on the first frame
      */
     fun freezeFrameForUser(address: Address?): Boolean{
-        return if(!isPostPro()) false else !isUserPro(address)
+        return if(!isPostPro() || address?.isCommunity == true) false else !isUserPro(address)
     }
 
     /**
@@ -84,6 +85,10 @@ class ProStatusManager @Inject constructor(
         return prefs.forcePostPro()
     }
 
+    fun shouldShowProBadge(address: Address?): Boolean {
+        return isPostPro() && isUserPro(address) //todo PRO also check flag to see if user wants to hide their badge here
+    }
+
     fun getCharacterLimit(): Int {
         return if (isCurrentUserPro()) MAX_CHARACTER_PRO else MAX_CHARACTER_REGULAR
     }
@@ -92,6 +97,50 @@ class ProStatusManager @Inject constructor(
         if(!isPostPro()) return Int.MAX_VALUE // allow infinite pins while not in post Pro
 
         return if (isCurrentUserPro()) Int.MAX_VALUE else MAX_PIN_REGULAR
+    }
 
+
+    /**
+     * This will calculate the pro features of an outgoing message
+     */
+    fun calculateMessageProFeatures(message: String): List<MessageProFeature>{
+        val userAddress = prefs.getLocalNumber()
+        if(!isCurrentUserPro() || userAddress == null) return emptyList()
+
+        val features = mutableListOf<MessageProFeature>()
+
+        // check for pro badge display
+        if(shouldShowProBadge(Address.fromSerialized(userAddress))){
+            features.add(MessageProFeature.ProBadge)
+        }
+
+        // check for "long message" feature
+        if(message.length > MAX_CHARACTER_REGULAR){
+            features.add(MessageProFeature.LongMessage)
+        }
+
+        // check is the user has an animated avatar
+        //todo PRO check for animated avatar here and add appropriate feature
+
+
+        return features
+    }
+
+    /**
+     * This will get the list of Pro features from an incoming message
+     */
+    fun getMessageProFeatures(messageId: MessageId): Set<MessageProFeature>{
+        //todo PRO implement once we have data
+
+        // use debug values if any
+        if(prefs.forceIncomingMessagesAsPro()){
+            return prefs.getDebugMessageFeatures()
+        }
+
+        return emptySet()
+    }
+
+    enum class MessageProFeature {
+        ProBadge, LongMessage, AnimatedAvatar
     }
 }

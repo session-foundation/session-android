@@ -42,17 +42,11 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <TextView
-                android:layout_gravity="center"
-                android:textSize="@dimen/text_size"
-                tools:text="@tools:sample/full_names"
-                android:id="@+id/search_result_title"
-                android:textStyle="bold"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/resultTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:ellipsize="end"
-                />
+                android:layout_gravity="center"/>
             <RelativeLayout
                 android:id="@+id/unreadCountIndicator"
                 android:layout_width="wrap_content"

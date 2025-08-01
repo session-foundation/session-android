@@ -21,11 +21,13 @@ import network.loki.messenger.R
 import network.loki.messenger.libsession_util.allWithStatus
 import network.loki.messenger.libsession_util.util.GroupMember
 import org.session.libsession.database.StorageProtocol
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.GroupDisplayInfo
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUtils
 import java.util.EnumSet
@@ -36,7 +38,8 @@ abstract class BaseGroupMembersViewModel (
     private val storage: StorageProtocol,
     private val usernameUtils: UsernameUtils,
     private val configFactory: ConfigFactoryProtocol,
-    private val avatarUtils: AvatarUtils
+    private val avatarUtils: AvatarUtils,
+    private val proStatusManager: ProStatusManager,
 ) : ViewModel() {
     // Output: the source-of-truth group information. Other states are derived from this.
     protected val groupInfo: StateFlow<Pair<GroupDisplayInfo, List<GroupMemberState>>?> =
@@ -123,6 +126,7 @@ abstract class BaseGroupMembersViewModel (
             status = status.takeIf { !isMyself }, // Status is only meant for other members
             highlightStatus = highlightStatus,
             showAsAdmin = member.isAdminOrBeingPromoted(status),
+            showProBadge = proStatusManager.shouldShowProBadge(Address.fromSerialized(member.accountId())),
             avatarUIData = avatarUtils.getUIDataFromAccountId(memberAccountId.hexString),
             clickable = !isMyself,
             statusLabel = getMemberLabel(status, context, amIAdmin),
@@ -174,6 +178,7 @@ data class GroupMemberState(
     val status: GroupMember.Status?,
     val highlightStatus: Boolean,
     val showAsAdmin: Boolean,
+    val showProBadge: Boolean,
     val canResendInvite: Boolean,
     val canResendPromotion: Boolean,
     val canRemove: Boolean,

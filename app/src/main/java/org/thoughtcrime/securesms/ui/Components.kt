@@ -15,14 +15,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -33,10 +32,10 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -76,7 +75,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -87,32 +85,21 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideSubcomposition
-import com.bumptech.glide.integration.compose.RequestState
-import com.google.accompanist.drawablepainter.rememberDrawablePainter
-import com.squareup.phrase.Phrase
+import androidx.compose.ui.unit.times
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.loki.messenger.R
-import org.session.libsession.utilities.NonTranslatableStringConstants
-import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
-import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
 import org.thoughtcrime.securesms.ui.components.SmallCircularProgressIndicator
-import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
 import org.thoughtcrime.securesms.ui.components.TitledRadioButton
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
-import org.thoughtcrime.securesms.ui.theme.SessionColorsParameterProvider
-import org.thoughtcrime.securesms.ui.theme.ThemeColors
 import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.ui.theme.primaryOrange
@@ -122,6 +109,99 @@ import org.thoughtcrime.securesms.ui.theme.primaryRed
 import org.thoughtcrime.securesms.ui.theme.primaryYellow
 import org.thoughtcrime.securesms.ui.theme.transparentButtonColors
 import kotlin.math.roundToInt
+
+@Composable
+fun AccountIdHeader(
+    modifier: Modifier = Modifier,
+    text: String = stringResource(R.string.accountId),
+){
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ){
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+
+        Text(
+            modifier = Modifier
+                .border()
+                .padding(
+                    horizontal = LocalDimensions.current.smallSpacing,
+                    vertical = LocalDimensions.current.xxxsSpacing
+                )
+            ,
+            text = text,
+            style = LocalType.current.small.copy(color = LocalColors.current.textSecondary)
+        )
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(color = LocalColors.current.borders)
+        )
+    }
+}
+
+@Composable
+fun PathDot(
+    modifier: Modifier = Modifier,
+    dotSize: Dp = LocalDimensions.current.iconMedium,
+    glowSize: Dp = LocalDimensions.current.xxsSpacing,
+    color: Color = primaryGreen
+) {
+    val fullSize = dotSize + 2 * glowSize
+    Box(
+        modifier = modifier.size(fullSize),
+        contentAlignment = Alignment.Center
+    ) {
+        // Glow effect (outer circle with radial gradient)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(this.size.width / 2, this.size.height / 2)
+            val radius = (fullSize * 0.5f).toPx()
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        color, // Start color (opaque)
+                        color.copy(alpha = 0f)  // End color (transparent)
+                    ),
+                    center = center,
+                    radius = radius
+                ),
+                center = center,
+                radius = radius
+            )
+        }
+
+        // Inner solid dot
+        Box(
+            modifier = Modifier
+                .size(dotSize)
+                .background(
+                    color = color,
+                    shape = CircleShape
+                )
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewPathDot(){
+    PreviewTheme {
+        Box(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            PathDot()
+        }
+    }
+}
+
 
 data class RadioOption<T>(
     val value: T,
@@ -170,8 +250,10 @@ fun <T> OptionsCard(card: OptionsCardData<T>, onOptionSelected: (T) -> Unit) {
 
 @Composable
 fun LargeItemButtonWithDrawable(
-    @StringRes textId: Int,
+    text: GetString,
     @DrawableRes icon: Int,
+    iconTint: Color? = null,
+    iconSize: Dp? = null,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
@@ -180,7 +262,11 @@ fun LargeItemButtonWithDrawable(
     onClick: () -> Unit
 ) {
     ItemButtonWithDrawable(
-        textId, icon, modifier,
+        text = text,
+        icon = icon,
+        iconTint = iconTint,
+        iconSize = iconSize,
+        modifier = modifier,
         subtitle = subtitle,
         subtitleQaTag = subtitleQaTag,
         textStyle = LocalType.current.h8,
@@ -192,8 +278,10 @@ fun LargeItemButtonWithDrawable(
 
 @Composable
 fun ItemButtonWithDrawable(
-    @StringRes textId: Int,
+    text: GetString,
     @DrawableRes icon: Int,
+    iconSize: Dp? = null,
+    iconTint: Color? = null,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     @StringRes subtitleQaTag: Int? = null,
@@ -202,16 +290,22 @@ fun ItemButtonWithDrawable(
     shape: Shape = RectangleShape,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
     ItemButton(
-        annotatedStringText = AnnotatedString(stringResource(textId)),
+        annotatedStringText = AnnotatedString(text.string()),
         modifier = modifier,
         icon = {
             Image(
-                painter = rememberDrawablePainter(drawable = AppCompatResources.getDrawable(context, icon)),
+                painter = painterResource(id = icon),
                 contentDescription = null,
+                colorFilter = iconTint?.let { ColorFilter.tint(it) },
                 modifier = Modifier.align(Alignment.Center)
+                    .then(
+                        if(iconSize != null) {
+                            Modifier.size(iconSize)
+                        } else {
+                            Modifier
+                        }
+                    )
             )
         },
         textStyle = textStyle,
@@ -280,7 +374,7 @@ fun LargeItemButton(
 @Composable
 fun LargeItemButton(
     annotatedStringText: AnnotatedString,
-    @DrawableRes icon: Int,
+    icon: @Composable BoxScope.() -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     colors: ButtonColors = transparentButtonColors(),
@@ -570,447 +664,6 @@ private fun BottomFadingEdgeBoxPreview() {
             modifier = Modifier
                 .align(Alignment.CenterHorizontally),
             text = "Do stuff", onClick = {}
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SessionProCTA(
-    content: @Composable () -> Unit,
-    text: String,
-    features: List<CTAFeature>,
-    modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Text(
-                                text = stringResource(R.string.upgradeTo),
-                                style = LocalType.current.h5
-                            )
-
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // features
-                        features.forEachIndexed { index, feature ->
-                            ProCTAFeature(data = feature)
-                            if(index < features.size - 1){
-                                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
-                            }
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // buttons
-                        Row(
-                            Modifier.height(IntrinsicSize.Min),
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xsSpacing),
-                        ) {
-                            AccentFillButtonRect(
-                                modifier = Modifier.weight(1f).shimmerOverlay(),
-                                text = stringResource(R.string.theContinue),
-                                onClick = onUpgrade
-                            )
-
-                            TertiaryFillButtonRect(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.cancel),
-                                onClick = onCancel
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    )
-}
-
-sealed interface CTAFeature {
-    val text: String
-
-    data class Icon(
-        override val text: String,
-        @DrawableRes val icon: Int = R.drawable.ic_circle_check,
-    ): CTAFeature
-
-    data class RainbowIcon(
-        override val text: String,
-        @DrawableRes val icon: Int = R.drawable.ic_pro_sparkle_custom,
-    ): CTAFeature
-}
-
-@Composable
-fun SimpleSessionProCTA(
-    @DrawableRes heroImage: Int,
-    text: String,
-    features: List<CTAFeature>,
-    modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    SessionProCTA(
-        modifier = modifier,
-        text = text,
-        features = features,
-        onUpgrade = onUpgrade,
-        onCancel = onCancel,
-        content = { CTAImage(heroImage = heroImage) }
-    )
-}
-
-@Composable
-fun CTAImage(
-    @DrawableRes heroImage: Int,
-){
-    Image(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LocalColors.current.accent),
-        contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImage),
-        contentDescription = null,
-    )
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun AnimatedSessionProCTA(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-    text: String,
-    features: List<CTAFeature>,
-    modifier: Modifier = Modifier,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-){
-    SessionProCTA(
-        modifier = modifier,
-        text = text,
-        features = features,
-        onUpgrade = onUpgrade,
-        onCancel = onCancel,
-        content = {
-            CTAAnimatedImages(
-                heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
-            )
-        })
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun CTAAnimatedImages(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-){
-    Image(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(LocalColors.current.accent),
-        contentScale = ContentScale.FillWidth,
-        painter = painterResource(id = heroImageBg),
-        contentDescription = null,
-    )
-
-    GlideSubcomposition(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        model = heroImageAnimatedFg,
-    ){
-        when (state) {
-            is RequestState.Success -> {
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentScale = ContentScale.FillWidth,
-                    painter = painter,
-                    contentDescription = null,
-                )
-            }
-
-            else -> {}
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SessionProActivatedCTA(
-    content: @Composable () -> Unit,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    BasicAlertDialog(
-        modifier = modifier,
-        onDismissRequest = onCancel,
-        content = {
-            DialogBg {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    // hero image
-                    BottomFadingEdgeBox(
-                        fadingEdgeHeight = 70.dp,
-                        fadingColor = LocalColors.current.backgroundSecondary,
-                        content = { _ ->
-                            content()
-                        },
-                    )
-
-                    // content
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(LocalDimensions.current.smallSpacing)
-                    ) {
-                        // title
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentScale = ContentScale.FillHeight,
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-
-                            Text(
-                                text = stringResource(R.string.proActivated),
-                                style = LocalType.current.h5
-                            )
-                        }
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // already have pro
-                        Row(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)
-
-                        ) {
-                            Text(
-                                text = stringResource(R.string.proAlreadyPurchased),
-                                style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
-                            )
-
-                            Image(
-                                modifier = Modifier.height(LocalType.current.base.lineHeight.value.dp),
-                                painter = painterResource(id = R.drawable.ic_pro_badge),
-                                contentDescription = NonTranslatableStringConstants.APP_PRO,
-                            )
-                        }
-
-                        Spacer(Modifier.height(2.dp))
-
-                        // main message
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = text,
-                            textAlign = TextAlign.Center,
-                            style = LocalType.current.base.copy(
-                                color = LocalColors.current.textSecondary
-                            )
-                        )
-
-                        Spacer(Modifier.height(LocalDimensions.current.contentSpacing))
-
-                        // buttons
-                        TertiaryFillButtonRect(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = stringResource(R.string.close),
-                            onClick = onCancel
-                        )
-                    }
-                }
-            }
-        }
-    )
-}
-
-@Composable
-fun SimpleSessionProActivatedCTA(
-    @DrawableRes heroImage: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        text = text,
-        onCancel = onCancel,
-        content = { CTAImage(heroImage = heroImage) }
-    )
-}
-
-@OptIn(ExperimentalGlideComposeApi::class)
-@Composable
-fun AnimatedSessionProActivatedCTA(
-    @DrawableRes heroImageBg: Int,
-    @DrawableRes heroImageAnimatedFg: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    onCancel: () -> Unit,
-){
-    SessionProActivatedCTA(
-        modifier = modifier,
-        text = text,
-        onCancel = onCancel,
-        content = {
-            CTAAnimatedImages(
-                heroImageBg = heroImageBg,
-                heroImageAnimatedFg = heroImageAnimatedFg
-            )
-        })
-}
-
-/**
- * Added here for reusability since multiple screens need this dialog
- */
-@Composable
-fun PinProCTA(
-    overTheLimit: Boolean,
-    onUpgrade: () -> Unit,
-    onCancel: () -> Unit,
-    modifier: Modifier = Modifier,
-){
-    val context = LocalContext.current
-    SimpleSessionProCTA(
-        modifier = modifier,
-        heroImage = R.drawable.cta_hero_pins,
-        text = if(overTheLimit)
-            Phrase.from(context,R.string.proCallToActionPinnedConversations)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString()
-                else
-            Phrase.from(context,R.string.proCallToActionPinnedConversationsMoreThan)
-                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
-                .format()
-                .toString(),
-        features = listOf(
-            CTAFeature.Icon(stringResource(R.string.proFeatureListPinnedConversations)),
-            CTAFeature.Icon(stringResource(R.string.proFeatureListLargerGroups)),
-            CTAFeature.RainbowIcon(stringResource(R.string.proFeatureListLoadsMore)),
-        ),
-        onUpgrade = onUpgrade,
-        onCancel = onCancel
-    )
-}
-
-@Preview
-@Composable
-private fun PreviewProCTA(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
-) {
-    PreviewTheme(colors) {
-        SimpleSessionProCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            features = listOf(
-                CTAFeature.Icon("Feature one"),
-                CTAFeature.Icon("Feature two", R.drawable.ic_eye),
-                CTAFeature.RainbowIcon("Feature three"),
-            ),
-            onUpgrade = {},
-            onCancel = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-private fun PreviewProActivatedCTA(
-    @PreviewParameter(SessionColorsParameterProvider::class) colors: ThemeColors
-) {
-    PreviewTheme(colors) {
-        SimpleSessionProActivatedCTA(
-            heroImage = R.drawable.cta_hero_char_limit,
-            text = "This is a description of this Pro feature",
-            onCancel = {}
-        )
-    }
-}
-
-@Composable
-fun ProCTAFeature(
-    data: CTAFeature,
-    modifier: Modifier = Modifier
-){
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = LocalDimensions.current.xxxsSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxsSpacing)
-    ) {
-        when(data){
-            is CTAFeature.Icon -> {
-                Image(
-                    painter = painterResource(id = data.icon),
-                    colorFilter = ColorFilter.tint(LocalColors.current.accentText ),
-                    contentDescription = null,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
-            }
-            is CTAFeature.RainbowIcon -> {
-                AnimatedGradientDrawable(
-                    vectorRes = data.icon
-                )
-            }
-        }
-
-        Text(
-            text = data.text,
-            style = LocalType.current.base
         )
     }
 }
