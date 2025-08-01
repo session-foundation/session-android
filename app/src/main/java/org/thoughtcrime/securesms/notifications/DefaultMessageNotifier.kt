@@ -535,11 +535,6 @@ class DefaultMessageNotifier(
                     !threadRecipients.isApproved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
-            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-
-            // If the thread has more than 1 message (prevents spam request notif)
-//            if (isMessageRequest && hasExistingMessages) continue
-
             // Check notification settings
             if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
 
@@ -593,7 +588,6 @@ class DefaultMessageNotifier(
                 var slideDeck: SlideDeck? = null
 
                 if (isMessageRequest) {
-                    Log.i(TAG, "📨 messageRequest for thread=$threadId  hasExisting=$hasExistingMessages  mapContains=${firstRequestByThread.containsKey(threadId)}")
                     body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
                 } else if (KeyCachingService.isLocked(context)) {
                     body = SpanUtil.italic(
@@ -633,15 +627,15 @@ class DefaultMessageNotifier(
                 )
 
                 if (isMessageRequest) {
+                    val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+
                     val existing = firstRequestByThread[threadId]
-                    if (existing == null || hasExistingMessages) {
+                    if (existing == null) {
                         // first time: stash this item
                         firstRequestByThread[threadId] = item
-                        Log.i(TAG, "→ Stashing new requestItem id=${item.id}")
                     } else {
                         // reuse the original one
                         item = existing
-                        Log.i(TAG, "→ Reusing requestItem id=${existing?.id}")
                     }
                 }
 
