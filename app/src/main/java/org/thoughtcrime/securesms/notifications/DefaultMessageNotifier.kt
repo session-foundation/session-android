@@ -289,6 +289,7 @@ class DefaultMessageNotifier(
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
+        // Since we are resending a copy, we need to check if the copy of the hash is in the existing signature
         val hasExistingRequestNotif = existingSignature != null && contentSignature.contains(existingSignature) && isMessageRequest
 
         // Only skip duplicates for _real_ message notifications, not for request alerts
@@ -379,7 +380,7 @@ class DefaultMessageNotifier(
         }
 
         if (bundled) {
-            builder.setGroup(NOTIFICATION_GROUP)
+            builder.setGroup(if(isMessageRequest) REQUESTS_GROUP else  NOTIFICATION_GROUP)
             builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         }
 
@@ -414,6 +415,9 @@ class DefaultMessageNotifier(
         Log.i(TAG, "sendMultiThreadNotification()  signal: $signal")
 
         val notifications = notificationState.notifications
+        val notificationItem = notifications.first()
+        val isMessageRequest = !notificationItem.recipient.isApproved
+
         val contentSignature = notifications.map {
             getNotificationSignature(it)
         }.sorted().joinToString("|")
@@ -431,7 +435,7 @@ class DefaultMessageNotifier(
 
         builder.setMessageCount(notificationState.notificationCount, notificationState.threadCount)
         builder.setMostRecentSender(notifications[0].individualRecipient, notifications[0].recipient)
-        builder.setGroup(NOTIFICATION_GROUP)
+        builder.setGroup(if (isMessageRequest) REQUESTS_GROUP else NOTIFICATION_GROUP)
         builder.setDeleteIntent(notificationState.getDeleteIntent(context))
         builder.setOnlyAlertOnce(!signal)
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
@@ -588,7 +592,7 @@ class DefaultMessageNotifier(
                 var slideDeck: SlideDeck? = null
 
                 if (isMessageRequest) {
-                    body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+                   body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
                 } else if (KeyCachingService.isLocked(context)) {
                     body = SpanUtil.italic(
                         context.resources.getQuantityString(
@@ -628,8 +632,10 @@ class DefaultMessageNotifier(
 
                 if (isMessageRequest) {
                     val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-
                     val existing = firstRequestByThread[threadId]
+
+                    if(hasExistingMessages && existing == null) continue
+
                     if (existing == null) {
                         // first time: stash this item
                         firstRequestByThread[threadId] = item
@@ -830,6 +836,7 @@ class DefaultMessageNotifier(
         private const val SUMMARY_NOTIFICATION_ID = 1338
         private const val PENDING_MESSAGES_ID = 1111
         private const val NOTIFICATION_GROUP = "messages"
+        private const val REQUESTS_GROUP = "message_requests"
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
 
