@@ -23,7 +23,7 @@ interface Job {
 
     fun getFactoryKey(): String
 
-    interface Factory<T : Job> {
+    interface DeserializeFactory<T : Job> {
 
         fun create(data: Data): T?
     }

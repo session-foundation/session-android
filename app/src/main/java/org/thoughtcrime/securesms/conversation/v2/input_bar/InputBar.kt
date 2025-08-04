@@ -19,6 +19,7 @@ import com.bumptech.glide.RequestManager
 import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewInputBarBinding
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.recipients.Recipient
@@ -240,7 +241,9 @@ class InputBar @JvmOverloads constructor(
             it.delegate = this
             binding.inputBarAdditionalContentContainer.addView(layout)
             val attachments = (message as? MmsMessageRecord)?.slideDeck
-            val sender = if (message.isOutgoing) TextSecurePreferences.getLocalNumber(context)!! else message.individualRecipient.address.toString()
+            val sender =
+                if (message.isOutgoing) Recipient.from(context, Address.fromSerialized(TextSecurePreferences.getLocalNumber(context)!!), false)
+                else message.individualRecipient
             it.bind(sender, message.body, attachments, thread, true, message.isOpenGroupInvitation, message.threadId, false, glide)
         }
 

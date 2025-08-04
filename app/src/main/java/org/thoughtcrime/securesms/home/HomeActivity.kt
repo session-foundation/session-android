@@ -77,6 +77,7 @@ import org.thoughtcrime.securesms.home.search.SearchContactActionBottomSheet
 import org.thoughtcrime.securesms.messagerequests.MessageRequestsActivity
 import org.thoughtcrime.securesms.permissions.Permissions
 import org.thoughtcrime.securesms.preferences.SettingsActivity
+import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity
 import org.thoughtcrime.securesms.reviews.StoreReviewManager
 import org.thoughtcrime.securesms.reviews.ui.InAppReview
@@ -127,6 +128,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
     @Inject lateinit var dateUtils: DateUtils
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var storeReviewManager: StoreReviewManager
+    @Inject lateinit var proStatusManager: ProStatusManager
 
     private val globalSearchViewModel by viewModels<GlobalSearchViewModel>()
     private val homeViewModel by viewModels<HomeViewModel>()
@@ -218,6 +220,7 @@ class HomeActivity : ScreenLockActionBarActivity(),
             homeViewModel.onSearchClicked()
         }
         binding.sessionToolbar.disableClipping()
+        binding.sessionHeaderProBadge.isVisible = homeViewModel.shouldShowCurrentUserProBadge()
         // Set up seed reminder view
         lifecycleScope.launchWhenStarted {
             binding.seedReminderView.setThemedContent {
@@ -446,14 +449,30 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .flatMap { (key, contacts) ->
                 listOf(
                     GlobalSearchAdapter.Model.SubHeader(key)
-                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) }
+                ) + contacts.sortedBy { it.name ?: it.value.accountID }.map { it.value }.map {
+                    GlobalSearchAdapter.Model.Contact(
+                        contact = it,
+                        isSelf = it.accountID == publicKey,
+                        showProBadge = proStatusManager.shouldShowProBadge(Address.fromSerialized(it.accountID))
+                    )
+                }
             }
     }
 
     private val GlobalSearchResult.contactAndGroupList: List<GlobalSearchAdapter.Model> get() =
-        contacts.map { GlobalSearchAdapter.Model.Contact(it, it.accountID == publicKey) } +
+        contacts.map {
+            GlobalSearchAdapter.Model.Contact(
+                contact = it,
+                isSelf = it.accountID == publicKey,
+                showProBadge = proStatusManager.shouldShowProBadge(Address.fromSerialized(it.accountID))
+            )
+        } +
             threads.map {
-                GlobalSearchAdapter.Model.GroupConversation(this@HomeActivity, it)
+                GlobalSearchAdapter.Model.GroupConversation(
+                    context = this@HomeActivity,
+                    groupRecord = it,
+                    showProBadge = proStatusManager.shouldShowProBadge(Address.fromSerialized(it.encodedId))
+                )
             }
 
     private val GlobalSearchResult.messageResults: List<GlobalSearchAdapter.Model> get() {
@@ -462,7 +481,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
             .associateWith { mmsSmsDatabase.getUnreadCount(it) }
 
         return messages.map {
-            GlobalSearchAdapter.Model.Message(it, unreadThreadMap[it.threadId] ?: 0, it.conversationRecipient.isLocalNumber)
+            GlobalSearchAdapter.Model.Message(
+                messageResult = it,
+                unread = unreadThreadMap[it.threadId] ?: 0,
+                isSelf = it.conversationRecipient.isLocalNumber,
+                showProBadge = proStatusManager.shouldShowProBadge(it.conversationRecipient.address)
+            )
         }
     }
 

@@ -2,6 +2,7 @@ package org.thoughtcrime.securesms.conversation.v2.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,22 +17,40 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.*
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupDeviceOnly
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.ClearMessagesGroupEveryone
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupAdminClearMessagesDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideGroupEditDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideNicknameDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HidePinCTADialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideProBadgeCTA
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.HideSimpleDialog
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.RemoveNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetGroupText
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.SetNickname
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupDescription
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateGroupName
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsViewModel.Commands.UpdateNickname
 import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.PinProCTA
 import org.thoughtcrime.securesms.ui.RadioOption
+import org.thoughtcrime.securesms.ui.SimpleSessionProActivatedCTA
+import org.thoughtcrime.securesms.ui.components.AnnotatedTextWithIcon
 import org.thoughtcrime.securesms.ui.components.DialogTitledRadioButton
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
+import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 
 @Composable
@@ -213,14 +232,42 @@ fun ConversationSettingsDialogs(
     if(dialogsState.pinCTA != null){
         PinProCTA(
             overTheLimit = dialogsState.pinCTA.overTheLimit,
-            onUpgrade = {
-                sendCommand(GoToProUpgradeScreen)
-            },
-
-            onCancel = {
+            onDismissRequest = {
                 sendCommand(HidePinCTADialog)
             }
         )
+    }
+
+    when(dialogsState.proBadgeCTA){
+        is ConversationSettingsViewModel.ProBadgeCTA.Generic -> {
+            GenericProCTA(
+                onDismissRequest = {
+                    sendCommand(HideProBadgeCTA)
+                }
+            )
+        }
+
+        is ConversationSettingsViewModel.ProBadgeCTA.Group -> {
+            SimpleSessionProActivatedCTA(
+                heroImage = R.drawable.cta_hero_group,
+                title = stringResource(R.string.proGroupActivated),
+                textContent = {
+                    AnnotatedTextWithIcon(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        text = stringResource(R.string.proGroupActivatedDescription),
+                        iconRes = R.drawable.ic_pro_badge,
+                        iconSize = 40.sp to 18.sp,
+                        style = LocalType.current.large,
+                    )
+                },
+                onCancel = {
+                    sendCommand(HideProBadgeCTA)
+                }
+            )
+        }
+
+        else -> {}
     }
 }
 
@@ -375,6 +422,19 @@ fun PreviewClearAllMsgGroupDialog() {
         ConversationSettingsDialogs(
             dialogsState = ConversationSettingsViewModel.DialogsState(
                 groupAdminClearMessagesDialog = ConversationSettingsViewModel.GroupAdminClearMessageDialog("Testy")
+            ),
+            sendCommand = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+fun PreviewCTAGroupDialog() {
+    PreviewTheme {
+        ConversationSettingsDialogs(
+            dialogsState = ConversationSettingsViewModel.DialogsState(
+                proBadgeCTA = ConversationSettingsViewModel.ProBadgeCTA.Group
             ),
             sendCommand = {}
         )

@@ -1,5 +1,8 @@
 package org.thoughtcrime.securesms.conversation.v2
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -8,7 +11,6 @@ import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.AttachmentDownloadJob
@@ -27,11 +29,11 @@ import org.thoughtcrime.securesms.util.timedBuffer
  * To use this handler, call [downloadPendingAttachment] with the attachment that needs to be
  * downloaded. The call to [downloadPendingAttachment] is cheap and can be called multiple times.
  */
-class AttachmentDownloadHandler(
+class AttachmentDownloadHandler @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val messageDataProvider: MessageDataProvider,
-    jobQueue: JobQueue = JobQueue.shared,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default) + SupervisorJob(),
+    @Assisted private val scope: CoroutineScope,
+    private val downloadJobFactory: AttachmentDownloadJob.Factory
 ) {
     companion object {
         private const val BUFFER_TIMEOUT_MILLS = 500L
@@ -40,6 +42,7 @@ class AttachmentDownloadHandler(
     }
 
     private val downloadRequests = Channel<DatabaseAttachment>(UNLIMITED)
+    private val jobQueue: JobQueue = JobQueue.shared
 
     init {
         scope.launch(Dispatchers.Default) {
@@ -50,7 +53,7 @@ class AttachmentDownloadHandler(
                 .flatten()
                 .collect { attachment ->
                     jobQueue.add(
-                        AttachmentDownloadJob(
+                        downloadJobFactory.create(
                             attachmentID = attachment.attachmentId.rowId,
                             mmsMessageId = attachment.mmsId
                         )
@@ -126,5 +129,10 @@ class AttachmentDownloadHandler(
 
             downloadRequests.trySend(attachment)
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)): AttachmentDownloadHandler
     }
 }

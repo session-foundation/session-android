@@ -3,10 +3,14 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import nl.komponents.kovenant.Promise
 import nl.komponents.kovenant.functional.map
 import okio.Buffer
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -27,7 +31,15 @@ import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PushAttachmentData
 import org.session.libsignal.utilities.Util
 
-class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val message: Message, val messageSendJobID: String) : Job {
+class AttachmentUploadJob @AssistedInject constructor(
+    @Assisted val attachmentID: Long,
+    @Assisted("threadID") val threadID: String,
+    @Assisted private val message: Message,
+    @Assisted private val messageSendJobID: String,
+    private val storage: StorageProtocol,
+    private val messageDataProvider: MessageDataProvider,
+    private val messageSendJobFactory: MessageSendJob.Factory,
+) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -53,8 +65,6 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
 
     override suspend fun execute(dispatcherName: String) {
         try {
-            val storage = MessagingModuleConfiguration.shared.storage
-            val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
             val attachment = messageDataProvider.getScaledSignalAttachmentStream(attachmentID)
                 ?: return handleFailure(dispatcherName, Error.NoAttachment)
             val openGroup = storage.getOpenGroup(threadID.toLong())
@@ -114,7 +124,6 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
     private fun handleSuccess(dispatcherName: String, attachment: SignalServiceAttachmentStream, attachmentKey: ByteArray, uploadResult: UploadResult) {
         Log.d(TAG, "Attachment uploaded successfully.")
         delegate?.handleJobSucceeded(this, dispatcherName)
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         messageDataProvider.handleSuccessfulAttachmentUpload(attachmentID, attachment, attachmentKey, uploadResult)
 
         // We don't need to calculate the duration for voice notes, as they will have it set already.
@@ -133,10 +142,9 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
             }
         }
 
-        val storage = MessagingModuleConfiguration.shared.storage
         storage.getMessageSendJob(messageSendJobID)?.let {
             val destination = it.destination as? Destination.OpenGroup ?: return@let
-            val updatedJob = MessageSendJob(
+            val updatedJob = messageSendJobFactory.create(
                 message = it.message,
                 destination = Destination.OpenGroup(
                     destination.roomToken,
@@ -158,7 +166,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
     private fun handlePermanentFailure(dispatcherName: String, e: Exception) {
         Log.w(TAG, "Attachment upload failed permanently due to error: $this.")
         delegate?.handleJobFailedPermanently(this, dispatcherName, e)
-        MessagingModuleConfiguration.shared.messageDataProvider.handleFailedAttachmentUpload(attachmentID)
+        messageDataProvider.handleFailedAttachmentUpload(attachmentID)
         failAssociatedMessageSendJob(e)
     }
 
@@ -171,7 +179,6 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
     }
 
     private fun failAssociatedMessageSendJob(e: Exception) {
-        val storage = MessagingModuleConfiguration.shared.storage
         val messageSendJob = storage.getMessageSendJob(messageSendJobID)
         MessageSender.handleFailedMessageSend(this.message, e)
         if (messageSendJob != null) {
@@ -198,7 +205,7 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
         return KEY
     }
 
-    class Factory: Job.Factory<AttachmentUploadJob> {
+    class DeserializeFactory(private val factory: Factory): Job.DeserializeFactory<AttachmentUploadJob> {
 
         override fun create(data: Data): AttachmentUploadJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -213,12 +220,22 @@ class AttachmentUploadJob(val attachmentID: Long, val threadID: String, val mess
                 return null
             }
             input.close()
-            return AttachmentUploadJob(
-                    data.getLong(ATTACHMENT_ID_KEY),
-                    data.getString(THREAD_ID_KEY)!!,
-                    message,
-                    data.getString(MESSAGE_SEND_JOB_ID_KEY)!!
+            return factory.create(
+                attachmentID = data.getLong(ATTACHMENT_ID_KEY),
+                threadID = data.getString(THREAD_ID_KEY)!!,
+                message = message,
+                messageSendJobID = data.getString(MESSAGE_SEND_JOB_ID_KEY)!!
             )
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            attachmentID: Long,
+            @Assisted("threadID") threadID: String,
+            message: Message,
+            messageSendJobID: String
+        ): AttachmentUploadJob
     }
 }

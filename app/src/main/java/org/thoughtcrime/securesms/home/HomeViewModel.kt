@@ -47,7 +47,6 @@ import org.thoughtcrime.securesms.database.ThreadDatabase
 import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.pro.ProStatusManager
-import org.thoughtcrime.securesms.reviews.InAppReviewManager
 import org.thoughtcrime.securesms.sskenvironment.TypingStatusRepository
 import org.thoughtcrime.securesms.util.UserProfileModalCommands
 import org.thoughtcrime.securesms.util.UserProfileModalData
@@ -276,14 +275,6 @@ class HomeViewModel @Inject constructor(
                 _dialogsState.update { it.copy(pinCTA = null) }
             }
 
-            is Commands.GoToProUpgradeScreen -> {
-                // hide dialog
-                _dialogsState.update { it.copy(pinCTA = null) }
-
-                // to go Pro upgrade screen
-                //todo PRO go to screen once it exists
-            }
-
             is Commands.HideUserProfileModal -> {
                 _dialogsState.update { it.copy(userProfileModal = null) }
             }
@@ -311,6 +302,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun shouldShowCurrentUserProBadge() : Boolean {
+        return proStatusManager.shouldShowProBadge(Address.fromSerialized(prefs.getLocalNumber()!!))
+    }
+
     data class DialogsState(
         val pinCTA: PinProCTA? = null,
         val userProfileModal: UserProfileModalData? = null
@@ -323,7 +318,6 @@ class HomeViewModel @Inject constructor(
     sealed interface Commands {
         data object HidePinCTADialog : Commands
         data object HideUserProfileModal : Commands
-        data object GoToProUpgradeScreen : Commands
         data class HandleUserProfileCommand(
             val upmCommand: UserProfileModalCommands
         ) : Commands

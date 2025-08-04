@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -57,6 +59,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import kotlinx.coroutines.launch
@@ -64,17 +67,26 @@ import network.loki.messenger.R
 import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
+import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
+import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.ui.AnimatedProfilePicProCTA
+import org.thoughtcrime.securesms.ui.CTAFeature
 import org.thoughtcrime.securesms.ui.CarouselNextButton
 import org.thoughtcrime.securesms.ui.CarouselPrevButton
 import org.thoughtcrime.securesms.ui.Cell
 import org.thoughtcrime.securesms.ui.Divider
+import org.thoughtcrime.securesms.ui.GenericProCTA
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.HorizontalPagerIndicator
 import org.thoughtcrime.securesms.ui.LargeItemButton
+import org.thoughtcrime.securesms.ui.LongMessageProCTA
+import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
@@ -145,6 +157,7 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
     @Composable
     private fun MessageDetailsScreen() {
         val state by viewModel.stateFlow.collectAsState()
+        val dialogState by viewModel.dialogState.collectAsState()
 
         // can only save if the there is a media attachment which has finished downloading.
         val canSave = state.mmsRecord?.containsMediaSlide() == true
@@ -157,8 +170,13 @@ class MessageDetailActivity : ScreenLockActionBarActivity(), ActivityDispatcher 
             onSave = if(canSave) { { setResultAndFinish(ON_SAVE) } } else null,
             onDelete = if (state.canDelete) { { setResultAndFinish(ON_DELETE) } } else null,
             onCopy = { setResultAndFinish(ON_COPY) },
-            onClickImage = { viewModel.onClickImage(it) },
+            sendCommand = { viewModel.onCommand(it) },
             retryFailedAttachments = viewModel::retryFailedAttachments
+        )
+
+        MessageDetailDialogs(
+            state = dialogState,
+            sendCommand = { viewModel.onCommand(it) }
         )
     }
 
@@ -177,7 +195,7 @@ fun MessageDetails(
     onSave: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
     onCopy: () -> Unit = {},
-    onClickImage: (Int) -> Unit = {},
+    sendCommand: (Commands) -> Unit,
     retryFailedAttachments: (List<DatabaseAttachment>) -> Unit
 ) {
     Column(
@@ -225,9 +243,9 @@ fun MessageDetails(
                 }
             }
         }
-        Carousel(state.imageAttachments) { onClickImage(it) }
+        Carousel(state.imageAttachments) { sendCommand(Commands.OpenImage(it)) }
         state.nonImageAttachmentFileDetails?.let { FileDetails(it) }
-        CellMetadata(state)
+        CellMetadata(state, sendCommand = sendCommand)
         CellButtons(
             onReply = onReply,
             onResend = onResend,
@@ -278,6 +296,7 @@ fun PreviewStatus(){
 @Composable
 fun CellMetadata(
     state: MessageDetailsState,
+    sendCommand: (Commands) -> Unit
 ) {
     state.apply {
         if (listOfNotNull(sent, received, error, senderInfo).isEmpty()) return
@@ -286,12 +305,21 @@ fun CellMetadata(
                 modifier = Modifier.padding(LocalDimensions.current.spacing),
                 verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.smallSpacing)
             ) {
+                // Message Pro features
+                if(proFeatures.isNotEmpty()) {
+                    MessageProFeatures(
+                        features = proFeatures,
+                        badgeClickable = proBadgeClickable,
+                        sendCommand = sendCommand
+                    )
+                }
+
                 // Show the sent details if we're the sender of the message, otherwise show the received details
                 if (sent     != null) { TitledText(sent)     }
                 if (received != null) { TitledText(received) }
 
                 TitledErrorText(error)
-                senderInfo?.let {
+                senderInfo?.let { sender ->
                     TitledView(state.fromTitle) {
                         Row {
                             senderAvatarData?.let {
@@ -303,12 +331,90 @@ fun CellMetadata(
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
-                            TitledMonospaceText(it)
+
+                            Column(verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
+                                // author
+                                ProBadgeText(
+                                    text = sender.title.string(),
+                                    textStyle = LocalType.current.xl.bold(),
+                                    showBadge = state.senderShowProBadge,
+                                    onBadgeClick = if(state.proBadgeClickable){{
+                                        sendCommand(Commands.ShowProBadgeCTA)
+                                    }} else null
+                                )
+
+                                sender.text?.let {
+                                    Text(
+                                        text = it,
+                                        style = LocalType.current.base.monospace()
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MessageProFeatures(
+    features: Set<ProStatusManager.MessageProFeature>,
+    badgeClickable: Boolean,
+    sendCommand: (Commands) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        ProBadgeText(
+            text = stringResource(id = R.string.message),
+            textStyle = LocalType.current.xl.bold(),
+            badgeAtStart = true,
+            onBadgeClick = if(badgeClickable){{
+                sendCommand(Commands.ShowProBadgeCTA)
+            }} else null
+        )
+
+        Text(
+            text = stringResource(id = R.string.proMessageInfoFeatures),
+            style = LocalType.current.large
+        )
+
+        features.forEach {
+            ProCTAFeature(
+                textStyle = LocalType.current.large,
+                padding = PaddingValues(),
+                data = CTAFeature.Icon(
+                    text = when(it){
+                        ProStatusManager.MessageProFeature.ProBadge -> Phrase.from(LocalContext.current, R.string.proBadge)
+                            .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                            .format()
+                            .toString()
+                        ProStatusManager.MessageProFeature.LongMessage -> stringResource(id = R.string.proIncreasedMessageLengthFeature)
+                        ProStatusManager.MessageProFeature.AnimatedAvatar -> stringResource(id = R.string.proAnimatedDisplayPictureFeature)
+                    }
+                )
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun PreviewMessageProFeatures(){
+    PreviewTheme {
+        MessageProFeatures(
+            features = setOf(
+                ProStatusManager.MessageProFeature.ProBadge,
+                ProStatusManager.MessageProFeature.LongMessage,
+                ProStatusManager.MessageProFeature.AnimatedAvatar
+            ),
+            badgeClickable = false,
+            sendCommand = {}
+        )
     }
 }
 
@@ -350,7 +456,7 @@ fun CellButtons(
             onResend?.let {
                 LargeItemButton(
                     R.string.resend,
-                    R.drawable.ic_refresh_cw,
+                    R.drawable.ic_repeat_2,
                     onClick = it
                 )
                 Divider()
@@ -505,8 +611,10 @@ fun PreviewMessageDetails(
                 received = TitledText(R.string.received, "6:12 AM Tue, 09/08/2022"),
                 error = TitledText(R.string.errorUnknown, "Message failed to send"),
                 senderInfo = TitledText("Connor", "d4f1g54sdf5g1d5f4g65ds4564df65f4g65d54"),
+                senderShowProBadge = true
 
             ),
+            sendCommand = {},
             retryFailedAttachments = {}
         )
     }
@@ -527,7 +635,7 @@ fun FileDetails(fileDetails: List<TitledText>) {
                     TitledText(
                         it,
                         modifier = Modifier
-                            .widthIn(min = maxWidth.div(2))
+                            .widthIn(min = this.maxWidth.div(2))
                             .padding(horizontal = LocalDimensions.current.xsSpacing)
                             .width(IntrinsicSize.Max)
                     )
@@ -541,16 +649,8 @@ fun FileDetails(fileDetails: List<TitledText>) {
 fun TitledErrorText(titledText: TitledText?) {
     TitledText(
         titledText,
-        style = LocalType.current.base,
+        style = LocalType.current.large,
         color = LocalColors.current.danger
-    )
-}
-
-@Composable
-fun TitledMonospaceText(titledText: TitledText?) {
-    TitledText(
-        titledText,
-        style = LocalType.current.base.monospace()
     )
 }
 
@@ -558,7 +658,7 @@ fun TitledMonospaceText(titledText: TitledText?) {
 fun TitledText(
     titledText: TitledText?,
     modifier: Modifier = Modifier,
-    style: TextStyle = LocalType.current.base,
+    style: TextStyle = LocalType.current.large,
     color: Color = Color.Unspecified
 ) {
     titledText?.apply {
@@ -578,7 +678,27 @@ fun TitledText(
 @Composable
 fun TitledView(title: GetString, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(LocalDimensions.current.xxxsSpacing)) {
-        Text(title.string(), style = LocalType.current.base.bold())
+        Text(title.string(), style = LocalType.current.xl.bold())
         content()
+    }
+}
+
+@Composable
+fun MessageDetailDialogs(
+    state: DialogsState,
+    sendCommand: (Commands) -> Unit
+){
+    // Pro badge CTAs
+    if(state.proBadgeCTA != null){
+        when(state.proBadgeCTA){
+            is ProBadgeCTA.Generic ->
+                GenericProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+
+            is ProBadgeCTA.LongMessage ->
+                LongMessageProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+
+            is ProBadgeCTA.AnimatedProfile ->
+                AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
+        }
     }
 }

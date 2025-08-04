@@ -1,6 +1,5 @@
 package org.session.libsession.messaging.sending_receiving.pollers
 
-import android.app.Application
 import android.os.SystemClock
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -58,7 +57,7 @@ class Poller @AssistedInject constructor(
     private val preferences: TextSecurePreferences,
     private val appVisibilityManager: AppVisibilityManager,
     private val networkConnectivity: NetworkConnectivity,
-    private val application: Application,
+    private val batchMessageReceiveJobFactory: BatchMessageReceiveJob.Factory,
     @Assisted scope: CoroutineScope
 ) {
     private val userPublicKey: String
@@ -215,8 +214,7 @@ class Poller @AssistedInject constructor(
             MessageReceiveParameters(envelope.toByteArray(), serverHash = serverHash)
         }
         parameters.chunked(BatchMessageReceiveJob.BATCH_DEFAULT_NUMBER).forEach { chunk ->
-            val job = BatchMessageReceiveJob(chunk)
-            JobQueue.shared.add(job)
+            JobQueue.shared.add(batchMessageReceiveJobFactory.create(chunk))
         }
     }
 

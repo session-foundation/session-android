@@ -355,6 +355,7 @@ fun EditMemberItem(
             LocalColors.current.textSecondary
         },
         showAsAdmin = member.showAsAdmin,
+        showProBadge = member.showProBadge,
         avatarUIData = member.avatarUIData,
         onClick = if(member.clickable) onClick else null,
         modifier = modifier
@@ -391,6 +392,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited"
         )
@@ -412,6 +414,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed"
         )
@@ -433,6 +436,7 @@ private fun EditGroupPreviewSheet() {
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = ""
         )
@@ -485,6 +489,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Invited"
         )
@@ -506,6 +511,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = true,
+            showProBadge = true,
             clickable = true,
             statusLabel = "Promotion failed"
         )
@@ -527,6 +533,7 @@ private fun EditGroupEditNamePreview(
             canResendInvite = false,
             canResendPromotion = false,
             showAsAdmin = false,
+            showProBadge = false,
             clickable = true,
             statusLabel = ""
         )

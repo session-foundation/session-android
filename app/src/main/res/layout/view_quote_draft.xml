@@ -75,17 +75,11 @@
         android:orientation="vertical"
         android:layout_width="0dp"
         android:layout_height="wrap_content">
-        <TextView
-            tools:visibility="gone"
-            android:id="@+id/quoteViewAuthorTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="?android:textColorPrimary"
-            android:textSize="@dimen/small_font_size"
-            android:textStyle="bold"
-            tools:text="Spiderman" />
+
+        <androidx.compose.ui.platform.ComposeView
+            android:id="@+id/quoteAuthor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
         <TextView
             android:id="@+id/quoteViewBodyTextView"

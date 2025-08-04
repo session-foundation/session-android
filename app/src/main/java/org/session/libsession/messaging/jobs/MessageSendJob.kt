@@ -3,13 +3,17 @@ package org.session.libsession.messaging.jobs
 import com.esotericsoftware.kryo.Kryo
 import com.esotericsoftware.kryo.io.Input
 import com.esotericsoftware.kryo.io.Output
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeout
-import org.session.libsession.messaging.MessagingModuleConfiguration
+import org.session.libsession.database.MessageDataProvider
+import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.jobs.Job.Companion.MAX_BUFFER_SIZE_BYTES
 import org.session.libsession.messaging.messages.Destination
 import org.session.libsession.messaging.messages.Message
@@ -23,7 +27,15 @@ import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.Log
 
-class MessageSendJob(val message: Message, val destination: Destination, val statusCallback: SendChannel<Result<Unit>>?) : Job {
+class MessageSendJob @AssistedInject constructor(
+    @Assisted val message: Message,
+    @Assisted val destination: Destination,
+    @Assisted val statusCallback: SendChannel<Result<Unit>>?,
+    private val attachmentUploadJobFactory: AttachmentUploadJob.Factory,
+    private val messageDataProvider: MessageDataProvider,
+    private val storage: StorageProtocol,
+    private val configFactory: ConfigFactoryProtocol,
+) : Job {
 
     object AwaitingAttachmentUploadException : Exception("Awaiting attachment upload.")
 
@@ -43,10 +55,8 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
     }
 
     override suspend fun execute(dispatcherName: String) {
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val messageId = message.id
         val message = message as? VisibleMessage
-        val storage = MessagingModuleConfiguration.shared.storage
 
         // do not attempt to send if the message is marked as deleted
         if (messageId != null && messageDataProvider.isDeletedMessage(messageId)) {
@@ -68,7 +78,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
                 if (storage.getAttachmentUploadJob(it.attachmentId.rowId) != null) {
                     // Wait for it to finish
                 } else {
-                    val job = AttachmentUploadJob(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
+                    val job = attachmentUploadJobFactory.create(it.attachmentId.rowId, message.threadID!!.toString(), message, id!!)
                     JobQueue.shared.add(job)
                 }
             }
@@ -83,7 +93,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
             withTimeout(20_000L) {
                 // Shouldn't send message to group when the group has no keys available
                 if (destination is Destination.ClosedGroup) {
-                    MessagingModuleConfiguration.shared.configFactory
+                    configFactory
                         .waitForGroupEncryptionKeys(AccountId(destination.publicKey))
                 }
 
@@ -132,10 +142,8 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
         Log.w(TAG, "Failed to send ${message::class.simpleName}.", error)
         val messageId = message.id
         if (message is VisibleMessage && messageId != null) {
-            if (
-                MessagingModuleConfiguration.shared.messageDataProvider.isDeletedMessage(messageId) ||
-                !MessagingModuleConfiguration.shared.messageDataProvider.isOutgoingMessage(messageId)
-                ) {
+            if (messageDataProvider.isDeletedMessage(messageId) ||
+                !messageDataProvider.isOutgoingMessage(messageId)) {
                 return // The message has been deleted
             }
         }
@@ -166,7 +174,7 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
         return KEY
     }
 
-    class Factory : Job.Factory<MessageSendJob> {
+    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<MessageSendJob> {
 
         override fun create(data: Data): MessageSendJob? {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)
@@ -194,7 +202,20 @@ class MessageSendJob(val message: Message, val destination: Destination, val sta
             }
             destinationInput.close()
             // Return
-            return MessageSendJob(message, destination, statusCallback = null)
+            return factory.create(
+                message = message,
+                destination = destination,
+                statusCallback = null
+            )
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            message: Message,
+            destination: Destination,
+            statusCallback: SendChannel<Result<Unit>>? = null
+        ): MessageSendJob
     }
 }

@@ -96,7 +96,6 @@ class ConversationViewModel(
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
-    private val messageDataProvider: MessageDataProvider,
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
@@ -114,7 +113,8 @@ class ConversationViewModel(
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
-    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -319,11 +319,7 @@ class ConversationViewModel(
         expiredGroupManager.expiredGroups.map { groupId in it }
     }
 
-    private val attachmentDownloadHandler = AttachmentDownloadHandler(
-        storage = storage,
-        messageDataProvider = messageDataProvider,
-        scope = viewModelScope,
-    )
+    private val attachmentDownloadHandler = attachmentDownloadHandlerFactory.create(viewModelScope)
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
@@ -508,7 +504,10 @@ class ConversationViewModel(
                 showCall = conversation?.showCallMenu() ?: false,
                 showAvatar = showOptionsMenu,
                 showSearch = _appBarData.value.showSearch,
-                avatarUIData = avatarData
+                avatarUIData = avatarData,
+                // show the pro badge when a conversation/user is pro, except for communities
+                showProBadge = proStatusManager.shouldShowProBadge(conversation?.address)
+                        && conversation?.isLocalNumber == false // do not show for note to self
             )
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
@@ -1362,12 +1361,9 @@ class ConversationViewModel(
         private val application: Application,
         private val repository: ConversationRepository,
         private val storage: StorageProtocol,
-        private val messageDataProvider: MessageDataProvider,
         private val groupDb: GroupDatabase,
         private val threadDb: ThreadDatabase,
         private val reactionDb: ReactionDatabase,
-        @ApplicationContext
-        private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
         private val lokiAPIDb: LokiAPIDatabase,
         private val textSecurePreferences: TextSecurePreferences,
@@ -1382,7 +1378,8 @@ class ConversationViewModel(
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
         private val proStatusManager: ProStatusManager,
-        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+        private val attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1392,7 +1389,6 @@ class ConversationViewModel(
                 application = application,
                 repository = repository,
                 storage = storage,
-                messageDataProvider = messageDataProvider,
                 groupDb = groupDb,
                 threadDb = threadDb,
                 reactionDb = reactionDb,
@@ -1410,7 +1406,8 @@ class ConversationViewModel(
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
                 proStatusManager = proStatusManager,
-                upmFactory = upmFactory
+                upmFactory = upmFactory,
+                attachmentDownloadHandlerFactory = attachmentDownloadHandlerFactory,
             ) as T
         }
     }
