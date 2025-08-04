@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import okhttp3.internal.ws.MessageInflater
 import org.thoughtcrime.securesms.mms.DecryptableStreamUriLoader
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -45,58 +44,61 @@ fun MediaMessage(
     Box(
         modifier = modifier.clip(shape = RoundedCornerShape(LocalDimensions.current.messageCornerRadius))
     ) {
-        CALCULATE IMAGE SIZES - DYNAMIC FOR ONE BUT WITH A MIN
-        SET SIZE FOR 2 AND 3 
+        val itemSpacing: Dp = 2.dp
+
         when (data.items.size) {
             1 -> {
                 MediaItem(
                     data = data.items[0],
-                    maxWidth = maxWidth,
-                    minSize = LocalDimensions.current.minMessageWidth
+                    itemSize = MediaItemSize.AspectRatio(
+                        minSize = LocalDimensions.current.minMessageWidth,
+                        maxSize = maxWidth,
+                    ),
                 )
             }
 
             2 -> {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(itemSpacing),
                     ) {
+
+                    val cellSize = maxWidth * 0.5f - itemSpacing * 0.5f
+
                     MediaItem(
                         data = data.items[0],
-                        maxWidth = maxWidth,
-                        minSize = LocalDimensions.current.minMessageWidth * 0.5f
+                        itemSize = MediaItemSize.SquareSize(size = cellSize),
                     )
 
                     MediaItem(
                         data = data.items[1],
-                        maxWidth = maxWidth,
-                        minSize = LocalDimensions.current.minMessageWidth * 0.5f
+                        itemSize = MediaItemSize.SquareSize(size = cellSize),
                     )
                 }
             }
 
             else -> {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(itemSpacing),
                 ) {
+                    val largeCellSize = maxWidth * 0.66f - itemSpacing * 0.5f
+                    val smallCellSize = largeCellSize * 0.5f - itemSpacing * 0.5f
+
                     MediaItem(
                         data = data.items[0],
-                        maxWidth = maxWidth,
-                        minSize = LocalDimensions.current.minMessageWidth * 0.5f
+                        itemSize = MediaItemSize.SquareSize(size = largeCellSize),
                     )
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(itemSpacing),
                     ) {
                         MediaItem(
                             data = data.items[1],
-                            maxWidth = maxWidth,
-                            minSize = LocalDimensions.current.minMessageWidth * 0.5f
+                            itemSize = MediaItemSize.SquareSize(size = smallCellSize),
                         )
 
                         MediaItem(
                             data = data.items[2],
-                            maxWidth = maxWidth,
-                            minSize = LocalDimensions.current.minMessageWidth * 0.5f
+                            itemSize = MediaItemSize.SquareSize(size = smallCellSize),
                         )
                     }
                 }
@@ -109,19 +111,39 @@ fun MediaMessage(
 @Composable
 private fun MediaItem(
     data: MessageMediaItem,
+    itemSize: MediaItemSize,
     modifier: Modifier = Modifier,
-    maxWidth: Dp,
-    minSize: Dp
 ){
-    //todo CONVOv3 media items (1 vs 2 vs 3 items)
+
+    var imageModifier: Modifier = modifier
+        .background(LocalColors.current.backgroundSecondary)
+
+    when(itemSize){
+        is MediaItemSize.SquareSize -> {
+            imageModifier = imageModifier.size(itemSize.size)
+        }
+        is MediaItemSize.AspectRatio -> {
+            val aspectRatio = data.width / data.height.toFloat()
+            val isLandscape = aspectRatio > 1f
+
+            imageModifier = imageModifier.sizeIn(
+                maxWidth = itemSize.maxSize, minWidth = itemSize.minSize,
+                maxHeight = itemSize.maxSize, minHeight = itemSize.minSize
+            ).aspectRatio(aspectRatio, matchHeightConstraintsFirst = !isLandscape)
+        }
+    }
+
     GlideImage(
         contentScale = ContentScale.Crop,
-        modifier = modifier.widthIn(max = maxWidth, min = minSize)
-            .heightIn(max = maxWidth, min = minSize) // the image can only be as tall as the max width
-            .background(LocalColors.current.backgroundSecondary),
+        modifier = imageModifier,
         model = DecryptableStreamUriLoader.DecryptableUri(data.uri),
         contentDescription = data.filename
     )
+}
+
+sealed interface MediaItemSize{
+    data class SquareSize(val size: Dp): MediaItemSize
+    data class AspectRatio(val minSize: Dp, val maxSize: Dp): MediaItemSize
 }
 
 @Preview
@@ -139,7 +161,10 @@ fun MediaMessagePreviewLocal(
                 author = "Toto",
                 type = MessageType.Media(
                     outgoing = true,
-                    items = listOf(PreviewMessageData.image()),
+                    items = listOf(PreviewMessageData.image(
+                        width = 50,
+                        height = 100
+                    )),
                     loading = false
                 )
             ))
@@ -305,15 +330,22 @@ sealed class MessageMediaItem(){
     abstract val filename: String
     abstract val loading: Boolean
 
+    abstract val width: Int
+    abstract val height: Int
+
     data class Image(
         override val uri: Uri,
         override val filename: String,
         override val loading: Boolean,
+        override val width: Int,
+        override val height: Int,
     ): MessageMediaItem()
 
     data class Video(
         override val uri: Uri,
         override val filename: String,
         override val loading: Boolean,
+        override val width: Int,
+        override val height: Int,
     ): MessageMediaItem()
 }

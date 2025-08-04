@@ -68,7 +68,6 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 //todo CONVOv3 status animated icon for disappearing messages
 //todo CONVOv3 highlight effect (needs to work on all types and shapes (how should it work for combos like message + image? overall effect?)
 //todo CONVOv3 text formatting in bubble including mentions and links
-//todo CONVOv3 images
 //todo CONVOv3 typing indicator
 //todo CONVOv3 long press views (overlay+message+recent reactions+menu)
 //todo CONVOv3 reactions
@@ -1132,16 +1131,28 @@ object PreviewMessageData {
         audioState = state
     )
 
-    fun image(loading: Boolean = false) = MessageMediaItem.Image(
+    fun image(
+        loading: Boolean = false,
+        width: Int = 100,
+        height: Int = 100,
+    ) = MessageMediaItem.Image(
         "".toUri(),
         "",
-        loading = loading
+        loading = loading,
+        width = width,
+        height = height
     )
 
-    fun video(loading: Boolean = false) = MessageMediaItem.Video(
+    fun video(
+        loading: Boolean = false,
+        width: Int = 100,
+        height: Int = 100,
+    ) = MessageMediaItem.Video(
         "".toUri(),
         "",
-        loading = loading
+        loading = loading,
+        width = width,
+        height = height
     )
 
     fun quote(
