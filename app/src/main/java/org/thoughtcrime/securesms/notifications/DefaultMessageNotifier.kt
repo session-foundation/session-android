@@ -544,7 +544,7 @@ class DefaultMessageNotifier(
             val hasExistingNotification = hasExistingRequestNotification(context, threadId)
 
             // If there is an existing notification, add the notification to prevent an empty notificationState
-            if(isMessageRequest && hasExistingMessages && !hasExistingNotification) continue
+//            if(isMessageRequest && hasExistingMessages) continue
 
             // Check notification settings
             if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
