@@ -284,16 +284,13 @@ class DefaultMessageNotifier(
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
-        }.sorted().joinToString("|")
+        }.distinct().sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
-        // Since we are resending a copy, we need to check if the copy of the hash is in the existing signature
-        val hasExistingRequestNotif = existingSignature != null && contentSignature.contains(existingSignature) && isMessageRequest
-
         // Only skip duplicates for _real_ message notifications, not for request alerts
-        if ((existingSignature == contentSignature) || hasExistingRequestNotif) {
+        if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate single thread notification for ID $notificationId")
             return
         }
@@ -403,7 +400,11 @@ class DefaultMessageNotifier(
     }
 
     private fun getNotificationSignature(notification: NotificationItem): String {
-        return "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
+        return if(notification.recipient.isApproved){
+            "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
+        }else{
+            "${notification.threadId}"
+        }
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
@@ -420,7 +421,7 @@ class DefaultMessageNotifier(
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
-        }.sorted().joinToString("|")
+        }.distinct().sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
@@ -539,6 +540,12 @@ class DefaultMessageNotifier(
                     !threadRecipients.isApproved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
+            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+            val hasExistingNotification = hasExistingRequestNotification(context, threadId)
+
+            // If there is an existing notification, add the notification to prevent an empty notificationState
+            if(isMessageRequest && hasExistingMessages && !hasExistingNotification) continue
+
             // Check notification settings
             if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
 
@@ -618,35 +625,20 @@ class DefaultMessageNotifier(
 
                 Log.w(TAG, "Adding incoming message notification: ${body}")
 
-                var item = NotificationItem(
-                    record.getId(),
-                    record.isMms || record.isMmsNotification,
-                    record.individualRecipient,
-                    record.recipient,
-                    threadRecipients,
-                    threadId,
-                    body,
-                    record.timestamp,
-                    slideDeck
-                )
-
-                if (isMessageRequest) {
-                    val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-                    val existing = firstRequestByThread[threadId]
-
-                    if(hasExistingMessages && existing == null) continue
-
-                    if (existing == null) {
-                        // first time: stash this item
-                        firstRequestByThread[threadId] = item
-                    } else {
-                        // reuse the original one
-                        item = existing
-                    }
-                }
-
                 // Add incoming message notification
-                notificationState.addNotification(item)
+                notificationState.addNotification(
+                    NotificationItem(
+                        record.getId(),
+                        record.isMms || record.isMmsNotification,
+                        record.individualRecipient,
+                        record.recipient,
+                        threadRecipients,
+                        threadId,
+                        body,
+                        record.timestamp,
+                        slideDeck
+                    )
+                )
             }
             // CASE 2: REACTIONS TO OUR OUTGOING MESSAGES
             // Only if: it's OUR message AND it has reactions AND it's NOT an unread incoming message
@@ -750,6 +742,13 @@ class DefaultMessageNotifier(
         alarmManager.cancel(pendingIntent)
     }
 
+    private fun hasExistingRequestNotification(context: Context, threadId : Long): Boolean {
+        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
+        return existingNotifications.any {
+            it.notification.extras.getString(CONTENT_SIGNATURE) == threadId.toString()
+        }
+    }
+
     class ReminderReceiver : BroadcastReceiver() {
         @SuppressLint("StaticFieldLeak")
         override fun onReceive(context: Context, intent: Intent) {
@@ -839,8 +838,6 @@ class DefaultMessageNotifier(
         private const val REQUESTS_GROUP = "message_requests"
         private val MIN_AUDIBLE_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(5)
         private val DESKTOP_ACTIVITY_PERIOD = TimeUnit.MINUTES.toMillis(1)
-
-        private val firstRequestByThread = mutableMapOf<Long, NotificationItem>()
 
         @Volatile
         private var visibleThread: Long = -1
