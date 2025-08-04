@@ -280,6 +280,8 @@ class DefaultMessageNotifier(
         val notificationItem =  notifications.first()
         val isMessageRequest = !notificationItem.recipient.isApproved
 
+        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
+
         val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
 
         val contentSignature = notifications.map {
@@ -419,6 +421,8 @@ class DefaultMessageNotifier(
         val notificationItem = notifications.first()
         val isMessageRequest = !notificationItem.recipient.isApproved
 
+        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
+
         val contentSignature = notifications.map {
             getNotificationSignature(it)
         }.distinct().sorted().joinToString("|")
@@ -540,11 +544,11 @@ class DefaultMessageNotifier(
                     !threadRecipients.isApproved &&
                     !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
-            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-            val hasExistingNotification = hasExistingRequestNotification(context, threadId)
+//            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+//            val hasExistingNotification = hasExistingRequestNotification(context, threadId)
 
             // If there is an existing notification, add the notification to prevent an empty notificationState
-//            if(isMessageRequest && hasExistingMessages) continue
+//            if(isMessageRequest && hasExistingMessages && !hasExistingNotification) continue
 
             // Check notification settings
             if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
@@ -742,11 +746,9 @@ class DefaultMessageNotifier(
         alarmManager.cancel(pendingIntent)
     }
 
-    private fun hasExistingRequestNotification(context: Context, threadId : Long): Boolean {
-        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        return existingNotifications.any {
-            it.notification.extras.getString(CONTENT_SIGNATURE) == threadId.toString()
-        }
+    private fun hasExistingMessages(context: Context, threadId: Long): Boolean {
+        val threadDatabase = get(context).threadDatabase()
+        return threadDatabase.getMessageCount(threadId) > 1
     }
 
     class ReminderReceiver : BroadcastReceiver() {
