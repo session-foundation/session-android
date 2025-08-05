@@ -1,3 +1,3 @@
 
 all:
-	protoc --java_out=../java/ WebRtcData.proto Backups.proto DeviceName.proto
+	protoc --java_out=../java/ SignalService.proto WebSocketResources.proto Utils.proto
