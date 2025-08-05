@@ -735,7 +735,6 @@
     <string name="passwordEnterCurrent">कृपया अपना वर्तमान पासवर्ड दर्ज करें</string>
     <string name="passwordEnterNew">कृपया अपना नया पासवर्ड दर्ज करें</string>
     <string name="passwordError">पासवर्ड में केवल अक्षर, संख्याएं और प्रतीक होने चाहिए</string>
-    <string name="passwordErrorLength">पासवर्ड 6 से 64 वर्णों के बीच होना चाहिए</string>
     <string name="passwordErrorMatch">पासवर्ड्स मेल नहीं खाते</string>
     <string name="passwordFailed">पासवर्ड सेट करने में विफल</string>
     <string name="passwordIncorrect">गलत पासवर्ड</string>

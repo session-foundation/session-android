@@ -787,7 +787,7 @@
     <string name="passwordEnterCurrent">Please enter your current password</string>
     <string name="passwordEnterNew">Please enter your new password</string>
     <string name="passwordError">Password must only contain letters, numbers and symbols</string>
-    <string name="passwordErrorLength">Password must be between 6 and 64 characters long</string>
+    <string name="passwordErrorLength">Password must be between {min} and {max} characters long</string>
     <string name="passwordErrorMatch">Passwords do not match</string>
     <string name="passwordFailed">Failed to set password</string>
     <string name="passwordIncorrect">Incorrect password</string>

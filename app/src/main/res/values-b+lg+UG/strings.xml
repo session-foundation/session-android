@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Geba akasumulizo akaliwo leero</string>
     <string name="passwordEnterNew">Geba akasumulizo akaggya ko.</string>
     <string name="passwordError">Akasumulizo kalina kubaamu nnyukuta zokka, ennyingiza ne bika.</string>
-    <string name="passwordErrorLength">Akasumulizo kalina kubeera wakati wa ennyukuta 6 ne 64.</string>
     <string name="passwordErrorMatch">Obusumuluzo tebyawumulwa</string>
     <string name="passwordFailed">Ensobi okuzaako okwongeza ekigambo</string>
     <string name="passwordIncorrect">Recovery Password y\'ekiino si kituufu</string>

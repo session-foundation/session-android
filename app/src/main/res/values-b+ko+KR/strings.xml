@@ -746,7 +746,6 @@
     <string name="passwordEnterCurrent">현재 비밀번호를 입력해주세요</string>
     <string name="passwordEnterNew">새 비밀번호를 입력해 주세요</string>
     <string name="passwordError">비밀번호는 문자, 숫자 및 간단한 기호만으로 구성되야 합니다</string>
-    <string name="passwordErrorLength">비밀번호는 반드시 6자에서 12자 사이어야 합니다.</string>
     <string name="passwordErrorMatch">비밀번호가 일치하지 않습니다</string>
     <string name="passwordFailed">비밀번호 설정 실패</string>
     <string name="passwordIncorrect">잘못된 비밀번호</string>

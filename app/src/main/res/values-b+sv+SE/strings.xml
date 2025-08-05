@@ -732,7 +732,6 @@
     <string name="passwordEnterCurrent">Ange ditt nuvarande lösenord</string>
     <string name="passwordEnterNew">Ange ditt nya lösenord</string>
     <string name="passwordError">Lösenord får endast innehålla bokstäver, siffror och symboler</string>
-    <string name="passwordErrorLength">Lösenordet måste vara mellan 6 och 64 tecken långt</string>
     <string name="passwordErrorMatch">Lösenorden matchar ej</string>
     <string name="passwordFailed">Misslyckades att uppdatera lösenordet</string>
     <string name="passwordIncorrect">Felaktigt lösenord</string>

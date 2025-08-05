@@ -678,7 +678,6 @@
     <string name="passwordEnterCurrent">Увядзіце свой дзейны пароль</string>
     <string name="passwordEnterNew">Калі ласка, увядзіце ваш новы пароль</string>
     <string name="passwordError">Пароль павінен утрымліваць толькі літары, лічбы і сімвалы</string>
-    <string name="passwordErrorLength">Ваш пароль павінен мець даўжыню ў межах ад 6 да 64 сімвалаў</string>
     <string name="passwordErrorMatch">Паролі не супадаюць</string>
     <string name="passwordFailed">Не атрымалася ўсталяваць пароль</string>
     <string name="passwordIncorrect">Няправільны пароль</string>

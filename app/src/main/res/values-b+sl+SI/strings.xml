@@ -678,7 +678,6 @@
     <string name="passwordEnterCurrent">Prosimo, vnesite trenutno geslo</string>
     <string name="passwordEnterNew">Prosimo, vnesite novo geslo</string>
     <string name="passwordError">Geslo lahko vsebuje samo črke, številke in simbole</string>
-    <string name="passwordErrorLength">Geslo mora biti dolgo med 6 in 64 znakov</string>
     <string name="passwordErrorMatch">Gesli se ne ujemata</string>
     <string name="passwordFailed">Ni uspelo nastaviti gesla</string>
     <string name="passwordIncorrect">Napačno geslo</string>

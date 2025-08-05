@@ -726,7 +726,6 @@
     <string name="passwordEnterCurrent">Nodwch eich cyfrinair cyfredol</string>
     <string name="passwordEnterNew">Nodwch eich cyfrinair newydd</string>
     <string name="passwordError">Dim ond llythrennau, rhifau a symbolau y mae\'n rhaid i gyfrinair ei gynnwys</string>
-    <string name="passwordErrorLength">Rhaid i gyfrinair fod rhwng 6 a 64 nod o hyd</string>
     <string name="passwordErrorMatch">Nid yw cyfrineiriau\'n cydweddu</string>
     <string name="passwordFailed">Methwyd gosod cyfrinair</string>
     <string name="passwordIncorrect">Cyfrinair anghywir</string>

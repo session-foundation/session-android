@@ -679,7 +679,6 @@
     <string name="passwordEnterCurrent">Zadajte prosím svoje aktuálne heslo</string>
     <string name="passwordEnterNew">Zadajte prosím svoje nové heslo</string>
     <string name="passwordError">Heslo môže obsahovať iba písmená, čísla a symboly</string>
-    <string name="passwordErrorLength">Heslo musí mať dĺžku 6 až 64 znakov</string>
     <string name="passwordErrorMatch">Heslá sa nezhodujú</string>
     <string name="passwordFailed">Nepodarilo sa nastaviť heslo</string>
     <string name="passwordIncorrect">Nesprávne heslo</string>

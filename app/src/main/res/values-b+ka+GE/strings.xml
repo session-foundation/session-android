@@ -689,7 +689,6 @@
     <string name="passwordEnterCurrent">გთხოვთ შეიყვანოთ მიმდინარე პაროლი</string>
     <string name="passwordEnterNew">გთხოვთ შეიყვანოთ ახალი პაროლი</string>
     <string name="passwordError">პაროლი უნდა შეიცავდეს მხოლოდ ასოებს, რიცხვებს და სიმბოლოებს</string>
-    <string name="passwordErrorLength">პაროლი უნდა იყოს 6-64 სიმბოლოს სიგრძის</string>
     <string name="passwordErrorMatch">პაროლები არ ემთხვევა ერთმანეთს</string>
     <string name="passwordFailed">ვერ შევძელიში პაროლის დაწესება</string>
     <string name="passwordIncorrect">არასწორი პაროლი</string>

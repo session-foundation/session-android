@@ -773,7 +773,6 @@
     <string name="passwordEnterCurrent">Add meg a jelenlegi jelszavad</string>
     <string name="passwordEnterNew">Add meg az új jelszavad</string>
     <string name="passwordError">A jelszó csak betűket, számokat, és szimbólumokat tartalmazhat</string>
-    <string name="passwordErrorLength">A jelszónak minimum 6 és maximum 64 karakter hosszúságúnak kell lennie</string>
     <string name="passwordErrorMatch">A megadott jelszavak nem egyeznek</string>
     <string name="passwordFailed">Jelszó frissítése sikertelen</string>
     <string name="passwordIncorrect">Hibás jelszó</string>

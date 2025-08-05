@@ -642,7 +642,6 @@
     <string name="passwordEnterCurrent">ကျေးဇူးပြု၍ သင့် စကားဝှက်လက်ရှိကို ရိုက်ထည့်ပါ</string>
     <string name="passwordEnterNew">ကျေးဇူးပြု၍ စကားဝှက်အသစ်ကို ရိုက်ထည့်ပါ</string>
     <string name="passwordError">စကားဝှက်တွင် စာလုံး၊ နံပါတ်များနှင့် သင်္ကေတများသာ ပါဝင်ရမည်</string>
-    <string name="passwordErrorLength">စကားဝှက်သည်စာလုံးများအကြား ၆ မှ ၆၄ ရှိရမည်</string>
     <string name="passwordErrorMatch">စကားဝှက်များ မကိုက်ညီပါ</string>
     <string name="passwordFailed">စကားဝှက်တင်သွင်းမှု မအောင်မြင်ပါ</string>
     <string name="passwordIncorrect">စကားဝှက်မှားနေသည်</string>

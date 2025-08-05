@@ -715,7 +715,6 @@
     <string name="passwordEnterCurrent">Vui lòng nhập mật khẩu hiện tại của bạn</string>
     <string name="passwordEnterNew">Vui lòng nhập mật khẩu mới</string>
     <string name="passwordError">Mật khẩu chỉ có thể chứa chữ cái, số và các ký hiệu đơn giản</string>
-    <string name="passwordErrorLength">Mật khẩu phải dài từ 6 đến 64 ký tự</string>
     <string name="passwordErrorMatch">Mật khẩu không khớp</string>
     <string name="passwordFailed">Đặt mật khẩu thất bại</string>
     <string name="passwordIncorrect">Mật khẩu không chính xác</string>

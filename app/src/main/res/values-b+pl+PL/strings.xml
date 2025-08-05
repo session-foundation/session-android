@@ -808,7 +808,6 @@
     <string name="passwordEnterCurrent">Wprowadź aktualne hasło</string>
     <string name="passwordEnterNew">Wprowadź nowe hasło</string>
     <string name="passwordError">Hasło może zawierać jedynie litery, cyfry i symbole</string>
-    <string name="passwordErrorLength">Hasło musi zawierać od 6 do 64 znaków</string>
     <string name="passwordErrorMatch">Podane hasła różnią się</string>
     <string name="passwordFailed">Nie udało się ustawić hasła</string>
     <string name="passwordIncorrect">Nieprawidłowe hasło</string>

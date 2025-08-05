@@ -642,7 +642,6 @@
     <string name="passwordEnterCurrent">សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្នរបស់អ្នក</string>
     <string name="passwordEnterNew">សូម​បញ្ចូល​ពាក្យ​សម្ងាត់ថ្មី​របស់​អ្នក</string>
     <string name="passwordError">ពាក្យសម្ងាត់ត្រូវតែមានអក្សរ លេខ និងនិមិត្តសញ្ញាប៉ុណ្ណោះ</string>
-    <string name="passwordErrorLength">ពាក្យ​សម្ងាត់​ត្រូវ​តែ​មាន​ចន្លោះ​ពី 6 ទៅ 64 តួអក្សរ</string>
     <string name="passwordErrorMatch">ពាក្យសម្ងាត់មិនត្រូវគ្នាទេ</string>
     <string name="passwordFailed">ការកំណត់ពាក្យសម្ងាត់មិនបានសម្រេច</string>
     <string name="passwordIncorrect">ពាក្យសម្ងាត់មិនត្រឹមត្រូវ</string>

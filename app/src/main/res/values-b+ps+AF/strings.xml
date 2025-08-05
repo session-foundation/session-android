@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">مهرباني وکړئ خپل موجوده پاسورډ دننه کړئ</string>
     <string name="passwordEnterNew">مهرباني وکړئ خپل نوی پاسورډ دننه کړئ</string>
     <string name="passwordError">پاسورډ باید یوازې حروف، شمیرې او نښې ولري</string>
-    <string name="passwordErrorLength">پاسورډ باید د 6 او 64 تورو ترمنځ وي</string>
     <string name="passwordErrorMatch">پاسورډونه سمون نه خوري</string>
     <string name="passwordFailed">پټنوم تنظیم کې ناکام</string>
     <string name="passwordIncorrect">ناسم رمز</string>

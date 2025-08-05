@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">ದಯವಿಟ್ಟು ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಪಾಸ್ವರ್ಡನ್ನು ನಮೂದಿಸಿ</string>
     <string name="passwordEnterNew">ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೊಸ ಪಾಸ್ವರ್ಡನ್ನು ನಮೂದಿಸಿ</string>
     <string name="passwordError">ಪಾಸ್ವರ್ಡ್ ಅಕ್ಷರಗಳು, ಸಂಖ್ಯೆಗಳು ಮತ್ತು ಚಿಹ್ನೆಗಳನ್ನು ಮಾತ್ರ ಹೊಂದಿರಬೇಕು</string>
-    <string name="passwordErrorLength">ಪಾಸ್ವರ್ಡ್ 6.೦ರಿಂದ 64 ಅಕ್ಷರಗಳಷ್ಟು ಉದ್ದವು ಇರಬೇಕು</string>
     <string name="passwordErrorMatch">ಪಾಸ್ವರ್ಡ್‌ಗಳು ಸೇರಲಿಲ್ಲ</string>
     <string name="passwordFailed">ಪಾಸ್‌ವರ್ಡ್ ಸೆಟ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ</string>
     <string name="passwordIncorrect">ಪಾಸ್ವರ್ಡ್ ತಪ್ಪಾಗಿದೆ</string>

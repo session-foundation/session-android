@@ -713,7 +713,6 @@
     <string name="passwordEnterCurrent">Vă rugăm să introduceţi parola actuală</string>
     <string name="passwordEnterNew">Vă rugăm să introduceţi parola nouă</string>
     <string name="passwordError">Parola poate conține doar litere, numere și simboluri simple</string>
-    <string name="passwordErrorLength">Parola trebuie să aibă între 6 și 64 de caractere lungime</string>
     <string name="passwordErrorMatch">Parolele nu se potrivesc</string>
     <string name="passwordFailed">Eroare la setarea parolei</string>
     <string name="passwordIncorrect">Parolă incorectă</string>

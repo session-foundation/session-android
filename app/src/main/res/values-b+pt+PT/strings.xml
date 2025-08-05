@@ -670,7 +670,6 @@
     <string name="passwordEnterCurrent">Por favor, insira a sua palavra-passe</string>
     <string name="passwordEnterNew">Por favor introduza a sua nova palavra-passe.</string>
     <string name="passwordError">Apenas pode criar uma palavra-passe com letras, números e símbolos simples</string>
-    <string name="passwordErrorLength">A palavra-passe deve ter entre 6 e 64 carateres</string>
     <string name="passwordErrorMatch">As palavras-passes não correspondem</string>
     <string name="passwordFailed">Falha ao definir palavra-passe</string>
     <string name="passwordIncorrect">Palavra-passe Incorreta</string>

@@ -653,7 +653,6 @@
     <string name="passwordEnterCurrent">Ju lutemi vendosni fjalëkalimin tuaj të tanishëm</string>
     <string name="passwordEnterNew">Ju lutemi shkruani fjalëkalimin tuaj të ri.</string>
     <string name="passwordError">Fjalëkalimi duhet të përmbajë vetëm shkronja, numra dhe simbole</string>
-    <string name="passwordErrorLength">Fjalëkalimi duhet të jetë midis 6 dhe 64 karaktere të gjata</string>
     <string name="passwordErrorMatch">Fjalëkalimet nuk përputhen</string>
     <string name="passwordFailed">Dështoi vendosja e fjalëkalimit</string>
     <string name="passwordIncorrect">Fjalëkalim i pasaktë</string>

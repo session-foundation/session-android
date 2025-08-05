@@ -666,7 +666,6 @@
     <string name="passwordEnterCurrent">Unesite svoju trenutnu lozinku</string>
     <string name="passwordEnterNew">Unesite svoju novu lozinku</string>
     <string name="passwordError">Lozinka može sadržavati samo slova, brojeve i simbole</string>
-    <string name="passwordErrorLength">Lozinka mora imati između 6 i 64 znakova</string>
     <string name="passwordErrorMatch">Lozinke se ne podudaraju</string>
     <string name="passwordFailed">Postavljanje lozinke nije uspjelo</string>
     <string name="passwordIncorrect">Neispravna lozinka</string>

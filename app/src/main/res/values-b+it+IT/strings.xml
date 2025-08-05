@@ -713,7 +713,6 @@
     <string name="passwordEnterCurrent">Per favore, inserisci la tua password attuale</string>
     <string name="passwordEnterNew">Inserisci la tua nuova password</string>
     <string name="passwordError">La password deve contenere solo lettere, numeri e simboli</string>
-    <string name="passwordErrorLength">La password deve essere lunga tra i 6 e i 64 caratteri</string>
     <string name="passwordErrorMatch">Le password non coincidono</string>
     <string name="passwordFailed">Impossibile impostare la password</string>
     <string name="passwordIncorrect">Password non corretta</string>

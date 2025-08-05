@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Mesedez, sartu zure uneko pasahitza</string>
     <string name="passwordEnterNew">Mesedez, sartu zure pasahitz berria</string>
     <string name="passwordError">Pasahitzak hizkiak, zenbakiak eta sinboloak bakarrik eduki behar ditu</string>
-    <string name="passwordErrorLength">Pasahitzak 6 eta 64 karaktere bitartekoa izan behar du</string>
     <string name="passwordErrorMatch">Pasahitzak ez datoz bat</string>
     <string name="passwordFailed">Pasahitza ezartzea huts egin da</string>
     <string name="passwordIncorrect">Pasahitz okerra</string>

@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Pakilagay ang iyong kasalukuyang password</string>
     <string name="passwordEnterNew">Pakilagay ang iyong bagong password</string>
     <string name="passwordError">Ang password ay naglalaman ng letra, numero at mga simbolo</string>
-    <string name="passwordErrorLength">Dapat may haba na 6 hanggang 20 titik ang \'yong password</string>
     <string name="passwordErrorMatch">Hindi nagtugma ang mga password</string>
     <string name="passwordFailed">Bigong na-reset ang password</string>
     <string name="passwordIncorrect">Maling password</string>

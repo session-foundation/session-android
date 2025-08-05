@@ -682,7 +682,6 @@
     <string name="passwordEnterCurrent">現在のパスワードを入力してください</string>
     <string name="passwordEnterNew">新しいパスワードを入力してください</string>
     <string name="passwordError">パスワードには英数字と記号の文字しか使えません</string>
-    <string name="passwordErrorLength">パスワードの長さを6文字から64文字にしてください</string>
     <string name="passwordErrorMatch">パスワードが一致しません</string>
     <string name="passwordFailed">パスワードの設定に失敗しました</string>
     <string name="passwordIncorrect">パスワードが正しくありません</string>

@@ -659,7 +659,6 @@
     <string name="passwordEnterCurrent">لطفا پسورد فعلی خود را وارد کنید</string>
     <string name="passwordEnterNew">لطفا گذرواژه‌ی جدید خودت رو وارد کن</string>
     <string name="passwordError">رمز عبور باید فقط شامل حروف، اعداد و نشان‌ها باشد</string>
-    <string name="passwordErrorLength">طول رمز عبور باید بین ۶ تا ۶۴ کاراکتر باشد</string>
     <string name="passwordErrorMatch">رمزهای عبور مطابقت ندارند</string>
     <string name="passwordFailed">تنظیم رمز عبور شکست خورد</string>
     <string name="passwordIncorrect">رمز عبور نادرست است</string>

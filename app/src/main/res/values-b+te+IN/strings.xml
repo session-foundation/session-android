@@ -655,7 +655,6 @@
     <string name="passwordEnterCurrent">దయచేసి మీ ప్రస్తుత పాస్‌వర్డ్‌ను ఎంటర్ చేయండి</string>
     <string name="passwordEnterNew">దయచేసి మీ కొత్త పాస్‌వర్డ్‌ను ఎంటర్ చేయండి</string>
     <string name="passwordError">పాస్‌వర్డ్‌లో కేవలం అక్షరాలు, సంఖ్యలు మరియు సాంకేతిక పదాలు ఉండాలి</string>
-    <string name="passwordErrorLength">పాస్‌వర్డ్ 6 మరియు 64 అక్షరాల మధ్య ఉండాలి</string>
     <string name="passwordErrorMatch">పాస్‌వర్డ్‌లు సరిపోలవు</string>
     <string name="passwordFailed">పాస్‌వర్డ్ సెట్ చేయడంలో విఫలమైంది</string>
     <string name="passwordIncorrect">సరికాని పాస్వర్డ్</string>

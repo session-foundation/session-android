@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Մուտքագրեք Ձեր ներկա գաղտնաբառը.</string>
     <string name="passwordEnterNew">Խնդրում ենք մուտքագրել ձեր նոր գաղտնաբառը</string>
     <string name="passwordError">Գաղտնաբառը պետք է պարունակի միայն տառեր, թվեր և նշաններ</string>
-    <string name="passwordErrorLength">Գաղտնաբառը պետք է լինի 6-ից 64 նիշ</string>
     <string name="passwordErrorMatch">Գաղտնաբառերը չեն համընկնում</string>
     <string name="passwordFailed">Չհաջողվեց սահմանել գաղտնաբառը</string>
     <string name="passwordIncorrect">Սխալ գաղտնաբառ</string>

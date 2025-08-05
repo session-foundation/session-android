@@ -712,7 +712,6 @@
     <string name="passwordEnterCurrent">Por favor, introduzca su antigua contraseña</string>
     <string name="passwordEnterNew">Por favor, ingrese su nueva contraseña</string>
     <string name="passwordError">La contraseña solo debe contener letras, números y símbolos</string>
-    <string name="passwordErrorLength">La contraseña debe tener entre 6 y 64 caracteres de longitud</string>
     <string name="passwordErrorMatch">Las contraseñas no coinciden</string>
     <string name="passwordFailed">Error al establecer la contraseña</string>
     <string name="passwordIncorrect">Contraseña incorrecta</string>

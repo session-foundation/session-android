@@ -795,7 +795,6 @@
     <string name="passwordEnterCurrent">الرجاء إدخال كلمة السر الحالية</string>
     <string name="passwordEnterNew">الرجاء إدخال كلمة السر الجديدة</string>
     <string name="passwordError">كلمة المرور يجب ان تحتوي فقط على الاحرف, الارقام و الرموز</string>
-    <string name="passwordErrorLength">كلمة المرور يجب ان تكون بين 6 و 64 عنصر</string>
     <string name="passwordErrorMatch">كلمتا المرور لا تتطابقان</string>
     <string name="passwordFailed">فشل تعيين كلمة المرور</string>
     <string name="passwordIncorrect">كلمة المرور خاطئة</string>

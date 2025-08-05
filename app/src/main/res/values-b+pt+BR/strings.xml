@@ -674,7 +674,6 @@
     <string name="passwordEnterCurrent">Por favor, insira sua senha atual</string>
     <string name="passwordEnterNew">Por favor, digite a sua nova senha</string>
     <string name="passwordError">A senha deve conter apenas letras, números e símbolos</string>
-    <string name="passwordErrorLength">A senha deve ter entre 6 e 64 caracteres</string>
     <string name="passwordErrorMatch">As senhas não coincidem</string>
     <string name="passwordFailed">Falha ao definir a senha</string>
     <string name="passwordIncorrect">Senha incorreta</string>

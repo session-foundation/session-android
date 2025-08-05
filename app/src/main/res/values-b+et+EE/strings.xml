@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Palun sisestage oma praegune parool</string>
     <string name="passwordEnterNew">Palun sisestage oma uus parool</string>
     <string name="passwordError">Parool võib sisaldada ainult tähti, numbreid ja sümboleid</string>
-    <string name="passwordErrorLength">Parool peab olema 6 kuni 64 tähemärki pikk</string>
     <string name="passwordErrorMatch">Paroolid ei ühti</string>
     <string name="passwordFailed">Salasõna määramine ebaõnnestus</string>
     <string name="passwordIncorrect">Vale parool</string>

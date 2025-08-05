@@ -691,7 +691,6 @@
     <string name="passwordEnterCurrent">Ji kerema xwe şîfreya xwe ya berdest têkeve</string>
     <string name="passwordEnterNew">Ji kerema xwe şîfreya xwe ya nû têkeve</string>
     <string name="passwordError">Şîfre divê tenê herf, nimre û sembolan bihewîne</string>
-    <string name="passwordErrorLength">Divê şîfre di navbera dirêjiya 6 û 64 karakteran de be</string>
     <string name="passwordErrorMatch">Şîfre li hev nayên</string>
     <string name="passwordFailed">Bi ser neket ku şîfre deyne</string>
     <string name="passwordIncorrect">Şîfreya nerast</string>

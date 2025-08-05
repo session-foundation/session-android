@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Ве молиме внесете ја вашата тековна лозинка</string>
     <string name="passwordEnterNew">Ве молиме внесете ја вашата нова лозинка</string>
     <string name="passwordError">Лозинката треба да содржи само букви, бројки и симболи</string>
-    <string name="passwordErrorLength">Лозинката мора да содржи помеѓу 6 и 64 карактери</string>
     <string name="passwordErrorMatch">Лозинките не се совпаѓаат</string>
     <string name="passwordFailed">Неуспешно поставување лозинка</string>
     <string name="passwordIncorrect">Неправилна лозинка</string>

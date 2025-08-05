@@ -681,7 +681,6 @@
     <string name="passwordEnterCurrent">Įveskite dabartinį slaptažodį</string>
     <string name="passwordEnterNew">Įveskite naują slaptažodį</string>
     <string name="passwordError">Password must only contain letters, numbers and symbols</string>
-    <string name="passwordErrorLength">Password must be between 6 and 64 characters long</string>
     <string name="passwordErrorMatch">Slaptažodžiai nesutampa</string>
     <string name="passwordFailed">Nepavyko nustatyti slaptažodžio</string>
     <string name="passwordIncorrect">Neteisingas slaptažodis</string>

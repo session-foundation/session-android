@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">කරුණාකර ඔබේ වත්මන් මුරපදය ඇතුළු කරන්න</string>
     <string name="passwordEnterNew">ඔබගේ මුරපදය ඇතුල් කරන්න</string>
     <string name="passwordError">මුරපදයේ අඩංගු විය යුත්තේ අකුරු, අංක සහ සංකේත පමණි</string>
-    <string name="passwordErrorLength">මුරපදය අක්ෂර 6 සහ 64 අතර දිග විය යුතුය</string>
     <string name="passwordErrorMatch">මුරපද නොගැලපේ</string>
     <string name="passwordFailed">මුරපදය සැකසීමට අසමත් විය</string>
     <string name="passwordIncorrect">සාවද්‍ය මුරපදයකි</string>

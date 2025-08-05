@@ -755,7 +755,6 @@
     <string name="passwordEnterCurrent">Venligst indtast din nuværende adgangskode</string>
     <string name="passwordEnterNew">Indtast din nye adgangskode</string>
     <string name="passwordError">Adgangskoden må kun indeholde bogstaver, numre og symboler</string>
-    <string name="passwordErrorLength">Adgangskoden skal være mellem 6 til 64 tegn</string>
     <string name="passwordErrorMatch">Adgangskoder matcher ikke</string>
     <string name="passwordFailed">Opdatering af adgangskode mislykkedes</string>
     <string name="passwordIncorrect">Forkert adgangskode</string>

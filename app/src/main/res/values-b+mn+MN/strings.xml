@@ -670,7 +670,6 @@
     <string name="passwordEnterCurrent">Одоогийн нууц үгээ оруулна уу</string>
     <string name="passwordEnterNew">Шинэ нууц үгээ оруулна уу</string>
     <string name="passwordError">Нууц үг нь зөвхөн үсэг, тоо болон тэмдэгтүүдийг агуулна</string>
-    <string name="passwordErrorLength">Нууц үг 6-аас 64 тэмдэгттэй байх ёстой</string>
     <string name="passwordErrorMatch">Нууц үг тохирсонгүй</string>
     <string name="passwordFailed">Нууц үгийг тогтоохдоо алдаа гарлаа</string>
     <string name="passwordIncorrect">Зөв нууц үг биш</string>

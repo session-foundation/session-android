@@ -655,7 +655,6 @@
     <string name="passwordEnterCurrent">Nceda ngenisa ipassword yakho yangoku</string>
     <string name="passwordEnterNew">Nceda ngenisa ipassword yakho entsha</string>
     <string name="passwordError">Iphasiwedi kufuneka iqulathe oonobumba, amanani kunye neesimboli kuphela</string>
-    <string name="passwordErrorLength">Iphasiwedi mayibe phakathi kwe-6 ne-64 iimpawu ngokubude</string>
     <string name="passwordErrorMatch">Iipasiwedi azifanani</string>
     <string name="passwordFailed">Koyekile ukumisela i-password</string>
     <string name="passwordIncorrect">Iphasiwedi echanekileyo</string>

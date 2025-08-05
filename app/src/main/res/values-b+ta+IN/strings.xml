@@ -658,7 +658,6 @@
     <string name="passwordEnterCurrent">தற்போதைய கடவுச்சொல்லை உள்ளிடவும்</string>
     <string name="passwordEnterNew">உங்கள் புதிய கடவுச்சொல்லை உள்ளிடவும்</string>
     <string name="passwordError">கடவுச்சொல் எழுத்துக்கள், எண்கள் மற்றும் சின்னங்களை மட்டும் கொண்டிருக்க வேண்டும்</string>
-    <string name="passwordErrorLength">கடவுச்சொல் 6 முதல் 64 எழுத்துக்களினிடையே இருக்க வேண்டும்</string>
     <string name="passwordErrorMatch">கடவுச்சொற்கள் பொருந்தவில்லை</string>
     <string name="passwordFailed">கடவுச்சொல்லை அமைப்பதில் தோல்வி</string>
     <string name="passwordIncorrect">தவறான கடவுச்சொல்</string>

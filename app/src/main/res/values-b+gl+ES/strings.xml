@@ -576,7 +576,6 @@
     <string name="passwordEnter">Introduza o contrasinal</string>
     <string name="passwordEnterNew">Por favor, introduce o teu novo contrasinal</string>
     <string name="passwordError">O contrasinal só debe conter letras, números e símbolos</string>
-    <string name="passwordErrorLength">O contrasinal debe ter entre 6 e 64 caracteres</string>
     <string name="passwordErrorMatch">Os contrasinais non coinciden</string>
     <string name="passwordFailed">Non se puido establecer o contrasinal</string>
     <string name="passwordIncorrect">Contrasinal incorrecto</string>

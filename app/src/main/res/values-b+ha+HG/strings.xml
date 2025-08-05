@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Shigar da kalmar sirri mai koyawa</string>
     <string name="passwordEnterNew">Shigar da sabuwar kalmar sirri</string>
     <string name="passwordError">Kalmar sirri dole ta ƙunshi haruffa, lambobi da alamomin musamman</string>
-    <string name="passwordErrorLength">Kalmar sirri dole ta kasance tsakanin haruffa 6 zuwa 64</string>
     <string name="passwordErrorMatch">Kalmar sirri ba ta dace da juna ba</string>
     <string name="passwordFailed">An kasa saita kalmar sirri</string>
     <string name="passwordIncorrect">Kalmar wucewa da aka shigar ba daidai ba ce</string>

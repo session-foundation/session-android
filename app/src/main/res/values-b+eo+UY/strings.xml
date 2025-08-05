@@ -744,7 +744,6 @@
     <string name="passwordEnterCurrent">Bonvolu enigi vian nuntempan pasvorton</string>
     <string name="passwordEnterNew">Bonvolu enigi vian novan pasvorton</string>
     <string name="passwordError">Necesas, ke pasvorto enhavu nur literojn, ciferojn kaj simbolojn</string>
-    <string name="passwordErrorLength">Necesas, ke pasvorto estu inter 6 kaj 64 longe</string>
     <string name="passwordErrorMatch">Pasvortoj ne kongruas</string>
     <string name="passwordFailed">Malsukcesis agordi pasvorton</string>
     <string name="passwordIncorrect">Malĝusta pasvorto</string>

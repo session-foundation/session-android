@@ -765,7 +765,6 @@
     <string name="passwordEnterCurrent">Voer uw huidige wachtwoord in</string>
     <string name="passwordEnterNew">Voer je nieuwe wachtwoord in</string>
     <string name="passwordError">Wachtwoord mag alleen letters, cijfers en symbolen bevatten</string>
-    <string name="passwordErrorLength">Wachtwoord moet tussen de 6 en 64 tekens lang zijn</string>
     <string name="passwordErrorMatch">Wachtwoorden komen niet overeen</string>
     <string name="passwordFailed">Instellen van wachtwoord mislukt</string>
     <string name="passwordIncorrect">Onjuist wachtwoord</string>

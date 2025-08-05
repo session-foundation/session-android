@@ -643,7 +643,6 @@
     <string name="passwordEnterCurrent">โปรดป้อนรหัสผ่านปัจจุบันของคุณ</string>
     <string name="passwordEnterNew">โปรดป้อนรหัสผ่านใหม่ของคุณ</string>
     <string name="passwordError">รหัสผ่านต้องประกอบด้วยตัวอักษร ตัวเลข และสัญลักษณ์เท่านั้น</string>
-    <string name="passwordErrorLength">รหัสผ่านต้องมีความยาวตั้งแต่ 6 ถึง 64 ตัวอักษร</string>
     <string name="passwordErrorMatch">รหัสผ่านไม่ตรงกัน</string>
     <string name="passwordFailed">การตั้งรหัสผ่านล้มเหลว</string>
     <string name="passwordIncorrect">รหัสผ่านไม่ถูกต้อง</string>

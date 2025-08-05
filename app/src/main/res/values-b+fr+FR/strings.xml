@@ -766,7 +766,6 @@
     <string name="passwordEnterCurrent">Veuillez entrer votre mot de passe actuel</string>
     <string name="passwordEnterNew">Veuillez entrer votre nouveau mot de passe</string>
     <string name="passwordError">Le mot de passe ne peux contenir que des lettres, des chiffres et des symboles</string>
-    <string name="passwordErrorLength">Le mot de passe doit avoir une longueur comprise entre 6 et 64 caractères</string>
     <string name="passwordErrorMatch">Les mots de passe ne correspondent pas.</string>
     <string name="passwordFailed">Échec de la définition du mot de passe</string>
     <string name="passwordIncorrect">Mot de passe incorrect</string>

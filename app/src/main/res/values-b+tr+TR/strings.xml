@@ -717,7 +717,6 @@
     <string name="passwordEnterCurrent">Lütfen mevcut parolanızı girin</string>
     <string name="passwordEnterNew">Lütfen yeni parolanızı girin</string>
     <string name="passwordError">Parolanız sadece harf, sayı ve sembol içermelidir</string>
-    <string name="passwordErrorLength">Parolanız 6 ila 64 karakter uzunluğu aralığında olmalıdır</string>
     <string name="passwordErrorMatch">Şifreler uyuşmuyor</string>
     <string name="passwordFailed">Parolayı ayarlama başarısız oldu</string>
     <string name="passwordIncorrect">Yanlış şifre</string>

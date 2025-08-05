@@ -775,7 +775,6 @@
     <string name="passwordEnterCurrent">Пожалуйста, введите ваш текущий пароль</string>
     <string name="passwordEnterNew">Введите новый пароль</string>
     <string name="passwordError">Пароль должен содержать только буквы, цифры и символы</string>
-    <string name="passwordErrorLength">Пароль должен содержать от 6 до 64 символов</string>
     <string name="passwordErrorMatch">Пароли не совпадают</string>
     <string name="passwordFailed">Не удалось установить пароль</string>
     <string name="passwordIncorrect">Неверный пароль</string>

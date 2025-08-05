@@ -656,7 +656,6 @@
     <string name="passwordEnterCurrent">Sila masukkan kata laluan semasa anda</string>
     <string name="passwordEnterNew">Sila masukkan kata laluan baru anda</string>
     <string name="passwordError">Kata laluan hanya boleh mengandungi huruf, nombor dan simbol</string>
-    <string name="passwordErrorLength">Kata laluan mestilah antara 6 hingga 64 aksara panjang</string>
     <string name="passwordErrorMatch">Kata laluan tidak sepadan</string>
     <string name="passwordFailed">Gagal menetapkan kata laluan</string>
     <string name="passwordIncorrect">Kata laluan tidak betul</string>

@@ -666,7 +666,6 @@
     <string name="passwordEnterCurrent">Унесите тренутну лозинку</string>
     <string name="passwordEnterNew">Унесите нову лозинку</string>
     <string name="passwordError">Лозинка мора садржати само слова, бројеве и симболе</string>
-    <string name="passwordErrorLength">Лозинка мора имати између 6 и 64 карактера</string>
     <string name="passwordErrorMatch">Лозинке се не поклапају</string>
     <string name="passwordFailed">Неуспех у постављању лозинке</string>
     <string name="passwordIncorrect">Нетачна лозинка</string>

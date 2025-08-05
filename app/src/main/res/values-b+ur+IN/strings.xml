@@ -666,7 +666,6 @@
     <string name="passwordEnterCurrent">براہ کرم اپنا موجودہ پاس ورڈ درج کریں</string>
     <string name="passwordEnterNew">براہ کرم اپنا نیا پاس ورڈ درج کریں</string>
     <string name="passwordError">پاس ورڈ میں صرف حروف، نمبر اور علامتیں ہونی چاہئیں</string>
-    <string name="passwordErrorLength">پاس ورڈ 6 اور 64 حروف کے درمیان ہونا چاہیے</string>
     <string name="passwordErrorMatch">پاس ورڈ نہیں ملتے</string>
     <string name="passwordFailed">پاس ورڈ سیٹ کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>

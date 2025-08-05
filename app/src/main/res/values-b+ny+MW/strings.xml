@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Chonde lowetsani chinsinsi chanu choyambilira</string>
     <string name="passwordEnterNew">Chonde lowetsani chinsinsi chanu chatsopano</string>
     <string name="passwordError">Chinsinsi chiyenera kukhala ndi zilembo, manambala ndi zizindikiro zokha</string>
-    <string name="passwordErrorLength">Chinsinsi chiyenera kutalika pakati pa zilembo 6 ndi 64</string>
     <string name="passwordErrorMatch">Machinsinsi sapitirizana</string>
     <string name="passwordFailed">Zalephera kukhazikitsa mawu achinsinsi</string>
     <string name="passwordIncorrect">Mawekerede wosalakwika</string>

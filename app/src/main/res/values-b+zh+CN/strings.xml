@@ -721,7 +721,6 @@
     <string name="passwordEnterCurrent">请输入您当前的密码</string>
     <string name="passwordEnterNew">请输入您的新密码</string>
     <string name="passwordError">密码必须只包含字母、数字和符号</string>
-    <string name="passwordErrorLength">密码长度必须在6到64个字符之间</string>
     <string name="passwordErrorMatch">密码不一致</string>
     <string name="passwordFailed">设置密码失败</string>
     <string name="passwordIncorrect">密码不正确</string>

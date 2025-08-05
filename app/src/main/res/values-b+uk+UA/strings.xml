@@ -815,7 +815,6 @@
     <string name="passwordEnterCurrent">Будь ласка, введіть поточний пароль</string>
     <string name="passwordEnterNew">Будь ласка, введіть новий пароль</string>
     <string name="passwordError">Пароль має містити лише літери, цифри та символи</string>
-    <string name="passwordErrorLength">Пароль має бути довжиною від 6 до 64 символів</string>
     <string name="passwordErrorMatch">Паролі не збігаються</string>
     <string name="passwordFailed">Не вдалося встановити пароль</string>
     <string name="passwordIncorrect">Неправильний пароль</string>

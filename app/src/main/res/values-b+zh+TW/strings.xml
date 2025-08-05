@@ -656,7 +656,6 @@
     <string name="passwordEnterCurrent">請輸入您目前的密碼</string>
     <string name="passwordEnterNew">請輸入您的新密碼</string>
     <string name="passwordError">密碼只能包含字母、數字和符號</string>
-    <string name="passwordErrorLength">密碼必須介於6到64個字元之間。</string>
     <string name="passwordErrorMatch">密碼不一致</string>
     <string name="passwordFailed">設定密碼失敗</string>
     <string name="passwordIncorrect">密碼錯誤</string>

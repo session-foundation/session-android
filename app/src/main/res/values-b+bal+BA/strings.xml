@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">براہء مہربانی اپنے موجودہ پاسورڈ ڈالیں</string>
     <string name="passwordEnterNew">براہء مہربانی اپنا نیا پاسورڈ ڈالیں</string>
     <string name="passwordError">پاسورڈ فقط حروف، اعداد و علامات بوت</string>
-    <string name="passwordErrorLength">پاسورڈ 6 تا 64 حرفء درمیان بوت</string>
     <string name="passwordErrorMatch">پاسورڈاں مطابق نئیں</string>
     <string name="passwordFailed">پاسورڈ مقرر کرنے میں ناکامی</string>
     <string name="passwordIncorrect">غلط پاس ورڈ</string>

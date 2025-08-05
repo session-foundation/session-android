@@ -670,7 +670,6 @@
     <string name="passwordEnterCurrent">Παρακαλώ εισαγάγετε τον τρέχον σας κωδικό πρόσβασης</string>
     <string name="passwordEnterNew">Παρακαλώ εισαγάγετε τον νέο σας κωδικό πρόσβασης</string>
     <string name="passwordError">Ο κωδικός πρόσβασης πρέπει να περιέχει μόνο γράμματα, αριθμούς και σύμβολα</string>
-    <string name="passwordErrorLength">Ο κωδικός πρόσβασης πρέπει να αποτελείται από 6 έως 64 χαρακτήρες</string>
     <string name="passwordErrorMatch">Οι Κωδικοί Πρόσβασης δεν ταιριάζουν</string>
     <string name="passwordFailed">Αποτυχία ορισμού κωδικού πρόσβασης</string>
     <string name="passwordIncorrect">Λάθος κωδικός πρόσβασης</string>

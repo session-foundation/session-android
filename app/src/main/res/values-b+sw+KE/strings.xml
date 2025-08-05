@@ -655,7 +655,6 @@
     <string name="passwordEnterCurrent">Tafadhali weka nyila yako ya sasa</string>
     <string name="passwordEnterNew">Tafadhali weka nyila yako mpya</string>
     <string name="passwordError">Nywila lazima ziwe na herufi, nambari na alama pekee</string>
-    <string name="passwordErrorLength">Nywila lazima iwe kati ya herufi 6 na 64</string>
     <string name="passwordErrorMatch">Nywila hazilingani</string>
     <string name="passwordFailed">Imeshindikana kuweka nenosiri</string>
     <string name="passwordIncorrect">Nywila sio sahihi</string>

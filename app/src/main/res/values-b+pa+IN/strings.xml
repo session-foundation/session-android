@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">ਕ੍ਰਿਪਾ ਕਰਕੇ ਆਪਣਾ ਮੌਜੂਦਾ ਪਾਸਵਰਡ ਡਾਲੋ।</string>
     <string name="passwordEnterNew">ਕ੍ਰਿਪਾ ਕਰਕੇ ਆਪਣਾ ਨਵਾਂ ਪਾਸਵਰਡ ਡਾਲੋ</string>
     <string name="passwordError">ਪਾਸਵਰਡ ਵਿੱਚ ਸਿਰਫ਼ ਅੱਖਰ, ਅੰਕ ਅਤੇ ਨਿਸ਼ਾਨ ਹੋਣੇ ਚਾਹੀਦੇ ਹਨ</string>
-    <string name="passwordErrorLength">ਪਾਸਵਰਡ 6 ਤੋਂ 64 ਅੱਖਰ ਲੰਮਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
     <string name="passwordErrorMatch">ਪਾਸਵਰਡ ਮਿਲਦੇ ਨਹੀਂ ਹਨ</string>
     <string name="passwordFailed">ਪਾਸਵਰਡ ਸੈੱਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ ਹੋਇਆ</string>
     <string name="passwordIncorrect">ਗਲਤ ਪਾਸਵਰਡ</string>

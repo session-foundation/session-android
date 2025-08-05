@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Voer jou huidige wagwoord in</string>
     <string name="passwordEnterNew">Voer jou nuwe wagwoord in</string>
     <string name="passwordError">Wagwoord moet slegs letters, syfers en simbole bevat</string>
-    <string name="passwordErrorLength">Wagwoord moet tussen 6 en 64 karakters lank wees</string>
     <string name="passwordErrorMatch">Wagwoorde stem nie ooreen nie</string>
     <string name="passwordFailed">Kon nie wagwoord stel nie</string>
     <string name="passwordIncorrect">Verkeerde wagwoord</string>

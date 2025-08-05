@@ -655,7 +655,6 @@
     <string name="passwordEnterCurrent">Iltimos, hozirgi parolni kiriting</string>
     <string name="passwordEnterNew">Iltimos, yangi parolingizni kiriting</string>
     <string name="passwordError">Parolda faqat simvollar raqamlar va harflar bo\'lishi lozim</string>
-    <string name="passwordErrorLength">Sizning parolingiz uzunligi 6 va 64 belgidan iborat bo\'lishi mumkin</string>
     <string name="passwordErrorMatch">Parollar mos kelmadi</string>
     <string name="passwordFailed">Parolni o\'rnatishda muammo chiqdi</string>
     <string name="passwordIncorrect">Xato parol</string>

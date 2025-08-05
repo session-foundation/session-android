@@ -755,7 +755,6 @@
     <string name="passwordEnterCurrent">Lütfən hazırkı parolunuzu daxil edin</string>
     <string name="passwordEnterNew">Lütfən yeni parolunuzu daxil edin</string>
     <string name="passwordError">Parolda yalnız hərf, rəqəm və simvollar olmalıdır</string>
-    <string name="passwordErrorLength">Parol 6-64 simvol uzunluğunda olmalıdır</string>
     <string name="passwordErrorMatch">Parollar uyuşmur</string>
     <string name="passwordFailed">Parol təyin etmə uğursuz oldu</string>
     <string name="passwordIncorrect">Yanlış parol</string>

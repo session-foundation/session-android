@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">Моля, въведете текущата си парола</string>
     <string name="passwordEnterNew">Моля, въведете новата си парола</string>
     <string name="passwordError">Паролата трябва да съдържа само букви, цифри и символи</string>
-    <string name="passwordErrorLength">Паролата трябва да е между 6 и 64 символа</string>
     <string name="passwordErrorMatch">Паролите не съвпадат</string>
     <string name="passwordFailed">Неуспешно задаване на паролата</string>
     <string name="passwordIncorrect">Грешна парола</string>

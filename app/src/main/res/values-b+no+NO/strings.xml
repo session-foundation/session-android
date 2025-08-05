@@ -658,7 +658,6 @@
     <string name="passwordEnterCurrent">Vennligst skriv inn ditt nåværende passord</string>
     <string name="passwordEnterNew">Vennligst skriv inn det nye passordet ditt</string>
     <string name="passwordError">Passordet kan kun inneholde bokstaver, tall og symboler</string>
-    <string name="passwordErrorLength">Passordet må være mellom 6 og 64 tegn langt</string>
     <string name="passwordErrorMatch">Passordene stemmer ikke overens</string>
     <string name="passwordFailed">Kunne ikke stille passordet</string>
     <string name="passwordIncorrect">Galt passord</string>

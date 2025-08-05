@@ -719,7 +719,6 @@
     <string name="passwordEnterCurrent">Harap masukkan kata sandi Anda saat ini</string>
     <string name="passwordEnterNew">Mohon masukkan kata sandi Anda yang baru</string>
     <string name="passwordError">Kata sandi hanya bisa terdiri dari huruf, angka dan simbol sederhana</string>
-    <string name="passwordErrorLength">Panjang kata sandi anda harus diantara 6 dan 64 karakter</string>
     <string name="passwordErrorMatch">Kata sandi tidak cocok</string>
     <string name="passwordFailed">Gagal memperbarui kata sandi</string>
     <string name="passwordIncorrect">Kata sandi salah</string>

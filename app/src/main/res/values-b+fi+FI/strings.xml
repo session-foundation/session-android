@@ -674,7 +674,6 @@
     <string name="passwordEnterCurrent">Syötä nykyinen salasanasi</string>
     <string name="passwordEnterNew">Syötä uusi salasana</string>
     <string name="passwordError">Salasana voi sisältää vain kirjaimia, numeroita tai symboleja</string>
-    <string name="passwordErrorLength">Salasanan tulee olla 6-64 merkkiä pitkä</string>
     <string name="passwordErrorMatch">Salasanat eivät täsmää</string>
     <string name="passwordFailed">Salasanan asetus epäonnistui</string>
     <string name="passwordIncorrect">Virheellinen salasana</string>

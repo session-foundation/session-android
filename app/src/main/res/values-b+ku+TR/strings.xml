@@ -654,7 +654,6 @@
     <string name="passwordEnterCurrent">تکایە لەبەشی حالەتی تێپەڕەوشەوە بنووسە</string>
     <string name="passwordEnterNew">تکایە تێپەڕەوشەی نوێت بنووسە</string>
     <string name="passwordError">پەیامەکان تەنها دەبێ سەرنج amin FischerAzadhace.</string>
-    <string name="passwordErrorLength">تێپەڕبووی تێپەڕاندەکانی تێپەڕەبە دووبارە بکەوە دەگل ناچێ.</string>
     <string name="passwordErrorMatch">تێپەڕبووان وەک یەک نین</string>
     <string name="passwordFailed">شکستی دانانی وشەی نهێنی</string>
     <string name="passwordIncorrect">وشەی نهێنیکردنەوەی نەگونجاو</string>

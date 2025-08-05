@@ -778,7 +778,6 @@
     <string name="passwordEnterCurrent">Si us plau, introdueix la teva contrasenya actual</string>
     <string name="passwordEnterNew">Si us plau, introdueix la teva nova contrasenya.</string>
     <string name="passwordError">La contrasenya només pot contenir lletres, números i símbols</string>
-    <string name="passwordErrorLength">La contrasenya ha de ser d\'entre 6 i 64 caràcters</string>
     <string name="passwordErrorMatch">Les contrassenyes no coincideixen</string>
     <string name="passwordFailed">No s\'ha pogut canviar la contrasenya</string>
     <string name="passwordIncorrect">Contrasenya incorrecta</string>

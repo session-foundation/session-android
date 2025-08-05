@@ -604,7 +604,6 @@
     <string name="passwordEnterCurrent">Lūdzu, ievadi pašreizējo paroli</string>
     <string name="passwordEnterNew">Lūdzu, ievadiet savu jauno paroli</string>
     <string name="passwordError">Parolei drīkst būt tikai burti, cipari un simboli</string>
-    <string name="passwordErrorLength">Parolei jābūt no 6 līdz 64 rakstzīmēm garai</string>
     <string name="passwordErrorMatch">Paroles nesakrīt</string>
     <string name="passwordFailed">Neizdevās iestatīt paroli</string>
     <string name="passwordIncorrect">Nepareiza parole</string>

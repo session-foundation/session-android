@@ -678,7 +678,6 @@
     <string name="passwordEnterCurrent">אנא הזן את הסיסמא הנוכחית שלך</string>
     <string name="passwordEnterNew">אנא הזן את הסיסמא החדשה שלך</string>
     <string name="passwordError">הסיסמא חייבת להכיל רק אותיות, מספרים וסימנים</string>
-    <string name="passwordErrorLength">הסיסמא חייבת להיות באורך של בין 6 ל-64 תווים</string>
     <string name="passwordErrorMatch">משפטי־סיסמה אינם תואמים</string>
     <string name="passwordFailed">נכשל לקבוע סיסמה</string>
     <string name="passwordIncorrect">סיסמה שגויה</string>
