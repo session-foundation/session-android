@@ -175,6 +175,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" 
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
+sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

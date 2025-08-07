@@ -47,6 +47,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
+val nonDebugBuildTypes = listOf("release", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -206,6 +207,14 @@ android {
             maybeCreate(variant).apply {
                 java.srcDirs("$nonPlayCommonDir/kotlin")
                 resources.srcDirs("$nonPlayCommonDir/resources")
+            }
+        }
+
+        val nonDebugDir = "src/nonDebug"
+        nonDebugBuildTypes.forEach { buildType ->
+            maybeCreate(buildType).apply {
+                java.srcDirs("$nonDebugDir/kotlin")
+                resources.srcDirs("$nonDebugDir/resources")
             }
         }
     }
@@ -450,6 +459,8 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    debugImplementation(libs.sqlite.web.viewer)
 }
 
 fun getLastCommitTimestamp(): String {
