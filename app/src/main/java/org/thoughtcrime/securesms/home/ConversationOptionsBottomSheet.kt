@@ -47,6 +47,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
     var onUnblockTapped: (() -> Unit)? = null
     var onDeleteTapped: (() -> Unit)? = null
     var onMarkAllAsReadTapped: (() -> Unit)? = null
+    var onMarkAsUnreadTapped : (() -> Unit)? = null
     var onNotificationTapped: (() -> Unit)? = null
     var onDeleteContactTapped: (() -> Unit)? = null
 
@@ -66,6 +67,7 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             binding.unblockTextView -> onUnblockTapped?.invoke()
             binding.deleteTextView -> onDeleteTapped?.invoke()
             binding.markAllAsReadTextView -> onMarkAllAsReadTapped?.invoke()
+            binding.markAsUnreadTextView -> onMarkAsUnreadTapped?.invoke()
             binding.notificationsTextView -> onNotificationTapped?.invoke()
             binding.deleteContactTextView -> onDeleteContactTapped?.invoke()
         }
@@ -181,10 +183,24 @@ class ConversationOptionsBottomSheet(private val parentContext: Context) : Botto
             TextViewCompat.setCompoundDrawablesRelativeWithIntrinsicBounds(this, drawableStartRes, 0, 0, 0)
         }
 
-        binding.markAllAsReadTextView.isVisible = (thread.unreadCount > 0 ||
-                configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) })
-                && !isDeprecatedLegacyGroup
+        // We have three states for a conversation:
+        // 1. The conversation has unread messages
+        // 2. The conversation is marked as unread (which is different from having unread messages)
+        // 3. The conversation is up to date
+        // Case 1 and 2 should show the 'mark as read' button while case 3 should show 'mark as unread'
+
+        // case 1
+        val hasUnreadMessages = thread.unreadCount > 0
+
+        // case 2
+        val isMarkedAsUnread = configFactory.withUserConfigs { it.convoInfoVolatile.getConversationUnread(thread) } || !thread.isRead
+
+        val showMarkAsReadButton = hasUnreadMessages || isMarkedAsUnread
+
+        binding.markAllAsReadTextView.isVisible = showMarkAsReadButton && !isDeprecatedLegacyGroup
         binding.markAllAsReadTextView.setOnClickListener(this)
+        binding.markAsUnreadTextView.isVisible = !showMarkAsReadButton  && !isDeprecatedLegacyGroup
+        binding.markAsUnreadTextView.setOnClickListener(this)
         binding.pinTextView.isVisible = !thread.isPinned && !isDeprecatedLegacyGroup
         binding.unpinTextView.isVisible = thread.isPinned
         binding.pinTextView.setOnClickListener(this)

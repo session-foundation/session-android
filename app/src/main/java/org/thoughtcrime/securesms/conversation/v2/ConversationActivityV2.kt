@@ -92,6 +92,7 @@ import org.session.libsession.messaging.sending_receiving.attachments.Attachment
 import org.session.libsession.messaging.sending_receiving.link_preview.LinkPreview
 import org.session.libsession.messaging.sending_receiving.quotes.QuoteModel
 import org.session.libsession.snode.SnodeAPI
+import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.GroupUtil
@@ -220,6 +221,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -260,6 +262,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     @Inject lateinit var typingStatusSender: TypingStatusSender
     @Inject lateinit var openGroupManager: OpenGroupManager
     @Inject lateinit var attachmentDatabase: AttachmentDatabase
+    @Inject lateinit var clock: SnodeClock
 
     override val applyDefaultWindowInsets: Boolean
         get() = false
@@ -771,7 +774,26 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
             if (author != null && messageTimestamp >= 0) {
                 jumpToMessage(author, messageTimestamp, firstLoad.get(), null)
             } else {
-                if (firstLoad.getAndSet(false)) scrollToFirstUnreadMessageOrBottom()
+                if (firstLoad.getAndSet(false)) {
+                    scrollToFirstUnreadMessageOrBottom()
+
+                    // On the first load, check if there unread messages
+                    if (unreadCount == 0 && adapter.itemCount > 0) {
+                        // Get the last visible timestamp
+                        val lastPos = adapter.itemCount - 1
+                        val lastTimestamp = adapter.getTimestampForItemAt(lastPos)
+                            ?: clock.currentTimeMills()
+
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            // Check first if it is already unread to avoid unnecessary operation
+                            val isRead = storage.isRead(viewModel.threadId)
+                            if (!isRead) {
+                                storage.markConversationAsRead(viewModel.threadId, lastTimestamp)
+                            }
+                        }
+                    }
+                }
+
                 handleRecyclerViewScrolled()
             }
 
@@ -1101,8 +1123,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun scrollToFirstUnreadMessageOrBottom() {
         // if there are no unread messages, go straight to the very bottom of the list
-        if(unreadCount == 0){
-            layoutManager?.scrollToPositionWithOffset(adapter.itemCount -1, Int.MIN_VALUE)
+        if (unreadCount == 0) {
+            layoutManager?.scrollToPositionWithOffset(adapter.itemCount - 1, Int.MIN_VALUE)
             return
         }
 
@@ -1301,13 +1323,14 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         binding.typingIndicatorViewContainer.isVisible = wasTypingIndicatorVisibleBefore && isScrolledToBottom
 
         showScrollToBottomButtonIfApplicable()
+
         val maybeTargetVisiblePosition = layoutManager?.findLastVisibleItemPosition()
         val targetVisiblePosition = maybeTargetVisiblePosition ?: RecyclerView.NO_POSITION
         if (!firstLoad.get() && targetVisiblePosition != RecyclerView.NO_POSITION) {
             adapter.getTimestampForItemAt(targetVisiblePosition)?.let { visibleItemTimestamp ->
-                bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
-                    if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
-                }
+                    bufferedLastSeenChannel.trySend(visibleItemTimestamp).apply {
+                        if (isFailure) Log.e(TAG, "trySend failed", exceptionOrNull())
+                    }
             }
         }
 

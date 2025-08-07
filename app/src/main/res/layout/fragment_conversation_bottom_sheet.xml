@@ -91,6 +91,15 @@
         app:drawableStartCompat="@drawable/ic_mail_open" />
 
     <TextView
+        android:id="@+id/markAsUnreadTextView"
+        style="@style/BottomSheetActionItem"
+        android:text="@string/messageMarkUnread"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:drawableTint="?attr/colorControlNormal"
+        app:drawableStartCompat="@drawable/ic_mail" />
+
+    <TextView
         android:id="@+id/deleteTextView"
         style="@style/BottomSheetActionItem"
         android:contentDescription="@string/AccessibilityId_delete"
