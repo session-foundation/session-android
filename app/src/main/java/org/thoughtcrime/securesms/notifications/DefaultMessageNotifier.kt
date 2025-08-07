@@ -211,20 +211,38 @@ class DefaultMessageNotifier(
     }
 
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
+        // 1. Early exits
+        val localNum = getLocalNumber(context)
+        if (localNum == null || !isNotificationsEnabled(context)) {
+            cancelActiveNotifications(context)
+            clearReminder(context)
+            return
+        }
+
+        // 2. Open our two focused cursors
+        val incomingCursor = get(context)
+            .mmsSmsDatabase()
+            .getUnreadIncomingCursor()
+
+        val reactionCursor = get(context)
+            .mmsSmsDatabase()
+            .getUnseenReactionsCursor()
+
+        // 3. If both empty, bail out
+        if (!incomingCursor.moveToFirst() && !reactionCursor.moveToFirst()) {
+            incomingCursor.close()
+            reactionCursor.close()
+            cancelActiveNotifications(context)
+            clearReminder(context)
+            return
+        }
+
         var playNotificationAudio = signal // Local copy of the argument so we can modify it
-        var telcoCursor: Cursor? = null
 
         try {
-            telcoCursor = get(context).mmsSmsDatabase().unreadOrUnseenReactions // TODO: add a notification specific lighter query here
-
-            if ((telcoCursor == null || telcoCursor.isAfterLast) || getLocalNumber(context) == null) {
-                cancelActiveNotifications(context)
-                clearReminder(context)
-                return
-            }
-
             try {
-                val notificationState = constructNotificationState(context, telcoCursor)
+                // 4. Build grouped state from both
+                val notificationState = constructNotificationState(context, incomingCursor, reactionCursor)
 
                 if (playNotificationAudio && (System.currentTimeMillis() - lastAudibleNotification) < MIN_AUDIBLE_PERIOD_MILLIS) {
                     playNotificationAudio = false
@@ -254,7 +272,8 @@ class DefaultMessageNotifier(
             }
 
         } finally {
-            telcoCursor?.close()
+            incomingCursor.close()
+            reactionCursor.close()
         }
     }
 
@@ -280,13 +299,13 @@ class DefaultMessageNotifier(
         val notificationItem =  notifications.first()
         val isMessageRequest = !notificationItem.recipient.isApproved
 
-        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
+//        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
 
         val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
-        }.distinct().sorted().joinToString("|")
+        }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == notificationId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
@@ -421,7 +440,7 @@ class DefaultMessageNotifier(
         val notificationItem = notifications.first()
         val isMessageRequest = !notificationItem.recipient.isApproved
 
-        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
+//        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -511,171 +530,350 @@ class DefaultMessageNotifier(
         Log.i(TAG, "Posted notification. $notification")
     }
 
-    private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
+//    private fun constructNotificationState(context: Context, cursor: Cursor): NotificationState {
+//        val notificationState = NotificationState()
+//        val reader = get(context).mmsSmsDatabase().readerFor(cursor)
+//        if (reader == null) {
+//            Log.e(TAG, "No reader for cursor - aborting constructNotificationState")
+//            return NotificationState()
+//        }
+//
+//        val threadDatabase = get(context).threadDatabase()
+//        val cache: MutableMap<Long, String?> = HashMap()
+//
+//        var record: MessageRecord? = null
+//        do {
+//            record = reader.next
+//            if (record == null) break // Bail if there are no more MessageRecords
+//
+//            val threadId = record.threadId
+//            val threadRecipients = if (threadId != -1L) {
+//                threadDatabase.getRecipientForThreadId(threadId)
+//            } else null
+//
+//            // Start by checking various scenario that we should skip
+//
+//            // Skip if muted or calls
+//            if (threadRecipients?.isMuted == true) continue
+//            if (record.isIncomingCall || record.isOutgoingCall) continue
+//
+//            // Handle message requests early
+//            val isMessageRequest = threadRecipients != null &&
+//                    !threadRecipients.isGroupOrCommunityRecipient &&
+//                    !threadRecipients.isApproved &&
+//                    !threadDatabase.getLastSeenAndHasSent(threadId).second()
+//
+////            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+////            val hasExistingNotification = hasExistingRequestNotification(context, threadId)
+//
+//            // If there is an existing notification, add the notification to prevent an empty notificationState
+////            if(isMessageRequest && hasExistingMessages && !hasExistingNotification) continue
+//
+//            // Check notification settings
+//            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
+//
+//            val userPublicKey = getLocalNumber(context)
+//
+//            // Check mentions-only setting
+//            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+//                var blindedPublicKey = cache[threadId]
+//                if (blindedPublicKey == null) {
+//                    blindedPublicKey = generateBlindedId(threadId, context)
+//                    cache[threadId] = blindedPublicKey
+//                }
+//
+//                var isMentioned = false
+//                val body = record.getDisplayBody(context).toString()
+//
+//                // Check for @mentions
+//                if (body.contains("@$userPublicKey") ||
+//                    (blindedPublicKey != null && body.contains("@$blindedPublicKey"))) {
+//                    isMentioned = true
+//                }
+//
+//                // Check for quote mentions
+//                if (record is MmsMessageRecord) {
+//                    val quote = record.quote
+//                    val quoteAuthor = quote?.author?.toString()
+//                    if ((quoteAuthor != null && userPublicKey == quoteAuthor) ||
+//                        (blindedPublicKey != null && quoteAuthor == blindedPublicKey)) {
+//                        isMentioned = true
+//                    }
+//                }
+//
+//                if (!isMentioned) continue
+//            }
+//
+//            Log.w(TAG, "Processing: ID=${record.getId()}, outgoing=${record.isOutgoing}, read=${record.isRead}, hasReactions=${record.reactions.isNotEmpty()}")
+//
+//
+//            // Determine the reason this message was returned by the query
+//            val isNotified = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFIED)) == 1
+//            val isUnreadIncoming = !record.isOutgoing && !record.isRead() && !isNotified // << Case 1
+//            val hasUnreadReactions = record.reactions.isNotEmpty() // << Case 2
+//
+//            Log.w(TAG, "  -> isUnreadIncoming=$isUnreadIncoming, hasUnreadReactions=$hasUnreadReactions, isNotified=${isNotified}")
+//
+//            // CASE 1: TRULY NEW UNREAD INCOMING MESSAGE
+//            // Only show message notification if it's incoming, unread AND not yet notified
+//            if (isUnreadIncoming) {
+//                // Prepare message body
+//                var body: CharSequence = record.getDisplayBody(context)
+//                var slideDeck: SlideDeck? = null
+//
+//                if (isMessageRequest) {
+//                   body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+//                } else if (KeyCachingService.isLocked(context)) {
+//                    body = SpanUtil.italic(
+//                        context.resources.getQuantityString(
+//                            R.plurals.messageNewYouveGot,
+//                            1,
+//                            1
+//                        )
+//                    )
+//                } else {
+//                    // Handle MMS content
+//                    if (record.isMms && TextUtils.isEmpty(body) && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()) {
+//                        slideDeck = (record as MediaMmsMessageRecord).slideDeck
+//                        body = SpanUtil.italic(slideDeck.body)
+//                    } else if (record.isMms && !record.isMmsNotification && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()) {
+//                        slideDeck = (record as MediaMmsMessageRecord).slideDeck
+//                        val message = slideDeck.body + ": " + record.body
+//                        val italicLength = message.length - body.length
+//                        body = SpanUtil.italic(message, italicLength)
+//                    } else if (record.isOpenGroupInvitation) {
+//                        body = SpanUtil.italic(context.getString(R.string.communityInvitation))
+//                    }
+//                }
+//
+//                Log.w(TAG, "Adding incoming message notification: ${body}")
+//
+//                // Add incoming message notification
+//                notificationState.addNotification(
+//                    NotificationItem(
+//                        record.getId(),
+//                        record.isMms || record.isMmsNotification,
+//                        record.individualRecipient,
+//                        record.recipient,
+//                        threadRecipients,
+//                        threadId,
+//                        body,
+//                        record.timestamp,
+//                        slideDeck
+//                    )
+//                )
+//            }
+//            // CASE 2: REACTIONS TO OUR OUTGOING MESSAGES
+//            // Only if: it's OUR message AND it has reactions AND it's NOT an unread incoming message
+//            else if (record.isOutgoing &&
+//                hasUnreadReactions &&
+//                threadRecipients != null &&
+//                !threadRecipients.isGroupOrCommunityRecipient) {
+//
+//                var blindedPublicKey = cache[threadId]
+//                if (blindedPublicKey == null) {
+//                    blindedPublicKey = generateBlindedId(threadId, context)
+//                    cache[threadId] = blindedPublicKey
+//                }
+//
+//                // Find reactions from others (not from us)
+//                val reactionsFromOthers = record.reactions.filter { reaction ->
+//                    reaction.author != userPublicKey &&
+//                            (blindedPublicKey == null || reaction.author != blindedPublicKey)
+//                }
+//
+//                if (reactionsFromOthers.isNotEmpty()) {
+//                    // Get the most recent reaction from others
+//                    val latestReaction = reactionsFromOthers.maxByOrNull { it.dateSent }
+//
+//                    if (latestReaction != null) {
+//                        val reactor = Recipient.from(context, fromSerialized(latestReaction.author), false)
+//                        val emoji = Phrase.from(context, R.string.emojiReactsNotification)
+//                            .put(EMOJI_KEY, latestReaction.emoji).format().toString()
+//
+//                        // Use unique ID to avoid conflicts with message notifications
+//                        val reactionId = "reaction_${record.getId()}_${latestReaction.emoji}_${latestReaction.author}".hashCode().toLong()
+//
+//                        Log.w(TAG, "Adding reaction notification: ${emoji} to our message ID ${record.getId()}")
+//
+//                        notificationState.addNotification(
+//                            NotificationItem(
+//                                reactionId,
+//                                record.isMms || record.isMmsNotification,
+//                                reactor,
+//                                reactor,
+//                                threadRecipients,
+//                                threadId,
+//                                emoji,
+//                                latestReaction.dateSent,
+//                                null
+//                            )
+//                        )
+//                    }
+//                }
+//            }
+//            // CASE 3: IGNORED SCENARIOS
+//            // This handles cases like:
+//            // - Contact's message with reactions (hasUnreadReactions=true, but isOutgoing=false)
+//            // - Already read messages that somehow got returned
+//            // - etc.
+//            else {
+//                Log.w(TAG, "Ignoring message: not unread incoming and not our outgoing with reactions")
+//            }
+//
+//        } while (record != null)
+//
+//        reader.close()
+//        return notificationState
+//    }
+
+    /**
+     * Builds one NotificationState by reading both
+     * the new-unread-incoming cursor and the unseen-reactions cursor.
+     */
+    private fun constructNotificationState(
+        context: Context,
+        incoming: Cursor,
+        reactions: Cursor
+    ): NotificationState {
         val notificationState = NotificationState()
-        val reader = get(context).mmsSmsDatabase().readerFor(cursor)
-        if (reader == null) {
-            Log.e(TAG, "No reader for cursor - aborting constructNotificationState")
-            return NotificationState()
-        }
-
         val threadDatabase = get(context).threadDatabase()
+        val readerDb = get(context).mmsSmsDatabase()
         val cache: MutableMap<Long, String?> = HashMap()
+        val userPublicKey = getLocalNumber(context)
 
-        var record: MessageRecord? = null
-        do {
-            record = reader.next
-            if (record == null) break // Bail if there are no more MessageRecords
+        // Helper that runs the exact same logic on either cursor
+        fun readCursor(cursor: Cursor) {
+            val reader = readerDb.readerFor(cursor) ?: return
+            var record: MessageRecord?
 
-            val threadId = record.threadId
-            val threadRecipients = if (threadId != -1L) {
-                threadDatabase.getRecipientForThreadId(threadId)
-            } else null
+            do {
+                record = reader.next
+                if (record == null) break
 
-            // Start by checking various scenario that we should skip
+                val recipient = record.recipient
 
-            // Skip if muted or calls
-            if (threadRecipients?.isMuted == true) continue
-            if (record.isIncomingCall || record.isOutgoingCall) continue
+                val threadId = record.threadId
+                val threadRecipients = if (threadId != -1L)
+                    threadDatabase.getRecipientForThreadId(threadId)
+                else null
 
-            // Handle message requests early
-            val isMessageRequest = threadRecipients != null &&
-                    !threadRecipients.isGroupOrCommunityRecipient &&
-                    !threadRecipients.isApproved &&
-                    !threadDatabase.getLastSeenAndHasSent(threadId).second()
+                // SKIP IF MUTED OR CALLS
+                if (threadRecipients?.isMuted == true) continue
+                if (record.isIncomingCall || record.isOutgoingCall) continue
 
-//            val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
-//            val hasExistingNotification = hasExistingRequestNotification(context, threadId)
+                // MESSAGE-REQUESTS (unapproved)
+                val isMessageRequest = threadRecipients != null &&
+                        !threadRecipients.isGroupOrCommunityRecipient &&
+                        !threadRecipients.isApproved &&
+                        !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
-            // If there is an existing notification, add the notification to prevent an empty notificationState
-//            if(isMessageRequest && hasExistingMessages && !hasExistingNotification) continue
+                // SKIP IF NOTIFICATIONS DISABLED FOR THIS THREAD
+                if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
 
-            // Check notification settings
-            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_NONE) continue
-
-            val userPublicKey = getLocalNumber(context)
-
-            // Check mentions-only setting
-            if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
-                var blindedPublicKey = cache[threadId]
-                if (blindedPublicKey == null) {
-                    blindedPublicKey = generateBlindedId(threadId, context)
-                    cache[threadId] = blindedPublicKey
-                }
-
-                var isMentioned = false
-                val body = record.getDisplayBody(context).toString()
-
-                // Check for @mentions
-                if (body.contains("@$userPublicKey") ||
-                    (blindedPublicKey != null && body.contains("@$blindedPublicKey"))) {
-                    isMentioned = true
-                }
-
-                // Check for quote mentions
-                if (record is MmsMessageRecord) {
-                    val quote = record.quote
-                    val quoteAuthor = quote?.author?.toString()
-                    if ((quoteAuthor != null && userPublicKey == quoteAuthor) ||
-                        (blindedPublicKey != null && quoteAuthor == blindedPublicKey)) {
-                        isMentioned = true
+                // MENTIONS-ONLY SETTING
+                if (threadRecipients?.notifyType == RecipientDatabase.NOTIFY_TYPE_MENTIONS) {
+                    var blinded = cache[threadId]
+                    if (blinded == null) {
+                        blinded = generateBlindedId(threadId, context)
+                        cache[threadId] = blinded
                     }
+
+                    val bodyStr = record.getDisplayBody(context).toString()
+                    val mentioned = bodyStr.contains("@$userPublicKey") ||
+                            (blinded != null && bodyStr.contains("@$blinded")) ||
+                            (record is MmsMessageRecord).let {
+                                val quote = (record as? MmsMessageRecord)?.quote
+                                val qa = quote?.author?.toString()
+                                qa == userPublicKey || qa == blinded
+                            }
+
+                    if (!mentioned) continue
                 }
 
-                if (!isMentioned) continue
-            }
+                // DETERMINE CASES
+                val isNotified = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFIED)) == 1
+                val isUnreadIncoming = !record.isOutgoing && !record.isRead() && !isNotified
+                val hasUnreadReactions = record.reactions.isNotEmpty()
 
-            Log.w(TAG, "Processing: ID=${record.getId()}, outgoing=${record.isOutgoing}, read=${record.isRead}, hasReactions=${record.reactions.isNotEmpty()}")
+                // CASE 1: NEW INCOMING
+                if (isUnreadIncoming) {
+                    // prepare body & slideDeck just like before
+                    var body: CharSequence = record.getDisplayBody(context)
+                    var slideDeck: SlideDeck? = null
 
+                    if (isMessageRequest) {
+                        body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
+                    } else if (KeyCachingService.isLocked(context)) {
+                        body = SpanUtil.italic(
+                            context.resources.getQuantityString(
+                                R.plurals.messageNewYouveGot, 1, 1
+                            )
+                        )
+                    } else {
+                        if (record.isMms && TextUtils.isEmpty(body)
+                            && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()
+                        ) {
+                            slideDeck = (record as MediaMmsMessageRecord).slideDeck
+                            body = SpanUtil.italic(slideDeck.body)
+                        } else if (record.isMms && !record.isMmsNotification
+                            && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()
+                        ) {
+                            slideDeck = (record as MediaMmsMessageRecord).slideDeck
+                            val message = slideDeck.body + ": " + record.body
+                            val italicStart = message.length - body.length
+                            body = SpanUtil.italic(message, italicStart)
+                        } else if (record.isOpenGroupInvitation) {
+                            body = SpanUtil.italic(context.getString(R.string.communityInvitation))
+                        }
+                    }
 
-            // Determine the reason this message was returned by the query
-            val isNotified = cursor.getInt(cursor.getColumnIndexOrThrow(NOTIFIED)) == 1
-            val isUnreadIncoming = !record.isOutgoing && !record.isRead() && !isNotified // << Case 1
-            val hasUnreadReactions = record.reactions.isNotEmpty() // << Case 2
-
-            Log.w(TAG, "  -> isUnreadIncoming=$isUnreadIncoming, hasUnreadReactions=$hasUnreadReactions, isNotified=${isNotified}")
-
-            // CASE 1: TRULY NEW UNREAD INCOMING MESSAGE
-            // Only show message notification if it's incoming, unread AND not yet notified
-            if (isUnreadIncoming) {
-                // Prepare message body
-                var body: CharSequence = record.getDisplayBody(context)
-                var slideDeck: SlideDeck? = null
-
-                if (isMessageRequest) {
-                   body = SpanUtil.italic(context.getString(R.string.messageRequestsNew))
-                } else if (KeyCachingService.isLocked(context)) {
-                    body = SpanUtil.italic(
-                        context.resources.getQuantityString(
-                            R.plurals.messageNewYouveGot,
-                            1,
-                            1
+                    notificationState.addNotification(
+                        NotificationItem(
+                            record.getId(),
+                            record.isMms || record.isMmsNotification,
+                            record.individualRecipient,
+                            record.recipient,
+                            threadRecipients,
+                            threadId,
+                            body,
+                            record.timestamp,
+                            slideDeck
                         )
                     )
-                } else {
-                    // Handle MMS content
-                    if (record.isMms && TextUtils.isEmpty(body) && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()) {
-                        slideDeck = (record as MediaMmsMessageRecord).slideDeck
-                        body = SpanUtil.italic(slideDeck.body)
-                    } else if (record.isMms && !record.isMmsNotification && (record as MmsMessageRecord).slideDeck.slides.isNotEmpty()) {
-                        slideDeck = (record as MediaMmsMessageRecord).slideDeck
-                        val message = slideDeck.body + ": " + record.body
-                        val italicLength = message.length - body.length
-                        body = SpanUtil.italic(message, italicLength)
-                    } else if (record.isOpenGroupInvitation) {
-                        body = SpanUtil.italic(context.getString(R.string.communityInvitation))
+                }
+                // CASE 2: UNSEEN REACTIONS ON OUR OUTGOING
+                else if (record.isOutgoing
+                    && hasUnreadReactions
+                    && threadRecipients != null
+                    && !threadRecipients.isGroupOrCommunityRecipient
+                ) {
+                    var blinded = cache[threadId]
+                    if (blinded == null) {
+                        blinded = generateBlindedId(threadId, context)
+                        cache[threadId] = blinded
                     }
-                }
 
-                Log.w(TAG, "Adding incoming message notification: ${body}")
+                    val others = record.reactions.filter { reaction ->
+                        reaction.author != userPublicKey &&
+                                (blinded == null || reaction.author != blinded)
+                    }
 
-                // Add incoming message notification
-                notificationState.addNotification(
-                    NotificationItem(
-                        record.getId(),
-                        record.isMms || record.isMmsNotification,
-                        record.individualRecipient,
-                        record.recipient,
-                        threadRecipients,
-                        threadId,
-                        body,
-                        record.timestamp,
-                        slideDeck
-                    )
-                )
-            }
-            // CASE 2: REACTIONS TO OUR OUTGOING MESSAGES
-            // Only if: it's OUR message AND it has reactions AND it's NOT an unread incoming message
-            else if (record.isOutgoing &&
-                hasUnreadReactions &&
-                threadRecipients != null &&
-                !threadRecipients.isGroupOrCommunityRecipient) {
-
-                var blindedPublicKey = cache[threadId]
-                if (blindedPublicKey == null) {
-                    blindedPublicKey = generateBlindedId(threadId, context)
-                    cache[threadId] = blindedPublicKey
-                }
-
-                // Find reactions from others (not from us)
-                val reactionsFromOthers = record.reactions.filter { reaction ->
-                    reaction.author != userPublicKey &&
-                            (blindedPublicKey == null || reaction.author != blindedPublicKey)
-                }
-
-                if (reactionsFromOthers.isNotEmpty()) {
-                    // Get the most recent reaction from others
-                    val latestReaction = reactionsFromOthers.maxByOrNull { it.dateSent }
-
-                    if (latestReaction != null) {
-                        val reactor = Recipient.from(context, fromSerialized(latestReaction.author), false)
+                    if (others.isNotEmpty()) {
+                        val latest = others.maxByOrNull { it.dateSent }!!
+                        val reactor = Recipient.from(
+                            context,
+                            fromSerialized(latest.author),
+                            false
+                        )
                         val emoji = Phrase.from(context, R.string.emojiReactsNotification)
-                            .put(EMOJI_KEY, latestReaction.emoji).format().toString()
-
-                        // Use unique ID to avoid conflicts with message notifications
-                        val reactionId = "reaction_${record.getId()}_${latestReaction.emoji}_${latestReaction.author}".hashCode().toLong()
-
-                        Log.w(TAG, "Adding reaction notification: ${emoji} to our message ID ${record.getId()}")
+                            .put(EMOJI_KEY, latest.emoji)
+                            .format()
+                            .toString()
+                        val reactionId =
+                            "reaction_${record.getId()}_${latest.emoji}_${latest.author}"
+                                .hashCode()
+                                .toLong()
 
                         notificationState.addNotification(
                             NotificationItem(
@@ -686,27 +884,28 @@ class DefaultMessageNotifier(
                                 threadRecipients,
                                 threadId,
                                 emoji,
-                                latestReaction.dateSent,
+                                latest.dateSent,
                                 null
                             )
                         )
                     }
                 }
-            }
-            // CASE 3: IGNORED SCENARIOS
-            // This handles cases like:
-            // - Contact's message with reactions (hasUnreadReactions=true, but isOutgoing=false)
-            // - Already read messages that somehow got returned
-            // - etc.
-            else {
-                Log.w(TAG, "Ignoring message: not unread incoming and not our outgoing with reactions")
-            }
+                // CASE 3: EVERYTHING ELSE
+                else {
+                    // skip read messages, muted threads, etc.
+                }
+            } while (true)
 
-        } while (record != null)
+            reader.close()
+        }
 
-        reader.close()
+        // Process both sets of rows
+        readCursor(incoming)
+        readCursor(reactions)
+
         return notificationState
     }
+
 
     private fun generateBlindedId(threadId: Long, context: Context): String? {
         val lokiThreadDatabase = get(context).lokiThreadDatabase()

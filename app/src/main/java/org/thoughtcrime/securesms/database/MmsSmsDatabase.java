@@ -451,6 +451,61 @@ public class MmsSmsDatabase extends Database {
     return queryTables(PROJECTION, selection, order, null);
   }
 
+  /**
+   * Returns the same “outgoingCondition” we were building inline
+   * in getUnreadOrUnseenReactions(): MMS vs SMS mask checks.
+   */
+  private String buildOutgoingCondition() {
+    // reuse the existing helper for the list of base types
+    String typesList = buildOutgoingTypesList();
+
+    // MMS side: look at MESSAGE_BOX & BASE_TYPE_MASK
+    String mmsCond = "(" +
+            TRANSPORT + " = '" + MMS_TRANSPORT + "' AND " +
+            "(" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + typesList + ")" +
+            ")";
+
+    // SMS side: look at TYPE & BASE_TYPE_MASK
+    String smsCond = "(" +
+            TRANSPORT + " = '" + SMS_TRANSPORT + "' AND " +
+            "(" + SmsDatabase.TYPE + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") IN (" + typesList + ")" +
+            ")";
+
+    // combine them with OR
+    return mmsCond + " OR " + smsCond;
+  }
+
+  /**
+   * Incoming unread + un-notified only (no reactions)
+   */
+  public Cursor getUnreadIncomingCursor() {
+    String selection =
+            "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + buildOutgoingCondition() + "))";
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
+    return rawQueryUnion(selection, order);
+  }
+
+  /** Outgoing messages with unseen reactions only */
+  public Cursor getUnseenReactionsCursor() {
+    String lastSeenQuery =
+            "(SELECT "+ThreadDatabase.LAST_SEEN+" FROM "+ThreadDatabase.TABLE_NAME
+                    +" WHERE "+ThreadDatabase.ID+" = "+MmsSmsColumns.THREAD_ID+")";
+    String selection =
+            "("+ ReactionDatabase.DATE_SENT +" > "+ lastSeenQuery
+                    +" AND ("+ buildOutgoingCondition() +"))";
+    String order     = MmsSmsColumns.NORMALIZED_DATE_SENT +" ASC";
+    return rawQueryUnion(selection, order);
+  }
+
+  /**
+   * Runs the same union-of-MMS-and-SMS query as queryTables(...)
+   * but lets you supply your own WHERE and ORDER clauses.
+   */
+  private Cursor rawQueryUnion(String selection, String order) {
+    // PROJECTION is the static String[] you already have at top of this class
+    return queryTables(PROJECTION, selection, order, /* limit */ null);
+  }
+
   /** Builds the comma-separated list of base types that represent
    *  *outgoing* messages (same helper as before). */
   private String buildOutgoingTypesList() {
