@@ -49,7 +49,7 @@
             android:id="@+id/moderatorIconImageView"
             android:layout_width="16dp"
             android:layout_height="16dp"
-            android:src="@drawable/ic_crown_custom"
+            android:src="@drawable/ic_crown_custom_enlarged"
             android:layout_marginEnd="-1dp"
             android:layout_marginBottom="-1dp"
             android:layout_alignParentEnd="true"

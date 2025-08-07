@@ -184,7 +184,7 @@ fun ConversationSettingsNavHost(
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
                         factory.create(
-                            excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet()
+                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
                         )
                     }
 

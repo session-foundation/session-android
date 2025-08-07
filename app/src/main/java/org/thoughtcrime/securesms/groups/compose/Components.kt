@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -20,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.components.Avatar
@@ -58,20 +57,20 @@ fun GroupMinimumVersionBanner(modifier: Modifier = Modifier) {
 
 @Composable
 fun  MemberItem(
-    accountId: AccountId,
+    address: Address,
     title: String,
     avatarUIData: AvatarUIData,
     showAsAdmin: Boolean,
     showProBadge: Boolean,
     modifier: Modifier = Modifier,
-    onClick: ((accountId: AccountId) -> Unit)? = null,
+    onClick: ((address: Address) -> Unit)? = null,
     subtitle: String? = null,
     subtitleColor: Color = LocalColors.current.textSecondary,
     content: @Composable RowScope.() -> Unit = {},
 ) {
     var itemModifier = modifier
     if(onClick != null){
-        itemModifier = itemModifier.clickable(onClick = { onClick(accountId) })
+        itemModifier = itemModifier.clickable(onClick = { onClick(address) })
     }
 
     Row(
@@ -119,10 +118,10 @@ fun  MemberItem(
 fun RadioMemberItem(
     enabled: Boolean,
     selected: Boolean,
-    accountId: AccountId,
+    address: Address,
     avatarUIData: AvatarUIData,
     title: String,
-    onClick: (accountId: AccountId) -> Unit,
+    onClick: (address: Address) -> Unit,
     showAsAdmin: Boolean,
     showProBadge: Boolean,
     modifier: Modifier = Modifier,
@@ -130,7 +129,7 @@ fun RadioMemberItem(
     subtitleColor: Color = LocalColors.current.textSecondary
 ) {
     MemberItem(
-        accountId = accountId,
+        address = address,
         avatarUIData = avatarUIData,
         title = title,
         subtitle = subtitle,
@@ -150,7 +149,7 @@ fun RadioMemberItem(
 fun LazyListScope.multiSelectMemberList(
     contacts: List<ContactItem>,
     modifier: Modifier = Modifier,
-    onContactItemClicked: (accountId: AccountId) -> Unit,
+    onContactItemClicked: (address: Address) -> Unit,
     enabled: Boolean = true,
 ) {
     items(contacts.size) { index ->
@@ -159,12 +158,12 @@ fun LazyListScope.multiSelectMemberList(
             modifier = modifier,
             enabled = enabled,
             selected = contact.selected,
-            accountId = contact.accountID,
+            address = contact.address,
             avatarUIData = contact.avatarUIData,
             title = contact.name,
             showAsAdmin = false,
             showProBadge = contact.showProBadge,
-            onClick = { onContactItemClicked(contact.accountID) }
+            onClick = { onContactItemClicked(contact.address) }
         )
     }
 }
@@ -179,7 +178,7 @@ fun PreviewMemberList() {
             multiSelectMemberList(
                 contacts = listOf(
                     ContactItem(
-                        accountID = AccountId(random),
+                        address = Address.fromSerialized(random),
                         name = "Person",
                         avatarUIData = AvatarUIData(
                             listOf(
@@ -193,7 +192,7 @@ fun PreviewMemberList() {
                         showProBadge = false,
                     ),
                     ContactItem(
-                        accountID = AccountId(random),
+                        address = Address.fromSerialized(random),
                         name = "Cow",
                         avatarUIData = AvatarUIData(
                             listOf(

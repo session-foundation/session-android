@@ -27,15 +27,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.CreateGroupEvent
 import org.thoughtcrime.securesms.groups.CreateGroupViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SearchBar
-import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.BackAppBar
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -79,12 +79,12 @@ fun CreateGroupScreen(
         groupName = viewModel.groupName.collectAsState().value,
         onGroupNameChanged = viewModel::onGroupNameChanged,
         groupNameError = viewModel.groupNameError.collectAsState().value,
-        contactSearchQuery = viewModel.selectContactsViewModel.searchQuery.collectAsState().value,
-        onContactSearchQueryChanged = viewModel.selectContactsViewModel::onSearchQueryChanged,
-        onContactSearchQueryClear = { viewModel.selectContactsViewModel.onSearchQueryChanged("") },
-        onContactItemClicked = viewModel.selectContactsViewModel::onContactItemClicked,
+        contactSearchQuery = viewModel.searchQuery.collectAsState().value,
+        onContactSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onContactSearchQueryClear = { viewModel.onSearchQueryChanged("") },
+        onContactItemClicked = viewModel::onContactItemClicked,
         showLoading = viewModel.isLoading.collectAsState().value,
-        items = viewModel.selectContactsViewModel.contacts.collectAsState().value,
+        items = viewModel.contacts.collectAsState().value,
         onCreateClicked = viewModel::onCreateClicked,
         onBack = onBack,
     )
@@ -99,7 +99,7 @@ fun CreateGroup(
     contactSearchQuery: String,
     onContactSearchQueryChanged: (String) -> Unit,
     onContactSearchQueryClear: () -> Unit,
-    onContactItemClicked: (accountID: AccountId) -> Unit,
+    onContactItemClicked: (address: Address) -> Unit,
     showLoading: Boolean,
     items: List<ContactItem>,
     onCreateClicked: () -> Unit,
@@ -205,7 +205,7 @@ private fun CreateGroupPreview(
 ) {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val previewMembers = listOf(
-        ContactItem(accountID = AccountId(random), name = "Alice", selected = false,
+        ContactItem(address = Address.fromSerialized(random), name = "Alice", selected = false,
             showProBadge = true,
             avatarUIData = AvatarUIData(
                 listOf(
@@ -216,7 +216,7 @@ private fun CreateGroupPreview(
                 )
             ),
         ),
-        ContactItem(accountID = AccountId(random), name = "Bob", selected = true,
+        ContactItem(address = Address.fromSerialized(random), name = "Bob", selected = true,
             showProBadge = false,
             avatarUIData = AvatarUIData(
                 listOf(

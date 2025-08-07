@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.groups.compose
+package org.thoughtcrime.securesms.preferences
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,11 +23,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.SelectContactsViewModel
+import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
+import org.thoughtcrime.securesms.ui.AlertDialog
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
+import org.thoughtcrime.securesms.ui.DialogButtonData
+import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.SearchBar
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.AccentOutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -38,27 +43,43 @@ import org.thoughtcrime.securesms.util.AvatarUIElement
 
 
 @Composable
-fun InviteContactsScreen(
-    viewModel: SelectContactsViewModel,
-    onDoneClicked: () -> Unit,
+fun BlockedContactsScreen(
+    viewModel: BlockedContactsViewModel,
     onBack: () -> Unit,
-    banner: @Composable ()->Unit = {}
 ) {
-    InviteContacts(
+    BlockedContacts(
         contacts = viewModel.contacts.collectAsState().value,
         onContactItemClicked = viewModel::onContactItemClicked,
         searchQuery = viewModel.searchQuery.collectAsState().value,
         onSearchQueryChanged = viewModel::onSearchQueryChanged,
         onSearchQueryClear = {viewModel.onSearchQueryChanged("") },
-        onDoneClicked = onDoneClicked,
+        onDoneClicked = viewModel::onUnblockClicked,
         onBack = onBack,
-        banner = banner
     )
+
+    // dialogs
+    val showConfirmDialog by viewModel.unblockDialog.collectAsState()
+
+    if(showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::hideUnblockDialog,
+            title = annotatedStringResource(R.string.blockUnblock),
+            text = annotatedStringResource(viewModel.getDialogText()),
+            buttons = listOf(
+                DialogButtonData(
+                    GetString(R.string.blockUnblock),
+                    color = LocalColors.current.danger,
+                    onClick = viewModel::unblock
+                ),
+                DialogButtonData(GetString(android.R.string.cancel), dismissOnClick = true)
+            )
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InviteContacts(
+fun BlockedContacts(
     contacts: List<ContactItem>,
     onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
@@ -66,12 +87,11 @@ fun InviteContacts(
     onSearchQueryClear: () -> Unit,
     onDoneClicked: () -> Unit,
     onBack: () -> Unit,
-    banner: @Composable ()->Unit = {}
 ) {
     Scaffold(
         topBar = {
             BackAppBar(
-                title = stringResource(id = R.string.membersInvite),
+                title = stringResource(id = R.string.conversationsBlockedContacts),
                 onBack = onBack,
             )
         },
@@ -81,8 +101,6 @@ fun InviteContacts(
                 .padding(paddings)
                 .consumeWindowInsets(paddings),
         ) {
-            banner()
-
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             SearchBar(
@@ -103,7 +121,7 @@ fun InviteContacts(
             BottomFadingEdgeBox(modifier = Modifier.weight(1f)) { bottomContentPadding ->
                 if(contacts.isEmpty() && searchQuery.isEmpty()){
                     Text(
-                        text = stringResource(id = R.string.contactNone),
+                        text = stringResource(id = R.string.blockBlockedNone),
                         modifier = Modifier.padding(top = LocalDimensions.current.spacing)
                             .align(Alignment.TopCenter),
                         style = LocalType.current.base.copy(color = LocalColors.current.textSecondary)
@@ -127,15 +145,16 @@ fun InviteContacts(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                AccentOutlineButton(
+                OutlineButton(
                     onClick = onDoneClicked,
+                    color = LocalColors.current.danger,
                     enabled = contacts.any { it.selected },
                     modifier = Modifier
                         .padding(vertical = LocalDimensions.current.spacing)
-                        .qaTag(R.string.qa_invite_button),
+                        .qaTag(R.string.qa_unblock_button),
                 ) {
                     Text(
-                        stringResource(id = R.string.membersInviteTitle)
+                        stringResource(id = R.string.blockUnblock)
                     )
                 }
             }
@@ -166,7 +185,7 @@ private fun PreviewSelectContacts() {
     }
 
     PreviewTheme {
-        InviteContacts(
+        BlockedContacts(
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "",
@@ -184,7 +203,7 @@ private fun PreviewSelectEmptyContacts() {
     val contacts = emptyList<ContactItem>()
 
     PreviewTheme {
-        InviteContacts(
+        BlockedContacts(
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "",
@@ -192,7 +211,6 @@ private fun PreviewSelectEmptyContacts() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            banner = { GroupMinimumVersionBanner() }
         )
     }
 }
@@ -203,7 +221,7 @@ private fun PreviewSelectEmptyContactsWithSearch() {
     val contacts = emptyList<ContactItem>()
 
     PreviewTheme {
-        InviteContacts(
+        BlockedContacts(
             contacts = contacts,
             onContactItemClicked = {},
             searchQuery = "Test",
@@ -211,7 +229,6 @@ private fun PreviewSelectEmptyContactsWithSearch() {
             onSearchQueryClear = {},
             onDoneClicked = {},
             onBack = {},
-            banner = { GroupMinimumVersionBanner() }
         )
     }
 }

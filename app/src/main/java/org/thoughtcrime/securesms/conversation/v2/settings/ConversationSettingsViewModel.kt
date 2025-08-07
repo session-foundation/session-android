@@ -45,6 +45,7 @@ import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.groups.GroupManagerV2
 import org.session.libsession.messaging.open_groups.OpenGroup
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
@@ -1440,13 +1441,13 @@ class ConversationSettingsViewModel @AssistedInject constructor(
         }
     }
 
-    fun inviteContactsToCommunity(contacts: Set<AccountId>) {
+    fun inviteContactsToCommunity(contacts: Set<Address>) {
         showLoading()
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.Default) {
                     val recipients = contacts.map { contact ->
-                        Recipient.from(context, fromSerialized(contact.hexString), true)
+                        Recipient.from(context, (contact), true)
                     }
 
                     repository.inviteContactsToCommunity(threadId, recipients)

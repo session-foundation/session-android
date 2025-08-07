@@ -199,6 +199,7 @@
     <string name="AccessibilityId_resendInvite">Resend invite button</string>
     <string name="AccessibilityId_versionWarning">Version warning banner</string>
     <string name="qa_invite_button">invite-contacts-button</string>
+    <string name="qa_unblock_button">unblock-contacts-button</string>
     <!--Conversation screen -->
     <string name="AccessibilityId_attachmentsButton">Attachments button</string>
     <string name="AccessibilityId_files">Documents folder</string>

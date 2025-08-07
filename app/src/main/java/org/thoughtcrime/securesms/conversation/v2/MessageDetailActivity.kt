@@ -68,6 +68,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -379,7 +380,9 @@ fun MessageProFeatures(
         )
 
         Text(
-            text = stringResource(id = R.string.proMessageInfoFeatures),
+            text = Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format().toString(),
             style = LocalType.current.large
         )
 
