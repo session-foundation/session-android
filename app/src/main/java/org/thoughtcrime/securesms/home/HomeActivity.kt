@@ -647,6 +647,10 @@ class HomeActivity : ScreenLockActionBarActivity(),
             bottomSheet.dismiss()
             markAllAsRead(thread)
         }
+        bottomSheet.onMarkAsUnreadTapped = {
+            bottomSheet.dismiss()
+            markAsUnread(thread)
+        }
         bottomSheet.onDeleteContactTapped = {
             bottomSheet.dismiss()
             confirmDeleteContact(thread)
@@ -715,6 +719,12 @@ class HomeActivity : ScreenLockActionBarActivity(),
     private fun markAllAsRead(thread: ThreadRecord) {
         lifecycleScope.launch(Dispatchers.Default) {
             storage.markConversationAsRead(thread.threadId, clock.currentTimeMills())
+        }
+    }
+
+    private fun markAsUnread(thread : ThreadRecord){
+        lifecycleScope.launch(Dispatchers.Default) {
+            storage.markConversationAsUnread(thread.threadId)
         }
     }
 
