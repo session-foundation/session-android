@@ -85,7 +85,6 @@ interface StorageProtocol {
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
     fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
     fun getOpenGroup(room: String, server: String): OpenGroup?
-    fun setGroupMemberRoles(members: List<GroupMember>)
 
     // Open Group Public Keys
     fun getOpenGroupPublicKey(server: String): String?
