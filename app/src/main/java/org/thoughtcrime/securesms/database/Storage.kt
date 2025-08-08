@@ -645,10 +645,6 @@ open class Storage @Inject constructor(
         return getAllOpenGroups().values.firstOrNull { it.server == server && it.room == room }
     }
 
-    override fun setGroupMemberRoles(members: List<GroupMember>) {
-        groupMemberDatabase.setGroupMembers(members)
-    }
-
     override fun isDuplicateMessage(timestamp: Long): Boolean {
         return getReceivedMessageTimestamps().contains(timestamp)
     }

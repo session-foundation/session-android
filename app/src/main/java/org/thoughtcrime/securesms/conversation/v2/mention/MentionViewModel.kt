@@ -129,8 +129,8 @@ class MentionViewModel(
                         emptySet()
                     } else {
                         memberDatabase.getGroupMembersRoles(groupId, memberIDs)
-                            .mapNotNullTo(hashSetOf()) { (memberId, roles) ->
-                                memberId.takeIf { roles.any { it.isModerator } }
+                            .mapNotNullTo(hashSetOf()) { (memberId, role) ->
+                                memberId.takeIf { role.isModerator }
                             }
                     }
                 } else if (recipient.isGroupV2Recipient) {
