@@ -55,7 +55,7 @@ materialVersion = "1.12.0"
 mockitoKotlinVersion = "6.0.0"
 okhttpVersion = "5.1.0"
 preferenceVersion = "1.2.1"
-protobufVersion = "4.29.3"
+protobufVersion = "4.31.1"
 recyclerviewVersion = "1.4.0"
 robolectricVersion = "4.14.1"
 roundedimageviewVersion = "2.1.0"
@@ -173,6 +173,7 @@ huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
 sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
+protoc = { module = "com.google.protobuf:protoc", version = "4.31.1" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }
@@ -185,3 +186,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "kspVersion" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "daggerHiltVersion" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServicesVersion" }
 dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.ref = "dependenciesAnalysisVersion" }
+protobuf-compiler = { id = "com.google.protobuf", version = "0.9.5" }
