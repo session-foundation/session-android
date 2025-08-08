@@ -1195,6 +1195,7 @@ open class Storage @Inject constructor(
         val address = fromSerialized(contact.accountID)
         if (!getRecipientApproved(address)) return
         profileManager.contactUpdatedInternal(contact)
+        threadDatabase.notifyConversationListListeners()
     }
 
     override fun deleteContactAndSyncConfig(accountId: String) {

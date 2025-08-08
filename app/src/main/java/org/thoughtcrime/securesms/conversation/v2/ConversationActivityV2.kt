@@ -692,6 +692,15 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     is ConversationUiEvent.ShowUnblockConfirmation -> {
                         unblock()
                     }
+
+                    is ConversationUiEvent.ShowConversationSettings -> {
+                        val intent = ConversationSettingsActivity.createIntent(
+                            context = this@ConversationActivityV2,
+                            threadId = event.threadId,
+                            threadAddress = event.threadAddress
+                        )
+                        startActivity(intent)
+                    }
                 }
             }
         }

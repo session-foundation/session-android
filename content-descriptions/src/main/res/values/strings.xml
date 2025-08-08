@@ -252,6 +252,13 @@
     <string name="qa_settings_item_donate">donate-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
 
+    <!-- In app review -->
+    <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>
+    <string name="qa_inapp_review_dialog_button_work">enjoy-session-negative-button</string>
+    <string name="qa_inapp_review_dialog_button_rate">rate-app-button</string>
+    <string name="qa_inapp_review_dialog_button_not_now">not-now-button</string>
+    <string name="qa_inapp_review_dialog_button_survey">open-survey-button</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
