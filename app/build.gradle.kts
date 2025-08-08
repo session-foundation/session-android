@@ -25,7 +25,7 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 416
+val canonicalVersionCode = 417
 val canonicalVersionName = "1.27.0"
 
 val postFixSize = 10

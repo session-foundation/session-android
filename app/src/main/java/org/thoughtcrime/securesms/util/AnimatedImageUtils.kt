@@ -12,14 +12,14 @@ object AnimatedImageUtils {
     fun isAnimated(context: Context, uri: Uri): Boolean {
         val mime = context.contentResolver.getType(uri)
         return when (mime) {
-            "image/gif"  -> true
-            "image/webp" -> isAnimatedWebP(context, uri) // not all WebPs are animated
+            "image/gif"  -> isAnimatedImage(context, uri) // not all gifs are animated
+            "image/webp" -> isAnimatedImage(context, uri) // not all WebPs are animated
             else         -> false
         }
     }
 
-    private fun isAnimatedWebP(context: Context, uri: Uri): Boolean {
-        if (Build.VERSION.SDK_INT < 28) return isAnimatedWebPLegacy(context, uri)
+    private fun isAnimatedImage(context: Context, uri: Uri): Boolean {
+        if (Build.VERSION.SDK_INT < 28) return isAnimatedImageLegacy(context, uri)
 
         var animated = false
         val source = ImageDecoder.createSource(context.contentResolver, uri)
@@ -31,7 +31,7 @@ object AnimatedImageUtils {
         return animated
     }
 
-    private fun isAnimatedWebPLegacy(context: Context, uri: Uri): Boolean {
+    private fun isAnimatedImageLegacy(context: Context, uri: Uri): Boolean {
         context.contentResolver.openInputStream(uri)?.use { input ->
             val header = ByteArray(32)
             if (input.read(header) != header.size) return false

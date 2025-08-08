@@ -91,7 +91,7 @@ class UserProfileUtils @AssistedInject constructor(
             isResolvedBlinded -> {
                 "${address.substring(0, 23)}\n${address.substring(23, 46)}\n${address.substring(46)}" to
                         Phrase.from(context, R.string.tooltipAccountIdVisible)
-                            .put(NAME_KEY, recipient.name)
+                            .put(NAME_KEY, truncateName(recipient.name))
                             .format()
             }
 
@@ -117,6 +117,14 @@ class UserProfileUtils @AssistedInject constructor(
             showProCTA = false
         )
 
+    }
+
+    private fun truncateName(name: String): String {
+        return if (name.length > 10) {
+            name.take(10) + "…"
+        } else {
+            name
+        }
     }
 
     fun onCommand(command: UserProfileModalCommands){

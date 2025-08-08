@@ -111,7 +111,7 @@ class MentionViewModel(
                     }
                     recipient.isCommunityRecipient -> mmsSmsDatabase.getRecentChatMemberAddresses(
                         threadID,
-                        20
+                        300
                     )
                     recipient.isContactRecipient -> listOf(recipient.address.toString())
                     else -> listOf()
@@ -163,11 +163,11 @@ class MentionViewModel(
                     true
                 )
 
-                // Other members from this groupv2
+                // Get other members
                 val otherMembers = if (recipient.isGroupV2Recipient) {
                     val groupId = AccountId(recipient.address.toString())
 
-                    // Get members of the group
+                    // Get members of the group from the config
                     val rawMembers = configFactory.withGroupConfigs(groupId) {
                         it.groupMembers.allWithStatus()
                     }
@@ -183,12 +183,16 @@ class MentionViewModel(
                                 )  // returns contact name or blank
                                 .takeIf { it.isNotBlank() } ?: id // fallback to id
                             buildMember(id, name, id in moderatorIDs, false)
-                        }
+                        }.sortedBy { it.name }
                 } else {
-                    // Fallback to only local contacts
-                    contactDatabase.getContacts(memberIDs)
-                        .asSequence()
-                        .filter { it.accountID != myId }
+                    // For communities and one-on-one conversations
+                    val contacts = contactDatabase.getContacts(memberIDs) // Get members from contacts based on memberIDs
+                    val contactMap = contacts.associateBy { it.accountID }
+
+                    // Map using memberIDs to preserve the order of members
+                    memberIDs.asSequence()
+                        .filter { it != myId }
+                        .mapNotNull { contactMap[it] }
                         .map { contact ->
                             val id = contact.accountID
                             val name = contact.displayName(contactContext)
@@ -348,7 +352,6 @@ class MentionViewModel(
         companion object {
             val MENTION_LIST_COMPARATOR = compareBy<Candidate> { !it.member.isMe }
                 .thenBy { it.matchScore }
-                .then(compareBy { it.member.name })
         }
     }
 
