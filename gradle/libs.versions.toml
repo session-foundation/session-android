@@ -6,13 +6,11 @@ accompanistPermissionsVersion = "0.37.3"
 activityKtxVersion = "1.10.1"
 androidImageCropperVersion = "4.5.0"
 androidVersion = "125.6422.07"
-annotationVersion = "1.9.1"
 assertjCoreVersion = "3.27.3"
 biometricVersion = "1.1.0"
 cameraCamera2Version = "1.4.2"
 cardviewVersion = "1.0.0"
 composeBomVersion = "2025.06.01"
-kotlinComposeCompilerVersion = "1.5.15"
 composeVersion = "1.0.0-beta01"
 conscryptAndroidVersion = "2.5.3"
 conscryptJavaVersion = "2.5.2"
@@ -81,7 +79,6 @@ googlePlayReviewVersion = "2.0.2"
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
 android = { module = "io.github.webrtc-sdk:android", version.ref = "androidVersion" }
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropperVersion" }
-androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotationVersion" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "biometricVersion" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCamera2Version" }
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCamera2Version" }
@@ -175,7 +172,7 @@ turbine = { module = "app.cash.turbine:turbine", version.ref = "turbineVersion" 
 huawei-push = { module = 'com.huawei.hms:push', version.ref = 'huaweiPushVersion' }
 google-play-review = { module = "com.google.android.play:review", version.ref = "googlePlayReviewVersion" }
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
-sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.1" }
+sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

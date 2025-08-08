@@ -1,12 +1,14 @@
 package org.thoughtcrime.securesms.debugmenu
 
+import dev.fanchao.sqliteviewer.StartedInstance
 import dev.fanchao.sqliteviewer.model.SupportQueryable
 import dev.fanchao.sqliteviewer.startDatabaseViewerServer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -25,29 +27,29 @@ class DatabaseInspector @Inject constructor(
 ) {
     val available: Boolean get() = true
 
-    private val state = MutableStateFlow<Job?>(null)
+    private val instance = MutableStateFlow<StartedInstance?>(null)
 
-    val enabled: StateFlow<Boolean> = state.map { it != null }
-        .stateIn(coroutineScope, SharingStarted.Eagerly, state.value != null)
+    val enabled: StateFlow<Boolean> = instance
+        .flatMapLatest { st ->
+            st?.state?.map {
+                it is StartedInstance.State.Running
+            } ?: flowOf(false)
+        }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
     fun start() {
-        state.update { job ->
-            if (job == null) {
-                startDatabaseViewerServer(
-                    currentActivityObserver.currentActivity.value!!,
-                    scope = coroutineScope,
-                    port = 3000,
-                    queryable = SupportQueryable(openHelper.get().writableDatabase)
-                )
-            } else {
-                null
-            }
+        instance.update { inst ->
+            inst?.takeIf { it.state.value !is StartedInstance.State.Stopped } ?: startDatabaseViewerServer(
+                currentActivityObserver.currentActivity.value!!,
+                port = 3000,
+                queryable = SupportQueryable(openHelper.get().writableDatabase)
+            )
         }
     }
 
     fun stop() {
-        state.update { job ->
-            job?.cancel()
+        instance.update {
+            it?.stop()
             null
         }
     }

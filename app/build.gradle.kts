@@ -115,10 +115,6 @@ android {
         buildConfig = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinComposeCompilerVersion.get()
-    }
-
     defaultConfig {
         versionCode = canonicalVersionCode * postFixSize
         versionName = canonicalVersionName
