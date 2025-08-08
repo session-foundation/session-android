@@ -31,7 +31,6 @@ import android.text.TextUtils
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.annimon.stream.Stream
 import com.squareup.phrase.Phrase
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -47,7 +46,6 @@ import org.session.libsession.utilities.StringSubstitutionConstants.EMOJI_KEY
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getNotificationPrivacy
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getRepeatAlertsCount
-import org.session.libsession.utilities.TextSecurePreferences.Companion.hasHiddenMessageRequests
 import org.session.libsession.utilities.TextSecurePreferences.Companion.isNotificationsEnabled
 import org.session.libsession.utilities.TextSecurePreferences.Companion.removeHasHiddenMessageRequests
 import org.session.libsession.utilities.recipients.Recipient
@@ -59,18 +57,11 @@ import org.session.libsignal.utilities.Util
 import org.thoughtcrime.securesms.ApplicationContext
 import org.thoughtcrime.securesms.conversation.v2.utilities.MentionUtilities.highlightMentions
 import org.thoughtcrime.securesms.crypto.KeyPairUtilities.getUserED25519KeyPair
-import org.thoughtcrime.securesms.database.MmsDatabase.Companion.MESSAGE_BOX
-import org.thoughtcrime.securesms.database.MmsSmsColumns
 import org.thoughtcrime.securesms.database.MmsSmsColumns.NOTIFIED
-import org.thoughtcrime.securesms.database.MmsSmsColumns.READ
-import org.thoughtcrime.securesms.database.MmsSmsDatabase.MMS_TRANSPORT
-import org.thoughtcrime.securesms.database.MmsSmsDatabase.TRANSPORT
 import org.thoughtcrime.securesms.database.RecipientDatabase
-import org.thoughtcrime.securesms.database.SmsDatabase
 import org.thoughtcrime.securesms.database.model.MediaMmsMessageRecord
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
-import org.thoughtcrime.securesms.database.model.ReactionRecord
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent.Companion.get
 import org.thoughtcrime.securesms.mms.SlideDeck
 import org.thoughtcrime.securesms.service.KeyCachingService
@@ -219,18 +210,23 @@ class DefaultMessageNotifier(
             return
         }
 
-        // 2. Open our two focused cursors
-        val incomingCursor = get(context)
+        // 2. Open our three focused cursors
+        val incomingApprovedCursor = get(context)
             .mmsSmsDatabase()
             .getUnreadIncomingCursor()
+
+        val incomingUnapprovedCursor = get(context)
+            .mmsSmsDatabase()
+            .getUnreadIncomingFromUnapprovedOnceCursor()
 
         val reactionCursor = get(context)
             .mmsSmsDatabase()
             .getUnseenReactionsCursor()
 
-        // 3. If both empty, bail out
-        if (!incomingCursor.moveToFirst() && !reactionCursor.moveToFirst()) {
-            incomingCursor.close()
+        // 3. If all are empty, bail out
+        if (!incomingApprovedCursor.moveToFirst() && !incomingUnapprovedCursor.moveToFirst() && !reactionCursor.moveToFirst()) {
+            incomingApprovedCursor.close()
+            incomingUnapprovedCursor.close()
             reactionCursor.close()
             cancelActiveNotifications(context)
             clearReminder(context)
@@ -242,7 +238,7 @@ class DefaultMessageNotifier(
         try {
             try {
                 // 4. Build grouped state from both
-                val notificationState = constructNotificationState(context, incomingCursor, reactionCursor)
+                val notificationState = constructNotificationState(context, incomingApprovedCursor, incomingUnapprovedCursor, reactionCursor)
 
                 if (playNotificationAudio && (System.currentTimeMillis() - lastAudibleNotification) < MIN_AUDIBLE_PERIOD_MILLIS) {
                     playNotificationAudio = false
@@ -272,7 +268,8 @@ class DefaultMessageNotifier(
             }
 
         } finally {
-            incomingCursor.close()
+            incomingApprovedCursor.close()
+            incomingUnapprovedCursor.close()
             reactionCursor.close()
         }
     }
@@ -421,11 +418,12 @@ class DefaultMessageNotifier(
     }
 
     private fun getNotificationSignature(notification: NotificationItem): String {
-        return if(notification.recipient.isApproved){
-            "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
-        }else{
-            "${notification.threadId}"
+        if(notification.recipient.isApproved){
+            return "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
         }
+
+        return "${notification.threadId}"
+
     }
 
     // Note: The `signal` parameter means "play an audio signal for the notification".
@@ -439,8 +437,6 @@ class DefaultMessageNotifier(
         val notifications = notificationState.notifications
         val notificationItem = notifications.first()
         val isMessageRequest = !notificationItem.recipient.isApproved
-
-//        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -733,7 +729,8 @@ class DefaultMessageNotifier(
      */
     private fun constructNotificationState(
         context: Context,
-        incoming: Cursor,
+        incomingApproved: Cursor,
+        incomingUnapproved : Cursor,
         reactions: Cursor
     ): NotificationState {
         val notificationState = NotificationState()
@@ -750,8 +747,6 @@ class DefaultMessageNotifier(
             do {
                 record = reader.next
                 if (record == null) break
-
-                val recipient = record.recipient
 
                 val threadId = record.threadId
                 val threadRecipients = if (threadId != -1L)
@@ -900,7 +895,8 @@ class DefaultMessageNotifier(
         }
 
         // Process both sets of rows
-        readCursor(incoming)
+        readCursor(incomingApproved)
+        readCursor(incomingUnapproved)
         readCursor(reactions)
 
         return notificationState
@@ -943,11 +939,6 @@ class DefaultMessageNotifier(
         val pendingIntent = PendingIntent.getBroadcast(context, 0, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(pendingIntent)
-    }
-
-    private fun hasExistingMessages(context: Context, threadId: Long): Boolean {
-        val threadDatabase = get(context).threadDatabase()
-        return threadDatabase.getMessageCount(threadId) > 1
     }
 
     class ReminderReceiver : BroadcastReceiver() {
