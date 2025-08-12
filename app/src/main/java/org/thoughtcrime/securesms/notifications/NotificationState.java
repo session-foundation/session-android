@@ -25,6 +25,8 @@ public class NotificationState {
 
   private int notificationCount = 0;
 
+  private boolean hasSkippedNotification = false;
+
   public NotificationState() {}
 
   public NotificationState(@NonNull List<NotificationItem> items) {
@@ -71,7 +73,9 @@ public class NotificationState {
   public int getThreadCount()                      { return threads.size();     }
   public int getNotificationCount()                { return notificationCount;  }
   public List<NotificationItem> getNotifications() { return notifications;      }
-
+  public boolean hasSkippedNotification() {
+    return hasSkippedNotification;
+  }
   public List<NotificationItem> getNotificationsForThread(long threadId) {
     LinkedList<NotificationItem> notificationsInThread = new LinkedList<>();
 
@@ -205,4 +209,8 @@ public class NotificationState {
 
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
+
+    public void setHasSkippedNotification(boolean hasSkippedNotification) {
+        this.hasSkippedNotification = hasSkippedNotification;
+    }
 }

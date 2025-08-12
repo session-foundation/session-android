@@ -498,7 +498,7 @@ public class MmsSmsDatabase extends Database {
 //                    MmsSmsColumns.THREAD_ID + " IN " + approvedThreads;
 //
 //    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-//
+
     return rawQueryUnion(selection, order);
   }
 
@@ -519,20 +519,39 @@ public class MmsSmsDatabase extends Database {
    */
   public Cursor getUnreadIncomingFromUnapprovedOnceCursor() {
     // Subquery: thread IDs where recipient is unapproved AND the thread has <= 1 message
-    String unapprovedOnceThreads =
-            "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
-                    " FROM " + ThreadDatabase.TABLE_NAME +
-                    " JOIN " + RecipientDatabase.TABLE_NAME +
-                    "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
-                    " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0" +
-                    " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
-                    ")";
+//    String unapprovedOnceThreads =
+//            "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
+//                    " FROM " + ThreadDatabase.TABLE_NAME +
+//                    " JOIN " + RecipientDatabase.TABLE_NAME +
+//                    "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
+//                    " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
+//                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0" +
+//                    " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
+//                    ")";
+//
+//    // Only incoming, unread, not yet notified, and restricted to those thread IDs
+//    String selection =
+//            READ + " = 0 AND " +
+//                    NOTIFIED + " = 0 AND " +
+//                    "NOT (" + buildOutgoingCondition() + ") AND " +
+//                    MmsSmsColumns.THREAD_ID + " IN " + unapprovedOnceThreads;
+//
+//    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
+//    return rawQueryUnion(selection, order);
 
-    // Only incoming, unread, not yet notified, and restricted to those thread IDs
+    // Threads that are (a) unapproved (or missing recipient row) AND (b) message_count <= 1
+    String unapprovedOnceThreads =
+            "(SELECT thread._id" +
+                    "   FROM thread" +
+                    "   LEFT JOIN recipient" +
+                    "     ON thread.recipient_ids = recipient.address" +
+                    "  WHERE IFNULL(recipient.approved, 0) = 0" +
+                    "    AND thread.message_count <= 1)";
+
+    // Only incoming, unread, not yet notified, restricted to those thread IDs
     String selection =
-            READ + " = 0 AND " +
-                    NOTIFIED + " = 0 AND " +
+            "IFNULL(" + READ + ",0) = 0 AND " +
+                    "IFNULL(" + NOTIFIED + ",0) = 0 AND " +
                     "NOT (" + buildOutgoingCondition() + ") AND " +
                     MmsSmsColumns.THREAD_ID + " IN " + unapprovedOnceThreads;
 
