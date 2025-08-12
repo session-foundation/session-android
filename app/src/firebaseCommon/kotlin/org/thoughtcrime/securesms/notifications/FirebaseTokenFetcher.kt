@@ -4,12 +4,11 @@ import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.tasks.await
 import org.session.libsession.messaging.notifications.TokenFetcher
-import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class FirebaseTokenFetcher @Inject constructor(): TokenFetcher, OnAppStartupComponent {
+class FirebaseTokenFetcher @Inject constructor(): TokenFetcher {
     override val token = MutableStateFlow<String?>(null)
 
     init {

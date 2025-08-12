@@ -1,5 +1,6 @@
 package org.thoughtcrime.securesms.dependencies
 
+import org.session.libsession.messaging.notifications.TokenFetcher
 import org.session.libsession.messaging.sending_receiving.pollers.OpenGroupPollerManager
 import org.session.libsession.messaging.sending_receiving.pollers.PollerManager
 import org.session.libsession.snode.SnodeClock
@@ -16,7 +17,6 @@ import org.thoughtcrime.securesms.groups.handler.RemoveGroupMemberHandler
 import org.thoughtcrime.securesms.logging.PersistentLogger
 import org.thoughtcrime.securesms.migration.DatabaseMigrationManager
 import org.thoughtcrime.securesms.notifications.BackgroundPollManager
-import org.thoughtcrime.securesms.notifications.FirebaseTokenFetcher
 import org.thoughtcrime.securesms.notifications.PushRegistrationHandler
 import org.thoughtcrime.securesms.pro.ProStatusManager
 import org.thoughtcrime.securesms.service.ExpiringMessageManager
@@ -58,7 +58,7 @@ class OnAppStartupComponents private constructor(
         adminStateSync: AdminStateSync,
         callMessageProcessor: CallMessageProcessor,
         pushRegistrationHandler: PushRegistrationHandler,
-        tokenFetcher: FirebaseTokenFetcher,
+        tokenFetcher: TokenFetcher,
         versionDataFetcher: VersionDataFetcher,
         threadDatabase: ThreadDatabase,
         emojiIndexLoader: EmojiIndexLoader,
