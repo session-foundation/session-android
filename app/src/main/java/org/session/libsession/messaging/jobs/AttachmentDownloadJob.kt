@@ -1,9 +1,13 @@
 package org.session.libsession.messaging.jobs
 
+import android.content.Context
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.session.libsession.database.MessageDataProvider
 import org.session.libsession.database.StorageProtocol
-import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentId
 import org.session.libsession.messaging.sending_receiving.attachments.AttachmentState
@@ -24,7 +28,13 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Job {
+class AttachmentDownloadJob @AssistedInject constructor(
+    @Assisted("attachmentID") val attachmentID: Long,
+    @Assisted val mmsMessageId: Long,
+    @param:ApplicationContext private val context: Context,
+    private val storage: StorageProtocol,
+    private val messageDataProvider: MessageDataProvider
+) : Job {
     override var delegate: JobDelegate? = null
     override var id: String? = null
     override var failureCount: Int = 0
@@ -71,8 +81,6 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
     }
 
     override suspend fun execute(dispatcherName: String) {
-        val storage = MessagingModuleConfiguration.shared.storage
-        val messageDataProvider = MessagingModuleConfiguration.shared.messageDataProvider
         val threadID = storage.getThreadIdForMms(mmsMessageId)
 
         val handleFailure: (java.lang.Exception, attachmentId: AttachmentId?) -> Unit = { exception, attachment ->
@@ -213,7 +221,7 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
     }
 
     private fun createTempFile(): File {
-        val file = File.createTempFile("push-attachment", "tmp", MessagingModuleConfiguration.shared.context.cacheDir)
+        val file = File.createTempFile("push-attachment", "tmp", context.cacheDir)
         file.deleteOnExit()
         return file
     }
@@ -229,10 +237,21 @@ class AttachmentDownloadJob(val attachmentID: Long, val mmsMessageId: Long) : Jo
         return KEY
     }
 
-    class Factory : Job.Factory<AttachmentDownloadJob> {
+    class DeserializeFactory(private val factory: Factory) : Job.DeserializeFactory<AttachmentDownloadJob> {
 
         override fun create(data: Data): AttachmentDownloadJob {
-            return AttachmentDownloadJob(data.getLong(ATTACHMENT_ID_KEY), data.getLong(TS_INCOMING_MESSAGE_ID_KEY))
+            return factory.create(
+                attachmentID = data.getLong(ATTACHMENT_ID_KEY),
+                mmsMessageId = data.getLong(TS_INCOMING_MESSAGE_ID_KEY)
+            )
         }
+    }
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            @Assisted("attachmentID") attachmentID: Long,
+            mmsMessageId: Long
+        ): AttachmentDownloadJob
     }
 }

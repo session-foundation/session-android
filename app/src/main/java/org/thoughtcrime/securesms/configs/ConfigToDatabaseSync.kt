@@ -423,9 +423,14 @@ class ConfigToDatabaseSync @Inject constructor(
                     continue
                 }
             }
+
             if (threadId != null) {
                 if (conversation.lastRead > storage.getLastSeen(threadId)) {
-                    storage.markConversationAsRead(threadId, conversation.lastRead, force = true)
+                    storage.markConversationAsRead(
+                        threadId,
+                        conversation.lastRead,
+                        force = true
+                    )
                     storage.updateThread(threadId, false)
                 }
             }

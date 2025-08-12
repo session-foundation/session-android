@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,7 +44,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DebugMenuViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val textSecurePreferences: TextSecurePreferences,
     private val tokenPageNotificationManager: TokenPageNotificationManager,
     private val configFactory: ConfigFactory,
@@ -53,6 +54,7 @@ class DebugMenuViewModel @Inject constructor(
     private val threadDb: ThreadDatabase,
     private val recipientDatabase: RecipientDatabase,
     private val attachmentDatabase: AttachmentDatabase,
+    private val databaseInspector: DatabaseInspector,
 ) : ViewModel() {
     private val TAG = "DebugMenu"
 
@@ -76,10 +78,25 @@ class DebugMenuViewModel @Inject constructor(
             forcePostPro = textSecurePreferences.forcePostPro(),
             forceShortTTl = textSecurePreferences.forcedShortTTL(),
             messageProFeature = textSecurePreferences.getDebugMessageFeatures(),
+            dbInspectorState = DatabaseInspectorState.NOT_AVAILABLE,
         )
     )
     val uiState: StateFlow<UIState>
         get() = _uiState
+
+    init {
+        if (databaseInspector.available) {
+            viewModelScope.launch {
+                databaseInspector.enabled.collectLatest { started ->
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            dbInspectorState = if (started) DatabaseInspectorState.STARTED else DatabaseInspectorState.STOPPED
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     private var temporaryEnv: Environment? = null
 
@@ -251,6 +268,16 @@ class DebugMenuViewModel @Inject constructor(
                     it.copy(messageProFeature = features)
                 }
             }
+
+            Commands.ToggleDatabaseInspector -> {
+                if (databaseInspector.available) {
+                    if (databaseInspector.enabled.value) {
+                        databaseInspector.stop()
+                    } else {
+                        databaseInspector.start()
+                    }
+                }
+            }
         }
     }
 
@@ -352,7 +379,14 @@ class DebugMenuViewModel @Inject constructor(
         val availableDeprecationState: List<LegacyGroupDeprecationManager.DeprecationState?>,
         val deprecatedTime: ZonedDateTime,
         val deprecatingStartTime: ZonedDateTime,
+        val dbInspectorState: DatabaseInspectorState,
     )
+
+    enum class DatabaseInspectorState {
+        NOT_AVAILABLE,
+        STARTED,
+        STOPPED,
+    }
 
     sealed class Commands {
         object ChangeEnvironment : Commands()
@@ -376,5 +410,6 @@ class DebugMenuViewModel @Inject constructor(
         data class OverrideDeprecatingStartTime(val time: ZonedDateTime) : Commands()
         object ClearTrustedDownloads: Commands()
         data class GenerateContacts(val prefix: String, val count: Int): Commands()
+        data object ToggleDatabaseInspector : Commands()
     }
 }

@@ -791,6 +791,25 @@ public class ThreadDatabase extends Database {
     }
   }
 
+  public boolean isRead(long threadId) {
+    SQLiteDatabase db = getReadableDatabase();
+    // Only ask for the "READ" column
+    String[] projection = {READ};
+    String selection = ID + " = ?";
+    String[] args = {String.valueOf(threadId)};
+
+    Cursor cursor = db.query(TABLE_NAME, projection, selection, args, null, null, null);
+    try {
+      if (cursor != null && cursor.moveToFirst()) {
+        // READ is stored as 1 = read, 0 = unread
+        return cursor.getInt(0) == 1;
+      }
+      return false;
+    } finally {
+      if (cursor != null) cursor.close();
+    }
+  }
+
   /**
    * @param threadId
    * @param lastSeenTime
@@ -929,6 +948,7 @@ public class ThreadDatabase extends Database {
       boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
+      boolean isReadFlag = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -970,7 +990,7 @@ public class ThreadDatabase extends Database {
         }
         return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent, isReadFlag);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {

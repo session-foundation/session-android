@@ -62,7 +62,6 @@ interface StorageProtocol {
     fun getAllPendingJobs(vararg types: String): Map<String,Job?>
     fun getAttachmentUploadJob(attachmentID: Long): AttachmentUploadJob?
     fun getMessageSendJob(messageSendJobID: String): MessageSendJob?
-    fun getMessageReceiveJob(messageReceiveJobID: String): Job?
     fun getGroupAvatarDownloadJob(server: String, room: String, imageId: String?): Job?
     fun resumeMessageSendJobIfNeeded(messageSendJobID: String)
     fun isJobCanceled(job: Job): Boolean
@@ -86,7 +85,6 @@ interface StorageProtocol {
     fun hasBackgroundGroupAddJob(groupJoinUrl: String): Boolean
     fun setOpenGroupServerMessageID(messageID: MessageId, serverID: Long, threadID: Long)
     fun getOpenGroup(room: String, server: String): OpenGroup?
-    fun setGroupMemberRoles(members: List<GroupMember>)
 
     // Open Group Public Keys
     fun getOpenGroupPublicKey(server: String): String?
@@ -194,6 +192,7 @@ interface StorageProtocol {
     fun getTotalPinned(): Int
     fun setPinned(threadID: Long, isPinned: Boolean)
     fun isPinned(threadID: Long): Boolean
+    fun isRead(threadId: Long) : Boolean
     fun deleteConversation(threadID: Long)
     fun setThreadCreationDate(threadId: Long, newDate: Long)
     fun getLastLegacyRecipient(threadRecipient: String): String?
@@ -223,6 +222,7 @@ interface StorageProtocol {
      */
     fun persist(message: VisibleMessage, quotes: QuoteModel?, linkPreview: List<LinkPreview?>, groupPublicKey: String?, openGroupID: String?, attachments: List<Attachment>, runThreadUpdate: Boolean): MessageId?
     fun markConversationAsRead(threadId: Long, lastSeenTime: Long, force: Boolean = false)
+    fun markConversationAsUnread(threadId: Long)
     fun getLastSeen(threadId: Long): Long
     fun ensureMessageHashesAreSender(hashes: Set<String>, sender: String, closedGroupId: String): Boolean
     fun updateThread(threadId: Long, unarchive: Boolean)

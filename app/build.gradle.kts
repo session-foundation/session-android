@@ -12,6 +12,7 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.dependency.analysis)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.protobuf.compiler)
 
     id("generate-ip-country-data")
     id("rename-apk")
@@ -25,7 +26,7 @@ configurations.configureEach {
     exclude(module = "commons-logging")
 }
 
-val canonicalVersionCode = 416
+val canonicalVersionCode = 417
 val canonicalVersionName = "1.27.0"
 
 val postFixSize = 10
@@ -47,6 +48,7 @@ val getGitHash = providers
 
 val firebaseEnabledVariants = listOf("play", "fdroid")
 val nonPlayVariants = listOf("fdroid", "website") + if (huaweiEnabled) listOf("huawei") else emptyList()
+val nonDebugBuildTypes = listOf("release", "qa", "automaticQa")
 
 fun VariantDimension.devNetDefaultOn(defaultOn: Boolean) {
     val fqEnumClass = "org.session.libsession.utilities.Environment"
@@ -84,6 +86,23 @@ kotlin {
     }
 }
 
+protobuf {
+    protoc {
+        artifact = libs.protoc.get().toString()
+    }
+
+    plugins {
+        generateProtoTasks {
+            all().forEach {
+                it.builtins {
+                    create("java") {
+                    }
+                }
+            }
+        }
+    }
+}
+
 android {
     namespace = "network.loki.messenger"
     useLibrary("org.apache.http.legacy")
@@ -112,10 +131,6 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinComposeCompilerVersion.get()
     }
 
     defaultConfig {
@@ -206,6 +221,14 @@ android {
             maybeCreate(variant).apply {
                 java.srcDirs("$nonPlayCommonDir/kotlin")
                 resources.srcDirs("$nonPlayCommonDir/resources")
+            }
+        }
+
+        val nonDebugDir = "src/nonDebug"
+        nonDebugBuildTypes.forEach { buildType ->
+            maybeCreate(buildType).apply {
+                java.srcDirs("$nonDebugDir/kotlin")
+                resources.srcDirs("$nonDebugDir/resources")
             }
         }
     }
@@ -450,6 +473,8 @@ dependencies {
     implementation(libs.zxing.core)
 
     implementation(libs.androidx.biometric)
+
+    debugImplementation(libs.sqlite.web.viewer)
 }
 
 fun getLastCommitTimestamp(): String {

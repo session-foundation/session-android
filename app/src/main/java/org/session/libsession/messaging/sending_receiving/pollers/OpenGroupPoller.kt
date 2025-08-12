@@ -35,7 +35,7 @@ import org.session.libsession.messaging.open_groups.OpenGroup
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.open_groups.OpenGroupMessage
 import org.session.libsession.messaging.sending_receiving.MessageReceiver
-import org.session.libsession.messaging.sending_receiving.handle
+import org.session.libsession.messaging.sending_receiving.ReceivedMessageHandler
 import org.session.libsession.snode.OnionRequestAPI
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address
@@ -43,6 +43,7 @@ import org.session.libsession.utilities.GroupUtil
 import org.session.libsignal.protos.SignalServiceProtos
 import org.session.libsignal.utilities.Base64
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.database.GroupMemberDatabase
 import org.thoughtcrime.securesms.util.AppVisibilityManager
 import java.util.concurrent.TimeUnit
 
@@ -59,6 +60,9 @@ private typealias ManualPollRequestToken = Channel<Result<Unit>>
 class OpenGroupPoller @AssistedInject constructor(
     private val storage: StorageProtocol,
     private val appVisibilityManager: AppVisibilityManager,
+    private val receivedMessageHandler: ReceivedMessageHandler,
+    private val batchMessageJobFactory: BatchMessageReceiveJob.Factory,
+    private val groupMemberDatabase: GroupMemberDatabase,
     @Assisted private val server: String,
     @Assisted private val scope: CoroutineScope,
 ) {
@@ -75,6 +79,7 @@ class OpenGroupPoller @AssistedInject constructor(
 
         fun handleRoomPollInfo(
             storage: StorageProtocol,
+            memberDb: GroupMemberDatabase,
             server: String,
             roomToken: String,
             pollInfo: OpenGroupApi.RoomPollInfo,
@@ -110,25 +115,25 @@ class OpenGroupPoller @AssistedInject constructor(
 
             // - Moderators
             pollInfo.details?.moderators?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.MODERATOR)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.MODERATOR, moderatorList
+                )
             }
             pollInfo.details?.hiddenModerators?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_MODERATOR)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.HIDDEN_MODERATOR, moderatorList
+                )
             }
             // - Admins
             pollInfo.details?.admins?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.ADMIN)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.ADMIN, moderatorList
+                )
             }
             pollInfo.details?.hiddenAdmins?.let { moderatorList ->
-                storage.setGroupMemberRoles(moderatorList.map {
-                    GroupMember(groupId, it, GroupMemberRole.HIDDEN_ADMIN)
-                })
+                memberDb.updateGroupMembers(
+                    groupId, GroupMemberRole.HIDDEN_ADMIN, moderatorList
+                )
             }
 
             // Update the group avatar
@@ -217,7 +222,7 @@ class OpenGroupPoller @AssistedInject constructor(
                             handleCapabilities(server, response.body as OpenGroupApi.Capabilities)
                         }
                         is Endpoint.RoomPollInfo -> {
-                            handleRoomPollInfo(storage, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
+                            handleRoomPollInfo(storage, groupMemberDatabase, server, response.endpoint.roomToken, response.body as OpenGroupApi.RoomPollInfo)
                         }
                         is Endpoint.RoomMessagesRecent -> {
                             handleMessages(server, response.endpoint.roomToken, response.body as List<OpenGroupApi.Message>)
@@ -342,7 +347,7 @@ class OpenGroupPoller @AssistedInject constructor(
                     mappingCache[it.recipient] = mapping
                 }
                 val threadId = Message.getThreadId(message, null, storage, false)
-                MessageReceiver.handle(message, proto, threadId ?: -1, null, null)
+                receivedMessageHandler.handle(message, proto, threadId ?: -1, null, null)
             } catch (e: Exception) {
                 Log.e(TAG, "Couldn't handle direct message", e)
             }
@@ -374,7 +379,7 @@ class OpenGroupPoller @AssistedInject constructor(
             val parameters = list.map { (serverId, message, reactions) ->
                 MessageReceiveParameters(message.toByteArray(), openGroupMessageServerID = serverId, reactions = reactions)
             }
-            JobQueue.shared.add(BatchMessageReceiveJob(parameters, openGroupID))
+            JobQueue.shared.add(batchMessageJobFactory.create(parameters, openGroupID))
         }
 
         if (envelopes.isNotEmpty()) {

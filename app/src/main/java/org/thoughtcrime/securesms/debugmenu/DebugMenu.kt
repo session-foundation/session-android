@@ -77,6 +77,8 @@ import org.thoughtcrime.securesms.ui.DialogButtonData
 import org.thoughtcrime.securesms.ui.GetString
 import org.thoughtcrime.securesms.ui.LoadingDialog
 import org.thoughtcrime.securesms.ui.components.BackAppBar
+import org.thoughtcrime.securesms.ui.components.Button
+import org.thoughtcrime.securesms.ui.components.ButtonType
 import org.thoughtcrime.securesms.ui.components.DropDown
 import org.thoughtcrime.securesms.ui.components.SessionOutlinedTextField
 import org.thoughtcrime.securesms.ui.components.SessionSwitch
@@ -218,6 +220,20 @@ fun DebugMenu(
                         sendCommand(ShowEnvironmentWarningDialog(it))
                     }
                 )
+            }
+
+            if (uiState.dbInspectorState != DebugMenuViewModel.DatabaseInspectorState.NOT_AVAILABLE) {
+                DebugCell("Database inspector") {
+                    Button(
+                        onClick = {
+                            sendCommand(DebugMenuViewModel.Commands.ToggleDatabaseInspector)
+                        },
+                        text = if (uiState.dbInspectorState == DebugMenuViewModel.DatabaseInspectorState.STOPPED)
+                            "Start"
+                        else "Stop",
+                        type = ButtonType.AccentFill,
+                    )
+                }
             }
 
             // Session Pro
@@ -699,7 +715,8 @@ fun PreviewDebugMenu() {
                 forceOtherUsersAsPro = false,
                 forcePostPro = false,
                 forceShortTTl = false,
-                messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar)
+                messageProFeature = setOf(ProStatusManager.MessageProFeature.AnimatedAvatar),
+                dbInspectorState = DebugMenuViewModel.DatabaseInspectorState.STARTED,
             ),
             sendCommand = {},
             onClose = {}

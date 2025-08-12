@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:key="message_trimming" android:title="@string/conversationsMessageTrimming">
         <org.thoughtcrime.securesms.components.SwitchPreferenceCompat
@@ -26,9 +27,11 @@
             android:title="@string/conversationsAutoplayAudioMessage" />
     </PreferenceCategory>
 
-    <org.thoughtcrime.securesms.preferences.BlockedContactsPreference
-        android:key="blocked_contacts"
-        android:layout="@layout/blocked_contacts_preference"
-        />
+    <PreferenceCategory android:title="@string/conversationsBlockedContacts">
+        <Preference
+            android:key="blocked_contacts"
+            android:layout="@layout/blocked_contacts_preference"
+            android:selectable="true" />
+    </PreferenceCategory>
 
 </PreferenceScreen>

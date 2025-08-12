@@ -43,6 +43,7 @@ import com.squareup.phrase.Phrase
 import network.loki.messenger.BuildConfig
 import network.loki.messenger.R
 import network.loki.messenger.libsession_util.util.GroupMember
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.StringSubstitutionConstants.GROUP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.NAME_KEY
 import org.session.libsignal.utilities.AccountId
@@ -342,11 +343,11 @@ private fun MemberActionSheet(
 @Composable
 fun EditMemberItem(
     member: GroupMemberState,
-    onClick: (accountId: AccountId) -> Unit,
+    onClick: (address: Address) -> Unit,
     modifier: Modifier = Modifier
 ) {
     MemberItem(
-        accountId = member.accountId,
+        address = Address.fromSerialized(member.accountId.hexString),
         title = member.name,
         subtitle = member.statusLabel,
         subtitleColor = if (member.highlightStatus) {

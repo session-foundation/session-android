@@ -21,14 +21,7 @@ import org.session.libsession.utilities.Address
 import org.session.libsignal.utilities.AccountId
 import org.thoughtcrime.securesms.conversation.disappearingmessages.DisappearingMessagesViewModel
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.DisappearingMessagesScreen
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteAllMedia
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteConversationSettings
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteDisappearingMessages
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteGroupMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToCommunity
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteInviteToGroup
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteManageMembers
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.RouteNotifications
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination.*
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsScreen
 import org.thoughtcrime.securesms.conversation.v2.settings.notification.NotificationSettingsViewModel
 import org.thoughtcrime.securesms.groups.EditGroupViewModel
@@ -40,7 +33,9 @@ import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
 import org.thoughtcrime.securesms.groups.compose.InviteContactsScreen
 import org.thoughtcrime.securesms.media.MediaOverviewScreen
 import org.thoughtcrime.securesms.media.MediaOverviewViewModel
+import org.thoughtcrime.securesms.ui.NavigationAction
 import org.thoughtcrime.securesms.ui.ObserveAsEvents
+import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
@@ -86,7 +81,7 @@ sealed interface ConversationSettingsDestination {
 fun ConversationSettingsNavHost(
     threadId: Long,
     threadAddress: Address?,
-    navigator: ConversationSettingsNavigator,
+    navigator: UINavigator<ConversationSettingsDestination>,
     returnResult: (String, Boolean) -> Unit,
     onBack: () -> Unit
 ){
@@ -95,7 +90,7 @@ fun ConversationSettingsNavHost(
 
         ObserveAsEvents(flow = navigator.navigationActions) { action ->
             when (action) {
-                is NavigationAction.Navigate -> navController.navigate(
+                is NavigationAction.Navigate<ConversationSettingsDestination> -> navController.navigate(
                     action.destination
                 ) {
                     action.navOptions(this)
@@ -113,7 +108,7 @@ fun ConversationSettingsNavHost(
             }
         }
 
-        NavHost(navController = navController, startDestination = navigator.startDestination) {
+        NavHost(navController = navController, startDestination = RouteConversationSettings) {
             // Conversation Settings
             horizontalSlideComposable<RouteConversationSettings> {
                 val viewModel =
@@ -184,7 +179,7 @@ fun ConversationSettingsNavHost(
                 val viewModel =
                     hiltViewModel<SelectContactsViewModel, SelectContactsViewModel.Factory> { factory ->
                         factory.create(
-                            excludingAccountIDs = data.excludingAccountIDs.map(::AccountId).toSet()
+                            excludingAccountIDs = data.excludingAccountIDs.map(Address::fromSerialized).toSet()
                         )
                     }
 

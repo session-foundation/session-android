@@ -155,7 +155,7 @@ class RetrieveProfileAvatarJob(
         return KEY
     }
 
-    class Factory: Job.Factory<RetrieveProfileAvatarJob> {
+    class DeserializeFactory: Job.DeserializeFactory<RetrieveProfileAvatarJob> {
         override fun create(data: Data): RetrieveProfileAvatarJob {
             val profileAvatar = if (data.hasString(PROFILE_AVATAR_KEY)) { data.getString(PROFILE_AVATAR_KEY) } else { null }
             val recipientAddress = Address.fromSerialized(data.getString(RECEIPIENT_ADDRESS_KEY))

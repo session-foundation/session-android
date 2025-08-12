@@ -199,6 +199,7 @@
     <string name="AccessibilityId_resendInvite">Resend invite button</string>
     <string name="AccessibilityId_versionWarning">Version warning banner</string>
     <string name="qa_invite_button">invite-contacts-button</string>
+    <string name="qa_unblock_button">unblock-contacts-button</string>
     <!--Conversation screen -->
     <string name="AccessibilityId_attachmentsButton">Attachments button</string>
     <string name="AccessibilityId_files">Documents folder</string>
@@ -251,6 +252,13 @@
     <string name="qa_settings_item_donate">donate-menu-item</string>
     <string name="qa_settings_item_pro">pro-menu-item</string>
 
+    <!-- In app review -->
+    <string name="qa_inapp_review_dialog_button_great">enjoy-session-positive-button</string>
+    <string name="qa_inapp_review_dialog_button_work">enjoy-session-negative-button</string>
+    <string name="qa_inapp_review_dialog_button_rate">rate-app-button</string>
+    <string name="qa_inapp_review_dialog_button_not_now">not-now-button</string>
+    <string name="qa_inapp_review_dialog_button_survey">open-survey-button</string>
+
     <!-- Misc. -->
     <string name="AccessibilityId_navigateBack">Navigate back</string>
     <string name="AccessibilityId_close">Close Dialog</string>
@@ -263,5 +271,8 @@
     <string name="qa_blocked_banner">blocked-banner</string>
     <string name="qa_delete_message_device_only">delete-only-on-this-device</string>
     <string name="qa_delete_message_everyone">delete-for-everyone</string>
+    <string name="qa_pro_badge_component">pro-badge-component</string>
+    <string name="qa_pro_badge_text">pro-badge-text</string>
+    <string name="qa_pro_badge_icon">pro-badge-icon</string>
 
 </resources>

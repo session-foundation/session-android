@@ -223,7 +223,7 @@
         android:src="@drawable/ic_phone_fill_answer_custom"
         android:padding="10dp"
         app:tint="@color/white"
-        android:backgroundTint="?colorAccent"
+        android:backgroundTint="@color/accent_green"
         android:layout_width="@dimen/large_button_height"
         android:layout_height="@dimen/large_button_height"
         android:layout_marginBottom="@dimen/very_large_spacing"

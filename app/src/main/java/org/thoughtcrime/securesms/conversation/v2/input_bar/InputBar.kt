@@ -329,6 +329,9 @@ class InputBar @JvmOverloads constructor(
             is InputBarContentState.Disabled ->{
                 isVisible = true
                 binding.inputBarEditText.isVisible = false
+                binding.inputBarAdditionalContentContainer.isVisible = false
+                binding.inputBarEditText.text?.clear()
+                inputBarEditTextContentChanged("")
                 binding.disabledBanner.isVisible = true
                 binding.disabledText.text = state.contentState.text
                 if(state.contentState.onClick == null){
@@ -343,6 +346,7 @@ class InputBar @JvmOverloads constructor(
             else -> {
                 isVisible = true
                 binding.inputBarEditText.isVisible = true
+                binding.inputBarAdditionalContentContainer.isVisible = true
                 binding.disabledBanner.isVisible = false
             }
         }

@@ -68,6 +68,7 @@ import network.loki.messenger.databinding.ViewVisibleMessageContentBinding
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
 import org.session.libsession.utilities.NonTranslatableStringConstants
+import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
 import org.thoughtcrime.securesms.MediaPreviewActivity
 import org.thoughtcrime.securesms.ScreenLockActionBarActivity
@@ -88,6 +89,7 @@ import org.thoughtcrime.securesms.ui.LongMessageProCTA
 import org.thoughtcrime.securesms.ui.ProBadgeText
 import org.thoughtcrime.securesms.ui.ProCTAFeature
 import org.thoughtcrime.securesms.ui.TitledText
+import org.thoughtcrime.securesms.ui.UserProfileModal
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setComposeContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
@@ -101,6 +103,7 @@ import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.ui.theme.dangerButtonColors
 import org.thoughtcrime.securesms.ui.theme.monospace
 import org.thoughtcrime.securesms.util.ActivityDispatcher
+import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.push
 import javax.inject.Inject
 
@@ -321,13 +324,18 @@ fun CellMetadata(
                 TitledErrorText(error)
                 senderInfo?.let { sender ->
                     TitledView(state.fromTitle) {
-                        Row {
+                        Row(
+                            modifier = Modifier.clickable{
+                                sendCommand(Commands.ShowUserProfileModal)
+                            }
+                        ) {
                             senderAvatarData?.let {
                                 Avatar(
                                     modifier = Modifier
                                         .align(Alignment.CenterVertically),
                                     size = LocalDimensions.current.iconLarge,
-                                    data = senderAvatarData
+                                    data = senderAvatarData,
+                                    badge = if (state.senderIsAdmin) { AvatarBadge.Admin } else AvatarBadge.None
                                 )
                                 Spacer(modifier = Modifier.width(LocalDimensions.current.smallSpacing))
                             }
@@ -344,9 +352,12 @@ fun CellMetadata(
                                 )
 
                                 sender.text?.let {
+                                    val addressColor = if(state.senderIsBlinded) LocalColors.current.textSecondary else LocalColors.current.text
                                     Text(
                                         text = it,
-                                        style = LocalType.current.base.monospace()
+                                        style = LocalType.current.base.monospace().copy(
+                                            color = addressColor
+                                        )
                                     )
                                 }
                             }
@@ -379,7 +390,9 @@ fun MessageProFeatures(
         )
 
         Text(
-            text = stringResource(id = R.string.proMessageInfoFeatures),
+            text = Phrase.from(LocalContext.current,R.string.proMessageInfoFeatures)
+                .put(APP_PRO_KEY, NonTranslatableStringConstants.APP_PRO)
+                .format().toString(),
             style = LocalType.current.large
         )
 
@@ -438,7 +451,7 @@ fun CellButtons(
             }
 
             LargeItemButton(
-                R.string.copy,
+                R.string.messageCopy,
                 R.drawable.ic_copy,
                 onClick = onCopy
             )
@@ -700,5 +713,18 @@ fun MessageDetailDialogs(
             is ProBadgeCTA.AnimatedProfile ->
                 AnimatedProfilePicProCTA(onDismissRequest = {sendCommand(Commands.HideProBadgeCTA)})
         }
+    }
+
+    // user profile modal
+    if(state.userProfileModal != null){
+        UserProfileModal(
+            data = state.userProfileModal,
+            onDismissRequest = {
+                sendCommand(Commands.HideUserProfileModal)
+            },
+            sendCommand = {
+                sendCommand(Commands.HandleUserProfileCommand(it))
+            },
+        )
     }
 }

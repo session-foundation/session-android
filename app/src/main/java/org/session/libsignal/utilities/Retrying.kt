@@ -43,6 +43,7 @@ suspend fun <T> retryWithUniformInterval(maxRetryCount: Int = 3, retryIntervalMi
         } catch (e: NonRetryableException) {
             throw e
         } catch (e: Exception) {
+            Log.w("", "Exception while performing retryWithUniformInterval:", e)
             if (retryCount == maxRetryCount) {
                 throw e
             } else {

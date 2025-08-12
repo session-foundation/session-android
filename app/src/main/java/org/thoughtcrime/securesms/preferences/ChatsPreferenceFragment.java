@@ -1,9 +1,11 @@
 package org.thoughtcrime.securesms.preferences;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.Preference;
 
 import org.thoughtcrime.securesms.permissions.Permissions;
 
@@ -20,6 +22,14 @@ public class ChatsPreferenceFragment extends CorrectedPreferenceFragment {
   @Override
   public void onCreatePreferences(@Nullable Bundle savedInstanceState, String rootKey) {
     addPreferencesFromResource(R.xml.preferences_chats);
+
+    Preference blockedContactsPreference = findPreference("blocked_contacts");
+    if (blockedContactsPreference != null) {
+      blockedContactsPreference.setOnPreferenceClickListener(preference -> {
+        startActivity(new Intent(requireContext(), BlockedContactsActivity.class));
+        return true;
+      });
+    }
   }
 
   @Override

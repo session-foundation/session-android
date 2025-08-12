@@ -13,7 +13,6 @@ import org.session.libsession.messaging.MessagingModuleConfiguration
 import org.session.libsession.messaging.file_server.FileServerApi
 import org.session.libsession.snode.utilities.await
 import org.session.libsession.utilities.Address.Companion.fromSerialized
-import org.session.libsession.utilities.TextSecurePreferences.Companion.getLastProfilePictureUpload
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getLocalNumber
 import org.session.libsession.utilities.TextSecurePreferences.Companion.getProfileKey
 import org.session.libsession.utilities.TextSecurePreferences.Companion.setLastProfilePictureUpload
