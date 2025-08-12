@@ -1798,18 +1798,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     override fun onReactWithAnyEmojiDialogDismissed() = reactionDelegate.hide()
 
     override fun onReactWithAnyEmojiSelected(emoji: String, messageId: MessageId) {
-        reactionDelegate.hide()
         val message = if (messageId.mms) {
             mmsDb.getMessageRecord(messageId.id)
         } else {
             smsDb.getMessageRecord(messageId.id)
         }
-        val oldRecord = reactionDb.getReactions(messageId).find { it.author == textSecurePreferences.getLocalNumber() }
-        if (oldRecord?.emoji == emoji) {
-            sendEmojiRemoval(emoji, message)
-        } else {
-            sendEmojiReaction(emoji, message)
-        }
+
+        onReactionSelected(message, emoji)
     }
 
     override fun onRemoveReaction(emoji: String, messageId: MessageId) {

@@ -352,6 +352,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.emoji2)
+    implementation(libs.androidx.emoji2.picker)
 
     // Add firebase dependencies to specific variants
     for (variant in firebaseEnabledVariants) {

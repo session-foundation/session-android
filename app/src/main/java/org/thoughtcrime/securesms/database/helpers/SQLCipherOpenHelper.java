@@ -1,35 +1,22 @@
 package org.thoughtcrime.securesms.database.helpers;
 
-import static org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY;
-
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.database.Cursor;
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
 
-import com.google.common.io.Files;
-import com.squareup.phrase.Phrase;
-import java.io.File;
-import java.io.IOException;
+import androidx.annotation.NonNull;
 
 import net.zetetic.database.sqlcipher.SQLiteConnection;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 import net.zetetic.database.sqlcipher.SQLiteDatabaseHook;
 import net.zetetic.database.sqlcipher.SQLiteOpenHelper;
 
-import network.loki.messenger.BuildConfig;
-import network.loki.messenger.R;
 import org.session.libsession.utilities.TextSecurePreferences;
 import org.session.libsignal.utilities.Log;
-import org.session.libsignal.utilities.guava.Preconditions;
 import org.thoughtcrime.securesms.crypto.DatabaseSecret;
 import org.thoughtcrime.securesms.database.AttachmentDatabase;
 import org.thoughtcrime.securesms.database.BlindedIdMappingDatabase;
 import org.thoughtcrime.securesms.database.ConfigDatabase;
 import org.thoughtcrime.securesms.database.DraftDatabase;
-import org.thoughtcrime.securesms.database.EmojiSearchDatabase;
 import org.thoughtcrime.securesms.database.ExpirationConfigurationDatabase;
 import org.thoughtcrime.securesms.database.GroupDatabase;
 import org.thoughtcrime.securesms.database.GroupMemberDatabase;
@@ -213,7 +200,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
     db.execSQL(BlindedIdMappingDatabase.CREATE_BLINDED_ID_MAPPING_TABLE_COMMAND);
     db.execSQL(GroupMemberDatabase.CREATE_GROUP_MEMBER_TABLE_COMMAND);
     db.execSQL(LokiAPIDatabase.RESET_SEQ_NO); // probably not needed but consistent with all migrations
-    db.execSQL(EmojiSearchDatabase.CREATE_EMOJI_SEARCH_TABLE_COMMAND);
     db.execSQL(ReactionDatabase.CREATE_REACTION_TABLE_COMMAND);
     db.execSQL(ThreadDatabase.getUnreadMentionCountCommand());
     db.execSQL(SmsDatabase.CREATE_HAS_MENTION_COMMAND);
@@ -460,10 +446,6 @@ public class SQLCipherOpenHelper extends SQLiteOpenHelper {
         db.execSQL(MmsDatabase.CREATE_REACTIONS_LAST_SEEN_COMMAND);
         db.execSQL(ReactionDatabase.CREATE_REACTION_TABLE_COMMAND);
         executeStatements(db, ReactionDatabase.CREATE_REACTION_TRIGGERS);
-      }
-
-      if (oldVersion < lokiV38) {
-        db.execSQL(EmojiSearchDatabase.CREATE_EMOJI_SEARCH_TABLE_COMMAND);
       }
 
       if (oldVersion < lokiV39) {

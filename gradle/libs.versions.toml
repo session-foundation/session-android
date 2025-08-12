@@ -74,6 +74,7 @@ workRuntimeKtxVersion = "2.10.2"
 zxingVersion = "3.5.3"
 huaweiPushVersion = "6.7.0.300"
 googlePlayReviewVersion = "2.0.2"
+emoji2Version = "1.5.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -137,6 +138,8 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
+androidx-emoji2 = { module = "androidx.emoji2:emoji2", version.ref = "emoji2Version" }
+androidx-emoji2-picker = { module = "androidx.emoji2:emoji2-emojipicker", version.ref = "emoji2Version" }
 compose = { module = "com.github.bumptech.glide:compose", version.ref = "composeVersion" }
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroidVersion" }
 eventbus = { module = "org.greenrobot:eventbus", version.ref = "eventbusVersion" }

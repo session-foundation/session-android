@@ -34,7 +34,8 @@ public class EmojiImageView extends AppCompatImageView {
     if (isInEditMode()) {
       setImageResource(R.drawable.ic_emoji);
     } else {
-      Drawable emojiDrawable = EmojiProvider.getEmojiDrawable(getContext(), emoji);
+      //todo: EMOJI commented out
+      Drawable emojiDrawable = null;//EmojiProvider.getEmojiDrawable(getContext(), emoji);
       if (emojiDrawable == null) {
         // fallback
         setImageResource(R.drawable.ic_square_x);
