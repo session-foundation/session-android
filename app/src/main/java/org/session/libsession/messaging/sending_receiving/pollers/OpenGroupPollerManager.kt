@@ -2,7 +2,6 @@ package org.session.libsession.messaging.sending_receiving.pollers
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,6 +21,8 @@ import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -41,7 +42,8 @@ class OpenGroupPollerManager @Inject constructor(
     pollerFactory: OpenGroupPoller.Factory,
     configFactory: ConfigFactoryProtocol,
     preferences: TextSecurePreferences,
-) {
+    @ManagerScope scope: CoroutineScope
+) : OnAppStartupComponent {
     val pollers: StateFlow<Map<String, PollerHandle>> =
         preferences.watchLocalNumber()
             .map { it != null }
@@ -86,7 +88,7 @@ class OpenGroupPollerManager @Inject constructor(
                     newPollerStates
                 }
             }
-            .stateIn(GlobalScope, SharingStarted.Eagerly, emptyMap())
+            .stateIn(scope, SharingStarted.Eagerly, emptyMap())
 
     val isAllCaughtUp: Boolean
         get() = pollers.value.values.all { it.poller.isCaughtUp.value }

@@ -26,16 +26,15 @@ import org.session.libsignal.crypto.secureRandom
 import org.session.libsignal.crypto.secureRandomOrNull
 import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.Base64
+import org.session.libsignal.utilities.ByteArraySlice
+import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.ForkInfo
 import org.session.libsignal.utilities.HTTP
 import org.session.libsignal.utilities.JsonUtil
 import org.session.libsignal.utilities.Log
-import org.session.libsignal.utilities.ByteArraySlice
-import org.session.libsignal.utilities.ByteArraySlice.Companion.view
 import org.session.libsignal.utilities.Snode
 import org.session.libsignal.utilities.recover
 import org.session.libsignal.utilities.toHexString
-import kotlin.collections.set
 
 private typealias Path = List<Snode>
 
@@ -367,7 +366,7 @@ object OnionRequestAPI {
         }
         val promise = deferred.promise
         promise.fail { exception ->
-            if (exception is HTTP.HTTPRequestFailedException && SnodeModule.isInitialized) {
+            if (exception is HTTP.HTTPRequestFailedException) {
                 val checkedGuardSnode = guardSnode
                 val path =
                     if (checkedGuardSnode == null) null

@@ -4,7 +4,6 @@ import android.content.Context
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.ConfigBase
@@ -75,7 +74,8 @@ class ConfigFactory @Inject constructor(
     private val textSecurePreferences: TextSecurePreferences,
     private val clock: SnodeClock,
     private val configToDatabaseSync: Lazy<ConfigToDatabaseSync>,
-    private val usernameUtils: Lazy<UsernameUtils>
+    private val usernameUtils: Lazy<UsernameUtils>,
+    @ManagerScope private val coroutineScope: CoroutineScope
 ) : ConfigFactoryProtocol {
     companion object {
         // This is a buffer period within which we will process messages which would result in a
@@ -94,8 +94,6 @@ class ConfigFactory @Inject constructor(
 
     private val userConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, UserConfigsImpl>>()
     private val groupConfigs = HashMap<AccountId, Pair<ReentrantReadWriteLock, GroupConfigsImpl>>()
-
-    private val coroutineScope: CoroutineScope = GlobalScope
 
     private val _configUpdateNotifications = MutableSharedFlow<ConfigUpdateNotification>()
     override val configUpdateNotifications get() = _configUpdateNotifications

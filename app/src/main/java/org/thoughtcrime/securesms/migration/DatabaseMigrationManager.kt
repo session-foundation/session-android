@@ -5,7 +5,6 @@ import android.os.SystemClock
 import androidx.annotation.StringRes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -19,6 +18,8 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.crypto.DatabaseSecretProvider
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,9 +28,8 @@ class DatabaseMigrationManager @Inject constructor(
     private val application: Application,
     private val prefs: TextSecurePreferences,
     private val databaseSecretProvider: DatabaseSecretProvider,
-) {
-    private val scope: CoroutineScope = GlobalScope
-
+    @param:ManagerScope private val scope: CoroutineScope,
+) : OnAppStartupComponent {
     private val dbSecret by lazy {
         databaseSecretProvider.getOrCreateDatabaseSecret()
     }
@@ -235,6 +235,10 @@ class DatabaseMigrationManager @Inject constructor(
 
         val action: (fromRetry: Boolean) -> Unit,
     )
+
+    override fun onPostAppStarted() {
+        requestMigration(fromRetry = false)
+    }
 
     data class ProgressStep(
         val title: String,

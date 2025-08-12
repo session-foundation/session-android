@@ -1,17 +1,18 @@
 package org.session.libsession.utilities
 
 import android.content.Context
+import dagger.Lazy
 import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.messages.Message
 import org.session.libsession.messaging.messages.control.ExpirationTimerUpdate
-import org.session.libsession.messaging.sending_receiving.notifications.MessageNotifier
 import org.session.libsession.utilities.recipients.Recipient
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class SSKEnvironment(
+@Singleton
+class SSKEnvironment @Inject constructor(
     val typingIndicators: TypingIndicatorsProtocol,
-    val readReceiptManager: ReadReceiptManagerProtocol,
     val profileManager: ProfileManagerProtocol,
-    val notificationManager: MessageNotifier,
     val messageExpirationManager: MessageExpirationManagerProtocol
 ) {
 
@@ -53,16 +54,9 @@ class SSKEnvironment(
     }
 
     companion object {
-        @Deprecated("Use Hilt to inject your dependencies instead")
-        lateinit var shared: SSKEnvironment
+        lateinit var sharedLazy: Lazy<SSKEnvironment>
 
-        fun configure(typingIndicators: TypingIndicatorsProtocol,
-                      readReceiptManager: ReadReceiptManagerProtocol,
-                      profileManager: ProfileManagerProtocol,
-                      notificationManager: MessageNotifier,
-                      messageExpirationManager: MessageExpirationManagerProtocol) {
-            if (Companion::shared.isInitialized) { return }
-            shared = SSKEnvironment(typingIndicators, readReceiptManager, profileManager, notificationManager, messageExpirationManager)
-        }
+        @Deprecated("Use Hilt to inject your dependencies instead")
+        val shared: SSKEnvironment get() = sharedLazy.get()
     }
 }

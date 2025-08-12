@@ -1,6 +1,6 @@
 package org.thoughtcrime.securesms.groups.handler
 
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import network.loki.messenger.libsession_util.allWithStatus
@@ -9,6 +9,8 @@ import org.session.libsession.messaging.groups.GroupScope
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 
 /**
@@ -23,10 +25,11 @@ import javax.inject.Inject
 class CleanupInvitationHandler @Inject constructor(
     private val prefs: TextSecurePreferences,
     private val configFactory: ConfigFactoryProtocol,
-    private val groupScope: GroupScope
-) {
-    fun start() {
-        GlobalScope.launch {
+    private val groupScope: GroupScope,
+    @param:ManagerScope private val scope: CoroutineScope
+) : OnAppStartupComponent {
+    override fun onPostAppStarted() {
+        scope.launch {
             // Wait for the local number to be available
             prefs.watchLocalNumber().first { it != null }
 
