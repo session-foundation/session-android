@@ -20,6 +20,7 @@ import network.loki.messenger.libsession_util.getOrNull
 import org.session.libsession.database.StorageProtocol
 import org.session.libsession.messaging.groups.GroupInviteException
 import org.session.libsession.messaging.groups.GroupManagerV2
+import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.UsernameUtils
 import org.session.libsignal.utilities.AccountId
@@ -66,7 +67,7 @@ class EditGroupViewModel @AssistedInject constructor(
     val excludingAccountIDsFromContactSelection: Set<String>
         get() = groupInfo.value?.second?.mapTo(hashSetOf()) { it.accountId.hexString }.orEmpty()
 
-    fun onContactSelected(contacts: Set<AccountId>) {
+    fun onContactSelected(contacts: Set<Address>) {
         performGroupOperation(
             showLoading = false,
             errorMessage = { err ->
@@ -79,7 +80,7 @@ class EditGroupViewModel @AssistedInject constructor(
         ) {
             groupManager.inviteMembers(
                 groupId,
-                contacts.toList(),
+                contacts.map { AccountId(it.toString()) }.toList(),
                 shareHistory = false,
                 isReinvite = false,
             )

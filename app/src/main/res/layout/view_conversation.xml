@@ -59,7 +59,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@id/conversationViewDisplayName"
-                    app:layout_constraintEnd_toStartOf="@id/unreadCountIndicator"
+                    app:layout_constraintEnd_toStartOf="@id/markedUnreadIndicator"
                     app:layout_constrainedWidth="true"
                     app:layout_constraintHorizontal_chainStyle="packed"
                     app:layout_constraintHorizontal_bias="0"
@@ -69,12 +69,49 @@
                     android:visibility="gone"
                     tools:visibility="visible" />
 
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/markedUnreadIndicator"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="4dp"
+                    android:visibility="visible"
+                    app:layout_constrainedWidth="true"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/unreadCountIndicator"
+                    app:layout_constraintHorizontal_bias="0"
+                    app:layout_constraintHorizontal_chainStyle="packed"
+                    app:layout_constraintStart_toEndOf="@+id/iconPinned"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_mail"
+                        android:visibility="visible"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="?colorControlNormal"
+                        tools:visibility="visible" />
+
+                    <RelativeLayout
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@drawable/circle_tintable"
+                        android:backgroundTint="?unreadIndicatorBackgroundColor"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
                 <RelativeLayout
                     android:id="@+id/unreadCountIndicator"
                     android:layout_width="wrap_content"
                     android:layout_height="20dp"
                     android:layout_marginStart="4dp"
-                    app:layout_constraintStart_toEndOf="@id/iconPinned"
+                    app:layout_constraintStart_toEndOf="@id/markedUnreadIndicator"
                     app:layout_constraintEnd_toStartOf="@id/unreadMentionIndicator"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"

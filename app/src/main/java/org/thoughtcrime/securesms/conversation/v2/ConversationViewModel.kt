@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -68,6 +70,7 @@ import org.thoughtcrime.securesms.database.model.GroupThreadStatus
 import org.thoughtcrime.securesms.database.model.MessageId
 import org.thoughtcrime.securesms.database.model.MessageRecord
 import org.thoughtcrime.securesms.database.model.MmsMessageRecord
+import org.thoughtcrime.securesms.database.model.ThreadRecord
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
 import org.thoughtcrime.securesms.groups.ExpiredGroupManager
 import org.thoughtcrime.securesms.groups.OpenGroupManager
@@ -96,7 +99,6 @@ class ConversationViewModel(
     private val application: Application,
     private val repository: ConversationRepository,
     private val storage: StorageProtocol,
-    private val messageDataProvider: MessageDataProvider,
     private val groupDb: GroupDatabase,
     private val threadDb: ThreadDatabase,
     private val reactionDb: ReactionDatabase,
@@ -114,7 +116,8 @@ class ConversationViewModel(
     private val recipientChangeSource: RecipientChangeSource,
     private val openGroupManager: OpenGroupManager,
     private val proStatusManager: ProStatusManager,
-    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+    private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+    attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory,
 ) : InputbarViewModel(
     application = application,
     proStatusManager = proStatusManager
@@ -319,11 +322,7 @@ class ConversationViewModel(
         expiredGroupManager.expiredGroups.map { groupId in it }
     }
 
-    private val attachmentDownloadHandler = AttachmentDownloadHandler(
-        storage = storage,
-        messageDataProvider = messageDataProvider,
-        scope = viewModelScope,
-    )
+    private val attachmentDownloadHandler = attachmentDownloadHandlerFactory.create(viewModelScope)
 
     val callBanner: StateFlow<String?> = callManager.currentConnectionStateFlow.map {
         // a call is in progress if it isn't idle nor disconnected and the recipient is the person on the call
@@ -494,7 +493,8 @@ class ConversationViewModel(
                     pagerData += ConversationAppBarPagerData(
                         title = title,
                         action = {
-                            showGroupMembers()
+                            if(conversation.isCommunityRecipient) showConversationSettings()
+                            else showGroupMembers()
                         },
                     )
                 }
@@ -1322,6 +1322,15 @@ class ConversationViewModel(
         }
     }
 
+    private fun showConversationSettings() {
+        recipient?.let { convo ->
+            _uiEvents.tryEmit(ConversationUiEvent.ShowConversationSettings(
+                threadId = threadId,
+                threadAddress = convo.address
+            ))
+        }
+    }
+
     private fun showNotificationSettings() {
         _uiEvents.tryEmit(ConversationUiEvent.ShowNotificationSettings(threadId))
     }
@@ -1365,12 +1374,9 @@ class ConversationViewModel(
         private val application: Application,
         private val repository: ConversationRepository,
         private val storage: StorageProtocol,
-        private val messageDataProvider: MessageDataProvider,
         private val groupDb: GroupDatabase,
         private val threadDb: ThreadDatabase,
         private val reactionDb: ReactionDatabase,
-        @ApplicationContext
-        private val context: Context,
         private val lokiMessageDb: LokiMessageDatabase,
         private val lokiAPIDb: LokiAPIDatabase,
         private val textSecurePreferences: TextSecurePreferences,
@@ -1385,7 +1391,8 @@ class ConversationViewModel(
         private val recipientChangeSource: RecipientChangeSource,
         private val openGroupManager: OpenGroupManager,
         private val proStatusManager: ProStatusManager,
-        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory
+        private val upmFactory: UserProfileUtils.UserProfileUtilsFactory,
+        private val attachmentDownloadHandlerFactory: AttachmentDownloadHandler.Factory
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1395,7 +1402,6 @@ class ConversationViewModel(
                 application = application,
                 repository = repository,
                 storage = storage,
-                messageDataProvider = messageDataProvider,
                 groupDb = groupDb,
                 threadDb = threadDb,
                 reactionDb = reactionDb,
@@ -1413,7 +1419,8 @@ class ConversationViewModel(
                 recipientChangeSource = recipientChangeSource,
                 openGroupManager = openGroupManager,
                 proStatusManager = proStatusManager,
-                upmFactory = upmFactory
+                upmFactory = upmFactory,
+                attachmentDownloadHandlerFactory = attachmentDownloadHandlerFactory,
             ) as T
         }
     }
@@ -1483,6 +1490,7 @@ sealed interface ConversationUiEvent {
     data class ShowDisappearingMessages(val threadId: Long) : ConversationUiEvent
     data class ShowNotificationSettings(val threadId: Long) : ConversationUiEvent
     data class ShowGroupMembers(val groupId: String) : ConversationUiEvent
+    data class ShowConversationSettings(val threadId: Long, val threadAddress: Address) : ConversationUiEvent
     data object ShowUnblockConfirmation : ConversationUiEvent
 }
 

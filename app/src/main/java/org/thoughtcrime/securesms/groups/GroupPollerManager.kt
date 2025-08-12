@@ -24,14 +24,11 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.supervisorScope
-import org.session.libsession.snode.SnodeClock
 import org.session.libsession.utilities.ConfigUpdateNotification
 import org.session.libsession.utilities.TextSecurePreferences
-import org.session.libsignal.database.LokiAPIDatabaseProtocol
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
-import org.thoughtcrime.securesms.util.AppVisibilityManager
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,12 +49,9 @@ import javax.inject.Singleton
 @Singleton
 class GroupPollerManager @Inject constructor(
     configFactory: ConfigFactory,
-    lokiApiDatabase: LokiAPIDatabaseProtocol,
-    clock: SnodeClock,
     preferences: TextSecurePreferences,
-    appVisibilityManager: AppVisibilityManager,
     connectivity: NetworkConnectivity,
-    groupRevokedMessageHandler: GroupRevokedMessageHandler,
+    pollFactory: GroupPoller.Factory,
 ) {
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
@@ -109,14 +103,9 @@ class GroupPollerManager @Inject constructor(
                         Log.d(TAG, "Starting poller for $groupId")
                         val scope = CoroutineScope(Dispatchers.Default)
                         poller = GroupPollerHandle(
-                            poller = GroupPoller(
+                            poller = pollFactory.create(
                                 scope = scope,
                                 groupId = groupId,
-                                configFactoryProtocol = configFactory,
-                                lokiApiDatabase = lokiApiDatabase,
-                                clock = clock,
-                                appVisibilityManager = appVisibilityManager,
-                                groupRevokedMessageHandler = groupRevokedMessageHandler,
                             ),
                             scope = scope
                         )

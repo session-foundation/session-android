@@ -21,10 +21,11 @@ import network.loki.messenger.libsession_util.util.ExpiryMode
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.UiState
 import org.thoughtcrime.securesms.conversation.disappearingmessages.ui.toUiState
-import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsNavigator
+import org.thoughtcrime.securesms.conversation.v2.settings.ConversationSettingsDestination
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.ui.UINavigator
 
 @HiltViewModel(assistedFactory = DisappearingMessagesViewModel.Factory::class)
 class DisappearingMessagesViewModel @AssistedInject constructor(
@@ -37,7 +38,7 @@ class DisappearingMessagesViewModel @AssistedInject constructor(
     private val threadDb: ThreadDatabase,
     private val groupDb: GroupDatabase,
     private val storage: Storage,
-    private val navigator: ConversationSettingsNavigator,
+    private val navigator: UINavigator<ConversationSettingsDestination>,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(

@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import network.loki.messenger.R
-import org.session.libsignal.utilities.AccountId
+import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
 import org.thoughtcrime.securesms.groups.SelectContactsViewModel
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
@@ -60,7 +60,7 @@ fun InviteContactsScreen(
 @Composable
 fun InviteContacts(
     contacts: List<ContactItem>,
-    onContactItemClicked: (accountId: AccountId) -> Unit,
+    onContactItemClicked: (address: Address) -> Unit,
     searchQuery: String,
     onSearchQueryChanged: (String) -> Unit,
     onSearchQueryClear: () -> Unit,
@@ -150,7 +150,7 @@ private fun PreviewSelectContacts() {
     val random = "05abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234"
     val contacts = List(20) {
         ContactItem(
-            accountID = AccountId(random),
+            address = Address.fromSerialized(random),
             name = "User $it",
             selected = it % 3 == 0,
             showProBadge = true,

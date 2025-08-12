@@ -7,6 +7,7 @@ import androidx.core.content.IntentCompat
 import dagger.hilt.android.AndroidEntryPoint
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.FullComposeScreenLockActivity
+import org.thoughtcrime.securesms.ui.UINavigator
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -25,7 +26,7 @@ class ConversationSettingsActivity: FullComposeScreenLockActivity() {
     }
 
     @Inject
-    lateinit var navigator: ConversationSettingsNavigator
+    lateinit var navigator: UINavigator<ConversationSettingsDestination>
 
     @Composable
     override fun ComposeContent() {

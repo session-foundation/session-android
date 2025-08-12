@@ -7,6 +7,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,35 +21,58 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideSubcomposition
@@ -57,10 +82,13 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.NonTranslatableStringConstants
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_PRO_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_LONG_KEY
+import org.session.libsession.utilities.StringSubstitutionConstants.TOKEN_NAME_SHORT_KEY
 import org.thoughtcrime.securesms.ui.components.AccentFillButtonRect
 import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.components.QrImage
 import org.thoughtcrime.securesms.ui.components.TertiaryFillButtonRect
+import org.thoughtcrime.securesms.ui.components.annotatedStringResource
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -71,18 +99,68 @@ import org.thoughtcrime.securesms.ui.theme.primaryBlue
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
 
+
+@Composable
+fun ProBadge(
+    modifier: Modifier = Modifier,
+    colors: ProBadgeColors = proBadgeColorStandard()
+) {
+    Box(
+        modifier = modifier.clearAndSetSemantics{
+            contentDescription = NonTranslatableStringConstants.APP_PRO
+        }
+    ) {
+        Image(
+            modifier = Modifier.align(Alignment.Center),
+            painter = painterResource(id = R.drawable.ic_pro_badge_bg),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.backgroundColor)
+        )
+
+        Image(
+            modifier = Modifier.align(Alignment.Center),
+            painter = painterResource(id = R.drawable.ic_pro_badge_fg),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.textColor)
+        )
+    }
+}
+
+data class ProBadgeColors(
+    val backgroundColor: Color,
+    val textColor: Color
+)
+
+@Composable
+fun proBadgeColorStandard() = ProBadgeColors(
+    backgroundColor = LocalColors.current.accent,
+    textColor = Color.Black
+)
+
+@Composable
+fun proBadgeColorOutgoing() = ProBadgeColors(
+    backgroundColor = Color.White,
+    textColor = Color.Black
+)
+
+@Composable
+fun proBadgeColorDisabled() = ProBadgeColors(
+    backgroundColor = LocalColors.current.disabled,
+    textColor = Color.Black
+)
+
 @Composable
 fun ProBadgeText(
     text: String,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = LocalType.current.h5,
     showBadge: Boolean = true,
-    invertBadgeColor: Boolean = false,
+    badgeColors: ProBadgeColors = proBadgeColorStandard(),
     badgeAtStart: Boolean = false,
     onBadgeClick: (() -> Unit)? = null
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.qaTag(stringResource(R.string.qa_pro_badge_component)),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(textStyle.lineHeight.value.dp * 0.2f)
     ) {
@@ -94,17 +172,18 @@ fun ProBadgeText(
                         onBadgeClick()
                     }
                 }
-                Image(
-                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f),
-                    painter = painterResource(id = if (invertBadgeColor) R.drawable.ic_pro_badge_inverted else R.drawable.ic_pro_badge),
-                    contentDescription = NonTranslatableStringConstants.APP_PRO,
+                ProBadge(
+                    modifier = proBadgeModifier.height(textStyle.lineHeight.value.dp * 0.8f)
+                        .qaTag(stringResource(R.string.qa_pro_badge_icon)),
+                    colors = badgeColors
                 )
             }
         }
 
         val textContent = @Composable {
             Text(
-                modifier = Modifier.weight(1f, fill = false),
+                modifier = Modifier.weight(1f, fill = false)
+                    .qaTag(stringResource(R.string.qa_pro_badge_text)),
                 text = text,
                 style = textStyle,
                 maxLines = 1,
@@ -134,7 +213,7 @@ private fun PreviewProBadgeText(
         ) {
             ProBadgeText(text = "Hello Pro", textStyle = LocalType.current.base)
             ProBadgeText(text = "Hello Pro")
-            ProBadgeText(text = "Inverted Badge Color", invertBadgeColor = true)
+            ProBadgeText(text = "Outgoing Badge Color", badgeColors = proBadgeColorOutgoing())
             ProBadgeText(text = "Hello Pro with a very long name that should overflow")
             ProBadgeText(text = "No Badge", showBadge = false)
         }
@@ -841,26 +920,106 @@ fun AvatarQrWidget(
     }
 }
 
+@Composable
+fun SessionProSettingsHeader(
+    modifier: Modifier = Modifier,
+    color: Color = LocalColors.current.accent
+){
+    val accentColourWithLowAlpha = color.copy(alpha = 0.15f)
+
+    Column(modifier = modifier) {
+        // UI with radial gradient
+        var headerSize by remember { mutableStateOf(IntSize.Zero) }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+        ) {
+            // Note: We add 20% to the ratio for the radial background so that it reaches the
+            // edges of the screen, or thereabouts.
+            val ratio = headerSize.width * 1.2f / headerSize.height
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = headerSize != IntSize.Zero,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                if (!LocalColors.current.isLight) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .scale(ratio, 1.5f)
+                            .background(
+                                Brush.radialGradient(
+                                    // Gradient runs from our washed-out accent colour in the center to the background colour at the edges
+                                    colors = listOf(accentColourWithLowAlpha, LocalColors.current.background),
+                                )
+                            )
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = LocalDimensions.current.spacing)
+                    .onSizeChanged { newSizeDp ->
+                        headerSize = newSizeDp
+                    }
+                    .clearAndSetSemantics{
+                        contentDescription = NonTranslatableStringConstants.APP_PRO
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally
+
+            ) {
+                Image(
+                    modifier = Modifier.size(LocalDimensions.current.iconXXLarge),
+                    painter = painterResource(id = R.drawable.session_logo),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(color)
+                )
+
+                Spacer(Modifier.height(LocalDimensions.current.xsSpacing))
+
+                Row(
+                    modifier = Modifier.height(LocalDimensions.current.smallSpacing)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_session),
+                        contentDescription = null,
+                    )
+
+                    Spacer(Modifier.width(LocalDimensions.current.xxxsSpacing))
+
+                    ProBadge(
+                        colors = proBadgeColorStandard().copy(
+                            backgroundColor = color
+                        )
+                    )
+                }
+            }
+        }
+
+
+    }
+}
 
 @Preview
 @Composable
-fun PreviewAvatarQrWidget(){
+fun PreviewSessionHeader(){
     PreviewTheme {
-        AvatarQrWidget(
-            showQR = false,
-            expandedAvatar = false,
-            showBadge = false,
-            avatarUIData = AvatarUIData(
-                listOf(
-                    AvatarUIElement(
-                        name = "TO",
-                        color = primaryBlue
-                    )
-                )
-            ),
-            address = "1234567890",
-            toggleQR = {},
-            toggleAvatarExpand = {}
-        )
+        Column {
+            Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
+
+            SessionProSettingsHeader()
+
+            Spacer(Modifier.height(LocalDimensions.current.xlargeSpacing))
+
+            SessionProSettingsHeader(
+                color = LocalColors.current.disabled
+            )
+        }
     }
 }

@@ -79,7 +79,7 @@ class NotifyPNServerJob(val message: SnodeMessage) : Job {
         return KEY
     }
 
-    class Factory : Job.Factory<NotifyPNServerJob> {
+    class DeserializeFactory : Job.DeserializeFactory<NotifyPNServerJob> {
 
         override fun create(data: Data): NotifyPNServerJob {
             val serializedMessage = data.getByteArray(MESSAGE_KEY)

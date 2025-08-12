@@ -57,7 +57,7 @@ class BackgroundGroupAddJob(val joinUrl: String): Job {
 
     class DuplicateGroupException: Exception("Current open groups already contains this group")
 
-    class Factory : Job.Factory<BackgroundGroupAddJob> {
+    class DeserializeFactory : Job.DeserializeFactory<BackgroundGroupAddJob> {
         override fun create(data: Data): BackgroundGroupAddJob {
             return BackgroundGroupAddJob(
                 data.getString(JOIN_URL)

@@ -69,7 +69,8 @@ class OpenGroupManager @Inject constructor(
             server = server,
             roomToken = room,
             pollInfo = info.toPollInfo(),
-            createGroupIfMissingWithPublicKey = publicKey
+            createGroupIfMissingWithPublicKey = publicKey,
+            memberDb = groupMemberDatabase,
         )
 
         // If existing poller for the same server exist, we'll request a poll once now so new room
@@ -129,8 +130,8 @@ class OpenGroupManager @Inject constructor(
         standardPublicKey: String,
         blindedPublicKey: String? = null
     ): Boolean {
-        val standardRoles = groupMemberDatabase.getGroupMemberRoles(groupId, standardPublicKey)
-        val blindedRoles = blindedPublicKey?.let { groupMemberDatabase.getGroupMemberRoles(groupId, it) } ?: emptyList()
-        return standardRoles.any { it.isModerator } || blindedRoles.any { it.isModerator }
+        val standardRole = groupMemberDatabase.getGroupMemberRole(groupId, standardPublicKey)
+        val blindedRole = blindedPublicKey?.let { groupMemberDatabase.getGroupMemberRole(groupId, it) }
+        return standardRole?.isModerator == true || blindedRole?.isModerator == true
     }
 }

@@ -71,7 +71,6 @@ class ConversationViewModelTest: BaseViewModelTest() {
             edKeyPair = edKeyPair,
             repository = repository,
             storage = storage,
-            messageDataProvider = mock(),
             groupDb = mock(),
             threadDb = mock(),
             textSecurePreferences = mock(),
@@ -96,6 +95,7 @@ class ConversationViewModelTest: BaseViewModelTest() {
             },
             proStatusManager = mock(),
             upmFactory = mock(),
+            attachmentDownloadHandlerFactory = mock(),
         )
     }
 

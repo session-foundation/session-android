@@ -55,7 +55,7 @@ class OpenGroupDeleteJob(private val messageServerIds: LongArray, private val th
 
     override fun getFactoryKey(): String = KEY
 
-    class Factory: Job.Factory<OpenGroupDeleteJob> {
+    class DeserializeFactory: Job.DeserializeFactory<OpenGroupDeleteJob> {
         override fun create(data: Data): OpenGroupDeleteJob {
             val messageServerIds = data.getLongArray(MESSAGE_IDS)
             val threadId = data.getLong(THREAD_ID)

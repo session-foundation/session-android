@@ -14,6 +14,8 @@
     <attr name="onLightCell" format="reference|color"/>
 
     <attr name="accentColor" format="reference|color"/>
+    <attr name="crown" format="reference|color"/>
+    <attr name="crownBg" format="reference|color"/>
     <attr name="onInvertedBackgroundPrimary" format="reference|color"/>
     <attr name="warning" format="reference|color"/>
     <attr name="danger" format="reference|color"/>
@@ -43,8 +45,6 @@
     <attr name="conversation_pinned_icon_color" format="reference|color" />
 
     <attr name="conversation_menu_background_color" format="reference|color" />
-    <attr name="conversation_menu_cell_color" format="reference|color"/>
-    <attr name="conversation_menu_border_color" format="reference|color"/>
     <attr name="conversationMenuSearchBackgroundColor" format="reference|color"/>
     <attr name="conversationMenuSearchTintColor" format="reference|color"/>
     <attr name="dialog_border" format="reference|color" />
@@ -65,10 +65,6 @@
 
     <attr name="home_gradient_start" format="color|reference" />
     <attr name="home_gradient_end" format="color|reference" />
-    <attr name="conversation_color_non_main" format="color|reference"/>
-    <attr name="conversation_tint_non_main" format="color|reference"/>
-    <attr name="conversation_shadow_non_main" format="color|reference"/>
-    <attr name="conversation_shadow_main" format="color|reference"/>
     <attr name="colorCellBackground" format="color|reference" />
     <attr name="colorDividerBackground" format="color|reference" />
     <attr name="outlineButtonBorder" format="color|reference" />
@@ -84,7 +80,6 @@
     <attr name="message_status_color" format="color|reference" />
     <attr name="input_bar_text_hint" format="color|reference"/>
     <attr name="input_bar_text_user" format="color|reference"/>
-    <attr name="input_bar_border" format="color|reference"/>
     <attr name="input_bar_button_background" format="color|reference"/>
     <attr name="input_bar_button_background_opaque" format="color|reference"/>
     <attr name="input_bar_button_background_opaque_border" format="color|reference"/>
@@ -109,31 +104,8 @@
         <attr name="thumbnail_radius" format="dimension" />
     </declare-styleable>
 
-    <declare-styleable name="DeliveryStatusView">
-        <attr name="iconColor" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="AlertView">
-        <attr name="useSmallIcon" format="boolean" />
-    </declare-styleable>
-
-    <declare-styleable name="MessageAudioView">
-        <attr name="widgetBackground" format="color"/>
-        <attr name="foregroundTintColor" format="color" />
-        <attr name="waveformFillColor" format="reference|color" />
-        <attr name="waveformBackgroundColor" format="reference|color" />
-    </declare-styleable>
-
     <declare-styleable name="CircleColorImageView">
         <attr name="circleColor" format="color"/>
-    </declare-styleable>
-
-    <declare-styleable name="HourglassView">
-        <attr name="full" format="reference"/>
-        <attr name="empty" format="reference"/>
-        <attr name="tint" format="color"/>
-        <attr name="percentage" format="integer"/>
-        <attr name="offset" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="SquareFrameLayout">
@@ -163,27 +135,6 @@
         <attr name="erv_outgoing" format="boolean" />
     </declare-styleable>
 
-    <declare-styleable name="ColorPickerPreference">
-        <attr name="currentColor" format="reference" />
-        <attr name="colors" format="reference" />
-        <attr name="sortColors" format="boolean|reference" />
-        <attr name="colorDescriptions" format="reference" />
-        <attr name="columns" format="integer|reference" />
-        <attr name="colorSize" format="enum|reference">
-            <enum name="large" value="1" />
-            <enum name="small" value="2" />
-        </attr>
-    </declare-styleable>
-
-    <declare-styleable name="VerificationCodeView">
-        <attr name="vcv_spacing" format="dimension"/>
-        <attr name="vcv_inputWidth" format="dimension"/>
-        <attr name="vcv_inputHeight" format="dimension"/>
-        <attr name="vcv_inputColor" format="color"/>
-        <attr name="vcv_textSize" format="dimension"/>
-        <attr name="vcv_textColor" format="color"/>
-    </declare-styleable>
-
     <declare-styleable name="QuoteView">
         <attr name="quote_mode" format="enum">
             <enum name="regular" value="0"/>
@@ -196,13 +147,6 @@
             <enum name="conversation" value="0" />
             <enum name="compose" value="1" />
         </attr>
-    </declare-styleable>
-
-    <declare-styleable name="ConversationItemThumbnail">
-        <attr name="conversationThumbnail_minWidth" format="dimension" />
-        <attr name="conversationThumbnail_maxWidth" format="dimension" />
-        <attr name="conversationThumbnail_minHeight" format="dimension" />
-        <attr name="conversationThumbnail_maxHeight" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="TypingIndicatorView">
@@ -221,7 +165,6 @@
     <attr name="reactionsPillSelectedTextColor" format="color|reference"/>
     <attr name="reactionsPillSelectedBackground" format="color|reference"/>
     <attr name="reactionsPillNormalBackground" format="color|reference"/>
-    <attr name="reactionsPillNormalTextColor" format="color|reference"/>
 
     <declare-styleable name="InputBar">
         <attr name="sendOnly" format="boolean" />

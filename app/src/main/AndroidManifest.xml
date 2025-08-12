@@ -168,6 +168,10 @@
             android:label="@string/sessionSettings"
             android:screenOrientation="portrait" />
         <activity
+            android:name="org.thoughtcrime.securesms.preferences.prosettings.ProSettingsActivity"
+            android:theme="@style/Theme.Session.DayNight.NoActionBar"
+            android:screenOrientation="portrait" />
+        <activity
             android:name="org.thoughtcrime.securesms.recoverypassword.RecoveryPasswordActivity"
             android:screenOrientation="portrait" />
         <activity

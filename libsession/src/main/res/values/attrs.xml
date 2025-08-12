@@ -54,21 +54,6 @@
         <attr name="thumbnail_radius" format="dimension" />
     </declare-styleable>
 
-    <declare-styleable name="DeliveryStatusView">
-        <attr name="iconColor" format="color" />
-    </declare-styleable>
-
-    <declare-styleable name="AlertView">
-        <attr name="useSmallIcon" format="boolean" />
-    </declare-styleable>
-
-    <declare-styleable name="MessageAudioView">
-        <attr name="widgetBackground" format="color"/>
-        <attr name="foregroundTintColor" format="color" />
-        <attr name="waveformFillColor" format="reference|color" />
-        <attr name="waveformBackgroundColor" format="reference|color" />
-    </declare-styleable>
-
     <declare-styleable name="CircleColorImageView">
         <attr name="circleColor" format="color"/>
     </declare-styleable>
@@ -77,13 +62,6 @@
         <attr name="camera" format="integer"/>
     </declare-styleable>
 
-    <declare-styleable name="HourglassView">
-        <attr name="full" format="reference"/>
-        <attr name="empty" format="reference"/>
-        <attr name="tint" format="color"/>
-        <attr name="percentage" format="integer"/>
-        <attr name="offset" format="integer"/>
-    </declare-styleable>
 
     <declare-styleable name="SquareFrameLayout">
         <attr name="square_height" format="boolean"/>
@@ -98,15 +76,6 @@
     <declare-styleable name="EmojiTextView">
         <attr name="scaleEmojis" format="boolean" />
         <attr name="emoji_maxLength" format="integer" />
-    </declare-styleable>
-
-    <declare-styleable name="VerificationCodeView">
-        <attr name="vcv_spacing" format="dimension"/>
-        <attr name="vcv_inputWidth" format="dimension"/>
-        <attr name="vcv_inputHeight" format="dimension"/>
-        <attr name="vcv_inputColor" format="color"/>
-        <attr name="vcv_textSize" format="dimension"/>
-        <attr name="vcv_textColor" format="color"/>
     </declare-styleable>
 
     <declare-styleable name="QuoteView">
@@ -126,12 +95,6 @@
         </attr>
     </declare-styleable>
 
-    <declare-styleable name="ConversationItemThumbnail">
-        <attr name="conversationThumbnail_minWidth" format="dimension" />
-        <attr name="conversationThumbnail_maxWidth" format="dimension" />
-        <attr name="conversationThumbnail_minHeight" format="dimension" />
-        <attr name="conversationThumbnail_maxHeight" format="dimension" />
-    </declare-styleable>
 
     <declare-styleable name="TypingIndicatorView">
         <attr name="typingIndicator_tint" format="color" />
