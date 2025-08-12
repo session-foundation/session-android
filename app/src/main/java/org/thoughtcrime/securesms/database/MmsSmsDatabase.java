@@ -479,25 +479,25 @@ public class MmsSmsDatabase extends Database {
    * Incoming unread + un-notified only (no reactions)
    */
   public Cursor getUnreadIncomingCursor() {
-    String selection =
-            "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + buildOutgoingCondition() + "))";
-    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-
-//    String approvedThreads =
-//            "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
-//                    " FROM " + ThreadDatabase.TABLE_NAME +
-//                    " JOIN " + RecipientDatabase.TABLE_NAME +
-//                    "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
-//                    " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-//                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 1)";
-//
 //    String selection =
-//            READ + " = 0 AND " +
-//                    NOTIFIED + " = 0 AND " +
-//                    "NOT (" + buildOutgoingCondition() + ") AND " +  // incoming only
-//                    MmsSmsColumns.THREAD_ID + " IN " + approvedThreads;
-//
+//            "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + buildOutgoingCondition() + "))";
 //    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
+
+    String approvedThreads =
+            "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
+                    " FROM " + ThreadDatabase.TABLE_NAME +
+                    " JOIN " + RecipientDatabase.TABLE_NAME +
+                    "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
+                    " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
+                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 1)";
+
+    String selection =
+            READ + " = 0 AND " +
+                    NOTIFIED + " = 0 AND " +
+                    "NOT (" + buildOutgoingCondition() + ") AND " +  // incoming only
+                    MmsSmsColumns.THREAD_ID + " IN " + approvedThreads;
+
+    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
 
     return rawQueryUnion(selection, order);
   }
@@ -528,30 +528,21 @@ public class MmsSmsDatabase extends Database {
 //                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0" +
 //                    " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
 //                    ")";
-//
-//    // Only incoming, unread, not yet notified, and restricted to those thread IDs
-//    String selection =
-//            READ + " = 0 AND " +
-//                    NOTIFIED + " = 0 AND " +
-//                    "NOT (" + buildOutgoingCondition() + ") AND " +
-//                    MmsSmsColumns.THREAD_ID + " IN " + unapprovedOnceThreads;
-//
-//    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-//    return rawQueryUnion(selection, order);
 
-    // Threads that are (a) unapproved (or missing recipient row) AND (b) message_count <= 1
     String unapprovedOnceThreads =
-            "(SELECT thread._id" +
-                    "   FROM thread" +
-                    "   LEFT JOIN recipient" +
-                    "     ON thread.recipient_ids = recipient.address" +
-                    "  WHERE IFNULL(recipient.approved, 0) = 0" +
-                    "    AND thread.message_count <= 1)";
+    "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
+            " FROM " + ThreadDatabase.TABLE_NAME +
+            " LEFT JOIN " + RecipientDatabase.TABLE_NAME +
+            "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
+            " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
+            " WHERE IFNULL(" + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + ", 0) = 0" +
+//            " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
+            ")";
 
-    // Only incoming, unread, not yet notified, restricted to those thread IDs
+    // Only incoming, unread, not yet notified, and restricted to those thread IDs
     String selection =
-            "IFNULL(" + READ + ",0) = 0 AND " +
-                    "IFNULL(" + NOTIFIED + ",0) = 0 AND " +
+            READ + " = 0 AND " +
+                    NOTIFIED + " = 0 AND " +
                     "NOT (" + buildOutgoingCondition() + ") AND " +
                     MmsSmsColumns.THREAD_ID + " IN " + unapprovedOnceThreads;
 

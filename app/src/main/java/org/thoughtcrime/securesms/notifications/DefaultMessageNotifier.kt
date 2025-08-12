@@ -213,7 +213,7 @@ class DefaultMessageNotifier(
         // 2. Open our three focused cursors
         val incomingApprovedCursor = get(context)
             .mmsSmsDatabase()
-            .getUnreadOrUnseenReactions()
+            .getUnreadIncomingCursor()
 
         val incomingUnapprovedCursor = get(context)
             .mmsSmsDatabase()
@@ -578,10 +578,10 @@ class DefaultMessageNotifier(
                         !threadRecipients.isApproved &&
                         !threadDatabase.getLastSeenAndHasSent(threadId).second()
 
-                val hasExistingMessages = threadDatabase.getMessageCount(threadId) > 1
+                val hasExistingMessages = threadDatabase.getMessageCount(threadId) >= 1
 
-                if (hasExistingMessages) {
-                    notificationState.setHasSkippedNotification(true)
+                if (isMessageRequest && hasExistingMessages) {
+                    notificationState.addSkippedThreadId(threadId)
                     continue
                 }
 
@@ -717,9 +717,9 @@ class DefaultMessageNotifier(
         }
 
         // Process both sets of rows
-//        readCursor(incomingCursor)
+        readCursor(incomingCursor)
         readCursor(incomingUnapproved)
-//        readCursor(reactionsCursor)
+        readCursor(reactionsCursor)
 
         return notificationState
     }
