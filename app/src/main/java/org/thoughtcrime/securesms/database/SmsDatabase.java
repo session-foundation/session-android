@@ -722,7 +722,6 @@ public class SmsDatabase extends MessagingDatabase {
     if (updateThread) {
       for (final long threadId : deletedMessageThreadIds) {
         DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-        notifyConversationListeners(threadId);
       }
     }
 
