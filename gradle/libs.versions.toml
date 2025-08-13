@@ -72,7 +72,7 @@ turbineVersion = "1.1.0"
 uiTestJunit4Version = "1.8.3"
 workRuntimeKtxVersion = "2.10.2"
 zxingVersion = "3.5.3"
-huaweiPushVersion = "6.7.0.300"
+huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
 
 [libraries]
