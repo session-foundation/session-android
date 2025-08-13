@@ -19,6 +19,7 @@ import org.thoughtcrime.securesms.database.model.MessageRecord;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -52,7 +53,7 @@ public abstract class MessagingDatabase extends Database implements MmsSmsColumn
   public abstract long getNextExpiringTimestamp();
 
   public abstract boolean deleteMessage(long messageId);
-  public abstract boolean deleteMessages(long[] messageId, long threadId);
+  public abstract boolean deleteMessages(Collection<Long> messageIds);
 
   public abstract void updateThreadId(long fromId, long toId);
 

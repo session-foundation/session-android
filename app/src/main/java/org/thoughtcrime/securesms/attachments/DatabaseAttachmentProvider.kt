@@ -204,7 +204,7 @@ class DatabaseAttachmentProvider(context: Context, helper: Provider<SQLCipherOpe
         val messagingDatabase: MessagingDatabase = if (isSms)  DatabaseComponent.get(context).smsDatabase()
                                                    else DatabaseComponent.get(context).mmsDatabase()
 
-        messagingDatabase.deleteMessages(messageIDs.toLongArray(), threadId)
+        messagingDatabase.deleteMessages(messageIDs)
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessages(messageIDs, isSms = isSms)
         DatabaseComponent.get(context).lokiMessageDatabase().deleteMessageServerHashes(messageIDs, mms = !isSms)
     }
