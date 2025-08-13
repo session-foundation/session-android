@@ -264,7 +264,7 @@ class DefaultMessageNotifier(
                 } else if (notificationState.notificationCount > 0) {
                     sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
                 } else {
-                    if(!notificationState.hasSkippedNotification()){
+                    if(get(context).threadDatabase().unapprovedUnreadConversationCount == 0L){
                         cancelActiveNotifications(context)
                     }
                 }

@@ -479,10 +479,6 @@ public class MmsSmsDatabase extends Database {
    * Incoming unread + un-notified only (no reactions)
    */
   public Cursor getUnreadIncomingCursor() {
-//    String selection =
-//            "(" + READ + " = 0 AND " + NOTIFIED + " = 0 AND NOT (" + buildOutgoingCondition() + "))";
-//    String order = MmsSmsColumns.NORMALIZED_DATE_SENT + " ASC";
-
     String approvedThreads =
             "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
                     " FROM " + ThreadDatabase.TABLE_NAME +
@@ -519,16 +515,6 @@ public class MmsSmsDatabase extends Database {
    */
   public Cursor getUnreadIncomingFromUnapprovedOnceCursor() {
     // Subquery: thread IDs where recipient is unapproved AND the thread has <= 1 message
-//    String unapprovedOnceThreads =
-//            "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
-//                    " FROM " + ThreadDatabase.TABLE_NAME +
-//                    " JOIN " + RecipientDatabase.TABLE_NAME +
-//                    "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
-//                    " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
-//                    " WHERE " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + " = 0" +
-//                    " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
-//                    ")";
-
     String unapprovedOnceThreads =
     "(SELECT " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ID +
             " FROM " + ThreadDatabase.TABLE_NAME +
@@ -536,7 +522,7 @@ public class MmsSmsDatabase extends Database {
             "   ON " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.ADDRESS +
             " = " + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.ADDRESS +
             " WHERE IFNULL(" + RecipientDatabase.TABLE_NAME + "." + RecipientDatabase.APPROVED + ", 0) = 0" +
-//            " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
+            " AND " + ThreadDatabase.TABLE_NAME + "." + ThreadDatabase.MESSAGE_COUNT + " <= 1" +
             ")";
 
     // Only incoming, unread, not yet notified, and restricted to those thread IDs
@@ -555,7 +541,6 @@ public class MmsSmsDatabase extends Database {
    * but lets you supply your own WHERE and ORDER clauses.
    */
   private Cursor rawQueryUnion(String selection, String order) {
-    // PROJECTION is the static String[] you already have at top of this class
     return queryTables(PROJECTION, selection, order, /* limit */ null);
   }
 
