@@ -306,9 +306,7 @@ class DefaultMessageNotifier(
         // Bail early if the existing displayed notification has the same content as what we are trying to send now
         val notifications = notificationState.notifications
         val notificationItem =  notifications.first()
-        val isMessageRequest = !notificationItem.recipient.isApproved
-
-//        if(isMessageRequest && hasExistingMessages(context, notificationItem.threadId)) return
+        val isMessageRequest = notificationItem.isMessageRequest
 
         val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
 
@@ -430,7 +428,7 @@ class DefaultMessageNotifier(
     }
 
     private fun getNotificationSignature(notification: NotificationItem): String {
-        if(notification.recipient.isApproved){
+        if(notification.recipient.isApproved || notification.recipient.isGroupOrCommunityRecipient){
             return "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
         }
 
@@ -448,11 +446,11 @@ class DefaultMessageNotifier(
 
         val notifications = notificationState.notifications
         val notificationItem = notifications.first()
-        val isMessageRequest = !notificationItem.recipient.isApproved
+        val isMessageRequest = notificationItem.isMessageRequest
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
-        }.distinct().sorted().joinToString("|")
+        }.sorted().joinToString("|")
 
         val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
         val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
@@ -655,7 +653,8 @@ class DefaultMessageNotifier(
                             threadId,
                             body,
                             record.timestamp,
-                            slideDeck
+                            slideDeck,
+                            isMessageRequest
                         )
                     )
                 }
@@ -702,7 +701,8 @@ class DefaultMessageNotifier(
                                 threadId,
                                 emoji,
                                 latest.dateSent,
-                                null
+                                null,
+                                isMessageRequest
                             )
                         )
                     }
