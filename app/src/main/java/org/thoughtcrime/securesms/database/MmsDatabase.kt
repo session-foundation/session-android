@@ -1008,12 +1008,12 @@ class MmsDatabase
             doDeleteMessages(
                 updateThread = true,
                 where = "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL",
-                threadId
+                threadId, fromUser
             )
         } else {
             doDeleteMessages(
                 updateThread = true,
-                where = "$THREAD_ID = ? AND $ADDRESS = ?",
+                where = "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL",
                 threadId
             )
         }
@@ -1023,7 +1023,7 @@ class MmsDatabase
         doDeleteMessages(
             updateThread = true,
             where = "$THREAD_ID = ? AND $ADDRESS = ?",
-            threadId.toString(), fromUser
+            threadId, fromUser
         )
     }
 
