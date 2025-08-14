@@ -126,25 +126,98 @@ class DefaultMessageNotifier(
             val notifications = ServiceUtil.getNotificationManager(context)
             val activeNotifications = notifications.activeNotifications
 
-            for (notification in activeNotifications) {
-                var validNotification = false
+//            val hasRequests = notificationState.notifications.any { it.isMessageRequest }
+//            val hasNormal   = notificationState.notifications.any { !it.isMessageRequest }
 
-                if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID &&
-                    notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
-                    for (item in notificationState.notifications) {
-                        if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
-                            validNotification = true
-                            break
-                        }
-                    }
+            // Preserve message-request bucket if there are still any unapproved unread conversations.
+            // This is more reliable than a per-frame "skipped" flag when the <= 1 query filters rows out.
+            val keepRequestsBucket =
+                get(context).threadDatabase().unapprovedUnreadConversationCount > 0L
 
-                    if (!validNotification) {
-                        if (notification.id != WEBRTC_NOTIFICATION) {
-                            notifications.cancel(notification.id)
-                        }
-                    }
-                }
+            // IDs we always leave alone (service/foreground/etc.)
+            val reservedIds = setOf(
+                KeyCachingService.SERVICE_RUNNING_ID,
+                FOREGROUND_ID,
+                PENDING_MESSAGES_ID,
+                WEBRTC_NOTIFICATION
+            )
+
+
+            val normals  = notificationState.notifications.filter { !it.isMessageRequest }.map { it.threadId }.toSet()
+            val requests = notificationState.notifications.filter {  it.isMessageRequest }.map { it.threadId }.toSet()
+
+            val keepRequests =
+                get(context).threadDatabase().unapprovedUnreadConversationCount > 0L
+
+            // Match the “skip the lone normal child in hybrid” rule:
+            val suppressLoneNormalChild = normals.size == 1 && requests.isNotEmpty()
+
+            val valid = buildSet<Int> {
+                if (normals.isNotEmpty()) add(SUMMARY_NOTIFICATION_ID)
+                if (requests.isNotEmpty() || keepRequests) add(REQUESTS_SUMMARY_NOTIFICATION_ID)
+
+                normals.forEach { if (!suppressLoneNormalChild) add((NORMAL_CHILD_BASE   + it).toInt()) }
+                requests.forEach { add((REQUESTS_CHILD_BASE + it).toInt()) }
             }
+
+            for (s in activeNotifications) {
+                val id = s.id
+                if (id in reservedIds) continue
+                if (keepRequests && s.notification.group == REQUESTS_GROUP) continue
+                if (id !in valid) notifications.cancel(id)
+            }
+
+            // IDs that are always safe to keep. We whitelist BOTH summaries so we don't
+            // accidentally cancel whichever one was used earlier in this session.
+//            val validIds = buildSet<Int> {
+//                add(SUMMARY_NOTIFICATION_ID)
+//                add(REQUESTS_SUMMARY_NOTIFICATION_ID)
+//
+//                // Child IDs must mirror how we notify bundled children:
+//                //   normal:   NORMAL_CHILD_BASE   + threadId
+//                //   requests: REQUESTS_CHILD_BASE + threadId
+//                notificationState.notifications.forEach { item ->
+//                    val childId = if (item.isMessageRequest)
+//                        (REQUESTS_CHILD_BASE + item.threadId).toInt()
+//                    else
+//                        (NORMAL_CHILD_BASE + item.threadId).toInt()
+//                    add(childId)
+//                }
+//            }
+//
+//            for (status in activeNotifications) {
+//                val id = status.id
+//                if (id in reservedIds) continue
+//
+//                // If we’re preserving the requests bucket, skip canceling anything that belongs to it.
+//                // (Covers existing request children even if none appeared in this frame due to the <= 1 filter.)
+//                val group = status.notification.group
+//                if (keepRequestsBucket && group == REQUESTS_GROUP) continue
+//
+//                if (id !in validIds) notifications.cancel(id)
+//            }
+
+
+
+//            for (notification in activeNotifications) {
+//                var validNotification = false
+//
+//                if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID &&
+//                    notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
+//                    for (item in notificationState.notifications) {
+//                        if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
+//                            validNotification = true
+//                            break
+//                        }
+//                    }
+//
+//                    if (!validNotification) {
+//                        if (notification.id != WEBRTC_NOTIFICATION) {
+//                            notifications.cancel(notification.id)
+//                        }
+//                    }
+//                }
+//            }
         } catch (e: Throwable) {
             // XXX Android ROM Bug, see #6043
             Log.w(TAG, e)
@@ -257,10 +330,37 @@ class DefaultMessageNotifier(
                 }
 
                 if (notificationState.hasMultipleThreads()) {
-                    for (threadId in notificationState.threads) {
-                        sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
+//                    for (threadId in notificationState.threads) {
+//                        sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
+//                    }
+//                    sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
+
+                    val threads = notificationState.threads
+
+                    val requestThreads = threads.filter {
+                        notificationState.getNotificationsForThread(it).firstOrNull()?.isMessageRequest == true
                     }
+                    val normalThreads  = threads.filter {
+                        notificationState.getNotificationsForThread(it).firstOrNull()?.isMessageRequest != true
+                    }
+
+                    val suppressLoneNormalChild = normalThreads.size == 1 && requestThreads.isNotEmpty()
+
+                    for (threadId in threads) {
+                        val items = notificationState.getNotificationsForThread(threadId)
+                        val isRequest = items.firstOrNull()?.isMessageRequest == true
+                        if (!isRequest && suppressLoneNormalChild) continue  // <— skip the lone normal child
+
+                        sendSingleThreadNotification(
+                            context,
+                            NotificationState(items),
+                             false,
+                            true
+                        )
+                    }
+
                     sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
+
                 } else if (notificationState.notificationCount > 0) {
                     sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
                 } else {
@@ -308,7 +408,18 @@ class DefaultMessageNotifier(
         val notificationItem =  notifications.first()
         val isMessageRequest = notificationItem.isMessageRequest
 
-        val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
+//        val notificationId =  (SUMMARY_NOTIFICATION_ID + (if (bundled) notifications[0].threadId else 0)).toInt()
+
+        // separate namespaces for requests vs normal
+        val notificationId = if (bundled) {
+            // child items live under a base + threadId
+            if (isMessageRequest) (REQUESTS_CHILD_BASE + notificationItem.threadId).toInt()
+            else (NORMAL_CHILD_BASE + notificationItem.threadId).toInt()
+        } else {
+            // single-thread (unbundled) uses the summary ID of its “group”
+            if (isMessageRequest) REQUESTS_SUMMARY_NOTIFICATION_ID
+            else SUMMARY_NOTIFICATION_ID
+        }
 
         val contentSignature = notifications.map {
             getNotificationSignature(it)
@@ -452,8 +563,13 @@ class DefaultMessageNotifier(
             getNotificationSignature(it)
         }.sorted().joinToString("|")
 
-        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
+//        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
+//        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
+
+        // Change this block to target the correct summary ID:
+        val summaryId = if (isMessageRequest) REQUESTS_SUMMARY_NOTIFICATION_ID else SUMMARY_NOTIFICATION_ID
+        val active = ServiceUtil.getNotificationManager(context).activeNotifications
+        val existingSignature = active.find { it.id == summaryId }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
         if (existingSignature == contentSignature) {
             Log.i(TAG, "Skipping duplicate multi-thread notification")
@@ -470,6 +586,7 @@ class DefaultMessageNotifier(
         builder.setOnlyAlertOnce(!signal)
         builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
         builder.setAutoCancel(true)
+
 
         val messageIdTag = notifications[0].timestamp.toString()
 
@@ -847,6 +964,12 @@ class DefaultMessageNotifier(
 
         private const val FOREGROUND_ID = 313399
         private const val SUMMARY_NOTIFICATION_ID = 1338
+        private const val REQUESTS_SUMMARY_NOTIFICATION_ID = 1339 // message-request summary
+
+        // Child bases (bundled/child notifications get “base + threadId”)
+        private const val NORMAL_CHILD_BASE = 400_000            // normal threads
+        private const val REQUESTS_CHILD_BASE = 500_000          // message-requests
+
         private const val PENDING_MESSAGES_ID = 1111
         private const val NOTIFICATION_GROUP = "messages"
         private const val REQUESTS_GROUP = "message_requests"
