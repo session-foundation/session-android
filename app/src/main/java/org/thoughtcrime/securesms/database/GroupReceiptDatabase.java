@@ -5,10 +5,12 @@ import android.content.Context;
 
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
 
-import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.jspecify.annotations.NonNull;
 import org.session.libsession.utilities.Address;
 import org.thoughtcrime.securesms.database.helpers.SQLCipherOpenHelper;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Provider;
@@ -66,26 +68,10 @@ public class GroupReceiptDatabase extends Database {
               new String[] {String.valueOf(mmsId), address.toString(), String.valueOf(status)});
   }
 
-  void deleteRowsForMessages(String[] mmsIds) {
-    StringBuilder queryBuilder = new StringBuilder();
-    for (int i = 0; i < mmsIds.length; i++) {
-      queryBuilder.append(MMS_ID+" = ").append(mmsIds[i]);
-      if (i+1 < mmsIds.length) {
-        queryBuilder.append(" OR ");
-      }
-    }
-    String idsAsString = queryBuilder.toString();
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, idsAsString, null);
-  }
+  void deleteRowsForMessages(@NonNull Collection<Long> mmsIds) {
+    final String where = MMS_ID + " IN (SELECT value FROM json_each(?))";
+    final String arg = new JSONArray(mmsIds).toString();
 
-  void deleteRowsForMessage(long mmsId) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, MMS_ID + " = ?", new String[] {String.valueOf(mmsId)});
-  }
-
-  void deleteRowsForMessages(long[] mmsIds) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, MMS_ID + " IN (?)", new String[] {StringUtils.join(mmsIds, ',')});
+    getWritableDatabase().delete(TABLE_NAME, where, new String[]{arg});
   }
 }

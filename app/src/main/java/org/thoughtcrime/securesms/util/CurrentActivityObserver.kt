@@ -7,6 +7,7 @@ import android.os.Bundle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.session.libsignal.utilities.Log
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,7 +17,7 @@ import javax.inject.Singleton
 @Singleton
 class CurrentActivityObserver @Inject constructor(
     application: Application
-) {
+) : OnAppStartupComponent {
     private val _currentActivity = MutableStateFlow<Activity?>(null)
 
     val currentActivity: StateFlow<Activity?> get() = _currentActivity

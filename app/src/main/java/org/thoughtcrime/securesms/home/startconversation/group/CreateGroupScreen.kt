@@ -1,10 +1,11 @@
-package org.thoughtcrime.securesms.groups.compose
+package org.thoughtcrime.securesms.home.startconversation.group
 
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,8 +30,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.thoughtcrime.securesms.groups.ContactItem
-import org.thoughtcrime.securesms.groups.CreateGroupEvent
-import org.thoughtcrime.securesms.groups.CreateGroupViewModel
+import org.thoughtcrime.securesms.groups.compose.GroupMinimumVersionBanner
+import org.thoughtcrime.securesms.groups.compose.multiSelectMemberList
 import org.thoughtcrime.securesms.ui.BottomFadingEdgeBox
 import org.thoughtcrime.securesms.ui.LoadingArcOr
 import org.thoughtcrime.securesms.ui.SearchBar
@@ -115,6 +116,7 @@ fun CreateGroup(
                 title = stringResource(id = R.string.groupCreate),
                 backgroundColor = LocalColors.current.backgroundSecondary,
                 onBack = onBack,
+                windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
             )
         },
     ) { paddings ->

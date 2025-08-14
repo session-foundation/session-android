@@ -9,14 +9,14 @@ import org.session.libsession.messaging.messages.visible.VisibleMessage
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.model.MessageId
-import org.thoughtcrime.securesms.util.AnimatedImageUtils
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ProStatusManager @Inject constructor(
     private val prefs: TextSecurePreferences,
-){
+) : OnAppStartupComponent {
     val MAX_CHARACTER_PRO = 10000 // max characters in a message for pro users
     private val MAX_CHARACTER_REGULAR = 2000 // max characters in a message for non pro users
     private val MAX_PIN_REGULAR = 5 // max pinned conversation for non pro users

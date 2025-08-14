@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.start.home
+package org.thoughtcrime.securesms.home.startconversation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -24,8 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import network.loki.messenger.R
-import org.thoughtcrime.securesms.conversation.start.NullStartConversationDelegate
-import org.thoughtcrime.securesms.conversation.start.StartConversationDelegate
+import org.thoughtcrime.securesms.home.startconversation.StartConversationDestination
 import org.thoughtcrime.securesms.ui.Divider
 import org.thoughtcrime.securesms.ui.ItemButton
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
@@ -43,7 +42,8 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 @Composable
 internal fun StartConversationScreen(
     accountId: String,
-    delegate: StartConversationDelegate
+    navigateTo: (StartConversationDestination) -> Unit,
+    onClose: () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -54,7 +54,7 @@ internal fun StartConversationScreen(
         BasicAppBar(
             title = stringResource(R.string.conversationsStart),
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
-            actions = { AppBarCloseIcon(onClose = delegate::onDialogClosePressed) },
+            actions = { AppBarCloseIcon(onClose = onClose) },
             windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         Surface(
@@ -69,27 +69,36 @@ internal fun StartConversationScreen(
                     text = newMessageTitleTxt,
                     icon = R.drawable.ic_message_square,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_messageNew),
-                    onClick = delegate::onNewMessageSelected)
+                    onClick = {
+                       navigateTo(StartConversationDestination.NewMessage)
+                    }
+                )
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.groupCreate,
                     icon = R.drawable.ic_users_group_custom,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_groupCreate),
-                    onClick = delegate::onCreateGroupSelected
+                    onClick = {
+                        navigateTo(StartConversationDestination.CreateGroup)
+                    }
                 )
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.communityJoin,
                     icon = R.drawable.ic_globe,
                     modifier = Modifier.qaTag(R.string.AccessibilityId_communityJoin),
-                    onClick = delegate::onJoinCommunitySelected
+                    onClick = {
+                        navigateTo(StartConversationDestination.JoinCommunity)
+                    }
                 )
                 Divider(startIndent = LocalDimensions.current.minItemButtonHeight)
                 ItemButton(
                     textId = R.string.sessionInviteAFriend,
                     icon = R.drawable.ic_user_round_plus,
                     Modifier.qaTag(R.string.AccessibilityId_sessionInviteAFriendButton),
-                    onClick = delegate::onInviteFriend
+                    onClick = {
+                        navigateTo(StartConversationDestination.InviteFriend)
+                    }
                 )
                 Column(
                     modifier = Modifier
@@ -124,7 +133,8 @@ private fun PreviewStartConversationScreen(
     PreviewTheme(colors) {
         StartConversationScreen(
             accountId = "059287129387123",
-            NullStartConversationDelegate
+            onClose = {},
+            navigateTo = {}
         )
     }
 }

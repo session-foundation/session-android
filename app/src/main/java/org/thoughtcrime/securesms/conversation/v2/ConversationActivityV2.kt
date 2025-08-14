@@ -387,13 +387,13 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                     if (!viewModel.isMessageRequestThread) {
                         showConversationReaction(message, view)
                     } else {
-                        selectMessage(message, position)
+                        selectMessage(message)
                     }
                 }
             },
-            onDeselect = { message, position ->
+            onDeselect = { message ->
                 actionMode?.let {
-                    onDeselect(message, position, it)
+                    onDeselect(message, it)
                 }
             },
             downloadPendingAttachment = viewModel::downloadPendingAttachment,
@@ -869,8 +869,6 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     // called from onCreate
     private fun setUpToolBar() {
-        binding.conversationAppBar.applySafeInsetsPaddings(WindowInsetsCompat.Type.statusBars())
-
         binding.conversationAppBar.setThemedContent {
            val data by viewModel.appBarData.collectAsState()
             val query by searchViewModel.searchQuery.collectAsState()
@@ -893,7 +891,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
                    settingsLauncher.launch(intent)
                }
            )
-       }
+        }
     }
 
     // called from onCreate
@@ -1548,7 +1546,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     private fun handlePress(message: MessageRecord, position: Int, view: VisibleMessageView, event: MotionEvent) {
         val actionMode = this.actionMode
         if (actionMode != null) {
-            onDeselect(message, position, actionMode)
+            onDeselect(message, actionMode)
         } else {
             // NOTE: We have to use onContentClick (rather than a click listener directly on
             // the view) so as to not interfere with all the other gestures. Do not add
@@ -1557,8 +1555,8 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         }
     }
 
-    private fun onDeselect(message: MessageRecord, position: Int, actionMode: ActionMode) {
-        adapter.toggleSelection(message, position)
+    private fun onDeselect(message: MessageRecord, actionMode: ActionMode) {
+        adapter.toggleSelection(message)
         val actionModeCallback = ConversationActionModeCallback(
             adapter = adapter,
             threadID = viewModel.threadId,
@@ -1581,7 +1579,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     // `position` is the adapter position; not the visual position
-    private fun selectMessage(message: MessageRecord, position: Int) {
+    private fun selectMessage(message: MessageRecord) {
         val actionMode = this.actionMode
         val actionModeCallback = ConversationActionModeCallback(
             adapter = adapter,
@@ -1593,10 +1591,10 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
         actionModeCallback.delegate = this
         if(binding.searchBottomBar.isVisible) onSearchClosed()
         if (actionMode == null) { // Nothing should be selected if this is the case
-            adapter.toggleSelection(message, position)
+            adapter.toggleSelection(message)
             this.actionMode = startActionMode(actionModeCallback, ActionMode.TYPE_PRIMARY)
         } else {
-            adapter.toggleSelection(message, position)
+            adapter.toggleSelection(message)
             actionModeCallback.updateActionModeMenu(actionMode.menu)
             if (adapter.selectedItems.isEmpty()) {
                 actionMode.finish()
@@ -2395,7 +2393,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
     }
 
     override fun selectMessages(messages: Set<MessageRecord>) {
-        selectMessage(messages.first(), 0) //TODO: begin selection mode
+        selectMessage(messages.first())
     }
 
     // Note: The messages in the provided set may be a single message, or multiple if there are a

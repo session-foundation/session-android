@@ -15,7 +15,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
-@Serializable
 sealed interface ProSettingsDestination {
     @Serializable
     data object Home: ProSettingsDestination

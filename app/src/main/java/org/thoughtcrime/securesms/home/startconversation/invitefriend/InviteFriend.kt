@@ -1,10 +1,11 @@
-package org.thoughtcrime.securesms.conversation.start.invitefriend
+package org.thoughtcrime.securesms.home.startconversation.invitefriend
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement.Absolute.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,11 +22,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.squareup.phrase.Phrase
 import network.loki.messenger.R
 import org.session.libsession.utilities.StringSubstitutionConstants.APP_NAME_KEY
+import org.thoughtcrime.securesms.preferences.copyPublicKey
+import org.thoughtcrime.securesms.preferences.sendInvitationToUseSession
 import org.thoughtcrime.securesms.ui.border
 import org.thoughtcrime.securesms.ui.components.AppBarCloseIcon
 import org.thoughtcrime.securesms.ui.components.BackAppBar
-import org.thoughtcrime.securesms.ui.components.SlimOutlineButton
-import org.thoughtcrime.securesms.ui.components.SlimOutlineCopyButton
+import org.thoughtcrime.securesms.ui.components.OutlineButton
+import org.thoughtcrime.securesms.ui.components.OutlineCopyButton
 import org.thoughtcrime.securesms.ui.qaTag
 import org.thoughtcrime.securesms.ui.theme.LocalColors
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
@@ -36,11 +39,11 @@ import org.thoughtcrime.securesms.ui.theme.PreviewTheme
 @Composable
 internal fun InviteFriend(
     accountId: String,
-    onBack: () -> Unit = {},
-    onClose: () -> Unit = {},
-    copyPublicKey: () -> Unit = {},
-    sendInvitation: () -> Unit = {},
+    onBack: () -> Unit,
+    onClose: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     Column(modifier = Modifier.background(
         LocalColors.current.backgroundSecondary,
         shape = MaterialTheme.shapes.small
@@ -49,7 +52,8 @@ internal fun InviteFriend(
             title = stringResource(R.string.sessionInviteAFriend),
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
             onBack = onBack,
-            actions = { AppBarCloseIcon(onClose = onClose) }
+            actions = { AppBarCloseIcon(onClose = onClose) },
+            windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         Column(
             modifier = Modifier.padding(horizontal = LocalDimensions.current.spacing)
@@ -70,8 +74,7 @@ internal fun InviteFriend(
 
             Text(
                 stringResource(R.string.shareAccountIdDescription).let { txt ->
-                    val c = LocalContext.current
-                    Phrase.from(txt).put(APP_NAME_KEY, c.getString(R.string.app_name)).format().toString()
+                    Phrase.from(txt).put(APP_NAME_KEY, context.getString(R.string.app_name)).format().toString()
                 },
                 textAlign = TextAlign.Center,
                 style = LocalType.current.small,
@@ -82,17 +85,21 @@ internal fun InviteFriend(
             Spacer(modifier = Modifier.height(LocalDimensions.current.smallSpacing))
 
             Row(horizontalArrangement = spacedBy(LocalDimensions.current.smallSpacing)) {
-                SlimOutlineButton(
+                OutlineButton(
                     stringResource(R.string.share),
                     modifier = Modifier
                         .weight(1f)
                         .qaTag("Share button"),
-                    onClick = sendInvitation
+                    onClick = {
+                        context.sendInvitationToUseSession()
+                    }
                 )
 
-                SlimOutlineCopyButton(
+                OutlineCopyButton(
                     modifier = Modifier.weight(1f),
-                    onClick = copyPublicKey
+                    onClick = {
+                        context.copyPublicKey()
+                    }
                 )
             }
         }
@@ -103,6 +110,10 @@ internal fun InviteFriend(
 @Composable
 private fun PreviewInviteFriend() {
     PreviewTheme {
-        InviteFriend("050000000")
+        InviteFriend(
+            accountId = "050000000",
+            onBack = {},
+            onClose = {}
+        )
     }
 }

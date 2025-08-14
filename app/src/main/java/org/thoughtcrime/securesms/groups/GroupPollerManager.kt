@@ -29,6 +29,7 @@ import org.session.libsession.utilities.TextSecurePreferences
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import org.thoughtcrime.securesms.util.NetworkConnectivity
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,7 +53,7 @@ class GroupPollerManager @Inject constructor(
     preferences: TextSecurePreferences,
     connectivity: NetworkConnectivity,
     pollFactory: GroupPoller.Factory,
-) {
+) : OnAppStartupComponent {
     @Suppress("OPT_IN_USAGE")
     private val groupPollers: StateFlow<Map<AccountId, GroupPollerHandle>> =
         combine(

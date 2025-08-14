@@ -789,7 +789,7 @@ fun AvatarQrWidget(
 
     // Badge animations
     val badgeSize by animateDpAsState(
-        targetValue = if (expandedAvatar || showQR) {
+        targetValue = if (expandedAvatar && !showQR) {
             30.dp
         } else {
             LocalDimensions.current.iconMedium

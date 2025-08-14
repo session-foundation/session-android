@@ -12,14 +12,22 @@ class UINavigator<T> @Inject constructor() {
     private val _navigationActions = Channel<NavigationAction<T>>()
     val navigationActions = _navigationActions.receiveAsFlow()
 
+    // simple system to avoid navigating too quickly
+    private var lastNavigationTime = 0L
+    private val navigationDebounceTime = 500L // 500ms debounce
+
     suspend fun navigate(
         destination: T,
         navOptions: NavOptionsBuilder.() -> Unit = {}
     ) {
-        _navigationActions.send(NavigationAction.Navigate(
-            destination = destination,
-            navOptions = navOptions
-        ))
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastNavigationTime > navigationDebounceTime) {
+            lastNavigationTime = currentTime
+            _navigationActions.send(NavigationAction.Navigate(
+                destination = destination,
+                navOptions = navOptions
+            ))
+        }
     }
 
     suspend fun navigateUp() {

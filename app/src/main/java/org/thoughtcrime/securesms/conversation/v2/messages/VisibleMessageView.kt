@@ -2,7 +2,6 @@ package org.thoughtcrime.securesms.conversation.v2.messages
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
@@ -20,7 +19,6 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
@@ -37,7 +35,6 @@ import org.session.libsession.messaging.contacts.Contact
 import org.session.libsession.messaging.contacts.Contact.ContactContext
 import org.session.libsession.messaging.open_groups.OpenGroupApi
 import org.session.libsession.messaging.sending_receiving.attachments.DatabaseAttachment
-import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.Address.Companion.fromSerialized
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.ThemeUtil.getThemedColor
@@ -47,8 +44,6 @@ import org.session.libsession.utilities.getColorFromAttr
 import org.session.libsession.utilities.modifyLayoutParams
 import org.session.libsignal.utilities.AccountId
 import org.session.libsignal.utilities.IdPrefix
-import org.thoughtcrime.securesms.conversation.v2.ConversationActivityV2
-import org.thoughtcrime.securesms.conversation.v2.messages.QuoteView.Mode
 import org.thoughtcrime.securesms.database.GroupDatabase
 import org.thoughtcrime.securesms.database.LokiAPIDatabase
 import org.thoughtcrime.securesms.database.LokiThreadDatabase
@@ -121,7 +116,7 @@ class VisibleMessageView : FrameLayout {
     private var isOutgoing: Boolean = false
 
     var indexInAdapter: Int = -1
-    var snIsSelected = false
+    var isMessageSelected = false
         set(value) {
             field = value
             handleIsSelectedChanged()
@@ -250,7 +245,7 @@ class VisibleMessageView : FrameLayout {
                 }
             }
         }
-        if(!message.isOutgoing && (isStartOfMessageCluster && (isGroupThread || snIsSelected))){
+        if(!message.isOutgoing && (isStartOfMessageCluster && isGroupThread)){
             binding.senderName.setOnClickListener {
                 delegate?.showUserProfileModal(message.recipient)
             }
@@ -290,7 +285,7 @@ class VisibleMessageView : FrameLayout {
         }
 
         // Date break
-        val showDateBreak = isStartOfMessageCluster || snIsSelected
+        val showDateBreak = isStartOfMessageCluster
         binding.dateBreakTextView.text = if (showDateBreak) dateUtils.getDisplayFormattedTimeSpanString(
             message.timestamp
         ) else null
@@ -513,7 +508,7 @@ class VisibleMessageView : FrameLayout {
     }
 
     private fun handleIsSelectedChanged() {
-        background = if (snIsSelected) ColorDrawable(context.getColorFromAttr(R.attr.message_selected)) else null
+        background = if (isMessageSelected) ColorDrawable(context.getColorFromAttr(R.attr.message_selected)) else null
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -578,7 +573,7 @@ class VisibleMessageView : FrameLayout {
 
     private fun onMove(event: MotionEvent) {
         val translationX = toDp(event.rawX + dx, context.resources)
-        if (abs(translationX) < longPressMovementThreshold || snIsSelected) {
+        if (abs(translationX) < longPressMovementThreshold || isMessageSelected) {
             return
         } else {
             longPressCallback?.let { gestureHandler.removeCallbacks(it) }

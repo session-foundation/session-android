@@ -208,48 +208,6 @@
         <item name="android:layout">@layout/preference_category_session</item>
     </style>
 
-    <style name="AccountIdTextView">
-        <item name="android:background">@drawable/account_id_text_view_background</item>
-        <item name="android:padding">@dimen/medium_spacing</item>
-        <item name="android:textSize">20sp</item>
-        <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:fontFamily">monospace</item>
-        <item name="android:textAlignment">viewStart</item>
-    </style>
-
-    <style name="SessionNetworkTextBaseMono">
-        <item name="android:textSize">15sp</item>
-        <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:fontFamily">monospace</item>
-    </style>
-
-    <style name="SessionEditText">
-        <item name="android:background">@drawable/account_id_text_view_background</item>
-        <item name="android:paddingLeft">@dimen/medium_spacing</item>
-        <item name="android:paddingTop">30dp</item>
-        <item name="android:paddingRight">@dimen/medium_spacing</item>
-        <item name="android:paddingBottom">30dp</item>
-        <item name="android:textSize">@dimen/small_font_size</item>
-        <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:textCursorDrawable">@drawable/session_edit_text_cursor</item>
-        <item name="android:textAlignment">viewStart</item>
-        <item name="android:maxLines">1</item>
-    </style>
-
-    <style name="SmallSessionEditText">
-        <item name="android:background">@drawable/account_id_text_view_background</item>
-        <item name="android:paddingLeft">@dimen/medium_spacing</item>
-        <item name="android:paddingTop">@dimen/medium_spacing</item>
-        <item name="android:paddingRight">@dimen/medium_spacing</item>
-        <item name="android:paddingBottom">@dimen/medium_spacing</item>
-        <item name="android:textSize">@dimen/small_font_size</item>
-        <item name="android:textColor">?android:textColorPrimary</item>
-        <item name="android:textColorHint">?android:textColorTertiary</item>
-        <item name="android:textCursorDrawable">@drawable/session_edit_text_cursor</item>
-        <item name="android:textAlignment">viewStart</item>
-        <item name="android:maxLines">1</item>
-    </style>
-
     <style name="CallMessage">
         <item name="android:background">@drawable/control_message_bubble_background</item>
         <item name="android:textColor">?message_received_text_color</item>

@@ -2,14 +2,10 @@ package org.thoughtcrime.securesms.conversation.v2
 
 import android.content.Context
 import android.database.Cursor
-import android.util.SparseArray
-import android.util.SparseBooleanArray
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.WorkerThread
-import androidx.core.util.getOrDefault
-import androidx.core.util.set
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.bumptech.glide.RequestManager
@@ -43,7 +39,7 @@ class ConversationAdapter(
     private val onItemPress: (MessageRecord, Int, VisibleMessageView, MotionEvent) -> Unit,
     private val onItemSwipeToReply: (MessageRecord, Int) -> Unit,
     private val onItemLongPress: (MessageRecord, Int, View) -> Unit,
-    private val onDeselect: (MessageRecord, Int) -> Unit,
+    private val onDeselect: (MessageRecord) -> Unit,
     private val downloadPendingAttachment: (DatabaseAttachment) -> Unit,
     private val retryFailedAttachments: (List<DatabaseAttachment>) -> Unit,
     private val glide: RequestManager,
@@ -129,7 +125,7 @@ class ConversationAdapter(
             is VisibleMessageViewHolder -> {
                 val visibleMessageView = viewHolder.view
                 val isSelected = selectedItems.contains(message)
-                visibleMessageView.snIsSelected = isSelected
+                visibleMessageView.isMessageSelected = isSelected
                 visibleMessageView.indexInAdapter = position
                 val senderId = message.individualRecipient.address.toString()
                 updateQueue.trySend(senderId)
@@ -198,9 +194,19 @@ class ConversationAdapter(
         }
     }
 
-    fun toggleSelection(message: MessageRecord, position: Int) {
+    private fun getItemPositionForId(target: MessageId): Int? {
+        val c = cursor ?: return null
+        for (i in 0 until itemCount) {
+            if (!c.moveToPosition(i)) break
+            val rec = messageDB.readerFor(c).current ?: continue
+            if (rec.messageId == target) return i
+        }
+        return null
+    }
+
+    fun toggleSelection(message: MessageRecord) {
         if (selectedItems.contains(message)) selectedItems.remove(message) else selectedItems.add(message)
-        notifyItemChanged(position)
+        getItemPositionForId(message.messageId)?.let { notifyItemChanged(it) }
     }
 
     override fun onItemViewRecycled(viewHolder: ViewHolder?) {
@@ -235,21 +241,21 @@ class ConversationAdapter(
         super.changeCursor(cursor)
 
         val toRemove = mutableSetOf<MessageRecord>()
-        val toDeselect = mutableSetOf<Pair<Int, MessageRecord>>()
+        val toDeselect = mutableSetOf<MessageRecord>()
         for (selected in selectedItems) {
-            val position = getItemPositionForTimestamp(selected.timestamp)
+            val position = getItemPositionForId(selected.messageId)
             if (position == null || position == -1) {
                 toRemove += selected
             } else {
                 val item = getMessage(getCursorAtPositionOrThrow(position))
                 if (item == null || item.isDeleted) {
-                    toDeselect += position to selected
+                    toDeselect += selected
                 }
             }
         }
         selectedItems -= toRemove
-        toDeselect.iterator().forEach { (pos, record) ->
-            onDeselect(record, pos)
+        toDeselect.iterator().forEach { record ->
+            onDeselect(record)
         }
     }
 

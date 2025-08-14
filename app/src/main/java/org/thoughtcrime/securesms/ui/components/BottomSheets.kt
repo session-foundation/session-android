@@ -45,10 +45,12 @@ import org.thoughtcrime.securesms.ui.theme.ThemeColors
 fun BaseBottomSheet(
     sheetState: SheetState,
     onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
     dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ){
     ModalBottomSheet(
+        modifier = modifier,
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
         shape = RoundedCornerShape(
@@ -75,14 +77,16 @@ fun BaseBottomSheet(
 @Composable
 fun <T> ActionSheet(
     options: Collection<T>,
-    sheetState: SheetState = rememberModalBottomSheetState(),
     onDismissRequest: () -> Unit,
     onOptionClick: (T) -> Unit,
     optionTitle: (T) -> String,
     optionQaTag: (T) -> Int,
     optionIconRes: (T) -> Int,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
     BaseBottomSheet(
+        modifier = modifier,
         sheetState = sheetState,
         dragHandle = null,
         onDismissRequest = onDismissRequest

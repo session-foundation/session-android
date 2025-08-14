@@ -29,8 +29,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.annimon.stream.Stream;
 import net.zetetic.database.sqlcipher.SQLiteDatabase;
-import net.zetetic.database.sqlcipher.SQLiteStatement;
-import org.apache.commons.lang3.StringUtils;
+
+import org.json.JSONArray;
 import org.session.libsession.messaging.calls.CallMessageType;
 import org.session.libsession.messaging.messages.signal.IncomingGroupMessage;
 import org.session.libsession.messaging.messages.signal.IncomingTextMessage;
@@ -54,12 +54,12 @@ import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Provider;
 
@@ -653,38 +653,17 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
-  // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-  // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
   @Override
   public boolean deleteMessage(long messageId) {
-    Log.i("MessageDatabase", "Deleting: " + messageId);
-    SQLiteDatabase db = getWritableDatabase();
-    long threadId = getThreadIdForMessage(messageId);
-    db.delete(TABLE_NAME, ID_WHERE, new String[] {messageId+""});
-    notifyConversationListeners(threadId);
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    return threadDeleted;
+    return doDeleteMessages(true, ID + " = ?", messageId);
   }
 
   @Override
-  public boolean deleteMessages(long[] messageIds, long threadId) {
-    String[] argsArray = new String[messageIds.length];
-    String[] argValues = new String[messageIds.length];
-    Arrays.fill(argsArray, "?");
-
-    for (int i = 0; i < messageIds.length; i++) {
-      argValues[i] = (messageIds[i] + "");
-    }
-
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(
-      TABLE_NAME,
-      ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
-      argValues
+  public boolean deleteMessages(Collection<Long> messageIds) {
+    return doDeleteMessages(true,
+            ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(messageIds).toString()
     );
-    boolean threadDeleted = DatabaseComponent.get(context).threadDatabase().update(threadId, false);
-    notifyConversationListeners(threadId);
-    return threadDeleted;
   }
 
   @Override
@@ -729,58 +708,47 @@ public class SmsDatabase extends MessagingDatabase {
     }
   }
 
+  private boolean doDeleteMessages(final boolean updateThread, @NonNull final String where, @Nullable final Object...args) {
+    final String sql = "DELETE FROM " + TABLE_NAME + " WHERE " + where + " RETURNING " + THREAD_ID;
+    final HashSet<Long> deletedMessageThreadIds = new HashSet<>();
+
+    try (final Cursor cursor = getWritableDatabase().rawQuery(sql, args)) {
+        while (cursor.moveToNext()) {
+            final long threadId = cursor.getLong(0);
+            deletedMessageThreadIds.add(threadId);
+        }
+    }
+
+    if (updateThread) {
+      for (final long threadId : deletedMessageThreadIds) {
+        DatabaseComponent.get(context).threadDatabase().update(threadId, false);
+      }
+    }
+
+    return !deletedMessageThreadIds.isEmpty();
+  }
+
   void deleteMessagesFrom(long threadId, String fromUser) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID+" = ? AND "+ADDRESS+" = ?", new String[]{threadId+"", fromUser});
+    doDeleteMessages(
+        true,
+        THREAD_ID + " = ? AND " + ADDRESS + " = ?",
+        threadId, fromUser
+    );
   }
 
   void deleteMessagesInThreadBeforeDate(long threadId, long date) {
-    SQLiteDatabase db = getWritableDatabase();
-    String where      = THREAD_ID + " = ? AND " + DATE_SENT + " < " + date;
-
-    db.delete(TABLE_NAME, where, new String[] {threadId + ""});
+    doDeleteMessages(true, THREAD_ID + " = ? AND " + DATE_SENT + " < ?", threadId, date);
   }
 
   void deleteThread(long threadId) {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, THREAD_ID + " = ?", new String[] {threadId+""});
+    doDeleteMessages(true, THREAD_ID + " = ?", threadId);
   }
 
-  void deleteThreads(Set<Long> threadIds) {
-    SQLiteDatabase db = getWritableDatabase();
-    String where      = "";
-
-    for (long threadId : threadIds) {
-      where += THREAD_ID + " = '" + threadId + "' OR ";
-    }
-
-    where = where.substring(0, where.length() - 4); // Remove the final: "' OR "
-
-    db.delete(TABLE_NAME, where, null);
+  void deleteThreads(@NonNull Collection<Long> threadIds) {
+    doDeleteMessages(true, THREAD_ID + " IN (SELECT value FROM json_each(?))",
+            new JSONArray(threadIds).toString());
   }
 
-  void deleteAllThreads() {
-    SQLiteDatabase db = getWritableDatabase();
-    db.delete(TABLE_NAME, null, null);
-  }
-
-
-  /*package*/ SQLiteStatement createInsertStatement(SQLiteDatabase database) {
-    return database.compileStatement("INSERT INTO " + TABLE_NAME + " (" + ADDRESS + ", " +
-                                                                      PERSON + ", " +
-                                                                      DATE_SENT + ", " +
-                                                                      DATE_RECEIVED  + ", " +
-                                                                      PROTOCOL + ", " +
-                                                                      READ + ", " +
-                                                                      STATUS + ", " +
-                                                                      TYPE + ", " +
-                                                                      REPLY_PATH_PRESENT + ", " +
-                                                                      SUBJECT + ", " +
-                                                                      BODY + ", " +
-                                                                      SERVICE_CENTER +
-                                                                      ", " + THREAD_ID + ") " +
-                                     " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-  }
 
   public static class Status {
     public static final int STATUS_NONE     = -1;

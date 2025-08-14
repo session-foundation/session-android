@@ -1,8 +1,9 @@
-package org.thoughtcrime.securesms.conversation.start.newmessage
+package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,7 +72,8 @@ internal fun NewMessage(
             title = newMessageTitleTxt,
             backgroundColor = Color.Transparent, // transparent to show the rounded shape of the container
             onBack = onBack,
-            actions = { AppBarCloseIcon(onClose = onClose) }
+            actions = { AppBarCloseIcon(onClose = onClose) },
+            windowInsets = WindowInsets(0, 0, 0, 0), // Insets handled by the dialog
         )
         SessionTabRow(pagerState, TITLES)
         HorizontalPager(pagerState) {

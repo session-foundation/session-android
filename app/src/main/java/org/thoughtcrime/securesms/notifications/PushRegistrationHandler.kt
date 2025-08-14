@@ -4,16 +4,12 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
@@ -27,7 +23,10 @@ import org.session.libsignal.utilities.IdPrefix
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.dependencies.ConfigFactory
+import org.thoughtcrime.securesms.dependencies.ManagerScope
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent
 import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TAG = "PushRegistrationHandler"
 
@@ -37,23 +36,23 @@ private const val TAG = "PushRegistrationHandler"
  *
  * This class DOES NOT handle the legacy groups push notification.
  */
+@Singleton
 class PushRegistrationHandler
 @Inject
 constructor(
     private val configFactory: ConfigFactory,
     private val preferences: TextSecurePreferences,
     private val tokenFetcher: TokenFetcher,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val registry: PushRegistryV2,
     private val storage: Storage,
-) {
-    @OptIn(DelicateCoroutinesApi::class)
-    private val scope: CoroutineScope = GlobalScope
+    @param:ManagerScope private val scope: CoroutineScope
+) : OnAppStartupComponent {
 
     private var job: Job? = null
 
     @OptIn(FlowPreview::class)
-    fun run() {
+    override fun onPostAppStarted() {
         require(job == null) { "Job is already running" }
 
         job = scope.launch(Dispatchers.Default) {

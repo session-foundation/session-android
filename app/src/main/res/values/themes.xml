@@ -351,7 +351,7 @@
         <item name="mention_candidates_view_background">?colorCellBackground</item>
         <item name="scroll_to_bottom_button_background">@color/classic_light_4</item>
         <item name="scroll_to_bottom_button_border">@color/classic_light_2</item>
-        <item name="message_selected">@color/classic_light_4</item>
+        <item name="message_selected">@color/classic_light_3</item>
 
     </style>
 

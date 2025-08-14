@@ -39,7 +39,6 @@ import org.thoughtcrime.securesms.ui.UINavigator
 import org.thoughtcrime.securesms.ui.horizontalSlideComposable
 
 // Destinations
-@Serializable
 sealed interface ConversationSettingsDestination {
     @Serializable
     data object RouteConversationSettings: ConversationSettingsDestination

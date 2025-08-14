@@ -61,6 +61,7 @@ import org.thoughtcrime.securesms.database.model.MmsMessageRecord;
 import org.thoughtcrime.securesms.database.model.ThreadRecord;
 import org.thoughtcrime.securesms.database.model.content.MessageContent;
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent;
+import org.thoughtcrime.securesms.dependencies.OnAppStartupComponent;
 import org.thoughtcrime.securesms.mms.Slide;
 import org.thoughtcrime.securesms.mms.SlideDeck;
 import org.thoughtcrime.securesms.notifications.MarkReadReceiver;
@@ -82,7 +83,7 @@ import kotlinx.serialization.json.Json;
 import network.loki.messenger.libsession_util.util.GroupInfo;
 
 @Singleton
-public class ThreadDatabase extends Database {
+public class ThreadDatabase extends Database implements OnAppStartupComponent {
 
   public interface ConversationThreadUpdateListener {
     void threadCreated(@NonNull Address address, long threadId);
@@ -182,9 +183,8 @@ public class ThreadDatabase extends Database {
     this.prefs = prefs;
   }
 
-  // This method is called when the application is created, providing an opportunity to perform
-  // initialization tasks that need to be done only once.
-  public void onAppCreated() {
+  @Override
+  public void onPostAppStarted() {
     if (!prefs.getMigratedDisappearingMessagesToMessageContent()) {
       migrateDisappearingMessagesToMessageContent();
       prefs.setMigratedDisappearingMessagesToMessageContent(true);

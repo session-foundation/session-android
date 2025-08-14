@@ -1,4 +1,4 @@
-package org.thoughtcrime.securesms.conversation.start.newmessage
+package org.thoughtcrime.securesms.home.startconversation.newmessage
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -16,12 +16,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.loki.messenger.R
 import org.session.libsession.snode.SnodeAPI
-import org.session.libsession.snode.utilities.await
 import org.session.libsignal.utilities.Log
 import org.session.libsignal.utilities.PublicKeyValidation
-import org.session.libsignal.utilities.retryWithUniformInterval
 import org.thoughtcrime.securesms.ui.GetString
-import org.thoughtcrime.securesms.ui.LoadingDialog
 import java.net.IDN
 
 @HiltViewModel

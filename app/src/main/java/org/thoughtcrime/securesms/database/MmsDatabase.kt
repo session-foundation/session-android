@@ -20,10 +20,9 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import com.annimon.stream.Stream
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.apache.commons.lang3.StringUtils
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -78,7 +77,10 @@ class MmsDatabase
     @Inject constructor(
         @ApplicationContext context: Context,
         databaseHelper: Provider<SQLCipherOpenHelper>,
-        private val json: Json
+        private val json: Json,
+        private val attachmentDatabase: Lazy<AttachmentDatabase>,
+        private val groupRecipientDatabase: Lazy<GroupReceiptDatabase>,
+        private val threadDatabase: Lazy<ThreadDatabase>,
     ) : MessagingDatabase(context, databaseHelper) {
     private val earlyDeliveryReceiptCache = EarlyReceiptCache()
     private val earlyReadReceiptCache = EarlyReceiptCache()
@@ -924,79 +926,60 @@ class MmsDatabase
         }
     }
 
-    /**
-     * Delete all the messages in single queries where possible
-     * @param messageIds a String array representation of regularly Long types representing message IDs
-     */
-    private fun deleteMessages(messageIds: Array<String?>) {
-        if (messageIds.isEmpty()) {
-            Log.w(TAG, "No message Ids provided to MmsDatabase.deleteMessages - aborting delete operation!")
-            return
-        }
+    private fun doDeleteMessages(
+        updateThread: Boolean,
+        where: String,
+        vararg whereArgs: Any?): Boolean {
+        val deletedMessageIDs: MutableList<Long>
+        val deletedMessagesThreadIDs = hashSetOf<Long>()
 
-        // don't need thread IDs
-        val queryBuilder = StringBuilder()
-        for (i in messageIds.indices) {
-            queryBuilder.append("$TABLE_NAME.$ID").append(" = ").append(
-                messageIds[i]
-            )
-            if (i + 1 < messageIds.size) {
-                queryBuilder.append(" OR ")
+         writableDatabase.rawQuery(
+            "DELETE FROM $TABLE_NAME WHERE $where RETURNING $ID, $THREAD_ID",
+            *whereArgs
+        ).use { cursor ->
+            deletedMessageIDs = ArrayList(cursor.count)
+
+            while (cursor.moveToNext()) {
+                deletedMessageIDs += cursor.getLong(0)
+                deletedMessagesThreadIDs += cursor.getLong(1)
             }
         }
-        val idsAsString = queryBuilder.toString()
-        val attachmentDatabase = get(context).attachmentDatabase()
-        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-        groupReceiptDatabase.deleteRowsForMessages(messageIds)
-        val database = writableDatabase
-        database.delete(TABLE_NAME, idsAsString, null)
-        notifyConversationListListeners()
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+
+        // Delete messages related data from other tables
+        if (!deletedMessageIDs.isEmpty()) {
+            attachmentDatabase.get().deleteAttachmentsForMessages(deletedMessageIDs)
+            groupRecipientDatabase.get().deleteRowsForMessages(deletedMessageIDs)
+
+            notifyConversationListListeners()
+            notifyStickerListeners()
+            notifyStickerPackListeners()
+        }
+
+        if (updateThread) {
+            for (threadId in deletedMessagesThreadIDs) {
+                threadDatabase.get().update(threadId, false)
+            }
+        }
+
+        return deletedMessageIDs.isNotEmpty()
     }
 
     override fun getTypeColumn(): String = MESSAGE_BOX
 
-    // Caution: The bool returned from `deleteMessage` is NOT "Was the message successfully deleted?"
-    // - it is "Was the thread deleted because removing that message resulted in an empty thread"!
     override fun deleteMessage(messageId: Long): Boolean {
-        val threadId = getThreadIdForMessage(messageId)
-        val attachmentDatabase = get(context).attachmentDatabase()
-        queue { attachmentDatabase.deleteAttachmentsForMessage(messageId) }
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-        groupReceiptDatabase.deleteRowsForMessage(messageId)
-        val database = writableDatabase
-        database!!.delete(TABLE_NAME, ID_WHERE, arrayOf(messageId.toString()))
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
-        return threadDeleted
+        return doDeleteMessages(
+            updateThread = true,
+            where = "$ID = ?",
+            messageId
+        )
     }
 
-    override fun deleteMessages(messageIds: LongArray, threadId: Long): Boolean {
-        val argsArray = messageIds.map { "?" }
-        val argValues = messageIds.map { it.toString() }.toTypedArray()
-
-        val attachmentDatabase = get(context).attachmentDatabase()
-        val groupReceiptDatabase = get(context).groupReceiptDatabase()
-
-        queue { attachmentDatabase.deleteAttachmentsForMessages(messageIds) }
-        groupReceiptDatabase.deleteRowsForMessages(messageIds)
-
-        val db = writableDatabase
-        db.delete(
-            TABLE_NAME,
-            ID + " IN (" + StringUtils.join(argsArray, ',') + ")",
-            argValues
+    override fun deleteMessages(messageIds: Collection<Long>): Boolean {
+        return doDeleteMessages(
+            updateThread = true,
+            where = "$ID IN (SELECT value FROM json_each(?))",
+            JSONArray(messageIds).toString()
         )
-
-        val threadDeleted = get(context).threadDatabase().update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
-        return threadDeleted
     }
 
     override fun updateThreadId(fromId: Long, toId: Long) {
@@ -1016,64 +999,32 @@ class MmsDatabase
         }
     }
 
-    fun deleteThread(threadId: Long) {
-        deleteThreads(setOf(threadId))
+    fun deleteThread(threadId: Long, updateThread: Boolean) {
+        deleteThreads(listOf(threadId), updateThread)
     }
 
     fun deleteMediaFor(threadId: Long, fromUser: String? = null) {
-        val db = writableDatabase
-        val whereString =
-            if (fromUser == null) "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL"
-            else "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL"
-        val whereArgs = if (fromUser == null) arrayOf(threadId.toString()) else arrayOf(threadId.toString(), fromUser)
-        var cursor: Cursor? = null
-        try {
-            cursor = db.query(TABLE_NAME, arrayOf(ID), whereString, whereArgs, null, null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
+        if (fromUser != null) {
+            doDeleteMessages(
+                updateThread = true,
+                where = "$THREAD_ID = ? AND $ADDRESS = ? AND $LINK_PREVIEWS IS NULL",
+                threadId, fromUser
+            )
+        } else {
+            doDeleteMessages(
+                updateThread = true,
+                where = "$THREAD_ID = ? AND $LINK_PREVIEWS IS NULL",
+                threadId
+            )
         }
-        val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
     }
 
     fun deleteMessagesFrom(threadId: Long, fromUser: String) { // copied from deleteThreads implementation
-        val db = writableDatabase
-        var cursor: Cursor? = null
-        val whereString = "$THREAD_ID = ? AND $ADDRESS = ?"
-        try {
-            cursor =
-                db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, arrayOf(threadId.toString(), fromUser), null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString() // get the ID as a string
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
-        }
-        val threadDb = get(context).threadDatabase()
-        threadDb.update(threadId, false)
-        notifyConversationListeners(threadId)
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+        doDeleteMessages(
+            updateThread = true,
+            where = "$THREAD_ID = ? AND $ADDRESS = ?",
+            threadId, fromUser
+        )
     }
 
     private fun getSerializedSharedContacts(
@@ -1219,66 +1170,31 @@ class MmsDatabase
         return false
     }
 
-    private fun deleteThreads(threadIds: Set<Long>) {
-        val db = writableDatabase
-        val where = StringBuilder()
-        var cursor: Cursor? = null
-        for (threadId in threadIds) {
-            where.append(THREAD_ID).append(" = '").append(threadId).append("' OR ")
-        }
-        val whereString = where.substring(0, where.length - 4)
-        try {
-            cursor = db!!.query(TABLE_NAME, arrayOf<String?>(ID), whereString, null, null, null, null)
-            val toDeleteStringMessageIds = mutableListOf<String>()
-            while (cursor.moveToNext()) {
-                toDeleteStringMessageIds += cursor.getLong(0).toString()
-            }
-            // TODO: this can probably be optimized out,
-            //  currently attachmentDB uses MmsID not threadID which makes it difficult to delete
-            //  and clean up on threadID alone
-            toDeleteStringMessageIds.toList().chunked(50).forEach { sublist ->
-                deleteMessages(sublist.toTypedArray())
-            }
-        } finally {
-            cursor?.close()
-        }
-        val threadDb = get(context).threadDatabase()
-        for (threadId in threadIds) {
-            val threadDeleted = threadDb.update(threadId, false)
-            notifyConversationListeners(threadId)
-        }
-        notifyStickerListeners()
-        notifyStickerPackListeners()
+    fun deleteThreads(threadIds: Collection<Long>, updateThread: Boolean) {
+        doDeleteMessages(
+            updateThread = updateThread,
+            where = "$THREAD_ID IN (SELECT value FROM json_each(?))",
+            JSONArray(threadIds).toString()
+        )
     }
 
     /*package*/
     fun deleteMessagesInThreadBeforeDate(threadId: Long, date: Long, onlyMedia: Boolean) {
-        var cursor: Cursor? = null
-        try {
-            val db = readableDatabase
-            var where =
-                THREAD_ID + " = ? AND (CASE (" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") "
-            for (outgoingType in MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES) {
-                where += " WHEN $outgoingType THEN $DATE_SENT < $date"
-            }
-            where += " ELSE $DATE_RECEIVED < $date END)"
-            if (onlyMedia) where += " AND $PART_COUNT >= 1"
-            cursor = db.query(
-                TABLE_NAME,
-                arrayOf<String?>(ID),
-                where,
-                arrayOf<String?>(threadId.toString() + ""),
-                null,
-                null,
-                null
-            )
-            while (cursor != null && cursor.moveToNext()) {
-                Log.i("MmsDatabase", "Trimming: " + cursor.getLong(0))
-                deleteMessage(cursor.getLong(0))
-            }
-        } finally {
-            cursor?.close()
+        var where =
+            THREAD_ID + " = ? AND (CASE (" + MESSAGE_BOX + " & " + MmsSmsColumns.Types.BASE_TYPE_MASK + ") "
+
+        for (outgoingType in MmsSmsColumns.Types.OUTGOING_MESSAGE_TYPES) {
+            where += " WHEN $outgoingType THEN $DATE_SENT < $date"
         }
+
+        where += " ELSE $DATE_RECEIVED < $date END)"
+        if (onlyMedia) where += " AND $PART_COUNT >= 1"
+
+        doDeleteMessages(
+            updateThread = true,
+            where = where,
+            threadId
+        )
     }
 
     fun readerFor(cursor: Cursor?, getQuote: Boolean = true) = Reader(cursor, getQuote)
@@ -1307,8 +1223,8 @@ class MmsDatabase
         } ?: ""
 
         val where = "$THREAD_ID = ? AND $MESSAGE_CONTENT->>'$.${MessageContent.DISCRIMINATOR}' == '${DisappearingMessageUpdate.TYPE_NAME}' " + outgoingClause
-        writableDatabase.delete(TABLE_NAME, where, arrayOf("$threadId"))
-        notifyConversationListeners(threadId)
+
+        doDeleteMessages(updateThread = true, where, threadId)
     }
 
     object Status {

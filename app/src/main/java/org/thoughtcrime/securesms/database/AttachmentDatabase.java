@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -267,74 +268,32 @@ public class AttachmentDatabase extends Database {
     return attachments;
   }
 
-  void deleteAttachmentsForMessages(String[] messageIds) {
-    StringBuilder queryBuilder = new StringBuilder();
-    for (int i = 0; i < messageIds.length; i++) {
-      queryBuilder.append(MMS_ID+" = ").append(messageIds[i]);
-      if (i+1 < messageIds.length) {
-        queryBuilder.append(" OR ");
+  void deleteAttachmentsForMessages(@NonNull Collection<Long> mmsMessageIDs) {
+    final String sql = "DELETE FROM " + TABLE_NAME + " " +
+            "WHERE " + MMS_ID + " IN (SELECT value FROM json_each(?)) " +
+            "RETURNING " + DATA + ", " + THUMBNAIL + ", " + CONTENT_TYPE;
+
+    final String arg = new JSONArray(mmsMessageIDs).toString();
+
+    final List<MmsAttachmentInfo> deletedAttachments;
+
+    try (final Cursor cursor = getWritableDatabase().rawQuery(sql, arg)) {
+      deletedAttachments = new ArrayList<>(cursor.getCount());
+      while (cursor.moveToNext()) {
+          deletedAttachments.add(new MmsAttachmentInfo(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
       }
     }
-    String idsAsString = queryBuilder.toString();
-    SQLiteDatabase database = getReadableDatabase();
-    Cursor cursor = null;
-    List<MmsAttachmentInfo> attachmentInfos = new ArrayList<>();
-    try {
-      cursor = database.query(TABLE_NAME, new String[] { DATA, THUMBNAIL, CONTENT_TYPE}, idsAsString, null, null, null, null);
-      while (cursor != null && cursor.moveToNext()) {
-        attachmentInfos.add(new MmsAttachmentInfo(cursor.getString(0), cursor.getString(1), cursor.getString(2)));
-      }
-    } finally {
-      if (cursor != null) {
-        cursor.close();
-      }
+
+    deleteAttachmentsOnDisk(deletedAttachments);
+
+    if (!deletedAttachments.isEmpty()) {
+      notifyAttachmentListeners();
     }
-    deleteAttachmentsOnDisk(attachmentInfos);
-    database.delete(TABLE_NAME, idsAsString, null);
-    notifyAttachmentListeners();
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   void deleteAttachmentsForMessage(long mmsId) {
-    SQLiteDatabase database = getWritableDatabase();
-    Cursor cursor           = null;
-
-    try {
-      cursor = database.query(TABLE_NAME, new String[] {DATA, THUMBNAIL, CONTENT_TYPE}, MMS_ID + " = ?",
-                              new String[] {mmsId+""}, null, null, null);
-
-      while (cursor != null && cursor.moveToNext()) {
-        deleteAttachmentOnDisk(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    database.delete(TABLE_NAME, MMS_ID + " = ?", new String[] {mmsId + ""});
-    notifyAttachmentListeners();
-  }
-
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  void deleteAttachmentsForMessages(long[] mmsIds) {
-    SQLiteDatabase database = getWritableDatabase();
-    Cursor cursor           = null;
-    String mmsIdString = StringUtils.join(mmsIds, ',');
-
-    try {
-      cursor = database.query(TABLE_NAME, new String[] {DATA, THUMBNAIL, CONTENT_TYPE}, MMS_ID + " IN (?)",
-              new String[] {mmsIdString}, null, null, null);
-
-      while (cursor != null && cursor.moveToNext()) {
-        deleteAttachmentOnDisk(cursor.getString(0), cursor.getString(1), cursor.getString(2));
-      }
-    } finally {
-      if (cursor != null)
-        cursor.close();
-    }
-
-    database.delete(TABLE_NAME, MMS_ID + " IN (?)", new String[] {mmsIdString});
-    notifyAttachmentListeners();
+    deleteAttachmentsForMessages(Collections.singletonList(mmsId));
   }
 
   public void deleteAttachment(@NonNull AttachmentId id) {
