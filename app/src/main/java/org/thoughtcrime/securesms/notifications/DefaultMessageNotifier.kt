@@ -136,20 +136,26 @@ class DefaultMessageNotifier(
             val approvedThreadItems  = notificationState.notifications.filter { !it.isMessageRequest }.map { it.threadId }.toSet()
             val unapprovedThreadItems = notificationState.notifications.filter {  it.isMessageRequest }.map { it.threadId }.toSet()
 
+            // If there are *any* unread requests in DB, keep the requests summary visible
+            // even if our current NotificationState has no request items (due to <= 1 rule, etc.).
             val keepRequests =
                 get(context).threadDatabase().unapprovedUnreadConversationCount > 0L
 
             // Match the “skip the lone approved message child
             val suppressLoneApprovedChild = approvedThreadItems.size == 1 && unapprovedThreadItems.isNotEmpty()
 
+            // Build the exact set of IDs that should exist after this update.
             val valid = buildSet<Int> {
+                // Summaries (unbundled-single also uses the summary ID)
                 if (approvedThreadItems.isNotEmpty()) add(SUMMARY_NOTIFICATION_ID)
                 if (unapprovedThreadItems.isNotEmpty() || keepRequests) add(REQUESTS_SUMMARY_NOTIFICATION_ID)
 
+                // Children (only when the bucket actually bundles)
                 approvedThreadItems.forEach { if (!suppressLoneApprovedChild) add((APPROVED_CHILD_BASE   + it).toInt()) }
                 unapprovedThreadItems.forEach { add((REQUESTS_CHILD_BASE + it).toInt()) }
             }
 
+            // Cancel anything that isn't explicitly valid (except reserved/system IDs).
             for (s in activeNotifications) {
                 val id = s.id
                 if (id in reservedIds) continue
@@ -214,7 +220,17 @@ class DefaultMessageNotifier(
     }
 
     override fun updateNotification(context: Context, signal: Boolean, reminderCount: Int) {
-        // 1. Early exits
+        // Orchestrates building and posting notifications for unread items.
+        // We:
+        // - open DB cursors for unread approved messages, unread request messages, and unseen reactions
+        // - fold them into a NotificationState
+        // - split into two "buckets": approved vs. message-requests
+        // - post per-thread child notifications (when a bucket has >1 threads)
+        // - post one summary (or a single-thread) notification per bucket
+        // - enforce a one-time audio alert for the whole pass
+        // - clean up any orphaned notifications
+
+        // 1. Early exits: if we can't or shouldn't notify, cancel and leave to avoid further computations.
         val localNum = getLocalNumber(context)
         if (localNum == null || !isNotificationsEnabled(context)) {
             cancelActiveNotifications(context)
@@ -223,6 +239,9 @@ class DefaultMessageNotifier(
         }
 
         // 2. Open our three focused cursors
+        // - approved incoming (approved)
+        // - unapproved incoming (message requests)
+        // - unseen reactions (on our outgoing)
         val incomingApprovedCursor = get(context)
             .mmsSmsDatabase()
             .getUnreadIncomingCursor()
@@ -235,7 +254,9 @@ class DefaultMessageNotifier(
             .mmsSmsDatabase()
             .getUnseenReactionsCursor()
 
-        // 3. If all are empty, bail out
+        // 3) Fast bail-out: if ALL are empty, close cursors, clear notifications/reminders, and stop.
+        // NOTE: We call moveToFirst() only to test emptiness. The reader we create later
+        // is responsible for iterating all rows (not relying on current cursor pos
         if (!incomingApprovedCursor.moveToFirst()
             && !incomingUnapprovedCursor.moveToFirst()
             && !reactionCursor.moveToFirst()) {
@@ -254,7 +275,9 @@ class DefaultMessageNotifier(
 
         try {
             try {
-                // 4. Build grouped state from both
+                // 4) Build a combined state from the three cursors.
+                // constructNotificationState() filters muted threads, calls, applies mention-only rules,
+                // tags items as message-requests vs approved, and formats bodies/slideDecks.
                 val notificationState = constructNotificationState(
                     context,
                     incomingApprovedCursor,
@@ -262,15 +285,18 @@ class DefaultMessageNotifier(
                     reactionCursor
                 )
 
+                // We don't want to chime too often
                 if (playNotificationAudio && (System.currentTimeMillis() - lastAudibleNotification) < MIN_AUDIBLE_PERIOD_MILLIS) {
                     playNotificationAudio = false
                 } else if (playNotificationAudio) {
                     lastAudibleNotification = System.currentTimeMillis()
                 }
 
-                // 1) Split into two buckets since we want to group notifications.
+                // Split into two buckets so we can group approved vs. message-requests separately.
+                // unapprovedItems = message requests, approvedItems = normal messages
                 val (unapprovedItems, approvedItems) = notificationState.notifications.partition { it.isMessageRequest }
 
+                // Wrap each bucket in its own NotificationState for per-bucket operations.
                 val approvedMessagesState  = NotificationState(approvedItems)
                 val unapprovedMessagesState = NotificationState(unapprovedItems)
 
@@ -284,11 +310,12 @@ class DefaultMessageNotifier(
                     return
                 }
 
-                // 2) Post children per bucket (only when that bucket has >1 threads)
+                // 5) Post children per bucket (only when that bucket has >1 threads)
+                // This allows the system UI to show a bundle (summary + per-thread children).
                 postNotificationForBucket(context, approvedMessagesState)
                 postNotificationForBucket(context, unapprovedMessagesState)
 
-                // 3) Post summary OR single-thread per bucket
+                // 6) Post either a summary (when multiple threads) or a single-thread notification
                 var audioLeft = playNotificationAudio
 
                 audioLeft = postNotificationSingleOrSummary(
@@ -305,6 +332,9 @@ class DefaultMessageNotifier(
                     audioLeft
                 )
 
+                // 7) Remove any notifications that should no longer be on screen.
+                // cancelOrphanedNotifications() knows about both buckets (separate summary IDs)
+                // and preserves the message-requests summary if there are still unread requests.
                 cancelOrphanedNotifications(context, notificationState)
 
                 if (playNotificationAudio) {
@@ -316,6 +346,7 @@ class DefaultMessageNotifier(
             }
 
         } finally {
+            // Closing to avoid leaks
             incomingApprovedCursor.close()
             incomingUnapprovedCursor.close()
             reactionCursor.close()
@@ -543,9 +574,6 @@ class DefaultMessageNotifier(
         val contentSignature = notifications.map {
             getNotificationSignature(it)
         }.sorted().joinToString("|")
-
-//        val existingNotifications = ServiceUtil.getNotificationManager(context).activeNotifications
-//        val existingSignature = existingNotifications.find { it.id == SUMMARY_NOTIFICATION_ID }?.notification?.extras?.getString(CONTENT_SIGNATURE)
 
         // Change this block to target the correct summary ID:
         val summaryId = if (isMessageRequest) REQUESTS_SUMMARY_NOTIFICATION_ID else SUMMARY_NOTIFICATION_ID
@@ -813,7 +841,7 @@ class DefaultMessageNotifier(
             reader.close()
         }
 
-        // Process both sets of rows
+        // Process sets of rows
         readCursor(incomingCursor)
         readCursor(incomingUnapproved)
         readCursor(reactionsCursor)
@@ -947,7 +975,7 @@ class DefaultMessageNotifier(
         private const val REQUESTS_SUMMARY_NOTIFICATION_ID = 1339 // message-request summary
 
         // Child bases (bundled/child notifications get “base + threadId”)
-        private const val APPROVED_CHILD_BASE = 400_000            // normal threads
+        private const val APPROVED_CHILD_BASE = 400_000          // Approved threads
         private const val REQUESTS_CHILD_BASE = 500_000          // message-requests
 
         private const val PENDING_MESSAGES_ID = 1111
