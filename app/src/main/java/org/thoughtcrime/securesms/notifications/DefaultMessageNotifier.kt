@@ -126,14 +126,6 @@ class DefaultMessageNotifier(
             val notifications = ServiceUtil.getNotificationManager(context)
             val activeNotifications = notifications.activeNotifications
 
-//            val hasRequests = notificationState.notifications.any { it.isMessageRequest }
-//            val hasNormal   = notificationState.notifications.any { !it.isMessageRequest }
-
-            // Preserve message-request bucket if there are still any unapproved unread conversations.
-            // This is more reliable than a per-frame "skipped" flag when the <= 1 query filters rows out.
-            val keepRequestsBucket =
-                get(context).threadDatabase().unapprovedUnreadConversationCount > 0L
-
             // IDs we always leave alone (service/foreground/etc.)
             val reservedIds = setOf(
                 KeyCachingService.SERVICE_RUNNING_ID,
@@ -141,7 +133,6 @@ class DefaultMessageNotifier(
                 PENDING_MESSAGES_ID,
                 WEBRTC_NOTIFICATION
             )
-
 
             val normals  = notificationState.notifications.filter { !it.isMessageRequest }.map { it.threadId }.toSet()
             val requests = notificationState.notifications.filter {  it.isMessageRequest }.map { it.threadId }.toSet()
@@ -167,57 +158,6 @@ class DefaultMessageNotifier(
                 if (id !in valid) notifications.cancel(id)
             }
 
-            // IDs that are always safe to keep. We whitelist BOTH summaries so we don't
-            // accidentally cancel whichever one was used earlier in this session.
-//            val validIds = buildSet<Int> {
-//                add(SUMMARY_NOTIFICATION_ID)
-//                add(REQUESTS_SUMMARY_NOTIFICATION_ID)
-//
-//                // Child IDs must mirror how we notify bundled children:
-//                //   normal:   NORMAL_CHILD_BASE   + threadId
-//                //   requests: REQUESTS_CHILD_BASE + threadId
-//                notificationState.notifications.forEach { item ->
-//                    val childId = if (item.isMessageRequest)
-//                        (REQUESTS_CHILD_BASE + item.threadId).toInt()
-//                    else
-//                        (NORMAL_CHILD_BASE + item.threadId).toInt()
-//                    add(childId)
-//                }
-//            }
-//
-//            for (status in activeNotifications) {
-//                val id = status.id
-//                if (id in reservedIds) continue
-//
-//                // If we’re preserving the requests bucket, skip canceling anything that belongs to it.
-//                // (Covers existing request children even if none appeared in this frame due to the <= 1 filter.)
-//                val group = status.notification.group
-//                if (keepRequestsBucket && group == REQUESTS_GROUP) continue
-//
-//                if (id !in validIds) notifications.cancel(id)
-//            }
-
-
-
-//            for (notification in activeNotifications) {
-//                var validNotification = false
-//
-//                if (notification.id != SUMMARY_NOTIFICATION_ID && notification.id != KeyCachingService.SERVICE_RUNNING_ID &&
-//                    notification.id != FOREGROUND_ID && notification.id != PENDING_MESSAGES_ID) {
-//                    for (item in notificationState.notifications) {
-//                        if (notification.id.toLong() == (SUMMARY_NOTIFICATION_ID + item.threadId)) {
-//                            validNotification = true
-//                            break
-//                        }
-//                    }
-//
-//                    if (!validNotification) {
-//                        if (notification.id != WEBRTC_NOTIFICATION) {
-//                            notifications.cancel(notification.id)
-//                        }
-//                    }
-//                }
-//            }
         } catch (e: Throwable) {
             // XXX Android ROM Bug, see #6043
             Log.w(TAG, e)
@@ -330,11 +270,6 @@ class DefaultMessageNotifier(
                 }
 
                 if (notificationState.hasMultipleThreads()) {
-//                    for (threadId in notificationState.threads) {
-//                        sendSingleThreadNotification(context, NotificationState(notificationState.getNotificationsForThread(threadId)), false, true)
-//                    }
-//                    sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
-
                     val threads = notificationState.threads
 
                     val requestThreads = threads.filter {
@@ -539,7 +474,7 @@ class DefaultMessageNotifier(
     }
 
     private fun getNotificationSignature(notification: NotificationItem): String {
-        if(notification.recipient.isApproved || notification.recipient.isGroupOrCommunityRecipient){
+        if(!notification.isMessageRequest){
             return "${notification.id}_${notification.text}_${notification.timestamp}_${notification.threadId}"
         }
 
@@ -592,7 +527,7 @@ class DefaultMessageNotifier(
 
         val notificationManager = ServiceUtil.getNotificationManager(context)
         for (notification in notificationManager.activeNotifications) {
-            if (notification.id == SUMMARY_NOTIFICATION_ID && messageIdTag == notification.notification.extras.getString(LATEST_MESSAGE_ID_TAG)) {
+            if (notification.id == summaryId && messageIdTag == notification.notification.extras.getString(LATEST_MESSAGE_ID_TAG)) {
                 return
             }
         }
@@ -600,7 +535,7 @@ class DefaultMessageNotifier(
         val timestamp = notifications[0].timestamp
         if (timestamp != 0L) builder.setWhen(timestamp)
 
-        builder.addActions(notificationState.getMarkAsReadIntent(context, SUMMARY_NOTIFICATION_ID))
+        builder.addActions(notificationState.getMarkAsReadIntent(context, summaryId))
 
         val iterator: ListIterator<NotificationItem> = notifications.listIterator(notifications.size)
         while (iterator.hasPrevious()) {
@@ -649,7 +584,7 @@ class DefaultMessageNotifier(
         }
 
         val notification = builder.build()
-        NotificationManagerCompat.from(context).notify(SUMMARY_NOTIFICATION_ID, notification)
+        NotificationManagerCompat.from(context).notify(summaryId, notification)
         Log.i(TAG, "Posted notification. $notification")
     }
 
