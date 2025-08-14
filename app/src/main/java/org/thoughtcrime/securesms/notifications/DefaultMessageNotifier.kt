@@ -104,6 +104,7 @@ class DefaultMessageNotifier(
         val notifications = ServiceUtil.getNotificationManager(context)
         val hasNotifications = notifications.activeNotifications.size > 0
         notifications.cancel(SUMMARY_NOTIFICATION_ID)
+        notifications.cancel(REQUESTS_SUMMARY_NOTIFICATION_ID)
 
         try {
             val activeNotifications = notifications.activeNotifications
@@ -269,39 +270,90 @@ class DefaultMessageNotifier(
                     lastAudibleNotification = System.currentTimeMillis()
                 }
 
-                if (notificationState.hasMultipleThreads()) {
-                    val threads = notificationState.threads
+                // 1) Split into two buckets
+                val (requestItems, normalItems) = notificationState.notifications.partition { it.isMessageRequest }
 
-                    val requestThreads = threads.filter {
-                        notificationState.getNotificationsForThread(it).firstOrNull()?.isMessageRequest == true
+                val approvedMessagesState  = NotificationState(normalItems)
+                val unapprovedMessagesState = NotificationState(requestItems)
+
+                // If nothing survived filters, keep the old “maybe cancel” behavior
+                if (normalItems.isEmpty() && requestItems.isEmpty()) {
+                    if (get(context).threadDatabase().unapprovedUnreadConversationCount == 0L) {
+                        cancelActiveNotifications(context)
                     }
-                    val normalThreads  = threads.filter {
-                        notificationState.getNotificationsForThread(it).firstOrNull()?.isMessageRequest != true
-                    }
+                    cancelOrphanedNotifications(context, notificationState)
+                    if (playNotificationAudio) scheduleReminder(context, reminderCount)
+                    return
+                }
 
-                    val suppressLoneNormalChild = normalThreads.size == 1 && requestThreads.isNotEmpty()
-
-                    for (threadId in threads) {
-                        val items = notificationState.getNotificationsForThread(threadId)
-                        val isRequest = items.firstOrNull()?.isMessageRequest == true
-                        if (!isRequest && suppressLoneNormalChild) continue  // <— skip the lone normal child
-
+                // 2) Post children per bucket (only when that bucket has >1 threads)
+                if (approvedMessagesState.hasMultipleThreads()) {
+                    for (tid in approvedMessagesState.threads) {
+                        val itemsForThread = approvedMessagesState.getNotificationsForThread(tid)
                         sendSingleThreadNotification(
                             context,
-                            NotificationState(items),
-                             false,
+                            NotificationState(itemsForThread),
+                            false,   // never play sound on children
                             true
                         )
                     }
+                }
 
-                    sendMultipleThreadNotification(context, notificationState, playNotificationAudio)
-
-                } else if (notificationState.notificationCount > 0) {
-                    sendSingleThreadNotification(context, notificationState, playNotificationAudio, false)
-                } else {
-                    if(get(context).threadDatabase().unapprovedUnreadConversationCount == 0L){
-                        cancelActiveNotifications(context)
+                // Request children
+                if (unapprovedMessagesState.hasMultipleThreads()) {
+                    for (tid in unapprovedMessagesState.threads) {
+                        val itemsForThread = unapprovedMessagesState.getNotificationsForThread(tid)
+                        sendSingleThreadNotification(
+                            context,
+                            NotificationState(itemsForThread),
+                            false,
+                            true
+                        )
                     }
+                }
+
+                // 3) Post summary OR single-thread per bucket
+                var audioLeft = playNotificationAudio
+
+                if (normalItems.isNotEmpty()) {
+                    if (approvedMessagesState.hasMultipleThreads()) {
+                        // Summary for normal messages
+                        sendMultipleThreadNotification(
+                            context,
+                            approvedMessagesState,
+                            audioLeft
+                        )
+                    } else {
+                        // Single-thread normal notification (unbundled)
+                        sendSingleThreadNotification(
+                            context,
+                            approvedMessagesState,
+                            audioLeft,
+                            false
+                        )
+                    }
+                    audioLeft = false // consume the alert sound once
+                }
+
+                // Requests bucket
+                if (requestItems.isNotEmpty()) {
+                    if (unapprovedMessagesState.hasMultipleThreads()) {
+                        // Summary for message requests
+                        sendMultipleThreadNotification(
+                            context,
+                            unapprovedMessagesState, /* signal = */
+                            audioLeft
+                        )
+                    } else {
+                        // Single-thread request notification (unbundled)
+                        sendSingleThreadNotification(
+                            context,
+                            unapprovedMessagesState, /* signal = */
+                            audioLeft, /* bundled = */
+                            false
+                        )
+                    }
+                    audioLeft = false
                 }
 
                 cancelOrphanedNotifications(context, notificationState)
@@ -631,7 +683,6 @@ class DefaultMessageNotifier(
                 val hasExistingMessages = threadDatabase.getMessageCount(threadId) >= 1
 
                 if (isMessageRequest && hasExistingMessages) {
-                    notificationState.addSkippedThreadId(threadId)
                     continue
                 }
 

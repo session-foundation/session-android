@@ -73,9 +73,6 @@ public class NotificationState {
   public int getThreadCount()                      { return threads.size();     }
   public int getNotificationCount()                { return notificationCount;  }
   public List<NotificationItem> getNotifications() { return notifications;      }
-  public boolean hasSkippedNotification() {
-    return !skippedThreadId.isEmpty();
-  }
   public List<NotificationItem> getNotificationsForThread(long threadId) {
     LinkedList<NotificationItem> notificationsInThread = new LinkedList<>();
 
@@ -209,8 +206,4 @@ public class NotificationState {
 
     return PendingIntent.getBroadcast(context, 0, intent, intentFlags);
   }
-
-    public void addSkippedThreadId(long threadId) {
-        this.skippedThreadId.add(threadId);
-    }
 }
