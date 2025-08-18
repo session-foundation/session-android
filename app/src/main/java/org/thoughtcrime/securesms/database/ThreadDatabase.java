@@ -948,7 +948,6 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
       boolean            pinned              = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.IS_PINNED)) != 0;
       String             invitingAdmin       = cursor.getString(cursor.getColumnIndexOrThrow(LokiMessageDatabase.invitingSessionId));
       String messageContentJson = cursor.getString(cursor.getColumnIndexOrThrow(ThreadDatabase.SNIPPET_CONTENT));
-      boolean isReadFlag = cursor.getInt(cursor.getColumnIndexOrThrow(ThreadDatabase.READ)) != 0;
 
       if (!TextSecurePreferences.isReadReceiptsEnabled(context)) {
         readReceiptCount = 0;
@@ -990,7 +989,7 @@ public class ThreadDatabase extends Database implements OnAppStartupComponent {
         }
         return new ThreadRecord(body, snippetUri, lastMessage, recipient, date, count,
                               unreadCount, unreadMentionCount, threadId, deliveryReceiptCount, status, type,
-                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent, isReadFlag);
+                              distributionType, archived, expiresIn, lastSeen, readReceiptCount, pinned, invitingAdmin, groupThreadStatus, messageContent);
     }
 
     private @Nullable Uri getSnippetUri(Cursor cursor) {

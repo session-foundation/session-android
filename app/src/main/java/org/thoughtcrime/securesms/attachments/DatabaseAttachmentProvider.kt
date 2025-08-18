@@ -342,7 +342,7 @@ fun DatabaseAttachment.toSignalAttachmentPointer(): SignalServiceAttachmentPoint
     if (TextUtils.isEmpty(location)) { return null }
     // `key` can be empty in an open group context (no encryption means no encryption key)
     return try {
-        val id = location!!.toLong()
+        val id = location?.toLongOrNull() ?: 0L
         val key = Base64.decode(key!!)
         SignalServiceAttachmentPointer(
             id,

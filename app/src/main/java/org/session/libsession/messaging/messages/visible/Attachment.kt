@@ -71,7 +71,7 @@ class Attachment {
         fun createAttachmentPointer(attachment: SignalServiceAttachmentPointer): SignalServiceProtos.AttachmentPointer? {
             val builder = SignalServiceProtos.AttachmentPointer.newBuilder()
                     .setContentType(attachment.contentType)
-                    .setId(attachment.id)
+                    .setId(attachment.id.toString().toLongOrNull() ?: 0L)
                     .setKey(ByteString.copyFrom(attachment.key))
                     .setDigest(ByteString.copyFrom(attachment.digest.get()))
                     .setSize(attachment.size.get())
