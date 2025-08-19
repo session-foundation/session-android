@@ -718,17 +718,6 @@ class ConversationSettingsViewModel @AssistedInject constructor(
                 qrAddress = qrAddress,
             )
         }
-
-        // also preload the larger version of the avatar in case the user goes to the fullscreen avatar
-        avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
-            val  loadSize = min(context.resources.displayMetrics.widthPixels, context.resources.displayMetrics.heightPixels)
-            Glide.with(context).load(it)
-                .avatarOptions(
-                    sizePx = loadSize,
-                    freezeFrame = proStatusManager.freezeFrameForUser(recipient?.address)
-                )
-                .preload(loadSize, loadSize)
-        }
     }
 
     private fun getNotificationsData(conversation: Recipient): Pair<Int, String> {
