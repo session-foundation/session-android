@@ -22,7 +22,6 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.load.resource.gif.StreamGifDecoder;
 import com.bumptech.glide.module.AppGlideModule;
 
-import org.session.libsession.avatars.PlaceholderAvatarPhoto;
 import org.session.libsession.utilities.recipients.RemoteFile;
 import org.thoughtcrime.securesms.ApplicationContext;
 import org.thoughtcrime.securesms.crypto.AttachmentSecret;
@@ -30,7 +29,6 @@ import org.thoughtcrime.securesms.crypto.AttachmentSecretProvider;
 import org.thoughtcrime.securesms.giph.model.ChunkedImageUrl;
 import org.thoughtcrime.securesms.glide.ChunkedImageUrlLoader;
 import org.thoughtcrime.securesms.glide.OkHttpUrlLoader;
-import org.thoughtcrime.securesms.glide.PlaceholderAvatarLoader;
 import org.thoughtcrime.securesms.glide.RemoteFileLoader;
 import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapCacheDecoder;
 import org.thoughtcrime.securesms.glide.cache.EncryptedBitmapResourceEncoder;
@@ -76,7 +74,6 @@ public class SignalGlideModule extends AppGlideModule {
     registry.append(DecryptableUri.class, InputStream.class, new DecryptableStreamUriLoader.Factory(context));
     registry.append(AttachmentModel.class, InputStream.class, new AttachmentStreamUriLoader.Factory());
     registry.append(ChunkedImageUrl.class, InputStream.class, new ChunkedImageUrlLoader.Factory());
-    registry.append(PlaceholderAvatarPhoto.class, BitmapDrawable.class, new PlaceholderAvatarLoader.Factory());
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory());
   }
 
