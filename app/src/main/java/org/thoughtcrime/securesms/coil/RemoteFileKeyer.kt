@@ -4,8 +4,9 @@ import coil3.key.Keyer
 import coil3.request.Options
 import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.utilities.toHexString
+import javax.inject.Inject
 
-class RemoteFileKeyer : Keyer<RemoteFile> {
+class RemoteFileKeyer @Inject constructor() : Keyer<RemoteFile> {
     override fun key(
         data: RemoteFile,
         options: Options

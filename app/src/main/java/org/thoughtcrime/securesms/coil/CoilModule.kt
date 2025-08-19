@@ -22,6 +22,8 @@ class CoilModule {
     fun provideImageLoader(
         @ApplicationContext context: Context,
         fetcherFactory: RemoteFileFetcher.Factory,
+        keyer: RemoteFileKeyer,
+        interceptor: PermanentErrorCacheInterceptor,
     ): ImageLoader {
         return ImageLoader.Builder(context)
             .crossfade(false)
@@ -32,7 +34,8 @@ class CoilModule {
                     .build()
             )
             .components {
-                add(RemoteFileKeyer())
+                add(interceptor)
+                add(keyer)
                 add(fetcherFactory)
 
                 if (Build.VERSION.SDK_INT >= 28) {

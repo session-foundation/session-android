@@ -21,7 +21,6 @@ import org.session.libsession.utilities.recipients.RemoteFile
 import org.session.libsignal.exceptions.NonRetryableException
 import org.thoughtcrime.securesms.attachments.LocalEncryptedFileInputStream
 import org.thoughtcrime.securesms.attachments.RemoteFileDownloadWorker
-import javax.inject.Inject
 
 class RemoteFileFetcher @AssistedInject constructor(
     @Assisted private val file: RemoteFile,
