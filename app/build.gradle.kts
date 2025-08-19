@@ -378,9 +378,9 @@ dependencies {
     implementation(libs.android)
     implementation(libs.photoview)
     implementation(libs.glide)
+    implementation(libs.glide.compose)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
-    implementation(libs.glideCompose)
     implementation(libs.android.image.cropper)
     implementation(libs.subsampling.scale.image.view) {
         exclude(group = "com.android.support", module = "support-annotations")

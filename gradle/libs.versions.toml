@@ -11,7 +11,6 @@ biometricVersion = "1.1.0"
 cameraCamera2Version = "1.4.2"
 cardviewVersion = "1.0.0"
 composeBomVersion = "2025.08.00"
-glideComposeVersion = "1.0.0-beta01"
 conscryptAndroidVersion = "2.5.3"
 conscryptJavaVersion = "2.5.2"
 constraintlayoutVersion = "2.2.1"
@@ -137,11 +136,11 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
-glideCompose = { module = "com.github.bumptech.glide:compose", version.ref = "glideComposeVersion" }
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroidVersion" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessagingVersion" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexboxVersion" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
+glide-compose = { module = "com.github.bumptech.glide:compose", version = "1.0.0-beta01" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glideVersion" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHiltVersion" }
 dagger-hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "daggerHiltVersion" }

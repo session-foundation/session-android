@@ -24,7 +24,7 @@ class CoilModule {
         factory: RemoteFileFetcher.CoilFetcherFactory
     ): ImageLoader {
         return ImageLoader.Builder(context)
-            .crossfade(true)
+            .crossfade(false)
             .diskCache(null)
             .memoryCache(
                 MemoryCache.Builder()
@@ -34,15 +34,19 @@ class CoilModule {
             .components {
                 add(RemoteFileKeyer())
                 add(factory)
-                add(GifDecoder.Factory())
-                add(BitmapFactoryDecoder.Factory())
+
                 if (Build.VERSION.SDK_INT >= 28) {
+                    // AnimatedImageDecoder also supports Gif and it's faster than GifDecoder
                     add(AnimatedImageDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
                 }
 
                 if (Build.VERSION.SDK_INT >= 29) {
                     add(StaticImageDecoder.Factory())
                 }
+
+                add(BitmapFactoryDecoder.Factory())
             }
             .build()
     }

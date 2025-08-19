@@ -18,6 +18,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapNotNull
 import network.loki.messenger.libsession_util.util.Bytes
 import org.session.libsession.avatars.AvatarHelper
 import org.session.libsession.messaging.file_server.FileServerApi
@@ -330,7 +331,8 @@ class RemoteFileDownloadWorker @AssistedInject constructor(
                 )
 
             return WorkManager.getInstance(context)
-                .getWorkInfoByIdFlow(request.id)
+                .getWorkInfosForUniqueWorkFlow(workName)
+                .mapNotNull { it.firstOrNull() }
         }
     }
 }
