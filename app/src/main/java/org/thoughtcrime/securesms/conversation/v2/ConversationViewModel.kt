@@ -5,6 +5,10 @@ import android.content.Context
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.lifecycle.viewModelScope
+import coil3.imageLoader
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
+import coil3.util.CoilUtils
 import com.bumptech.glide.Glide
 import com.squareup.phrase.Phrase
 import dagger.assisted.Assisted
@@ -490,13 +494,15 @@ class ConversationViewModel @AssistedInject constructor(
         ).also {
             // also preload the larger version of the avatar in case the user goes to the settings
             avatarData.elements.mapNotNull { it.contactPhoto }.forEach {
-                val loadSize = application.resources.getDimensionPixelSize(R.dimen.large_profile_picture_size)
-                Glide.with(application).load(it)
-                    .avatarOptions(
-                        sizePx = loadSize,
-                        freezeFrame = proStatusManager.freezeFrameForUser(recipient.address)
-                    )
-                    .preload(loadSize, loadSize)
+                val loadSize = application.resources.getDimensionPixelSize(R.dimen.xxl_profile_picture_size)
+
+                val request = ImageRequest.Builder(application)
+                    .data(it)
+                    .size(loadSize, loadSize)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .build()
+
+                application.imageLoader.enqueue(request) // preloads image
             }
         }
     }
