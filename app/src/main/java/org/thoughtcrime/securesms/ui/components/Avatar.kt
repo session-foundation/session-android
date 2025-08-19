@@ -53,6 +53,7 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
+import org.thoughtcrime.securesms.util.avatarOptions
 
 
 @Composable
@@ -160,8 +161,8 @@ private fun AvatarElement(
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(data.contactPhoto)
-                .size(maxSizePx)
                 .allowRgb565(true)
+                .avatarOptions(maxSizePx, freezeFrame = data.freezeFrame)
                 .build(),
             modifier = modifier.size(size).clip(clip),
             contentDescription = null,

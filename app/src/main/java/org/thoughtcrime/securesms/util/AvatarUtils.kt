@@ -14,6 +14,8 @@ import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import coil3.decode.BitmapFactoryDecoder
+import coil3.request.ImageRequest
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -244,3 +246,12 @@ fun <T>RequestBuilder<T>.avatarOptions(
         } else this
     }
 
+fun ImageRequest.Builder.avatarOptions(
+    sizePx: Int,
+    freezeFrame: Boolean
+): ImageRequest.Builder = this.size(sizePx, sizePx)
+    .apply {
+        if (freezeFrame) {
+            decoderFactory(BitmapFactoryDecoder.Factory())
+        }
+    }
