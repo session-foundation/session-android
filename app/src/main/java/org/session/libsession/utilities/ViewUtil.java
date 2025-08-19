@@ -29,6 +29,7 @@ import androidx.annotation.IdRes;
 import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import org.session.libsignal.utilities.ListenableFuture;
 import org.session.libsignal.utilities.SettableFuture;
@@ -51,7 +52,7 @@ public class ViewUtil {
 
   private static Animation getAlphaAnimation(float from, float to, int duration) {
     final Animation anim = new AlphaAnimation(from, to);
-//    anim.setInterpolator(new FastOutSlowInInterpolator());
+    anim.setInterpolator(new FastOutSlowInInterpolator());
     anim.setDuration(duration);
     return anim;
   }
