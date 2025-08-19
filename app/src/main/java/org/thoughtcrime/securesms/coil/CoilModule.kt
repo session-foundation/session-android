@@ -21,7 +21,7 @@ class CoilModule {
     @Provides
     fun provideImageLoader(
         @ApplicationContext context: Context,
-        factory: RemoteFileFetcher.CoilFetcherFactory
+        fetcherFactory: RemoteFileFetcher.Factory,
     ): ImageLoader {
         return ImageLoader.Builder(context)
             .crossfade(false)
@@ -33,7 +33,7 @@ class CoilModule {
             )
             .components {
                 add(RemoteFileKeyer())
-                add(factory)
+                add(fetcherFactory)
 
                 if (Build.VERSION.SDK_INT >= 28) {
                     // AnimatedImageDecoder also supports Gif and it's faster than GifDecoder

@@ -62,19 +62,15 @@ class RemoteFileFetcher @AssistedInject constructor(
     }
 
     @AssistedFactory
-    interface Factory {
-        fun create(remoteFile: RemoteFile): RemoteFileFetcher
-    }
+    abstract class Factory : Fetcher.Factory<RemoteFile> {
+        abstract fun create(remoteFile: RemoteFile): RemoteFileFetcher
 
-    class CoilFetcherFactory @Inject constructor(
-        private val factory: Factory
-    ) : Fetcher.Factory<RemoteFile> {
         override fun create(
             data: RemoteFile,
             options: Options,
             imageLoader: ImageLoader
-        ): Fetcher {
-            return factory.create(data)
+        ): Fetcher? {
+            return create(data)
         }
     }
 }
