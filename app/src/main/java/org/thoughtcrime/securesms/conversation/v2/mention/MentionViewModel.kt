@@ -40,6 +40,8 @@ import org.thoughtcrime.securesms.database.MmsSmsDatabase
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.database.Storage
 import org.thoughtcrime.securesms.database.ThreadDatabase
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 
 /**
  * A ViewModel that provides the mention search functionality for a text input.
@@ -56,6 +58,7 @@ class MentionViewModel @AssistedInject constructor(
     groupDatabase: GroupDatabase,
     storage: Storage,
     recipientRepository: RecipientRepository,
+    avatarUtils: AvatarUtils,
     mmsSmsDatabase: MmsSmsDatabase
 ) : ViewModel() {
     private val editable = MentionEditable()
@@ -117,7 +120,8 @@ class MentionViewModel @AssistedInject constructor(
                         showAdminCrown = (recipient.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(
                             AccountId(myId)
                         ) == true,
-                        isMe = true
+                        isMe = true,
+                        avatarData = avatarUtils.getUIDataFromRecipient(recipientRepository.getSelf()),
                     )
                 ) + memberIDs
                     .asSequence()
@@ -129,7 +133,8 @@ class MentionViewModel @AssistedInject constructor(
                             publicKey = accountId.hexString,
                             name = m.displayName(attachesBlindedId = true),
                             showAdminCrown = (recipient.data as? RecipientData.GroupLike)?.shouldShowAdminCrown(accountId) == true,
-                            isMe = false
+                            isMe = false,
+                            avatarData = avatarUtils.getUIDataFromRecipient(m)
                         )
                     })
                     .toList()
@@ -168,13 +173,6 @@ class MentionViewModel @AssistedInject constructor(
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), AutoCompleteState.Idle)
-
-    private fun buildMember(
-        id: String,
-        name: String,
-        isModerator: Boolean,
-        isMe: Boolean
-    ) = Member(publicKey = id, name = name, showAdminCrown = isModerator, isMe = isMe)
 
     private fun searchAndHighlight(
         haystack: Member,
@@ -270,6 +268,7 @@ class MentionViewModel @AssistedInject constructor(
         val name: String,
         val showAdminCrown: Boolean,
         val isMe: Boolean,
+        val avatarData: AvatarUIData,
     )
 
     data class Candidate(

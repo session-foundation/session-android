@@ -8,8 +8,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.session.libsession.utilities.recipients.RecipientKt;
-import org.thoughtcrime.securesms.components.ProfilePictureView;
 import org.thoughtcrime.securesms.components.emoji.EmojiImageView;
 import org.thoughtcrime.securesms.database.model.MessageId;
 import org.thoughtcrime.securesms.util.AvatarUtils;
@@ -18,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 import network.loki.messenger.R;
-import network.loki.messenger.databinding.ReactionsBottomSheetDialogFragmentRecipientItemBinding;
 
 public final class ReactionRecipientsAdapter extends RecyclerView.Adapter<ReactionRecipientsAdapter.ViewHolder> {
 
