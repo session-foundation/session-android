@@ -6,7 +6,7 @@
     android:layout_height="50dp"
     android:background="?backgroundSecondary">
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/reactions_bottom_view_avatar"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"

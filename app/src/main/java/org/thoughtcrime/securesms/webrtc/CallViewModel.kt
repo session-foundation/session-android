@@ -6,9 +6,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
@@ -16,9 +20,12 @@ import network.loki.messenger.R
 import org.session.libsession.utilities.Address
 import org.session.libsession.utilities.ConfigFactoryProtocol
 import org.session.libsession.utilities.currentUserName
+import org.session.libsession.utilities.recipients.Recipient
 import org.session.libsession.utilities.recipients.displayName
 import org.thoughtcrime.securesms.conversation.v2.ViewUtil
 import org.thoughtcrime.securesms.database.RecipientRepository
+import org.thoughtcrime.securesms.util.AvatarUIData
+import org.thoughtcrime.securesms.util.AvatarUtils
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_INCOMING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_ANSWER_OUTGOING
 import org.thoughtcrime.securesms.webrtc.CallViewModel.State.CALL_CONNECTED
@@ -37,11 +44,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CallViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val callManager: CallManager,
     private val rtcCallBridge: WebRtcCallBridge,
     private val recipientRepository: RecipientRepository,
     private val configFactory: ConfigFactoryProtocol,
+    private val avatarUtils: AvatarUtils
 ): ViewModel() {
 
     //todo PHONE Can we eventually remove this state and instead use the StateMachine.kt State?
@@ -168,8 +176,33 @@ class CallViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), initialCallState)
 
 
-    val recipient get() = callManager.recipientEvents
+    val recipient: StateFlow<Recipient?> get() = callManager.recipientAddressFlow
+        .flatMapLatest { addr ->
+            if (addr == null) {
+                flowOf(null)
+            } else {
+                recipientRepository.observeRecipient(addr)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
     val callStartTime: Long get() = callManager.callStartTime
+
+    val currentUserAvatarData: StateFlow<AvatarUIData> = recipientRepository
+        .observeSelf()
+        .drop(1)
+        .map(avatarUtils::getUIDataFromRecipient)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, avatarUtils.getUIDataFromRecipient(recipientRepository.getSelf()))
+
+    val recipientAvatarData: StateFlow<AvatarUIData> = recipient
+        .map { recipient ->
+            if (recipient == null) {
+                AvatarUIData(emptyList())
+            } else {
+                avatarUtils.getUIDataFromRecipient(recipient)
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, AvatarUIData(emptyList()))
 
     data class CallAccumulator(
         val callSteps: Set<CallViewModel.State>,
@@ -202,11 +235,6 @@ class CallViewModel @Inject constructor(
 
     fun hangUp() = rtcCallBridge.handleLocalHangup(null)
 
-    fun getContactName(accountID: String) =
-        recipientRepository.getRecipientSync(Address.fromSerialized(accountID))
-            .displayName()
-
-    fun getCurrentUsername() = configFactory.currentUserName
 
     data class CallState(
         val callLabelTitle: String?,

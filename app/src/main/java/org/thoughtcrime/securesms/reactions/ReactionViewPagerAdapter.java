@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.thoughtcrime.securesms.database.model.MessageId;
+import org.thoughtcrime.securesms.util.AvatarUtils;
 import org.thoughtcrime.securesms.util.ContextUtil;
 import org.thoughtcrime.securesms.util.adapter.AlwaysChangedDiffUtil;
 
@@ -21,7 +22,7 @@ import network.loki.messenger.R;
 /**
  * ReactionViewPagerAdapter provides pages to a ViewPager2 which contains the reactions on a given message.
  */
-class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPagerAdapter.ViewHolder> {
+public class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPagerAdapter.ViewHolder> {
 
   private Listener callback;
   private int selectedPosition = 0;
@@ -29,11 +30,13 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
   private boolean isUserModerator = false;
 
   private final boolean canRemove;
+  private final AvatarUtils avatarUtils;
 
-  protected ReactionViewPagerAdapter(Listener callback, boolean canRemove) {
+  protected ReactionViewPagerAdapter(Listener callback, boolean canRemove, AvatarUtils avatarUtils) {
     super(new AlwaysChangedDiffUtil<>());
     this.callback = callback;
     this.canRemove = canRemove;
+    this.avatarUtils = avatarUtils;
   }
 
   public void setIsUserModerator(boolean isUserModerator) {
@@ -62,7 +65,9 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
   @Override
   public @NonNull ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
     return new ViewHolder(callback,
-            LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler, parent, false), canRemove);
+            LayoutInflater.from(parent.getContext()).inflate(R.layout.reactions_bottom_sheet_dialog_fragment_recycler, parent, false),
+            canRemove,
+            avatarUtils);
   }
 
   @Override
@@ -91,10 +96,12 @@ class ReactionViewPagerAdapter extends ListAdapter<EmojiCount, ReactionViewPager
   static class ViewHolder extends RecyclerView.ViewHolder {
     private final RecyclerView              recycler;
     private final ReactionRecipientsAdapter adapter;
+    private final AvatarUtils avatarUtils;
 
-    public ViewHolder(Listener callback, @NonNull View itemView, boolean canRemove) {
+    public ViewHolder(Listener callback, @NonNull View itemView, boolean canRemove, AvatarUtils avatarUtils) {
       super(itemView);
-      adapter = new ReactionRecipientsAdapter(callback, canRemove);
+        this.avatarUtils = avatarUtils;
+        adapter = new ReactionRecipientsAdapter(callback, avatarUtils, canRemove);
       recycler = itemView.findViewById(R.id.reactions_bottom_view_recipient_recycler);
 
       ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,

@@ -6,6 +6,7 @@ import android.telephony.TelephonyManager
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -30,7 +31,6 @@ import org.session.libsignal.protos.SignalServiceProtos.CallMessage.Type.ICE_CAN
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioDeviceUpdate
 import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.AudioEnabled
-import org.thoughtcrime.securesms.webrtc.CallManager.StateEvent.RecipientUpdate
 import org.thoughtcrime.securesms.webrtc.audio.AudioManagerCompat
 import org.thoughtcrime.securesms.webrtc.audio.OutgoingRinger
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager
@@ -67,7 +67,7 @@ import org.thoughtcrime.securesms.webrtc.data.State as CallState
 
 @Singleton
 class CallManager @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     audioManager: AudioManagerCompat,
     private val storage: StorageProtocol,
 ): PeerConnection.Observer,
@@ -78,11 +78,6 @@ class CallManager @Inject constructor(
         data class VideoEnabled(val isEnabled: Boolean): StateEvent()
         data class CallStateUpdate(val state: CallState): StateEvent()
         data class AudioDeviceUpdate(val selectedDevice: AudioDevice, val audioDevices: Set<AudioDevice>): StateEvent()
-        data class RecipientUpdate(val recipient: Address?): StateEvent() {
-            companion object {
-                val UNKNOWN = RecipientUpdate(recipient = null)
-            }
-        }
     }
 
     companion object {
@@ -128,8 +123,6 @@ class CallManager @Inject constructor(
 
     private val _callStateEvents = MutableStateFlow(CallViewModel.State.CALL_INITIALIZING)
     val callStateEvents = _callStateEvents.asSharedFlow()
-    private val _recipientEvents = MutableStateFlow(RecipientUpdate.UNKNOWN)
-    val recipientEvents = _recipientEvents.asSharedFlow()
     private var localCameraState: CameraState = CameraState.UNKNOWN
 
     private val _audioDeviceEvents = MutableStateFlow(AudioDeviceUpdate(AudioDevice.NONE, setOf()))
@@ -152,11 +145,18 @@ class CallManager @Inject constructor(
     var pendingOfferTime: Long = -1
     var preOfferCallData: PreOffer? = null
     var callId: UUID? = null
-    var recipient: Address? = null
-    set(value) {
-        field = value
-        _recipientEvents.value = RecipientUpdate(value)
-    }
+
+    private val _recipientAddressFlow = MutableStateFlow<Address?>(null)
+
+    val recipientAddressFlow: StateFlow<Address?>
+        get() = _recipientAddressFlow
+
+    var recipient: Address?
+        get() = _recipientAddressFlow.value
+        set(value) {
+            _recipientAddressFlow.value = value
+        }
+
     var callStartTime: Long = -1
 
     private var peerConnection: PeerConnectionWrapper? = null

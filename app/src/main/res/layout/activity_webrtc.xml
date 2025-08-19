@@ -22,7 +22,7 @@
             android:layout_gravity="center"/>
     </FrameLayout>
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/userAvatar"
         app:layout_constraintStart_toStartOf="@id/fullscreen_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/fullscreen_renderer_container"
@@ -33,7 +33,7 @@
         android:layout_height="@dimen/extra_large_profile_picture_size"
         android:visibility="gone"/>
 
-    <org.thoughtcrime.securesms.components.ProfilePictureView
+    <androidx.compose.ui.platform.ComposeView
         android:id="@+id/contactAvatar"
         app:layout_constraintStart_toStartOf="@id/fullscreen_renderer_container"
         app:layout_constraintEnd_toEndOf="@id/fullscreen_renderer_container"
