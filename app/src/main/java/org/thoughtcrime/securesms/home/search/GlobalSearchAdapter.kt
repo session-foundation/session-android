@@ -113,9 +113,6 @@ class GlobalSearchAdapter(
     }
 
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
-        if (holder is ContentView) {
-            holder.binding.searchResultProfilePicture.recycle()
-        }
     }
 
     class ContentView(
@@ -132,7 +129,6 @@ class GlobalSearchAdapter(
         }
 
         fun bind(query: String, model: Model) {
-            binding.searchResultProfilePicture.recycle()
             when (model) {
                 is Model.GroupConversation -> bindModel(query, model)
                 is Model.Contact -> bindModel(query, model)

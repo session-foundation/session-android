@@ -14,6 +14,7 @@ import org.session.libsession.utilities.Device
 import org.session.libsession.utilities.TextSecurePreferences
 import org.thoughtcrime.securesms.database.RecipientRepository
 import org.thoughtcrime.securesms.pro.ProStatusManager
+import org.thoughtcrime.securesms.util.AvatarUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,6 +31,7 @@ class MessagingModuleConfiguration @Inject constructor(
     val preferences: TextSecurePreferences,
     val deprecationManager: LegacyGroupDeprecationManager,
     val recipientRepository: RecipientRepository,
+    val avatarUtils: AvatarUtils,
     val proStatusManager: ProStatusManager,
     val messageSendJobFactory: MessageSendJob.Factory,
 ) {

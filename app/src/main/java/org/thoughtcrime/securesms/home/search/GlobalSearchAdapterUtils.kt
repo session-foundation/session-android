@@ -21,8 +21,10 @@ import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.Message
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SavedMessages
 import org.thoughtcrime.securesms.home.search.GlobalSearchAdapter.Model.SubHeader
 import org.thoughtcrime.securesms.ui.ProBadgeText
+import org.thoughtcrime.securesms.ui.components.Avatar
 import org.thoughtcrime.securesms.ui.setThemedContent
 import org.thoughtcrime.securesms.ui.theme.LocalColors
+import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
 import org.thoughtcrime.securesms.ui.theme.bold
 import org.thoughtcrime.securesms.util.DateUtils
@@ -114,7 +116,14 @@ fun ContentView.bindModel(query: String?, model: GroupConversation) {
     val threadRecipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
         Address.fromSerialized(model.groupId)
     )
-    binding.searchResultProfilePicture.update(threadRecipient)
+
+    binding.searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(threadRecipient)
+        )
+    }
+
     binding.resultTitle.setupTitleWithBadge(
         title =  model.title,
         showProBadge = model.showProBadge
@@ -133,7 +142,13 @@ fun ContentView.bindModel(query: String?, model: ContactModel) = binding.run {
     val recipient = MessagingModuleConfiguration.shared.recipientRepository.getRecipientSync(
         Address.fromSerialized(model.contact.hexString)
     )
-    searchResultProfilePicture.update(recipient)
+    searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+        )
+    }
+
     val nameString = if (model.isSelf) root.context.getString(R.string.noteToSelf)
         else model.name
 
@@ -150,7 +165,15 @@ fun ContentView.bindModel(model: SavedMessages) {
         title = binding.root.context.getString(R.string.noteToSelf),
         showProBadge = false
     )
-    binding.searchResultProfilePicture.update(Address.fromSerialized(model.currentUserPublicKey))
+
+    val recipient = MessagingModuleConfiguration.shared.recipientRepository.getSelf()
+
+    binding.searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(recipient)
+        )
+    }
     binding.searchResultProfilePicture.isVisible = true
 }
 
@@ -162,7 +185,12 @@ fun ContentView.bindModel(query: String?, model: Message, dateUtils: DateUtils) 
         model.messageResult.sentTimestampMs
     )
 
-    searchResultProfilePicture.update(model.messageResult.conversationRecipient)
+    searchResultProfilePicture.setThemedContent {
+        Avatar(
+            size = LocalDimensions.current.iconLarge,
+            data = MessagingModuleConfiguration.shared.avatarUtils.getUIDataFromRecipient(model.messageResult.conversationRecipient)
+        )
+    }
     val textSpannable = SpannableStringBuilder()
     if (model.messageResult.conversationRecipient != model.messageResult.messageRecipient) {
         // group chat, bind
