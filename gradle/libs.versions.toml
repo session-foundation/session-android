@@ -22,7 +22,7 @@ exifinterfaceVersion = "1.4.1"
 firebaseMessagingVersion = "25.0.0"
 flexboxVersion = "3.0.0"
 fragmentKtxVersion = "1.8.8"
-gradlePluginVersion = "8.12.0"
+gradlePluginVersion = "8.12.1"
 dependenciesAnalysisVersion = "2.17.0"
 googleServicesVersion = "4.4.2"
 junit = "1.2.1"
@@ -73,6 +73,7 @@ workRuntimeKtxVersion = "2.10.2"
 zxingVersion = "3.5.3"
 huaweiPushVersion = "6.13.0.300"
 googlePlayReviewVersion = "2.0.2"
+coilVersion = "3.3.0"
 
 [libraries]
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissionsVersion" }
@@ -136,7 +137,7 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceVersion" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerviewVersion" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glideComposeVersion" }
+glideCompose = { module = "com.github.bumptech.glide:compose", version.ref = "glideComposeVersion" }
 conscrypt-android = { module = "org.conscrypt:conscrypt-android", version.ref = "conscryptAndroidVersion" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessagingVersion" }
 flexbox = { module = "com.google.android.flexbox:flexbox", version.ref = "flexboxVersion" }
@@ -172,6 +173,8 @@ google-play-review = { module = "com.google.android.play:review", version.ref = 
 google-play-review-ktx = { module = "com.google.android.play:review-ktx", version.ref = "googlePlayReviewVersion" }
 sqlite-web-viewer = { module = "io.github.simophin:sqlite-web-viewer", version = "0.0.3" }
 protoc = { module = "com.google.protobuf:protoc", version = "4.31.1" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilVersion" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coilVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "gradlePluginVersion" }

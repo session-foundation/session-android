@@ -3,7 +3,6 @@ package org.thoughtcrime.securesms.components;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +32,8 @@ public class AnimatingToggle extends FrameLayout {
     super(context, attrs, defStyleAttr);
     this.outAnimation = AnimationUtils.loadAnimation(getContext(), R.anim.animation_toggle_out);
     this.inAnimation  = AnimationUtils.loadAnimation(getContext(), R.anim.animation_toggle_in);
-    this.outAnimation.setInterpolator(new FastOutSlowInInterpolator());
-    this.inAnimation.setInterpolator(new FastOutSlowInInterpolator());
+//    this.outAnimation.setInterpolator(new FastOutSlowInInterpolator());
+//    this.inAnimation.setInterpolator(new FastOutSlowInInterpolator());
   }
 
   @Override

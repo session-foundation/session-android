@@ -29,6 +29,10 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.request.crossfade
 import dagger.Lazy
 import dagger.hilt.EntryPoints
 import dagger.hilt.android.HiltAndroidApp
@@ -49,6 +53,7 @@ import org.session.libsession.utilities.TextSecurePreferences.Companion.pushSuff
 import org.session.libsignal.utilities.HTTP.isConnectedToNetwork
 import org.session.libsignal.utilities.Log
 import org.thoughtcrime.securesms.AppContext.configureKovenant
+import org.thoughtcrime.securesms.coil.RemoteFileKeyer
 import org.thoughtcrime.securesms.debugmenu.DebugActivity
 import org.thoughtcrime.securesms.dependencies.DatabaseComponent
 import org.thoughtcrime.securesms.dependencies.DatabaseModule.init
@@ -80,7 +85,7 @@ import kotlin.concurrent.Volatile
  * @author Moxie Marlinspike
  */
 @HiltAndroidApp
-class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider {
+class ApplicationContext : Application(), DefaultLifecycleObserver, Configuration.Provider, SingletonImageLoader.Factory {
     @Inject lateinit var messagingModuleConfiguration: Lazy<MessagingModuleConfiguration>
     @Inject lateinit var workerFactory: Lazy<HiltWorkerFactory>
     @Inject lateinit var snodeModule: Lazy<SnodeModule>
@@ -91,6 +96,7 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
     @Inject lateinit var textSecurePreferences: Lazy<TextSecurePreferences>
     @Inject lateinit var migrationManager: Lazy<DatabaseMigrationManager>
 
+    @Inject lateinit var imageLoaderProvider: Provider<ImageLoader>
 
     // Exist purely because Glide doesn't support Hilt injection
     @Inject
@@ -191,6 +197,9 @@ class ApplicationContext : Application(), DefaultLifecycleObserver, Configuratio
         super.onTerminate()
     }
 
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        return imageLoaderProvider.get()
+    }
 
     // Loki
     private fun initializeSecurityProvider() {

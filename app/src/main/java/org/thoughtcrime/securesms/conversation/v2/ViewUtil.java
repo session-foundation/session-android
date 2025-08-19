@@ -39,7 +39,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ContextThemeWrapper;
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.lifecycle.Lifecycle;
 
 import org.session.libsession.utilities.ServiceUtil;
@@ -100,7 +99,7 @@ public final class ViewUtil {
 
   private static Animation getAlphaAnimation(float from, float to, int duration) {
     final Animation anim = new AlphaAnimation(from, to);
-    anim.setInterpolator(new FastOutSlowInInterpolator());
+//    anim.setInterpolator(new FastOutSlowInInterpolator());
     anim.setDuration(duration);
     return anim;
   }

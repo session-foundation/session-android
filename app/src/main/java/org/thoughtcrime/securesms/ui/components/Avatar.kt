@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -12,12 +11,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,12 +29,9 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideSubcomposition
-import com.bumptech.glide.integration.compose.RequestState
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import network.loki.messenger.R
 import org.thoughtcrime.securesms.ui.theme.LocalDimensions
 import org.thoughtcrime.securesms.ui.theme.LocalType
@@ -52,7 +44,6 @@ import org.thoughtcrime.securesms.ui.theme.primaryGreen
 import org.thoughtcrime.securesms.util.AvatarBadge
 import org.thoughtcrime.securesms.util.AvatarUIData
 import org.thoughtcrime.securesms.util.AvatarUIElement
-import org.thoughtcrime.securesms.util.avatarOptions
 
 
 @Composable
@@ -143,7 +134,6 @@ fun Avatar(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AvatarElement(
     size: Dp,
@@ -152,18 +142,6 @@ private fun AvatarElement(
     clip: Shape = CircleShape,
     maxSizeLoad: Dp = LocalDimensions.current.iconLarge,
 ){
-    val lifecycleOwner = LocalLifecycleOwner.current
-    var resumeTick by remember { mutableIntStateOf(0) }
-
-    // Bump a key when the app returns to foreground so Glide restarts the request.
-    DisposableEffect(lifecycleOwner) {
-        val obs = LifecycleEventObserver { _, e ->
-            if (e == Lifecycle.Event.ON_START) resumeTick++
-        }
-        lifecycleOwner.lifecycle.addObserver(obs)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
-    }
-
     Box(
         modifier = modifier
             .size(size)
@@ -178,28 +156,20 @@ private fun AvatarElement(
         if(data.contactPhoto != null){
             val maxSizePx = with(LocalDensity.current) { maxSizeLoad.toPx().toInt() }
 
-            key(resumeTick, data) {
-                GlideSubcomposition(
-                    model = data.contactPhoto,
-                    modifier = Modifier.fillMaxSize(),
-                    requestBuilderTransform = {
-                        it.avatarOptions(sizePx = maxSizePx, freezeFrame = data.freezeFrame)
-                    }
-                ) {
-                    when (state) {
-                        is RequestState.Success -> {
-                            Image(
-                                modifier = Modifier.fillMaxWidth(),
-                                painter = painter,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop
-                            )
-                        }
+            SubcomposeAsyncImage(
+                model = data.contactPhoto,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            ) {
+                val state by painter.state.collectAsState()
 
-                        is RequestState.Failure,
-                        is RequestState.Loading -> {
-                            FallbackIcon(size = size, data = data)
-                        }
+                when (state) {
+                    is AsyncImagePainter.State.Success -> SubcomposeAsyncImageContent()
+                    AsyncImagePainter.State.Empty,
+                    is AsyncImagePainter.State.Error,
+                    is AsyncImagePainter.State.Loading -> {
+                        FallbackIcon(size, data)
                     }
                 }
             }
