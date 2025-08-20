@@ -45,7 +45,7 @@ jobs:
 
       - name: Build with gradle
         id: build
-        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }}
+        run: ./gradlew assemble${{ matrix.variant }}${{ matrix.build_type }} ${{ matrix.extra_build_command_options }} --stacktrace
 
       - name: Run unit tests
         if: ${{ matrix.run_test == true }}
