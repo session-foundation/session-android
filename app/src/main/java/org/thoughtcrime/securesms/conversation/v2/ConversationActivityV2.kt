@@ -2723,7 +2723,7 @@ class ConversationActivityV2 : ScreenLockActionBarActivity(), InputBarDelegate,
 
     private fun moveToMessagePosition(position: Int, highlight: Boolean, onMessageNotFound: Runnable?) {
         if (position >= 0) {
-            binding.conversationRecyclerView.smoothScrollToPosition(position)
+            binding.conversationRecyclerView.scrollToPosition(position)
 
             if (highlight) {
                 runOnUiThread {
