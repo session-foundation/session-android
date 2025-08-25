@@ -1,6 +1,7 @@
 package org.thoughtcrime.securesms.util
 
 import android.content.res.Resources
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.roundToInt
 
@@ -32,17 +33,6 @@ val RecyclerView.isNearBottom: Boolean
 
 val RecyclerView.isFullyScrolled: Boolean
     get() {
-        return scrollAmount == 0
+        return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition() ==
+                adapter!!.itemCount - 1
     }
-
-val RecyclerView.scrollAmount: Int
-    get() {
-        val scrollOffset = computeVerticalScrollOffset().coerceAtLeast(0)
-        val scrollExtent = computeVerticalScrollExtent()
-        val scrollRange = computeVerticalScrollRange()
-
-
-        // We're at the bottom if the offset + extent equals the range
-        return scrollOffset + scrollExtent - scrollRange
-    }
-
